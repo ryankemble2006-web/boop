@@ -16,6 +16,10 @@ jobs:
       - name: Unpack BOOP
         run: unzip -q BOOP-Alpha1-project.zip -d boop-build
 
+      - name: Apply editable BOOP source
+        run: |
+          cp source/MainActivity.java boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java
+
       - name: Inspect launch-critical source
         run: |
           echo '=== PROJECT TREE ==='
