@@ -187,19 +187,32 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override public void onBufferReceived(byte[] buffer) { }
     @Override public void onEndOfSpeech() { }
 
+    private String speechErrorName(int error) {
+        switch (error) {
+            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: return "network timeout";
+            case SpeechRecognizer.ERROR_NETWORK: return "network";
+            case SpeechRecognizer.ERROR_AUDIO: return "audio";
+            case SpeechRecognizer.ERROR_SERVER: return "server";
+            case SpeechRecognizer.ERROR_CLIENT: return "client";
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT: return "speech timeout";
+            case SpeechRecognizer.ERROR_NO_MATCH: return "no match";
+            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY: return "recognizer busy";
+            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS: return "insufficient permissions";
+            case SpeechRecognizer.ERROR_TOO_MANY_REQUESTS: return "too many requests";
+            case SpeechRecognizer.ERROR_SERVER_DISCONNECTED: return "server disconnected";
+            case SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED: return "language not supported";
+            case SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE: return "language unavailable";
+            case SpeechRecognizer.ERROR_CANNOT_CHECK_SUPPORT: return "cannot check support";
+            case SpeechRecognizer.ERROR_CANNOT_LISTEN_TO_DOWNLOAD_EVENTS: return "cannot listen to download events";
+            default: return "unknown";
+        }
+    }
+
     @Override
     public void onError(int error) {
         listening = false;
         face.animate().alpha(1.0f).setDuration(120).start();
-
-        if (error == SpeechRecognizer.ERROR_CLIENT) {
-            return;
-        }
-        if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
-            speak("I didn't catch that.");
-        } else {
-            speak("Try that again.");
-        }
+        speak("Speech error " + error + ", " + speechErrorName(error) + ".");
     }
 
     @Override
