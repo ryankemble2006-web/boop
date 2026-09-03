@@ -25,10 +25,15 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK
-        run: yes | sdkmanager "platforms;android-37" "build-tools;36.0.0"
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Set up Gradle
+      - name: Make project use Android 36
+        run: |
+          sed -i 's/compileSdk 37/compileSdk 36/' boop-build/BOOP-Alpha1/app/build.gradle
+          sed -i 's/targetSdk 37/targetSdk 36/' boop-build/BOOP-Alpha1/app/build.gradle
+
+      - name: Set up Gradle 9.6.0
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
