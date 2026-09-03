@@ -70,7 +70,13 @@ jobs:
       - name: Boot clean Android 16 emulator
         timeout-minutes: 6
         run: |
+          export ANDROID_AVD_HOME="${RUNNER_TEMP}/android-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
           echo no | avdmanager create avd -n boop-test -k "system-images;android-36;google_apis;x86_64" --device "pixel_7_pro"
+          echo '=== CREATED AVDS ==='
+          "${ANDROID_HOME}/emulator/emulator" -list-avds || true
+          echo '=== AVD FILES ==='
+          find "$ANDROID_AVD_HOME" -maxdepth 3 -type f -print | sort || true
           nohup "${ANDROID_HOME}/emulator/emulator" -avd boop-test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -wipe-data > emulator.log 2>&1 &
           if ! timeout 300s bash -c 'adb wait-for-device && until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 2; done'; then
             echo '=== EMULATOR FAILED TO BOOT ==='
