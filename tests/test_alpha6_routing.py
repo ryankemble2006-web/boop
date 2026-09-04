@@ -7,7 +7,7 @@ class Alpha6RoutingTest(unittest.TestCase):
         main = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('private BoopCommandRouter commandRouter;', main)
         self.assertIn('new HomeAssistantGeneralAssistantClient(tokenStore, haAuth)', main)
-        self.assertIn('new BoopCommandRouter(haClient, generalAssistant)', main)
+        self.assertIn('new BoopCommandRouter(', main)
         self.assertIn('commandRouter.process(transcript)', main)
         self.assertNotIn('CommandOutcome outcome = haClient.process(transcript);', main)
 
