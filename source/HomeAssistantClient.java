@@ -32,9 +32,15 @@ final class HomeAssistantClient {
             return CommandOutcome.authRequired();
         }
 
+        String deviceId = tokenStore.getHaDeviceId();
+        if (deviceId == null || deviceId.isEmpty()) {
+            return CommandOutcome.authRequired();
+        }
+
         try {
             String accessToken = auth.freshAccessToken();
-            HomeAssistantResponse response = postConversation(baseUrl, accessToken, text, null);
+            HomeAssistantResponse response = postConversation(
+                    baseUrl, accessToken, text, deviceId);
 
             switch (response.kind()) {
                 case ACTION_DONE:
