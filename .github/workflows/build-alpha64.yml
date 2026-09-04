@@ -139,22 +139,23 @@ jobs:
           export ANDROID_AVD_HOME="${RUNNER_TEMP}/android-avd"
           mkdir -p "$ANDROID_AVD_HOME"
           echo no | avdmanager create avd -n boop-test -k "system-images;android-36;google_apis;x86_64" --device "pixel_7_pro"
-          nohup "${ANDROID_HOME}/emulator/emulator" -avd boop-test -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -wipe-data > emulator.log 2>&1 &
+          nohup "${ANDROID_HOME}/emulator/emulator" -avd boop-test -no-window -no-boot-anim -gpu swiftshader_indirect -no-snapshot -wipe-data > emulator.log 2>&1 &
           if ! timeout 300s bash -c 'adb wait-for-device && until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 2; done'; then
             tail -n 160 emulator.log || true
             exit 1
           fi
           adb shell input keyevent 82 || true
 
-      - name: Launch BOOP and verify process survives
+      - name: Launch BOOP with wake microphone armed and verify process survives
         run: |
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           adb install -r "$APK"
+          adb shell pm grant com.boop.alpha1 android.permission.RECORD_AUDIO
           adb logcat -c
           adb shell am start -W -n com.boop.alpha1/.MainActivity
-          sleep 4
+          sleep 8
           if ! adb shell pidof com.boop.alpha1 >/dev/null 2>&1; then
-            adb logcat -d -v threadtime | grep -i -E 'boop|FATAL EXCEPTION|AndroidRuntime|Process: com\.boop\.alpha1|Caused by:' || true
+            adb logcat -d -v threadtime | grep -i -E 'boop|FATAL EXCEPTION|AndroidRuntime|Process: com\.boop\.alpha1|Caused by:|onnx|reshape|sherpa' || true
             exit 1
           fi
 
