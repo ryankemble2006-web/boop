@@ -25,4 +25,11 @@ public final class HomeAssistantResponseParserTest {
         HomeAssistantResponse r = HomeAssistantResponseParser.parse(json);
         assertEquals(HomeAssistantResponse.Kind.NO_VALID_TARGETS, r.kind());
     }
+
+    @Test public void malformedJsonBecomesUnknownError() {
+        HomeAssistantResponse r = HomeAssistantResponseParser.parse("not-json");
+        assertEquals(HomeAssistantResponse.Kind.UNKNOWN_ERROR, r.kind());
+        assertTrue(r.successTargets().isEmpty());
+        assertTrue(r.failedTargets().isEmpty());
+    }
 }
