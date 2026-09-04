@@ -40,6 +40,11 @@ class Alpha64WakeIntegrationTest(unittest.TestCase):
         self.assertIn('Build.VERSION.SDK_INT', self.main)
         self.assertIn('Build.VERSION_CODES.TIRAMISU', self.main)
 
+    def test_wake_path_surfaces_recognizer_result_or_error_for_pixel_diagnosis(self):
+        self.assertIn('showWakeDiagnostic("ERR " + error + " " + speechErrorName(error))', self.main)
+        self.assertIn('showWakeDiagnostic("HEARD " + (best == null ? "<nothing>" : best))', self.main)
+        self.assertIn('private void showWakeDiagnostic(String message)', self.main)
+
 
 if __name__ == '__main__':
     unittest.main()
