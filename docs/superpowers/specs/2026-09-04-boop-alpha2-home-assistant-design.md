@@ -67,13 +67,15 @@ No token copying, YAML, manual endpoint entry, or settings maze is part of the n
 
 ### Area identity
 
-After Home Assistant authorization, BOOP asks one minimal question:
+The first Alpha 2 build does **not** add an area picker. This Pixel is deliberately fixed to `Living Room` for the first physical control milestone.
+
+The later reusable-device setup prompt is one minimal question:
 
 **“Where am I?”**
 
-It presents the Home Assistant areas and stores the selected area locally. For the first Alpha 2 physical test, `Living Room` is the required choice.
+At that point BOOP will present Home Assistant areas and store the chosen area locally, allowing the same app build to become `BOOP Bedroom`, `BOOP Kitchen`, and so on without a traditional setup wizard.
 
-The prompt is a one-time dependency/identity prompt, not an onboarding wizard. The stored area can be deliberately changed later.
+That prompt is explicitly deferred so it cannot block the first real Home Assistant device command.
 
 ## Home Assistant command handoff
 
@@ -208,12 +210,13 @@ The following behaviors remain locked for later but are outside the first Home A
 - capacitive finger-follow eyes using Henson-style eased puppetry motion
 - one-time local speech-model prompt: **“BOOP needs her ears”**
 - richer camera-based eye tracking
+- reusable-device **“Where am I?”** area selection
 
 These must not block the first real Home Assistant command.
 
 ## First physical acceptance test
 
-Target device: spare Pixel 7 Pro, assigned to Home Assistant area `Living Room`.
+Target device: spare Pixel 7 Pro, fixed to Home Assistant area `Living Room` for Alpha 2.
 
 Target entities currently available:
 
@@ -226,7 +229,7 @@ The first acceptance sequence is:
 2. BOOP discovers the local Home Assistant instance.
 3. User taps **Connect** after **“I found your house.”**
 4. Complete Home Assistant's normal authorization once.
-5. BOOP asks **“Where am I?”** and the user selects `Living Room`.
+5. BOOP retains its Alpha 2 home area as `Living Room` without asking another setup question.
 6. Tap BOOP and say **“turn on the fan.”**
 7. Only the Living Room Govee fan turns on.
 8. BOOP gives a short cloud-enhanced puppet acknowledgement when OpenAI is reachable.
@@ -266,6 +269,7 @@ Do not add these during the first implementation slice:
 - wake-word listening
 - music ducking
 - setup/settings wizard
+- reusable-device area picker
 - multi-Home-Assistant support
 - cloud-required device control
 
