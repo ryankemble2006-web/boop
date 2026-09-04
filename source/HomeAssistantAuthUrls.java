@@ -4,8 +4,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 final class HomeAssistantAuthUrls {
-    static final String CLIENT_ID = "https://ryankemble2006-web.github.io/boop/ha-auth/";
-    static final String REDIRECT_URI = "https://ryankemble2006-web.github.io/boop/ha-auth/callback.html";
+    static final String CLIENT_ID = "https://raw.githubusercontent.com/ryankemble2006-web/boop/alpha2-local-ha-control/web/ha-auth/index.html";
+    static final String REDIRECT_URI = "boop://auth-callback";
     static final String APP_CALLBACK = "boop://auth-callback";
 
     private HomeAssistantAuthUrls() { }
