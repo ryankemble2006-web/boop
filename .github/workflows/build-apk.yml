@@ -28,31 +28,6 @@ jobs:
       - name: Materialize editable BOOP project
         run: bash scripts/materialize-android.sh
 
-      - name: Prepare permanent BOOP signing key
-        shell: bash
-        run: |
-          set -euo pipefail
-          missing=0
-          for name in BOOP_KEYSTORE_BASE64 BOOP_KEYSTORE_PASSWORD BOOP_KEY_ALIAS BOOP_KEY_PASSWORD; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error::Missing GitHub Actions secret: $name"
-              missing=1
-            fi
-          done
-          if [ "$missing" -ne 0 ]; then
-            echo "Refusing to build a disposable-signed BOOP APK. Add the four BOOP signing secrets first."
-            exit 1
-          fi
-          BOOP_KEYSTORE_PATH="${RUNNER_TEMP}/boop-signing.jks"
-          printf '%s' "$BOOP_KEYSTORE_BASE64" | base64 --decode > "$BOOP_KEYSTORE_PATH"
-          chmod 600 "$BOOP_KEYSTORE_PATH"
-          keytool -list \
-            -keystore "$BOOP_KEYSTORE_PATH" \
-            -storepass "$BOOP_KEYSTORE_PASSWORD" \
-            -alias "$BOOP_KEY_ALIAS" >/dev/null
-          echo "BOOP_KEYSTORE_PATH=$BOOP_KEYSTORE_PATH" >> "$GITHUB_ENV"
-          echo 'Permanent BOOP signing key loaded.'
-
       - name: Inspect launch-critical source
         run: |
           echo '=== PROJECT TREE ==='
@@ -102,6 +77,31 @@ jobs:
           name: BOOP-Alpha2-unit-test-failure
           path: unit-test-summary.txt
           if-no-files-found: ignore
+
+      - name: Prepare permanent BOOP signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in BOOP_KEYSTORE_BASE64 BOOP_KEYSTORE_PASSWORD BOOP_KEY_ALIAS BOOP_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Refusing to build a disposable-signed BOOP APK. Add the four BOOP signing secrets first."
+            exit 1
+          fi
+          BOOP_KEYSTORE_PATH="${RUNNER_TEMP}/boop-signing.jks"
+          printf '%s' "$BOOP_KEYSTORE_BASE64" | base64 --decode > "$BOOP_KEYSTORE_PATH"
+          chmod 600 "$BOOP_KEYSTORE_PATH"
+          keytool -list \
+            -keystore "$BOOP_KEYSTORE_PATH" \
+            -storepass "$BOOP_KEYSTORE_PASSWORD" \
+            -alias "$BOOP_KEY_ALIAS" >/dev/null
+          echo "BOOP_KEYSTORE_PATH=$BOOP_KEYSTORE_PATH" >> "$GITHUB_ENV"
+          echo 'Permanent BOOP signing key loaded.'
 
       - name: Build BOOP APK
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
