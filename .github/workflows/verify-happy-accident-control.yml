@@ -1,0 +1,14 @@
+name: Verify BOOP Happy Accident Control
+
+on:
+  push:
+    branches: [ "diag-happy-accident-control" ]
+  workflow_dispatch:
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run control invariant test
+        run: python3 -m unittest tests.test_happy_accident_control -v
