@@ -1,4 +1,4 @@
-name: Build BOOP Alpha 1 APK
+name: Build BOOP Alpha 2 APK
 
 on:
   workflow_dispatch:
@@ -16,12 +16,8 @@ jobs:
       - name: Run source regression tests
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
 
-      - name: Unpack BOOP
-        run: unzip -q BOOP-Alpha1-project.zip -d boop-build
-
-      - name: Apply editable BOOP source
-        run: |
-          cp source/MainActivity.java boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java
+      - name: Materialize editable BOOP project
+        run: bash scripts/materialize-android.sh
 
       - name: Inspect launch-critical source
         run: |
@@ -49,15 +45,13 @@ jobs:
         run: |
           sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" "emulator" "system-images;android-36;google_apis;x86_64"
 
-      - name: Make project use Android 36
-        run: |
-          sed -i 's/compileSdk 37/compileSdk 36/' boop-build/BOOP-Alpha1/app/build.gradle
-          sed -i 's/targetSdk 37/targetSdk 36/' boop-build/BOOP-Alpha1/app/build.gradle
-
       - name: Set up Gradle 9.6.0
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
+
+      - name: Run Android unit tests
+        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
 
       - name: Build BOOP APK
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
@@ -125,6 +119,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Alpha1-debug
+          name: BOOP-Alpha2-debug
           path: boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
