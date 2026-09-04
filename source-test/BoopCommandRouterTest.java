@@ -1,7 +1,11 @@
 package com.boop.alpha1;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class BoopCommandRouterTest {
     @Test public void onlyNoMatchFallsThroughToAssistant() {
@@ -29,6 +33,50 @@ public final class BoopCommandRouterTest {
         assertEquals(CommandOutcome.Status.ASSISTANT_REPLY, result.status());
         assertEquals("blue sky", result.assistantSpeech());
         assertEquals(1, assistantCalls.value);
+    }
+
+    @Test public void thinkingCallbacksWrapOnlyAssistantFallback() {
+        List<String> events = new ArrayList<>();
+        BoopCommandRouter.AssistantActivity activity = new BoopCommandRouter.AssistantActivity() {
+            @Override public void onAssistantStarted() { events.add("start"); }
+            @Override public void onAssistantFinished() { events.add("finish"); }
+        };
+
+        BoopCommandRouter localRouter = new BoopCommandRouter(
+                text -> CommandOutcome.success("light"),
+                text -> { events.add("assistant"); return CommandOutcome.assistantReply("unused"); },
+                activity);
+        localRouter.process("turn on the light");
+        assertTrue(events.isEmpty());
+
+        BoopCommandRouter assistantRouter = new BoopCommandRouter(
+                text -> CommandOutcome.noMatch(),
+                text -> { events.add("assistant"); return CommandOutcome.assistantReply("orange"); },
+                activity);
+        CommandOutcome result = assistantRouter.process("why are oranges orange");
+
+        assertEquals(CommandOutcome.Status.ASSISTANT_REPLY, result.status());
+        assertEquals(List.of("start", "assistant", "finish"), events);
+    }
+
+    @Test public void thinkingAlwaysFinishesWhenAssistantThrows() {
+        List<String> events = new ArrayList<>();
+        BoopCommandRouter.AssistantActivity activity = new BoopCommandRouter.AssistantActivity() {
+            @Override public void onAssistantStarted() { events.add("start"); }
+            @Override public void onAssistantFinished() { events.add("finish"); }
+        };
+        BoopCommandRouter router = new BoopCommandRouter(
+                text -> CommandOutcome.noMatch(),
+                text -> { throw new RuntimeException("boom"); },
+                activity);
+
+        try {
+            router.process("question");
+        } catch (RuntimeException expected) {
+            // Expected: this test only locks the lifecycle cleanup.
+        }
+
+        assertEquals(List.of("start", "finish"), events);
     }
 
     private static CommandOutcome outcome(CommandOutcome.Status status) {
