@@ -33,6 +33,21 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn(':app:testDebugUnitTest', text)
         self.assertIn('name: BOOP-Alpha2-debug', text)
 
+    def test_build_requires_persistent_secret_backed_signing(self):
+        workflow = Path('.github/workflows/build-apk.yml').read_text(encoding='utf-8')
+        gradle = Path('source/app-build.gradle').read_text(encoding='utf-8')
+        for secret in (
+            'BOOP_KEYSTORE_BASE64',
+            'BOOP_KEYSTORE_PASSWORD',
+            'BOOP_KEY_ALIAS',
+            'BOOP_KEY_PASSWORD',
+        ):
+            self.assertIn('secrets.' + secret, workflow)
+        self.assertIn('base64 --decode', workflow)
+        self.assertIn('BOOP_KEYSTORE_PATH', gradle)
+        self.assertIn('signingConfigs', gradle)
+        self.assertIn('signingConfig signingConfigs.boop', gradle)
+
     def test_no_literal_credentials_are_committed(self):
         text = '\n'.join(
             p.read_text(encoding='utf-8')
