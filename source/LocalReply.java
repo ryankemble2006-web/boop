@@ -20,6 +20,14 @@ final class LocalReply {
                 return "I didn't understand that.";
             case AUTH_REQUIRED:
                 return "I need to reconnect to the house.";
+            case ASSISTANT_REPLY:
+                return outcome.assistantSpeech();
+            case ASSISTANT_NO_AGENT:
+                return "I can control the house, but I don't have my assistant connected yet.";
+            case ASSISTANT_UNREACHABLE:
+                return "I can still control the house, but I can't reach my assistant right now.";
+            case ASSISTANT_FAILED:
+                return "I can still control the house, but my assistant didn't answer that.";
             case FAILED:
             default:
                 return "That didn't work.";
