@@ -5,11 +5,11 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public final class AssistantFallbackPolicyTest {
-    @Test public void onlyNoMatchFallsThroughToAssistant() {
+    @Test public void noMatchAndNoTargetFallThroughToAssistant() {
         assertTrue(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.NO_MATCH));
+        assertTrue(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.NO_TARGET));
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.SUCCESS));
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.TARGET_OFFLINE));
-        assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.NO_TARGET));
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.FAILED));
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.UNREACHABLE));
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.AUTH_REQUIRED));
