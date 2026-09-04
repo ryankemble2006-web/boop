@@ -55,6 +55,15 @@ class Alpha64BuildWorkflowTest(unittest.TestCase):
         self.assertIn('adb install -r', self.workflow)
         self.assertIn('adb shell pidof com.boop.alpha1', self.workflow)
 
+    def test_emulator_actually_arms_the_wake_decoder_before_survival_check(self):
+        grant = 'adb shell pm grant com.boop.alpha1 android.permission.RECORD_AUDIO'
+        launch = 'adb shell am start -W -n com.boop.alpha1/.MainActivity'
+        self.assertIn(grant, self.workflow)
+        self.assertIn(launch, self.workflow)
+        self.assertLess(self.workflow.index(grant), self.workflow.index(launch))
+        self.assertNotIn('-no-audio', self.workflow)
+        self.assertIn('sleep 8', self.workflow)
+
     def test_workflow_publishes_expected_raw_apk_artifact(self):
         self.assertIn('actions/upload-artifact@v4', self.workflow)
         self.assertIn('BOOP-Alpha6.4-Wake-Word-debug', self.workflow)
