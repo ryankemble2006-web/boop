@@ -8,7 +8,7 @@ import java.util.Locale;
 final class HomeAssistantDeviceSetupProtocol {
     private static final String APP_ID = "com.boop.alpha1";
     private static final String APP_NAME = "BOOP";
-    private static final String APP_VERSION = "0.3.1-alpha3";
+    private static final String APP_VERSION = "0.3.2-alpha3";
     private static final String DEVICE_NAME = "BOOP Wall";
 
     private HomeAssistantDeviceSetupProtocol() { }
