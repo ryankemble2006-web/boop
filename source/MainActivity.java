@@ -13,7 +13,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
 import android.speech.RecognitionListener;
+import android.speech.RecognitionSupport;
+import android.speech.RecognitionSupportCallback;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
@@ -32,6 +35,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -43,11 +47,18 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private static final String HOME_AREA = "Living Room";
     private static final long IDLE_TIMEOUT_MS = 30_000L;
 
+    private enum RecognitionMode { NONE, TAP, WAKE }
+
     private FrameLayout interactionSurface;
     private BoopFaceView face;
     private BoopPresenceState presenceState;
     private Handler presenceHandler;
     private SpeechRecognizer recognizer;
+    private RecognitionMode recognitionMode = RecognitionMode.NONE;
+    private BoopWakeWordController wakeWordController;
+    private BoopWakeSessionCoordinator wakeCoordinator;
+    private BoopWakeAudioSession wakeAudioSession;
+    private boolean wakeSupportCheckInFlight;
     private TextToSpeech tts;
     private BoopVoiceController voiceController;
     private LinearLayout voiceSettingsOverlay;
@@ -122,6 +133,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         voiceController = new BoopVoiceController(this);
         tts = new TextToSpeech(this, this);
         createRecognizer();
+        createWakeObjects();
 
         executor = Executors.newSingleThreadExecutor();
         tokenStore = new SecureTokenStore(this);
@@ -145,6 +157,49 @@ public final class MainActivity extends Activity implements RecognitionListener,
         deviceSetup = new HomeAssistantDeviceSetup(tokenStore, haAuth);
         discovery = new HomeAssistantDiscovery(this);
         handleAuthIntent(getIntent());
+    }
+
+    private void createWakeObjects() {
+        wakeWordController = new BoopWakeWordController(this, new BoopWakeWordController.Listener() {
+            @Override
+            public void onWakeDetected(BoopWakeAudioSession session, long detectedAtMs) {
+                runOnUiThread(() -> {
+                    if (wakeCoordinator == null || !wakeCoordinator.onWakeDetected(detectedAtMs)) {
+                        session.close();
+                        return;
+                    }
+                    wakeFaceForInteraction();
+                    startWakeRecognition(session);
+                });
+            }
+
+            @Override
+            public void onWakeFailure(String message) {
+                runOnUiThread(() -> {
+                    if (wakeCoordinator != null) {
+                        wakeCoordinator.failWakeSession();
+                    }
+                });
+            }
+        });
+
+        wakeCoordinator = new BoopWakeSessionCoordinator(new BoopWakeSessionCoordinator.Engine() {
+            @Override public boolean arm() {
+                return wakeWordController != null && wakeWordController.arm();
+            }
+
+            @Override public void suspendAll() {
+                if (wakeWordController != null) {
+                    wakeWordController.suspendAll();
+                }
+            }
+
+            @Override public void shutdown() {
+                if (wakeWordController != null) {
+                    wakeWordController.shutdown();
+                }
+            }
+        });
     }
 
     private boolean onFaceTouch(View view, MotionEvent event) {
@@ -355,6 +410,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
             requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_RECORD_AUDIO);
             return;
         }
+        if (wakeCoordinator != null) {
+            wakeCoordinator.onTapStarted();
+        }
+        recognitionMode = RecognitionMode.TAP;
         startListening();
     }
 
@@ -372,6 +431,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
         wakeFaceForInteraction();
         if (recognizer == null) {
             speak("I can't hear speech on this device yet.");
+            if (recognitionMode == RecognitionMode.TAP && wakeCoordinator != null) {
+                wakeCoordinator.onTapFinished();
+            }
+            recognitionMode = RecognitionMode.NONE;
             return;
         }
 
@@ -390,13 +453,118 @@ public final class MainActivity extends Activity implements RecognitionListener,
         recognizer.startListening(intent);
     }
 
+    private void startWakeRecognition(BoopWakeAudioSession session) {
+        if (recognizer == null) {
+            session.close();
+            if (wakeCoordinator != null) {
+                wakeCoordinator.failWakeSession();
+            }
+            return;
+        }
+        wakeAudioSession = session;
+        recognitionMode = RecognitionMode.WAKE;
+        listening = true;
+        face.animate().alpha(0.78f).setDuration(120).start();
+        try {
+            recognizer.startListening(
+                    BoopWakeRecognitionIntent.build(Locale.getDefault(), session.audioSource()));
+        } catch (RuntimeException e) {
+            closeWakeAudioSession();
+            listening = false;
+            recognitionMode = RecognitionMode.NONE;
+            face.animate().alpha(1.0f).setDuration(120).start();
+            if (wakeCoordinator != null) {
+                wakeCoordinator.failWakeSession();
+            }
+        }
+    }
+
     private void stopListening() {
+        RecognitionMode stoppedMode = recognitionMode;
+        recognitionMode = RecognitionMode.NONE;
         listening = false;
         face.animate().alpha(1.0f).setDuration(120).start();
         if (recognizer != null) {
             recognizer.cancel();
         }
+        if (stoppedMode == RecognitionMode.WAKE) {
+            closeWakeAudioSession();
+            if (wakeCoordinator != null) {
+                wakeCoordinator.cancelWakeCapture();
+            }
+        } else if (stoppedMode == RecognitionMode.TAP && wakeCoordinator != null) {
+            wakeCoordinator.onTapFinished();
+        }
         scheduleFaceIdle();
+    }
+
+    private void closeWakeAudioSession() {
+        BoopWakeAudioSession session = wakeAudioSession;
+        wakeAudioSession = null;
+        if (session != null) {
+            session.close();
+        }
+    }
+
+    private void checkWakeRecognitionSupport() {
+        if (wakeCoordinator == null) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || recognizer == null) {
+            wakeCoordinator.setRecognitionSupported(false);
+            return;
+        }
+        if (wakeSupportCheckInFlight) {
+            return;
+        }
+
+        ParcelFileDescriptor[] pipe = null;
+        try {
+            pipe = ParcelFileDescriptor.createPipe();
+            ParcelFileDescriptor readSide = pipe[0];
+            ParcelFileDescriptor writeSide = pipe[1];
+            writeSide.close();
+            wakeSupportCheckInFlight = true;
+            Intent intent = BoopWakeRecognitionIntent.build(Locale.getDefault(), readSide);
+            recognizer.checkRecognitionSupport(intent, getMainExecutor(), new RecognitionSupportCallback() {
+                private void finishProbe() {
+                    try {
+                        readSide.close();
+                    } catch (IOException ignored) {
+                    }
+                    wakeSupportCheckInFlight = false;
+                }
+
+                @Override
+                public void onSupportResult(RecognitionSupport recognitionSupport) {
+                    finishProbe();
+                    if (wakeCoordinator != null) {
+                        wakeCoordinator.setRecognitionSupported(true);
+                    }
+                }
+
+                @Override
+                public void onError(int error) {
+                    finishProbe();
+                    if (wakeCoordinator != null) {
+                        wakeCoordinator.setRecognitionSupported(false);
+                    }
+                }
+            });
+        } catch (IOException | RuntimeException error) {
+            wakeSupportCheckInFlight = false;
+            if (pipe != null) {
+                for (ParcelFileDescriptor descriptor : pipe) {
+                    if (descriptor != null) {
+                        try {
+                            descriptor.close();
+                        } catch (IOException ignored) {
+                        }
+                    }
+                }
+            }
+            wakeCoordinator.setRecognitionSupported(false);
+        }
     }
 
     private void handleRecognizedSpeech(String transcript) {
@@ -615,6 +783,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
             boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
             if (granted && pendingListenAfterPermission) {
                 pendingListenAfterPermission = false;
+                if (wakeCoordinator != null) {
+                    wakeCoordinator.onTapStarted();
+                }
+                recognitionMode = RecognitionMode.TAP;
                 startListening();
             } else if (!granted) {
                 pendingListenAfterPermission = false;
@@ -650,7 +822,13 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override public void onBeginningOfSpeech() { }
     @Override public void onRmsChanged(float rmsdB) { }
     @Override public void onBufferReceived(byte[] buffer) { }
-    @Override public void onEndOfSpeech() { }
+
+    @Override
+    public void onEndOfSpeech() {
+        if (recognitionMode == RecognitionMode.WAKE && wakeAudioSession != null) {
+            wakeAudioSession.finishCapture();
+        }
+    }
 
     private String speechErrorName(int error) {
         switch (error) {
@@ -675,23 +853,87 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     @Override
     public void onError(int error) {
+        RecognitionMode failedMode = recognitionMode;
+        recognitionMode = RecognitionMode.NONE;
         listening = false;
         face.animate().alpha(1.0f).setDuration(120).start();
+
+        if (failedMode == RecognitionMode.WAKE) {
+            closeWakeAudioSession();
+            if (wakeCoordinator != null) {
+                if (error == SpeechRecognizer.ERROR_NO_MATCH
+                        || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                    wakeCoordinator.cancelWakeCapture();
+                } else {
+                    wakeCoordinator.failWakeSession();
+                }
+            }
+            scheduleFaceIdle();
+            return;
+        }
+
+        if (failedMode == RecognitionMode.TAP) {
+            speak("Speech error " + error + ", " + speechErrorName(error) + ".");
+            if (wakeCoordinator != null) {
+                wakeCoordinator.onTapFinished();
+            }
+            return;
+        }
+
         speak("Speech error " + error + ", " + speechErrorName(error) + ".");
     }
 
     @Override
     public void onResults(Bundle results) {
+        RecognitionMode completedMode = recognitionMode;
+        recognitionMode = RecognitionMode.NONE;
         listening = false;
         face.animate().alpha(1.0f).setDuration(120).start();
 
         ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        String best = null;
         if (matches != null && !matches.isEmpty()) {
-            String best = matches.get(0).trim();
-            if (!best.isEmpty()) {
+            String candidate = matches.get(0).trim();
+            if (!candidate.isEmpty()) {
+                best = candidate;
+            }
+        }
+
+        if (completedMode == RecognitionMode.WAKE) {
+            closeWakeAudioSession();
+            if (wakeCoordinator != null) {
+                wakeCoordinator.markWakeProcessing();
+            }
+            String normalized = BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best);
+            if (normalized.isEmpty()) {
+                if (wakeCoordinator != null) {
+                    wakeCoordinator.finishWakeProcessing();
+                }
+                scheduleFaceIdle();
+                return;
+            }
+            handleRecognizedSpeech(normalized);
+            return;
+        }
+
+        if (completedMode == RecognitionMode.TAP) {
+            if (best != null) {
+                if (wakeCoordinator != null) {
+                    wakeCoordinator.onTapFinished();
+                }
                 handleRecognizedSpeech(best);
                 return;
             }
+            speak("I didn't catch that.");
+            if (wakeCoordinator != null) {
+                wakeCoordinator.onTapFinished();
+            }
+            return;
+        }
+
+        if (best != null) {
+            handleRecognizedSpeech(best);
+            return;
         }
         speak("I didn't catch that.");
     }
