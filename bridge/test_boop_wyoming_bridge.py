@@ -1,6 +1,11 @@
 import unittest
 
-from bridge.boop_wyoming_bridge import SessionRegistry, disabled_tools, extract_text
+from bridge.boop_wyoming_bridge import (
+    BoopWyomingHandler,
+    SessionRegistry,
+    disabled_tools,
+    extract_text,
+)
 
 
 class SessionRegistryTest(unittest.IsolatedAsyncioTestCase):
@@ -74,6 +79,15 @@ class BridgeHelpersTest(unittest.TestCase):
     def test_extract_text_rejects_empty_reply(self):
         with self.assertRaises(ValueError):
             extract_text({"parts": [{"type": "text", "text": "   "}]})
+
+    def test_describe_advertises_boop_opencode_handle(self):
+        info = BoopWyomingHandler.info()
+        self.assertIsNotNone(info.handle)
+        self.assertEqual(1, len(info.handle))
+        self.assertEqual("BOOP OpenCode", info.handle[0].name)
+        self.assertFalse(info.handle[0].supports_home_control)
+        event = info.event()
+        self.assertEqual("info", event.type)
 
 
 if __name__ == "__main__":
