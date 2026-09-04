@@ -43,6 +43,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private Handler presenceHandler;
     private SpeechRecognizer recognizer;
     private TextToSpeech tts;
+    private BoopVoiceController voiceController;
     private boolean ttsReady = false;
     private boolean listening = false;
     private boolean thinking = false;
@@ -110,6 +111,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         keepAwakeAndHideSystemUi();
 
+        voiceController = new BoopVoiceController(this);
         tts = new TextToSpeech(this, this);
         createRecognizer();
 
@@ -269,6 +271,12 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private void handleRecognizedSpeech(String transcript) {
+        String voiceReply = voiceController.maybeChangeVoice(transcript);
+        if (voiceReply != null) {
+            speak(voiceReply);
+            return;
+        }
+
         if (!tokenStore.hasConnection()) {
             speak("I need to connect to the house first.");
             ensureHouseConnection();
@@ -498,8 +506,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
         if (status == TextToSpeech.SUCCESS && tts != null) {
             int result = tts.setLanguage(Locale.getDefault());
             ttsReady = result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED;
-            tts.setSpeechRate(1.0f);
-            tts.setPitch(1.0f);
+            if (ttsReady) {
+                voiceController.initialize(tts, Locale.getDefault());
+            }
         }
     }
 
@@ -579,6 +588,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
             tts.shutdown();
             tts = null;
         }
+        voiceController = null;
         if (executor != null) {
             executor.shutdownNow();
             executor = null;
