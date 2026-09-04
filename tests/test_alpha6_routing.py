@@ -17,6 +17,12 @@ class Alpha6RoutingTest(unittest.TestCase):
         conversation = client.index('postConversation(')
         self.assertLess(direct, conversation)
 
+    def test_general_assistant_allows_bridge_response_window(self):
+        assistant = Path('source/HomeAssistantGeneralAssistantClient.java').read_text(encoding='utf-8')
+        self.assertIn('ASSISTANT_READ_TIMEOUT_MS = 50_000', assistant)
+        self.assertIn('connection.setReadTimeout(ASSISTANT_READ_TIMEOUT_MS)', assistant)
+        self.assertIn('connection.setConnectTimeout(CONNECT_TIMEOUT_MS)', assistant)
+
     def test_puppet_touch_and_member_berry_surface_is_preserved(self):
         main = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('interactionSurface.setOnTouchListener(this::onFaceTouch)', main)
