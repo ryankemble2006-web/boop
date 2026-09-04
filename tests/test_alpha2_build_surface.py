@@ -18,20 +18,22 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('android:scheme="boop"', text)
         self.assertIn('android:host="auth-callback"', text)
 
-    def test_build_is_alpha2_android36_java17(self):
+    def test_build_is_alpha3_android36_java17(self):
         text = Path('source/app-build.gradle').read_text(encoding='utf-8') if Path('source/app-build.gradle').exists() else ''
         self.assertIn('compileSdk 36', text)
         self.assertIn('targetSdk 36', text)
         self.assertIn('minSdk 29', text)
-        self.assertIn('versionName "0.2.0-alpha2"', text)
+        self.assertIn('versionCode 3', text)
+        self.assertIn('versionName "0.3.0-alpha3"', text)
         self.assertIn('JavaVersion.VERSION_17', text)
+        self.assertIn("implementation 'com.squareup.okhttp3:okhttp:4.12.0'", text)
         self.assertIn("testImplementation 'junit:junit:4.13.2'", text)
 
-    def test_workflow_runs_jvm_tests_and_publishes_alpha2(self):
+    def test_workflow_runs_jvm_tests_and_publishes_apk(self):
         text = Path('.github/workflows/build-apk.yml').read_text(encoding='utf-8')
         self.assertIn('bash scripts/materialize-android.sh', text)
         self.assertIn(':app:testDebugUnitTest', text)
-        self.assertIn('name: BOOP-Alpha2-debug', text)
+        self.assertIn('actions/upload-artifact@v4', text)
 
     def test_build_requires_persistent_secret_backed_signing(self):
         workflow = Path('.github/workflows/build-apk.yml').read_text(encoding='utf-8')
@@ -73,13 +75,29 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('AES/GCM/NoPadding', text)
         self.assertNotIn('putString("refresh_token", refreshToken)', text)
 
-    def test_main_routes_speech_to_ha_off_ui_thread(self):
+    def test_main_routes_raw_speech_to_ha_off_ui_thread(self):
         text = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('ExecutorService', text)
-        self.assertIn('RoomContext', text)
+        self.assertIn('HomeAssistantDeviceSetup', text)
         self.assertIn('HomeAssistantClient', text)
         self.assertIn('LocalReply.forOutcome', text)
+        self.assertNotIn('RoomContext', text)
+        self.assertNotIn('roomContext.qualify', text)
+        self.assertIn('haClient.process(transcript)', text)
         self.assertNotIn('speak("You said, " + best)', text)
+
+    def test_old_room_context_grammar_is_deleted(self):
+        self.assertFalse(Path('source/RoomContext.java').exists())
+        self.assertFalse(Path('source-test/RoomContextTest.java').exists())
+
+    def test_conversation_request_does_not_rewrite_speech(self):
+        text = Path('source/HomeAssistantConversationRequest.java').read_text(encoding='utf-8')
+        self.assertIn('.put("text", text)', text)
+        self.assertIn('.put("device_id", deviceId)', text)
+        self.assertNotIn('replace(', text)
+        self.assertNotIn('Pattern.compile', text)
+        self.assertNotIn('Matcher', text)
+        self.assertNotIn('Living Room', text)
 
     def test_bcp47_speech_fix_is_preserved(self):
         text = Path('source/MainActivity.java').read_text(encoding='utf-8')
@@ -91,7 +109,7 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('REDIRECT_URI = "boop://auth-callback"', text)
         self.assertNotIn('github.io', text)
 
-    def test_boopp_wall_setup_is_one_time_and_registry_scoped(self):
+    def test_boop_wall_setup_is_one_time_and_registry_scoped(self):
         p = Path('source/HomeAssistantDeviceSetup.java')
         text = p.read_text(encoding='utf-8') if p.exists() else ''
         guard = text.find('hasHaDeviceIdentity()')
