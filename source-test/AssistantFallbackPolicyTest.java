@@ -13,5 +13,9 @@ public final class AssistantFallbackPolicyTest {
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.FAILED));
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.UNREACHABLE));
         assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.AUTH_REQUIRED));
+        assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.ASSISTANT_REPLY));
+        assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.ASSISTANT_NO_AGENT));
+        assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.ASSISTANT_UNREACHABLE));
+        assertFalse(AssistantFallbackPolicy.shouldAskAssistant(CommandOutcome.Status.ASSISTANT_FAILED));
     }
 }
