@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -19,7 +20,6 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -31,7 +31,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private static final int REQ_NEARBY_WIFI = 1002;
     private static final String HOME_AREA = "Living Room";
 
-    private ImageView face;
+    private BoopFaceView face;
     private SpeechRecognizer recognizer;
     private TextToSpeech tts;
     private boolean ttsReady = false;
@@ -52,11 +52,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        face = new ImageView(this);
-        face.setBackgroundColor(Color.BLACK);
-        face.setImageResource(R.drawable.boop_eyes);
-        face.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        face.setAdjustViewBounds(false);
+        face = new BoopFaceView(this);
         face.setContentDescription("BOOP face. Tap anywhere to speak.");
         face.setOnTouchListener(this::onFaceTouch);
         setContentView(face);
@@ -279,6 +275,15 @@ public final class MainActivity extends Activity implements RecognitionListener,
         super.onNewIntent(intent);
         setIntent(intent);
         handleAuthIntent(intent);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        keepAwakeAndHideSystemUi();
+        if (face != null) {
+            face.invalidate();
+        }
     }
 
     private void speak(String text) {
