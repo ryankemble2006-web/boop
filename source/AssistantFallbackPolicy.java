@@ -4,6 +4,7 @@ final class AssistantFallbackPolicy {
     private AssistantFallbackPolicy() { }
 
     static boolean shouldAskAssistant(CommandOutcome.Status status) {
-        return status == CommandOutcome.Status.NO_MATCH;
+        return status == CommandOutcome.Status.NO_MATCH
+                || status == CommandOutcome.Status.NO_TARGET;
     }
 }
