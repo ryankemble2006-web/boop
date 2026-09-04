@@ -2,7 +2,7 @@ name: Verify BOOP Alpha 6 OpenCode ChatGPT
 
 on:
   push:
-    branches: [ "alpha6-opencode-chatgpt", "alpha6.1-thinking-puppet", "alpha6.2-muppet-voice", "alpha6.3-voice-sliders" ]
+    branches: [ "alpha6-opencode-chatgpt", "alpha6.1-thinking-puppet", "alpha6.2-muppet-voice", "alpha6.3-voice-sliders", "alpha6.4-wake-word" ]
   workflow_dispatch:
 
 concurrency:
