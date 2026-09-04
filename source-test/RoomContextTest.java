@@ -12,6 +12,10 @@ public final class RoomContextTest {
         assertEquals("turn on the fan in the Living Room", context.qualify("turn on the fan"));
     }
 
+    @Test public void trailingOnIsNormalizedBeforeRoomContext() {
+        assertEquals("turn on the fan in the Living Room", context.qualify("turn the fan on"));
+    }
+
     @Test public void unqualifiedLightsStillGetLivingRoom() {
         assertEquals("turn on the lights in the Living Room", context.qualify("turn on the lights"));
     }
