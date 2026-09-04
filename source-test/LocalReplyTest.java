@@ -16,7 +16,7 @@ public final class LocalReplyTest {
         assertEquals("The living room fan is offline.", LocalReply.forOutcome(CommandOutcome.targetOffline("Fan", "Living Room")));
     }
 
-    @Test public void noTargetAsksWhichRoom() {
-        assertEquals("Which room?", LocalReply.forOutcome(CommandOutcome.noTarget()));
+    @Test public void noTargetSaysCantFindThat() {
+        assertEquals("I can't find that.", LocalReply.forOutcome(CommandOutcome.noTarget()));
     }
 }
