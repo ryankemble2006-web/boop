@@ -14,17 +14,21 @@ import java.util.Set;
 final class BoopVoiceController {
     private static final String PREFS_NAME = "boop_voice";
     private static final String KEY_VOICE_NAME = "voice_name";
-    private static final float PUPPET_PITCH = 1.12f;
-    private static final float PUPPET_SPEECH_RATE = 0.96f;
+    private static final String KEY_PITCH = "pitch";
+    private static final String KEY_SPEECH_RATE = "speech_rate";
 
     private final SharedPreferences preferences;
     private final List<Voice> localEnglishVoices = new ArrayList<>();
 
     private TextToSpeech tts;
     private int currentVoiceIndex = -1;
+    private float currentPitch;
+    private float currentSpeechRate;
 
     BoopVoiceController(Context context) {
         preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        currentPitch = preferences.getFloat(KEY_PITCH, BoopVoiceTuning.DEFAULT_PITCH);
+        currentSpeechRate = preferences.getFloat(KEY_SPEECH_RATE, BoopVoiceTuning.DEFAULT_RATE);
     }
 
     void initialize(TextToSpeech tts, Locale preferredLocale) {
@@ -66,6 +70,30 @@ final class BoopVoiceController {
         }
 
         return "I've only got this one.";
+    }
+
+    void setPitch(float pitch) {
+        currentPitch = BoopVoiceTuning.clampPitch(pitch);
+        preferences.edit().putFloat(KEY_PITCH, currentPitch).apply();
+        if (tts != null) {
+            tts.setPitch(currentPitch);
+        }
+    }
+
+    void setSpeechRate(float speechRate) {
+        currentSpeechRate = BoopVoiceTuning.clampRate(speechRate);
+        preferences.edit().putFloat(KEY_SPEECH_RATE, currentSpeechRate).apply();
+        if (tts != null) {
+            tts.setSpeechRate(currentSpeechRate);
+        }
+    }
+
+    float pitch() {
+        return currentPitch;
+    }
+
+    float speechRate() {
+        return currentSpeechRate;
     }
 
     private void refreshVoices(Locale preferredLocale) {
@@ -147,7 +175,7 @@ final class BoopVoiceController {
         if (tts == null) {
             return;
         }
-        tts.setPitch(PUPPET_PITCH);
-        tts.setSpeechRate(PUPPET_SPEECH_RATE);
+        tts.setPitch(currentPitch);
+        tts.setSpeechRate(currentSpeechRate);
     }
 }
