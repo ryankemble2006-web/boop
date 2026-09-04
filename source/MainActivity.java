@@ -16,8 +16,10 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -34,11 +36,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private static final int REQ_NEARBY_WIFI = 1002;
     private static final String HOME_AREA = "Living Room";
     private static final long IDLE_TIMEOUT_MS = 30_000L;
-    private static final long MEMBER_BERRY_DELAY_MS = 460L;
 
+    private FrameLayout interactionSurface;
     private BoopFaceView face;
     private BoopPresenceState presenceState;
-    private BoopMemberBerryState memberBerryState;
     private Handler presenceHandler;
     private SpeechRecognizer recognizer;
     private TextToSpeech tts;
@@ -48,6 +49,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
     private boolean setupFailureSpoken = false;
+    private boolean memberBerryConsumed = false;
+    private int memberBerryVariant = 0;
 
     private ExecutorService executor;
     private SecureTokenStore tokenStore;
@@ -69,15 +72,28 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
     };
 
+    private final Runnable memberBerryRunnable = () -> {
+        if (interactionSurface == null || face == null || listening) {
+            return;
+        }
+        memberBerryConsumed = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            interactionSurface.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
+        } else {
+            interactionSurface.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+        }
+        face.playMemberBerry(memberBerryVariant++);
+        scheduleFaceIdle();
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         presenceHandler = new Handler(Looper.getMainLooper());
         presenceState = new BoopPresenceState();
-        memberBerryState = new BoopMemberBerryState();
 
-        FrameLayout interactionSurface = new FrameLayout(this);
+        interactionSurface = new FrameLayout(this);
         interactionSurface.setBackgroundColor(Color.BLACK);
         interactionSurface.setContentDescription("BOOP face. Tap anywhere to speak.");
         interactionSurface.setOnTouchListener(this::onFaceTouch);
@@ -105,10 +121,23 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     private boolean onFaceTouch(View view, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            memberBerryConsumed = false;
             wakeFaceForInteraction();
+            scheduleMemberBerryHold();
+            return true;
+        }
+        if (event.getAction() == MotionEvent.ACTION_CANCEL) {
+            cancelMemberBerryHold();
+            memberBerryConsumed = false;
             return true;
         }
         if (event.getAction() != MotionEvent.ACTION_UP) {
+            return true;
+        }
+
+        cancelMemberBerryHold();
+        if (memberBerryConsumed) {
+            memberBerryConsumed = false;
             return true;
         }
 
@@ -120,19 +149,24 @@ public final class MainActivity extends Activity implements RecognitionListener,
         return true;
     }
 
+    private void scheduleMemberBerryHold() {
+        cancelMemberBerryHold();
+        if (presenceHandler != null && !listening) {
+            presenceHandler.postDelayed(
+                    memberBerryRunnable,
+                    ViewConfiguration.getLongPressTimeout());
+        }
+    }
+
+    private void cancelMemberBerryHold() {
+        if (presenceHandler != null) {
+            presenceHandler.removeCallbacks(memberBerryRunnable);
+        }
+    }
+
     private void wakeFaceForInteraction() {
         if (presenceState != null && face != null && presenceState.wake()) {
             face.wakeFromIdle();
-            if (memberBerryState != null) {
-                int memberBerry = memberBerryState.onWake();
-                if (memberBerry != BoopMemberBerryState.NONE) {
-                    face.postDelayed(() -> {
-                        if (presenceState != null && !presenceState.isIdleBlack()) {
-                            face.playMemberBerry(memberBerry);
-                        }
-                    }, MEMBER_BERRY_DELAY_MS);
-                }
-            }
         }
         scheduleFaceIdle();
     }
@@ -487,6 +521,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     protected void onDestroy() {
         if (presenceHandler != null) {
             presenceHandler.removeCallbacks(faceIdleRunnable);
+            presenceHandler.removeCallbacks(memberBerryRunnable);
             presenceHandler = null;
         }
         if (discovery != null) {
@@ -505,6 +540,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
             executor.shutdownNow();
             executor = null;
         }
+        interactionSurface = null;
         super.onDestroy();
     }
 }
