@@ -1,5 +1,7 @@
 package com.boop.alpha1;
 
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -10,6 +12,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 final class BoopFaceView extends View {
@@ -19,6 +22,7 @@ final class BoopFaceView extends View {
     private static final float IDLE_SCALE_Y = 0.08f;
     private static final long WAKE_DURATION_MS = 380L;
     private static final long SLEEP_DURATION_MS = 300L;
+    private static final long MEMBER_BERRY_DURATION_MS = 640L;
 
     private final Bitmap faceBitmap;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
@@ -31,6 +35,7 @@ final class BoopFaceView extends View {
 
     void showIdleBlackImmediately() {
         animate().cancel();
+        resetPuppetTransform();
         setPivotX(getWidth() / 2f);
         setPivotY(getHeight() / 2f);
         setScaleY(IDLE_SCALE_Y);
@@ -39,6 +44,7 @@ final class BoopFaceView extends View {
 
     void wakeFromIdle() {
         animate().cancel();
+        resetPuppetTransform();
         setPivotX(getWidth() / 2f);
         setPivotY(getHeight() / 2f);
         setScaleY(IDLE_SCALE_Y);
@@ -52,6 +58,7 @@ final class BoopFaceView extends View {
 
     void goIdleBlack() {
         animate().cancel();
+        resetPuppetTransform();
         setPivotX(getWidth() / 2f);
         setPivotY(getHeight() / 2f);
         animate()
@@ -60,6 +67,68 @@ final class BoopFaceView extends View {
                 .setDuration(SLEEP_DURATION_MS)
                 .setInterpolator(new AccelerateInterpolator())
                 .start();
+    }
+
+    void playMemberBerry(int variant) {
+        if (getAlpha() <= 0f) {
+            return;
+        }
+
+        animate().cancel();
+        resetPuppetTransform();
+        ObjectAnimator animator;
+        switch (Math.floorMod(variant, 3)) {
+            case 0:
+                animator = ObjectAnimator.ofPropertyValuesHolder(
+                        this,
+                        PropertyValuesHolder.ofFloat(
+                                "scaleX", 1f, 1.18f, 0.90f, 1.06f, 1f),
+                        PropertyValuesHolder.ofFloat(
+                                "scaleY", 1f, 0.90f, 1.12f, 0.97f, 1f),
+                        PropertyValuesHolder.ofFloat(
+                                "rotation", 0f, -1.5f, 1.0f, -0.5f, 0f));
+                break;
+            case 1:
+                animator = ObjectAnimator.ofPropertyValuesHolder(
+                        this,
+                        PropertyValuesHolder.ofFloat(
+                                "rotationY", 0f, -20f, 16f, -10f, 6f, 0f),
+                        PropertyValuesHolder.ofFloat(
+                                "rotationX", 0f, 8f, -6f, 4f, -2f, 0f),
+                        PropertyValuesHolder.ofFloat(
+                                "scaleX", 1f, 1.03f, 0.98f, 1.02f, 1f),
+                        PropertyValuesHolder.ofFloat(
+                                "scaleY", 1f, 0.99f, 1.02f, 0.99f, 1f));
+                break;
+            default:
+                animator = ObjectAnimator.ofPropertyValuesHolder(
+                        this,
+                        PropertyValuesHolder.ofFloat(
+                                "translationX", 0f, -18f, 14f, -10f, 7f, -4f, 0f),
+                        PropertyValuesHolder.ofFloat(
+                                "translationY", 0f, 7f, -6f, 5f, -3f, 2f, 0f),
+                        PropertyValuesHolder.ofFloat(
+                                "rotation", 0f, -3f, 2.4f, -1.8f, 1.1f, -0.5f, 0f),
+                        PropertyValuesHolder.ofFloat(
+                                "scaleX", 1f, 1.02f, 0.99f, 1.01f, 1f),
+                        PropertyValuesHolder.ofFloat(
+                                "scaleY", 1f, 0.99f, 1.01f, 0.99f, 1f));
+                break;
+        }
+
+        animator.setDuration(MEMBER_BERRY_DURATION_MS);
+        animator.setInterpolator(new DecelerateInterpolator(1.15f));
+        animator.start();
+    }
+
+    private void resetPuppetTransform() {
+        setScaleX(1f);
+        setScaleY(1f);
+        setRotation(0f);
+        setRotationX(0f);
+        setRotationY(0f);
+        setTranslationX(0f);
+        setTranslationY(0f);
     }
 
     @Override

@@ -34,9 +34,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private static final int REQ_NEARBY_WIFI = 1002;
     private static final String HOME_AREA = "Living Room";
     private static final long IDLE_TIMEOUT_MS = 30_000L;
+    private static final long MEMBER_BERRY_DELAY_MS = 460L;
 
     private BoopFaceView face;
     private BoopPresenceState presenceState;
+    private BoopMemberBerryState memberBerryState;
     private Handler presenceHandler;
     private SpeechRecognizer recognizer;
     private TextToSpeech tts;
@@ -73,6 +75,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         presenceHandler = new Handler(Looper.getMainLooper());
         presenceState = new BoopPresenceState();
+        memberBerryState = new BoopMemberBerryState();
 
         FrameLayout interactionSurface = new FrameLayout(this);
         interactionSurface.setBackgroundColor(Color.BLACK);
@@ -120,6 +123,16 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private void wakeFaceForInteraction() {
         if (presenceState != null && face != null && presenceState.wake()) {
             face.wakeFromIdle();
+            if (memberBerryState != null) {
+                int memberBerry = memberBerryState.onWake();
+                if (memberBerry != BoopMemberBerryState.NONE) {
+                    face.postDelayed(() -> {
+                        if (presenceState != null && !presenceState.isIdleBlack()) {
+                            face.playMemberBerry(memberBerry);
+                        }
+                    }, MEMBER_BERRY_DELAY_MS);
+                }
+            }
         }
         scheduleFaceIdle();
     }
