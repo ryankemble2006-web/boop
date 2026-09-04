@@ -34,7 +34,7 @@ final class HomeAssistantClient {
 
         try {
             String accessToken = auth.freshAccessToken();
-            HomeAssistantResponse response = postConversation(baseUrl, accessToken, text);
+            HomeAssistantResponse response = postConversation(baseUrl, accessToken, text, null);
 
             switch (response.kind()) {
                 case ACTION_DONE:
@@ -72,15 +72,16 @@ final class HomeAssistantClient {
     }
 
     private static HomeAssistantResponse postConversation(
-            String baseUrl, String accessToken, String text) throws Exception {
+            String baseUrl, String accessToken, String text, String deviceId) throws Exception {
         HttpURLConnection connection = null;
         try {
             connection = open(baseUrl + "/api/conversation/process", "POST", accessToken);
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            JSONObject body = new JSONObject()
-                    .put("text", text)
-                    .put("language", Locale.getDefault().toLanguageTag());
+            JSONObject body = HomeAssistantConversationRequest.build(
+                    text,
+                    Locale.getDefault().toLanguageTag(),
+                    deviceId);
             byte[] payload = body.toString().getBytes(StandardCharsets.UTF_8);
             connection.setFixedLengthStreamingMode(payload.length);
             try (OutputStream out = connection.getOutputStream()) {

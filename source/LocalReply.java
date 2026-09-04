@@ -15,7 +15,7 @@ final class LocalReply {
                 return "The " + outcome.area().toLowerCase(Locale.ROOT) + " "
                         + outcome.targetName().toLowerCase(Locale.ROOT) + " is offline.";
             case NO_TARGET:
-                return "Which room?";
+                return "I can't find that.";
             case NO_MATCH:
                 return "I didn't understand that.";
             case AUTH_REQUIRED:
