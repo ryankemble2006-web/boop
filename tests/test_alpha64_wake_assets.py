@@ -10,6 +10,13 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
         self.assertIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01-mobile.tar.bz2', fetch)
         self.assertIn('checksum.txt', fetch)
 
+    def test_model_checksum_parser_accepts_upstream_column_order_without_weakening_fail_closed(self):
+        fetch = Path('scripts/fetch-wake-assets.sh').read_text(encoding='utf-8')
+        self.assertIn('$1 == name {print $2}', fetch)
+        self.assertIn('$2 == name {print $1}', fetch)
+        self.assertIn('test -n "$MODEL_SHA256"', fetch)
+        self.assertIn("sha256sum -c -", fetch)
+
     def test_only_boop_is_configured_as_the_raw_keyword(self):
         raw = Path('wake-assets/boop-kws/keywords_raw.txt').read_text(encoding='utf-8').strip()
         self.assertEqual('BOOP :1.5 #0.25 @BOOP', raw)
