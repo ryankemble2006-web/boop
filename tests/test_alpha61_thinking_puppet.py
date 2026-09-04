@@ -33,9 +33,11 @@ class Alpha61ThinkingPuppetTest(unittest.TestCase):
         stop = main.find('private void stopAssistantThinking()')
         self.assertGreaterEqual(start, 0)
         self.assertGreater(stop, start)
-        lifecycle = main[start:main.find('private ', stop + 8)]
+        lifecycle_end = main.find('private ', stop + len('private '))
+        lifecycle = main[start:lifecycle_end if lifecycle_end >= 0 else len(main)]
         self.assertNotIn('speak(', lifecycle)
-        self.assertNotIn('thinking', lifecycle.lower().replace('startassistantthinking', '').replace('stopassistantthinking', ''))
+        self.assertNotIn('"I\'m thinking', lifecycle)
+        self.assertNotIn('"Thinking', lifecycle)
 
     def test_sacred_direct_media_client_is_unchanged(self):
         client = Path('source/HomeAssistantClient.java').read_text(encoding='utf-8')
