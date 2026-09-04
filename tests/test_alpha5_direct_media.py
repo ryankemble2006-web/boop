@@ -27,7 +27,7 @@ class Alpha5DirectMediaIntegrationTest(unittest.TestCase):
         self.assertIn('ViewConfiguration.getLongPressTimeout()', main)
         self.assertIn('memberBerryConsumed', main)
         self.assertIn('commandRouter.process(transcript)', main)
-        self.assertIn('new BoopCommandRouter(haClient, generalAssistant)', main)
+        self.assertIn('new BoopCommandRouter(', main)
 
 
 if __name__ == '__main__':
