@@ -45,6 +45,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private boolean listening = false;
+    private boolean thinking = false;
     private boolean pendingListenAfterPermission = false;
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
@@ -65,7 +66,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         if (presenceState == null || face == null) {
             return;
         }
-        if (listening) {
+        if (listening || thinking) {
             scheduleFaceIdle();
             return;
         }
@@ -117,7 +118,20 @@ public final class MainActivity extends Activity implements RecognitionListener,
         haAuth = new HomeAssistantAuth(this, tokenStore);
         haClient = new HomeAssistantClient(tokenStore, haAuth, HOME_AREA);
         generalAssistant = new HomeAssistantGeneralAssistantClient(tokenStore, haAuth);
-        commandRouter = new BoopCommandRouter(haClient, generalAssistant);
+        commandRouter = new BoopCommandRouter(
+                haClient::process,
+                generalAssistant::ask,
+                new BoopCommandRouter.AssistantActivity() {
+                    @Override
+                    public void onAssistantStarted() {
+                        startAssistantThinking();
+                    }
+
+                    @Override
+                    public void onAssistantFinished() {
+                        stopAssistantThinking();
+                    }
+                });
         deviceSetup = new HomeAssistantDeviceSetup(tokenStore, haAuth);
         discovery = new HomeAssistantDiscovery(this);
         handleAuthIntent(getIntent());
@@ -181,6 +195,27 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         presenceHandler.removeCallbacks(faceIdleRunnable);
         presenceHandler.postDelayed(faceIdleRunnable, IDLE_TIMEOUT_MS);
+    }
+
+    private void startAssistantThinking() {
+        runOnUiThread(() -> {
+            thinking = true;
+            wakeFaceForInteraction();
+            if (face != null) {
+                face.startThinking();
+            }
+            scheduleFaceIdle();
+        });
+    }
+
+    private void stopAssistantThinking() {
+        runOnUiThread(() -> {
+            thinking = false;
+            if (face != null) {
+                face.stopThinking();
+            }
+            scheduleFaceIdle();
+        });
     }
 
     private void beginTapToSpeak() {
@@ -523,6 +558,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     @Override
     protected void onDestroy() {
+        thinking = false;
+        if (face != null) {
+            face.stopThinking();
+        }
         if (presenceHandler != null) {
             presenceHandler.removeCallbacks(faceIdleRunnable);
             presenceHandler.removeCallbacks(memberBerryRunnable);
