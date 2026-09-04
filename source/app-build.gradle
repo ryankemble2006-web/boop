@@ -15,8 +15,8 @@ android {
         applicationId 'com.boop.alpha1'
         minSdk 29
         targetSdk 36
-        versionCode 8
-        versionName "0.3.5-alpha4.1"
+        versionCode 9
+        versionName "0.3.6-alpha4.2"
     }
 
     signingConfigs {
