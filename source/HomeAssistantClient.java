@@ -61,9 +61,9 @@ final class HomeAssistantClient {
                     }
                     return CommandOutcome.failed();
                 case NO_INTENT_MATCH:
-                    return handleNoMatch(text);
+                    return handleAssistantFallback(text, CommandOutcome.noMatch());
                 case NO_VALID_TARGETS:
-                    return CommandOutcome.noTarget();
+                    return handleAssistantFallback(text, CommandOutcome.noTarget());
                 case QUERY_ANSWER:
                 case FAILED_TO_HANDLE:
                 case UNKNOWN_ERROR:
@@ -79,8 +79,7 @@ final class HomeAssistantClient {
         }
     }
 
-    private CommandOutcome handleNoMatch(String text) {
-        CommandOutcome localOutcome = CommandOutcome.noMatch();
+    private CommandOutcome handleAssistantFallback(String text, CommandOutcome localOutcome) {
         if (!AssistantFallbackPolicy.shouldAskAssistant(localOutcome.status())) {
             return localOutcome;
         }
