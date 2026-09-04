@@ -15,7 +15,8 @@
         android:icon="@drawable/boop_eyes"
         android:label="BOOP"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BOOP">
+        android:theme="@style/Theme.BOOP"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
