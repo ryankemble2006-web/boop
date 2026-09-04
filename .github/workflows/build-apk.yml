@@ -3,7 +3,7 @@ name: Build BOOP Alpha 2 APK
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "master", "alpha2-local-ha-control" ]
+    branches: [ "main", "master", "alpha2-local-ha-control", "alpha3-ha-device-identity" ]
 
 concurrency:
   group: boop-build-${{ github.ref }}
