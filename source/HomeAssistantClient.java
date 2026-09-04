@@ -19,11 +19,13 @@ final class HomeAssistantClient {
     private final SecureTokenStore tokenStore;
     private final HomeAssistantAuth auth;
     private final String homeArea;
+    private final HomeAssistantDirectMediaClient directMedia;
 
     HomeAssistantClient(SecureTokenStore tokenStore, HomeAssistantAuth auth, String homeArea) {
         this.tokenStore = tokenStore;
         this.auth = auth;
         this.homeArea = homeArea;
+        this.directMedia = new HomeAssistantDirectMediaClient(homeArea);
     }
 
     CommandOutcome process(String text) {
@@ -39,6 +41,13 @@ final class HomeAssistantClient {
 
         try {
             String accessToken = auth.freshAccessToken();
+
+            CommandOutcome directMediaOutcome =
+                    directMedia.processIfMedia(baseUrl, accessToken, text);
+            if (directMediaOutcome != null) {
+                return directMediaOutcome;
+            }
+
             HomeAssistantResponse response = postConversation(
                     baseUrl, accessToken, text, deviceId);
 
