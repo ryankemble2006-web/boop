@@ -41,7 +41,7 @@ final class BoopSherpaWakeSpotter implements AutoCloseable {
         config.setMaxActivePaths(4);
         config.setKeywordsScore(1.5f);
         config.setKeywordsThreshold(0.25f);
-        config.setNumTrailingBlanks(2);
+        config.setNumTrailingBlanks(1);
 
         spotter = new KeywordSpotter(context.getAssets(), config);
         stream = spotter.createStream("");
