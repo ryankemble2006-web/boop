@@ -18,6 +18,11 @@ class Alpha64WakeControllerTest(unittest.TestCase):
         self.assertIn('stream.acceptWaveform', text)
         self.assertIn('spotter.reset(stream)', text)
 
+    def test_short_boop_finalizes_after_one_trailing_blank(self):
+        text = Path('source/BoopSherpaWakeSpotter.java').read_text(encoding='utf-8')
+        self.assertIn('config.setNumTrailingBlanks(1);', text)
+        self.assertNotIn('config.setNumTrailingBlanks(2);', text)
+
     def test_wake_controller_owns_one_audio_record_and_pre_roll_pipe(self):
         path = Path('source/BoopWakeWordController.java')
         self.assertTrue(path.exists(), 'BoopWakeWordController.java is missing')
