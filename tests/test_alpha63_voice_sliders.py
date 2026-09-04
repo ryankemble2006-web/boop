@@ -38,7 +38,9 @@ class Alpha63VoiceSlidersTest(unittest.TestCase):
         self.assertIn('putFloat(KEY_SPEECH_RATE', controller)
 
     def test_slider_mapping_is_bounded_for_a_puppet_voice(self):
-        tuning = Path('source/BoopVoiceTuning.java').read_text(encoding='utf-8')
+        tuning_path = Path('source/BoopVoiceTuning.java')
+        self.assertTrue(tuning_path.exists(), 'BoopVoiceTuning.java must exist')
+        tuning = tuning_path.read_text(encoding='utf-8')
         self.assertIn('MIN_PITCH', tuning)
         self.assertIn('MAX_PITCH', tuning)
         self.assertIn('MIN_RATE', tuning)
