@@ -1,0 +1,31 @@
+name: Verify BOOP Alpha 4.1 Routing Fix
+
+on:
+  push:
+    branches: [ "alpha4.1-assistant-routing-fix" ]
+
+concurrency:
+  group: boop-alpha4-1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run source regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Materialize Android project
+        run: bash scripts/materialize-android.sh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+      - name: Run Android unit tests
+        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
