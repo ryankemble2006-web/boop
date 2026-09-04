@@ -2,6 +2,7 @@ package com.boop.alpha1;
 
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,6 +12,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
@@ -23,9 +25,11 @@ final class BoopFaceView extends View {
     private static final long WAKE_DURATION_MS = 380L;
     private static final long SLEEP_DURATION_MS = 300L;
     private static final long MEMBER_BERRY_DURATION_MS = 300L;
+    private static final long THINKING_DURATION_MS = 1680L;
 
     private final Bitmap faceBitmap;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    private ObjectAnimator thinkingAnimator;
 
     BoopFaceView(Context context) {
         super(context);
@@ -34,6 +38,7 @@ final class BoopFaceView extends View {
     }
 
     void showIdleBlackImmediately() {
+        stopThinking();
         animate().cancel();
         resetPuppetTransform();
         setPivotX(getWidth() / 2f);
@@ -43,6 +48,7 @@ final class BoopFaceView extends View {
     }
 
     void wakeFromIdle() {
+        stopThinking();
         animate().cancel();
         resetPuppetTransform();
         setPivotX(getWidth() / 2f);
@@ -57,6 +63,7 @@ final class BoopFaceView extends View {
     }
 
     void goIdleBlack() {
+        stopThinking();
         animate().cancel();
         resetPuppetTransform();
         setPivotX(getWidth() / 2f);
@@ -74,6 +81,7 @@ final class BoopFaceView extends View {
             return;
         }
 
+        stopThinking();
         animate().cancel();
         resetPuppetTransform();
         ObjectAnimator animator;
@@ -103,6 +111,49 @@ final class BoopFaceView extends View {
         animator.setDuration(MEMBER_BERRY_DURATION_MS);
         animator.setInterpolator(new DecelerateInterpolator(1.1f));
         animator.start();
+    }
+
+    void startThinking() {
+        if (thinkingAnimator != null && thinkingAnimator.isRunning()) {
+            return;
+        }
+
+        animate().cancel();
+        resetPuppetTransform();
+        setPivotX(getWidth() / 2f);
+        setPivotY(getHeight() / 2f);
+        setAlpha(1f);
+
+        // A tiny puppet "hmm": cock the head, peek the other way, then settle.
+        // Deliberately organic rather than a spinner/loading UI.
+        thinkingAnimator = ObjectAnimator.ofPropertyValuesHolder(
+                this,
+                PropertyValuesHolder.ofFloat(
+                        "rotation", 0f, -2.6f, -1.3f, 2.1f, 0.8f, 0f),
+                PropertyValuesHolder.ofFloat(
+                        "rotationY", 0f, -10f, -5f, 8f, 3f, 0f),
+                PropertyValuesHolder.ofFloat(
+                        "translationX", 0f, -8f, -4f, 7f, 3f, 0f),
+                PropertyValuesHolder.ofFloat(
+                        "translationY", 0f, -4f, -2f, -5f, -1f, 0f),
+                PropertyValuesHolder.ofFloat(
+                        "scaleX", 1f, 1.018f, 1.008f, 1.014f, 1.004f, 1f),
+                PropertyValuesHolder.ofFloat(
+                        "scaleY", 1f, 0.975f, 0.99f, 1.018f, 1.006f, 1f));
+        thinkingAnimator.setDuration(THINKING_DURATION_MS);
+        thinkingAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        thinkingAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        thinkingAnimator.setRepeatMode(ValueAnimator.RESTART);
+        thinkingAnimator.start();
+    }
+
+    void stopThinking() {
+        if (thinkingAnimator != null) {
+            thinkingAnimator.cancel();
+            thinkingAnimator = null;
+        }
+        resetPuppetTransform();
+        setAlpha(1f);
     }
 
     private void resetPuppetTransform() {
