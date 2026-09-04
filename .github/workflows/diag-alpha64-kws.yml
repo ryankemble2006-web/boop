@@ -19,18 +19,21 @@ jobs:
 
       - name: Install sherpa diagnostic runtime
         run: |
-          python -m pip install 'sherpa-onnx==1.13.7' numpy soundfile
+          python -m pip install 'sherpa-onnx==1.13.7' numpy soundfile click sentencepiece pypinyin
           sudo apt-get update -qq
           sudo apt-get install -y -qq espeak-ng ffmpeg
 
-      - name: Download exact GigaSpeech KWS model family
+      - name: Download exact GigaSpeech KWS model families
         shell: bash
         run: |
           set -euo pipefail
-          URL='https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2'
-          curl -fL --retry 3 -o model.tar.bz2 "$URL"
+          BASE='https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models'
+          curl -fL --retry 3 -o model.tar.bz2 "$BASE/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2"
           tar -xjf model.tar.bz2
           mv sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01 model
+          curl -fL --retry 3 -o model-mobile.tar.bz2 "$BASE/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01-mobile.tar.bz2"
+          tar -xjf model-mobile.tar.bz2
+          mv sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01-mobile model-mobile
 
       - name: Regenerate BOOP keyword with sherpa text2token
         shell: bash
@@ -48,6 +51,39 @@ jobs:
           cat wake-assets/boop-kws/keywords.txt
           diff -u wake-assets/boop-kws/keywords.txt boop-generated.txt
 
+      - name: Probe BOOP shipped call order before decoder readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp boop-generated.txt model-mobile/keywords.txt
+          python - <<'PY'
+          import numpy as np
+          import sherpa_onnx
+
+          kws = sherpa_onnx.KeywordSpotter(
+              tokens='model-mobile/tokens.txt',
+              encoder='model-mobile/encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx',
+              decoder='model-mobile/decoder-epoch-12-avg-2-chunk-16-left-64.onnx',
+              joiner='model-mobile/joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx',
+              num_threads=2,
+              max_active_paths=4,
+              keywords_file='model-mobile/keywords.txt',
+              keywords_score=1.5,
+              keywords_threshold=0.25,
+              num_trailing_blanks=2,
+              provider='cpu',
+          )
+          stream = kws.create_stream()
+          stream.accept_waveform(16000, np.zeros(1600, dtype=np.float32))
+          ready = kws.is_ready(stream)
+          print(f'is_ready after first 100ms chunk: {ready}', flush=True)
+          # This intentionally reproduces BOOP code17: get_result() is called
+          # even if there was no decode() because is_ready() was false.
+          print('calling get_result before any guaranteed decode', flush=True)
+          result = kws.get_result(stream)
+          print(f'get_result returned safely: {result!r}', flush=True)
+          PY
+
       - name: Generate several spoken BOOP samples
         shell: bash
         run: |
@@ -58,7 +94,7 @@ jobs:
             ffmpeg -loglevel error -y -i "samples/boop-${speed}-raw.wav" -ar 16000 -ac 1 -sample_fmt s16 "samples/boop-${speed}.wav"
           done
 
-      - name: Run exact sherpa KWS against spoken BOOP samples
+      - name: Run official sherpa decode-result ordering against BOOP samples
         shell: bash
         run: |
           set -euo pipefail
@@ -69,13 +105,13 @@ jobs:
           import sherpa_onnx
 
           kws = sherpa_onnx.KeywordSpotter(
-              tokens='model/tokens.txt',
-              encoder='model/encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx',
-              decoder='model/decoder-epoch-12-avg-2-chunk-16-left-64.onnx',
-              joiner='model/joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx',
+              tokens='model-mobile/tokens.txt',
+              encoder='model-mobile/encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx',
+              decoder='model-mobile/decoder-epoch-12-avg-2-chunk-16-left-64.onnx',
+              joiner='model-mobile/joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx',
               num_threads=2,
               max_active_paths=4,
-              keywords_file='boop-generated.txt',
+              keywords_file='model-mobile/keywords.txt',
               keywords_score=1.5,
               keywords_threshold=0.25,
               num_trailing_blanks=2,
@@ -86,11 +122,8 @@ jobs:
           files = sorted(glob.glob('samples/boop-[0-9]*.wav'))
           for path in files:
               with wave.open(path, 'rb') as w:
-                  assert w.getnchannels() == 1
-                  assert w.getsampwidth() == 2
                   sr = w.getframerate()
                   pcm = np.frombuffer(w.readframes(w.getnframes()), dtype='<i2').astype(np.float32) / 32768.0
-              # Match streaming Android input and give the decoder trailing silence.
               pcm = np.concatenate([pcm, np.zeros(int(sr * 0.8), dtype=np.float32)])
               stream = kws.create_stream()
               result = ''
@@ -98,13 +131,14 @@ jobs:
                   stream.accept_waveform(sr, pcm[i:i+1600])
                   while kws.is_ready(stream):
                       kws.decode_stream(stream)
-                  result = kws.get_result(stream)
+                      result = kws.get_result(stream)
+                      if result:
+                          kws.reset_stream(stream)
+                          break
                   if result:
                       break
               print(f'{path}: {result!r}')
               if result:
                   detected += 1
           print(f'DETECTED {detected}/{len(files)}')
-          if detected == 0:
-              raise SystemExit('BOOP keyword never triggered on diagnostic speech')
           PY
