@@ -70,6 +70,12 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         text = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('Locale.getDefault().toLanguageTag()', text)
 
+    def test_auth_uses_public_client_id_and_direct_app_callback(self):
+        text = Path('source/HomeAssistantAuthUrls.java').read_text(encoding='utf-8')
+        self.assertIn('raw.githubusercontent.com/ryankemble2006-web/boop/alpha2-local-ha-control/web/ha-auth/index.html', text)
+        self.assertIn('REDIRECT_URI = "boop://auth-callback"', text)
+        self.assertNotIn('github.io', text)
+
 
 if __name__ == '__main__':
     unittest.main()
