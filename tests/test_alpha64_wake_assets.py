@@ -12,8 +12,8 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
 
     def test_model_checksum_parser_accepts_upstream_column_order_without_weakening_fail_closed(self):
         fetch = Path('scripts/fetch-wake-assets.sh').read_text(encoding='utf-8')
-        self.assertIn('$1 == name {print $2}', fetch)
-        self.assertIn('$2 == name {print $1}', fetch)
+        self.assertIn('$1 == name {print $2; exit}', fetch)
+        self.assertIn('$2 == name {print $1; exit}', fetch)
         self.assertIn('test -n "$MODEL_SHA256"', fetch)
         self.assertIn("sha256sum -c -", fetch)
 
