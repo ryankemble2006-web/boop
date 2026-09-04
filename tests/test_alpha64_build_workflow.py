@@ -36,6 +36,7 @@ class Alpha64BuildWorkflowTest(unittest.TestCase):
         self.assertIn('decoder-epoch-12-avg-2-chunk-16-left-64.onnx', self.workflow)
         self.assertIn('joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx', self.workflow)
         self.assertIn('assets/boop-kws/keywords.txt', self.workflow)
+        self.assertIn("grep -Fxq '▁BO O P :1.5 #0.25 @BOOP'", self.workflow)
         self.assertIn('python3 -m unittest bridge/test_boop_wyoming_bridge.py -v', self.workflow)
         self.assertIn("python3 -m unittest discover -s tests -p 'test_*.py' -v", self.workflow)
         self.assertIn(':app:testDebugUnitTest', self.workflow)
