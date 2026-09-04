@@ -22,7 +22,6 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,12 +39,13 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean pendingListenAfterPermission = false;
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
+    private boolean setupFailureSpoken = false;
 
     private ExecutorService executor;
-    private RoomContext roomContext;
     private SecureTokenStore tokenStore;
     private HomeAssistantAuth haAuth;
     private HomeAssistantClient haClient;
+    private HomeAssistantDeviceSetup deviceSetup;
     private HomeAssistantDiscovery discovery;
 
     @Override
@@ -67,10 +67,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
         createRecognizer();
 
         executor = Executors.newSingleThreadExecutor();
-        roomContext = new RoomContext(HOME_AREA, List.of("Living Room", "Bedroom"));
         tokenStore = new SecureTokenStore(this);
         haAuth = new HomeAssistantAuth(this, tokenStore);
         haClient = new HomeAssistantClient(tokenStore, haAuth, HOME_AREA);
+        deviceSetup = new HomeAssistantDeviceSetup(tokenStore, haAuth);
         discovery = new HomeAssistantDiscovery(this);
         handleAuthIntent(getIntent());
     }
@@ -143,17 +143,48 @@ public final class MainActivity extends Activity implements RecognitionListener,
             return;
         }
 
-        String qualified = roomContext.qualify(transcript);
         executor.execute(() -> {
-            CommandOutcome outcome = haClient.process(qualified);
+            HomeAssistantDeviceSetup.SetupResult setup = tokenStore.hasHaDeviceIdentity()
+                    ? HomeAssistantDeviceSetup.SetupResult.READY
+                    : deviceSetup.ensureReady();
+            if (setup != HomeAssistantDeviceSetup.SetupResult.READY) {
+                runOnUiThread(() -> handleDeviceSetupFailure(setup));
+                return;
+            }
+
+            setupFailureSpoken = false;
+            CommandOutcome outcome = haClient.process(transcript);
             runOnUiThread(() -> {
                 speak(LocalReply.forOutcome(outcome));
                 if (outcome.status() == CommandOutcome.Status.AUTH_REQUIRED) {
                     tokenStore.clear();
+                    setupFailureSpoken = false;
                     ensureHouseConnection();
                 }
             });
         });
+    }
+
+    private void handleDeviceSetupFailure(HomeAssistantDeviceSetup.SetupResult result) {
+        switch (result) {
+            case AUTH_REQUIRED:
+                tokenStore.clear();
+                setupFailureSpoken = false;
+                speak("I need to reconnect to the house.");
+                ensureHouseConnection();
+                return;
+            case UNREACHABLE:
+                speak("I can't reach the house right now.");
+                return;
+            case AREA_NOT_FOUND:
+            case FORBIDDEN:
+            case FAILED:
+            default:
+                if (!setupFailureSpoken) {
+                    setupFailureSpoken = true;
+                    speak("I couldn't set my room.");
+                }
+        }
     }
 
     private void ensureHouseConnection() {
@@ -229,7 +260,14 @@ public final class MainActivity extends Activity implements RecognitionListener,
         executor.execute(() -> {
             try {
                 haAuth.completeCallback(data);
+                setupFailureSpoken = false;
                 runOnUiThread(() -> speak("House connected."));
+                HomeAssistantDeviceSetup.SetupResult setup = deviceSetup.ensureReady();
+                if (setup == HomeAssistantDeviceSetup.SetupResult.READY) {
+                    setupFailureSpoken = false;
+                } else {
+                    runOnUiThread(() -> handleDeviceSetupFailure(setup));
+                }
             } catch (Exception e) {
                 runOnUiThread(() -> speak("That didn't connect."));
             }
@@ -245,7 +283,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     private void speak(String text) {
         if (ttsReady && tts != null) {
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha2");
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha3");
         }
     }
 
