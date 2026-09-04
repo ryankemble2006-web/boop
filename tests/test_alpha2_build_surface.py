@@ -44,6 +44,32 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIsNone(re.search(r'Bearer\s+[A-Za-z0-9_-]{20,}', text))
         self.assertNotIn('sk-', text)
 
+    def test_discovery_is_local_android_nsd(self):
+        p = Path('source/HomeAssistantDiscovery.java')
+        text = p.read_text(encoding='utf-8') if p.exists() else ''
+        self.assertIn('NsdManager', text)
+        self.assertIn('_home-assistant._tcp.', text)
+        self.assertNotIn('ui.nabu.casa', text)
+
+    def test_refresh_token_is_keystore_encrypted(self):
+        p = Path('source/SecureTokenStore.java')
+        text = p.read_text(encoding='utf-8') if p.exists() else ''
+        self.assertIn('AndroidKeyStore', text)
+        self.assertIn('AES/GCM/NoPadding', text)
+        self.assertNotIn('putString("refresh_token", refreshToken)', text)
+
+    def test_main_routes_speech_to_ha_off_ui_thread(self):
+        text = Path('source/MainActivity.java').read_text(encoding='utf-8')
+        self.assertIn('ExecutorService', text)
+        self.assertIn('RoomContext', text)
+        self.assertIn('HomeAssistantClient', text)
+        self.assertIn('LocalReply.forOutcome', text)
+        self.assertNotIn('speak("You said, " + best)', text)
+
+    def test_bcp47_speech_fix_is_preserved(self):
+        text = Path('source/MainActivity.java').read_text(encoding='utf-8')
+        self.assertIn('Locale.getDefault().toLanguageTag()', text)
+
 
 if __name__ == '__main__':
     unittest.main()
