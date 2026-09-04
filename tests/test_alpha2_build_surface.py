@@ -153,6 +153,13 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertNotIn('HomeAssistantClient', face)
         self.assertNotIn('HomeAssistantDeviceSetup', face)
 
+    def test_sleeping_face_keeps_a_full_screen_touch_surface(self):
+        main = Path('source/MainActivity.java').read_text(encoding='utf-8')
+        self.assertIn('FrameLayout interactionSurface', main)
+        self.assertIn('interactionSurface.setOnTouchListener(this::onFaceTouch)', main)
+        self.assertIn('interactionSurface.addView(face', main)
+        self.assertNotIn('face.setOnTouchListener(this::onFaceTouch)', main)
+
 
 if __name__ == '__main__':
     unittest.main()
