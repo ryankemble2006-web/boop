@@ -56,6 +56,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private SecureTokenStore tokenStore;
     private HomeAssistantAuth haAuth;
     private HomeAssistantClient haClient;
+    private HomeAssistantGeneralAssistantClient generalAssistant;
+    private BoopCommandRouter commandRouter;
     private HomeAssistantDeviceSetup deviceSetup;
     private HomeAssistantDiscovery discovery;
 
@@ -114,6 +116,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
         tokenStore = new SecureTokenStore(this);
         haAuth = new HomeAssistantAuth(this, tokenStore);
         haClient = new HomeAssistantClient(tokenStore, haAuth, HOME_AREA);
+        generalAssistant = new HomeAssistantGeneralAssistantClient(tokenStore, haAuth);
+        commandRouter = new BoopCommandRouter(haClient, generalAssistant);
         deviceSetup = new HomeAssistantDeviceSetup(tokenStore, haAuth);
         discovery = new HomeAssistantDiscovery(this);
         handleAuthIntent(getIntent());
@@ -246,7 +250,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
             }
 
             setupFailureSpoken = false;
-            CommandOutcome outcome = haClient.process(transcript);
+            CommandOutcome outcome = commandRouter.process(transcript);
             runOnUiThread(() -> {
                 speak(LocalReply.forOutcome(outcome));
                 if (outcome.status() == CommandOutcome.Status.AUTH_REQUIRED) {
