@@ -1,0 +1,19 @@
+name: Inspect KWS checksum format
+
+on:
+  push:
+    branches: [ "alpha6.4-wake-word" ]
+    paths:
+      - '.github/workflows/inspect-kws-checksum.yml'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print official kws-models checksum file
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL 'https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/checksum.txt' -o checksum.txt
+          wc -c checksum.txt
+          cat checksum.txt
