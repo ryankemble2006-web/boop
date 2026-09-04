@@ -8,6 +8,7 @@ import android.util.Base64;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
+import java.util.UUID;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -22,6 +23,9 @@ final class SecureTokenStore {
     private static final String PREF_BASE = "base_url";
     private static final String PREF_CIPHER = "refresh_ciphertext";
     private static final String PREF_IV = "refresh_iv";
+    private static final String PREF_BOOP_REGISTRATION_ID = "boop_registration_id";
+    private static final String PREF_HA_WEBHOOK_ID = "ha_webhook_id";
+    private static final String PREF_HA_DEVICE_ID = "ha_device_id";
 
     private final SharedPreferences prefs;
 
@@ -73,6 +77,44 @@ final class SecureTokenStore {
         return getBaseUrl() != null
                 && prefs.contains(PREF_CIPHER)
                 && prefs.contains(PREF_IV);
+    }
+
+    synchronized String getOrCreateBoopRegistrationId() {
+        String existing = prefs.getString(PREF_BOOP_REGISTRATION_ID, null);
+        if (existing != null && !existing.isEmpty()) {
+            return existing;
+        }
+        String created = UUID.randomUUID().toString().replace("-", "");
+        prefs.edit().putString(PREF_BOOP_REGISTRATION_ID, created).apply();
+        return created;
+    }
+
+    String getHaWebhookId() {
+        return prefs.getString(PREF_HA_WEBHOOK_ID, null);
+    }
+
+    void saveHaWebhookId(String webhookId) {
+        prefs.edit().putString(PREF_HA_WEBHOOK_ID, webhookId).apply();
+    }
+
+    String getHaDeviceId() {
+        return prefs.getString(PREF_HA_DEVICE_ID, null);
+    }
+
+    void saveHaDeviceId(String deviceId) {
+        prefs.edit().putString(PREF_HA_DEVICE_ID, deviceId).apply();
+    }
+
+    boolean hasHaDeviceIdentity() {
+        String deviceId = getHaDeviceId();
+        return deviceId != null && !deviceId.isEmpty();
+    }
+
+    void clearHaDeviceIdentity() {
+        prefs.edit()
+                .remove(PREF_HA_WEBHOOK_ID)
+                .remove(PREF_HA_DEVICE_ID)
+                .apply();
     }
 
     void clear() {
