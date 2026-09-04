@@ -9,7 +9,7 @@ final class RoomContext {
     private static final Pattern EXPLICIT_MULTI = Pattern.compile(
             "\\b(all|both|every|each)\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern TRAILING_TURN_STATE = Pattern.compile(
-            "^turn\\s+(.+?)\\s+(on|off)$", Pattern.CASE_INSENSITIVE);
+            "^(?:turn|switch)\\s+(.+?)\\s+(on|off)$", Pattern.CASE_INSENSITIVE);
 
     private final String homeArea;
     private final List<String> knownAreas;
