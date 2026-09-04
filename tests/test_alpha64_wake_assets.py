@@ -7,7 +7,8 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
         fetch = Path('scripts/fetch-wake-assets.sh').read_text(encoding='utf-8')
         self.assertIn('SHERPA_VERSION="1.13.7"', fetch)
         self.assertIn('c4ef49e309f24fcee5c106b8a279481aaecaabb078cd37b2cd6e9a62cc8a73c8', fetch)
-        self.assertIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01-mobile.tar.bz2', fetch)
+        self.assertIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2', fetch)
+        self.assertNotIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01-mobile.tar.bz2', fetch)
         self.assertIn('checksum.txt', fetch)
 
     def test_model_checksum_parser_accepts_upstream_column_order_without_weakening_fail_closed(self):
@@ -17,7 +18,7 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
         self.assertIn('test -n "$MODEL_SHA256"', fetch)
         self.assertIn("sha256sum -c -", fetch)
 
-    def test_runtime_model_files_match_the_pinned_mobile_archive(self):
+    def test_runtime_model_files_preserve_the_proven_streaming_mix(self):
         fetch = Path('scripts/fetch-wake-assets.sh').read_text(encoding='utf-8')
         self.assertIn('encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx', fetch)
         self.assertIn('decoder-epoch-12-avg-2-chunk-16-left-64.onnx', fetch)
