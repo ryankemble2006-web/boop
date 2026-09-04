@@ -20,6 +20,7 @@ import android.speech.RecognitionSupportCallback;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
@@ -132,6 +133,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         voiceController = new BoopVoiceController(this);
         tts = new TextToSpeech(this, this);
+        installTtsListener();
         createRecognizer();
         createWakeObjects();
 
@@ -157,6 +159,66 @@ public final class MainActivity extends Activity implements RecognitionListener,
         deviceSetup = new HomeAssistantDeviceSetup(tokenStore, haAuth);
         discovery = new HomeAssistantDiscovery(this);
         handleAuthIntent(getIntent());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (wakeCoordinator != null) {
+            wakeCoordinator.beginForegroundSession();
+            boolean granted = checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED;
+            wakeCoordinator.setMicrophonePermission(granted);
+            if (granted) {
+                checkWakeRecognitionSupport();
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        closeWakeAudioSession();
+        if (wakeCoordinator != null) {
+            wakeCoordinator.endForegroundSession();
+        }
+        super.onPause();
+    }
+
+    private void installTtsListener() {
+        if (tts == null) {
+            return;
+        }
+        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String utteranceId) { }
+
+            @Override
+            public void onDone(String utteranceId) {
+                runOnUiThread(() -> {
+                    if (wakeCoordinator != null) {
+                        wakeCoordinator.onTtsFinished();
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String utteranceId) {
+                runOnUiThread(() -> {
+                    if (wakeCoordinator != null) {
+                        wakeCoordinator.onTtsFinished();
+                    }
+                });
+            }
+
+            @Override
+            public void onStop(String utteranceId, boolean interrupted) {
+                runOnUiThread(() -> {
+                    if (wakeCoordinator != null) {
+                        wakeCoordinator.onTtsFinished();
+                    }
+                });
+            }
+        });
     }
 
     private void createWakeObjects() {
@@ -293,6 +355,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         wakeFaceForInteraction();
         voiceSettingsOpen = true;
+        if (wakeCoordinator != null) {
+            wakeCoordinator.setVoiceSettingsOpen(true);
+        }
 
         voiceSettingsOverlay = new LinearLayout(this);
         voiceSettingsOverlay.setOrientation(LinearLayout.VERTICAL);
@@ -397,6 +462,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         voiceSettingsOverlay = null;
         voiceSettingsOpen = false;
+        if (wakeCoordinator != null) {
+            wakeCoordinator.setVoiceSettingsOpen(false);
+        }
         wakeFaceForInteraction();
     }
 
@@ -738,8 +806,16 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     private void speak(String text) {
         wakeFaceForInteraction();
+        if (wakeCoordinator != null) {
+            wakeCoordinator.onTtsStarting();
+        }
         if (ttsReady && tts != null) {
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha3");
+            int result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha3");
+            if (result == TextToSpeech.ERROR && wakeCoordinator != null) {
+                wakeCoordinator.onTtsFinished();
+            }
+        } else if (wakeCoordinator != null) {
+            wakeCoordinator.onTtsFinished();
         }
     }
 
@@ -781,6 +857,12 @@ public final class MainActivity extends Activity implements RecognitionListener,
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_RECORD_AUDIO) {
             boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            if (wakeCoordinator != null) {
+                wakeCoordinator.setMicrophonePermission(granted);
+                if (granted) {
+                    checkWakeRecognitionSupport();
+                }
+            }
             if (granted && pendingListenAfterPermission) {
                 pendingListenAfterPermission = false;
                 if (wakeCoordinator != null) {
@@ -945,6 +1027,12 @@ public final class MainActivity extends Activity implements RecognitionListener,
     protected void onDestroy() {
         thinking = false;
         voiceSettingsOpen = false;
+        closeWakeAudioSession();
+        if (wakeCoordinator != null) {
+            wakeCoordinator.shutdown();
+            wakeCoordinator = null;
+        }
+        wakeWordController = null;
         if (interactionSurface != null && voiceSettingsOverlay != null) {
             interactionSurface.removeView(voiceSettingsOverlay);
         }
