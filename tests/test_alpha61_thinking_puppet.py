@@ -6,7 +6,11 @@ class Alpha61ThinkingPuppetTest(unittest.TestCase):
     def test_main_tracks_thinking_and_prevents_idle_sleep(self):
         main = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('private boolean thinking = false;', main)
-        self.assertIn('if (listening || thinking)', main)
+        self.assertIn('listening || thinking', main)
+        idle_guard = main.find('listening || thinking')
+        idle_reschedule = main.find('scheduleFaceIdle();', idle_guard)
+        self.assertGreaterEqual(idle_guard, 0)
+        self.assertGreater(idle_reschedule, idle_guard)
 
     def test_main_wires_assistant_lifecycle_to_face(self):
         main = Path('source/MainActivity.java').read_text(encoding='utf-8')
