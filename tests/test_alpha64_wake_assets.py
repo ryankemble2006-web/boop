@@ -17,6 +17,13 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
         self.assertIn('test -n "$MODEL_SHA256"', fetch)
         self.assertIn("sha256sum -c -", fetch)
 
+    def test_runtime_model_files_match_the_pinned_mobile_archive(self):
+        fetch = Path('scripts/fetch-wake-assets.sh').read_text(encoding='utf-8')
+        self.assertIn('encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx', fetch)
+        self.assertIn('decoder-epoch-12-avg-2-chunk-16-left-64.onnx', fetch)
+        self.assertNotIn('decoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx', fetch)
+        self.assertIn('joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx', fetch)
+
     def test_only_boop_is_configured_as_the_raw_keyword(self):
         raw = Path('wake-assets/boop-kws/keywords_raw.txt').read_text(encoding='utf-8').strip()
         self.assertEqual('BOOP :1.5 #0.25 @BOOP', raw)
