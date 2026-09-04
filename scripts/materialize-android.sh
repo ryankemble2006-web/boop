@@ -12,3 +12,4 @@ cp source/app-build.gradle "$ROOT/app/build.gradle"
 if compgen -G 'source-test/*.java' > /dev/null; then
   cp source-test/*.java "$TEST"/
 fi
+bash scripts/fetch-wake-assets.sh "$ROOT/app"
