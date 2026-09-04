@@ -22,6 +22,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -73,10 +74,16 @@ public final class MainActivity extends Activity implements RecognitionListener,
         presenceHandler = new Handler(Looper.getMainLooper());
         presenceState = new BoopPresenceState();
 
+        FrameLayout interactionSurface = new FrameLayout(this);
+        interactionSurface.setBackgroundColor(Color.BLACK);
+        interactionSurface.setContentDescription("BOOP face. Tap anywhere to speak.");
+        interactionSurface.setOnTouchListener(this::onFaceTouch);
+
         face = new BoopFaceView(this);
-        face.setContentDescription("BOOP face. Tap anywhere to speak.");
-        face.setOnTouchListener(this::onFaceTouch);
-        setContentView(face);
+        interactionSurface.addView(face, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        setContentView(interactionSurface);
         face.showIdleBlackImmediately();
 
         keepAwakeAndHideSystemUi();
