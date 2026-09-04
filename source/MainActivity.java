@@ -79,11 +79,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
-            recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(this);
-        } else {
-            recognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        }
+        recognizer = SpeechRecognizer.createSpeechRecognizer(this);
         recognizer.setRecognitionListener(this);
     }
 
@@ -102,7 +98,6 @@ public final class MainActivity extends Activity implements RecognitionListener,
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
-        intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
 
         listening = true;
         face.animate().alpha(0.78f).setDuration(120).start();
