@@ -28,7 +28,8 @@ import java.util.concurrent.atomic.AtomicReference;
 final class HomeAssistantAssistantClient {
     private static final int TIMEOUT_MS = 5000;
     private static final long DISCOVERY_TIMEOUT_SECONDS = 6L;
-    private static final int AGENT_LIST_MESSAGE_ID = 1;
+    private static final int PIPELINE_LIST_MESSAGE_ID = 1;
+    private static final int AGENT_LIST_MESSAGE_ID = 2;
 
     private final SecureTokenStore tokenStore;
     private final HomeAssistantAuth auth;
@@ -127,11 +128,7 @@ final class HomeAssistantAssistantClient {
                         }
 
                         if ("auth_ok".equals(type)) {
-                            webSocket.send(new JSONObject()
-                                    .put("id", AGENT_LIST_MESSAGE_ID)
-                                    .put("type", "conversation/agent/list")
-                                    .put("language", Locale.getDefault().toLanguageTag())
-                                    .toString());
+                            sendPipelineList(webSocket);
                             return;
                         }
 
@@ -145,8 +142,32 @@ final class HomeAssistantAssistantClient {
                             return;
                         }
 
-                        if ("result".equals(type)
-                                && message.optInt("id", -1) == AGENT_LIST_MESSAGE_ID) {
+                        if (!"result".equals(type)) {
+                            return;
+                        }
+
+                        int messageId = message.optInt("id", -1);
+                        if (messageId == PIPELINE_LIST_MESSAGE_ID) {
+                            if (message.optBoolean("success", false)) {
+                                Object rawResult = message.opt("result");
+                                String selected = HomeAssistantPipelineSelector.selectConversationEngine(
+                                        rawResult == null ? "{}" : rawResult.toString());
+                                if (!selected.isBlank()) {
+                                    finish(
+                                            finished,
+                                            result,
+                                            done,
+                                            DiscoveryResult.ready(selected));
+                                    webSocket.close(1000, "pipeline selected");
+                                    return;
+                                }
+                            }
+
+                            sendAgentList(webSocket);
+                            return;
+                        }
+
+                        if (messageId == AGENT_LIST_MESSAGE_ID) {
                             if (!message.optBoolean("success", false)) {
                                 finish(finished, result, done, DiscoveryResult.failed());
                                 webSocket.close(1000, "agent list failed");
@@ -190,6 +211,21 @@ final class HomeAssistantAssistantClient {
         }
 
         return result.get();
+    }
+
+    private static void sendPipelineList(WebSocket webSocket) throws Exception {
+        webSocket.send(new JSONObject()
+                .put("id", PIPELINE_LIST_MESSAGE_ID)
+                .put("type", "assist_pipeline/pipeline/list")
+                .toString());
+    }
+
+    private static void sendAgentList(WebSocket webSocket) throws Exception {
+        webSocket.send(new JSONObject()
+                .put("id", AGENT_LIST_MESSAGE_ID)
+                .put("type", "conversation/agent/list")
+                .put("language", Locale.getDefault().toLanguageTag())
+                .toString());
     }
 
     private static void finish(
