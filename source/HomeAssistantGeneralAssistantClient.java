@@ -26,14 +26,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 final class HomeAssistantGeneralAssistantClient {
-    private static final int TIMEOUT_MS = 5000;
+    private static final int CONNECT_TIMEOUT_MS = 5_000;
+    private static final int ASSISTANT_READ_TIMEOUT_MS = 50_000;
     private static final long DISCOVERY_TIMEOUT_SECONDS = 6L;
     private static final int AGENT_LIST_MESSAGE_ID = 1;
 
     private final SecureTokenStore tokenStore;
     private final HomeAssistantAuth auth;
     private final OkHttpClient webSocketClient = new OkHttpClient.Builder()
-            .connectTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+            .connectTimeout(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
             .build();
 
     private String cachedAgentId = "";
@@ -240,8 +241,8 @@ final class HomeAssistantGeneralAssistantClient {
         try {
             connection = (HttpURLConnection) new URL(baseUrl + "/api/conversation/process").openConnection();
             connection.setRequestMethod("POST");
-            connection.setConnectTimeout(TIMEOUT_MS);
-            connection.setReadTimeout(TIMEOUT_MS);
+            connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            connection.setReadTimeout(ASSISTANT_READ_TIMEOUT_MS);
             connection.setDoOutput(true);
             connection.setRequestProperty("Authorization", "Bearer " + accessToken);
             connection.setRequestProperty("Accept", "application/json");
