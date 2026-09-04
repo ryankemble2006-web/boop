@@ -81,7 +81,7 @@ Owns only wake-word audio and KWS responsibilities:
 - maintain rolling PCM pre-roll
 - feed PCM frames to keyword spotter
 - emit one `onWakeDetected(...)` callback
-- enforce a 750 ms refractory period after a accepted wake trigger
+- enforce a 750 ms refractory period after an accepted wake trigger
 - suspend/resume cleanly when another BOOP feature owns the microphone
 
 It must not know about Home Assistant, media commands, ChatGPT, voice settings or TTS text.
@@ -116,15 +116,11 @@ Do not add broad fuzzy text rewriting. The normalizer exists only to keep the wa
 
 ### Existing BOOP command path
 
-After wake transcription and wake-word stripping, the resulting command enters the same existing processing path used by tap-to-talk:
+After wake transcription and wake-word stripping, the resulting text re-enters the same existing transcript-handling seam used by tap-to-talk.
 
-1. local voice-settings intent / voice-cycle behavior
-2. existing BOOP command router
-3. direct Living Room media path
-4. normal Home Assistant conversation path
-5. genuine HA `NO_MATCH` fallback to the general assistant
+The existing local voice-settings / voice-cycle interception remains first. Remaining text then enters the existing `BoopCommandRouter`; its house path keeps the Alpha 5 direct-media behavior and normal Home Assistant handling, and only a genuine HA `NO_MATCH` falls through to the general assistant.
 
-No media, HA or ChatGPT routing rules move into the wake subsystem.
+No media, HA or ChatGPT routing rules move into the wake subsystem, and their existing order must not change.
 
 ## Audio flow
 
@@ -145,11 +141,11 @@ When the KWS detector accepts `BOOP`:
 4. begin/continue command capture without reopening the physical microphone
 5. stream the supplied PCM into Android speech recognition
 6. allow a maximum 3-second post-wake command window
-7. finish earlier if the recognizer reaches a valid end-of-speech result
+7. finish earlier when the recognizer reaches a valid end-of-speech result
 8. normalize the transcript by removing a leading `BOOP` when present
 9. send the remaining text through the existing BOOP transcript path
 
-The maximum 3 seconds is a command window, not a mandatory delay.
+The maximum 3 seconds is a command window, not a mandatory delay. If the Pixel recognizer cannot provide an acceptably snappy early endpoint with supplied audio, that is a room-test failure to solve before Alpha 6.4 is accepted; do not redefine the 3-second maximum as a fixed wait.
 
 ### Separated command
 
@@ -228,11 +224,11 @@ No behavior change. Wake-word work must not remap the long-hold gesture or membe
 
 ### Voice settings overlay
 
-While the voice-settings overlay is open, wake detection should be suspended because the current interaction surface intentionally blocks ordinary face interaction. Closing the overlay re-arms wake detection.
+While the voice-settings overlay is open, wake detection is suspended because the current interaction surface intentionally blocks ordinary face interaction. Closing the overlay re-arms wake detection.
 
 ### Thinking animation / cloud wait
 
-Wake-word behavior should mirror what the current tap path safely permits. The wake subsystem must not cancel, mutate or reroute a cloud request by itself. If a new local speech session is accepted during a wait, it enters the existing command path exactly like a tap session would.
+Wake-word behavior mirrors what the current tap path safely permits. The wake subsystem must not cancel, mutate or reroute a cloud request by itself. If a new local speech session is accepted during a wait, it enters the existing command path exactly like a tap session would.
 
 ### TTS
 
@@ -276,7 +272,7 @@ A transient runtime wake failure gets no repeated automatic recovery loop. A lat
 
 - Wake audio is processed locally on the Pixel.
 - Raw armed-state audio is not sent to Home Assistant, OpenCode or OpenAI.
-- Only after a wake trigger is accepted is command audio handed to the installed Android recognizer.
+- Only after a wake trigger is accepted is command audio handed to the installed Android recognizer, matching the existing speech-recognition trust boundary rather than creating a new cloud wake path.
 - The wake microphone is active only while the BOOP app is foreground-active and eligible.
 - Leaving/closing the app releases the wake mic and model resources.
 - No wake service persists in the background.
