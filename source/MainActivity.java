@@ -10,6 +10,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -30,8 +32,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private static final int REQ_RECORD_AUDIO = 1001;
     private static final int REQ_NEARBY_WIFI = 1002;
     private static final String HOME_AREA = "Living Room";
+    private static final long IDLE_TIMEOUT_MS = 30_000L;
 
     private BoopFaceView face;
+    private BoopPresenceState presenceState;
+    private Handler presenceHandler;
     private SpeechRecognizer recognizer;
     private TextToSpeech tts;
     private boolean ttsReady = false;
@@ -48,14 +53,31 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private HomeAssistantDeviceSetup deviceSetup;
     private HomeAssistantDiscovery discovery;
 
+    private final Runnable faceIdleRunnable = () -> {
+        if (presenceState == null || face == null) {
+            return;
+        }
+        if (listening) {
+            scheduleFaceIdle();
+            return;
+        }
+        if (presenceState.idle()) {
+            face.goIdleBlack();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        presenceHandler = new Handler(Looper.getMainLooper());
+        presenceState = new BoopPresenceState();
 
         face = new BoopFaceView(this);
         face.setContentDescription("BOOP face. Tap anywhere to speak.");
         face.setOnTouchListener(this::onFaceTouch);
         setContentView(face);
+        face.showIdleBlackImmediately();
 
         keepAwakeAndHideSystemUi();
 
@@ -72,6 +94,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private boolean onFaceTouch(View view, MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            wakeFaceForInteraction();
+            return true;
+        }
         if (event.getAction() != MotionEvent.ACTION_UP) {
             return true;
         }
@@ -82,6 +108,21 @@ public final class MainActivity extends Activity implements RecognitionListener,
             beginTapToSpeak();
         }
         return true;
+    }
+
+    private void wakeFaceForInteraction() {
+        if (presenceState != null && face != null && presenceState.wake()) {
+            face.wakeFromIdle();
+        }
+        scheduleFaceIdle();
+    }
+
+    private void scheduleFaceIdle() {
+        if (presenceHandler == null) {
+            return;
+        }
+        presenceHandler.removeCallbacks(faceIdleRunnable);
+        presenceHandler.postDelayed(faceIdleRunnable, IDLE_TIMEOUT_MS);
     }
 
     private void beginTapToSpeak() {
@@ -104,6 +145,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private void startListening() {
+        wakeFaceForInteraction();
         if (recognizer == null) {
             speak("I can't hear speech on this device yet.");
             return;
@@ -130,6 +172,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         if (recognizer != null) {
             recognizer.cancel();
         }
+        scheduleFaceIdle();
     }
 
     private void handleRecognizedSpeech(String transcript) {
@@ -282,11 +325,16 @@ public final class MainActivity extends Activity implements RecognitionListener,
         super.onConfigurationChanged(newConfig);
         keepAwakeAndHideSystemUi();
         if (face != null) {
-            face.invalidate();
+            if (presenceState != null && presenceState.isIdleBlack()) {
+                face.showIdleBlackImmediately();
+            } else {
+                face.invalidate();
+            }
         }
     }
 
     private void speak(String text) {
+        wakeFaceForInteraction();
         if (ttsReady && tts != null) {
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha3");
         }
@@ -417,6 +465,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     @Override
     protected void onDestroy() {
+        if (presenceHandler != null) {
+            presenceHandler.removeCallbacks(faceIdleRunnable);
+            presenceHandler = null;
+        }
         if (discovery != null) {
             discovery.stop();
         }

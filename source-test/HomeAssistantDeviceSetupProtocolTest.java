@@ -22,7 +22,7 @@ public final class HomeAssistantDeviceSetupProtocolTest {
                 "boop-registration-123", "Google", "Pixel 7 Pro", "16");
         assertEquals("com.boop.alpha1", body.getString("app_id"));
         assertEquals("BOOP", body.getString("app_name"));
-        assertEquals("0.3.2-alpha3", body.getString("app_version"));
+        assertEquals("0.3.3-alpha3", body.getString("app_version"));
         assertEquals("BOOP Wall", body.getString("device_name"));
         assertEquals("boop-registration-123", body.getString("device_id"));
         assertEquals("Google", body.getString("manufacturer"));

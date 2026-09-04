@@ -9,10 +9,16 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
 
 final class BoopFaceView extends View {
     static final Rect LEFT_SOURCE = new Rect(90, 600, 419, 993);
     static final Rect RIGHT_SOURCE = new Rect(525, 600, 854, 993);
+
+    private static final float IDLE_SCALE_Y = 0.08f;
+    private static final long WAKE_DURATION_MS = 380L;
+    private static final long SLEEP_DURATION_MS = 300L;
 
     private final Bitmap faceBitmap;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
@@ -21,6 +27,46 @@ final class BoopFaceView extends View {
         super(context);
         setBackgroundColor(Color.BLACK);
         faceBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);
+    }
+
+    void showIdleBlackImmediately() {
+        animate().cancel();
+        setPivotX(getWidth() / 2f);
+        setPivotY(getHeight() / 2f);
+        setScaleY(IDLE_SCALE_Y);
+        setAlpha(0f);
+    }
+
+    void wakeFromIdle() {
+        animate().cancel();
+        setPivotX(getWidth() / 2f);
+        setPivotY(getHeight() / 2f);
+        setScaleY(IDLE_SCALE_Y);
+        setAlpha(1f);
+        animate()
+                .scaleY(1f)
+                .setDuration(WAKE_DURATION_MS)
+                .setInterpolator(new OvershootInterpolator(0.45f))
+                .start();
+    }
+
+    void goIdleBlack() {
+        animate().cancel();
+        setPivotX(getWidth() / 2f);
+        setPivotY(getHeight() / 2f);
+        animate()
+                .alpha(0f)
+                .scaleY(IDLE_SCALE_Y)
+                .setDuration(SLEEP_DURATION_MS)
+                .setInterpolator(new AccelerateInterpolator())
+                .start();
+    }
+
+    @Override
+    protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight);
+        setPivotX(width / 2f);
+        setPivotY(height / 2f);
     }
 
     @Override
