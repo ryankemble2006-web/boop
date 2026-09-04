@@ -33,7 +33,7 @@ fi
 cp "$CACHE/$AAR" "$DEST/libs/$AAR"
 for file in \
   encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx \
-  decoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx \
+  decoder-epoch-12-avg-2-chunk-16-left-64.onnx \
   joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx \
   tokens.txt; do
   test -s "$MODEL_DIR/$file"
