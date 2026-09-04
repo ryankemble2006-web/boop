@@ -19,11 +19,13 @@ final class HomeAssistantClient {
     private final SecureTokenStore tokenStore;
     private final HomeAssistantAuth auth;
     private final String homeArea;
+    private final HomeAssistantAssistantClient assistantClient;
 
     HomeAssistantClient(SecureTokenStore tokenStore, HomeAssistantAuth auth, String homeArea) {
         this.tokenStore = tokenStore;
         this.auth = auth;
         this.homeArea = homeArea;
+        this.assistantClient = new HomeAssistantAssistantClient(tokenStore, auth);
     }
 
     CommandOutcome process(String text) {
@@ -59,7 +61,7 @@ final class HomeAssistantClient {
                     }
                     return CommandOutcome.failed();
                 case NO_INTENT_MATCH:
-                    return CommandOutcome.noMatch();
+                    return handleNoMatch(text);
                 case NO_VALID_TARGETS:
                     return CommandOutcome.noTarget();
                 case QUERY_ANSWER:
@@ -74,6 +76,28 @@ final class HomeAssistantClient {
             return CommandOutcome.unreachable();
         } catch (Exception e) {
             return CommandOutcome.authRequired();
+        }
+    }
+
+    private CommandOutcome handleNoMatch(String text) {
+        CommandOutcome localOutcome = CommandOutcome.noMatch();
+        if (!AssistantFallbackPolicy.shouldAskAssistant(localOutcome.status())) {
+            return localOutcome;
+        }
+
+        AssistantOutcome assistant = assistantClient.ask(text);
+        switch (assistant.status()) {
+            case REPLY:
+                return CommandOutcome.assistantReply(assistant.speech());
+            case NO_AGENT:
+                return CommandOutcome.assistantNoAgent();
+            case UNREACHABLE:
+                return CommandOutcome.assistantUnreachable();
+            case AUTH_REQUIRED:
+                return CommandOutcome.authRequired();
+            case FAILED:
+            default:
+                return CommandOutcome.assistantFailed();
         }
     }
 
