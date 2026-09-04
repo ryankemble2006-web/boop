@@ -37,15 +37,15 @@ Future Android devices use the same application and save a different area, for e
 
 ### Command resolution rule
 
-BOOP must preserve explicit room information spoken by the user. If the user does not name an area and the command targets a common entity name, BOOP adds its saved home area before sending the request to Home Assistant.
+BOOP must preserve explicit room information spoken by the user. If the user does not name an area, BOOP qualifies the request with its saved home area before sending it to Home Assistant.
 
 Examples for Living Room BOOP:
 
 - `turn on the fan` → send an equivalent request for `turn on the fan in the living room`
 - `turn on the bedroom fan` → preserve `Bedroom`; do not rewrite it to Living Room
-- `turn on both fans` → preserve the multi-device request
+- `turn on both fans` → preserve the explicit multi-device request and do not inject a room
 
-This is deliberately narrow. BOOP is not a general natural-language parser. Its only local interpretation is supplying its own room when the user omitted one.
+The room-context step must be conservative: explicit room or multi-target wording always wins. BOOP is not a general natural-language parser and must not reinterpret device intent beyond supplying its own room when the request is otherwise unqualified.
 
 ## One-time connection experience
 
@@ -61,7 +61,7 @@ User-facing flow:
 2. BOOP shows a minimal prompt: **“I found your house”** with a Connect action.
 3. BOOP opens Home Assistant's normal authorization/sign-in flow.
 4. The user authorizes BOOP once.
-5. BOOP stores the resulting long-lived refresh credential securely and obtains/renews short-lived access tokens itself.
+5. BOOP stores the resulting refresh credential securely and obtains/renews short-lived access tokens itself.
 
 No token copying, YAML, manual endpoint entry, or settings maze is part of the normal path. A manual URL fallback may exist later for networks where discovery is unavailable.
 
@@ -84,7 +84,7 @@ Alpha 2 command flow:
 1. User taps BOOP.
 2. BOOP listens using the existing working speech path.
 3. BOOP receives the transcript.
-4. BOOP adds its saved area only when the request lacks an explicit area and needs local disambiguation.
+4. BOOP adds its saved area only when the request is unqualified; explicit area or multi-target wording is preserved.
 5. BOOP sends the resulting text to Home Assistant's conversation system.
 6. Home Assistant resolves the entity/area and executes the action.
 7. BOOP evaluates Home Assistant's result.
