@@ -56,10 +56,10 @@ public final class HomeAssistantDeviceSetupProtocolTest {
         assertEquals("config/area_registry/list", areas.getString("type"));
     }
 
-    @Test public void resolvesLivingRoomAreaByHumanNameCaseInsensitively() throws Exception {
+    @Test public void resolvesLivingRoomFromRealHomeAssistantAreaShape() throws Exception {
         JSONArray areas = new JSONArray()
-                .put(new JSONObject().put("id", "bedroom").put("name", "Bedroom"))
-                .put(new JSONObject().put("id", "living_room").put("name", "Living Room"));
+                .put(new JSONObject().put("area_id", "bedroom").put("name", "Bedroom"))
+                .put(new JSONObject().put("area_id", "living_room").put("name", "Living Room"));
         assertEquals("living_room",
                 HomeAssistantDeviceSetupProtocol.findAreaId(areas, "living room"));
         assertNull(HomeAssistantDeviceSetupProtocol.findAreaId(areas, "Kitchen"));
