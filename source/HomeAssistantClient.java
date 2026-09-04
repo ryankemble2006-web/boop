@@ -63,7 +63,7 @@ final class HomeAssistantClient {
                 case NO_INTENT_MATCH:
                     return handleAssistantFallback(text, CommandOutcome.noMatch());
                 case NO_VALID_TARGETS:
-                    return handleAssistantFallback(text, CommandOutcome.noTarget());
+                    return CommandOutcome.noTarget();
                 case QUERY_ANSWER:
                 case FAILED_TO_HANDLE:
                 case UNKNOWN_ERROR:
