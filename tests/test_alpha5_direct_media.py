@@ -26,7 +26,8 @@ class Alpha5DirectMediaIntegrationTest(unittest.TestCase):
         main = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('ViewConfiguration.getLongPressTimeout()', main)
         self.assertIn('memberBerryConsumed', main)
-        self.assertIn('haClient.process(transcript)', main)
+        self.assertIn('commandRouter.process(transcript)', main)
+        self.assertIn('new BoopCommandRouter(haClient, generalAssistant)', main)
 
 
 if __name__ == '__main__':
