@@ -91,6 +91,18 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('REDIRECT_URI = "boop://auth-callback"', text)
         self.assertNotIn('github.io', text)
 
+    def test_boopp_wall_setup_is_one_time_and_registry_scoped(self):
+        p = Path('source/HomeAssistantDeviceSetup.java')
+        text = p.read_text(encoding='utf-8') if p.exists() else ''
+        guard = text.find('hasHaDeviceIdentity()')
+        registration = text.find('/api/mobile_app/registrations')
+        self.assertGreaterEqual(guard, 0)
+        self.assertGreater(registration, guard)
+        self.assertIn('config/area_registry/list', text)
+        self.assertIn('config/device_registry/update', text)
+        self.assertNotIn('config/entity_registry/list', text)
+        self.assertNotIn('/api/states', text)
+
 
 if __name__ == '__main__':
     unittest.main()
