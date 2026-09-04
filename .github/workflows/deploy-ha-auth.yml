@@ -3,7 +3,7 @@ name: Deploy BOOP auth bridge
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "alpha2-local-ha-control" ]
     paths:
       - "web/**"
       - ".github/workflows/deploy-ha-auth.yml"
