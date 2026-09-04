@@ -23,3 +23,17 @@ jobs:
         run: |
           python3 -m unittest bridge/test_boop_wyoming_bridge.py -v
           python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Materialize editable BOOP project
+        run: bash scripts/materialize-android.sh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+      - name: Run Android unit tests
+        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
