@@ -1,4 +1,4 @@
-name: Build BOOP Alpha 6.4 Wake Word APK
+name: Build BOOP Alpha 6.4.1 Wake Word Fix APK
 
 on:
   push:
@@ -108,17 +108,17 @@ jobs:
           keytool -list -keystore "$BOOP_KEYSTORE_PATH" -storepass "$BOOP_KEYSTORE_PASSWORD" -alias "$BOOP_KEY_ALIAS" >/dev/null
           echo "BOOP_KEYSTORE_PATH=$BOOP_KEYSTORE_PATH" >> "$GITHUB_ENV"
 
-      - name: Build BOOP Alpha 6.4 code17 APK
+      - name: Build BOOP Alpha 6.4.1 code18 APK
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
 
-      - name: Inspect and verify code17 wake APK
+      - name: Inspect and verify code18 wake fix APK
         shell: bash
         run: |
           set -euo pipefail
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           ${ANDROID_HOME}/build-tools/36.0.0/aapt dump badging "$APK" | tee badging.txt
-          grep -q "versionCode='17'" badging.txt
-          grep -q "versionName='0.4.4-alpha6.4'" badging.txt
+          grep -q "versionCode='18'" badging.txt
+          grep -q "versionName='0.4.5-alpha6.4.1'" badging.txt
           unzip -l "$APK" | grep -q 'assets/boop-kws/keywords.txt'
           unzip -l "$APK" | grep -q 'assets/boop-kws/encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx'
           unzip -l "$APK" | grep -q 'assets/boop-kws/decoder-epoch-12-avg-2-chunk-16-left-64.onnx'
@@ -159,9 +159,9 @@ jobs:
             exit 1
           fi
 
-      - name: Upload BOOP Alpha 6.4 Wake Word APK
+      - name: Upload BOOP Alpha 6.4.1 Wake Word Fix APK
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Alpha6.4-Wake-Word-debug
+          name: BOOP-Alpha6.4.1-Wake-Word-Fix-debug
           path: boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
