@@ -3,13 +3,22 @@ package com.boop.alpha1;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 final class HomeAssistantResponseParser {
     private HomeAssistantResponseParser() { }
 
     static HomeAssistantResponse parse(String json) {
-        JSONObject root = new JSONObject(json);
+        final JSONObject root;
+        try {
+            root = new JSONObject(json);
+        } catch (JSONException e) {
+            return new HomeAssistantResponse(
+                    HomeAssistantResponse.Kind.UNKNOWN_ERROR,
+                    List.of(), List.of(), "");
+        }
+
         JSONObject response = root.optJSONObject("response");
         if (response == null) {
             return new HomeAssistantResponse(
