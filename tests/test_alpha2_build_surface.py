@@ -158,7 +158,7 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('FrameLayout interactionSurface', main)
         self.assertIn('interactionSurface.setOnTouchListener(this::onFaceTouch)', main)
         self.assertIn('interactionSurface.addView(face', main)
-        self.assertNotIn('face.setOnTouchListener(this::onFaceTouch)', main)
+        self.assertNotIn('\n        face.setOnTouchListener(this::onFaceTouch)', main)
 
 
 if __name__ == '__main__':
