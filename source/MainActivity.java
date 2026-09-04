@@ -2,9 +2,11 @@ package com.boop.alpha1;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
@@ -20,10 +22,15 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener {
     private static final int REQ_RECORD_AUDIO = 1001;
+    private static final int REQ_NEARBY_WIFI = 1002;
+    private static final String HOME_AREA = "Living Room";
 
     private ImageView face;
     private SpeechRecognizer recognizer;
@@ -31,6 +38,15 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean ttsReady = false;
     private boolean listening = false;
     private boolean pendingListenAfterPermission = false;
+    private boolean pendingDiscoveryAfterPermission = false;
+    private boolean connectPromptShowing = false;
+
+    private ExecutorService executor;
+    private RoomContext roomContext;
+    private SecureTokenStore tokenStore;
+    private HomeAssistantAuth haAuth;
+    private HomeAssistantClient haClient;
+    private HomeAssistantDiscovery discovery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +65,14 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         tts = new TextToSpeech(this, this);
         createRecognizer();
+
+        executor = Executors.newSingleThreadExecutor();
+        roomContext = new RoomContext(HOME_AREA, List.of("Living Room", "Bedroom"));
+        tokenStore = new SecureTokenStore(this);
+        haAuth = new HomeAssistantAuth(this, tokenStore);
+        haClient = new HomeAssistantClient(tokenStore, haAuth, HOME_AREA);
+        discovery = new HomeAssistantDiscovery(this);
+        handleAuthIntent(getIntent());
     }
 
     private boolean onFaceTouch(View view, MotionEvent event) {
@@ -112,9 +136,116 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
     }
 
+    private void handleRecognizedSpeech(String transcript) {
+        if (!tokenStore.hasConnection()) {
+            speak("I need to connect to the house first.");
+            ensureHouseConnection();
+            return;
+        }
+
+        String qualified = roomContext.qualify(transcript);
+        executor.execute(() -> {
+            CommandOutcome outcome = haClient.process(qualified);
+            runOnUiThread(() -> {
+                speak(LocalReply.forOutcome(outcome));
+                if (outcome.status() == CommandOutcome.Status.AUTH_REQUIRED) {
+                    tokenStore.clear();
+                    ensureHouseConnection();
+                }
+            });
+        });
+    }
+
+    private void ensureHouseConnection() {
+        if (tokenStore.hasConnection()) {
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.NEARBY_WIFI_DEVICES)
+                != PackageManager.PERMISSION_GRANTED) {
+            pendingDiscoveryAfterPermission = true;
+            requestPermissions(
+                    new String[]{Manifest.permission.NEARBY_WIFI_DEVICES},
+                    REQ_NEARBY_WIFI);
+            return;
+        }
+        startHouseDiscovery();
+    }
+
+    private void startHouseDiscovery() {
+        discovery.start(new HomeAssistantDiscovery.Listener() {
+            @Override
+            public void onFound(String displayName, String baseUrl) {
+                runOnUiThread(() -> showConnectPrompt(displayName, baseUrl));
+            }
+
+            @Override
+            public void onUnavailable(String reason) {
+                runOnUiThread(() -> speak("I can't find the house right now."));
+            }
+        });
+    }
+
+    private void showConnectPrompt(String displayName, String baseUrl) {
+        if (connectPromptShowing || tokenStore.hasConnection()) {
+            return;
+        }
+        connectPromptShowing = true;
+
+        new AlertDialog.Builder(this)
+                .setTitle("I found your house")
+                .setMessage(displayName + "\n" + baseUrl)
+                .setPositiveButton("Connect", (dialog, which) -> {
+                    connectPromptShowing = false;
+                    discovery.stop();
+                    try {
+                        String authorizeUrl = haAuth.begin(baseUrl);
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(authorizeUrl)));
+                    } catch (RuntimeException e) {
+                        speak("That didn't connect.");
+                    }
+                })
+                .setNegativeButton("Not now", (dialog, which) -> {
+                    connectPromptShowing = false;
+                    discovery.stop();
+                })
+                .setOnCancelListener(dialog -> {
+                    connectPromptShowing = false;
+                    discovery.stop();
+                })
+                .show();
+    }
+
+    private void handleAuthIntent(Intent intent) {
+        if (intent == null || intent.getData() == null) {
+            return;
+        }
+        Uri data = intent.getData();
+        if (!"boop".equals(data.getScheme()) || !"auth-callback".equals(data.getHost())) {
+            return;
+        }
+
+        executor.execute(() -> {
+            try {
+                haAuth.completeCallback(data);
+                runOnUiThread(() -> speak("House connected."));
+            } catch (Exception e) {
+                runOnUiThread(() -> speak("That didn't connect."));
+            }
+        });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleAuthIntent(intent);
+    }
+
     private void speak(String text) {
         if (ttsReady && tts != null) {
-            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha1");
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha2");
         }
     }
 
@@ -162,6 +293,18 @@ public final class MainActivity extends Activity implements RecognitionListener,
             } else if (!granted) {
                 pendingListenAfterPermission = false;
                 speak("I need microphone permission to hear you.");
+            }
+            return;
+        }
+
+        if (requestCode == REQ_NEARBY_WIFI) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            if (granted && pendingDiscoveryAfterPermission) {
+                pendingDiscoveryAfterPermission = false;
+                startHouseDiscovery();
+            } else if (!granted) {
+                pendingDiscoveryAfterPermission = false;
+                speak("I need nearby devices permission to find the house.");
             }
         }
     }
@@ -219,7 +362,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         if (matches != null && !matches.isEmpty()) {
             String best = matches.get(0).trim();
             if (!best.isEmpty()) {
-                speak("You said, " + best);
+                handleRecognizedSpeech(best);
                 return;
             }
         }
@@ -231,6 +374,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     @Override
     protected void onDestroy() {
+        if (discovery != null) {
+            discovery.stop();
+        }
         if (recognizer != null) {
             recognizer.destroy();
             recognizer = null;
@@ -239,6 +385,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
             tts.stop();
             tts.shutdown();
             tts = null;
+        }
+        if (executor != null) {
+            executor.shutdownNow();
+            executor = null;
         }
         super.onDestroy();
     }
