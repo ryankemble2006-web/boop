@@ -45,7 +45,7 @@ final class BoopVoiceController {
     }
 
     String maybeChangeVoice(String text) {
-        if (!isVoiceChangeRequest(text)) {
+        if (!BoopVoiceIntent.matches(text)) {
             return null;
         }
 
@@ -149,45 +149,5 @@ final class BoopVoiceController {
         }
         tts.setPitch(PUPPET_PITCH);
         tts.setSpeechRate(PUPPET_SPEECH_RATE);
-    }
-
-    private static boolean isVoiceChangeRequest(String text) {
-        if (text == null) {
-            return false;
-        }
-        String normalized = text.toLowerCase(Locale.ROOT)
-                .replace('’', '\'')
-                .replace("'", "")
-                .replaceAll("[^a-z0-9]+", " ")
-                .trim();
-        if (normalized.isEmpty() || !containsWord(normalized, "voice")) {
-            return false;
-        }
-
-        return containsAnyWord(normalized, "change", "switch", "swap")
-                || normalized.contains("different voice")
-                || normalized.contains("another voice")
-                || normalized.contains("other voice")
-                || normalized.contains("new voice")
-                || normalized.contains("try a voice")
-                || normalized.contains("try another voice")
-                || normalized.contains("try different voice")
-                || normalized.contains("dont like your voice")
-                || normalized.contains("do not like your voice")
-                || normalized.contains("dont like this voice")
-                || normalized.contains("do not like this voice");
-    }
-
-    private static boolean containsAnyWord(String text, String... words) {
-        for (String word : words) {
-            if (containsWord(text, word)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean containsWord(String text, String word) {
-        return (" " + text + " ").contains(" " + word + " ");
     }
 }
