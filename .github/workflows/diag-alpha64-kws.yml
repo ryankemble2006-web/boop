@@ -77,8 +77,6 @@ jobs:
           stream.accept_waveform(16000, np.zeros(1600, dtype=np.float32))
           ready = kws.is_ready(stream)
           print(f'is_ready after first 100ms chunk: {ready}', flush=True)
-          # This intentionally reproduces BOOP code17: get_result() is called
-          # even if there was no decode() because is_ready() was false.
           print('calling get_result before any guaranteed decode', flush=True)
           result = kws.get_result(stream)
           print(f'get_result returned safely: {result!r}', flush=True)
@@ -99,7 +97,6 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import glob
           import wave
           import numpy as np
           import sherpa_onnx
@@ -119,10 +116,11 @@ jobs:
           )
 
           detected = 0
-          files = sorted(glob.glob('samples/boop-[0-9]*.wav'))
+          files = [f'samples/boop-{speed}.wav' for speed in (115, 140, 165, 190)]
           for path in files:
               with wave.open(path, 'rb') as w:
                   sr = w.getframerate()
+                  assert sr == 16000, (path, sr)
                   pcm = np.frombuffer(w.readframes(w.getnframes()), dtype='<i2').astype(np.float32) / 32768.0
               pcm = np.concatenate([pcm, np.zeros(int(sr * 0.8), dtype=np.float32)])
               stream = kws.create_stream()
