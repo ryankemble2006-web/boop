@@ -40,11 +40,13 @@ class Alpha64WakeIntegrationTest(unittest.TestCase):
         self.assertIn('Build.VERSION.SDK_INT', self.main)
         self.assertIn('Build.VERSION_CODES.TIRAMISU', self.main)
 
-    def test_diagnostic_apk_surfaces_wake_recognizer_result_or_error(self):
+    def test_diagnostic_apk_surfaces_wake_recognizer_result_error_and_partial(self):
         patch = Path('scripts/patch-wake-diagnostic.py').read_text(encoding='utf-8')
         materializer = Path('scripts/materialize-android.sh').read_text(encoding='utf-8')
         self.assertIn('WAKE ERR ', patch)
         self.assertIn('WAKE HEARD ', patch)
+        self.assertIn('WAKE PART ', patch)
+        self.assertIn('RecognizerIntent.EXTRA_PARTIAL_RESULTS, true', patch)
         self.assertIn('Toast.LENGTH_LONG', patch)
         self.assertIn('python3 scripts/patch-wake-diagnostic.py', materializer)
 
