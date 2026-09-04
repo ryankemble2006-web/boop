@@ -1,0 +1,30 @@
+name: Verify BOOP Alpha 5 Direct Media
+
+on:
+  push:
+    branches: [ "alpha5-direct-media" ]
+  workflow_dispatch:
+
+concurrency:
+  group: boop-alpha5-media-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Materialize editable BOOP project
+        run: bash scripts/materialize-android.sh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+      - name: Run Android unit tests
+        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
