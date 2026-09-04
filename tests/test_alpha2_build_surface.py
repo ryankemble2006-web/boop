@@ -83,7 +83,7 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('LocalReply.forOutcome', text)
         self.assertNotIn('RoomContext', text)
         self.assertNotIn('roomContext.qualify', text)
-        self.assertIn('haClient.process(transcript)', text)
+        self.assertIn('commandRouter.process(transcript)', text)
         self.assertNotIn('speak("You said, " + best)', text)
 
     def test_old_room_context_grammar_is_deleted(self):
@@ -132,7 +132,7 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('BoopFaceView', main)
         self.assertNotIn('new ImageView', main)
         self.assertNotIn('ImageView.ScaleType.FIT_CENTER', main)
-        self.assertIn('haClient.process(transcript)', main)
+        self.assertIn('commandRouter.process(transcript)', main)
         self.assertTrue(face_path.exists())
         self.assertIn('BoopEyeLayout.calculate', face)
         self.assertIn('canvas.drawBitmap', face)
@@ -149,7 +149,7 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('showIdleBlackImmediately', face)
         self.assertIn('wakeFromIdle', face)
         self.assertIn('goIdleBlack', face)
-        self.assertIn('haClient.process(transcript)', main)
+        self.assertIn('commandRouter.process(transcript)', main)
         self.assertNotIn('HomeAssistantClient', face)
         self.assertNotIn('HomeAssistantDeviceSetup', face)
 
