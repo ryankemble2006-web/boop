@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,7 +26,11 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -44,9 +50,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private SpeechRecognizer recognizer;
     private TextToSpeech tts;
     private BoopVoiceController voiceController;
+    private LinearLayout voiceSettingsOverlay;
     private boolean ttsReady = false;
     private boolean listening = false;
     private boolean thinking = false;
+    private boolean voiceSettingsOpen = false;
     private boolean pendingListenAfterPermission = false;
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
@@ -67,7 +75,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         if (presenceState == null || face == null) {
             return;
         }
-        if (listening || thinking) {
+        if (listening || thinking || voiceSettingsOpen) {
             scheduleFaceIdle();
             return;
         }
@@ -77,7 +85,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     };
 
     private final Runnable memberBerryRunnable = () -> {
-        if (interactionSurface == null || face == null || listening) {
+        if (interactionSurface == null || face == null || listening || voiceSettingsOpen) {
             return;
         }
         memberBerryConsumed = true;
@@ -140,6 +148,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private boolean onFaceTouch(View view, MotionEvent event) {
+        if (voiceSettingsOpen) {
+            return true;
+        }
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             memberBerryConsumed = false;
             wakeFaceForInteraction();
@@ -171,7 +182,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     private void scheduleMemberBerryHold() {
         cancelMemberBerryHold();
-        if (presenceHandler != null && !listening) {
+        if (presenceHandler != null && !listening && !voiceSettingsOpen) {
             presenceHandler.postDelayed(
                     memberBerryRunnable,
                     ViewConfiguration.getLongPressTimeout());
@@ -218,6 +229,124 @@ public final class MainActivity extends Activity implements RecognitionListener,
             }
             scheduleFaceIdle();
         });
+    }
+
+    private void showVoiceSettings() {
+        if (interactionSurface == null || voiceController == null || voiceSettingsOpen) {
+            return;
+        }
+
+        wakeFaceForInteraction();
+        voiceSettingsOpen = true;
+
+        voiceSettingsOverlay = new LinearLayout(this);
+        voiceSettingsOverlay.setOrientation(LinearLayout.VERTICAL);
+        voiceSettingsOverlay.setGravity(Gravity.CENTER);
+        voiceSettingsOverlay.setPadding(dp(42), dp(40), dp(42), dp(40));
+        voiceSettingsOverlay.setBackgroundColor(Color.argb(236, 0, 0, 0));
+        voiceSettingsOverlay.setClickable(true);
+        voiceSettingsOverlay.setContentDescription("BOOP voice settings");
+
+        TextView title = voiceSettingLabel("Voice", 30f, true);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        titleParams.setMargins(0, 0, 0, dp(28));
+        voiceSettingsOverlay.addView(title, titleParams);
+
+        TextView pitchLabel = voiceSettingLabel("Pitch", 22f, false);
+        voiceSettingsOverlay.addView(pitchLabel);
+
+        SeekBar pitchSlider = new SeekBar(this);
+        pitchSlider.setMax(BoopVoiceTuning.PROGRESS_MAX);
+        pitchSlider.setProgress(BoopVoiceTuning.progressFromPitch(voiceController.pitch()));
+        pitchSlider.setContentDescription("Voice pitch");
+        pitchSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    voiceController.setPitch(BoopVoiceTuning.pitchFromProgress(progress));
+                }
+            }
+
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        LinearLayout.LayoutParams pitchParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(64));
+        pitchParams.setMargins(0, dp(4), 0, dp(24));
+        voiceSettingsOverlay.addView(pitchSlider, pitchParams);
+
+        TextView cadenceLabel = voiceSettingLabel("Cadence", 22f, false);
+        voiceSettingsOverlay.addView(cadenceLabel);
+
+        SeekBar cadenceSlider = new SeekBar(this);
+        cadenceSlider.setMax(BoopVoiceTuning.PROGRESS_MAX);
+        cadenceSlider.setProgress(BoopVoiceTuning.progressFromRate(voiceController.speechRate()));
+        cadenceSlider.setContentDescription("Voice cadence");
+        cadenceSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    voiceController.setSpeechRate(BoopVoiceTuning.rateFromProgress(progress));
+                }
+            }
+
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        LinearLayout.LayoutParams cadenceParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(64));
+        cadenceParams.setMargins(0, dp(4), 0, dp(28));
+        voiceSettingsOverlay.addView(cadenceSlider, cadenceParams);
+
+        Button done = new Button(this);
+        done.setText("Done");
+        done.setTextSize(21f);
+        done.setTextColor(Color.WHITE);
+        done.setBackgroundColor(Color.rgb(42, 42, 42));
+        done.setContentDescription("Done adjusting voice");
+        done.setOnClickListener(v -> hideVoiceSettings());
+        LinearLayout.LayoutParams doneParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(64));
+        voiceSettingsOverlay.addView(done, doneParams);
+
+        interactionSurface.addView(voiceSettingsOverlay, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        voiceSettingsOverlay.bringToFront();
+        scheduleFaceIdle();
+    }
+
+    private TextView voiceSettingLabel(String text, float sizeSp, boolean bold) {
+        TextView label = new TextView(this);
+        label.setText(text);
+        label.setTextColor(Color.WHITE);
+        label.setTextSize(sizeSp);
+        label.setGravity(Gravity.CENTER);
+        if (bold) {
+            label.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        }
+        return label;
+    }
+
+    private void hideVoiceSettings() {
+        if (!voiceSettingsOpen) {
+            return;
+        }
+        if (interactionSurface != null && voiceSettingsOverlay != null) {
+            interactionSurface.removeView(voiceSettingsOverlay);
+        }
+        voiceSettingsOverlay = null;
+        voiceSettingsOpen = false;
+        wakeFaceForInteraction();
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void beginTapToSpeak() {
@@ -271,6 +400,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private void handleRecognizedSpeech(String transcript) {
+        if (BoopVoiceSettingsIntent.matches(transcript)) {
+            showVoiceSettings();
+            return;
+        }
+
         String voiceReply = voiceController.maybeChangeVoice(transcript);
         if (voiceReply != null) {
             speak(voiceReply);
@@ -568,6 +702,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override
     protected void onDestroy() {
         thinking = false;
+        voiceSettingsOpen = false;
+        if (interactionSurface != null && voiceSettingsOverlay != null) {
+            interactionSurface.removeView(voiceSettingsOverlay);
+        }
+        voiceSettingsOverlay = null;
         if (face != null) {
             face.stopThinking();
         }
