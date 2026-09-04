@@ -79,7 +79,7 @@ final class HomeAssistantDeviceSetupProtocol {
             }
             String name = area.optString("name", "").trim().toLowerCase(Locale.ROOT);
             if (wanted.equals(name)) {
-                String id = area.optString("id", "").trim();
+                String id = area.optString("area_id", "").trim();
                 return id.isEmpty() ? null : id;
             }
         }
