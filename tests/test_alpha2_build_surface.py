@@ -23,8 +23,8 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('compileSdk 36', text)
         self.assertIn('targetSdk 36', text)
         self.assertIn('minSdk 29', text)
-        self.assertIn('versionCode 5', text)
-        self.assertIn('versionName "0.3.2-alpha3"', text)
+        self.assertIn('versionCode 6', text)
+        self.assertIn('versionName "0.3.3-alpha3"', text)
         self.assertIn('JavaVersion.VERSION_17', text)
         self.assertIn("implementation 'com.squareup.okhttp3:okhttp:4.12.0'", text)
         self.assertIn("testImplementation 'junit:junit:4.13.2'", text)
@@ -138,6 +138,20 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('canvas.drawBitmap', face)
         self.assertIn('LEFT_SOURCE', face)
         self.assertIn('RIGHT_SOURCE', face)
+
+    def test_surprise_presence_behavior_stays_out_of_ha_path(self):
+        main = Path('source/MainActivity.java').read_text(encoding='utf-8')
+        face = Path('source/BoopFaceView.java').read_text(encoding='utf-8')
+        state = Path('source/BoopPresenceState.java')
+        self.assertTrue(state.exists())
+        self.assertIn('BoopPresenceState', main)
+        self.assertIn('IDLE_TIMEOUT_MS', main)
+        self.assertIn('showIdleBlackImmediately', face)
+        self.assertIn('wakeFromIdle', face)
+        self.assertIn('goIdleBlack', face)
+        self.assertIn('haClient.process(transcript)', main)
+        self.assertNotIn('HomeAssistantClient', face)
+        self.assertNotIn('HomeAssistantDeviceSetup', face)
 
 
 if __name__ == '__main__':
