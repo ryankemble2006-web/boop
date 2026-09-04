@@ -41,13 +41,13 @@ class Alpha64BuildWorkflowTest(unittest.TestCase):
         self.assertIn("python3 -m unittest discover -s tests -p 'test_*.py' -v", self.workflow)
         self.assertIn(':app:testDebugUnitTest', self.workflow)
 
-    def test_workflow_builds_signs_inspects_and_emulator_launches_code17(self):
+    def test_workflow_builds_signs_inspects_and_emulator_launches_code18(self):
         self.assertIn("java-version: '17'", self.workflow)
         self.assertIn('platforms;android-36', self.workflow)
         self.assertIn("gradle-version: '9.6.0'", self.workflow)
         self.assertIn(':app:assembleDebug', self.workflow)
-        self.assertIn("versionCode='17'", self.workflow)
-        self.assertIn("versionName='0.4.4-alpha6.4'", self.workflow)
+        self.assertIn("versionCode='18'", self.workflow)
+        self.assertIn("versionName='0.4.5-alpha6.4.1'", self.workflow)
         self.assertIn('apksigner verify --verbose', self.workflow)
         self.assertIn('unzip -tq', self.workflow)
         self.assertIn('--device "pixel_7_pro"', self.workflow)
@@ -66,7 +66,7 @@ class Alpha64BuildWorkflowTest(unittest.TestCase):
 
     def test_workflow_publishes_expected_raw_apk_artifact(self):
         self.assertIn('actions/upload-artifact@v4', self.workflow)
-        self.assertIn('BOOP-Alpha6.4-Wake-Word-debug', self.workflow)
+        self.assertIn('BOOP-Alpha6.4.1-Wake-Word-Fix-debug', self.workflow)
         self.assertIn('app-debug.apk', self.workflow)
 
     def test_generic_alpha6_verifier_keeps_alpha64_branch(self):
