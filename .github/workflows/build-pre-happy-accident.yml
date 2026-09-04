@@ -1,0 +1,80 @@
+name: Build BOOP Pre-Happy-Accident Control
+
+on:
+  push:
+    branches: [ "diag-pre-happy-accident" ]
+  workflow_dispatch:
+
+concurrency:
+  group: boop-pre-happy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BOOP_KEYSTORE_BASE64: ${{ secrets.BOOP_KEYSTORE_BASE64 }}
+      BOOP_KEYSTORE_PASSWORD: ${{ secrets.BOOP_KEYSTORE_PASSWORD }}
+      BOOP_KEY_ALIAS: ${{ secrets.BOOP_KEY_ALIAS }}
+      BOOP_KEY_PASSWORD: ${{ secrets.BOOP_KEY_PASSWORD }}
+
+    steps:
+      - name: Check out repository with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove Java is exact pre-happy-accident source
+        run: git diff --exit-code 4f7d912c3e1b7a34c4f7642debe0a692d23f164e HEAD -- 'source/*.java' 'source-test/*.java'
+
+      - name: Materialize editable BOOP project
+        run: bash scripts/materialize-android.sh
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Run Android unit tests
+        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
+
+      - name: Prepare permanent BOOP signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in BOOP_KEYSTORE_BASE64 BOOP_KEYSTORE_PASSWORD BOOP_KEY_ALIAS BOOP_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          BOOP_KEYSTORE_PATH="${RUNNER_TEMP}/boop-signing.jks"
+          printf '%s' "$BOOP_KEYSTORE_BASE64" | base64 --decode > "$BOOP_KEYSTORE_PATH"
+          chmod 600 "$BOOP_KEYSTORE_PATH"
+          keytool -list -keystore "$BOOP_KEYSTORE_PATH" -storepass "$BOOP_KEYSTORE_PASSWORD" -alias "$BOOP_KEY_ALIAS" >/dev/null
+          echo "BOOP_KEYSTORE_PATH=$BOOP_KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Build BOOP pre-happy control APK
+        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+
+      - name: Inspect built APK
+        run: ${ANDROID_HOME}/build-tools/36.0.0/aapt dump badging boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload BOOP pre-happy control APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Pre-Happy-Accident-debug
+          path: boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
