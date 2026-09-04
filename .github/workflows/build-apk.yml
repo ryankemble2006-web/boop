@@ -55,7 +55,23 @@ jobs:
           gradle-version: '9.6.0'
 
       - name: Run Android unit tests
-        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
+        run: |
+          set +e
+          gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace 2>&1 | tee unit-test.log
+          STATUS=${PIPESTATUS[0]}
+          if [ "$STATUS" -ne 0 ]; then
+            grep -E 'error:|FAILED|FAILURE:|There were failing tests|AssertionError|expected:<|but was:<|Caused by:' unit-test.log | tail -n 200 > unit-test-summary.txt || true
+            if [ ! -s unit-test-summary.txt ]; then tail -n 200 unit-test.log > unit-test-summary.txt; fi
+          fi
+          exit "$STATUS"
+
+      - name: Upload unit-test failure summary
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Alpha2-unit-test-failure
+          path: unit-test-summary.txt
+          if-no-files-found: ignore
 
       - name: Build BOOP APK
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
@@ -120,7 +136,7 @@ jobs:
           exit $START_STATUS
 
       - name: Upload BOOP APK
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: BOOP-Alpha2-debug
