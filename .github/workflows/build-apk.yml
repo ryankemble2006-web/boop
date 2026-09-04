@@ -5,6 +5,10 @@ on:
   push:
     branches: [ "main", "master", "alpha2-local-ha-control" ]
 
+concurrency:
+  group: boop-build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
