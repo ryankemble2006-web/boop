@@ -40,15 +40,18 @@ class Alpha64WakeIntegrationTest(unittest.TestCase):
         self.assertIn('Build.VERSION.SDK_INT', self.main)
         self.assertIn('Build.VERSION_CODES.TIRAMISU', self.main)
 
-    def test_diagnostic_apk_surfaces_wake_recognizer_result_error_and_partial(self):
-        patch = Path('scripts/patch-wake-diagnostic.py').read_text(encoding='utf-8')
+    def test_pixel_wake_path_falls_back_to_latest_partial_when_final_is_empty(self):
+        patch = Path('scripts/patch-wake-partial-fallback.py').read_text(encoding='utf-8')
+        intent = Path('source/BoopWakeRecognitionIntent.java').read_text(encoding='utf-8')
         materializer = Path('scripts/materialize-android.sh').read_text(encoding='utf-8')
-        self.assertIn('WAKE ERR ', patch)
-        self.assertIn('WAKE HEARD ', patch)
-        self.assertIn('WAKE PART ', patch)
-        self.assertIn('RecognizerIntent.EXTRA_PARTIAL_RESULTS, true', patch)
-        self.assertIn('Toast.LENGTH_LONG', patch)
-        self.assertIn('python3 scripts/patch-wake-diagnostic.py', materializer)
+        accumulator = Path('source/BoopWakeTranscriptAccumulator.java').read_text(encoding='utf-8')
+        self.assertIn('RecognizerIntent.EXTRA_PARTIAL_RESULTS, true', intent)
+        self.assertIn('wakeTranscriptAccumulator.rememberPartial', patch)
+        self.assertIn('wakeTranscriptAccumulator.chooseFinal(best)', patch)
+        self.assertIn('latestPartial', accumulator)
+        self.assertIn('python3 scripts/patch-wake-partial-fallback.py', materializer)
+        self.assertNotIn('WAKE HEARD ', patch)
+        self.assertNotIn('WAKE PART ', patch)
 
 
 if __name__ == '__main__':

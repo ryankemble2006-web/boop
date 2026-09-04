@@ -20,7 +20,7 @@ final class BoopWakeRecognitionIntent {
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.toLanguageTag());
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         intent.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, source);
         intent.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_CHANNEL_COUNT, CHANNEL_COUNT);
         intent.putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, ENCODING);
