@@ -121,6 +121,24 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertNotIn('config/entity_registry/list', text)
         self.assertNotIn('/api/states', text)
 
+    def test_auto_rotate_uses_responsive_face_without_touching_ha_flow(self):
+        manifest = Path('source/AndroidManifest.xml').read_text(encoding='utf-8')
+        main = Path('source/MainActivity.java').read_text(encoding='utf-8')
+        face_path = Path('source/BoopFaceView.java')
+        face = face_path.read_text(encoding='utf-8') if face_path.exists() else ''
+
+        self.assertNotIn('android:screenOrientation="portrait"', manifest)
+        self.assertIn('android:configChanges="keyboardHidden|orientation|screenSize"', manifest)
+        self.assertIn('BoopFaceView', main)
+        self.assertNotIn('new ImageView', main)
+        self.assertNotIn('ImageView.ScaleType.FIT_CENTER', main)
+        self.assertIn('haClient.process(transcript)', main)
+        self.assertTrue(face_path.exists())
+        self.assertIn('BoopEyeLayout.calculate', face)
+        self.assertIn('canvas.drawBitmap', face)
+        self.assertIn('LEFT_SOURCE', face)
+        self.assertIn('RIGHT_SOURCE', face)
+
 
 if __name__ == '__main__':
     unittest.main()
