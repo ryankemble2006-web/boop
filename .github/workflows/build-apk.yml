@@ -13,6 +13,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Run source regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
       - name: Unpack BOOP
         run: unzip -q BOOP-Alpha1-project.zip -d boop-build
 
