@@ -14,7 +14,11 @@ class Alpha652AssistantFollowUpTests(unittest.TestCase):
         self.assertIn("ASSISTANT_FOLLOW_UP_SILENCE_MS = 5_000L", main)
         self.assertIn("recognitionMode = RecognitionMode.TAP", main)
         self.assertIn("startListening()", main)
-        self.assertNotIn("ToneGenerator", main)
+        follow_up = main[
+            main.index("private void finishTtsUtterance"):
+            main.index("private void scheduleAssistantFollowUpSilenceTimeout")
+        ]
+        self.assertNotIn("playWakeAcceptedCue();", follow_up)
         self.assertNotIn("SoundPool", main)
 
     def test_silence_timeout_is_graceful_and_sleeps_immediately(self):
@@ -36,11 +40,11 @@ class Alpha652AssistantFollowUpTests(unittest.TestCase):
         self.assertIn("public void onPartialResults(Bundle partialResults)", main)
         self.assertIn("handleRecognizedSpeech(fallback)", main)
 
-    def test_manners_remain_local_and_do_not_reopen_follow_up(self):
+    def test_manners_remain_local_do_not_reopen_follow_up_and_sleep_after_reply(self):
         main = Path("source/MainActivity.java").read_text(encoding="utf-8")
         exit_check = "BoopConversationExitIntent.replyFor(transcript)"
         self.assertIn(exit_check, main)
-        self.assertIn("speak(exitReply);", main)
+        self.assertIn("speakThenSleep(exitReply);", main)
         self.assertLess(main.index(exit_check), main.index("commandRouter.process(transcript)"))
 
     def test_timed_routines_stay_absent(self):
