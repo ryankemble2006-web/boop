@@ -64,6 +64,24 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("return START_STICKY", source)
         self.assertNotIn("removeOverlay(); // hide", source)
 
+    def test_launcher_gateway_opens_fullscreen_home_and_home_restores_overlay(self):
+        main = self.read("java/com/boop/shieldoverlay/MainActivity.java")
+        home = self.read("java/com/boop/shieldoverlay/BoopHomeActivity.java")
+        manifest = self.read("AndroidManifest.xml")
+        themes = self.read("res/values/themes.xml")
+
+        self.assertIn("startActivity(new Intent(this, BoopHomeActivity.class))", main)
+        self.assertIn("startForegroundService(new Intent(this, BoopOverlayService.class))", main)
+        self.assertIn("BoopOverlayController.hide(this)", home)
+        self.assertIn("BoopOverlayController.show(this)", home)
+        self.assertIn("protected void onStart()", home)
+        self.assertIn("protected void onStop()", home)
+        self.assertIn("finish()", home)
+        self.assertIn('android:name=".BoopHomeActivity"', manifest)
+        self.assertIn('android:exported="false"', manifest)
+        self.assertIn("Theme.BoopHome", themes)
+        self.assertIn("@android:color/black", themes)
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
