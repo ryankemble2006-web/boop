@@ -70,6 +70,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean voiceSettingsOpen = false;
     private boolean pendingListenAfterPermission = false;
     private boolean listenAfterTts = false;
+    private boolean followUpRecognitionActive = false;
+    private String latestFollowUpPartial = null;
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
     private boolean setupFailureSpoken = false;
@@ -224,6 +226,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
             wakeCoordinator.onTtsFinished();
         }
         if (followUpListen) {
+            followUpRecognitionActive = true;
+            latestFollowUpPartial = null;
             recognitionMode = RecognitionMode.TAP;
             startListening();
         }
@@ -486,6 +490,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
             requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_RECORD_AUDIO);
             return;
         }
+        followUpRecognitionActive = false;
+        latestFollowUpPartial = null;
         if (wakeCoordinator != null) {
             wakeCoordinator.onTapStarted();
         }
@@ -522,7 +528,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag());
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, followUpRecognitionActive);
 
         listening = true;
         face.animate().alpha(0.78f).setDuration(120).start();
@@ -559,6 +565,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
         RecognitionMode stoppedMode = recognitionMode;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
+        followUpRecognitionActive = false;
+        latestFollowUpPartial = null;
         face.animate().alpha(1.0f).setDuration(120).start();
         if (recognizer != null) {
             recognizer.cancel();
@@ -984,8 +992,12 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override
     public void onError(int error) {
         RecognitionMode failedMode = recognitionMode;
+        boolean failedFollowUp = failedMode == RecognitionMode.TAP && followUpRecognitionActive;
+        String fallback = latestFollowUpPartial;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
+        followUpRecognitionActive = false;
+        latestFollowUpPartial = null;
         face.animate().alpha(1.0f).setDuration(120).start();
 
         if (failedMode == RecognitionMode.WAKE) {
@@ -999,6 +1011,17 @@ public final class MainActivity extends Activity implements RecognitionListener,
                 }
             }
             scheduleFaceIdle();
+            return;
+        }
+
+        if (failedFollowUp
+                && error == SpeechRecognizer.ERROR_NO_MATCH
+                && fallback != null
+                && !fallback.isBlank()) {
+            if (wakeCoordinator != null) {
+                wakeCoordinator.onTapFinished();
+            }
+            handleRecognizedSpeech(fallback);
             return;
         }
 
@@ -1018,6 +1041,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
         RecognitionMode completedMode = recognitionMode;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
+        followUpRecognitionActive = false;
+        latestFollowUpPartial = null;
         face.animate().alpha(1.0f).setDuration(120).start();
 
         ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
@@ -1068,7 +1093,25 @@ public final class MainActivity extends Activity implements RecognitionListener,
         speak("I didn't catch that.");
     }
 
-    @Override public void onPartialResults(Bundle partialResults) { }
+    @Override
+    public void onPartialResults(Bundle partialResults) {
+        if (!followUpRecognitionActive || recognitionMode != RecognitionMode.TAP) {
+            return;
+        }
+        ArrayList<String> matches = partialResults.getStringArrayList(
+                SpeechRecognizer.RESULTS_RECOGNITION);
+        if (matches == null || matches.isEmpty()) {
+            return;
+        }
+        String candidate = matches.get(0);
+        if (candidate == null) {
+            return;
+        }
+        candidate = candidate.trim();
+        if (!candidate.isEmpty()) {
+            latestFollowUpPartial = candidate;
+        }
+    }
     @Override public void onEvent(int eventType, Bundle params) { }
 
     @Override
