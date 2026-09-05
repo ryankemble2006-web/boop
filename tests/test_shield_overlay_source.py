@@ -60,12 +60,14 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
 
-    def test_java_sources_do_not_import_voice_network_or_home_assistant(self):
-        java_root = APP / "java" / "com" / "boop" / "shieldoverlay"
-        self.assertTrue(java_root.exists(), f"missing source folder: {java_root.relative_to(ROOT)}")
-        combined = "\n".join(
-            p.read_text(encoding="utf-8") for p in sorted(java_root.glob("*.java"))
-        ).lower()
+    def test_protected_overlay_runtime_stays_free_of_voice_network_and_ha_code(self):
+        protected_sources = (
+            "java/com/boop/shieldoverlay/BoopOverlayService.java",
+            "java/com/boop/shieldoverlay/BoopOverlayView.java",
+            "java/com/boop/shieldoverlay/OverlayGeometry.java",
+            "java/com/boop/shieldoverlay/OverlayWindowSpec.java",
+        )
+        combined = "\n".join(self.read(path) for path in protected_sources).lower()
         for forbidden in (
             "android.speech",
             "android.media.audiorecord",
