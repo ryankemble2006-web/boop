@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install matching sherpa tokenizer
-        run: python -m pip install 'sherpa-onnx==1.13.7'
+        run: python -m pip install 'sherpa-onnx==1.13.7' click
       - name: Download matching GigaSpeech keyword model metadata
         shell: bash
         run: |
