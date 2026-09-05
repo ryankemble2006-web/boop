@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Triggered once after the bounded patch workflow exists.
 path = Path('source/MainActivity.java')
 text = path.read_text(encoding='utf-8')
 
