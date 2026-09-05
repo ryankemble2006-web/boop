@@ -6,10 +6,14 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public final class RoutinesRepositoryTest {
     @Test
@@ -80,6 +84,49 @@ public final class RoutinesRepositoryTest {
 
         assertEquals(1, result.get().size());
         assertEquals("script.good", result.get().get(0).entityId());
+    }
+
+    @Test
+    public void sceneTargetsExactEntityAndFinishesWhenServiceAccepted() throws Exception {
+        RecordingCommands commands = new RecordingCommands();
+        RoutinesRepository repository = new RoutinesRepository(commands);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(false);
+
+        RoutinesRepository.Execution execution = repository.run(
+                new RoutineItem("scene.movie_night", "Movie Night", RoutineItem.Type.SCENE),
+                (ok, message) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+
+        assertNotNull(execution);
+        Command command = commands.command(0);
+        assertEquals("call_service", command.type);
+        assertEquals("scene", command.body.getString("domain"));
+        assertEquals("turn_on", command.body.getString("service"));
+        assertEquals("scene.movie_night",
+                command.body.getJSONObject("target").getString("entity_id"));
+        assertFalse(callbackSeen.get());
+
+        command.callback.onResult(true, null, null);
+        assertTrue(callbackSeen.get());
+        assertTrue(success.get());
+    }
+
+    @Test
+    public void cancelledSceneIgnoresLateServiceReply() throws Exception {
+        RecordingCommands commands = new RecordingCommands();
+        RoutinesRepository repository = new RoutinesRepository(commands);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+
+        RoutinesRepository.Execution execution = repository.run(
+                new RoutineItem("scene.movie_night", "Movie Night", RoutineItem.Type.SCENE),
+                (ok, message) -> callbackSeen.set(true));
+        execution.cancel();
+        commands.command(0).callback.onResult(true, null, null);
+
+        assertFalse(callbackSeen.get());
     }
 
     private static JSONObject state(String entityId, String value, String friendlyName) throws Exception {
