@@ -41,9 +41,11 @@ Routines is being added as a separate vertical slice rather than being bolted in
 
 Implemented so far:
 
-- whole-house discovery of usable `script.*` and `scene.*` entities
+- whole-house discovery of usable `automation.*`, `script.*` and `scene.*` entities
 - hidden/config/diagnostic filtering
 - one case-insensitive alphabetical list
+- one BOOP-facing type label: `Routine`
+- automation execution through `automation.trigger`
 - scene execution through `scene.turn_on`
 - script execution through `script.turn_on`
 - script completion only after the exact target is observed going `on -> off`
@@ -54,7 +56,7 @@ Implemented so far:
 - duplicate Select suppression on the same running routine while other routines remain usable
 - scrollable remote-first TV list without focus reordering
 
-The remaining Routines work is to finish Activity composition on the existing authenticated Home Assistant WebSocket, run a fresh full CI build, install the resulting APK on the Shield and perform the sofa verification checklist.
+Routines is composed in the Activity on the existing authenticated Home Assistant WebSocket. The current correction adds Home Assistant automations to the same BOOP-facing Routines list; fresh CI and Shield sofa verification remain required before the Routines checkpoint is physically green.
 
 The approved design and implementation plan live under:
 
@@ -199,10 +201,9 @@ The original Alpha 1 contract was the first physical BOOP face: true-black eyes,
 
 Current order of work:
 
-1. finish Shield Routines Activity wiring
-2. run fresh Shield CI and produce the installable APK
-3. physically verify Routines and re-check the existing Home favourite control
-4. create the Routines functional checkpoint only after physical green
-5. then return to the Pixel Alpha and rebuild its setup around the newer QR pairing/authentication flow
+1. run fresh Shield CI for the automation-compatible Routines build and produce the installable APK
+2. physically verify Routines and re-check the existing Home favourite control
+3. create the Routines functional checkpoint only after physical green
+4. then return to the Pixel Alpha and rebuild its setup around the newer QR pairing/authentication flow
 
 When in doubt, `BOOP_STATUS.md` is the current whiteboard and `BOOP_RULES.md` is the guardrail file.

@@ -113,7 +113,7 @@ public final class RoutinesRepository {
             return execution;
         }
 
-        SceneExecution execution = new SceneExecution(callback);
+        ImmediateExecution execution = new ImmediateExecution(callback);
         execution.start(routine);
         return execution;
     }
@@ -244,6 +244,9 @@ public final class RoutinesRepository {
         if (value.startsWith("scene.")) {
             return RoutineItem.Type.SCENE;
         }
+        if (value.startsWith("automation.")) {
+            return RoutineItem.Type.AUTOMATION;
+        }
         return null;
     }
 
@@ -255,18 +258,21 @@ public final class RoutinesRepository {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    private final class SceneExecution implements Execution {
+    private final class ImmediateExecution implements Execution {
         private final RunCallback callback;
         private boolean done;
 
-        SceneExecution(RunCallback callback) {
+        ImmediateExecution(RunCallback callback) {
             this.callback = callback;
         }
 
         void start(RoutineItem routine) {
             final JSONObject body;
             try {
-                body = serviceBody("scene", routine.entityId());
+                String service = routine.type() == RoutineItem.Type.AUTOMATION
+                        ? "trigger"
+                        : "turn_on";
+                body = serviceBody(routine.domain(), service, routine.entityId());
             } catch (JSONException couldNotEncode) {
                 complete(false, "I couldn't prepare that routine.");
                 return;
@@ -341,7 +347,7 @@ public final class RoutinesRepository {
 
             final JSONObject body;
             try {
-                body = serviceBody("script", routine.entityId());
+                body = serviceBody("script", "turn_on", routine.entityId());
             } catch (JSONException couldNotEncode) {
                 complete(false, "I couldn't prepare that routine.");
                 return;
@@ -429,10 +435,11 @@ public final class RoutinesRepository {
         }
     }
 
-    private static JSONObject serviceBody(String domain, String entityId) throws JSONException {
+    private static JSONObject serviceBody(String domain, String service, String entityId)
+            throws JSONException {
         return new JSONObject()
                 .put("domain", domain)
-                .put("service", "turn_on")
+                .put("service", service)
                 .put("target", new JSONObject().put("entity_id", entityId));
     }
 

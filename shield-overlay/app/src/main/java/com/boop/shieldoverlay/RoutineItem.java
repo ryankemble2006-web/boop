@@ -2,6 +2,7 @@ package com.boop.shieldoverlay;
 
 public final class RoutineItem {
     public enum Type {
+        AUTOMATION,
         SCRIPT,
         SCENE
     }
@@ -32,11 +33,14 @@ public final class RoutineItem {
     }
 
     public String domain() {
+        if (type == Type.AUTOMATION) {
+            return "automation";
+        }
         return type == Type.SCRIPT ? "script" : "scene";
     }
 
     public String typeLabel() {
-        return type == Type.SCRIPT ? "Script" : "Scene";
+        return "Routine";
     }
 
     private static String requireText(String value, String label) {

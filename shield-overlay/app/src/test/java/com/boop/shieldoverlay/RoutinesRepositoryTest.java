@@ -17,6 +17,16 @@ import static org.junit.Assert.assertTrue;
 
 public final class RoutinesRepositoryTest {
     @Test
+    public void everySupportedTypeUsesTheBoopRoutineLabel() {
+        assertEquals("Routine",
+                new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT)
+                        .typeLabel());
+        assertEquals("Routine",
+                new RoutineItem("scene.movie", "Movie Night", RoutineItem.Type.SCENE)
+                        .typeLabel());
+    }
+
+    @Test
     public void discoveryUsesDisplayRegistryAndReturnsOnlyUsableRoutinesAlphabetically() throws Exception {
         RecordingCommands commands = new RecordingCommands();
         RoutinesRepository repository = new RoutinesRepository(commands);
@@ -35,6 +45,7 @@ public final class RoutinesRepositoryTest {
                 .put("entities", new JSONArray()
                         .put(new JSONObject().put("ei", "script.bedtime").put("en", "Bedtime"))
                         .put(new JSONObject().put("ei", "scene.movie").put("en", "Movie Night"))
+                        .put(new JSONObject().put("ei", "automation.keep_awake").put("en", "Keep Awake"))
                         .put(new JSONObject().put("ei", "scene.alpha"))
                         .put(new JSONObject().put("ei", "script.hidden").put("en", "Hidden").put("hb", true))
                         .put(new JSONObject().put("ei", "script.config").put("en", "Config").put("ec", 0))
@@ -48,14 +59,19 @@ public final class RoutinesRepositoryTest {
                 new JSONArray()
                         .put(state("script.bedtime", "off", "Bedtime fallback"))
                         .put(state("scene.movie", "2026-09-05T12:00:00+00:00", "Movie fallback"))
+                        .put(state("automation.keep_awake", "on", "Keep Awake fallback"))
                         .put(state("scene.alpha", "unknown", "Alpha Scene")),
                 null);
 
         assertNull(error.get());
-        assertEquals(3, result.get().size());
+        assertEquals(4, result.get().size());
         assertEquals("Alpha Scene", result.get().get(0).displayName());
         assertEquals("Bedtime", result.get().get(1).displayName());
-        assertEquals("Movie Night", result.get().get(2).displayName());
+        assertEquals("Keep Awake", result.get().get(2).displayName());
+        assertEquals("automation.keep_awake", result.get().get(2).entityId());
+        assertEquals(RoutineItem.Type.AUTOMATION, result.get().get(2).type());
+        assertEquals("Routine", result.get().get(2).typeLabel());
+        assertEquals("Movie Night", result.get().get(3).displayName());
         assertEquals(RoutineItem.Type.SCENE, result.get().get(0).type());
         assertEquals(RoutineItem.Type.SCRIPT, result.get().get(1).type());
     }
@@ -112,6 +128,58 @@ public final class RoutinesRepositoryTest {
         command.callback.onResult(true, null, null);
         assertTrue(callbackSeen.get());
         assertTrue(success.get());
+    }
+
+    @Test
+    public void automationTargetsExactEntityAndFinishesWhenTriggerAccepted() throws Exception {
+        RecordingCommands commands = new RecordingCommands();
+        RoutinesRepository repository = new RoutinesRepository(commands);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(false);
+
+        repository.run(
+                new RoutineItem(
+                        "automation.tv_on_living_room_lights_on",
+                        "TV On - Living Room Lights On",
+                        RoutineItem.Type.AUTOMATION),
+                (ok, message) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+
+        Command command = commands.command(0);
+        assertEquals("call_service", command.type);
+        assertEquals("automation", command.body.getString("domain"));
+        assertEquals("trigger", command.body.getString("service"));
+        assertEquals("automation.tv_on_living_room_lights_on",
+                command.body.getJSONObject("target").getString("entity_id"));
+        assertFalse(callbackSeen.get());
+
+        command.callback.onResult(true, null, null);
+        assertTrue(callbackSeen.get());
+        assertTrue(success.get());
+    }
+
+    @Test
+    public void automationRejectionReportsFailure() {
+        RecordingCommands commands = new RecordingCommands();
+        RoutinesRepository repository = new RoutinesRepository(commands);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(true);
+
+        repository.run(
+                new RoutineItem(
+                        "automation.keep_awake",
+                        "Keep Awake",
+                        RoutineItem.Type.AUTOMATION),
+                (ok, message) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+        commands.command(0).callback.onResult(false, null, "Rejected");
+
+        assertTrue(callbackSeen.get());
+        assertFalse(success.get());
     }
 
     @Test

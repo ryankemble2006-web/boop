@@ -1,8 +1,10 @@
 # BOOP Shield Routines v1 Implementation Plan
 
+> **2026-09-05 compatibility amendment:** Home Assistant `automation.*`, `script.*` and `scene.*` entities are all BOOP **Routines**. The correction extends discovery with `automation.*`, invokes exact targets with `automation.trigger`, and uses the visible type label `Routine` for all three.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a whole-house Shield Routines page that discovers usable Home Assistant scripts and scenes, runs them locally, and gives truthful `Running…` / `Done` / `Didn’t run` feedback without regressing the checkpointed Home dashboard.
+**Goal:** Add a whole-house Shield Routines page that discovers usable Home Assistant automations, scripts and scenes, runs them locally, and gives truthful `Running…` / `Done` / `Didn’t run` feedback without regressing the checkpointed Home dashboard.
 
 **Architecture:** Keep Routines as a separate vertical slice: `RoutineItem` holds routine identity/type, `RoutinesRepository` owns Home Assistant discovery and execution protocol, `RoutinesController` owns per-row state/timers/concurrency, `TvRoutinesView` owns remote-first rendering, and `BoopHomeActivity` only composes those pieces on the already-authenticated Home Assistant WebSocket. Reuse `HomeAssistantWebSocket.subscribeStateChanges(...)`; do not move routine logic into `HomeAssistantRepository`, `FocusCardView`, or the protected overlay runtime.
 
@@ -16,7 +18,9 @@
 - Never move or modify `checkpoint-shield-home-f8e8135`.
 - Keep package/application ID `com.boop.shieldoverlay` and existing `shieldoverlay` naming.
 - Core routine execution remains local to Home Assistant; no OpenAI/cloud dependency.
-- Routines v1 contains only `script.*` and `scene.*`; no automations, sensors, voice, editing, history, room filtering, paging, or routine favourites.
+- Routines v1 contains `automation.*`, `script.*` and `scene.*`; no sensors, voice, editing, history, room filtering, paging, routine favourites, or automation enable/disable controls.
+- All three Home Assistant entity types use the BOOP-facing label `Routine`.
+- Automation success means the exact `automation.trigger` service request was accepted.
 - Discovery is whole-house and sorted case-insensitively by display name.
 - Use `config/entity_registry/list_for_display`; Home Assistant's API contract excludes disabled entities from that response. Still filter hidden entries and `config`/`diagnostic` categories locally.
 - Scene success means the exact `scene.turn_on` service request was accepted.
@@ -61,13 +65,13 @@
 
 ```java
 public final class RoutineItem {
-    public enum Type { SCRIPT, SCENE }
+    public enum Type { AUTOMATION, SCRIPT, SCENE }
     public RoutineItem(String entityId, String displayName, Type type);
     public String entityId();
     public String displayName();
     public Type type();
-    public String domain();      // "script" or "scene"
-    public String typeLabel();   // "Script" or "Scene"
+    public String domain();      // "automation", "script" or "scene"
+    public String typeLabel();   // "Routine"
 }
 ```
 
@@ -160,6 +164,7 @@ public void discoveryUsesDisplayRegistryAndReturnsOnlyUsableRoutinesAlphabetical
             .put("entities", new JSONArray()
                     .put(new JSONObject().put("ei", "script.bedtime").put("en", "Bedtime"))
                     .put(new JSONObject().put("ei", "scene.movie").put("en", "Movie Night"))
+                    .put(new JSONObject().put("ei", "automation.keep_awake").put("en", "Keep Awake"))
                     .put(new JSONObject().put("ei", "scene.alpha"))
                     .put(new JSONObject().put("ei", "script.hidden").put("en", "Hidden").put("hb", true))
                     .put(new JSONObject().put("ei", "script.config").put("en", "Config").put("ec", 0))
@@ -173,16 +178,20 @@ public void discoveryUsesDisplayRegistryAndReturnsOnlyUsableRoutinesAlphabetical
             new JSONArray()
                     .put(state("script.bedtime", "off", "Bedtime fallback"))
                     .put(state("scene.movie", "2026-09-05T12:00:00+00:00", "Movie fallback"))
+                    .put(state("automation.keep_awake", "on", "Keep Awake fallback"))
                     .put(state("scene.alpha", "unknown", "Alpha Scene")),
             null);
 
     assertNull(error.get());
-    assertEquals(3, result.get().size());
+    assertEquals(4, result.get().size());
     assertEquals("Alpha Scene", result.get().get(0).displayName());
     assertEquals("Bedtime", result.get().get(1).displayName());
-    assertEquals("Movie Night", result.get().get(2).displayName());
+    assertEquals("Keep Awake", result.get().get(2).displayName());
+    assertEquals("Movie Night", result.get().get(3).displayName());
     assertEquals(RoutineItem.Type.SCENE, result.get().get(0).type());
     assertEquals(RoutineItem.Type.SCRIPT, result.get().get(1).type());
+    assertEquals(RoutineItem.Type.AUTOMATION, result.get().get(2).type());
+    assertEquals("Routine", result.get().get(2).typeLabel());
 }
 ```
 
@@ -230,11 +239,14 @@ Use exact domain/label mapping and reject blank constructor values. No Android d
 
 ```java
 public String domain() {
+    if (type == Type.AUTOMATION) {
+        return "automation";
+    }
     return type == Type.SCRIPT ? "script" : "scene";
 }
 
 public String typeLabel() {
-    return type == Type.SCRIPT ? "Script" : "Scene";
+    return "Routine";
 }
 ```
 
@@ -254,7 +266,7 @@ commandPort.send("get_states", new JSONObject(), statesCallback);
 
 `collectCandidates(...)` rules:
 - read entity ID from compact key `ei`,
-- `typeForEntityId` accepts only prefixes `script.` and `scene.`,
+- `typeForEntityId` accepts only prefixes `automation.`, `script.` and `scene.`,
 - skip `hb == true`,
 - decode `ec` against either `JSONArray` or `JSONObject` category maps,
 - skip decoded `config` and `diagnostic`,
@@ -317,7 +329,7 @@ public Execution run(RoutineItem routine, RunCallback callback);
 Private type added:
 
 ```java
-private final class SceneExecution implements Execution {
+private final class ImmediateExecution implements Execution {
     private final RunCallback callback;
     private boolean done;
     void start(RoutineItem routine);
@@ -326,7 +338,9 @@ private final class SceneExecution implements Execution {
 }
 ```
 
-- [ ] **Step 1: Write scene tests**
+- [ ] **Step 1: Write automation and scene tests**
+
+Add one automation test that asserts `call_service`, domain `automation`, service `trigger`, and the exact `target.entity_id`. Its success callback follows the same accepted-service-result contract as a scene.
 
 ```java
 @Test
@@ -381,18 +395,19 @@ gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 
 Expected: missing run/Execution API.
 
-- [ ] **Step 3: Implement scene execution**
+- [ ] **Step 3: Implement immediate automation and scene execution**
 
 Build exactly:
 
 ```java
+String service = routine.type() == RoutineItem.Type.AUTOMATION ? "trigger" : "turn_on";
 JSONObject body = new JSONObject()
-        .put("domain", "scene")
-        .put("service", "turn_on")
+        .put("domain", routine.domain())
+        .put("service", service)
         .put("target", new JSONObject().put("entity_id", routine.entityId()));
 ```
 
-`SceneExecution` must synchronize its `done` flag. `cancel()` sets `done=true`. A service callback after cancellation does nothing. Service rejection returns `success=false`; JSON encoding or socket-send runtime exceptions are converted into one failed callback rather than escaping into Activity.
+`ImmediateExecution` serves both automations and scenes and must synchronize its `done` flag. `cancel()` sets `done=true`. A service callback after cancellation does nothing. Service rejection returns `success=false`; JSON encoding or socket-send runtime exceptions are converted into one failed callback rather than escaping into Activity.
 
 - [ ] **Step 4: Run green**
 
@@ -569,7 +584,7 @@ gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 
 - [ ] **Step 3: Implement script execution**
 
-`run(...)` dispatches `SCENE` to `SceneExecution` and `SCRIPT` to `ScriptExecution`. A script with no `StateChangePort` fails without sending the service command.
+`run(...)` dispatches `AUTOMATION` and `SCENE` to `ImmediateExecution`, and `SCRIPT` to `ScriptExecution`. A script with no `StateChangePort` fails without sending the service command.
 
 `ScriptExecution.start()` calls `stateChangePort.subscribe(...)` first. Only `onSubscribed(active, null)` may send `call_service`.
 
@@ -972,7 +987,7 @@ Empty/status copy:
 - `LIVE`, no rows -> `No routines found`
 
 Routine card first line always remains the routine name. The second line is:
-- ready -> `Script` / `Scene`
+- ready -> `Routine`
 - running -> `Running…`
 - done -> `Done`
 - failed -> `Didn’t run`
@@ -1251,20 +1266,21 @@ Do not accept an older workflow run as evidence for the new implementation commi
 
 - [ ] **Step 3: Install the fresh artifact and perform the sofa checklist**
 
-Use one known scene and one script that stays active long enough to see `Running…`.
+Use at least one known automation. If available, also use one scene and one script that stays active long enough to see `Running…`.
 
 1. Launch BOOP; confirm Home still loads.
 2. Open Routines from the rail.
-3. Confirm scripts + scenes are one alphabetical list.
-4. Confirm normal rows show small `Script` / `Scene` second lines.
+3. Confirm automations + scripts + scenes are one alphabetical list.
+4. Confirm every normal row shows the small `Routine` second line.
 5. Navigate far enough to prove D-pad Up/Down scrolling follows focus.
-6. Run a scene; observe `Running…` -> `Done` -> normal row after about two seconds.
-7. Run the long script; observe `Running…` while active.
-8. Confirm the script says `Done` only after that exact script has finished.
-9. Double-press Select on the running script; confirm it does not start twice.
-10. While that script runs, trigger another ready routine; confirm the rest of the page remains usable.
-11. Press Left; confirm focus returns to the Routines rail item.
-12. Return Home; toggle the existing favourite and confirm physical control + real state confirmation still work.
+6. Run an automation; observe `Running…` -> `Done` -> normal row after about two seconds.
+7. If available, run a scene and observe the same accepted-call feedback.
+8. If available, run the long script; observe `Running…` while active.
+9. Confirm the script says `Done` only after that exact script has finished.
+10. Double-press Select on the running script; confirm it does not start twice.
+11. While that script runs, trigger another ready routine; confirm the rest of the page remains usable.
+12. Press Left; confirm focus returns to the Routines rail item.
+13. Return Home; toggle the existing favourite and confirm physical control + real state confirmation still work.
 
 - [ ] **Step 4: Create functional checkpoint only after physical green**
 

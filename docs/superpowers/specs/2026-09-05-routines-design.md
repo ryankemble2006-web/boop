@@ -8,17 +8,18 @@ Base checkpoint: `f8e81359f27b62877849596e8da99d4ecaa1bb63`
 
 Add a first useful Routines page to the BOOP Shield Home app while preserving the working Home dashboard and its checkpointed behaviour.
 
-Routines v1 is deliberately narrow: discover whole-house Home Assistant scripts and scenes, show them in one sofa-friendly list, run them from the Shield remote, and provide truthful, plain-English execution feedback.
+Routines v1 is deliberately narrow: discover whole-house Home Assistant automations, scripts and scenes, show them in one sofa-friendly list, run them from the Shield remote, and provide truthful, plain-English execution feedback.
 
 ## Scope
 
 Included:
 
+- Home Assistant `automation.*` entities.
 - Home Assistant `script.*` entities.
 - Home Assistant `scene.*` entities.
 - Whole-house discovery; no room filter.
 - One case-insensitive alphabetical list.
-- A small visible type label: `Script` or `Scene`.
+- One small BOOP-facing type label for every supported entity: `Routine`.
 - Big, chunky, remote-first cards.
 - D-pad Up/Down navigation with focus-following vertical scrolling.
 - D-pad Left returns focus to the Routines rail item.
@@ -29,7 +30,6 @@ Included:
 
 Explicitly excluded from v1:
 
-- Home Assistant automations.
 - Editing or creating routines.
 - Voice control or spoken routine creation.
 - Room filtering.
@@ -47,7 +47,7 @@ Small immutable model containing:
 
 - entity ID
 - display name
-- type: `SCRIPT` or `SCENE`
+- internal type: `AUTOMATION`, `SCRIPT` or `SCENE`
 
 It represents only routines BOOP is prepared to show and run.
 
@@ -57,10 +57,11 @@ Owns Home Assistant protocol details for routine discovery and execution.
 
 Responsibilities:
 
-- discover available whole-house scripts and scenes
+- discover available whole-house automations, scripts and scenes
 - filter unusable registry entries
 - map them to `RoutineItem`
 - sort them case-insensitively by display name
+- call `automation.trigger` for automations
 - call `scene.turn_on` for scenes
 - call `script.turn_on` for scripts
 - subscribe to state changes before starting a script so completion can be observed truthfully
@@ -110,7 +111,7 @@ It must not absorb routine discovery, filtering, execution state, or protocol lo
 
 Routines v1 is whole-house.
 
-The repository reads Home Assistant entity metadata and current states, then keeps only entities whose domain is `script` or `scene` and which are intended for ordinary user interaction.
+The repository reads Home Assistant entity metadata and current states, then keeps only entities whose domain is `automation`, `script` or `scene` and which are intended for ordinary user interaction.
 
 Exclude:
 
@@ -123,11 +124,23 @@ Entries without a usable display name are excluded.
 
 Display name preference follows the existing Home approach: registry/display name first, then state `friendly_name` fallback where available.
 
-The final list combines scripts and scenes and sorts by display name using case-insensitive alphabetical order.
+The final list combines automations, scripts and scenes and sorts by display name using case-insensitive alphabetical order.
 
 No room membership test is applied.
 
 ## Execution behaviour
+
+### Automation
+
+When Select is pressed on an automation:
+
+1. That row changes to `Running…`.
+2. BOOP calls `automation.trigger` targeted at that exact automation entity.
+3. If Home Assistant accepts the service call, the row becomes `Done`.
+4. `Done` remains visible for about two seconds.
+5. The normal routine name/type returns.
+
+An automation is considered done when Home Assistant accepts the trigger request. This is the Home Assistant-style immediate **Run actions** path; enabling and disabling automations are deferred.
 
 ### Scene
 
@@ -226,44 +239,46 @@ Development follows the existing BOOP rule: evidence first, red test first, mini
 
 Automated tests must cover at least:
 
-1. Discovery keeps only `script.*` and `scene.*` entities.
+1. Discovery keeps only `automation.*`, `script.*` and `scene.*` entities.
 2. Hidden entities are excluded.
 3. Disabled entities are excluded.
 4. Config/diagnostic entities are excluded.
 5. Results are one case-insensitive alphabetical list.
-6. Scene execution calls `scene.turn_on` for the exact entity.
-7. A successful scene service result produces `Running…` then `Done`.
-8. Script execution establishes the state subscription before `script.turn_on`.
-9. Script completion ignores state events for every other entity.
-10. A script `off` event without a prior observed target-script `on` does not count as completion.
-11. Script completion succeeds only after the targeted script has been observed `on` and then `off`, and the service call has succeeded.
-12. Service-result and state-event ordering cannot race into a false result.
-13. Duplicate Select on an already-running row is ignored.
-14. Other rows remain runnable while one row is running.
-15. Rejected service calls become `Didn’t run`.
-16. Subscription setup failure becomes `Didn’t run` without firing the script.
-17. Script completion timeout becomes `Didn’t run` and cleans up the subscription.
-18. `Done` resets after about two seconds.
-19. `Didn’t run` resets after about two seconds.
-20. D-pad Left still returns from content to the Routines rail item.
-21. Focus visuals never reorder routine cards.
+6. Automation execution calls `automation.trigger` for the exact entity.
+7. Scene execution calls `scene.turn_on` for the exact entity.
+8. A successful automation or scene service result produces `Running…` then `Done`.
+9. Script execution establishes the state subscription before `script.turn_on`.
+10. Script completion ignores state events for every other entity.
+11. A script `off` event without a prior observed target-script `on` does not count as completion.
+12. Script completion succeeds only after the targeted script has been observed `on` and then `off`, and the service call has succeeded.
+13. Service-result and state-event ordering cannot race into a false result.
+14. Duplicate Select on an already-running row is ignored.
+15. Other rows remain runnable while one row is running.
+16. Rejected service calls become `Didn’t run`.
+17. Subscription setup failure becomes `Didn’t run` without firing the script.
+18. Script completion timeout becomes `Didn’t run` and cleans up the subscription.
+19. `Done` resets after about two seconds.
+20. `Didn’t run` resets after about two seconds.
+21. D-pad Left still returns from content to the Routines rail item.
+22. Focus visuals never reorder routine cards.
 
 ## Physical verification
 
-After fresh Shield CI is fully green, the first physical test should use at least one known scene and one known script.
+After fresh Shield CI is fully green, the first physical test should use at least one known automation. Scene and script checks apply when those entity types exist in the paired Home Assistant instance.
 
 Minimum sofa test:
 
 1. Open Routines from the rail.
-2. Confirm scripts and scenes appear together alphabetically.
+2. Confirm automations, scripts and scenes appear together alphabetically and every normal row says `Routine`.
 3. Navigate enough rows to prove vertical scrolling follows focus.
-4. Run a scene and observe `Running…` → `Done` → normal card.
-5. Run a script that lasts long enough to observe `Running…` while active.
-6. Confirm `Done` appears only when that script actually finishes.
-7. Press Select twice rapidly on the same running script and confirm it is not started twice.
-8. Confirm another routine can still be selected while the first is running.
-9. Confirm Left returns to the Routines rail item.
-10. Confirm the working Home page and favourite toggle path are unchanged.
+4. Run an automation and observe `Running…` → `Done` → normal card.
+5. If available, run a scene and observe the same accepted-call feedback.
+6. If available, run a script that lasts long enough to observe `Running…` while active.
+7. Confirm `Done` appears only when that script actually finishes.
+8. Press Select twice rapidly on the same running script and confirm it is not started twice.
+9. Confirm another routine can still be selected while the first is running.
+10. Confirm Left returns to the Routines rail item.
+11. Confirm the working Home page and favourite toggle path are unchanged.
 
 Routines v1 is not called physically complete until these checks pass on the Shield.
 
@@ -273,8 +288,8 @@ Routines v1 is not called physically complete until these checks pass on the Shi
 - Do not regress the existing Home dashboard, room selection, favourite discovery, physical binary control, real state confirmation, or focus ordering.
 - Keep the existing `shieldoverlay` app/package naming.
 - Keep core routine execution local to Home Assistant and independent of cloud/OpenAI availability.
-- Do not add sensors, routine editing, automations, voice, history, or room filtering as incidental extras.
+- Do not add sensors, routine editing, automation enable/disable controls, voice, history, or room filtering as incidental extras.
 
 ## Success criterion
 
-From the Shield remote, the user can open Routines, browse a whole-house alphabetical list of usable Home Assistant scenes and scripts, press Select to run one, receive truthful `Running…` / `Done` / `Didn’t run` feedback, and return to the rail without disturbing the already-working Home dashboard.
+From the Shield remote, the user can open Routines, browse a whole-house alphabetical list of usable Home Assistant automations, scenes and scripts under BOOP's single `Routine` label, press Select to run one, receive truthful `Running…` / `Done` / `Didn’t run` feedback, and return to the rail without disturbing the already-working Home dashboard.
