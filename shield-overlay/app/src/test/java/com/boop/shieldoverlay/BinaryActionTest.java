@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -33,105 +32,74 @@ public final class BinaryActionTest {
     }
 
     @Test
-    public void offEntityCallsTurnOnForExactTargetThenRefreshesState() throws Exception {
-        RecordingPort port = new RecordingPort();
-        HomeAssistantRepository repository = new HomeAssistantRepository(port);
-        EntityCard original = card("light.sofa", "living_room", "Sofa lamp", "off");
-        AtomicBoolean success = new AtomicBoolean(false);
-        AtomicReference<EntityCard> refreshed = new AtomicReference<>();
-
-        repository.toggleBinary(original, (ok, card, error) -> {
-            success.set(ok);
-            refreshed.set(card);
-        });
-
-        assertEquals(1, port.commands.size());
-        Command service = port.commands.get(0);
-        assertEquals("call_service", service.type);
-        assertEquals("light", service.body.getString("domain"));
-        assertEquals("turn_on", service.body.getString("service"));
-        assertEquals("light.sofa", service.body.getJSONObject("target").getString("entity_id"));
-        assertFalse(success.get());
-        assertNull(refreshed.get());
-
-        service.callback.onResult(true, null, null);
-
-        assertEquals(2, port.commands.size());
-        assertEquals("get_states", port.commands.get(1).type);
-        assertFalse(success.get());
-
-        JSONArray states = new JSONArray()
-                .put(new JSONObject()
-                        .put("entity_id", "light.sofa")
-                        .put("state", "on")
-                        .put("attributes", new JSONObject().put("friendly_name", "Sofa lamp")));
-        port.commands.get(1).callback.onResult(true, states, null);
-
-        assertTrue(success.get());
-        assertEquals("light.sofa", refreshed.get().entityId());
-        assertEquals("on", refreshed.get().state());
-    }
-
-    @Test
-    public void staleFirstReadWaitsForRequestedStateBeforeReportingSuccess() throws Exception {
-        RecordingPort port = new RecordingPort();
-        HomeAssistantRepository repository = new HomeAssistantRepository(port);
+    public void subscribesBeforeServiceAndConfirmsOnlyRequestedTargetState() throws Exception {
+        RecordingPorts ports = new RecordingPorts();
+        HomeAssistantRepository repository = new HomeAssistantRepository(ports, ports);
         EntityCard original = card("switch.sync_box", "living_room", "AI Sync Box strip", "on");
         AtomicBoolean callbackSeen = new AtomicBoolean(false);
         AtomicBoolean success = new AtomicBoolean(false);
-        AtomicReference<EntityCard> refreshed = new AtomicReference<>();
+        AtomicReference<EntityCard> confirmed = new AtomicReference<>();
 
         repository.toggleBinary(original, (ok, card, error) -> {
             callbackSeen.set(true);
             success.set(ok);
-            refreshed.set(card);
+            confirmed.set(card);
         });
 
-        port.commands.get(0).callback.onResult(true, null, null);
-        assertEquals("get_states", port.commands.get(1).type);
+        assertTrue("BOOP must listen before changing the house", ports.subscriptionRequested);
+        assertEquals(0, ports.commands.size());
 
-        JSONArray staleStates = new JSONArray()
-                .put(new JSONObject()
-                        .put("entity_id", "switch.sync_box")
-                        .put("state", "on")
-                        .put("attributes", new JSONObject().put("friendly_name", "AI Sync Box strip")));
-        port.commands.get(1).callback.onResult(true, staleStates, null);
-
-        assertFalse("old state must not be accepted as confirmation", callbackSeen.get());
-        waitForCommandCount(port, 3, 2000L);
-        assertEquals("get_states", port.commands.get(2).type);
-
-        JSONArray settledStates = new JSONArray()
-                .put(new JSONObject()
-                        .put("entity_id", "switch.sync_box")
-                        .put("state", "off")
-                        .put("attributes", new JSONObject().put("friendly_name", "AI Sync Box strip")));
-        port.commands.get(2).callback.onResult(true, settledStates, null);
-
-        assertTrue(callbackSeen.get());
-        assertTrue(success.get());
-        assertEquals("off", refreshed.get().state());
-    }
-
-    @Test
-    public void onEntityCallsTurnOffUsingItsActualDomain() throws Exception {
-        RecordingPort port = new RecordingPort();
-        HomeAssistantRepository repository = new HomeAssistantRepository(port);
-
-        repository.toggleBinary(
-                card("switch.corner", "living_room", "Corner plug", "on"),
-                (ok, card, error) -> { });
-
-        Command service = port.commands.get(0);
+        ports.ackSubscription();
+        assertEquals(1, ports.commands.size());
+        Command service = ports.commands.get(0);
+        assertEquals("call_service", service.type);
         assertEquals("switch", service.body.getString("domain"));
         assertEquals("turn_off", service.body.getString("service"));
-        assertEquals("switch.corner", service.body.getJSONObject("target").getString("entity_id"));
+        assertEquals("switch.sync_box", service.body.getJSONObject("target").getString("entity_id"));
+
+        service.callback.onResult(true, null, null);
+        ports.emit("light.other", "off");
+        ports.emit("switch.sync_box", "on");
+        assertFalse(callbackSeen.get());
+
+        ports.emit("switch.sync_box", "off");
+        assertTrue(callbackSeen.get());
+        assertTrue(success.get());
+        assertNotNull(confirmed.get());
+        assertEquals("off", confirmed.get().state());
+        assertTrue("confirmation listener must be released", ports.cancelled);
+        assertEquals("event confirmation must not poll get_states", 1, ports.commands.size());
     }
 
     @Test
-    public void failedServiceIsNeverReportedAsSuccessAndDoesNotRefresh() {
-        RecordingPort port = new RecordingPort();
-        HomeAssistantRepository repository = new HomeAssistantRepository(port);
+    public void expectedEventBeforeServiceReplyWaitsForServiceSuccess() throws Exception {
+        RecordingPorts ports = new RecordingPorts();
+        HomeAssistantRepository repository = new HomeAssistantRepository(ports, ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(false);
+
+        repository.toggleBinary(
+                card("light.sofa", "living_room", "Sofa lamp", "off"),
+                (ok, card, error) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+
+        ports.ackSubscription();
+        Command service = ports.commands.get(0);
+        ports.emit("light.sofa", "on");
+        assertFalse("event alone is not proof the service call succeeded", callbackSeen.get());
+
+        service.callback.onResult(true, null, null);
+        assertTrue(callbackSeen.get());
+        assertTrue(success.get());
+        assertTrue(ports.cancelled);
+    }
+
+    @Test
+    public void failedServiceCancelsListenerAndNeverReportsSuccess() throws Exception {
+        RecordingPorts ports = new RecordingPorts();
+        HomeAssistantRepository repository = new HomeAssistantRepository(ports, ports);
         AtomicBoolean callbackSeen = new AtomicBoolean(false);
         AtomicBoolean success = new AtomicBoolean(true);
         AtomicReference<EntityCard> result = new AtomicReference<>();
@@ -146,22 +114,33 @@ public final class BinaryActionTest {
                     error.set(message);
                 });
 
-        port.commands.get(0).callback.onResult(false, null, "Service rejected");
+        ports.ackSubscription();
+        ports.commands.get(0).callback.onResult(false, null, "Service rejected");
 
         assertTrue(callbackSeen.get());
         assertFalse(success.get());
         assertNull(result.get());
         assertEquals("Service rejected", error.get());
-        assertEquals(1, port.commands.size());
+        assertTrue(ports.cancelled);
     }
 
-    private static void waitForCommandCount(RecordingPort port, int expected, long timeoutMs)
-            throws InterruptedException {
-        long deadline = System.currentTimeMillis() + timeoutMs;
-        while (port.commands.size() < expected && System.currentTimeMillis() < deadline) {
-            Thread.sleep(20L);
-        }
-        assertEquals(expected, port.commands.size());
+    @Test
+    public void missingStateListenerNeverChangesDevice() {
+        RecordingPorts ports = new RecordingPorts();
+        HomeAssistantRepository repository = new HomeAssistantRepository(ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(true);
+
+        repository.toggleBinary(
+                card("switch.corner", "living_room", "Corner plug", "on"),
+                (ok, card, error) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+
+        assertTrue(callbackSeen.get());
+        assertFalse(success.get());
+        assertEquals(0, ports.commands.size());
     }
 
     private static EntityCard card(String id, String area, String name, String state) {
@@ -180,12 +159,36 @@ public final class BinaryActionTest {
         }
     }
 
-    private static final class RecordingPort implements HomeAssistantRepository.CommandPort {
+    private static final class RecordingPorts
+            implements HomeAssistantRepository.CommandPort, HomeAssistantRepository.StateChangePort {
         final List<Command> commands = Collections.synchronizedList(new ArrayList<>());
+        boolean subscriptionRequested;
+        boolean cancelled;
+        HomeAssistantRepository.StateChangePort.Listener listener;
+        HomeAssistantRepository.StateChangePort.Callback subscriptionCallback;
 
         @Override
         public void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback) {
             commands.add(new Command(type, body, callback));
+        }
+
+        @Override
+        public void subscribe(
+                HomeAssistantRepository.StateChangePort.Listener listener,
+                HomeAssistantRepository.StateChangePort.Callback callback) {
+            subscriptionRequested = true;
+            this.listener = listener;
+            this.subscriptionCallback = callback;
+        }
+
+        void ackSubscription() {
+            assertNotNull(subscriptionCallback);
+            subscriptionCallback.onResult(() -> cancelled = true, null);
+        }
+
+        void emit(String entityId, String state) {
+            assertNotNull(listener);
+            listener.onStateChanged(entityId, state);
         }
     }
 }
