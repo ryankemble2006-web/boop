@@ -1,0 +1,29 @@
+name: Apply Alpha 6.6 source patch
+
+on:
+  push:
+    branches: [ "alpha6.6-timed-routines" ]
+    paths: [ "scripts/apply-alpha66-source-patch.py" ]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: alpha6.6-timed-routines
+          fetch-depth: 0
+      - name: Apply bounded Alpha 6.6 patch
+        run: python3 scripts/apply-alpha66-source-patch.py
+      - name: Commit bounded source changes
+        run: |
+          set -euo pipefail
+          git config user.name "boop-ci"
+          git config user.email "boop-ci@users.noreply.github.com"
+          git add source/MainActivity.java source/HomeAssistantClient.java
+          git diff --cached --exit-code && exit 1 || true
+          git commit -m "Wire timed one-shot routines into BOOP"
+          git push origin HEAD:alpha6.6-timed-routines
