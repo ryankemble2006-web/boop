@@ -105,6 +105,15 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("scaleX(hasFocus ? 1.045f : 1f)", source)
         self.assertIn("scaleY(hasFocus ? 1.045f : 1f)", source)
 
+    def test_routines_page_is_scrollable_remote_first_and_does_not_reorder_cards(self):
+        source = self.read("java/com/boop/shieldoverlay/TvRoutinesView.java")
+        self.assertIn("extends ScrollView", source)
+        self.assertIn("setFillViewport(true)", source)
+        self.assertIn("FocusCardView", source)
+        self.assertIn("KEYCODE_DPAD_LEFT", source)
+        self.assertIn("onRun", source)
+        self.assertNotIn("bringToFront()", source)
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
