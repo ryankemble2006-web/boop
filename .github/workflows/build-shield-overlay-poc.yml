@@ -18,8 +18,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Run Shield source guardrails
-        run: python3 -m unittest tests.test_shield_overlay_source -v
+      - name: Run BOOP source regression suite
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
 
       - name: Copy approved BOOP eye artwork
         run: |
