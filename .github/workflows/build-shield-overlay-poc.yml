@@ -3,7 +3,7 @@ name: Build BOOP Shield Overlay POC
 on:
   workflow_dispatch:
   push:
-    branches: [ "boop-shield-overlay-poc" ]
+    branches: [ "boop-shield-overlay-poc", "boop-shield-overlay-hdr-reassert" ]
     paths:
       - "shield-overlay/**"
       - "tests/test_shield_overlay_source.py"
@@ -75,6 +75,6 @@ jobs:
       - name: Upload BOOP Shield Overlay POC APK
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-Overlay-POC-debug
+          name: BOOP-Shield-Overlay-HDR-Reassert-test
           path: shield-overlay/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
