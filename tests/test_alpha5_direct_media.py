@@ -22,6 +22,18 @@ class Alpha5DirectMediaIntegrationTest(unittest.TestCase):
         self.assertIn('/api/services/media_player/', text)
         self.assertIn('HomeAssistantMediaSelector.rank', text)
 
+    def test_media_selection_is_command_capability_aware(self):
+        direct = Path('source/HomeAssistantDirectMediaClient.java').read_text(encoding='utf-8')
+        selector = Path('source/HomeAssistantMediaSelector.java').read_text(encoding='utf-8')
+        self.assertIn('HomeAssistantMediaSelector.rank(areaEntities, states, command)', direct)
+        self.assertIn('supported_features', selector)
+        self.assertIn('supports(command', selector)
+
+    def test_recognised_media_does_not_fall_through_to_generic_assist(self):
+        direct = Path('source/HomeAssistantDirectMediaClient.java').read_text(encoding='utf-8')
+        self.assertIn('return CommandOutcome.failed();', direct)
+        self.assertIn('MediaCommand command = MediaCommandParser.parse(text)', direct)
+
     def test_puppet_surface_is_not_part_of_media_patch(self):
         main = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('ViewConfiguration.getLongPressTimeout()', main)
