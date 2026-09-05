@@ -25,6 +25,18 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
         void onResult(boolean success, Object result, String error);
     }
 
+    public interface StateChangeListener {
+        void onStateChanged(String entityId, String state);
+    }
+
+    public interface Subscription {
+        void cancel();
+    }
+
+    public interface SubscriptionCallback {
+        void onResult(Subscription subscription, String error);
+    }
+
     private final OkHttpClient client;
     private final Object lock = new Object();
     private final Map<Integer, Callback> callbacks = new HashMap<>();
@@ -101,6 +113,18 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
                 failed.onResult(false, null, "Home Assistant connection is unavailable");
             }
         }
+    }
+
+    public void subscribeStateChanges(
+            StateChangeListener listener,
+            SubscriptionCallback callback) {
+        if (listener == null) {
+            throw new IllegalArgumentException("state-change listener is required");
+        }
+        if (callback == null) {
+            throw new IllegalArgumentException("subscription callback is required");
+        }
+        callback.onResult(null, "Home Assistant state-change subscriptions are not wired yet.");
     }
 
     public boolean isReady() {
