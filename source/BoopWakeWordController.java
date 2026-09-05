@@ -166,6 +166,7 @@ final class BoopWakeWordController {
 
     private void audioLoop() {
         short[] buffer = new short[READ_SAMPLES];
+        boolean activationLogged = false;
         try {
             while (running) {
                 AudioRecord record = audioRecord;
@@ -185,6 +186,10 @@ final class BoopWakeWordController {
                 }
                 if (count <= 0) {
                     continue;
+                }
+                if (!activationLogged) {
+                    Log.i(TAG, "Wake microphone armed");
+                    activationLogged = true;
                 }
 
                 if (commandCapture) {

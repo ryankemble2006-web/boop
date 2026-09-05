@@ -29,7 +29,9 @@ jobs:
         run: |
           set -euo pipefail
           BASE=62ce633d63a9590fc20cecbde22025d18f0b0d2d
-          git diff --exit-code "$BASE" HEAD -- source/ wake-assets/
+          git diff --exit-code "$BASE" HEAD -- source/ wake-assets/ ':(exclude)source/BoopWakeWordController.java'
+          # Pin the sole reviewed instrumentation change separately from the runtime baseline.
+          test "$(git hash-object source/BoopWakeWordController.java)" = dda88a101e640ee83e3a950cefb11b25c2c32479
 
       - name: Prove shake stays visual-only and routines stay absent
         shell: bash
@@ -191,12 +193,29 @@ jobs:
           adb shell input keyevent 82 || true
 
       - name: Launch BOOP with wake microphone armed and verify process survives
+        shell: bash
+        timeout-minutes: 2
         run: |
+          set -euo pipefail
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           adb install -r "$APK"
           adb shell pm grant com.boop.alpha1 android.permission.RECORD_AUDIO
           adb logcat -c
           adb shell am start -W -n com.boop.alpha1/.MainActivity
+          WAKE_ARMED=0
+          for attempt in {1..30}; do
+            adb logcat -d -v raw -s BOOP-Wake:I '*:S' > wake-activation.log
+            if grep -Fxq 'Wake microphone armed' wake-activation.log; then
+              WAKE_ARMED=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$WAKE_ARMED" -ne 1 ]; then
+            echo '::error::Wake microphone never captured audio within 30 seconds'
+            adb logcat -d -v threadtime || true
+            exit 1
+          fi
           sleep 8
           if ! adb shell pidof com.boop.alpha1 >/dev/null 2>&1; then
             adb logcat -d -v threadtime | grep -i -E 'boop|FATAL EXCEPTION|AndroidRuntime|Process: com\.boop\.alpha1|Caused by:|sensor|onnx|sherpa' || true

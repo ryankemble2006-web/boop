@@ -1,5 +1,9 @@
 from pathlib import Path
 import hashlib
+import shutil
+import subprocess
+import tempfile
+import textwrap
 import unittest
 
 
@@ -7,6 +11,43 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class WallResurrectionContractTest(unittest.TestCase):
+    def test_wake_marker_requires_first_positive_audio_read(self):
+        controller = (ROOT / "source/BoopWakeWordController.java").read_text(encoding="utf-8")
+        loop = controller.split("private void audioLoop() {", 1)[1].split("private void beginCommandCapture", 1)[0]
+        self.assertEqual(1, controller.count('Log.i(TAG, "Wake microphone armed")'))
+        self.assertRegex(loop, r"boolean activationLogged = false;[\s\S]*while \(running\)")
+        self.assertRegex(loop, r"record.read\(buffer, 0, buffer.length\);[\s\S]*if \(count <= 0\) \{\s*continue;\s*\}\s*if \(!activationLogged\) \{\s*Log.i\(TAG, \"Wake microphone armed\"\);\s*activationLogged = true;\s*\}")
+
+    def test_ci_rejects_live_process_without_bounded_wake_activation(self):
+        workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
+        launch = workflow.split("      - name: Launch BOOP with wake microphone armed and verify process survives", 1)[1].split("      - name:", 1)[0]
+        script = textwrap.dedent(launch.split("run: |\n", 1)[1])
+        self.assertIn("Wake microphone armed", script)
+        self.assertIn("{1..30}", script)
+        self.assertLess(script.index("adb logcat -c"), script.index("adb shell am start"))
+        bash = shutil.which("bash") or r"C:\Program Files\Git\bin\bash.exe"
+        for mode, expected in (("armed", 0), ("absent", 1), ("wrong", 1)):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temp:
+                stub = '''
+                reads=0
+                adb() {
+                  if [[ "$*" == 'logcat -d -v raw'* ]]; then
+                    reads=$((reads + 1))
+                    if [[ "$mode" == armed && "$reads" -ge 3 ]]; then
+                      echo 'Wake microphone armed'
+                    elif [[ "$mode" == wrong ]]; then
+                      echo 'Wake microphone armed failed'
+                    fi
+                  elif [[ "$*" == 'shell pidof'* ]]; then
+                    echo 1234
+                  fi
+                  return 0
+                }
+                sleep() { :; }
+                '''
+                result = subprocess.run([bash, "-c", "mode=" + mode + "\n" + textwrap.dedent(stub) + script], cwd=temp, capture_output=True, text=True, timeout=10)
+                self.assertEqual(expected, result.returncode, result.stdout + result.stderr)
+
     def test_unified_workflow_gates_resurrection_apk(self):
         workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
         for required in ("boop-wall-resurrection", "testDebugUnitTest", "versionCode='29'",
