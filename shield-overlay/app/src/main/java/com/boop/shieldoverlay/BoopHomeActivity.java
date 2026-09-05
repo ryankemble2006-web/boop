@@ -19,8 +19,6 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -32,15 +30,16 @@ import java.util.concurrent.Executors;
 import okhttp3.OkHttpClient;
 
 public final class BoopHomeActivity extends Activity {
+    private static final long FOUND_IT_BEAT_MS = 700L;
+
+    private final FirstRunCoordinator firstRun = new FirstRunCoordinator();
+
     private Handler mainHandler;
     private ExecutorService pairingExecutor;
     private PairingGateController pairingController;
     private Runnable expiryRunnable;
-
-    private TextView titleView;
-    private TextView statusView;
-    private ImageView qrView;
-    private Button retryButton;
+    private Runnable successRunnable;
+    private TvPairingView pairingView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +53,7 @@ public final class BoopHomeActivity extends Activity {
                 controller.expireIfNeeded();
             }
         };
+        successRunnable = this::advanceAfterPairingSuccess;
         showPairingGate();
     }
 
@@ -84,8 +84,13 @@ public final class BoopHomeActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (mainHandler != null && expiryRunnable != null) {
-            mainHandler.removeCallbacks(expiryRunnable);
+        if (mainHandler != null) {
+            if (expiryRunnable != null) {
+                mainHandler.removeCallbacks(expiryRunnable);
+            }
+            if (successRunnable != null) {
+                mainHandler.removeCallbacks(successRunnable);
+            }
         }
         if (pairingController != null) {
             pairingController.close();
@@ -124,63 +129,10 @@ public final class BoopHomeActivity extends Activity {
     }
 
     private void showPairingGate() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER);
-        root.setPadding(dp(48), dp(32), dp(48), dp(32));
-        root.setBackgroundColor(Color.BLACK);
-
-        titleView = new TextView(this);
-        titleView.setText(R.string.pairing_title_searching);
-        titleView.setTextColor(Color.WHITE);
-        titleView.setTextSize(42f);
-        titleView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        titleView.setGravity(Gravity.CENTER);
-        root.addView(titleView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        int qrSize = pairingQrSizePx();
-        qrView = new ImageView(this);
-        qrView.setContentDescription(getString(R.string.pairing_scan));
-        qrView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        qrView.setVisibility(View.GONE);
-        LinearLayout.LayoutParams qrParams = new LinearLayout.LayoutParams(qrSize, qrSize);
-        qrParams.topMargin = dp(18);
-        qrParams.bottomMargin = dp(18);
-        root.addView(qrView, qrParams);
-
-        statusView = new TextView(this);
-        statusView.setTextColor(Color.LTGRAY);
-        statusView.setTextSize(24f);
-        statusView.setGravity(Gravity.CENTER);
-        statusView.setPadding(0, dp(4), 0, dp(12));
-        root.addView(statusView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        retryButton = new Button(this);
-        retryButton.setText(R.string.pairing_retry);
-        retryButton.setTextSize(24f);
-        retryButton.setAllCaps(false);
-        retryButton.setFocusable(true);
-        retryButton.setMinHeight(dp(68));
-        retryButton.setPadding(dp(36), dp(12), dp(36), dp(12));
-        retryButton.setTextColor(Color.WHITE);
-        retryButton.setBackgroundColor(Color.DKGRAY);
-        retryButton.setVisibility(View.GONE);
-        retryButton.setOnClickListener(view -> restartPairing());
-        retryButton.setOnFocusChangeListener((view, hasFocus) -> {
-            retryButton.setBackgroundColor(hasFocus ? Color.WHITE : Color.DKGRAY);
-            retryButton.setTextColor(hasFocus ? Color.BLACK : Color.WHITE);
-        });
-        LinearLayout.LayoutParams retryParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        retryParams.topMargin = dp(10);
-        root.addView(retryButton, retryParams);
-
-        setContentView(root, new ViewGroup.LayoutParams(
+        firstRun.start(false, false);
+        pairingView = new TvPairingView(this, this::restartPairing);
+        pairingView.showSearching(getString(R.string.pairing_title_searching));
+        setContentView(pairingView, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -290,82 +242,109 @@ public final class BoopHomeActivity extends Activity {
     }
 
     private void renderPairingState(PairingGateController.ViewState state) {
-        if (state == null || isFinishing() || isDestroyed()) {
+        if (state == null || isFinishing() || isDestroyed() || pairingView == null) {
             return;
         }
         mainHandler.removeCallbacks(expiryRunnable);
+        mainHandler.removeCallbacks(successRunnable);
 
         PairingGateController.State value = state.state();
         if (value == PairingGateController.State.SEARCHING) {
-            titleView.setText(R.string.pairing_title_searching);
-            statusView.setText(state.message());
-            hideQrAndRetry();
+            pairingView.showSearching(state.message());
             return;
         }
 
         if (value == PairingGateController.State.QR_READY) {
-            titleView.setText(R.string.pairing_title_found);
-            statusView.setText(R.string.pairing_scan);
-            retryButton.setVisibility(View.GONE);
             try {
-                qrView.setImageBitmap(QrCodeBitmap.render(
-                        state.qrPayload(),
-                        pairingQrSizePx()));
-                qrView.setVisibility(View.VISIBLE);
+                pairingView.showQr(state.qrPayload(), pairingQrSizePx());
                 long delayMs = Math.max(1L, state.expiresAtMs() - System.currentTimeMillis());
                 mainHandler.postDelayed(expiryRunnable, delayMs);
             } catch (IllegalArgumentException couldNotDrawQr) {
                 pairingController.close();
-                qrView.setVisibility(View.GONE);
-                showRetryState(getString(R.string.pairing_retry));
+                pairingView.showRetry(getString(R.string.pairing_retry));
             }
             return;
         }
 
         if (value == PairingGateController.State.AUTHORIZING) {
-            titleView.setText(R.string.pairing_title_found);
-            statusView.setText(R.string.pairing_authorizing);
-            hideQrAndRetry();
+            pairingView.showAuthorizing();
             return;
         }
 
         if (value == PairingGateController.State.CONNECTED) {
-            titleView.setText(R.string.pairing_found);
-            statusView.setText("");
-            hideQrAndRetry();
+            firstRun.onPairingConnected();
+            pairingView.showConnected();
+            mainHandler.postDelayed(successRunnable, FOUND_IT_BEAT_MS);
             return;
         }
 
-        if (value == PairingGateController.State.STALE) {
-            showRetryState(state.message());
+        if (value == PairingGateController.State.STALE
+                || value == PairingGateController.State.FAILED) {
+            pairingView.showRetry(state.message());
+        }
+    }
+
+    private void advanceAfterPairingSuccess() {
+        if (isFinishing() || isDestroyed()) {
             return;
         }
-
-        if (value == PairingGateController.State.FAILED) {
-            showRetryState(state.message());
+        FirstRunCoordinator.State next = firstRun.afterPairingSuccess(false);
+        if (next == FirstRunCoordinator.State.ROOM_PICKER) {
+            showRoomPickerPlaceholder();
+        } else if (next == FirstRunCoordinator.State.HOME) {
+            showHomePlaceholder();
         }
     }
 
-    private void hideQrAndRetry() {
-        qrView.setImageDrawable(null);
-        qrView.setVisibility(View.GONE);
-        retryButton.setVisibility(View.GONE);
+    private void showRoomPickerPlaceholder() {
+        LinearLayout root = simpleStage();
+        TextView title = stageTitle(getString(R.string.room_picker_title));
+        TextView detail = stageDetail(getString(R.string.room_picker_loading));
+        root.addView(title);
+        root.addView(detail);
+        setContentView(root);
+        pairingView = null;
     }
 
-    private void showRetryState(String message) {
-        qrView.setImageDrawable(null);
-        qrView.setVisibility(View.GONE);
-        titleView.setText(message == null || message.trim().isEmpty()
-                ? getString(R.string.pairing_retry)
-                : message);
-        statusView.setText("");
-        retryButton.setVisibility(View.VISIBLE);
-        retryButton.requestFocus();
+    private void showHomePlaceholder() {
+        LinearLayout root = simpleStage();
+        root.addView(stageTitle(getString(R.string.home_title)));
+        setContentView(root);
+        pairingView = null;
+    }
+
+    private LinearLayout simpleStage() {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setGravity(Gravity.CENTER);
+        root.setPadding(dp(64), dp(48), dp(64), dp(48));
+        root.setBackgroundColor(Color.BLACK);
+        return root;
+    }
+
+    private TextView stageTitle(String text) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextColor(Color.WHITE);
+        view.setTextSize(52f);
+        view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        view.setGravity(Gravity.CENTER);
+        return view;
+    }
+
+    private TextView stageDetail(String text) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextColor(Color.LTGRAY);
+        view.setTextSize(26f);
+        view.setGravity(Gravity.CENTER);
+        view.setPadding(0, dp(18), 0, 0);
+        return view;
     }
 
     private void restartPairing() {
         mainHandler.removeCallbacks(expiryRunnable);
-        retryButton.setVisibility(View.GONE);
+        mainHandler.removeCallbacks(successRunnable);
         PairingGateController controller = pairingController;
         if (controller != null) {
             controller.start();
