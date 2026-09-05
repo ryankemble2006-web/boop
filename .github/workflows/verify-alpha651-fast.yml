@@ -19,3 +19,17 @@ jobs:
           python-version: '3.12'
       - name: Run Alpha 6.5.1 focused regression tests
         run: python3 -m unittest tests/test_alpha651_manners_exit.py -v
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Run conversation-exit behavior harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/boop-alpha651-test
+          mkdir -p /tmp/boop-alpha651-test
+          javac -d /tmp/boop-alpha651-test \
+            source/BoopConversationExitIntent.java \
+            tests/java/BoopConversationExitIntentHarness.java
+          java -cp /tmp/boop-alpha651-test com.boop.alpha1.BoopConversationExitIntentHarness
