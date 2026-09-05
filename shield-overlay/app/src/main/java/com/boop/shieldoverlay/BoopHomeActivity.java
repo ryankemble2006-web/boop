@@ -562,7 +562,24 @@ public final class BoopHomeActivity extends Activity {
                         return;
                     }
                     dashboardReconnectAttempt = 0;
-                    HomeAssistantRepository repository = new HomeAssistantRepository(socket::send);
+                    HomeAssistantRepository.StateChangePort stateChangePort =
+                            new HomeAssistantRepository.StateChangePort() {
+                                @Override
+                                public void subscribe(
+                                        HomeAssistantRepository.StateChangePort.Listener listener,
+                                        HomeAssistantRepository.StateChangePort.Callback callback) {
+                                    socket.subscribeStateChanges(
+                                            listener::onStateChanged,
+                                            (subscription, error) -> {
+                                                HomeAssistantRepository.StateChangePort.Subscription mapped =
+                                                        subscription == null
+                                                                ? null
+                                                                : subscription::cancel;
+                                                callback.onResult(mapped, error);
+                                            });
+                                }
+                            };
+                    HomeAssistantRepository repository = new HomeAssistantRepository(socket::send, stateChangePort);
                     HomeDashboardController.RepositoryPort repositoryPort =
                             new HomeDashboardController.RepositoryPort() {
                                 @Override
