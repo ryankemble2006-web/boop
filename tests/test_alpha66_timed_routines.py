@@ -35,7 +35,19 @@ class Alpha66TimedRoutinesIntegrationTest(unittest.TestCase):
         next_method = main.index('\n    private void ', finish + 20)
         finish_body = main[finish:next_method]
         self.assertIn('listenAfterTts = false;', finish_body)
-        self.assertIn('beginTapToSpeak();', finish_body)
+        self.assertIn('startListening();', finish_body)
+
+    def test_follow_up_blocks_wake_before_tts_release_rearms_microphone(self):
+        main = Path('source/MainActivity.java').read_text(encoding='utf-8')
+        finish = main.index('private void finishTtsUtterance()')
+        next_method = main.index('\n    private void ', finish + 20)
+        finish_body = main[finish:next_method]
+        blocker = finish_body.index('wakeCoordinator.onTapStarted()')
+        release = finish_body.index('wakeCoordinator.onTtsFinished()')
+        self.assertLess(blocker, release)
+        self.assertIn('recognitionMode = RecognitionMode.TAP;', finish_body)
+        self.assertIn('startListening();', finish_body)
+        self.assertNotIn('beginTapToSpeak();', finish_body)
 
     def test_recurring_is_a_safe_future_seam_not_tool_enablement(self):
         main = Path('source/MainActivity.java').read_text(encoding='utf-8')
