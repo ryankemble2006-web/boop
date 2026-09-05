@@ -150,11 +150,14 @@ When Select is pressed on a script:
 3. Only after the subscription is active does BOOP call `script.turn_on` for that exact script entity.
 4. The row stays `Running…` while the script is active.
 5. BOOP listens only for state changes belonging to that exact script entity.
-6. When Home Assistant reports that the script has finished, the row becomes `Done`.
-7. `Done` remains visible for about two seconds.
-8. The normal routine name/type returns.
+6. BOOP considers this invocation complete only after it has observed that target script enter `on` and then return to `off` after the subscription was established. An `off` event on its own is not enough to claim completion.
+7. When that `on` → `off` lifecycle is observed and the service call has succeeded, the row becomes `Done`.
+8. `Done` remains visible for about two seconds.
+9. The normal routine name/type returns.
 
-The repository/controller implementation must account for the service-result and state-event callbacks arriving in either order.
+The repository/controller implementation must account for the service-result and state-event callbacks arriving in either order. It may remember the observed `on` and `off` events before the service callback arrives, but it must not emit success until both the service call has succeeded and the target script lifecycle has been observed.
+
+This deliberately prefers a false failure over a false success for unusual script modes that do not expose a clean `on` → `off` lifecycle. BOOP must not claim `Done` merely because a service request was accepted.
 
 The script completion wait is bounded. Initial v1 timeout target: 120 seconds. If completion is not observed inside that window, BOOP reports failure rather than leaving the card permanently in `Running…`.
 
@@ -232,17 +235,18 @@ Automated tests must cover at least:
 7. A successful scene service result produces `Running…` then `Done`.
 8. Script execution establishes the state subscription before `script.turn_on`.
 9. Script completion ignores state events for every other entity.
-10. Script completion succeeds only for the targeted script’s completion state.
-11. Service-result and state-event ordering cannot race into a false result.
-12. Duplicate Select on an already-running row is ignored.
-13. Other rows remain runnable while one row is running.
-14. Rejected service calls become `Didn’t run`.
-15. Subscription setup failure becomes `Didn’t run` without firing the script.
-16. Script completion timeout becomes `Didn’t run` and cleans up the subscription.
-17. `Done` resets after about two seconds.
-18. `Didn’t run` resets after about two seconds.
-19. D-pad Left still returns from content to the Routines rail item.
-20. Focus visuals never reorder routine cards.
+10. A script `off` event without a prior observed target-script `on` does not count as completion.
+11. Script completion succeeds only after the targeted script has been observed `on` and then `off`, and the service call has succeeded.
+12. Service-result and state-event ordering cannot race into a false result.
+13. Duplicate Select on an already-running row is ignored.
+14. Other rows remain runnable while one row is running.
+15. Rejected service calls become `Didn’t run`.
+16. Subscription setup failure becomes `Didn’t run` without firing the script.
+17. Script completion timeout becomes `Didn’t run` and cleans up the subscription.
+18. `Done` resets after about two seconds.
+19. `Didn’t run` resets after about two seconds.
+20. D-pad Left still returns from content to the Routines rail item.
+21. Focus visuals never reorder routine cards.
 
 ## Physical verification
 
