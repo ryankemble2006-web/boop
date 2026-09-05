@@ -8,13 +8,15 @@ import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Process;
 import android.provider.Settings;
-import android.hardware.display.DisplayManager;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -217,8 +219,9 @@ public final class BoopHdrDebugService extends Service {
     }
 
     private void ensureOverlays() {
-        OverlayGeometry.Geometry eyes = OverlayGeometry.eyes(displayWidth(), displayHeight());
-        OverlayGeometry.Geometry panel = OverlayGeometry.panel(displayWidth(), displayHeight());
+        Rect bounds = currentWindowBounds();
+        OverlayGeometry.Geometry eyes = OverlayGeometry.eyes(bounds.width(), bounds.height());
+        OverlayGeometry.Geometry panel = OverlayGeometry.panel(bounds.width(), bounds.height());
 
         if (eyesView == null) {
             eyesView = new BoopEyeView(this);
@@ -317,12 +320,13 @@ public final class BoopHdrDebugService extends Service {
         }
     }
 
-    private int displayWidth() {
-        return windowManager.getDefaultDisplay().getMode().getPhysicalWidth();
-    }
-
-    private int displayHeight() {
-        return windowManager.getDefaultDisplay().getMode().getPhysicalHeight();
+    private Rect currentWindowBounds() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return windowManager.getCurrentWindowMetrics().getBounds();
+        }
+        DisplayMetrics metrics = new DisplayMetrics();
+        windowManager.getDefaultDisplay().getRealMetrics(metrics);
+        return new Rect(0, 0, metrics.widthPixels, metrics.heightPixels);
     }
 
     private static final class DisplaySnapshotForFailure {
