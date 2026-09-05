@@ -35,15 +35,24 @@ Explicitly excluded:
 
 ## Package Isolation
 
-This is a separate Android package, proposed as:
+The package is fixed as:
 
 `com.boop.shieldoverlay`
 
 It must install beside BOOP Alpha 1 and must not share runtime state, activities, services, preferences, permissions, or process assumptions with `com.boop.alpha1`.
 
-The implementation lives as a separate Shield overlay project/module in the BOOP repository. Source may copy the small eye-rendering logic needed from the approved checkpoint, but it must not import the Pixel app as a runtime dependency.
+The implementation is a standalone Gradle Android project under `shield-overlay/` in the BOOP repository. It does not alter the repository-root Alpha 1 project definition and does not add a second runtime mode to Alpha 1. Source may copy the small eye-rendering logic needed from the approved checkpoint, but it must not import the Pixel app as a runtime dependency.
 
 For this disposable POC, the existing `BOOP-Alpha1-project.zip` in the repository is allowed to act as the source of the approved `boop_eyes` bitmap during CI/build so the binary artwork does not need to be recreated or altered.
+
+## Android Baseline
+
+- `compileSdk 36`
+- `targetSdk 36`
+- `minSdk 26` because `TYPE_APPLICATION_OVERLAY` is the required overlay type.
+- Java 17, matching the repository's proven GitHub Actions environment.
+
+The POC is designed to run on the physical Shield even when its installed Android version is older than the target SDK.
 
 ## Overlay Window
 
@@ -61,17 +70,19 @@ The view itself has a transparent background. Neither the view nor its `onDraw` 
 
 ## Visual Treatment
 
-The POC reuses the approved eye source crop and motion language from checkpoint `776e75c` rather than redrawing BOOP.
+The POC reuses the approved eye source crop and wake/open motion language from checkpoint `776e75c` rather than redrawing BOOP.
 
 For the first physical test:
 
 - Render the two isolated eyes only.
-- Scale them substantially smaller than the Pixel face presentation so they read as BOOP exploring the TV rather than occupying it.
-- Start at a low-obstruction screen position near an edge/corner rather than the center of content.
+- Place the puppet in the upper-right of the display.
+- Set the eye-pair window width to approximately 14% of the current display width, preserving the approved eye-pair aspect ratio.
+- Inset the window approximately 3% from the top and right display edges.
 - Preserve the approved proportions and anti-aliased bitmap rendering.
-- Keep animation minimal: an initial wake/open may use the existing puppet motion, after which the eyes remain calmly visible. No automatic interaction or speech-driven behavior is introduced for this test.
+- Play one existing-style wake/open animation when the overlay first appears, then leave the eyes calmly visible.
+- Do not add automatic wandering, periodic reactions, member-berry triggers, speech-driven motion, or any other autonomous behavior in this POC.
 
-Exact position/scale are implementation constants, intentionally easy to tweak after the first Shield photograph/test.
+The position and scale are isolated implementation constants so the first Shield photograph/test can tune them without touching lifecycle or overlay code.
 
 ## Launch and Permission Flow
 
@@ -81,7 +92,7 @@ First launch:
 2. If not granted, it opens the system overlay-permission screen for `com.boop.shieldoverlay`.
 3. When the user returns and permission is granted, the activity starts `BoopOverlayService` while the app is in the foreground.
 4. The service immediately promotes itself to a foreground service, creates the overlay, and keeps ownership of it.
-5. The activity exits/finishes so the Shield returns to normal launcher/app use with only the eyes remaining.
+5. The activity finishes so the Shield returns to normal launcher/app use with only the eyes remaining.
 
 Subsequent launch:
 
@@ -91,14 +102,15 @@ There is no custom settings screen and no second in-app permission flow.
 
 ## Foreground Service
 
-The app targets a current Android SDK and therefore declares:
+The manifest declares:
 
 - `android.permission.SYSTEM_ALERT_WINDOW`.
 - `android.permission.FOREGROUND_SERVICE`.
 - `android.permission.FOREGROUND_SERVICE_SPECIAL_USE`.
-- Service type `specialUse` with a manifest subtype explanation such as `persistent_noninteractive_visual_overlay_poc`.
+- Service type `specialUse`.
+- `android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE` with value `persistent_noninteractive_visual_overlay_poc`.
 
-The service creates the required low-importance notification channel and foreground notification. The POC does not request the Android notification runtime permission; notification permission is not required to launch a foreground service, while the service still supplies the mandatory foreground notification object.
+The service creates the required low-importance notification channel and foreground notification. The APK does not declare or request `POST_NOTIFICATIONS`; Android does not require that runtime permission in order to launch a foreground service, while the service still supplies the mandatory foreground notification object.
 
 The service returns `START_STICKY` so ordinary process reclamation can request recreation, but the POC does not add a boot receiver or any self-start mechanism. Explicit force-stop or reboot is allowed to stop BOOP; relaunching the APK is the recovery path for this experiment.
 
@@ -115,45 +127,46 @@ No app-switch callbacks, polling loops, media listeners, accessibility hooks, or
 
 ## Source Boundaries
 
-Suggested Shield project files:
+Shield POC files:
 
 - `shield-overlay/settings.gradle`
 - `shield-overlay/build.gradle`
+- `shield-overlay/gradle.properties`
 - `shield-overlay/app/build.gradle`
 - `shield-overlay/app/src/main/AndroidManifest.xml`
 - `shield-overlay/app/src/main/java/com/boop/shieldoverlay/MainActivity.java`
 - `shield-overlay/app/src/main/java/com/boop/shieldoverlay/BoopOverlayService.java`
 - `shield-overlay/app/src/main/java/com/boop/shieldoverlay/BoopOverlayView.java`
-- focused unit/source tests for layout/window configuration where practical
-- dedicated GitHub Actions workflow for the Shield POC APK
+- small focused Java helpers/tests where they improve testability
+- `.github/workflows/build-shield-overlay-poc.yml`
 
-The existing Pixel source remains untouched unless a build-only read/copy of the approved eye asset is required.
+The existing Pixel source and Alpha 1 workflow remain untouched. The Shield workflow may read/copy the approved eye bitmap from the existing Alpha 1 project ZIP during build.
 
 ## Build Strategy
 
 Use a dedicated GitHub Actions workflow for the Shield overlay so Alpha 1's existing workflow and artifact remain independent.
 
-The workflow should:
+The workflow will:
 
 1. Check out the repository.
 2. Extract/copy only the approved `boop_eyes` bitmap from `BOOP-Alpha1-project.zip` into the Shield project's drawable resources.
-3. Set up Java/Android SDK/Gradle using the repository's proven build pattern.
-4. Run Shield overlay tests.
-5. Build the debug APK.
-6. Inspect APK badging/permissions/package name.
-7. Upload a clearly named artifact such as `BOOP-Shield-Overlay-POC-debug`.
-
-The build must verify that the output package is `com.boop.shieldoverlay` and that no microphone, network, HA, or speech permissions/dependencies are present.
+3. Set up Java 17, Android SDK 36, build-tools 36.0.0, and Gradle using the repository's proven build pattern.
+4. Run Shield overlay regression/unit checks.
+5. Build the debug APK from `shield-overlay/`.
+6. Inspect APK badging and requested permissions.
+7. Fail if the package is not `com.boop.shieldoverlay` or if excluded permissions such as microphone/network/accessibility/boot are present.
+8. Upload the artifact as `BOOP-Shield-Overlay-POC-debug`.
 
 ## Test Plan
 
 ### Automated/build checks
 
-- Project compiles on the selected Android SDK.
+- Project compiles on SDK 36.
 - Package ID is `com.boop.shieldoverlay`.
 - Manifest contains overlay + foreground-service permissions only as required by this design.
-- No `RECORD_AUDIO`, internet/network, accessibility, boot-completed, or HA-related permissions are present.
+- No `RECORD_AUDIO`, `INTERNET`, network-state, accessibility, boot-completed, or HA-related permissions are present.
 - Overlay layout parameters use `TYPE_APPLICATION_OVERLAY`, `FLAG_NOT_FOCUSABLE`, and `FLAG_NOT_TOUCHABLE`.
+- Overlay dimensions are small and position constants resolve to upper-right placement.
 - View drawing path never paints an opaque/black background.
 - Service start is idempotent: one service, one overlay view.
 
@@ -172,14 +185,14 @@ Install the POC, launch once, grant "display over other apps", then verify in th
 
 The POC is successful when:
 
-- It installs beside existing BOOP builds as a separate package.
+- It installs beside existing BOOP builds as package `com.boop.shieldoverlay`.
 - The only manual setup is Android's overlay permission.
 - BOOP's isolated approved eyes appear over normal Shield UI/apps/video with genuinely transparent surroundings.
 - Shield remote input goes straight to the underlying app; BOOP never receives focus or interaction.
 - Eyes persist through normal app switching while the foreground service is alive.
-- No HA, microphone, speech, settings, black background, touch handling, or unrelated subsystem exists in the APK.
+- No HA, microphone, speech, settings, black background, touch handling, network access, boot persistence, or unrelated subsystem exists in the APK.
 - The first HDR/DV test gives us a clear empirical answer about overlay survival/visibility, even if that answer exposes a Shield/platform limitation.
 
 ## Non-Goals After This POC
 
-Movement around the screen, contextual reactions, media awareness, HA control, voice, boot persistence, richer puppetry, and any user-facing controls are all explicitly deferred until the transparent-overlay behavior is proven on the physical Shield.
+Movement around the screen, contextual reactions, member berries, media awareness, HA control, voice, boot persistence, richer puppetry, and any user-facing controls are all explicitly deferred until the transparent-overlay behavior is proven on the physical Shield.
