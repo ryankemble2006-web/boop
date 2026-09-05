@@ -45,14 +45,12 @@ public class FocusCardView extends TextView {
     private void applyFocus(boolean hasFocus) {
         setTextColor(hasFocus ? Color.BLACK : Color.WHITE);
         setBackgroundColor(hasFocus ? Color.WHITE : Color.rgb(36, 36, 36));
+        setTranslationZ(hasFocus ? dp(8) : 0f);
         animate()
                 .scaleX(hasFocus ? 1.045f : 1f)
                 .scaleY(hasFocus ? 1.045f : 1f)
                 .setDuration(100L)
                 .start();
-        if (hasFocus) {
-            bringToFront();
-        }
     }
 
     protected int dp(int value) {
