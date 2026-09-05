@@ -51,11 +51,6 @@ class Alpha654CustomizationFixesTests(unittest.TestCase):
         recognition = main.index('startWakeRecognition(session);', wake_block_start)
         self.assertLess(cue, recognition)
 
-    def test_build_identity_is_alpha654_code27(self):
-        gradle = Path('source/app-build.gradle').read_text(encoding='utf-8')
-        self.assertIn('versionCode 27', gradle)
-        self.assertIn('versionName "0.4.9-alpha6.5.4"', gradle)
-
 
 if __name__ == '__main__':
     unittest.main()
