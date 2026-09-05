@@ -8,6 +8,10 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.net.Uri;
@@ -44,7 +48,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class MainActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener {
+public final class MainActivity extends Activity implements RecognitionListener, TextToSpeech.OnInitListener, SensorEventListener {
     private static final int REQ_RECORD_AUDIO = 1001;
     private static final int REQ_NEARBY_WIFI = 1002;
     private static final String HOME_AREA = "Living Room";
@@ -57,6 +61,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private BoopFaceView face;
     private BoopPresenceState presenceState;
     private Handler presenceHandler;
+    private SensorManager sensorManager;
+    private Sensor shakeSensor;
+    private final BoopShakeDetector shakeDetector = new BoopShakeDetector();
     private SpeechRecognizer recognizer;
     private RecognitionMode recognitionMode = RecognitionMode.NONE;
     private BoopWakeWordController wakeWordController;
@@ -127,6 +134,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         presenceHandler = new Handler(Looper.getMainLooper());
         presenceState = new BoopPresenceState();
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        if (sensorManager != null) {
+            shakeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
 
         interactionSurface = new FrameLayout(this);
         interactionSurface.setBackgroundColor(Color.BLACK);
@@ -175,6 +186,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override
     protected void onResume() {
         super.onResume();
+        shakeDetector.reset();
+        if (sensorManager != null && shakeSensor != null) {
+            sensorManager.registerListener(this, shakeSensor, SensorManager.SENSOR_DELAY_GAME);
+        }
         if (wakeCoordinator != null) {
             wakeCoordinator.beginForegroundSession();
             boolean granted = checkSelfPermission(Manifest.permission.RECORD_AUDIO)
@@ -188,6 +203,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     @Override
     protected void onPause() {
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
+        shakeDetector.reset();
         assistantFollowUpAfterTts = false;
         sleepFaceAfterTts = false;
         assistantFollowUpListening = false;
@@ -198,6 +217,46 @@ public final class MainActivity extends Activity implements RecognitionListener,
             wakeCoordinator.endForegroundSession();
         }
         super.onPause();
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event == null || event.sensor != shakeSensor || event.values == null || event.values.length < 3) {
+            return;
+        }
+        if (presenceState == null
+                || !presenceState.isIdleBlack()
+                || voiceSettingsOpen
+                || listening
+                || thinking) {
+            shakeDetector.reset();
+            return;
+        }
+
+        long timestampMs = event.timestamp / 1_000_000L;
+        if (shakeDetector.onAccelerometer(
+                event.values[0], event.values[1], event.values[2], timestampMs)) {
+            handleShakeWake(shakeDetector.lastTriggerStrength());
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) { }
+
+    private void handleShakeWake(float strength) {
+        if (presenceState == null
+                || face == null
+                || !presenceState.isIdleBlack()
+                || voiceSettingsOpen
+                || listening
+                || thinking) {
+            return;
+        }
+        if (!presenceState.wake()) {
+            return;
+        }
+        face.playShakeMuppet(strength);
+        scheduleFaceIdle();
     }
 
     private void installTtsListener() {
@@ -1250,6 +1309,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
     protected void onDestroy() {
         thinking = false;
         voiceSettingsOpen = false;
+        if (sensorManager != null) {
+            sensorManager.unregisterListener(this);
+        }
+        shakeDetector.reset();
         closeWakeAudioSession();
         if (wakeCoordinator != null) {
             wakeCoordinator.shutdown();

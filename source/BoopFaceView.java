@@ -1,5 +1,7 @@
 package com.boop.alpha1;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
@@ -26,10 +28,15 @@ final class BoopFaceView extends View {
     private static final long SLEEP_DURATION_MS = 300L;
     private static final long MEMBER_BERRY_DURATION_MS = 300L;
     private static final long THINKING_DURATION_MS = 1680L;
+    private static final long SHAKE_MUPPET_DURATION_MS = 1_050L;
 
     private final Bitmap faceBitmap;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private ObjectAnimator thinkingAnimator;
+    private ValueAnimator shakeAnimator;
+    private boolean shakeMuppetActive;
+    private float shakeFraction;
+    private float shakeStrength;
 
     BoopFaceView(Context context) {
         super(context);
@@ -113,6 +120,40 @@ final class BoopFaceView extends View {
         animator.start();
     }
 
+    void playShakeMuppet(float strength) {
+        stopThinking();
+        animate().cancel();
+        resetPuppetTransform();
+        setPivotX(getWidth() / 2f);
+        setPivotY(getHeight() / 2f);
+        setScaleY(1f);
+        setAlpha(1f);
+
+        shakeStrength = Math.max(0f, Math.min(1f, strength));
+        shakeFraction = 0f;
+        shakeMuppetActive = true;
+        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+        shakeAnimator = animator;
+        animator.setDuration(SHAKE_MUPPET_DURATION_MS);
+        animator.addUpdateListener(valueAnimator -> {
+            shakeFraction = (float) valueAnimator.getAnimatedValue();
+            invalidate();
+        });
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (shakeAnimator != animation) {
+                    return;
+                }
+                shakeAnimator = null;
+                shakeMuppetActive = false;
+                shakeFraction = 0f;
+                invalidate();
+            }
+        });
+        animator.start();
+    }
+
     void startThinking() {
         if (thinkingAnimator != null && thinkingAnimator.isRunning()) {
             return;
@@ -152,8 +193,20 @@ final class BoopFaceView extends View {
             thinkingAnimator.cancel();
             thinkingAnimator = null;
         }
+        cancelShakeMuppet();
         resetPuppetTransform();
         setAlpha(1f);
+    }
+
+    private void cancelShakeMuppet() {
+        ValueAnimator animator = shakeAnimator;
+        shakeAnimator = null;
+        if (animator != null) {
+            animator.cancel();
+        }
+        shakeMuppetActive = false;
+        shakeFraction = 0f;
+        invalidate();
     }
 
     private void resetPuppetTransform() {
@@ -183,6 +236,20 @@ final class BoopFaceView extends View {
         }
 
         BoopEyeLayout.Layout layout = BoopEyeLayout.calculate(getWidth(), getHeight());
+        if (shakeMuppetActive) {
+            EyeGeometry leftBase;
+            EyeGeometry rightBase;
+            if (layout.landscape()) {
+                leftBase = EyeGeometry.from(layout.left());
+                rightBase = EyeGeometry.from(layout.right());
+            } else {
+                leftBase = portraitEyeGeometry(LEFT_SOURCE);
+                rightBase = portraitEyeGeometry(RIGHT_SOURCE);
+            }
+            drawShakeEye(canvas, LEFT_SOURCE, leftBase, true);
+            drawShakeEye(canvas, RIGHT_SOURCE, rightBase, false);
+            return;
+        }
         if (!layout.landscape()) {
             drawPortraitFace(canvas);
             return;
@@ -208,6 +275,45 @@ final class BoopFaceView extends View {
                 paint);
     }
 
+    private EyeGeometry portraitEyeGeometry(Rect source) {
+        float scale = Math.min(
+                getWidth() / (float) faceBitmap.getWidth(),
+                getHeight() / (float) faceBitmap.getHeight());
+        float faceWidth = faceBitmap.getWidth() * scale;
+        float faceHeight = faceBitmap.getHeight() * scale;
+        float faceLeft = (getWidth() - faceWidth) / 2f;
+        float faceTop = (getHeight() - faceHeight) / 2f;
+        return new EyeGeometry(
+                faceLeft + source.exactCenterX() * scale,
+                faceTop + source.exactCenterY() * scale,
+                source.width() * scale,
+                source.height() * scale);
+    }
+
+    private void drawShakeEye(Canvas canvas, Rect source, EyeGeometry base, boolean leftEye) {
+        BoopShakeEyeMotion.Pose pose = BoopShakeEyeMotion.pose(
+                leftEye,
+                shakeFraction,
+                getWidth(),
+                getHeight(),
+                base.centerX,
+                base.centerY,
+                base.width,
+                base.height,
+                shakeStrength);
+        float halfWidth = base.width * pose.scaleX() / 2f;
+        float halfHeight = base.height * pose.scaleY() / 2f;
+        RectF destination = new RectF(
+                pose.centerX() - halfWidth,
+                pose.centerY() - halfHeight,
+                pose.centerX() + halfWidth,
+                pose.centerY() + halfHeight);
+        int save = canvas.save();
+        canvas.rotate(pose.rotation(), pose.centerX(), pose.centerY());
+        canvas.drawBitmap(faceBitmap, source, destination, paint);
+        canvas.restoreToCount(save);
+    }
+
     private void drawEye(Canvas canvas, Rect source, BoopEyeLayout.Eye eye) {
         float halfWidth = eye.width() / 2f;
         float halfHeight = eye.height() / 2f;
@@ -217,5 +323,23 @@ final class BoopFaceView extends View {
                 eye.centerX() + halfWidth,
                 eye.centerY() + halfHeight);
         canvas.drawBitmap(faceBitmap, source, destination, paint);
+    }
+
+    private static final class EyeGeometry {
+        final float centerX;
+        final float centerY;
+        final float width;
+        final float height;
+
+        EyeGeometry(float centerX, float centerY, float width, float height) {
+            this.centerX = centerX;
+            this.centerY = centerY;
+            this.width = width;
+            this.height = height;
+        }
+
+        static EyeGeometry from(BoopEyeLayout.Eye eye) {
+            return new EyeGeometry(eye.centerX(), eye.centerY(), eye.width(), eye.height());
+        }
     }
 }
