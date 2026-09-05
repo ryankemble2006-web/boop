@@ -101,6 +101,7 @@ public final class HomeAssistantWebSocketTest {
             @Override
             public void onMessage(WebSocket webSocket, String text) {
                 webSocket.send("{\"type\":\"auth_invalid\",\"message\":\"Invalid access token\"}");
+                webSocket.close(1000, "test complete");
             }
         }));
 
