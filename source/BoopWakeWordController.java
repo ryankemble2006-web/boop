@@ -131,6 +131,23 @@ final class BoopWakeWordController {
         }
     }
 
+    void reloadSensitivity() {
+        suspendAll();
+        BoopSherpaWakeSpotter spotterToClose;
+        synchronized (lock) {
+            spotterToClose = spotter;
+            spotter = null;
+            preRoll = null;
+        }
+        if (spotterToClose != null) {
+            try {
+                spotterToClose.close();
+            } catch (Throwable error) {
+                Log.w(TAG, "Wake sensitivity reload failed", error);
+            }
+        }
+    }
+
     void shutdown() {
         suspendAll();
         BoopSherpaWakeSpotter spotterToClose;

@@ -288,7 +288,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private void playWakeAcceptedCue() {
         final ToneGenerator tone;
         try {
-            tone = new ToneGenerator(AudioManager.STREAM_SYSTEM, 35);
+            tone = new ToneGenerator(AudioManager.STREAM_MUSIC, 55);
         } catch (RuntimeException unavailable) {
             return;
         }
@@ -316,9 +316,6 @@ public final class MainActivity extends Activity implements RecognitionListener,
         suppressNextRecognizerError = true;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
-        if (face != null) {
-            face.animate().alpha(1.0f).setDuration(120).start();
-        }
         if (recognizer != null) {
             recognizer.cancel();
         }
@@ -530,6 +527,30 @@ public final class MainActivity extends Activity implements RecognitionListener,
         cadenceParams.setMargins(0, dp(4), 0, dp(28));
         voiceSettingsOverlay.addView(cadenceSlider, cadenceParams);
 
+        TextView wakeSensitivityLabel = voiceSettingLabel("Wake sensitivity", 22f, false);
+        voiceSettingsOverlay.addView(wakeSensitivityLabel);
+
+        SeekBar wakeSensitivitySlider = new SeekBar(this);
+        wakeSensitivitySlider.setMax(BoopWakeSensitivity.PROGRESS_MAX);
+        wakeSensitivitySlider.setProgress(BoopWakeSensitivity.loadProgress(this));
+        wakeSensitivitySlider.setContentDescription("Wake sensitivity");
+        wakeSensitivitySlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    BoopWakeSensitivity.saveProgress(MainActivity.this, progress);
+                }
+            }
+
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        LinearLayout.LayoutParams wakeSensitivityParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(64));
+        wakeSensitivityParams.setMargins(0, dp(4), 0, dp(28));
+        voiceSettingsOverlay.addView(wakeSensitivitySlider, wakeSensitivityParams);
+
         Button done = new Button(this);
         done.setText("Done");
         done.setTextSize(21f);
@@ -570,6 +591,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         voiceSettingsOverlay = null;
         voiceSettingsOpen = false;
+        if (wakeWordController != null) {
+            wakeWordController.reloadSensitivity();
+        }
         if (wakeCoordinator != null) {
             wakeCoordinator.setVoiceSettingsOpen(false);
         }
@@ -1082,12 +1106,14 @@ public final class MainActivity extends Activity implements RecognitionListener,
         latestAssistantFollowUpPartial = null;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
-        face.animate().alpha(1.0f).setDuration(120).start();
 
         if (suppressNextRecognizerError) {
             suppressNextRecognizerError = false;
+            sleepFaceImmediately();
             return;
         }
+
+        face.animate().alpha(1.0f).setDuration(120).start();
 
         if (failedMode == RecognitionMode.WAKE) {
             closeWakeAudioSession();

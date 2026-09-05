@@ -39,7 +39,7 @@ final class BoopSherpaWakeSpotter implements AutoCloseable {
         config.setModelConfig(model);
         config.setKeywordsFile("boop-kws/keywords.txt");
         config.setMaxActivePaths(4);
-        config.setKeywordsScore(1.5f);
+        config.setKeywordsScore(BoopWakeSensitivity.keywordScore(context));
         config.setKeywordsThreshold(0.25f);
         config.setNumTrailingBlanks(1);
 
