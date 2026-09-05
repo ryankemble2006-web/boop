@@ -18,13 +18,13 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('android:scheme="boop"', text)
         self.assertIn('android:host="auth-callback"', text)
 
-    def test_build_is_alpha654_android36_java17(self):
+    def test_build_is_alpha655_android36_java17(self):
         text = Path('source/app-build.gradle').read_text(encoding='utf-8') if Path('source/app-build.gradle').exists() else ''
         self.assertIn('compileSdk 36', text)
         self.assertIn('targetSdk 36', text)
         self.assertIn('minSdk 29', text)
-        self.assertIn('versionCode 27', text)
-        self.assertIn('versionName "0.4.9-alpha6.5.4"', text)
+        self.assertIn('versionCode 28', text)
+        self.assertIn('versionName "0.4.9-alpha6.5.5"', text)
         self.assertIn('JavaVersion.VERSION_17', text)
         self.assertIn("implementation 'com.squareup.okhttp3:okhttp:4.12.0'", text)
         self.assertIn("testImplementation 'junit:junit:4.13.2'", text)
