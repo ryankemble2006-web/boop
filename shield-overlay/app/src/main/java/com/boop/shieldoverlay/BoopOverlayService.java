@@ -14,9 +14,15 @@ import android.os.IBinder;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
+import android.view.View;
 import android.view.WindowManager;
 
 public final class BoopOverlayService extends Service {
+    public static final String ACTION_HIDE_EYES =
+            "com.boop.shieldoverlay.action.HIDE_EYES";
+    public static final String ACTION_SHOW_EYES =
+            "com.boop.shieldoverlay.action.SHOW_EYES";
+
     private static final int NOTIFICATION_ID = 1001;
     private static final String CHANNEL_ID = "boop_overlay_poc";
 
@@ -41,6 +47,23 @@ public final class BoopOverlayService extends Service {
             stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
             return START_NOT_STICKY;
+        }
+
+        String action = intent == null ? null : intent.getAction();
+        if (ACTION_HIDE_EYES.equals(action)) {
+            if (overlayView != null) {
+                overlayView.setVisibility(View.GONE);
+            }
+            return START_STICKY;
+        }
+
+        if (ACTION_SHOW_EYES.equals(action)) {
+            ensureOverlay();
+            if (overlayView != null) {
+                overlayView.setVisibility(View.VISIBLE);
+                overlayView.postInvalidateOnAnimation();
+            }
+            return START_STICKY;
         }
 
         ensureOverlay();
