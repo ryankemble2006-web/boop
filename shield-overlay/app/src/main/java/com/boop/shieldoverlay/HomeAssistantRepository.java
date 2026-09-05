@@ -29,6 +29,22 @@ public final class HomeAssistantRepository {
         void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback);
     }
 
+    public interface StateChangePort {
+        interface Listener {
+            void onStateChanged(String entityId, String state);
+        }
+
+        interface Subscription {
+            void cancel();
+        }
+
+        interface Callback {
+            void onResult(Subscription subscription, String error);
+        }
+
+        void subscribe(Listener listener, Callback callback);
+    }
+
     public interface AreasCallback {
         void onResult(List<AreaInfo> areas, String error);
     }
@@ -42,12 +58,18 @@ public final class HomeAssistantRepository {
     }
 
     private final CommandPort commandPort;
+    private final StateChangePort stateChangePort;
 
     public HomeAssistantRepository(CommandPort commandPort) {
+        this(commandPort, null);
+    }
+
+    public HomeAssistantRepository(CommandPort commandPort, StateChangePort stateChangePort) {
         if (commandPort == null) {
             throw new IllegalArgumentException("Home Assistant command port is required");
         }
         this.commandPort = commandPort;
+        this.stateChangePort = stateChangePort;
     }
 
     public void loadAreas(AreasCallback callback) {
