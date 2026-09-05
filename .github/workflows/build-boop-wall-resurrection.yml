@@ -191,6 +191,18 @@ jobs:
             exit 1
           fi
           adb shell input keyevent 82 || true
+          RECOGNITION_SERVICES="$(adb shell cmd package query-services --brief --components --user 0 \
+            -a android.speech.RecognitionService)"
+          printf '%s\n' "$RECOGNITION_SERVICES"
+          ON_DEVICE_RECOGNIZER="$(printf '%s\n' "$RECOGNITION_SERVICES" \
+            | tr -d '\r' | grep '^com\.google\.android\.as/' | head -n 1 || true)"
+          if [ -z "$ON_DEVICE_RECOGNIZER" ]; then
+            echo '::error::Android System Intelligence recognition service is unavailable'
+            exit 1
+          fi
+          adb shell settings put secure voice_recognition_service "$ON_DEVICE_RECOGNIZER"
+          SELECTED_RECOGNIZER="$(adb shell settings get secure voice_recognition_service | tr -d '\r')"
+          test "$SELECTED_RECOGNIZER" = "$ON_DEVICE_RECOGNIZER"
 
       - name: Launch BOOP with wake microphone armed and verify process survives
         shell: bash

@@ -48,6 +48,19 @@ class WallResurrectionContractTest(unittest.TestCase):
                 result = subprocess.run([bash, "-c", "mode=" + mode + "\n" + textwrap.dedent(stub) + script], cwd=temp, capture_output=True, text=True, timeout=10)
                 self.assertEqual(expected, result.returncode, result.stdout + result.stderr)
 
+    def test_ci_selects_supplied_audio_capable_recognizer_before_launch(self):
+        workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
+        boot = workflow.split("      - name: Boot clean Android 16 Pixel 7 Pro emulator", 1)[1].split("      - name:", 1)[0]
+        launch_index = workflow.index("      - name: Launch BOOP with wake microphone armed")
+        for required in (
+                "query-services --brief --components",
+                "android.speech.RecognitionService",
+                r"com\.google\.android\.as/",
+                "voice_recognition_service",
+        ):
+            self.assertIn(required, boot)
+        self.assertLess(workflow.index("voice_recognition_service"), launch_index)
+
     def test_unified_workflow_gates_resurrection_apk(self):
         workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
         for required in ("boop-wall-resurrection", "testDebugUnitTest", "versionCode='29'",
