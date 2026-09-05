@@ -1,0 +1,29 @@
+name: Apply Alpha 6.6.2 follow-up ASR diagnostics
+
+on:
+  push:
+    branches: [ "diag-alpha662-followup-asr" ]
+    paths: [ "scripts/apply-alpha662-followup-diag.py" ]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: diag-alpha662-followup-asr
+          fetch-depth: 0
+      - name: Apply bounded diagnostic instrumentation
+        run: python3 scripts/apply-alpha662-followup-diag.py
+      - name: Commit diagnostic source
+        run: |
+          set -euo pipefail
+          git config user.name "boop-ci"
+          git config user.email "boop-ci@users.noreply.github.com"
+          git add source/MainActivity.java
+          git diff --cached --exit-code && exit 1 || true
+          git commit -m "Instrument follow-up speech callbacks"
+          git push origin HEAD:diag-alpha662-followup-asr
