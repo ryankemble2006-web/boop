@@ -159,6 +159,9 @@ public final class HomeAssistantRepository {
                         }
 
                         String areaId = clean(object.optString("ai", null));
+                        if (areaId == null) {
+                            areaId = room.id();
+                        }
                         String name = clean(object.optString("en", null));
                         boolean hidden = object.optBoolean("hb", false);
                         String category = entityCategory(object.opt("ec"), categories);
