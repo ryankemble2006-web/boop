@@ -1,4 +1,6 @@
 from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 
 
@@ -21,6 +23,28 @@ class BoopSigningTest(unittest.TestCase):
         text = (ROOT / ".gitignore").read_text(encoding="utf-8")
         self.assertIn("*.jks", text)
         self.assertIn("*.keystore", text)
+
+    def test_alpha1_signing_patch_injects_boop_dev_config(self):
+        script = ROOT / "scripts" / "apply_boop_dev_signing.py"
+        with tempfile.TemporaryDirectory() as tmp:
+            gradle = Path(tmp) / "build.gradle"
+            gradle.write_text(
+                "plugins { id 'com.android.application' }\n\n"
+                "android {\n"
+                "    compileSdk 36\n"
+                "    defaultConfig { applicationId 'com.boop.alpha1' }\n"
+                "}\n",
+                encoding="utf-8",
+            )
+            subprocess.run(
+                ["python3", str(script), str(gradle)],
+                check=True,
+                cwd=ROOT,
+            )
+            patched = gradle.read_text(encoding="utf-8")
+            self.assertIn("BOOP_SIGNING_STORE_FILE", patched)
+            self.assertIn("keyAlias 'boop-dev'", patched)
+            self.assertIn("signingConfig signingConfigs.boopDev", patched)
 
 
 if __name__ == "__main__":
