@@ -8,7 +8,7 @@ class Alpha654CustomizationFixesTests(unittest.TestCase):
         self.assertIn('Wake sensitivity', main)
         self.assertIn('BoopWakeSensitivity.PROGRESS_MAX', main)
         self.assertIn('BoopWakeSensitivity.loadProgress(this)', main)
-        self.assertIn('BoopWakeSensitivity.saveProgress(this, progress)', main)
+        self.assertIn('BoopWakeSensitivity.saveProgress(MainActivity.this, progress)', main)
 
     def test_default_sensitivity_is_exactly_alpha653_and_slider_is_monotonic(self):
         tuning = Path('source/BoopWakeSensitivity.java').read_text(encoding='utf-8')
