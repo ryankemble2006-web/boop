@@ -1,6 +1,7 @@
 package com.boop.alpha1;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
 final class HomeAssistantLightColourProtocol {
     private HomeAssistantLightColourProtocol() { }
 
-    static JSONObject serviceBody(List<String> entityIds, String colour) {
+    static JSONObject serviceBody(List<String> entityIds, String colour) throws JSONException {
         JSONArray entities = new JSONArray();
         for (String entityId : entityIds) {
             entities.put(entityId);
