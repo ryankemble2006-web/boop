@@ -1,5 +1,6 @@
 package com.boop.alpha1;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -67,10 +68,14 @@ public final class PinnedTlsPairingClient {
             socket.startHandshake();
 
             JSONObject json = new JSONObject();
-            json.put("session_id", link.sessionId());
-            json.put("secret", link.secret());
-            json.put("authorization_code", authorizationCode);
-            json.put("client_id", clientId);
+            try {
+                json.put("session_id", link.sessionId());
+                json.put("secret", link.secret());
+                json.put("authorization_code", authorizationCode);
+                json.put("client_id", clientId);
+            } catch (JSONException e) {
+                throw new IOException("Could not encode pairing handoff", e);
+            }
 
             BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
@@ -84,8 +89,12 @@ public final class PinnedTlsPairingClient {
             if (line == null || line.length() > 1024) {
                 return false;
             }
-            JSONObject response = new JSONObject(line);
-            return "accepted".equals(response.optString("status"));
+            try {
+                JSONObject response = new JSONObject(line);
+                return "accepted".equals(response.optString("status"));
+            } catch (JSONException e) {
+                throw new IOException("Could not decode Shield pairing response", e);
+            }
         }
     }
 
