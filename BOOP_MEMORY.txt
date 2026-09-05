@@ -292,12 +292,33 @@ CURRENT ENGINEERING TRUTH (2026-09-05)
 
 Active branch:
 
-    boop-shield-home-implementation
+    boop-wall-resurrection
 
 Current code HEAD at the time of reconciliation:
 
-    d7be623c89f270a3466336f7d0c306c83b6a2ced
-    fix: restore Home Assistant automations as routines
+    c9a7d07f60d0ed7cd2c96247c28552c1d3da10f3
+    ci: require actual wake microphone capture before launch passes
+
+BOOP Wall resurrection implementation status:
+
+- Built from the exact Alpha 6.5.5 natural-wake base
+  e6f3f5afc3390ff0dded1239abbb81f1a3763ed0.
+- All 33 natural wake phrases and their compiled `@BOOP` mappings are preserved.
+- Current exact Home Assistant agent identity `BOOP` is preferred, with historic
+  BOOP/OpenCode and generic OpenCode compatibility retained.
+- Immediate local Home Assistant control and direct media routing remain ahead
+  of general conversation, so they do not depend on OpenCode availability.
+- The separate Shield QR pairing companion and stable BOOP development signing
+  contract are integrated without changing the protected Shield runtime.
+- The CI gate requires real positive microphone capture before treating the
+  wake path as armed; a merely live Android process is not enough.
+- Timed voice routines remain deliberately absent pending redesign.
+- Local source verification passes 121 tests.
+- CI status: NOT YET RUN for this branch.
+- Physical Pixel 7 Pro status: NOT YET TESTED.
+
+No BOOP Wall physical checkpoint exists and none may be created until the exact
+signed APK passes the complete Pixel acceptance checklist.
 
 Physically verified green:
 
