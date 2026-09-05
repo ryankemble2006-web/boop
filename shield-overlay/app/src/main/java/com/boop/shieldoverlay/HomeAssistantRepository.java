@@ -13,11 +13,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class HomeAssistantRepository {
-    private static final long BINARY_CONFIRM_DELAY_MS = 250L;
-    private static final int BINARY_CONFIRM_MAX_READS = 5;
+    private static final long BINARY_CONFIRM_TIMEOUT_MS = 5000L;
     private static final ScheduledExecutorService BINARY_CONFIRM_EXECUTOR =
             Executors.newSingleThreadScheduledExecutor(runnable -> {
                 Thread thread = new Thread(runnable, "boop-ha-confirm");
@@ -283,6 +283,10 @@ public final class HomeAssistantRepository {
             callback.onResult(false, null, "That control isn't a simple on/off thing.");
             return;
         }
+        if (stateChangePort == null) {
+            callback.onResult(false, null, "I couldn't listen for the new Home Assistant state.");
+            return;
+        }
 
         String expectedState = "off".equals(card.state()) ? "on" : "off";
         String service = "off".equals(card.state()) ? "turn_on" : "turn_off";
@@ -298,71 +302,133 @@ public final class HomeAssistantRepository {
             return;
         }
 
-        commandPort.send("call_service", body, (success, result, error) -> {
-            if (!success) {
-                callback.onResult(false, null, plainError(error, "Home Assistant didn't do that."));
-                return;
-            }
-            refreshExactState(card, expectedState, BINARY_CONFIRM_MAX_READS, callback);
-        });
+        new BinaryConfirmation(card, expectedState, body, callback).start();
     }
 
-    private void refreshExactState(
-            EntityCard original,
-            String expectedState,
-            int remainingReads,
-            BinaryActionCallback callback) {
-        commandPort.send("get_states", new JSONObject(), (success, result, error) -> {
-            if (!success) {
-                callback.onResult(
-                        false,
-                        null,
-                        plainError(error, "Home Assistant changed it, but I couldn't confirm the new state."));
-                return;
+    private final class BinaryConfirmation {
+        private final EntityCard original;
+        private final String expectedState;
+        private final JSONObject serviceBody;
+        private final BinaryActionCallback callback;
+
+        private StateChangePort.Subscription subscription;
+        private ScheduledFuture<?> timeout;
+        private boolean serviceSucceeded;
+        private boolean expectedStateSeen;
+        private boolean done;
+
+        BinaryConfirmation(
+                EntityCard original,
+                String expectedState,
+                JSONObject serviceBody,
+                BinaryActionCallback callback) {
+            this.original = original;
+            this.expectedState = expectedState;
+            this.serviceBody = serviceBody;
+            this.callback = callback;
+        }
+
+        void start() {
+            try {
+                stateChangePort.subscribe(this::onStateChanged, this::onSubscribed);
+            } catch (RuntimeException couldNotSubscribe) {
+                complete(false, "I couldn't listen for the new Home Assistant state.");
             }
-            if (!(result instanceof JSONArray)) {
-                callback.onResult(false, null, "Home Assistant changed it, but I couldn't confirm the new state.");
+        }
+
+        private void onSubscribed(StateChangePort.Subscription active, String error) {
+            if (active == null || error != null) {
+                if (active != null) {
+                    active.cancel();
+                }
+                complete(false, plainError(error, "I couldn't listen for the new Home Assistant state."));
                 return;
             }
 
-            JSONArray states = (JSONArray) result;
-            boolean found = false;
-            for (int index = 0; index < states.length(); index++) {
-                Object item = states.opt(index);
-                if (!(item instanceof JSONObject)) {
-                    continue;
-                }
-                JSONObject state = (JSONObject) item;
-                if (!original.entityId().equals(clean(state.optString("entity_id", null)))) {
-                    continue;
-                }
-                found = true;
-                String newState = clean(state.optString("state", null));
-                if (expectedState.equals(newState)) {
-                    callback.onResult(true, original.withState(newState), null);
+            synchronized (this) {
+                if (done) {
+                    active.cancel();
                     return;
                 }
-                break;
+                subscription = active;
+                timeout = BINARY_CONFIRM_EXECUTOR.schedule(
+                        () -> complete(
+                                false,
+                                "Home Assistant changed it, but I couldn't confirm the new state."),
+                        BINARY_CONFIRM_TIMEOUT_MS,
+                        TimeUnit.MILLISECONDS);
             }
 
-            if (remainingReads > 1) {
-                BINARY_CONFIRM_EXECUTOR.schedule(
-                        () -> refreshExactState(
-                                original,
-                                expectedState,
-                                remainingReads - 1,
-                                callback),
-                        BINARY_CONFIRM_DELAY_MS,
-                        TimeUnit.MILLISECONDS);
+            try {
+                commandPort.send("call_service", serviceBody, this::onServiceResult);
+            } catch (RuntimeException couldNotSend) {
+                complete(false, "Home Assistant didn't do that.");
+            }
+        }
+
+        private void onStateChanged(String entityId, String state) {
+            if (!original.entityId().equals(clean(entityId))
+                    || !expectedState.equals(clean(state))) {
                 return;
             }
 
-            if (found) {
-                callback.onResult(false, null, "Home Assistant changed it, but I couldn't confirm the new state.");
-            } else {
-                callback.onResult(false, null, "Home Assistant changed it, but I couldn't find that control afterwards.");
+            boolean finish;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                expectedStateSeen = true;
+                finish = serviceSucceeded;
             }
-        });
+            if (finish) {
+                complete(true, null);
+            }
+        }
+
+        private void onServiceResult(boolean success, Object result, String error) {
+            if (!success) {
+                complete(false, plainError(error, "Home Assistant didn't do that."));
+                return;
+            }
+
+            boolean finish;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                serviceSucceeded = true;
+                finish = expectedStateSeen;
+            }
+            if (finish) {
+                complete(true, null);
+            }
+        }
+
+        private void complete(boolean success, String error) {
+            final StateChangePort.Subscription toCancel;
+            final ScheduledFuture<?> timeoutToCancel;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                done = true;
+                toCancel = subscription;
+                subscription = null;
+                timeoutToCancel = timeout;
+                timeout = null;
+            }
+
+            if (timeoutToCancel != null) {
+                timeoutToCancel.cancel(false);
+            }
+            if (toCancel != null) {
+                toCancel.cancel();
+            }
+            callback.onResult(
+                    success,
+                    success ? original.withState(expectedState) : null,
+                    success ? null : plainError(error, "Home Assistant didn't do that."));
+        }
     }
 
     private static Set<String> referencedEntities(JSONObject result) {
