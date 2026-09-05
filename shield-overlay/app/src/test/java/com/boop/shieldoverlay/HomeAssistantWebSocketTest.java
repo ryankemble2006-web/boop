@@ -36,6 +36,7 @@ public final class HomeAssistantWebSocketTest {
     public void authenticatesThenUsesMonotonicCommandIds() throws Exception {
         CountDownLatch authSeen = new CountDownLatch(1);
         CountDownLatch commandsSeen = new CountDownLatch(2);
+        CountDownLatch serverClosed = new CountDownLatch(1);
         AtomicReference<String> authMessage = new AtomicReference<>();
         AtomicReference<String> firstCommand = new AtomicReference<>();
         AtomicReference<String> secondCommand = new AtomicReference<>();
@@ -63,6 +64,16 @@ public final class HomeAssistantWebSocketTest {
                 }
                 commandsSeen.countDown();
             }
+
+            @Override
+            public void onClosing(WebSocket webSocket, int code, String reason) {
+                webSocket.close(code, reason);
+            }
+
+            @Override
+            public void onClosed(WebSocket webSocket, int code, String reason) {
+                serverClosed.countDown();
+            }
         }));
 
         CountDownLatch ready = new CountDownLatch(1);
@@ -88,10 +99,12 @@ public final class HomeAssistantWebSocketTest {
         assertEquals("config/area_registry/list", first.getString("type"));
         assertEquals("get_states", second.getString("type"));
         socket.close();
+        assertTrue(serverClosed.await(3, TimeUnit.SECONDS));
     }
 
     @Test
     public void authInvalidIsReauthFailureNotReady() throws Exception {
+        CountDownLatch serverClosed = new CountDownLatch(1);
         server.enqueue(new MockResponse().withWebSocketUpgrade(new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
@@ -102,6 +115,11 @@ public final class HomeAssistantWebSocketTest {
             public void onMessage(WebSocket webSocket, String text) {
                 webSocket.send("{\"type\":\"auth_invalid\",\"message\":\"Invalid access token\"}");
                 webSocket.close(1000, "test complete");
+            }
+
+            @Override
+            public void onClosed(WebSocket webSocket, int code, String reason) {
+                serverClosed.countDown();
             }
         }));
 
@@ -117,5 +135,6 @@ public final class HomeAssistantWebSocketTest {
         assertTrue(reauth.await(3, TimeUnit.SECONDS));
         assertFalse(ready.await(200, TimeUnit.MILLISECONDS));
         socket.close();
+        assertTrue(serverClosed.await(3, TimeUnit.SECONDS));
     }
 }
