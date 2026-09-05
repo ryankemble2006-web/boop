@@ -43,21 +43,29 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, manifest)
 
+    def test_service_promotes_with_declared_special_use_type(self):
+        source = self.read("java/com/boop/shieldoverlay/BoopOverlayService.java")
+        self.assertIn("FOREGROUND_SERVICE_TYPE_SPECIAL_USE", source)
+
+    def test_java_only_module_disables_builtin_kotlin(self):
+        gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
+        self.assertIn("enableKotlin = false", gradle)
+
     def test_java_sources_do_not_import_voice_network_or_home_assistant(self):
         java_root = APP / "java" / "com" / "boop" / "shieldoverlay"
         self.assertTrue(java_root.exists(), f"missing source folder: {java_root.relative_to(ROOT)}")
         combined = "\n".join(
             p.read_text(encoding="utf-8") for p in sorted(java_root.glob("*.java"))
-        )
+        ).lower()
         for forbidden in (
             "android.speech",
-            "android.media.AudioRecord",
+            "android.media.audiorecord",
             "java.net",
             "okhttp",
             "retrofit",
             "homeassistant",
         ):
-            self.assertNotIn(forbidden, combined.lower())
+            self.assertNotIn(forbidden, combined)
 
 
 if __name__ == "__main__":
