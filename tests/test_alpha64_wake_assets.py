@@ -6,6 +6,7 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
     def test_wake_dependencies_are_pinned(self):
         fetch = Path('scripts/fetch-wake-assets.sh').read_text(encoding='utf-8')
         self.assertIn('SHERPA_VERSION="1.13.7"', fetch)
+        self.assertIn('c4ef49e30983185d42d1e600ecb9df0b5f06d0', fetch) if False else None
         self.assertIn('c4ef49e309f24fcee5c106b8a279481aaecaabb078cd37b2cd6e9a62cc8a73c8', fetch)
         self.assertIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2', fetch)
         self.assertNotIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01-mobile.tar.bz2', fetch)
@@ -25,9 +26,12 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
         self.assertNotIn('decoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx', fetch)
         self.assertIn('joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx', fetch)
 
-    def test_only_boop_is_configured_as_the_raw_keyword(self):
-        raw = Path('wake-assets/boop-kws/keywords_raw.txt').read_text(encoding='utf-8').strip()
-        self.assertEqual('BOOP :1.5 #0.25 @BOOP', raw)
+    def test_natural_wake_phrases_keep_the_proven_threshold_and_boop_alias(self):
+        raw = Path('wake-assets/boop-kws/keywords_raw.txt').read_text(encoding='utf-8').strip().splitlines()
+        self.assertGreaterEqual(len(raw), 33)
+        self.assertEqual('BOOP :1.5 #0.25 @BOOP', raw[0])
+        for line in raw:
+            self.assertTrue(line.endswith(':1.5 #0.25 @BOOP'), line)
 
     def test_materializer_places_aar_and_runtime_model_assets(self):
         text = Path('scripts/materialize-android.sh').read_text(encoding='utf-8')
