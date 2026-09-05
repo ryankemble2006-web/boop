@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BOOP HDR Debug</string>
+    <string name="notification_channel_name">BOOP HDR diagnostics</string>
+    <string name="notification_channel_description">Keeps BOOP HDR diagnostics alive while testing display mode changes</string>
+    <string name="notification_title">BOOP HDR Debug is running</string>
+    <string name="notification_text">Recording overlay and display-mode events</string>
+</resources>

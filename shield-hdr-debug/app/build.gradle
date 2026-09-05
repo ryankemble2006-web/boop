@@ -1,0 +1,21 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.boop.shieldhdrdebug'
+    compileSdk 36
+    enableKotlin = false
+
+    defaultConfig {
+        applicationId 'com.boop.shieldhdrdebug'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '0.1-hdr-debug'
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
