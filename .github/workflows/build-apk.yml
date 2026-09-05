@@ -25,7 +25,10 @@ jobs:
 
       - name: Apply editable BOOP source
         run: |
-          cp source/MainActivity.java boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java
+          PACKAGE_DIR=boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1
+          cp source/MainActivity.java "$PACKAGE_DIR/MainActivity.java"
+          cp source/companion/*.java "$PACKAGE_DIR/"
+          python3 scripts/patch_alpha1_companion.py boop-build/BOOP-Alpha1/app/src/main/AndroidManifest.xml
 
       - name: Inspect launch-critical source
         run: |
