@@ -59,6 +59,9 @@ public final class BoopHomeActivity extends Activity {
     private HomeDashboardController dashboardController;
     private HomeDashboardController.ViewState dashboardState;
     private TvHomeView homeView;
+    private RoutinesController routinesController;
+    private RoutinesController.ViewState routinesState;
+    private TvRoutinesView routinesView;
     private int dashboardReconnectAttempt;
 
     @Override
@@ -133,10 +136,13 @@ public final class BoopHomeActivity extends Activity {
             pairingController.close();
             pairingController = null;
         }
+        closeRoutinesController();
         closeHomeSocket();
         dashboardController = null;
         dashboardState = null;
         homeView = null;
+        routinesState = null;
+        routinesView = null;
         if (pairingExecutor != null) {
             pairingExecutor.shutdownNow();
             pairingExecutor = null;
@@ -474,6 +480,7 @@ public final class BoopHomeActivity extends Activity {
     }
 
     private void showHomeShell() {
+        closeRoutinesController();
         closeHomeSocket();
         pairingView = null;
         roomPickerView = null;
@@ -481,6 +488,8 @@ public final class BoopHomeActivity extends Activity {
         navigationModel = new TvNavigationModel();
         dashboardController = null;
         dashboardState = null;
+        routinesState = RoutinesController.ViewState.loading();
+        routinesView = null;
         dashboardReconnectAttempt = 0;
 
         LinearLayout root = new LinearLayout(this);
@@ -524,6 +533,7 @@ public final class BoopHomeActivity extends Activity {
         }
 
         mainHandler.removeCallbacks(dashboardReconnectRunnable);
+        closeRoutinesController();
         closeHomeSocket();
         ensureHomeExecutor().execute(() -> {
             try {
@@ -536,6 +546,7 @@ public final class BoopHomeActivity extends Activity {
                 runOnUiThread(() -> {
                     if (sameSelectedRoom(room) && homeShellVisible) {
                         showOfflineDashboard(room, "Home Assistant is offline.");
+                        markRoutinesOffline();
                         scheduleHomeDashboardReconnect();
                     }
                 });
@@ -549,6 +560,7 @@ public final class BoopHomeActivity extends Activity {
             return;
         }
 
+        closeRoutinesController();
         closeHomeSocket();
         HomeAssistantWebSocket socket = new HomeAssistantWebSocket(
                 new OkHttpClient.Builder().build());
@@ -606,6 +618,70 @@ public final class BoopHomeActivity extends Activity {
                             };
                     dashboardController = createDashboardController(room, repositoryPort);
                     dashboardController.start();
+
+                    RoutinesRepository.StateChangePort routinesStateChangePort =
+                            new RoutinesRepository.StateChangePort() {
+                                @Override
+                                public void subscribe(
+                                        RoutinesRepository.StateChangePort.Listener listener,
+                                        RoutinesRepository.StateChangePort.Callback callback) {
+                                    socket.subscribeStateChanges(
+                                            listener::onStateChanged,
+                                            (subscription, error) -> {
+                                                RoutinesRepository.StateChangePort.Subscription mapped =
+                                                        subscription == null
+                                                                ? null
+                                                                : subscription::cancel;
+                                                callback.onResult(mapped, error);
+                                            });
+                                }
+                            };
+                    RoutinesRepository routinesRepository = new RoutinesRepository(
+                            socket::send,
+                            routinesStateChangePort);
+                    RoutinesController.RepositoryPort routinesRepositoryPort =
+                            new RoutinesController.RepositoryPort() {
+                                @Override
+                                public void loadRoutines(RoutinesRepository.LoadCallback callback) {
+                                    try {
+                                        routinesRepository.loadRoutines(callback);
+                                    } catch (RuntimeException unavailable) {
+                                        callback.onResult(null, "Home Assistant is offline.");
+                                    }
+                                }
+
+                                @Override
+                                public RoutinesRepository.Execution run(
+                                        RoutineItem routine,
+                                        RoutinesRepository.RunCallback callback) {
+                                    try {
+                                        return routinesRepository.run(routine, callback);
+                                    } catch (RuntimeException unavailable) {
+                                        callback.onResult(false, "Home Assistant is offline.");
+                                        return () -> { };
+                                    }
+                                }
+                            };
+                    RoutinesController.SchedulerPort routinesScheduler = (delayMs, runnable) -> {
+                        mainHandler.postDelayed(runnable, delayMs);
+                        return () -> mainHandler.removeCallbacks(runnable);
+                    };
+                    closeRoutinesController();
+                    routinesController = new RoutinesController(
+                            routinesRepositoryPort,
+                            routinesScheduler,
+                            state -> runOnUiThread(() -> {
+                                if (socket != homeSocket || !homeShellVisible
+                                        || !sameSelectedRoom(room)
+                                        || isFinishing() || isDestroyed()) {
+                                    return;
+                                }
+                                routinesState = state;
+                                if (routinesView != null) {
+                                    routinesView.render(state);
+                                }
+                            }));
+                    routinesController.start();
                 });
             }
 
@@ -620,6 +696,7 @@ public final class BoopHomeActivity extends Activity {
                     } else {
                         dashboardController.markOffline("Home Assistant is offline.");
                     }
+                    markRoutinesOffline();
                     scheduleHomeDashboardReconnect();
                 });
             }
@@ -638,6 +715,7 @@ public final class BoopHomeActivity extends Activity {
                         dashboardController.markOffline(
                                 "Home Assistant needs BOOP to pair again.");
                     }
+                    markRoutinesOffline();
                 });
             }
         });
@@ -773,11 +851,27 @@ public final class BoopHomeActivity extends Activity {
 
         if (page == TvNavigationModel.Page.ROUTINES) {
             homeView = null;
-            TvRoutinesView routinesView = new TvRoutinesView(this, onContentLeft);
+            routinesView = new TvRoutinesView(this, new TvRoutinesView.Listener() {
+                @Override
+                public void onRun(String entityId) {
+                    if (routinesController != null) {
+                        routinesController.runRoutine(entityId);
+                    }
+                }
+
+                @Override
+                public void onContentLeft() {
+                    returnContentFocusToRail();
+                }
+            });
+            if (routinesState != null) {
+                routinesView.render(routinesState);
+            }
             pageView = routinesView;
             currentPageFirstFocusable = routinesView.firstFocusable();
         } else if (page == TvNavigationModel.Page.SETTINGS) {
             homeView = null;
+            routinesView = null;
             TvSettingsView settingsView = new TvSettingsView(
                     this,
                     room,
@@ -786,6 +880,7 @@ public final class BoopHomeActivity extends Activity {
             pageView = settingsView;
             currentPageFirstFocusable = settingsView.firstFocusable();
         } else {
+            routinesView = null;
             homeView = new TvHomeView(
                     this,
                     room,
@@ -862,12 +957,34 @@ public final class BoopHomeActivity extends Activity {
         dashboardController = null;
         dashboardState = null;
         homeView = null;
+        closeRoutinesController();
+        routinesState = null;
+        routinesView = null;
         navigationModel = null;
         navigationContent = null;
         homeRailCard = null;
         routinesRailCard = null;
         settingsRailCard = null;
         currentPageFirstFocusable = null;
+    }
+
+    private void markRoutinesOffline() {
+        if (routinesController != null) {
+            routinesController.markOffline();
+            return;
+        }
+        routinesState = RoutinesController.ViewState.offline();
+        if (routinesView != null) {
+            routinesView.render(routinesState);
+        }
+    }
+
+    private void closeRoutinesController() {
+        RoutinesController controller = routinesController;
+        routinesController = null;
+        if (controller != null) {
+            controller.close();
+        }
     }
 
     private void restartPairing() {

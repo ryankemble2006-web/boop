@@ -114,6 +114,22 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("onRun", source)
         self.assertNotIn("bringToFront()", source)
 
+    def test_home_activity_wires_routines_to_existing_ha_socket(self):
+        home = self.read("java/com/boop/shieldoverlay/BoopHomeActivity.java")
+        self.assertIn("RoutinesRepository", home)
+        self.assertIn("RoutinesController", home)
+        self.assertIn("subscribeStateChanges", home)
+        self.assertIn("runRoutine", home)
+        self.assertIn("routinesView.render", home)
+
+    def test_home_session_failure_marks_routines_offline(self):
+        home = self.read("java/com/boop/shieldoverlay/BoopHomeActivity.java")
+        method_start = home.index("private void startHomeDashboard()")
+        method_end = home.index("private void connectForHomeDashboard", method_start)
+        method = home[method_start:method_end]
+        catch_block = method[method.index("catch (Exception e)"):]
+        self.assertIn("markRoutinesOffline()", catch_block)
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)

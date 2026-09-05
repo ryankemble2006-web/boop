@@ -163,6 +163,26 @@ public final class RoutinesControllerTest {
     }
 
     @Test
+    public void markOfflineAfterRunFailureRetainsFailureThenCollapses() {
+        FakeRepository repository = repositoryWithTwoItems();
+        ManualScheduler scheduler = new ManualScheduler();
+        AtomicReference<RoutinesController.ViewState> rendered = new AtomicReference<>();
+        RoutinesController controller = new RoutinesController(repository, scheduler, rendered::set);
+        controller.start();
+        controller.runRoutine("scene.movie");
+        repository.complete("scene.movie", false, "Home Assistant disconnected.");
+
+        controller.markOffline();
+
+        assertEquals(RoutinesController.PageStatus.OFFLINE, rendered.get().pageStatus());
+        assertEquals(RoutinesController.RowStatus.FAILED,
+                row(rendered.get(), "scene.movie").status());
+        assertTrue(scheduler.hasDelay(2_000L));
+        scheduler.runDelay(2_000L);
+        assertTrue(rendered.get().rows().isEmpty());
+    }
+
+    @Test
     public void closeCancelsActiveWorkAndIgnoresLateCallbacks() {
         FakeRepository repository = repositoryWithTwoItems();
         ManualScheduler scheduler = new ManualScheduler();

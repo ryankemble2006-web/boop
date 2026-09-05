@@ -237,7 +237,7 @@ public final class RoutinesController implements AutoCloseable {
             timers.addAll(resetTasks.values());
             resetTasks.clear();
 
-            boolean hadRunning = false;
+            boolean hadFailure = statuses.containsValue(RowStatus.FAILED);
             for (Operation operation : operations.values()) {
                 if (operation.execution != null) {
                     executions.add(operation.execution);
@@ -247,12 +247,12 @@ public final class RoutinesController implements AutoCloseable {
                 }
                 if (statuses.get(operation.routine.entityId()) == RowStatus.RUNNING) {
                     statuses.put(operation.routine.entityId(), RowStatus.FAILED);
-                    hadRunning = true;
+                    hadFailure = true;
                 }
             }
             operations.clear();
 
-            retainFailedRows = hadRunning;
+            retainFailedRows = hadFailure;
             if (!retainFailedRows) {
                 routines.clear();
                 statuses.clear();
