@@ -150,8 +150,9 @@ The OpenCode Wyoming bridge adds per-Home-Assistant-conversation state:
   Assistant entities and existing automations.
 - `PENDING_CONFIRMATION` has no write capability. It retains one validated
   proposal, its digest and its expiry.
-- `CREATING` is entered only by the exact context-bound `yes please`. It exposes
-  exactly one proven automation-creation capability for one turn.
+- `CREATING` is entered only by the exact context-bound `yes please`. OpenCode
+  receives no write tool in this state; the bridge invokes its own bounded
+  automation-creation adapter once with the stored validated proposal.
 - Every success, refusal, cancellation, timeout or error returns to `CHAT` and
   revokes authoring capabilities.
 
@@ -176,14 +177,16 @@ The implementation begins with a live inventory of the OpenCode tools available
 in the installed Home Assistant add-on. Tool identifiers are matched against an
 explicit allowlist; prefix or substring guesses are forbidden.
 
-The design is viable only if the live environment provides separable:
+The design is viable only if the live environment provides:
 
-1. read-only Home Assistant entity/automation inspection; and
-2. a bounded native Home Assistant automation-creation operation.
+1. exact read-only Home Assistant entity/automation inspection tools;
+2. the non-mutating OpenCode skill loader for
+   `home-assistant-configuration`; and
+3. the add-on's bundled `hab automation create` command.
 
 The bridge must fail closed when those capabilities are absent, renamed or
-ambiguous. It must never enable general shell execution, arbitrary file editing,
-or every Home Assistant tool as a workaround. The
+ambiguous. It must never expose `hab_run`, general shell execution, arbitrary
+file editing, or every Home Assistant tool to the model as a workaround. The
 `home-assistant-configuration` skill supplies planning guidance, but a skill does
 not override the bridge's capability allowlist or state machine.
 
@@ -193,11 +196,19 @@ boundary.
 
 ### Native Home Assistant ownership
 
-Automation creation uses Home Assistant's native configuration interface rather
-than editing `automations.yaml` directly. Home Assistant assigns/persists the
-automation, validates its configuration and remains responsible for execution.
-The bridge performs a read-after-write verification and does not reload or
-restart Home Assistant unless the native interface explicitly requires it.
+Automation creation uses the OpenCode add-on's bundled, pre-authenticated `hab`
+CLI, which creates automations through Home Assistant's API, rather than editing
+`automations.yaml` directly. The bridge deterministically renders the validated
+proposal to a mode-0600 temporary YAML file and invokes an argument-vector
+subprocess equivalent to:
+
+    hab automation create <validated-slug> -f <temporary-yaml>
+
+No shell interpreter, user-controlled command fragment or OpenCode tool call is
+involved. The temporary file is removed in a `finally` path. Home Assistant
+assigns/persists the automation and remains responsible for execution. The
+bridge performs a read-after-write verification and does not reload or restart
+Home Assistant unless the native interface explicitly requires it.
 
 Routine names are generated from the requested action and trigger. Existing
 automations are inspected first; an exact equivalent or conflicting duplicate
@@ -242,10 +253,11 @@ triggers/domains/services, duplicate handling and exact confirmation semantics.
 Bridge tests use fake OpenCode and Home Assistant clients to prove:
 
 - ordinary chat disables all discovered tools;
-- authoring read turns receive only the exact read allowlist;
-- write capability is absent before confirmation;
+- authoring read turns receive only the exact read allowlist and skill loader;
+- OpenCode receives no write capability before or after confirmation;
 - `yes please` without the matching pending proposal cannot write;
-- confirmation exposes one exact creation capability for one turn;
+- confirmation invokes one argument-vector `hab automation create` operation
+  from the stored proposal, without a shell;
 - creation is idempotent across an uncertain response;
 - success requires read-after-write verification;
 - no creation call executes the new automation; and
