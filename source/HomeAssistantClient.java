@@ -19,12 +19,14 @@ final class HomeAssistantClient {
     private final SecureTokenStore tokenStore;
     private final HomeAssistantAuth auth;
     private final String homeArea;
+    private final HomeAssistantLightColourClient lightColour;
     private final HomeAssistantDirectMediaClient directMedia;
 
     HomeAssistantClient(SecureTokenStore tokenStore, HomeAssistantAuth auth, String homeArea) {
         this.tokenStore = tokenStore;
         this.auth = auth;
         this.homeArea = homeArea;
+        this.lightColour = new HomeAssistantLightColourClient(homeArea);
         this.directMedia = new HomeAssistantDirectMediaClient(homeArea);
     }
 
@@ -41,6 +43,11 @@ final class HomeAssistantClient {
 
         try {
             String accessToken = auth.freshAccessToken();
+
+            String colour = LightColourCommandParser.parseColour(text);
+            if (colour != null) {
+                return lightColour.setColour(baseUrl, accessToken, colour);
+            }
 
             CommandOutcome directMediaOutcome =
                     directMedia.processIfMedia(baseUrl, accessToken, text);
