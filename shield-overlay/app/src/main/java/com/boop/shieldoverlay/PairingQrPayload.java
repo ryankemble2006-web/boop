@@ -1,5 +1,6 @@
 package com.boop.shieldoverlay;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -140,17 +141,25 @@ public final class PairingQrPayload {
     }
 
     private static String requireText(String value, String label) {
-        if (value == null || value.isBlank()) {
+        if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(label + " is required");
         }
         return value;
     }
 
     private static String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+        try {
+            return URLEncoder.encode(value, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException impossible) {
+            throw new IllegalStateException("UTF-8 unavailable", impossible);
+        }
     }
 
     private static String decode(String value) {
-        return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException impossible) {
+            throw new IllegalStateException("UTF-8 unavailable", impossible);
+        }
     }
 }
