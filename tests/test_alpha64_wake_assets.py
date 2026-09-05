@@ -6,7 +6,6 @@ class Alpha64WakeAssetsTest(unittest.TestCase):
     def test_wake_dependencies_are_pinned(self):
         fetch = Path('scripts/fetch-wake-assets.sh').read_text(encoding='utf-8')
         self.assertIn('SHERPA_VERSION="1.13.7"', fetch)
-        self.assertIn('c4ef49e30983185d42d1e600ecb9df0b5f06d0', fetch) if False else None
         self.assertIn('c4ef49e309f24fcee5c106b8a279481aaecaabb078cd37b2cd6e9a62cc8a73c8', fetch)
         self.assertIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2', fetch)
         self.assertNotIn('sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01-mobile.tar.bz2', fetch)
