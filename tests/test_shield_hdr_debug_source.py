@@ -55,6 +55,12 @@ class ShieldHdrDebugSourceTest(unittest.TestCase):
         ):
             self.assertIn(required, service)
 
+    def test_overlay_geometry_uses_current_window_metrics_not_physical_output_mode(self):
+        service = self.read("shield-hdr-debug/app/src/main/java/com/boop/shieldhdrdebug/BoopHdrDebugService.java")
+        self.assertIn("getCurrentWindowMetrics", service)
+        self.assertNotIn("getMode().getPhysicalWidth()", service)
+        self.assertNotIn("getMode().getPhysicalHeight()", service)
+
     def test_panel_is_photo_friendly_and_contains_previous_session(self):
         panel = self.read("shield-hdr-debug/app/src/main/java/com/boop/shieldhdrdebug/DiagnosticPanelView.java")
         for required in (
