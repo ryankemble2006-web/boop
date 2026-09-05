@@ -47,6 +47,15 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         source = self.read("java/com/boop/shieldoverlay/BoopOverlayService.java")
         self.assertIn("FOREGROUND_SERVICE_TYPE_SPECIAL_USE", source)
 
+    def test_display_mode_change_reasserts_existing_eye_surface(self):
+        source = self.read("java/com/boop/shieldoverlay/BoopOverlayService.java")
+        self.assertIn("DisplayManager.DisplayListener", source)
+        self.assertIn("onDisplayChanged", source)
+        self.assertIn("registerDisplayListener", source)
+        self.assertIn("unregisterDisplayListener", source)
+        self.assertIn("postInvalidateOnAnimation", source)
+        self.assertNotIn("postDelayed", source)
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
