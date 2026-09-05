@@ -274,11 +274,12 @@ Physically verified green:
 - Truthful confirmation from real state_changed events.
 - Focus ordering fix and the protected Shield Home checkpoint.
 
-Protected physical checkpoint:
+Protected physical checkpoints:
 
     checkpoint-shield-home-f8e8135
+    checkpoint-shield-routines-3fa18c6
 
-Implemented and previously CI-green, but NOT yet physically verified as a whole:
+Routines v1 at signed physical code head 3fa18c6:
 
 - Shield Routines v1 discovery and execution for automation.*, script.* and
   scene.* entities.
@@ -289,11 +290,10 @@ Implemented and previously CI-green, but NOT yet physically verified as a whole:
 - Scrollable remote-first Routines view.
 - Activity composition on the existing authenticated Home Assistant WebSocket.
 
-The later 3fa18c6 start-confirmation correction is CI-green and partially
-physically verified. The remaining Shield sofa checklist must pass before a
-Routines physical checkpoint may be created.
+The later 3fa18c6 start-confirmation correction is CI-green and physically green
+for the routine types available in the paired Home Assistant instance.
 
-Partial physical verification on 2026-09-05:
+Physical verification on 2026-09-05:
 
 - All three existing Home Assistant automations appeared in BOOP's Routines UI.
 - The user could select each of those three rows and activate the routine.
@@ -311,16 +311,27 @@ Partial physical verification on 2026-09-05:
   start feedback is therefore physically green. Navigation, scrolling where
   applicable, duplicate suppression, scene/script lifecycle coverage and the
   existing Home regression remain outside that specific confirmation.
+- Routines remote navigation is also physically green on signed build 3fa18c6:
+  Up/Down navigation had no issues, Left returned to the Routines rail item, and
+  the routine order remained stable.
+- The protected Home favourite path also passed regression testing: the correct
+  device changed, its real state appeared almost immediately, and the existing
+  10-second confirmation safety window had ample margin.
+- This Home Assistant inventory exposed three automations and no script or scene
+  routines. Scrolling was unnecessary with three rows, and script/scene physical
+  lifecycle checks were therefore not applicable. Their automated contracts
+  remain green.
 
-Do not call Routines v1 physically green as a whole until the remaining sofa
-checks pass.
+Routines v1 is physically green for the available Shield/Home Assistant setup.
+Its protected functional code checkpoint is:
+
+    checkpoint-shield-routines-3fa18c6
 
 Current intended work order:
 
-1. Finish the remaining Routines sofa checks, especially navigation and the Home
-   regression.
-2. Create a Routines checkpoint only after physical green as a whole.
-3. Return to the latest Pixel Alpha and rebuild its setup around the newer secure
+1. Preserve checkpoint-shield-routines-3fa18c6 and the older protected Home
+   checkpoint.
+2. Return to the latest Pixel Alpha and rebuild its setup around the newer secure
    QR pairing/authentication flow without discarding its proven puppet behaviour.
 
 
@@ -330,6 +341,7 @@ PROTECTED CODE AND CHECKPOINTS
 Do not move, rewrite or repoint:
 
     checkpoint-shield-home-f8e8135
+    checkpoint-shield-routines-3fa18c6
 
 Treat these files as protected unless a failing regression proves a change is
 required:
