@@ -1,7 +1,7 @@
 # BOOP Wall Resurrection Design
 
-**Status:** Approved direction; awaiting final user review  
-**Date:** 2026-09-05  
+**Status:** Approved direction; awaiting final user review
+**Date:** 2026-09-05
 **Target:** Pixel 7 Pro BOOP Wall (`com.boop.alpha1`)
 
 ## Background
