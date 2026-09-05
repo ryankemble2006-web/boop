@@ -29,6 +29,13 @@ class Alpha652AssistantFollowUpTests(unittest.TestCase):
         self.assertIn("onBeginningOfSpeech()", main)
         self.assertIn("cancelAssistantFollowUpSilenceTimeout()", main)
 
+    def test_one_word_follow_up_can_recover_from_android_no_match(self):
+        main = Path("source/MainActivity.java").read_text(encoding="utf-8")
+        self.assertIn("latestAssistantFollowUpPartial", main)
+        self.assertIn("RecognizerIntent.EXTRA_PARTIAL_RESULTS, assistantFollowUpListening", main)
+        self.assertIn("public void onPartialResults(Bundle partialResults)", main)
+        self.assertIn("handleRecognizedSpeech(fallback)", main)
+
     def test_manners_remain_local_and_do_not_reopen_follow_up(self):
         main = Path("source/MainActivity.java").read_text(encoding="utf-8")
         exit_check = "BoopConversationExitIntent.replyFor(transcript)"
