@@ -5,4 +5,11 @@
     <string name="notification_channel_description">Keeps the BOOP Shield overlay alive.</string>
     <string name="notification_title">BOOP eyes are floating</string>
     <string name="notification_text">Transparent Shield overlay POC is running.</string>
+
+    <string name="pairing_title_searching">Looking for your house…</string>
+    <string name="pairing_title_found">I found your house</string>
+    <string name="pairing_scan">Scan this with BOOP Wall.</string>
+    <string name="pairing_authorizing">Home Assistant is approving BOOP…</string>
+    <string name="pairing_found">Found it.</string>
+    <string name="pairing_retry">Try again</string>
 </resources>
