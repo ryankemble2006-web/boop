@@ -89,6 +89,15 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("SYSTEM_UI_FLAG_HIDE_NAVIGATION", home)
         self.assertIn("SYSTEM_UI_FLAG_FULLSCREEN", home)
 
+    def test_home_creates_decor_before_requesting_android_11_insets_controller(self):
+        home = self.read("java/com/boop/shieldoverlay/BoopHomeActivity.java")
+        method_start = home.index("private void keepAwakeAndHideSystemUi()")
+        method_end = home.index("\n    }", method_start)
+        method = home[method_start:method_end]
+        self.assertIn("window.getDecorView()", method)
+        self.assertIn("window.getInsetsController()", method)
+        self.assertLess(method.index("window.getDecorView()"), method.index("window.getInsetsController()"))
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
