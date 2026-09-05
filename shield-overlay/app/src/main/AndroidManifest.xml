@@ -20,6 +20,12 @@
         android:usesCleartextTraffic="true">
 
         <activity
+            android:name=".BoopHomeActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.BoopHome" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
