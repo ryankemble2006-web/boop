@@ -31,6 +31,8 @@ import okhttp3.OkHttpClient;
 
 public final class BoopHomeActivity extends Activity {
     private static final long FOUND_IT_BEAT_MS = 700L;
+    private static final long DASHBOARD_RETRY_MIN_MS = 3000L;
+    private static final long DASHBOARD_RETRY_MAX_MS = 15000L;
 
     private final FirstRunCoordinator firstRun = new FirstRunCoordinator();
 
@@ -42,6 +44,7 @@ public final class BoopHomeActivity extends Activity {
     private BoopPreferences preferences;
     private Runnable expiryRunnable;
     private Runnable successRunnable;
+    private Runnable dashboardReconnectRunnable;
     private TvPairingView pairingView;
     private TvRoomPickerView roomPickerView;
 
@@ -52,6 +55,11 @@ public final class BoopHomeActivity extends Activity {
     private FocusCardView settingsRailCard;
     private View currentPageFirstFocusable;
     private boolean homeShellVisible;
+
+    private HomeDashboardController dashboardController;
+    private HomeDashboardController.ViewState dashboardState;
+    private TvHomeView homeView;
+    private int dashboardReconnectAttempt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +75,11 @@ public final class BoopHomeActivity extends Activity {
             }
         };
         successRunnable = this::advanceAfterPairingSuccess;
+        dashboardReconnectRunnable = () -> {
+            if (homeShellVisible && !isFinishing() && !isDestroyed()) {
+                startHomeDashboard();
+            }
+        };
         showPairingGate();
     }
 
@@ -112,12 +125,18 @@ public final class BoopHomeActivity extends Activity {
             if (successRunnable != null) {
                 mainHandler.removeCallbacks(successRunnable);
             }
+            if (dashboardReconnectRunnable != null) {
+                mainHandler.removeCallbacks(dashboardReconnectRunnable);
+            }
         }
         if (pairingController != null) {
             pairingController.close();
             pairingController = null;
         }
         closeHomeSocket();
+        dashboardController = null;
+        dashboardState = null;
+        homeView = null;
         if (pairingExecutor != null) {
             pairingExecutor.shutdownNow();
             pairingExecutor = null;
@@ -459,6 +478,9 @@ public final class BoopHomeActivity extends Activity {
         roomPickerView = null;
         homeShellVisible = true;
         navigationModel = new TvNavigationModel();
+        dashboardController = null;
+        dashboardState = null;
+        dashboardReconnectAttempt = 0;
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.HORIZONTAL);
@@ -487,6 +509,205 @@ public final class BoopHomeActivity extends Activity {
 
         setContentView(root);
         renderNavigationPage(TvNavigationModel.Page.HOME, true);
+        startHomeDashboard();
+    }
+
+    private void startHomeDashboard() {
+        if (!homeShellVisible || preferences == null || isFinishing() || isDestroyed()) {
+            return;
+        }
+        AreaInfo room = preferences.selectedRoom();
+        if (room == null) {
+            showRoomPicker();
+            return;
+        }
+
+        mainHandler.removeCallbacks(dashboardReconnectRunnable);
+        closeHomeSocket();
+        ensureHomeExecutor().execute(() -> {
+            try {
+                HomeAssistantSession session = new HomeAssistantSession(
+                        new SecureCredentialStore(this),
+                        new HomeAssistantAuthClient(new OkHttpClient.Builder().build()));
+                HomeAssistantSession.Access access = session.ensureAccessToken();
+                runOnUiThread(() -> connectForHomeDashboard(room, access));
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    if (sameSelectedRoom(room) && homeShellVisible) {
+                        showOfflineDashboard(room, "Home Assistant is offline.");
+                        scheduleHomeDashboardReconnect();
+                    }
+                });
+            }
+        });
+    }
+
+    private void connectForHomeDashboard(AreaInfo room, HomeAssistantSession.Access access) {
+        if (access == null || !homeShellVisible || !sameSelectedRoom(room)
+                || isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        closeHomeSocket();
+        HomeAssistantWebSocket socket = new HomeAssistantWebSocket(
+                new OkHttpClient.Builder().build());
+        homeSocket = socket;
+        socket.connect(access.baseUrl(), access.accessToken(), new HomeAssistantWebSocket.Listener() {
+            @Override
+            public void onReady() {
+                runOnUiThread(() -> {
+                    if (socket != homeSocket || !homeShellVisible || !sameSelectedRoom(room)
+                            || isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    dashboardReconnectAttempt = 0;
+                    HomeAssistantRepository repository = new HomeAssistantRepository(socket::send);
+                    HomeDashboardController.RepositoryPort repositoryPort =
+                            new HomeDashboardController.RepositoryPort() {
+                                @Override
+                                public void loadDashboard(
+                                        AreaInfo selectedRoom,
+                                        HomeAssistantRepository.DashboardCallback callback) {
+                                    try {
+                                        repository.loadDashboard(selectedRoom, callback);
+                                    } catch (RuntimeException unavailable) {
+                                        callback.onResult(null, "Home Assistant is offline.");
+                                    }
+                                }
+
+                                @Override
+                                public void toggleBinary(
+                                        EntityCard card,
+                                        HomeAssistantRepository.BinaryActionCallback callback) {
+                                    try {
+                                        repository.toggleBinary(card, callback);
+                                    } catch (RuntimeException unavailable) {
+                                        callback.onResult(false, null, "Home Assistant is offline.");
+                                    }
+                                }
+                            };
+                    dashboardController = createDashboardController(room, repositoryPort);
+                    dashboardController.start();
+                });
+            }
+
+            @Override
+            public void onOffline(String message) {
+                runOnUiThread(() -> {
+                    if (socket != homeSocket || !homeShellVisible || !sameSelectedRoom(room)) {
+                        return;
+                    }
+                    if (dashboardController == null) {
+                        showOfflineDashboard(room, "Home Assistant is offline.");
+                    } else {
+                        dashboardController.markOffline("Home Assistant is offline.");
+                    }
+                    scheduleHomeDashboardReconnect();
+                });
+            }
+
+            @Override
+            public void onReauthRequired(String message) {
+                runOnUiThread(() -> {
+                    if (socket != homeSocket || !homeShellVisible || !sameSelectedRoom(room)) {
+                        return;
+                    }
+                    if (dashboardController == null) {
+                        showOfflineDashboard(
+                                room,
+                                "Home Assistant needs BOOP to pair again.");
+                    } else {
+                        dashboardController.markOffline(
+                                "Home Assistant needs BOOP to pair again.");
+                    }
+                });
+            }
+        });
+    }
+
+    private HomeDashboardController createDashboardController(
+            AreaInfo room,
+            HomeDashboardController.RepositoryPort repositoryPort) {
+        HomeDashboardController.CachePort cachePort = new HomeDashboardController.CachePort() {
+            @Override
+            public EntityCard load(AreaInfo selectedRoom) {
+                return preferences.cachedFavourite(selectedRoom);
+            }
+
+            @Override
+            public void save(AreaInfo selectedRoom, EntityCard card) {
+                preferences.setCachedFavourite(selectedRoom, card);
+            }
+
+            @Override
+            public void clear(AreaInfo selectedRoom) {
+                preferences.clearCachedFavourite(selectedRoom);
+            }
+        };
+
+        return new HomeDashboardController(
+                room,
+                repositoryPort,
+                cachePort,
+                state -> runOnUiThread(() -> {
+                    if (!homeShellVisible || !sameSelectedRoom(room)
+                            || isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    dashboardState = state;
+                    if (homeView != null) {
+                        homeView.render(state);
+                    }
+                }));
+    }
+
+    private void showOfflineDashboard(AreaInfo room, String message) {
+        if (!homeShellVisible || !sameSelectedRoom(room)) {
+            return;
+        }
+        if (dashboardController != null) {
+            dashboardController.markOffline(message);
+            return;
+        }
+
+        HomeDashboardController.RepositoryPort offlinePort =
+                new HomeDashboardController.RepositoryPort() {
+                    @Override
+                    public void loadDashboard(
+                            AreaInfo selectedRoom,
+                            HomeAssistantRepository.DashboardCallback callback) {
+                        callback.onResult(null, message);
+                    }
+
+                    @Override
+                    public void toggleBinary(
+                            EntityCard card,
+                            HomeAssistantRepository.BinaryActionCallback callback) {
+                        callback.onResult(false, null, "Home Assistant is offline.");
+                    }
+                };
+        dashboardController = createDashboardController(room, offlinePort);
+        dashboardController.start();
+    }
+
+    private void scheduleHomeDashboardReconnect() {
+        if (!homeShellVisible || mainHandler == null || dashboardReconnectRunnable == null) {
+            return;
+        }
+        mainHandler.removeCallbacks(dashboardReconnectRunnable);
+        dashboardReconnectAttempt++;
+        long delay = Math.min(
+                DASHBOARD_RETRY_MAX_MS,
+                DASHBOARD_RETRY_MIN_MS * Math.max(1, dashboardReconnectAttempt));
+        mainHandler.postDelayed(dashboardReconnectRunnable, delay);
+    }
+
+    private boolean sameSelectedRoom(AreaInfo expected) {
+        if (expected == null || preferences == null) {
+            return false;
+        }
+        AreaInfo selected = preferences.selectedRoom();
+        return selected != null && expected.id().equals(selected.id());
     }
 
     private FocusCardView createRailCard(String label, TvNavigationModel.Page page) {
@@ -533,10 +754,12 @@ public final class BoopHomeActivity extends Activity {
         View pageView;
 
         if (page == TvNavigationModel.Page.ROUTINES) {
+            homeView = null;
             TvRoutinesView routinesView = new TvRoutinesView(this, onContentLeft);
             pageView = routinesView;
             currentPageFirstFocusable = routinesView.firstFocusable();
         } else if (page == TvNavigationModel.Page.SETTINGS) {
+            homeView = null;
             TvSettingsView settingsView = new TvSettingsView(
                     this,
                     room,
@@ -545,7 +768,18 @@ public final class BoopHomeActivity extends Activity {
             pageView = settingsView;
             currentPageFirstFocusable = settingsView.firstFocusable();
         } else {
-            TvHomeView homeView = new TvHomeView(this, room, onContentLeft);
+            homeView = new TvHomeView(
+                    this,
+                    room,
+                    onContentLeft,
+                    () -> {
+                        if (dashboardController != null) {
+                            dashboardController.toggleFavourite();
+                        }
+                    });
+            if (dashboardState != null) {
+                homeView.render(dashboardState);
+            }
             pageView = homeView;
             currentPageFirstFocusable = homeView.firstFocusable();
         }
@@ -603,6 +837,13 @@ public final class BoopHomeActivity extends Activity {
 
     private void clearNavigationShellState() {
         homeShellVisible = false;
+        if (mainHandler != null && dashboardReconnectRunnable != null) {
+            mainHandler.removeCallbacks(dashboardReconnectRunnable);
+        }
+        dashboardReconnectAttempt = 0;
+        dashboardController = null;
+        dashboardState = null;
+        homeView = null;
         navigationModel = null;
         navigationContent = null;
         homeRailCard = null;
