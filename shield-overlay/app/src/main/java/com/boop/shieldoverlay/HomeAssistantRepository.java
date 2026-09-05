@@ -11,8 +11,20 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public final class HomeAssistantRepository {
+    private static final long BINARY_CONFIRM_DELAY_MS = 250L;
+    private static final int BINARY_CONFIRM_MAX_READS = 5;
+    private static final ScheduledExecutorService BINARY_CONFIRM_EXECUTOR =
+            Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "boop-ha-confirm");
+                thread.setDaemon(true);
+                return thread;
+            });
+
     public interface CommandPort {
         void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback);
     }
@@ -250,6 +262,7 @@ public final class HomeAssistantRepository {
             return;
         }
 
+        String expectedState = "off".equals(card.state()) ? "on" : "off";
         String service = "off".equals(card.state()) ? "turn_on" : "turn_off";
         final JSONObject body;
         try {
@@ -268,11 +281,15 @@ public final class HomeAssistantRepository {
                 callback.onResult(false, null, plainError(error, "Home Assistant didn't do that."));
                 return;
             }
-            refreshExactState(card, callback);
+            refreshExactState(card, expectedState, BINARY_CONFIRM_MAX_READS, callback);
         });
     }
 
-    private void refreshExactState(EntityCard original, BinaryActionCallback callback) {
+    private void refreshExactState(
+            EntityCard original,
+            String expectedState,
+            int remainingReads,
+            BinaryActionCallback callback) {
         commandPort.send("get_states", new JSONObject(), (success, result, error) -> {
             if (!success) {
                 callback.onResult(
@@ -287,6 +304,7 @@ public final class HomeAssistantRepository {
             }
 
             JSONArray states = (JSONArray) result;
+            boolean found = false;
             for (int index = 0; index < states.length(); index++) {
                 Object item = states.opt(index);
                 if (!(item instanceof JSONObject)) {
@@ -296,16 +314,32 @@ public final class HomeAssistantRepository {
                 if (!original.entityId().equals(clean(state.optString("entity_id", null)))) {
                     continue;
                 }
+                found = true;
                 String newState = clean(state.optString("state", null));
-                if (!"on".equals(newState) && !"off".equals(newState)) {
-                    callback.onResult(false, null, "Home Assistant changed it, but I couldn't confirm the new state.");
+                if (expectedState.equals(newState)) {
+                    callback.onResult(true, original.withState(newState), null);
                     return;
                 }
-                callback.onResult(true, original.withState(newState), null);
+                break;
+            }
+
+            if (remainingReads > 1) {
+                BINARY_CONFIRM_EXECUTOR.schedule(
+                        () -> refreshExactState(
+                                original,
+                                expectedState,
+                                remainingReads - 1,
+                                callback),
+                        BINARY_CONFIRM_DELAY_MS,
+                        TimeUnit.MILLISECONDS);
                 return;
             }
 
-            callback.onResult(false, null, "Home Assistant changed it, but I couldn't find that control afterwards.");
+            if (found) {
+                callback.onResult(false, null, "Home Assistant changed it, but I couldn't confirm the new state.");
+            } else {
+                callback.onResult(false, null, "Home Assistant changed it, but I couldn't find that control afterwards.");
+            }
         });
     }
 
