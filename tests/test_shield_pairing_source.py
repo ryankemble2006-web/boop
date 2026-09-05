@@ -32,6 +32,13 @@ class ShieldPairingSourceTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, source)
 
+    def test_qr_payload_avoids_newer_java_runtime_helpers_on_android_11(self):
+        source = self.read("PairingQrPayload.java")
+        self.assertNotIn(".isBlank()", source)
+        self.assertNotIn("URLEncoder.encode(value, StandardCharsets.UTF_8)", source)
+        self.assertNotIn("URLDecoder.decode(value, StandardCharsets.UTF_8)", source)
+        self.assertIn("StandardCharsets.UTF_8.name()", source)
+
 
 if __name__ == "__main__":
     unittest.main()
