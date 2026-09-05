@@ -37,13 +37,20 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         workflow = Path('.github/workflows/build-apk.yml').read_text(encoding='utf-8')
         gradle = Path('source/app-build.gradle').read_text(encoding='utf-8')
         for secret in (
-            'BOOP_KEYSTORE_BASE64',
-            'BOOP_KEYSTORE_PASSWORD',
-            'BOOP_KEY_ALIAS',
-            'BOOP_KEY_PASSWORD',
+            'BOOP_DEV_KEYSTORE_B64',
+            'BOOP_DEV_STORE_PASSWORD',
+            'BOOP_DEV_KEY_PASSWORD',
         ):
             self.assertIn('secrets.' + secret, workflow)
         self.assertIn('base64 --decode', workflow)
+        self.assertIn('BOOP_SIGNING_STORE_FILE="${RUNNER_TEMP}/boop-dev.jks"', workflow)
+        self.assertIn('-alias boop-dev', workflow)
+        self.assertIn('BOOP_SIGNING_STORE_FILE=$BOOP_SIGNING_STORE_FILE', workflow)
+        self.assertIn('shield-overlay/signing/boop-dev-cert-sha256.txt', workflow)
+        self.assertIn('${ANDROID_HOME}/build-tools/36.0.0/apksigner', workflow)
+        for retired in ('BOOP_KEYSTORE_BASE64', 'BOOP_KEYSTORE_PASSWORD',
+                        'BOOP_KEY_ALIAS', 'BOOP_KEY_PASSWORD', 'BOOP_KEYSTORE_PATH'):
+            self.assertNotIn(retired, workflow)
         self.assertIn('BOOP_SIGNING_STORE_FILE', gradle)
         self.assertIn('BOOP_DEV_STORE_PASSWORD', gradle)
         self.assertIn('BOOP_DEV_KEY_PASSWORD', gradle)

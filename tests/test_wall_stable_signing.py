@@ -19,6 +19,30 @@ class WallStableSigningTest(unittest.TestCase):
         self.assertIn("*.jks", ignore)
         self.assertIn("*.keystore", ignore)
 
+    def test_ci_uses_and_verifies_the_current_stable_signer(self):
+        workflow = (ROOT / ".github/workflows/build-apk.yml").read_text(encoding="utf-8")
+        for required in (
+            "secrets.BOOP_DEV_KEYSTORE_B64",
+            "secrets.BOOP_DEV_STORE_PASSWORD",
+            "secrets.BOOP_DEV_KEY_PASSWORD",
+            'BOOP_SIGNING_STORE_FILE="${RUNNER_TEMP}/boop-dev.jks"',
+            "base64 --decode",
+            "-alias boop-dev",
+            "BOOP_SIGNING_STORE_FILE=$BOOP_SIGNING_STORE_FILE",
+            "shield-overlay/signing/boop-dev-cert-sha256.txt",
+            "${ANDROID_HOME}/build-tools/36.0.0/apksigner",
+            "sha256",
+        ):
+            self.assertIn(required, workflow)
+        for retired in (
+            "BOOP_KEYSTORE_BASE64",
+            "BOOP_KEYSTORE_PASSWORD",
+            "BOOP_KEY_ALIAS",
+            "BOOP_KEY_PASSWORD",
+            "BOOP_KEYSTORE_PATH",
+        ):
+            self.assertNotIn(retired, workflow)
+
     def test_public_fingerprint_is_present(self):
         digest = (ROOT / "shield-overlay/signing/boop-dev-cert-sha256.txt").read_text(encoding="utf-8").strip()
         self.assertEqual(64, len(digest))

@@ -13,10 +13,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      BOOP_KEYSTORE_BASE64: ${{ secrets.BOOP_KEYSTORE_BASE64 }}
-      BOOP_KEYSTORE_PASSWORD: ${{ secrets.BOOP_KEYSTORE_PASSWORD }}
-      BOOP_KEY_ALIAS: ${{ secrets.BOOP_KEY_ALIAS }}
-      BOOP_KEY_PASSWORD: ${{ secrets.BOOP_KEY_PASSWORD }}
+      BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+      BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+      BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
 
     steps:
       - name: Check out repository
@@ -83,28 +82,41 @@ jobs:
         run: |
           set -euo pipefail
           missing=0
-          for name in BOOP_KEYSTORE_BASE64 BOOP_KEYSTORE_PASSWORD BOOP_KEY_ALIAS BOOP_KEY_PASSWORD; do
+          for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do
             if [ -z "${!name:-}" ]; then
               echo "::error::Missing GitHub Actions secret: $name"
               missing=1
             fi
           done
           if [ "$missing" -ne 0 ]; then
-            echo "Refusing to build a disposable-signed BOOP APK. Add the four BOOP signing secrets first."
+            echo "Refusing to build a disposable-signed BOOP APK. Add the three BOOP development signing secrets first."
             exit 1
           fi
-          BOOP_KEYSTORE_PATH="${RUNNER_TEMP}/boop-signing.jks"
-          printf '%s' "$BOOP_KEYSTORE_BASE64" | base64 --decode > "$BOOP_KEYSTORE_PATH"
-          chmod 600 "$BOOP_KEYSTORE_PATH"
+          BOOP_SIGNING_STORE_FILE="${RUNNER_TEMP}/boop-dev.jks"
+          printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "$BOOP_SIGNING_STORE_FILE"
+          chmod 600 "$BOOP_SIGNING_STORE_FILE"
           keytool -list \
-            -keystore "$BOOP_KEYSTORE_PATH" \
-            -storepass "$BOOP_KEYSTORE_PASSWORD" \
-            -alias "$BOOP_KEY_ALIAS" >/dev/null
-          echo "BOOP_KEYSTORE_PATH=$BOOP_KEYSTORE_PATH" >> "$GITHUB_ENV"
+            -keystore "$BOOP_SIGNING_STORE_FILE" \
+            -storepass "$BOOP_DEV_STORE_PASSWORD" \
+            -alias boop-dev >/dev/null
+          echo "BOOP_SIGNING_STORE_FILE=$BOOP_SIGNING_STORE_FILE" >> "$GITHUB_ENV"
           echo 'Permanent BOOP signing key loaded.'
 
       - name: Build BOOP APK
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+
+      - name: Verify BOOP APK signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          EXPECTED_DIGEST="$(tr -d '[:space:]' < shield-overlay/signing/boop-dev-cert-sha256.txt)"
+          ACTUAL_DIGEST="$("${ANDROID_HOME}/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')"
+          if [ "$ACTUAL_DIGEST" != "$EXPECTED_DIGEST" ]; then
+            echo "::error::APK signer certificate digest does not match shield-overlay/signing/boop-dev-cert-sha256.txt"
+            exit 1
+          fi
+          echo 'APK signer certificate digest verified.'
 
       - name: Inspect built APK
         run: |
