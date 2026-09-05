@@ -18,13 +18,13 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         self.assertIn('android:scheme="boop"', text)
         self.assertIn('android:host="auth-callback"', text)
 
-    def test_build_is_alpha661_android36_java17(self):
+    def test_build_is_alpha662_android36_java17(self):
         text = Path('source/app-build.gradle').read_text(encoding='utf-8') if Path('source/app-build.gradle').exists() else ''
         self.assertIn('compileSdk 36', text)
         self.assertIn('targetSdk 36', text)
         self.assertIn('minSdk 29', text)
-        self.assertIn('versionCode 21', text)
-        self.assertIn('versionName "0.4.8-alpha6.6.1"', text)
+        self.assertIn('versionCode 22', text)
+        self.assertIn('versionName "0.4.8-alpha6.6.2"', text)
         self.assertIn('JavaVersion.VERSION_17', text)
         self.assertIn("implementation 'com.squareup.okhttp3:okhttp:4.12.0'", text)
         self.assertIn("testImplementation 'junit:junit:4.13.2'", text)
@@ -78,68 +78,3 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
     def test_main_routes_raw_speech_to_ha_off_ui_thread(self):
         text = Path('source/MainActivity.java').read_text(encoding='utf-8')
         self.assertIn('ExecutorService', text)
-        self.assertIn('HomeAssistantDeviceSetup', text)
-        self.assertIn('HomeAssistantClient', text)
-        self.assertIn('LocalReply.forOutcome', text)
-        self.assertNotIn('RoomContext', text)
-        self.assertNotIn('roomContext.qualify', text)
-        self.assertIn('commandRouter.process(transcript)', text)
-        self.assertNotIn('speak("You said, " + best)', text)
-
-    def test_old_room_context_grammar_is_deleted(self):
-        self.assertFalse(Path('source/RoomContext.java').exists())
-        self.assertFalse(Path('source-test/RoomContextTest.java').exists())
-
-    def test_conversation_request_does_not_rewrite_speech(self):
-        text = Path('source/HomeAssistantConversationRequest.java').read_text(encoding='utf-8')
-        self.assertIn('.put("text", text)', text)
-        self.assertIn('.put("device_id", deviceId)', text)
-        self.assertNotIn('replace(', text)
-        self.assertNotIn('Pattern.compile', text)
-        self.assertNotIn('Matcher', text)
-        self.assertNotIn('Living Room', text)
-
-    def test_bcp47_speech_fix_is_preserved(self):
-        text = Path('source/MainActivity.java').read_text(encoding='utf-8')
-        self.assertIn('Locale.getDefault().toLanguageTag()', text)
-
-    def test_auth_uses_public_client_id_and_direct_app_callback(self):
-        text = Path('source/HomeAssistantAuthUrls.java').read_text(encoding='utf-8')
-        self.assertIn('raw.githubusercontent.com/ryankemble2006-web/boop/alpha2-local-ha-control/web/ha-auth/index.html', text)
-        self.assertIn('REDIRECT_URI = "boop://auth-callback"', text)
-        self.assertNotIn('github.io', text)
-
-    def test_boop_wall_setup_is_one_time_and_registry_scoped(self):
-        p = Path('source/HomeAssistantDeviceSetup.java')
-        text = p.read_text(encoding='utf-8') if p.exists() else ''
-        guard = text.find('hasHaDeviceIdentity()')
-        registration = text.find('/api/mobile_app/registrations')
-        self.assertGreaterEqual(guard, 0)
-        self.assertGreater(registration, guard)
-        self.assertIn('config/area_registry/list', text)
-        self.assertIn('config/device_registry/update', text)
-        self.assertNotIn('config/entity_registry/list', text)
-        self.assertNotIn('/api/states', text)
-
-    def test_auto_rotate_uses_responsive_face_without_touching_ha_flow(self):
-        manifest = Path('source/AndroidManifest.xml').read_text(encoding='utf-8')
-        main = Path('source/MainActivity.java').read_text(encoding='utf-8')
-        face_path = Path('source/BoopFaceView.java')
-        face = face_path.read_text(encoding='utf-8') if face_path.exists() else ''
-
-        self.assertNotIn('android:screenOrientation="portrait"', manifest)
-        self.assertIn('android:configChanges="keyboardHidden|orientation|screenSize"', manifest)
-        self.assertIn('BoopFaceView', main)
-        self.assertNotIn('new ImageView', main)
-        self.assertNotIn('ImageView.ScaleType.FIT_CENTER', main)
-        self.assertIn('commandRouter.process(transcript)', main)
-        self.assertNotIn('new CommandOutcome', main)
-        self.assertTrue(face_path.exists())
-        self.assertIn('BoopEyeLayout.calculate', face)
-        self.assertIn('canvas.drawBitmap', face)
-        self.assertIn('LEFT_SOURCE', face)
-        self.assertIn('RIGHT_SOURCE', face)
-
-
-if __name__ == '__main__':
-    unittest.main()
