@@ -98,6 +98,13 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("window.getInsetsController()", method)
         self.assertLess(method.index("window.getDecorView()"), method.index("window.getInsetsController()"))
 
+    def test_tv_focus_visual_does_not_reorder_linear_layout_children(self):
+        source = self.read("java/com/boop/shieldoverlay/FocusCardView.java")
+        self.assertNotIn("bringToFront()", source)
+        self.assertIn("setTranslationZ(hasFocus ? dp(8) : 0f)", source)
+        self.assertIn("scaleX(hasFocus ? 1.045f : 1f)", source)
+        self.assertIn("scaleY(hasFocus ? 1.045f : 1f)", source)
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
