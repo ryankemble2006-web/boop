@@ -35,11 +35,34 @@ if 'wakeTranscriptAccumulator.chooseFinal(best)' not in text:
         raise SystemExit('wake result anchor missing')
     text = text.replace(result_anchor, result_anchor + result_lines, 1)
 
-partial_anchor = '    @Override public void onPartialResults(Bundle partialResults) { }\n'
-partial_method = '''    @Override\n    public void onPartialResults(Bundle partialResults) {\n        if (recognitionMode != RecognitionMode.WAKE || partialResults == null) {\n            return;\n        }\n        ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);\n        if (matches != null && !matches.isEmpty()) {\n            wakeTranscriptAccumulator.rememberPartial(matches.get(0));\n        }\n    }\n'''
+partial_method_anchor = '    public void onPartialResults(Bundle partialResults) {\n'
+wake_partial_lines = (
+    '        if (recognitionMode == RecognitionMode.WAKE && partialResults != null) {\n'
+    '            ArrayList<String> wakeMatches = partialResults.getStringArrayList(\n'
+    '                    SpeechRecognizer.RESULTS_RECOGNITION);\n'
+    '            if (wakeMatches != null && !wakeMatches.isEmpty()) {\n'
+    '                wakeTranscriptAccumulator.rememberPartial(wakeMatches.get(0));\n'
+    '            }\n'
+    '            return;\n'
+    '        }\n'
+)
 if 'wakeTranscriptAccumulator.rememberPartial' not in text:
-    if partial_anchor not in text:
-        raise SystemExit('wake partial-results anchor missing')
-    text = text.replace(partial_anchor, partial_method, 1)
+    empty_partial = '    @Override public void onPartialResults(Bundle partialResults) { }\n'
+    if empty_partial in text:
+        partial_method = (
+            '    @Override\n'
+            '    public void onPartialResults(Bundle partialResults) {\n'
+            + wake_partial_lines
+            + '    }\n'
+        )
+        text = text.replace(empty_partial, partial_method, 1)
+    elif partial_method_anchor in text:
+        text = text.replace(
+            partial_method_anchor,
+            partial_method_anchor + wake_partial_lines,
+            1,
+        )
+    else:
+        raise SystemExit('wake partial-results method anchor missing')
 
 path.write_text(text, encoding='utf-8')
