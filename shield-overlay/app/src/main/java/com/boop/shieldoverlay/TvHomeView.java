@@ -12,9 +12,17 @@ import android.widget.TextView;
 
 public final class TvHomeView extends LinearLayout {
     private final FocusCardView firstCard;
+    private final TextView favouriteStatus;
+    private final Runnable onFavouriteClick;
+    private boolean favouriteActionEnabled;
 
-    public TvHomeView(Context context, AreaInfo selectedRoom, Runnable onContentLeft) {
+    public TvHomeView(
+            Context context,
+            AreaInfo selectedRoom,
+            Runnable onContentLeft,
+            Runnable onFavouriteClick) {
         super(context);
+        this.onFavouriteClick = onFavouriteClick;
         setOrientation(VERTICAL);
         setGravity(Gravity.TOP);
         setPadding(dp(36), dp(34), dp(44), dp(34));
@@ -24,8 +32,16 @@ public final class TvHomeView extends LinearLayout {
         addView(detail(selectedRoom == null ? "Home" : selectedRoom.name()));
         addView(section("Favourites"));
 
-        firstCard = card("Favourite controls will live here", onContentLeft);
+        firstCard = card("Finding a useful control…", onContentLeft);
+        firstCard.setOnClickListener(view -> {
+            if (favouriteActionEnabled && this.onFavouriteClick != null) {
+                this.onFavouriteClick.run();
+            }
+        });
         addView(firstCard, cardParams());
+
+        favouriteStatus = detail("Connecting to the house…");
+        addView(favouriteStatus);
 
         addView(section("Rooms"));
         FocusCardView roomCard = card(
@@ -36,6 +52,45 @@ public final class TvHomeView extends LinearLayout {
 
     public View firstFocusable() {
         return firstCard;
+    }
+
+    public void render(HomeDashboardController.ViewState state) {
+        if (state == null) {
+            favouriteActionEnabled = false;
+            firstCard.label("Finding a useful control…");
+            firstCard.setAlpha(0.72f);
+            favouriteStatus.setText("Connecting to the house…");
+            return;
+        }
+
+        EntityCard favourite = state.favourite();
+        favouriteActionEnabled = state.actionsEnabled() && favourite != null;
+        if (favourite == null) {
+            firstCard.label(state.stale()
+                    ? "No last-known control for this room"
+                    : "No simple on/off controls found in this room");
+            firstCard.setAlpha(0.72f);
+            favouriteStatus.setText(state.message() == null
+                    ? "Nothing useful to put here yet."
+                    : state.message());
+            return;
+        }
+
+        String stateLabel = "on".equals(favourite.state()) ? "On" : "Off";
+        String staleLabel = state.stale() ? " · Last known" : "";
+        firstCard.label(favourite.displayName() + "\n" + stateLabel + staleLabel);
+        firstCard.setAlpha(favouriteActionEnabled ? 1f : 0.72f);
+
+        if (state.stale()) {
+            favouriteStatus.setText(state.message() == null
+                    ? "Last known state — house controls are unavailable."
+                    : state.message() + " · Last known state");
+        } else if (state.actionsEnabled()) {
+            favouriteStatus.setText("Select to switch it "
+                    + ("on".equals(favourite.state()) ? "off." : "on."));
+        } else {
+            favouriteStatus.setText("Waiting for Home Assistant to confirm…");
+        }
     }
 
     private FocusCardView card(String label, Runnable onContentLeft) {
