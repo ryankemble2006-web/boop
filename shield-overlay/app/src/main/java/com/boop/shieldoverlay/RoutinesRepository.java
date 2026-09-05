@@ -16,6 +16,22 @@ public final class RoutinesRepository {
         void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback);
     }
 
+    public interface StateChangePort {
+        interface Listener {
+            void onStateChanged(String entityId, String state);
+        }
+
+        interface Subscription {
+            void cancel();
+        }
+
+        interface Callback {
+            void onResult(Subscription subscription, String error);
+        }
+
+        void subscribe(Listener listener, Callback callback);
+    }
+
     public interface LoadCallback {
         void onResult(List<RoutineItem> routines, String error);
     }
@@ -29,12 +45,18 @@ public final class RoutinesRepository {
     }
 
     private final CommandPort commandPort;
+    private final StateChangePort stateChangePort;
 
     public RoutinesRepository(CommandPort commandPort) {
+        this(commandPort, null);
+    }
+
+    public RoutinesRepository(CommandPort commandPort, StateChangePort stateChangePort) {
         if (commandPort == null) {
             throw new IllegalArgumentException("Home Assistant command port is required");
         }
         this.commandPort = commandPort;
+        this.stateChangePort = stateChangePort;
     }
 
     public void loadRoutines(LoadCallback callback) {
@@ -80,9 +102,15 @@ public final class RoutinesRepository {
         if (callback == null) {
             throw new IllegalArgumentException("run callback is required");
         }
-        if (routine.type() != RoutineItem.Type.SCENE) {
-            callback.onResult(false, "That routine isn't ready to run yet.");
-            return () -> { };
+
+        if (routine.type() == RoutineItem.Type.SCRIPT) {
+            if (stateChangePort == null) {
+                callback.onResult(false, "I couldn't watch that script finish.");
+                return () -> { };
+            }
+            ScriptExecution execution = new ScriptExecution(routine, callback);
+            execution.start();
+            return execution;
         }
 
         SceneExecution execution = new SceneExecution(callback);
@@ -238,10 +266,7 @@ public final class RoutinesRepository {
         void start(RoutineItem routine) {
             final JSONObject body;
             try {
-                body = new JSONObject()
-                        .put("domain", "scene")
-                        .put("service", "turn_on")
-                        .put("target", new JSONObject().put("entity_id", routine.entityId()));
+                body = serviceBody("scene", routine.entityId());
             } catch (JSONException couldNotEncode) {
                 complete(false, "I couldn't prepare that routine.");
                 return;
@@ -272,6 +297,143 @@ public final class RoutinesRepository {
         public synchronized void cancel() {
             done = true;
         }
+    }
+
+    private final class ScriptExecution implements Execution {
+        private final RoutineItem routine;
+        private final RunCallback callback;
+
+        private StateChangePort.Subscription subscription;
+        private boolean serviceSucceeded;
+        private boolean seenOn;
+        private boolean seenOffAfterOn;
+        private boolean done;
+
+        ScriptExecution(RoutineItem routine, RunCallback callback) {
+            this.routine = routine;
+            this.callback = callback;
+        }
+
+        void start() {
+            try {
+                stateChangePort.subscribe(this::onStateChanged, this::onSubscribed);
+            } catch (RuntimeException unavailable) {
+                complete(false, "I couldn't watch that script finish.");
+            }
+        }
+
+        private void onSubscribed(StateChangePort.Subscription active, String error) {
+            if (active == null || error != null) {
+                if (active != null) {
+                    active.cancel();
+                }
+                complete(false, "I couldn't watch that script finish.");
+                return;
+            }
+
+            synchronized (this) {
+                if (done) {
+                    active.cancel();
+                    return;
+                }
+                subscription = active;
+            }
+
+            final JSONObject body;
+            try {
+                body = serviceBody("script", routine.entityId());
+            } catch (JSONException couldNotEncode) {
+                complete(false, "I couldn't prepare that routine.");
+                return;
+            }
+
+            try {
+                commandPort.send("call_service", body, this::onServiceResult);
+            } catch (RuntimeException unavailable) {
+                complete(false, "Home Assistant is offline.");
+            }
+        }
+
+        private void onStateChanged(String entityId, String state) {
+            if (!routine.entityId().equals(clean(entityId))) {
+                return;
+            }
+
+            boolean finish;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                String value = clean(state);
+                if ("on".equals(value)) {
+                    seenOn = true;
+                } else if ("off".equals(value) && seenOn) {
+                    seenOffAfterOn = true;
+                }
+                finish = serviceSucceeded && seenOffAfterOn;
+            }
+            if (finish) {
+                complete(true, null);
+            }
+        }
+
+        private void onServiceResult(boolean success, Object result, String error) {
+            if (!success) {
+                complete(false, "Home Assistant didn't run that.");
+                return;
+            }
+
+            boolean finish;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                serviceSucceeded = true;
+                finish = seenOffAfterOn;
+            }
+            if (finish) {
+                complete(true, null);
+            }
+        }
+
+        private void complete(boolean success, String error) {
+            final StateChangePort.Subscription toCancel;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                done = true;
+                toCancel = subscription;
+                subscription = null;
+            }
+            if (toCancel != null) {
+                toCancel.cancel();
+            }
+            callback.onResult(success, error);
+        }
+
+        @Override
+        public void cancel() {
+            final StateChangePort.Subscription toCancel;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                done = true;
+                toCancel = subscription;
+                subscription = null;
+            }
+            if (toCancel != null) {
+                toCancel.cancel();
+            }
+        }
+    }
+
+    private static JSONObject serviceBody(String domain, String entityId) throws JSONException {
+        return new JSONObject()
+                .put("domain", domain)
+                .put("service", "turn_on")
+                .put("target", new JSONObject().put("entity_id", entityId));
     }
 
     private static final class Candidate {
