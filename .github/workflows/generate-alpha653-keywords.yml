@@ -1,0 +1,57 @@
+name: Generate BOOP Alpha 6.5.3 Wake Keywords
+
+on:
+  push:
+    branches: [ "alpha6.5.3-natural-wake-cook" ]
+    paths:
+      - 'wake-assets/boop-kws/keywords_raw.txt'
+      - '.github/workflows/generate-alpha653-keywords.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: alpha6.5.3-natural-wake-cook
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install matching sherpa tokenizer
+        run: python -m pip install 'sherpa-onnx==1.13.7'
+      - name: Download matching GigaSpeech keyword model metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE=sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01.tar.bz2
+          curl -fL --retry 3 -o "$RUNNER_TEMP/$ARCHIVE" \
+            "https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/$ARCHIVE"
+          tar -xjf "$RUNNER_TEMP/$ARCHIVE" -C "$RUNNER_TEMP"
+      - name: Tokenize natural BOOP wake phrases
+        shell: bash
+        run: |
+          set -euo pipefail
+          MODEL="$RUNNER_TEMP/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01"
+          sherpa-onnx-cli text2token \
+            --tokens "$MODEL/tokens.txt" \
+            --tokens-type bpe \
+            --bpe-model "$MODEL/bpe.model" \
+            wake-assets/boop-kws/keywords_raw.txt \
+            wake-assets/boop-kws/keywords.txt
+          test "$(grep -c '@BOOP$' wake-assets/boop-kws/keywords.txt)" -ge 33
+      - name: Commit generated keyword tokens
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name boop-ci
+          git config user.email boop-ci@users.noreply.github.com
+          git add wake-assets/boop-kws/keywords.txt
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "build: tokenize natural BOOP wake phrases"
+          git push origin HEAD:alpha6.5.3-natural-wake-cook
