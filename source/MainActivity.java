@@ -47,6 +47,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private static final int REQ_NEARBY_WIFI = 1002;
     private static final String HOME_AREA = "Living Room";
     private static final long IDLE_TIMEOUT_MS = 30_000L;
+    private static final long ASSISTANT_FOLLOW_UP_SILENCE_MS = 5_000L;
 
     private enum RecognitionMode { NONE, TAP, WAKE }
 
@@ -68,6 +69,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean thinking = false;
     private boolean voiceSettingsOpen = false;
     private boolean pendingListenAfterPermission = false;
+    private boolean assistantFollowUpAfterTts = false;
+    private boolean assistantFollowUpListening = false;
+    private boolean suppressNextRecognizerError = false;
+    private String latestAssistantFollowUpPartial = null;
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
     private boolean setupFailureSpoken = false;
@@ -95,6 +100,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
             face.goIdleBlack();
         }
     };
+
+    private final Runnable assistantFollowUpSilenceRunnable =
+            this::finishAssistantFollowUpSilently;
 
     private final Runnable memberBerryRunnable = () -> {
         if (interactionSurface == null || face == null || listening || voiceSettingsOpen) {
@@ -177,6 +185,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     @Override
     protected void onPause() {
+        assistantFollowUpAfterTts = false;
+        assistantFollowUpListening = false;
+        latestAssistantFollowUpPartial = null;
+        cancelAssistantFollowUpSilenceTimeout();
         closeWakeAudioSession();
         if (wakeCoordinator != null) {
             wakeCoordinator.endForegroundSession();
@@ -194,31 +206,95 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
             @Override
             public void onDone(String utteranceId) {
-                runOnUiThread(() -> {
-                    if (wakeCoordinator != null) {
-                        wakeCoordinator.onTtsFinished();
-                    }
-                });
+                runOnUiThread(() -> finishTtsUtterance());
             }
 
             @Override
             public void onError(String utteranceId) {
-                runOnUiThread(() -> {
-                    if (wakeCoordinator != null) {
-                        wakeCoordinator.onTtsFinished();
-                    }
-                });
+                runOnUiThread(() -> finishTtsUtterance());
             }
 
             @Override
             public void onStop(String utteranceId, boolean interrupted) {
-                runOnUiThread(() -> {
-                    if (wakeCoordinator != null) {
-                        wakeCoordinator.onTtsFinished();
-                    }
-                });
+                runOnUiThread(() -> finishTtsUtterance());
             }
         });
+    }
+
+    private void finishTtsUtterance() {
+        boolean openAssistantFollowUp = assistantFollowUpAfterTts;
+        assistantFollowUpAfterTts = false;
+
+        // Preserve the proven hand-off: reserve the tap recognizer before releasing TTS,
+        // so the wake-word engine cannot race the follow-up microphone.
+        if (openAssistantFollowUp && wakeCoordinator != null) {
+            wakeCoordinator.onTapStarted();
+        }
+        if (wakeCoordinator != null) {
+            wakeCoordinator.onTtsFinished();
+        }
+        if (!openAssistantFollowUp) {
+            return;
+        }
+
+        assistantFollowUpListening = true;
+        latestAssistantFollowUpPartial = null;
+        recognitionMode = RecognitionMode.TAP;
+        startListening();
+        scheduleAssistantFollowUpSilenceTimeout();
+    }
+
+    private void scheduleAssistantFollowUpSilenceTimeout() {
+        if (presenceHandler == null
+                || !assistantFollowUpListening
+                || recognitionMode != RecognitionMode.TAP
+                || !listening) {
+            return;
+        }
+        presenceHandler.removeCallbacks(assistantFollowUpSilenceRunnable);
+        presenceHandler.postDelayed(
+                assistantFollowUpSilenceRunnable,
+                ASSISTANT_FOLLOW_UP_SILENCE_MS);
+    }
+
+    private void cancelAssistantFollowUpSilenceTimeout() {
+        if (presenceHandler != null) {
+            presenceHandler.removeCallbacks(assistantFollowUpSilenceRunnable);
+        }
+    }
+
+    private void sleepFaceImmediately() {
+        if (presenceHandler != null) {
+            presenceHandler.removeCallbacks(faceIdleRunnable);
+        }
+        if (presenceState != null) {
+            presenceState.idle();
+        }
+        if (face != null) {
+            face.goIdleBlack();
+        }
+    }
+
+    private void finishAssistantFollowUpSilently() {
+        if (!assistantFollowUpListening || recognitionMode != RecognitionMode.TAP) {
+            return;
+        }
+        cancelAssistantFollowUpSilenceTimeout();
+        assistantFollowUpListening = false;
+        latestAssistantFollowUpPartial = null;
+        suppressNextRecognizerError = true;
+        recognitionMode = RecognitionMode.NONE;
+        listening = false;
+        if (face != null) {
+            face.animate().alpha(1.0f).setDuration(120).start();
+        }
+        if (recognizer != null) {
+            recognizer.cancel();
+        }
+        if (wakeCoordinator != null) {
+            wakeCoordinator.onTapFinished();
+        }
+        sleepFaceImmediately();
     }
 
     private void createWakeObjects() {
@@ -496,6 +572,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private void startListening() {
+        suppressNextRecognizerError = false;
         wakeFaceForInteraction();
         if (recognizer == null) {
             speak("I can't hear speech on this device yet.");
@@ -514,7 +591,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag());
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, assistantFollowUpListening);
 
         listening = true;
         face.animate().alpha(0.78f).setDuration(120).start();
@@ -549,6 +626,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     private void stopListening() {
         RecognitionMode stoppedMode = recognitionMode;
+        cancelAssistantFollowUpSilenceTimeout();
+        assistantFollowUpListening = false;
+        latestAssistantFollowUpPartial = null;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
         face.animate().alpha(1.0f).setDuration(120).start();
@@ -671,7 +751,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
             setupFailureSpoken = false;
             CommandOutcome outcome = commandRouter.process(transcript);
             runOnUiThread(() -> {
-                speak(LocalReply.forOutcome(outcome));
+                if (outcome.status() == CommandOutcome.Status.ASSISTANT_REPLY) {
+                    speakThenOpenAssistantFollowUp(LocalReply.forOutcome(outcome));
+                } else {
+                    speak(LocalReply.forOutcome(outcome));
+                }
                 if (outcome.status() == CommandOutcome.Status.AUTH_REQUIRED) {
                     tokenStore.clear();
                     setupFailureSpoken = false;
@@ -810,6 +894,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
     }
 
+    private void speakThenOpenAssistantFollowUp(String text) {
+        assistantFollowUpAfterTts = true;
+        speak(text);
+    }
+
     private void speak(String text) {
         wakeFaceForInteraction();
         if (wakeCoordinator != null) {
@@ -817,11 +906,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         if (ttsReady && tts != null) {
             int result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha3");
-            if (result == TextToSpeech.ERROR && wakeCoordinator != null) {
-                wakeCoordinator.onTtsFinished();
+            if (result == TextToSpeech.ERROR) {
+                finishTtsUtterance();
             }
-        } else if (wakeCoordinator != null) {
-            wakeCoordinator.onTtsFinished();
+        } else {
+            finishTtsUtterance();
         }
     }
 
@@ -907,7 +996,12 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     @Override public void onReadyForSpeech(Bundle params) { }
-    @Override public void onBeginningOfSpeech() { }
+    @Override
+    public void onBeginningOfSpeech() {
+        if (assistantFollowUpListening && recognitionMode == RecognitionMode.TAP) {
+            cancelAssistantFollowUpSilenceTimeout();
+        }
+    }
     @Override public void onRmsChanged(float rmsdB) { }
     @Override public void onBufferReceived(byte[] buffer) { }
 
@@ -942,9 +1036,20 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override
     public void onError(int error) {
         RecognitionMode failedMode = recognitionMode;
+        boolean failedAssistantFollowUp =
+                failedMode == RecognitionMode.TAP && assistantFollowUpListening;
+        String fallback = latestAssistantFollowUpPartial;
+        cancelAssistantFollowUpSilenceTimeout();
+        assistantFollowUpListening = false;
+        latestAssistantFollowUpPartial = null;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
         face.animate().alpha(1.0f).setDuration(120).start();
+
+        if (suppressNextRecognizerError) {
+            suppressNextRecognizerError = false;
+            return;
+        }
 
         if (failedMode == RecognitionMode.WAKE) {
             closeWakeAudioSession();
@@ -957,6 +1062,27 @@ public final class MainActivity extends Activity implements RecognitionListener,
                 }
             }
             scheduleFaceIdle();
+            return;
+        }
+
+        if (failedAssistantFollowUp
+                && error == SpeechRecognizer.ERROR_NO_MATCH
+                && fallback != null
+                && !fallback.isBlank()) {
+            if (wakeCoordinator != null) {
+                wakeCoordinator.onTapFinished();
+            }
+            handleRecognizedSpeech(fallback);
+            return;
+        }
+
+        if (failedAssistantFollowUp
+                && (error == SpeechRecognizer.ERROR_NO_MATCH
+                || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
+            if (wakeCoordinator != null) {
+                wakeCoordinator.onTapFinished();
+            }
+            sleepFaceImmediately();
             return;
         }
 
@@ -974,6 +1100,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override
     public void onResults(Bundle results) {
         RecognitionMode completedMode = recognitionMode;
+        boolean completedAssistantFollowUp =
+                completedMode == RecognitionMode.TAP && assistantFollowUpListening;
+        cancelAssistantFollowUpSilenceTimeout();
+        assistantFollowUpListening = false;
+        latestAssistantFollowUpPartial = null;
         recognitionMode = RecognitionMode.NONE;
         listening = false;
         face.animate().alpha(1.0f).setDuration(120).start();
@@ -1012,10 +1143,14 @@ public final class MainActivity extends Activity implements RecognitionListener,
                 handleRecognizedSpeech(best);
                 return;
             }
-            speak("I didn't catch that.");
             if (wakeCoordinator != null) {
                 wakeCoordinator.onTapFinished();
             }
+            if (completedAssistantFollowUp) {
+                sleepFaceImmediately();
+                return;
+            }
+            speak("I didn't catch that.");
             return;
         }
 
@@ -1026,7 +1161,25 @@ public final class MainActivity extends Activity implements RecognitionListener,
         speak("I didn't catch that.");
     }
 
-    @Override public void onPartialResults(Bundle partialResults) { }
+    @Override
+    public void onPartialResults(Bundle partialResults) {
+        if (!assistantFollowUpListening || recognitionMode != RecognitionMode.TAP) {
+            return;
+        }
+        ArrayList<String> matches = partialResults.getStringArrayList(
+                SpeechRecognizer.RESULTS_RECOGNITION);
+        if (matches == null || matches.isEmpty()) {
+            return;
+        }
+        String candidate = matches.get(0);
+        if (candidate == null) {
+            return;
+        }
+        candidate = candidate.trim();
+        if (!candidate.isEmpty()) {
+            latestAssistantFollowUpPartial = candidate;
+        }
+    }
     @Override public void onEvent(int eventType, Bundle params) { }
 
     @Override
@@ -1048,6 +1201,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         if (presenceHandler != null) {
             presenceHandler.removeCallbacks(faceIdleRunnable);
+            presenceHandler.removeCallbacks(assistantFollowUpSilenceRunnable);
             presenceHandler.removeCallbacks(memberBerryRunnable);
             presenceHandler = null;
         }
