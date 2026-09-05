@@ -15,7 +15,7 @@
 
     <string name="room_picker_title">Where am I?</string>
     <string name="room_picker_loading">Loading your rooms…</string>
-    <string name="room_picker_pick">Pick this Shield's room.</string>
-    <string name="room_picker_failed">I couldn't load your rooms.</string>
+    <string name="room_picker_pick">Pick this Shield’s room.</string>
+    <string name="room_picker_failed">I couldn’t load your rooms.</string>
     <string name="home_title">BOOP Home</string>
 </resources>
