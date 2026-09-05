@@ -32,16 +32,16 @@ final class HomeAssistantDirectMediaClient {
         JSONArray areaEntities = fetchAreaEntities(baseUrl, accessToken);
         JSONArray states = fetchStates(baseUrl, accessToken);
         List<HomeAssistantMediaSelector.Candidate> candidates =
-                HomeAssistantMediaSelector.rank(areaEntities, states);
+                HomeAssistantMediaSelector.rank(areaEntities, states, command);
 
         if (candidates.isEmpty()) {
-            return null;
+            return CommandOutcome.failed();
         }
 
         // Two equally strong candidates means BOOP does not have enough evidence to guess.
         if (candidates.size() > 1
                 && candidates.get(0).score() == candidates.get(1).score()) {
-            return null;
+            return CommandOutcome.failed();
         }
 
         for (HomeAssistantMediaSelector.Candidate candidate : candidates) {
@@ -59,8 +59,9 @@ final class HomeAssistantDirectMediaClient {
             }
         }
 
-        // If the direct path cannot safely complete the command, preserve the old Assist path.
-        return null;
+        // A recognised media command never falls through to generic Assist. That route can
+        // reinterpret pause/skip/volume as unrelated remote-control navigation.
+        return CommandOutcome.failed();
     }
 
     private JSONArray fetchAreaEntities(String baseUrl, String accessToken) throws Exception {
