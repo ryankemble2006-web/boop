@@ -37,6 +37,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -68,6 +69,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean thinking = false;
     private boolean voiceSettingsOpen = false;
     private boolean pendingListenAfterPermission = false;
+    private boolean listenAfterTts = false;
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
     private boolean setupFailureSpoken = false;
@@ -82,6 +84,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private BoopCommandRouter commandRouter;
     private HomeAssistantDeviceSetup deviceSetup;
     private HomeAssistantDiscovery discovery;
+    private BoopTimedRoutineFlow timedRoutineFlow;
 
     private final Runnable faceIdleRunnable = () -> {
         if (presenceState == null || face == null) {
@@ -132,6 +135,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
         keepAwakeAndHideSystemUi();
 
         voiceController = new BoopVoiceController(this);
+        timedRoutineFlow = new BoopTimedRoutineFlow();
         tts = new TextToSpeech(this, this);
         installTtsListener();
         createRecognizer();
@@ -194,31 +198,29 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
             @Override
             public void onDone(String utteranceId) {
-                runOnUiThread(() -> {
-                    if (wakeCoordinator != null) {
-                        wakeCoordinator.onTtsFinished();
-                    }
-                });
+                runOnUiThread(() -> finishTtsUtterance());
             }
 
             @Override
             public void onError(String utteranceId) {
-                runOnUiThread(() -> {
-                    if (wakeCoordinator != null) {
-                        wakeCoordinator.onTtsFinished();
-                    }
-                });
+                runOnUiThread(() -> finishTtsUtterance());
             }
 
             @Override
             public void onStop(String utteranceId, boolean interrupted) {
-                runOnUiThread(() -> {
-                    if (wakeCoordinator != null) {
-                        wakeCoordinator.onTtsFinished();
-                    }
-                });
+                runOnUiThread(() -> finishTtsUtterance());
             }
         });
+    }
+
+    private void finishTtsUtterance() {
+        if (wakeCoordinator != null) {
+            wakeCoordinator.onTtsFinished();
+        }
+        if (listenAfterTts) {
+            listenAfterTts = false;
+            beginTapToSpeak();
+        }
     }
 
     private void createWakeObjects() {
@@ -653,6 +655,23 @@ public final class MainActivity extends Activity implements RecognitionListener,
             return;
         }
 
+        BoopTimedRoutineFlow.Result timed =
+                timedRoutineFlow.process(transcript, LocalDateTime.now());
+        switch (timed.kind()) {
+            case ASK_ONCE_OR_RECURRING:
+                speakThenListen("Once or recurring?");
+                return;
+            case RECURRING_REQUESTED:
+                speak("Recurring routines need setup first.");
+                return;
+            case RUN_ONCE:
+                executeTimedCommand(timed);
+                return;
+            case NOT_TIMED:
+            default:
+                break;
+        }
+
         executor.execute(() -> {
             HomeAssistantDeviceSetup.SetupResult setup = tokenStore.hasHaDeviceIdentity()
                     ? HomeAssistantDeviceSetup.SetupResult.READY
@@ -664,15 +683,33 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
             setupFailureSpoken = false;
             CommandOutcome outcome = commandRouter.process(transcript);
-            runOnUiThread(() -> {
-                speak(LocalReply.forOutcome(outcome));
-                if (outcome.status() == CommandOutcome.Status.AUTH_REQUIRED) {
-                    tokenStore.clear();
-                    setupFailureSpoken = false;
-                    ensureHouseConnection();
-                }
-            });
+            runOnUiThread(() -> handleHouseOutcome(outcome));
         });
+    }
+
+    private void executeTimedCommand(BoopTimedRoutineFlow.Result timed) {
+        executor.execute(() -> {
+            HomeAssistantDeviceSetup.SetupResult setup = tokenStore.hasHaDeviceIdentity()
+                    ? HomeAssistantDeviceSetup.SetupResult.READY
+                    : deviceSetup.ensureReady();
+            if (setup != HomeAssistantDeviceSetup.SetupResult.READY) {
+                runOnUiThread(() -> handleDeviceSetupFailure(setup));
+                return;
+            }
+
+            setupFailureSpoken = false;
+            CommandOutcome outcome = haClient.processTimed(timed.haCommand());
+            runOnUiThread(() -> handleHouseOutcome(outcome));
+        });
+    }
+
+    private void handleHouseOutcome(CommandOutcome outcome) {
+        speak(LocalReply.forOutcome(outcome));
+        if (outcome.status() == CommandOutcome.Status.AUTH_REQUIRED) {
+            tokenStore.clear();
+            setupFailureSpoken = false;
+            ensureHouseConnection();
+        }
     }
 
     private void handleDeviceSetupFailure(HomeAssistantDeviceSetup.SetupResult result) {
@@ -804,6 +841,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
     }
 
+    private void speakThenListen(String text) {
+        listenAfterTts = true;
+        speak(text);
+    }
+
     private void speak(String text) {
         wakeFaceForInteraction();
         if (wakeCoordinator != null) {
@@ -811,11 +853,11 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         if (ttsReady && tts != null) {
             int result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "boop-alpha3");
-            if (result == TextToSpeech.ERROR && wakeCoordinator != null) {
-                wakeCoordinator.onTtsFinished();
+            if (result == TextToSpeech.ERROR) {
+                finishTtsUtterance();
             }
-        } else if (wakeCoordinator != null) {
-            wakeCoordinator.onTtsFinished();
+        } else {
+            finishTtsUtterance();
         }
     }
 

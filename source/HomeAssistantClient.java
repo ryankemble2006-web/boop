@@ -93,6 +93,57 @@ final class HomeAssistantClient {
         }
     }
 
+    CommandOutcome processTimed(String text) {
+        String baseUrl = tokenStore.getBaseUrl();
+        if (baseUrl == null) {
+            return CommandOutcome.authRequired();
+        }
+
+        String deviceId = tokenStore.getHaDeviceId();
+        if (deviceId == null || deviceId.isEmpty()) {
+            return CommandOutcome.authRequired();
+        }
+
+        try {
+            String accessToken = auth.freshAccessToken();
+            HomeAssistantResponse response = postConversation(
+                    baseUrl, accessToken, text, deviceId);
+
+            switch (response.kind()) {
+                case ACTION_DONE:
+                    if (!response.successTargets().isEmpty() && response.failedTargets().isEmpty()) {
+                        return CommandOutcome.success(response.successTargets().get(0).name());
+                    }
+                    if (!response.failedTargets().isEmpty()) {
+                        HomeAssistantResponse.Target failed = response.failedTargets().get(0);
+                        if ("entity".equals(failed.type())
+                                && !failed.id().isEmpty()
+                                && isUnavailable(baseUrl, accessToken, failed.id())) {
+                            return CommandOutcome.targetOffline(
+                                    failed.name().isEmpty() ? "device" : failed.name(),
+                                    homeArea);
+                        }
+                    }
+                    return CommandOutcome.failed();
+                case NO_INTENT_MATCH:
+                    return CommandOutcome.noMatch();
+                case NO_VALID_TARGETS:
+                    return CommandOutcome.noTarget();
+                case QUERY_ANSWER:
+                case FAILED_TO_HANDLE:
+                case UNKNOWN_ERROR:
+                default:
+                    return CommandOutcome.failed();
+            }
+        } catch (HomeAssistantAuth.AuthRejectedException e) {
+            return CommandOutcome.authRequired();
+        } catch (IOException e) {
+            return CommandOutcome.unreachable();
+        } catch (Exception e) {
+            return CommandOutcome.authRequired();
+        }
+    }
+
     private static HomeAssistantResponse postConversation(
             String baseUrl, String accessToken, String text, String deviceId) throws Exception {
         HttpURLConnection connection = null;
