@@ -155,6 +155,7 @@ public final class BoopHomeActivity extends Activity {
         window.setNavigationBarColor(Color.BLACK);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.getDecorView();
             window.setDecorFitsSystemWindows(false);
             WindowInsetsController controller = window.getInsetsController();
             if (controller != null) {
