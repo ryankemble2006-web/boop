@@ -1,0 +1,17 @@
+name: Verify BOOP Alpha 6.5.2 Media Recovery
+
+on:
+  push:
+    branches: [ "alpha6.5.2-media-assistant-recovery" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run direct-media regression tests
+        run: python3 -m unittest tests/test_alpha5_direct_media.py -v
