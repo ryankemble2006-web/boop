@@ -23,18 +23,22 @@ class ShieldPairingGateUiSourceTest(unittest.TestCase):
         self.assertIn("Bitmap.createBitmap", source)
         self.assertIn("size, size", source)
 
-    def test_main_activity_starts_existing_overlay_then_hosts_pairing_gate(self):
-        source = self.read_main("java/com/boop/shieldoverlay/MainActivity.java")
+    def test_launcher_starts_existing_overlay_then_opens_home_pairing_gate(self):
+        launcher = self.read_main("java/com/boop/shieldoverlay/MainActivity.java")
+        home = self.read_main("java/com/boop/shieldoverlay/BoopHomeActivity.java")
+
         self.assertIn(
             "startForegroundService(new Intent(this, BoopOverlayService.class));",
-            source,
+            launcher,
         )
-        self.assertIn("PairingGateController", source)
-        self.assertIn("showPairingGate", source)
-        self.assertIn("State.QR_READY", source)
-        self.assertIn("State.STALE", source)
-        self.assertIn("State.FAILED", source)
-        self.assertNotIn("startOverlayAndFinish", source)
+        self.assertIn("startActivity(new Intent(this, BoopHomeActivity.class))", launcher)
+        self.assertNotIn("PairingGateController", launcher)
+
+        self.assertIn("PairingGateController", home)
+        self.assertIn("showPairingGate", home)
+        self.assertIn("State.QR_READY", home)
+        self.assertIn("State.STALE", home)
+        self.assertIn("State.FAILED", home)
 
     def test_pairing_gate_has_big_plain_english_states_and_remote_retry(self):
         strings = self.read_main("res/values/strings.xml")
@@ -46,7 +50,7 @@ class ShieldPairingGateUiSourceTest(unittest.TestCase):
         ):
             self.assertIn(text, strings)
 
-        source = self.read_main("java/com/boop/shieldoverlay/MainActivity.java")
+        source = self.read_main("java/com/boop/shieldoverlay/BoopHomeActivity.java")
         self.assertIn("setOnClickListener", source)
         self.assertIn("requestFocus", source)
         self.assertIn("postDelayed", source)
