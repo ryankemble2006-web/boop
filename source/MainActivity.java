@@ -214,12 +214,18 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private void finishTtsUtterance() {
+        boolean followUpListen = listenAfterTts;
+        listenAfterTts = false;
+
+        if (followUpListen && wakeCoordinator != null) {
+            wakeCoordinator.onTapStarted();
+        }
         if (wakeCoordinator != null) {
             wakeCoordinator.onTtsFinished();
         }
-        if (listenAfterTts) {
-            listenAfterTts = false;
-            beginTapToSpeak();
+        if (followUpListen) {
+            recognitionMode = RecognitionMode.TAP;
+            startListening();
         }
     }
 
