@@ -1,0 +1,21 @@
+name: Verify BOOP Alpha 6.5.1 Manners Exit
+
+on:
+  push:
+    branches: [ "alpha6.5.1-manners-exit" ]
+  workflow_dispatch:
+
+concurrency:
+  group: boop-alpha651-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Alpha 6.5.1 focused regression tests
+        run: python3 -m unittest tests/test_alpha651_manners_exit.py -v
