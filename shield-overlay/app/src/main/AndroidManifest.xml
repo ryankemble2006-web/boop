@@ -16,7 +16,8 @@
         android:icon="@drawable/ic_boop_notification"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BoopOverlayPoc">
+        android:theme="@style/Theme.BoopOverlayPoc"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
