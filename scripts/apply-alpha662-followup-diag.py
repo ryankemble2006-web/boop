@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Diagnostic patch only; no recognizer timing or routing changes.
 path = Path('source/MainActivity.java')
 text = path.read_text(encoding='utf-8')
 
