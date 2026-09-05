@@ -1,0 +1,17 @@
+name: Verify BOOP Alpha 6.5.4 Customization Fixes
+
+on:
+  push:
+    branches: [ "alpha6.5.4-customization-fixes" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Alpha 6.5.4 regression tests
+        run: python3 -m unittest tests/test_alpha654_customization_fixes.py -v
