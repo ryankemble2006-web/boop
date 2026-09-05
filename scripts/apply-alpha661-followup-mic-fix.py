@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# One-shot CI patch used only to apply the tested Alpha 6.6.1 mic handoff fix.
 path = Path("source/MainActivity.java")
 text = path.read_text(encoding="utf-8")
 
