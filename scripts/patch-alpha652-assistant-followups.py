@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# BOOP Alpha 6.5.2 assistant-only follow-up patch.
 from pathlib import Path
 
 MAIN = Path("source/MainActivity.java")
