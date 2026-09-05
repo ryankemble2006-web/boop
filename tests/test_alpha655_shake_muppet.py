@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 
+# Alpha 6.5.5 physical-whimsy regression gate.
 
 class Alpha655ShakeMuppetTests(unittest.TestCase):
     def test_main_registers_accelerometer_only_while_foreground(self):
