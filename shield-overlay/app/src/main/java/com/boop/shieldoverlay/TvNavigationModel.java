@@ -50,7 +50,7 @@ public final class TvNavigationModel {
     }
 
     public boolean onBack() {
-        if (page != Page.HOME || focus == Focus.CONTENT) {
+        if (page != Page.HOME) {
             page = Page.HOME;
             focus = Focus.RAIL;
             return false;
