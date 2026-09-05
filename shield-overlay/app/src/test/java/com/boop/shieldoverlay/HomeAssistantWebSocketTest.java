@@ -2,8 +2,10 @@ package com.boop.shieldoverlay;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,6 +32,27 @@ public final class HomeAssistantWebSocketTest {
     @After
     public void tearDown() throws Exception {
         server.shutdown();
+    }
+
+    @Test
+    public void exposesStateChangeSubscriptionApi() throws Exception {
+        Class<?> stateListener = null;
+        Class<?> subscriptionCallback = null;
+        for (Class<?> nested : HomeAssistantWebSocket.class.getDeclaredClasses()) {
+            if ("StateChangeListener".equals(nested.getSimpleName())) {
+                stateListener = nested;
+            } else if ("SubscriptionCallback".equals(nested.getSimpleName())) {
+                subscriptionCallback = nested;
+            }
+        }
+
+        assertNotNull("socket needs a state-change listener type", stateListener);
+        assertNotNull("socket needs a subscription callback type", subscriptionCallback);
+        Method method = HomeAssistantWebSocket.class.getMethod(
+                "subscribeStateChanges",
+                stateListener,
+                subscriptionCallback);
+        assertNotNull(method);
     }
 
     @Test
