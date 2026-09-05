@@ -155,6 +155,24 @@ jobs:
           fi
           exit $START_STATUS
 
+      - name: Smoke test BOOP pairing deep link
+        run: |
+          set -euo pipefail
+          adb logcat -c
+          adb shell am start -W \
+            -a android.intent.action.VIEW \
+            -d 'boop://shield-pair-return?sid=test' \
+            com.boop.alpha1 | tee pairing-start.txt
+          sleep 2
+          echo '=== PAIRING ACTIVITY ==='
+          adb shell dumpsys activity activities | grep -E 'com\.boop\.alpha1/.ShieldPairingActivity' | tee pairing-activity.txt
+          test -s pairing-activity.txt
+          if ! adb shell pidof com.boop.alpha1 >/dev/null 2>&1; then
+            echo 'BOOP_DIED_AFTER_PAIRING_DEEP_LINK=1'
+            adb logcat -d -v threadtime | grep -i -E 'boop|FATAL EXCEPTION|AndroidRuntime|Process: com\.boop\.alpha1|Caused by:' || true
+            exit 1
+          fi
+
       - name: Upload BOOP APK
         if: always()
         uses: actions/upload-artifact@v4
