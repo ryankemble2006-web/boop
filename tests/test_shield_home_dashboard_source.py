@@ -22,6 +22,13 @@ class ShieldHomeDashboardSourceTest(unittest.TestCase):
         self.assertIn("homeView.render", activity)
         self.assertIn("dashboardController.toggleFavourite", activity)
 
+    def test_live_dashboard_wires_state_change_confirmation_from_socket(self):
+        activity = (JAVA / "BoopHomeActivity.java").read_text(encoding="utf-8")
+
+        self.assertIn("HomeAssistantRepository.StateChangePort", activity)
+        self.assertIn("socket.subscribeStateChanges", activity)
+        self.assertIn("new HomeAssistantRepository(socket::send, stateChangePort)", activity)
+
     def test_socket_loss_marks_existing_card_stale(self):
         activity = (JAVA / "BoopHomeActivity.java").read_text(encoding="utf-8")
 
