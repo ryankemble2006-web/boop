@@ -4,7 +4,7 @@
 
 **Goal:** Add a whole-house Shield Routines page that discovers usable Home Assistant scripts and scenes, runs them locally, and gives truthful `Running…` / `Done` / `Didn’t run` feedback without regressing the checkpointed Home dashboard.
 
-**Architecture:** Implement Routines as a separate vertical slice: `RoutineItem` for domain data, `RoutinesRepository` for Home Assistant discovery/execution protocol, `RoutinesController` for per-row state/timers/concurrency, `TvRoutinesView` for remote-first rendering, and minimal composition in `BoopHomeActivity`. Reuse the existing authenticated `HomeAssistantWebSocket` and its state-change subscription facility; do not move routine logic into `HomeAssistantRepository`, `FocusCardView`, or the protected overlay runtime.
+**Architecture:** Keep Routines as a separate vertical slice: `RoutineItem` holds routine identity/type, `RoutinesRepository` owns Home Assistant discovery and execution protocol, `RoutinesController` owns per-row state/timers/concurrency, `TvRoutinesView` owns remote-first rendering, and `BoopHomeActivity` only composes those pieces on the already-authenticated Home Assistant WebSocket. Reuse `HomeAssistantWebSocket.subscribeStateChanges(...)`; do not move routine logic into `HomeAssistantRepository`, `FocusCardView`, or the protected overlay runtime.
 
 **Tech Stack:** Java 17, Android SDK 36 / minSdk 26, Android Views, OkHttp 4.12.0 WebSocket, `org.json`, JUnit 4.13.2, Python `unittest`, Gradle 9.6.0 in CI.
 
@@ -12,50 +12,45 @@
 
 ## Global Constraints
 
-- Base implementation branch: `boop-shield-home-implementation`.
-- Preserve checkpoint branch `checkpoint-shield-home-f8e8135`; never move or modify it.
-- Keep package/application ID `com.boop.shieldoverlay` and existing Shield overlay naming.
-- Keep core routine execution local to Home Assistant; no OpenAI/cloud dependency.
-- Routines v1 contains only `script.*` and `scene.*` entities; no automations, sensors, voice, editing, history, room filtering, paging, or favourites.
+- Implementation branch: `boop-shield-home-implementation`.
+- Never move or modify `checkpoint-shield-home-f8e8135`.
+- Keep package/application ID `com.boop.shieldoverlay` and existing `shieldoverlay` naming.
+- Core routine execution remains local to Home Assistant; no OpenAI/cloud dependency.
+- Routines v1 contains only `script.*` and `scene.*`; no automations, sensors, voice, editing, history, room filtering, paging, or routine favourites.
 - Discovery is whole-house and sorted case-insensitively by display name.
-- Use Home Assistant `config/entity_registry/list_for_display`; by API contract this endpoint already omits disabled entities. Still filter hidden entries and config/diagnostic entity categories locally.
-- Scene success means Home Assistant accepted the exact `scene.turn_on` service call.
-- Script success requires both service-call success and an observed exact-target `on` then `off` lifecycle after subscription was established; an isolated `off` never counts as completion.
-- Script completion timeout: exactly `120_000L` ms in v1.
-- Result hold time for `Done` / `Didn’t run`: exactly `2_000L` ms in v1.
-- Same running row ignores duplicate Select; other ready rows remain runnable.
-- No raw Home Assistant errors appear in routine cards.
-- Focus visuals must never reorder children; do not add `bringToFront()`.
-- Preserve existing Home dashboard behaviour, room selection, favourite discovery, physical binary control, 10-second confirmation, and rail navigation.
+- Use `config/entity_registry/list_for_display`; Home Assistant's API contract excludes disabled entities from that response. Still filter hidden entries and `config`/`diagnostic` categories locally.
+- Scene success means the exact `scene.turn_on` service request was accepted.
+- Script success requires service-call success plus an observed exact-target `on` then `off` lifecycle after subscription activation. An isolated `off` event never counts as completion.
+- Script completion timeout is exactly `120_000L` ms.
+- `Done` / `Didn’t run` hold time is exactly `2_000L` ms.
+- Duplicate Select on the same running row is ignored; other ready rows remain runnable.
+- Routine cards never expose raw Home Assistant errors.
+- Do not add `bringToFront()` or any focus behaviour that reorders vertical children.
+- Preserve Home dashboard, selected-room flow, favourite selection, physical binary control, the 10-second Home confirmation window, and rail navigation.
 - Do not add Android permissions.
 
----
-
-## File Structure
+## File Map
 
 **Create**
-
-- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutineItem.java` — immutable routine identity/type model.
-- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesRepository.java` — Home Assistant discovery and execution protocol only.
-- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesController.java` — page state, per-row execution state, duplicate suppression, timers, offline transition, cleanup.
-- `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesRepositoryTest.java` — repository discovery and execution contract tests.
-- `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesControllerTest.java` — controller state/timer/concurrency tests.
+- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutineItem.java`
+- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesRepository.java`
+- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesController.java`
+- `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesRepositoryTest.java`
+- `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesControllerTest.java`
 
 **Modify**
+- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/TvRoutinesView.java`
+- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/BoopHomeActivity.java`
+- `tests/test_shield_overlay_source.py`
 
-- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/TvRoutinesView.java` — replace placeholder with ScrollView-backed chunky routine list.
-- `shield-overlay/app/src/main/java/com/boop/shieldoverlay/BoopHomeActivity.java` — compose the Routines slice on the already-authenticated Home Assistant socket.
-- `tests/test_shield_overlay_source.py` — source-level regression guards for scrolling, wiring, and no focus reordering.
-
-**Must remain untouched unless a failing test proves otherwise**
-
+**Expected untouched**
 - `shield-overlay/app/src/main/java/com/boop/shieldoverlay/HomeAssistantRepository.java`
 - `shield-overlay/app/src/main/java/com/boop/shieldoverlay/FocusCardView.java`
-- protected overlay files covered by `test_protected_overlay_runtime_stays_free_of_voice_network_and_ha_code`.
+- protected overlay service/view/geometry/window-spec files.
 
 ---
 
-### Task 1: Routine model and whole-house discovery
+### Task 1: Model and whole-house discovery
 
 **Files:**
 - Create: `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutineItem.java`
@@ -63,25 +58,91 @@
 - Create: `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesRepositoryTest.java`
 
 **Interfaces:**
-- Consumes: `HomeAssistantWebSocket.Callback`, `org.json.JSONObject`, `org.json.JSONArray`.
-- Produces:
-  - `RoutineItem(String entityId, String displayName, RoutineItem.Type type)`
-  - `String entityId()`
-  - `String displayName()`
-  - `RoutineItem.Type type()`
-  - `String domain()` returning `script` or `scene`
-  - `String typeLabel()` returning `Script` or `Scene`
-  - `RoutinesRepository.CommandPort.send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback)`
-  - `RoutinesRepository.LoadCallback.onResult(List<RoutineItem> routines, String error)`
-  - `RoutinesRepository.loadRoutines(LoadCallback callback)`
 
-- [ ] **Step 1: Write the failing discovery tests**
+```java
+public final class RoutineItem {
+    public enum Type { SCRIPT, SCENE }
+    public RoutineItem(String entityId, String displayName, Type type);
+    public String entityId();
+    public String displayName();
+    public Type type();
+    public String domain();      // "script" or "scene"
+    public String typeLabel();   // "Script" or "Scene"
+}
+```
 
-Add tests that prove the repository uses the display registry, excludes non-routine/hidden/config/diagnostic entries, uses friendly-name fallback, and returns one alphabetical list.
+```java
+public final class RoutinesRepository {
+    public interface CommandPort {
+        void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback);
+    }
+    public interface LoadCallback {
+        void onResult(List<RoutineItem> routines, String error);
+    }
+    public RoutinesRepository(CommandPort commandPort);
+    public void loadRoutines(LoadCallback callback);
+}
+```
+
+Private discovery helper types/methods introduced in this task:
+
+```java
+private static final class Candidate {
+    final String entityId;
+    final String displayName;
+    final RoutineItem.Type type;
+}
+
+private Map<String, Candidate> collectCandidates(JSONArray entities, Object categories);
+private void loadStates(Map<String, Candidate> candidates, LoadCallback callback);
+private static String entityCategory(Object categoryRef, Object categories);
+private static RoutineItem.Type typeForEntityId(String entityId);
+private static String clean(String value);
+```
+
+- [ ] **Step 1: Write the red discovery tests**
+
+Create `RoutinesRepositoryTest.java` with a command recorder and two discovery tests.
+
+```java
+private static final class Command {
+    final String type;
+    final JSONObject body;
+    final HomeAssistantWebSocket.Callback callback;
+
+    Command(String type, JSONObject body, HomeAssistantWebSocket.Callback callback) {
+        this.type = type;
+        this.body = body;
+        this.callback = callback;
+    }
+}
+
+private static class RecordingCommands implements RoutinesRepository.CommandPort {
+    final List<Command> commands = new ArrayList<>();
+
+    @Override
+    public void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback) {
+        commands.add(new Command(type, body, callback));
+    }
+
+    Command command(int index) {
+        return commands.get(index);
+    }
+}
+
+private static JSONObject state(String entityId, String value, String friendlyName) throws Exception {
+    return new JSONObject()
+            .put("entity_id", entityId)
+            .put("state", value)
+            .put("attributes", new JSONObject().put("friendly_name", friendlyName));
+}
+```
+
+Primary test:
 
 ```java
 @Test
-public void discoveryUsesEnabledDisplayRegistryAndReturnsVisibleScriptsAndScenesAlphabetically() throws Exception {
+public void discoveryUsesDisplayRegistryAndReturnsOnlyUsableRoutinesAlphabetically() throws Exception {
     RecordingCommands commands = new RecordingCommands();
     RoutinesRepository repository = new RoutinesRepository(commands);
     AtomicReference<List<RoutineItem>> result = new AtomicReference<>();
@@ -101,20 +162,21 @@ public void discoveryUsesEnabledDisplayRegistryAndReturnsVisibleScriptsAndScenes
                     .put(new JSONObject().put("ei", "scene.movie").put("en", "Movie Night"))
                     .put(new JSONObject().put("ei", "scene.alpha"))
                     .put(new JSONObject().put("ei", "script.hidden").put("en", "Hidden").put("hb", true))
-                    .put(new JSONObject().put("ei", "script.config").put("en", "Config Script").put("ec", 0))
-                    .put(new JSONObject().put("ei", "scene.diagnostic").put("en", "Diagnostic Scene").put("ec", 1))
+                    .put(new JSONObject().put("ei", "script.config").put("en", "Config").put("ec", 0))
+                    .put(new JSONObject().put("ei", "scene.diagnostic").put("en", "Diagnostic").put("ec", 1))
                     .put(new JSONObject().put("ei", "switch.not_a_routine").put("en", "Switch")));
     commands.command(0).callback.onResult(true, registry, null);
 
     assertEquals("get_states", commands.command(1).type);
-    JSONArray states = new JSONArray()
-            .put(state("script.bedtime", "off", "Bedtime fallback"))
-            .put(state("scene.movie", "2026-09-05T12:00:00+00:00", "Movie fallback"))
-            .put(state("scene.alpha", "unknown", "Alpha Scene"));
-    commands.command(1).callback.onResult(true, states, null);
+    commands.command(1).callback.onResult(
+            true,
+            new JSONArray()
+                    .put(state("script.bedtime", "off", "Bedtime fallback"))
+                    .put(state("scene.movie", "2026-09-05T12:00:00+00:00", "Movie fallback"))
+                    .put(state("scene.alpha", "unknown", "Alpha Scene")),
+            null);
 
     assertNull(error.get());
-    assertNotNull(result.get());
     assertEquals(3, result.get().size());
     assertEquals("Alpha Scene", result.get().get(0).displayName());
     assertEquals("Bedtime", result.get().get(1).displayName());
@@ -122,31 +184,26 @@ public void discoveryUsesEnabledDisplayRegistryAndReturnsVisibleScriptsAndScenes
     assertEquals(RoutineItem.Type.SCENE, result.get().get(0).type());
     assertEquals(RoutineItem.Type.SCRIPT, result.get().get(1).type());
 }
-
-private static JSONObject state(String entityId, String value, String friendlyName) throws Exception {
-    return new JSONObject()
-            .put("entity_id", entityId)
-            .put("state", value)
-            .put("attributes", new JSONObject().put("friendly_name", friendlyName));
-}
 ```
 
-Also add a test where `entity_categories` is a `JSONObject` keyed by numeric strings so the parser accepts both the currently-used array form and Home Assistant's documented compact mapping form:
+Category-map compatibility test:
 
 ```java
 @Test
-public void discoveryDecodesObjectCategoryMapAndStillExcludesConfigEntities() throws Exception {
+public void discoveryAcceptsObjectCategoryMapAndExcludesConfigEntity() throws Exception {
     RecordingCommands commands = new RecordingCommands();
     RoutinesRepository repository = new RoutinesRepository(commands);
     AtomicReference<List<RoutineItem>> result = new AtomicReference<>();
 
-    repository.loadRoutines((items, error) -> result.set(items));
-    JSONObject registry = new JSONObject()
-            .put("entity_categories", new JSONObject().put("0", "config").put("1", "diagnostic"))
-            .put("entities", new JSONArray()
-                    .put(new JSONObject().put("ei", "script.good").put("en", "Good"))
-                    .put(new JSONObject().put("ei", "scene.settings").put("en", "Settings").put("ec", 0)));
-    commands.command(0).callback.onResult(true, registry, null);
+    repository.loadRoutines((items, message) -> result.set(items));
+    commands.command(0).callback.onResult(
+            true,
+            new JSONObject()
+                    .put("entity_categories", new JSONObject().put("0", "config").put("1", "diagnostic"))
+                    .put("entities", new JSONArray()
+                            .put(new JSONObject().put("ei", "script.good").put("en", "Good"))
+                            .put(new JSONObject().put("ei", "scene.settings").put("en", "Settings").put("ec", 0))),
+            null);
     commands.command(1).callback.onResult(
             true,
             new JSONArray()
@@ -159,124 +216,56 @@ public void discoveryDecodesObjectCategoryMapAndStillExcludesConfigEntities() th
 }
 ```
 
-The test fixture must use a simple command recorder:
-
-```java
-private static final class Command {
-    final String type;
-    final JSONObject body;
-    final HomeAssistantWebSocket.Callback callback;
-
-    Command(String type, JSONObject body, HomeAssistantWebSocket.Callback callback) {
-        this.type = type;
-        this.body = body;
-        this.callback = callback;
-    }
-}
-
-private static final class RecordingCommands implements RoutinesRepository.CommandPort {
-    final List<Command> commands = new ArrayList<>();
-
-    @Override
-    public void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback) {
-        commands.add(new Command(type, body, callback));
-    }
-
-    Command command(int index) {
-        return commands.get(index);
-    }
-}
-```
-
-- [ ] **Step 2: Run the unit test and verify red**
-
-Run:
+- [ ] **Step 2: Run red**
 
 ```bash
 gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 ```
 
-Expected: compilation/test failure because `RoutineItem` and `RoutinesRepository` do not exist.
+Expected: compilation failure because `RoutineItem` / `RoutinesRepository` do not exist.
 
 - [ ] **Step 3: Implement `RoutineItem`**
 
-Create an immutable Java model with validation and exact type/domain labels:
+Use exact domain/label mapping and reject blank constructor values. No Android dependencies.
 
 ```java
-public final class RoutineItem {
-    public enum Type {
-        SCRIPT,
-        SCENE
-    }
+public String domain() {
+    return type == Type.SCRIPT ? "script" : "scene";
+}
 
-    private final String entityId;
-    private final String displayName;
-    private final Type type;
-
-    public RoutineItem(String entityId, String displayName, Type type) {
-        this.entityId = requireText(entityId, "entity ID");
-        this.displayName = requireText(displayName, "display name");
-        if (type == null) {
-            throw new IllegalArgumentException("routine type is required");
-        }
-        this.type = type;
-    }
-
-    public String entityId() { return entityId; }
-    public String displayName() { return displayName; }
-    public Type type() { return type; }
-    public String domain() { return type == Type.SCRIPT ? "script" : "scene"; }
-    public String typeLabel() { return type == Type.SCRIPT ? "Script" : "Scene"; }
-
-    private static String requireText(String value, String label) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException(label + " is required");
-        }
-        return value.trim();
-    }
+public String typeLabel() {
+    return type == Type.SCRIPT ? "Script" : "Scene";
 }
 ```
 
-- [ ] **Step 4: Implement whole-house discovery in `RoutinesRepository`**
+- [ ] **Step 4: Implement `RoutinesRepository.loadRoutines`**
 
-Use `config/entity_registry/list_for_display` first, because Home Assistant only returns enabled entities from this endpoint. Filter `hb`, config/diagnostic category, and non-`script`/`scene` domains before the state lookup. Then call `get_states` to provide `friendly_name` fallback and to drop registry entries with no current entity state.
-
-The core flow must be:
+Required command order:
 
 ```java
-public void loadRoutines(LoadCallback callback) {
-    if (callback == null) {
-        throw new IllegalArgumentException("routines callback is required");
-    }
-    commandPort.send("config/entity_registry/list_for_display", new JSONObject(),
-            (success, result, error) -> {
-                if (!success || !(result instanceof JSONObject)) {
-                    callback.onResult(null, "I couldn't load routines from Home Assistant.");
-                    return;
-                }
-                JSONObject registry = (JSONObject) result;
-                JSONArray entities = registry.optJSONArray("entities");
-                if (entities == null) {
-                    callback.onResult(null, "I couldn't load routines from Home Assistant.");
-                    return;
-                }
-                Map<String, Candidate> candidates = collectCandidates(
-                        entities,
-                        registry.opt("entity_categories"));
-                loadStates(candidates, callback);
-            });
-}
+commandPort.send("config/entity_registry/list_for_display", new JSONObject(), registryCallback);
 ```
 
-`collectCandidates` must:
+After a successful display-registry result, call:
 
-- derive type from `ei` prefix only (`script.` / `scene.`),
+```java
+commandPort.send("get_states", new JSONObject(), statesCallback);
+```
+
+`collectCandidates(...)` rules:
+- read entity ID from compact key `ei`,
+- `typeForEntityId` accepts only prefixes `script.` and `scene.`,
 - skip `hb == true`,
 - decode `ec` against either `JSONArray` or `JSONObject` category maps,
-- skip `config` and `diagnostic`,
-- retain `en` as preferred display name when present.
+- skip decoded `config` and `diagnostic`,
+- retain compact display name `en` when present.
 
-`loadStates` must call `get_states`, match candidate entity IDs, use candidate name first then `attributes.friendly_name`, skip entries with neither, construct `RoutineItem`, and sort with:
+`loadStates(...)` rules:
+- only use states whose `entity_id` exists in the candidate map,
+- preferred name = candidate `en`; fallback = state `attributes.friendly_name`,
+- skip a candidate with no usable name or no current state entry,
+- do **not** reject scene state `unknown`; a never-activated scene must still be discoverable,
+- sort exactly with:
 
 ```java
 items.sort(Comparator.comparing(
@@ -284,19 +273,17 @@ items.sort(Comparator.comparing(
         String.CASE_INSENSITIVE_ORDER));
 ```
 
-Return an empty list as a successful live result when no routines qualify; do not convert a legitimate empty list into an offline error.
+A successful empty list is `callback.onResult(Collections.emptyList(), null)`, not an offline error.
 
-- [ ] **Step 5: Run tests and verify green**
-
-Run:
+- [ ] **Step 5: Run green**
 
 ```bash
 gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 ```
 
-Expected: all existing Shield unit tests plus `RoutinesRepositoryTest` pass.
+Expected: all Shield unit tests pass.
 
-- [ ] **Step 6: Commit Task 1**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutineItem.java \
@@ -307,26 +294,43 @@ git commit -m "feat: discover Shield routines"
 
 ---
 
-### Task 2: Scene execution with accepted-service truthfulness
+### Task 2: Scene execution
 
 **Files:**
 - Modify: `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesRepository.java`
 - Modify: `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesRepositoryTest.java`
 
-**Interfaces:**
-- Consumes: `RoutineItem` from Task 1.
-- Produces:
-  - `RoutinesRepository.RunCallback.onResult(boolean success, String error)`
-  - `RoutinesRepository.Execution.cancel()`
-  - `RoutinesRepository.run(RoutineItem routine, RunCallback callback)` returning a non-null `Execution`.
+**Interfaces added:**
 
-- [ ] **Step 1: Write failing scene-execution tests**
+```java
+public interface RunCallback {
+    void onResult(boolean success, String error);
+}
 
-Add:
+public interface Execution {
+    void cancel();
+}
+
+public Execution run(RoutineItem routine, RunCallback callback);
+```
+
+Private type added:
+
+```java
+private final class SceneExecution implements Execution {
+    private final RunCallback callback;
+    private boolean done;
+    void start(RoutineItem routine);
+    void onServiceResult(boolean success, Object result, String error);
+    @Override public void cancel();
+}
+```
+
+- [ ] **Step 1: Write scene tests**
 
 ```java
 @Test
-public void sceneRunTargetsExactEntityAndCompletesWhenServiceIsAccepted() throws Exception {
+public void sceneTargetsExactEntityAndFinishesWhenServiceAccepted() throws Exception {
     RecordingCommands commands = new RecordingCommands();
     RoutinesRepository repository = new RoutinesRepository(commands);
     AtomicBoolean callbackSeen = new AtomicBoolean(false);
@@ -334,13 +338,12 @@ public void sceneRunTargetsExactEntityAndCompletesWhenServiceIsAccepted() throws
 
     RoutinesRepository.Execution execution = repository.run(
             new RoutineItem("scene.movie_night", "Movie Night", RoutineItem.Type.SCENE),
-            (ok, error) -> {
+            (ok, message) -> {
                 callbackSeen.set(true);
                 success.set(ok);
             });
 
     assertNotNull(execution);
-    assertEquals(1, commands.commands.size());
     Command command = commands.command(0);
     assertEquals("call_service", command.type);
     assertEquals("scene", command.body.getString("domain"));
@@ -355,14 +358,14 @@ public void sceneRunTargetsExactEntityAndCompletesWhenServiceIsAccepted() throws
 }
 
 @Test
-public void cancelledSceneSuppressesLateServiceCallback() throws Exception {
+public void cancelledSceneIgnoresLateServiceReply() throws Exception {
     RecordingCommands commands = new RecordingCommands();
     RoutinesRepository repository = new RoutinesRepository(commands);
     AtomicBoolean callbackSeen = new AtomicBoolean(false);
 
     RoutinesRepository.Execution execution = repository.run(
             new RoutineItem("scene.movie_night", "Movie Night", RoutineItem.Type.SCENE),
-            (ok, error) -> callbackSeen.set(true));
+            (ok, message) -> callbackSeen.set(true));
     execution.cancel();
     commands.command(0).callback.onResult(true, null, null);
 
@@ -370,29 +373,17 @@ public void cancelledSceneSuppressesLateServiceCallback() throws Exception {
 }
 ```
 
-- [ ] **Step 2: Run tests and verify red**
+- [ ] **Step 2: Run red**
 
 ```bash
 gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 ```
 
-Expected: failure because `run`, `RunCallback`, and `Execution` do not exist.
+Expected: missing run/Execution API.
 
 - [ ] **Step 3: Implement scene execution**
 
-Add interfaces:
-
-```java
-public interface RunCallback {
-    void onResult(boolean success, String error);
-}
-
-public interface Execution {
-    void cancel();
-}
-```
-
-`run` must validate non-null arguments and dispatch by `RoutineItem.Type`. Scene execution builds exactly:
+Build exactly:
 
 ```java
 JSONObject body = new JSONObject()
@@ -401,17 +392,15 @@ JSONObject body = new JSONObject()
         .put("target", new JSONObject().put("entity_id", routine.entityId()));
 ```
 
-Use a small `SceneExecution` object with synchronized/idempotent `done` state so `cancel()` suppresses late callbacks. Service rejection calls `RunCallback` with `success=false`; JSON/send exceptions are caught and reported through the callback rather than thrown into the Activity.
+`SceneExecution` must synchronize its `done` flag. `cancel()` sets `done=true`. A service callback after cancellation does nothing. Service rejection returns `success=false`; JSON encoding or socket-send runtime exceptions are converted into one failed callback rather than escaping into Activity.
 
-- [ ] **Step 4: Run tests and verify green**
+- [ ] **Step 4: Run green**
 
 ```bash
 gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 ```
 
-Expected: all Shield unit tests pass.
-
-- [ ] **Step 5: Commit Task 2**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesRepository.java \
@@ -421,114 +410,13 @@ git commit -m "feat: run Shield scenes"
 
 ---
 
-### Task 3: Script execution with subscribe-first `on` → `off` confirmation
+### Task 3: Script subscribe-first completion confirmation
 
 **Files:**
 - Modify: `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesRepository.java`
 - Modify: `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesRepositoryTest.java`
 
-**Interfaces:**
-- Consumes: `HomeAssistantWebSocket.subscribeStateChanges` semantics already proven in the Home path.
-- Produces:
-  - `RoutinesRepository.StateChangePort` with nested `Listener`, `Subscription`, `Callback`.
-  - overloaded constructor `RoutinesRepository(CommandPort commandPort, StateChangePort stateChangePort)`.
-  - script branch of `run(...)` that subscribes before service and silently cancels subscriptions through `Execution.cancel()`.
-
-- [ ] **Step 1: Write failing script protocol tests**
-
-Create a combined command/state fake modeled after `BinaryActionTest.RecordingPorts` and add these cases:
-
-```java
-@Test
-public void scriptSubscribesBeforeServiceAndNeedsTargetOnThenOffPlusServiceSuccess() throws Exception {
-    RecordingPorts ports = new RecordingPorts();
-    RoutinesRepository repository = new RoutinesRepository(ports, ports);
-    AtomicBoolean callbackSeen = new AtomicBoolean(false);
-    AtomicBoolean success = new AtomicBoolean(false);
-
-    repository.run(
-            new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
-            (ok, error) -> {
-                callbackSeen.set(true);
-                success.set(ok);
-            });
-
-    assertTrue(ports.subscriptionRequested);
-    assertEquals(0, ports.commands.size());
-
-    ports.ackSubscription();
-    assertEquals(1, ports.commands.size());
-    Command command = ports.command(0);
-    assertEquals("call_service", command.type);
-    assertEquals("script", command.body.getString("domain"));
-    assertEquals("turn_on", command.body.getString("service"));
-    assertEquals("script.bedtime",
-            command.body.getJSONObject("target").getString("entity_id"));
-
-    ports.emit("script.other", "on");
-    ports.emit("script.bedtime", "off");
-    command.callback.onResult(true, null, null);
-    assertFalse("off without an observed target on must not finish", callbackSeen.get());
-
-    ports.emit("script.bedtime", "on");
-    assertFalse(callbackSeen.get());
-    ports.emit("script.bedtime", "off");
-
-    assertTrue(callbackSeen.get());
-    assertTrue(success.get());
-    assertTrue(ports.cancelled);
-}
-
-@Test
-public void scriptLifecycleCanArriveBeforeServiceReplyWithoutFalseSuccess() throws Exception {
-    RecordingPorts ports = new RecordingPorts();
-    RoutinesRepository repository = new RoutinesRepository(ports, ports);
-    AtomicBoolean callbackSeen = new AtomicBoolean(false);
-
-    repository.run(
-            new RoutineItem("script.goodnight", "Goodnight", RoutineItem.Type.SCRIPT),
-            (ok, error) -> callbackSeen.set(true));
-    ports.ackSubscription();
-    Command command = ports.command(0);
-
-    ports.emit("script.goodnight", "on");
-    ports.emit("script.goodnight", "off");
-    assertFalse(callbackSeen.get());
-
-    command.callback.onResult(true, null, null);
-    assertTrue(callbackSeen.get());
-    assertTrue(ports.cancelled);
-}
-
-@Test
-public void scriptSubscriptionFailureNeverFiresService() throws Exception {
-    RecordingPorts ports = new RecordingPorts();
-    RoutinesRepository repository = new RoutinesRepository(ports, ports);
-    AtomicBoolean success = new AtomicBoolean(true);
-
-    repository.run(
-            new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
-            (ok, error) -> success.set(ok));
-    ports.failSubscription("subscription rejected");
-
-    assertFalse(success.get());
-    assertEquals(0, ports.commands.size());
-}
-```
-
-Also add tests that a rejected service cancels the subscription and that `Execution.cancel()` cancels the subscription without invoking the completion callback.
-
-- [ ] **Step 2: Run tests and verify red**
-
-```bash
-gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
-```
-
-Expected: failure because the repository does not yet expose a routine state-change port or script confirmation path.
-
-- [ ] **Step 3: Implement `StateChangePort` and script execution**
-
-Use a dedicated routines port instead of refactoring the checkpointed Home repository:
+**Interfaces added:**
 
 ```java
 public interface StateChangePort {
@@ -543,32 +431,164 @@ public interface StateChangePort {
     }
     void subscribe(Listener listener, Callback callback);
 }
+
+public RoutinesRepository(CommandPort commandPort, StateChangePort stateChangePort);
 ```
 
-The script execution object must track these booleans independently:
+Private type added:
 
 ```java
-private boolean serviceSucceeded;
-private boolean sawRunning;
-private boolean sawFinishedAfterRunning;
-private boolean done;
+private final class ScriptExecution implements Execution {
+    private final RoutineItem routine;
+    private final RunCallback callback;
+    private StateChangePort.Subscription subscription;
+    private boolean serviceSucceeded;
+    private boolean sawRunning;
+    private boolean sawFinishedAfterRunning;
+    private boolean done;
+
+    void start();
+    void onSubscribed(StateChangePort.Subscription active, String error);
+    void onStateChanged(String entityId, String state);
+    void onServiceResult(boolean success, Object result, String error);
+    void complete(boolean success, String error);
+    @Override public void cancel();
+}
 ```
 
-Rules:
+- [ ] **Step 1: Add script protocol fake and red tests**
+
+Extend the test recorder:
+
+```java
+private static final class RecordingPorts extends RecordingCommands
+        implements RoutinesRepository.StateChangePort {
+    boolean subscriptionRequested;
+    boolean cancelled;
+    Listener listener;
+    Callback subscriptionCallback;
+
+    @Override
+    public void subscribe(Listener listener, Callback callback) {
+        subscriptionRequested = true;
+        this.listener = listener;
+        this.subscriptionCallback = callback;
+    }
+
+    void ackSubscription() {
+        subscriptionCallback.onResult(() -> cancelled = true, null);
+    }
+
+    void failSubscription(String message) {
+        subscriptionCallback.onResult(null, message);
+    }
+
+    void emit(String entityId, String state) {
+        listener.onStateChanged(entityId, state);
+    }
+}
+```
+
+Strict lifecycle test:
+
+```java
+@Test
+public void scriptSubscribesBeforeServiceAndNeedsTargetOnThenOffPlusServiceSuccess() throws Exception {
+    RecordingPorts ports = new RecordingPorts();
+    RoutinesRepository repository = new RoutinesRepository(ports, ports);
+    AtomicBoolean callbackSeen = new AtomicBoolean(false);
+    AtomicBoolean success = new AtomicBoolean(false);
+
+    repository.run(
+            new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
+            (ok, message) -> {
+                callbackSeen.set(true);
+                success.set(ok);
+            });
+
+    assertTrue(ports.subscriptionRequested);
+    assertEquals(0, ports.commands.size());
+    ports.ackSubscription();
+
+    Command command = ports.command(0);
+    assertEquals("call_service", command.type);
+    assertEquals("script", command.body.getString("domain"));
+    assertEquals("turn_on", command.body.getString("service"));
+    assertEquals("script.bedtime",
+            command.body.getJSONObject("target").getString("entity_id"));
+
+    ports.emit("script.other", "on");
+    ports.emit("script.bedtime", "off");
+    command.callback.onResult(true, null, null);
+    assertFalse(callbackSeen.get());
+
+    ports.emit("script.bedtime", "on");
+    assertFalse(callbackSeen.get());
+    ports.emit("script.bedtime", "off");
+
+    assertTrue(callbackSeen.get());
+    assertTrue(success.get());
+    assertTrue(ports.cancelled);
+}
+```
+
+Race test:
+
+```java
+@Test
+public void scriptLifecycleMayArriveBeforeServiceReplyButCannotFinishEarly() throws Exception {
+    RecordingPorts ports = new RecordingPorts();
+    RoutinesRepository repository = new RoutinesRepository(ports, ports);
+    AtomicBoolean callbackSeen = new AtomicBoolean(false);
+
+    repository.run(
+            new RoutineItem("script.goodnight", "Goodnight", RoutineItem.Type.SCRIPT),
+            (ok, message) -> callbackSeen.set(true));
+    ports.ackSubscription();
+    Command command = ports.command(0);
+
+    ports.emit("script.goodnight", "on");
+    ports.emit("script.goodnight", "off");
+    assertFalse(callbackSeen.get());
+
+    command.callback.onResult(true, null, null);
+    assertTrue(callbackSeen.get());
+}
+```
+
+Also add exact tests for:
+- subscription failure -> no service command and failed callback,
+- service rejection -> subscription cancelled and failed callback,
+- `Execution.cancel()` -> subscription cancelled and no completion callback.
+
+- [ ] **Step 2: Run red**
+
+```bash
+gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
+```
+
+- [ ] **Step 3: Implement script execution**
+
+`run(...)` dispatches `SCENE` to `SceneExecution` and `SCRIPT` to `ScriptExecution`. A script with no `StateChangePort` fails without sending the service command.
+
+`ScriptExecution.start()` calls `stateChangePort.subscribe(...)` first. Only `onSubscribed(active, null)` may send `call_service`.
+
+State logic must be exactly:
 
 ```java
 private void onStateChanged(String entityId, String state) {
     if (!routine.entityId().equals(clean(entityId))) {
         return;
     }
-    boolean finish = false;
+    boolean finish;
     synchronized (this) {
         if (done) {
             return;
         }
-        if ("on".equals(clean(state))) {
+        String cleanState = clean(state);
+        if ("on".equals(cleanState)) {
             sawRunning = true;
-        } else if ("off".equals(clean(state)) && sawRunning) {
+        } else if ("off".equals(cleanState) && sawRunning) {
             sawFinishedAfterRunning = true;
         }
         finish = serviceSucceeded && sawFinishedAfterRunning;
@@ -579,19 +599,17 @@ private void onStateChanged(String entityId, String state) {
 }
 ```
 
-Subscription must become active before `call_service` is sent. Service success sets `serviceSucceeded=true`; it only completes immediately if `sawFinishedAfterRunning` is already true. Service failure completes false and cancels the active subscription. `complete(...)` and `cancel()` must both be idempotent and release the subscription exactly once.
+Service success sets `serviceSucceeded=true` and only completes if `sawFinishedAfterRunning` is already true. `complete(...)` and `cancel()` are idempotent and release the subscription exactly once.
 
-Do **not** add the 120-second timeout here; that belongs to `RoutinesController`, which owns user-facing operation state and timeout policy.
+Do not add the 120-second timeout in the repository; timeout policy belongs to the controller.
 
-- [ ] **Step 4: Run tests and verify green**
+- [ ] **Step 4: Run green**
 
 ```bash
 gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 ```
 
-Expected: repository tests and all pre-existing tests pass.
-
-- [ ] **Step 5: Commit Task 3**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesRepository.java \
@@ -601,169 +619,283 @@ git commit -m "feat: confirm Shield script completion"
 
 ---
 
-### Task 4: Per-row Routines controller, timers, duplicate suppression, and offline transition
+### Task 4: Controller state, timers, duplicate suppression, and socket-loss behaviour
 
 **Files:**
 - Create: `shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesController.java`
 - Create: `shield-overlay/app/src/test/java/com/boop/shieldoverlay/RoutinesControllerTest.java`
 
 **Interfaces:**
-- Consumes:
-  - `RoutinesRepository.LoadCallback`
-  - `RoutinesRepository.RunCallback`
-  - `RoutinesRepository.Execution`
-- Produces:
-  - `PageStatus { LOADING, LIVE, OFFLINE }`
-  - `RowStatus { READY, RUNNING, DONE, FAILED }`
-  - `ViewState.pageStatus()` and `ViewState.rows()`
-  - `RowState.routine()`, `RowState.status()`, `RowState.enabled()`
-  - `ViewState.loading()` and `ViewState.offline()` factories for Activity pre-controller states.
-  - `RepositoryPort.loadRoutines(...)` and `RepositoryPort.run(...)`
-  - `SchedulerPort.schedule(long delayMs, Runnable runnable)` returning `ScheduledTask`
-  - `start()`, `runRoutine(String entityId)`, `markOffline()`, `close()`.
-
-- [ ] **Step 1: Write failing controller tests**
-
-The first test must prove per-row state and duplicate handling:
 
 ```java
-@Test
-public void runningRowIgnoresDuplicateSelectButOtherRowsRemainRunnable() {
-    FakeRepository repository = new FakeRepository();
-    ManualScheduler scheduler = new ManualScheduler();
-    AtomicReference<RoutinesController.ViewState> rendered = new AtomicReference<>();
-    RoutinesController controller = new RoutinesController(repository, scheduler, rendered::set);
-    repository.items = Arrays.asList(
-            new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
-            new RoutineItem("scene.movie", "Movie Night", RoutineItem.Type.SCENE));
+public final class RoutinesController implements AutoCloseable {
+    public enum PageStatus { LOADING, LIVE, OFFLINE }
+    public enum RowStatus { READY, RUNNING, DONE, FAILED }
 
-    controller.start();
-    controller.runRoutine("script.bedtime");
-    controller.runRoutine("script.bedtime");
-    controller.runRoutine("scene.movie");
+    public interface RepositoryPort {
+        void loadRoutines(RoutinesRepository.LoadCallback callback);
+        RoutinesRepository.Execution run(RoutineItem routine, RoutinesRepository.RunCallback callback);
+    }
 
-    assertEquals(2, repository.runCalls.size());
-    assertEquals("script.bedtime", repository.runCalls.get(0));
-    assertEquals("scene.movie", repository.runCalls.get(1));
-    assertEquals(RoutinesController.RowStatus.RUNNING,
-            row(rendered.get(), "script.bedtime").status());
-    assertEquals(RoutinesController.RowStatus.RUNNING,
-            row(rendered.get(), "scene.movie").status());
+    public interface ScheduledTask {
+        void cancel();
+    }
+
+    public interface SchedulerPort {
+        ScheduledTask schedule(long delayMs, Runnable runnable);
+    }
+
+    public interface Listener {
+        void onViewState(ViewState state);
+    }
+
+    public static final class RowState {
+        public RoutineItem routine();
+        public RowStatus status();
+        public boolean enabled();
+    }
+
+    public static final class ViewState {
+        public PageStatus pageStatus();
+        public List<RowState> rows();
+        public static ViewState loading();
+        public static ViewState offline();
+    }
+
+    public RoutinesController(RepositoryPort repository, SchedulerPort scheduler, Listener listener);
+    public void start();
+    public void runRoutine(String entityId);
+    public void markOffline();
+    @Override public void close();
 }
 ```
 
-Add exact timer tests:
-
-```java
-@Test
-public void successShowsDoneForTwoSecondsThenReturnsReady() throws Exception {
-    FakeRepository repository = new FakeRepository();
-    ManualScheduler scheduler = new ManualScheduler();
-    AtomicReference<RoutinesController.ViewState> rendered = new AtomicReference<>();
-    RoutinesController controller = new RoutinesController(repository, scheduler, rendered::set);
-    repository.items = Collections.singletonList(
-            new RoutineItem("scene.movie", "Movie Night", RoutineItem.Type.SCENE));
-
-    controller.start();
-    controller.runRoutine("scene.movie");
-    repository.complete("scene.movie", true, null);
-
-    assertEquals(RoutinesController.RowStatus.DONE,
-            row(rendered.get(), "scene.movie").status());
-    assertTrue(scheduler.hasDelay(2_000L));
-    scheduler.runDelay(2_000L);
-    assertEquals(RoutinesController.RowStatus.READY,
-            row(rendered.get(), "scene.movie").status());
-}
-
-@Test
-public void scriptTimeoutCancelsExecutionAndShowsFailed() throws Exception {
-    FakeRepository repository = new FakeRepository();
-    ManualScheduler scheduler = new ManualScheduler();
-    AtomicReference<RoutinesController.ViewState> rendered = new AtomicReference<>();
-    RoutinesController controller = new RoutinesController(repository, scheduler, rendered::set);
-    repository.items = Collections.singletonList(
-            new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT));
-
-    controller.start();
-    controller.runRoutine("script.bedtime");
-    assertTrue(scheduler.hasDelay(120_000L));
-
-    scheduler.runDelay(120_000L);
-    assertTrue(repository.execution("script.bedtime").cancelled);
-    assertEquals(RoutinesController.RowStatus.FAILED,
-            row(rendered.get(), "script.bedtime").status());
-    assertTrue(scheduler.hasDelay(2_000L));
-}
-```
-
-Add tests for:
-
-- load error -> `OFFLINE` with zero rows,
-- service/repository failure -> `FAILED` for 2 seconds -> `READY`,
-- `markOffline()` with no active runs -> `OFFLINE` empty immediately,
-- `markOffline()` during active run -> cancel run, show affected row `FAILED` with all rows disabled for 2 seconds, then collapse to `OFFLINE` empty,
-- `close()` cancels all active executions and scheduled tasks without emitting fake success.
-
-Use a deterministic `ManualScheduler` that records `delayMs`, cancellation state, and runnable; do not use `Thread.sleep`.
-
-- [ ] **Step 2: Run tests and verify red**
-
-```bash
-gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
-```
-
-Expected: failure because `RoutinesController` does not exist.
-
-- [ ] **Step 3: Implement controller state model and exact constants**
-
-Define:
+Private state types/constants:
 
 ```java
 private static final long RESULT_HOLD_MS = 2_000L;
 private static final long SCRIPT_TIMEOUT_MS = 120_000L;
+
+private static final class Operation {
+    final RoutineItem routine;
+    RoutinesRepository.Execution execution;
+    ScheduledTask timeout;
+}
 ```
 
-`start()` emits `LOADING`, then calls `repository.loadRoutines`. A successful empty list is `LIVE` with zero rows; an error is `OFFLINE` with zero rows.
+- [ ] **Step 1: Create deterministic test fakes and write red tests**
 
-`runRoutine(entityId)` must only proceed when page status is `LIVE` and that row is `READY`. Before calling the repository it sets that row to `RUNNING` and emits. Store an operation object by exact entity ID so each row has independent execution and timer state.
+Use this scheduler rather than sleeping:
 
-For scripts only, schedule `SCRIPT_TIMEOUT_MS` before/around the repository call so a missed completion cannot leave `RUNNING` forever. The timeout must verify that the same operation is still active, cancel the execution handle when available, then transition to `FAILED` and schedule the 2-second reset.
+```java
+private static final class ManualScheduler implements RoutinesController.SchedulerPort {
+    private static final class Entry implements RoutinesController.ScheduledTask {
+        final long delayMs;
+        final Runnable runnable;
+        boolean cancelled;
 
-Repository callbacks must:
+        Entry(long delayMs, Runnable runnable) {
+            this.delayMs = delayMs;
+            this.runnable = runnable;
+        }
 
-1. ignore callbacks from operations no longer active,
-2. cancel the script timeout,
-3. transition success to `DONE` and failure to `FAILED`,
-4. schedule `RESULT_HOLD_MS`,
-5. reset only that row to `READY` if the controller is still live.
+        @Override
+        public void cancel() {
+            cancelled = true;
+        }
+    }
 
-Because a fake or real repository callback can arrive synchronously before `run(...)` returns its `Execution`, handle this race explicitly: create/store the operation first; after `run(...)` returns, attach the execution only if that operation is still active, otherwise immediately cancel the returned execution.
+    final List<Entry> entries = new ArrayList<>();
 
-Keep shared mutable state behind one private lock and emit immutable snapshot copies outside the lock.
+    @Override
+    public RoutinesController.ScheduledTask schedule(long delayMs, Runnable runnable) {
+        Entry entry = new Entry(delayMs, runnable);
+        entries.add(entry);
+        return entry;
+    }
 
-- [ ] **Step 4: Implement the offline transition**
+    boolean hasDelay(long delayMs) {
+        for (Entry entry : entries) {
+            if (!entry.cancelled && entry.delayMs == delayMs) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-`markOffline()` must:
+    void runDelay(long delayMs) {
+        for (Entry entry : new ArrayList<>(entries)) {
+            if (!entry.cancelled && entry.delayMs == delayMs) {
+                entry.cancelled = true;
+                entry.runnable.run();
+                return;
+            }
+        }
+        throw new AssertionError("No active task for delay " + delayMs);
+    }
+}
+```
 
-- set page status to `OFFLINE`,
-- cancel every active execution and timeout,
-- turn rows that were actively `RUNNING` into `FAILED`,
-- disable every row while offline,
-- if any running row failed, keep the current rows visible for exactly `2_000L` so `Didn’t run` can be seen, then clear rows to the unavailable-only state,
-- if nothing was running, clear rows immediately.
+Repository fake:
 
-This satisfies both approved behaviours: a socket loss during an operation visibly fails that row, while a normally-offline page does not retain a stale executable list.
+```java
+private static final class FakeExecution implements RoutinesRepository.Execution {
+    boolean cancelled;
+    @Override public void cancel() { cancelled = true; }
+}
 
-- [ ] **Step 5: Run tests and verify green**
+private static final class PendingRun {
+    final RoutinesRepository.RunCallback callback;
+    final FakeExecution execution;
+    PendingRun(RoutinesRepository.RunCallback callback, FakeExecution execution) {
+        this.callback = callback;
+        this.execution = execution;
+    }
+}
+
+private static final class FakeRepository implements RoutinesController.RepositoryPort {
+    List<RoutineItem> items = Collections.emptyList();
+    String loadError;
+    final List<String> runCalls = new ArrayList<>();
+    final Map<String, PendingRun> pending = new HashMap<>();
+
+    @Override
+    public void loadRoutines(RoutinesRepository.LoadCallback callback) {
+        callback.onResult(items, loadError);
+    }
+
+    @Override
+    public RoutinesRepository.Execution run(
+            RoutineItem routine,
+            RoutinesRepository.RunCallback callback) {
+        runCalls.add(routine.entityId());
+        FakeExecution execution = new FakeExecution();
+        pending.put(routine.entityId(), new PendingRun(callback, execution));
+        return execution;
+    }
+
+    void complete(String entityId, boolean success, String error) {
+        PendingRun run = pending.get(entityId);
+        run.callback.onResult(success, error);
+    }
+
+    FakeExecution execution(String entityId) {
+        return pending.get(entityId).execution;
+    }
+}
+```
+
+Row helper:
+
+```java
+private static RoutinesController.RowState row(
+        RoutinesController.ViewState state,
+        String entityId) {
+    for (RoutinesController.RowState row : state.rows()) {
+        if (entityId.equals(row.routine().entityId())) {
+            return row;
+        }
+    }
+    throw new AssertionError("Missing row " + entityId);
+}
+```
+
+Write tests proving:
+
+1. `start()` emits `LOADING` then `LIVE`, including a legitimate live empty list.
+2. load error emits `OFFLINE` with zero rows.
+3. same running row is not submitted twice while another ready row can still run.
+4. scene/repository success -> `DONE`, scheduled `2_000L`, then `READY`.
+5. repository failure -> `FAILED`, scheduled `2_000L`, then `READY`.
+6. script run schedules `120_000L`; timeout cancels its `Execution`, shows `FAILED`, then schedules `2_000L`.
+7. `markOffline()` with no active run clears rows immediately.
+8. `markOffline()` during a run cancels it, shows that row `FAILED` with every row disabled for `2_000L`, then collapses to `OFFLINE` with zero rows.
+9. `close()` cancels active executions and scheduled tasks without emitting success.
+
+Duplicate/concurrency test core:
+
+```java
+controller.start();
+controller.runRoutine("script.bedtime");
+controller.runRoutine("script.bedtime");
+controller.runRoutine("scene.movie");
+assertEquals(Arrays.asList("script.bedtime", "scene.movie"), repository.runCalls);
+```
+
+Timeout test core:
+
+```java
+controller.runRoutine("script.bedtime");
+assertTrue(scheduler.hasDelay(120_000L));
+scheduler.runDelay(120_000L);
+assertTrue(repository.execution("script.bedtime").cancelled);
+assertEquals(RoutinesController.RowStatus.FAILED,
+        row(rendered.get(), "script.bedtime").status());
+assertTrue(scheduler.hasDelay(2_000L));
+```
+
+- [ ] **Step 2: Run red**
 
 ```bash
 gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 ```
 
-Expected: all Shield unit tests pass.
+- [ ] **Step 3: Implement controller state machine**
 
-- [ ] **Step 6: Commit Task 4**
+`start()` first emits `ViewState.loading()`, then calls `repository.loadRoutines`. Success stores the returned ordered list, gives every row `READY`, sets page `LIVE`, and emits. Error clears rows, sets `OFFLINE`, and emits.
+
+`runRoutine(entityId)` only proceeds when page is `LIVE` and that exact row is `READY`. Create/store an `Operation` **before** invoking the repository, set row `RUNNING`, and emit. For scripts, schedule `SCRIPT_TIMEOUT_MS` for that operation.
+
+Handle synchronous-callback race explicitly:
+
+```java
+RoutinesRepository.Execution execution = repository.run(routine, callback);
+synchronized (lock) {
+    Operation current = operations.get(routine.entityId());
+    if (current == operation) {
+        operation.execution = execution;
+    } else if (execution != null) {
+        execution.cancel();
+    }
+}
+```
+
+Repository completion:
+- ignore if operation is no longer current,
+- remove the operation,
+- cancel its timeout,
+- state = `DONE` on success, `FAILED` on failure,
+- schedule `RESULT_HOLD_MS`,
+- reset only that row to `READY` if page is still `LIVE`.
+
+Timeout:
+- verify the operation is still current,
+- remove it,
+- cancel its execution when present,
+- mark row `FAILED`,
+- schedule `RESULT_HOLD_MS`.
+
+All shared maps/lists/statuses live behind one private lock. Build immutable snapshot copies under the lock, then call `listener.onViewState(snapshot)` outside the lock.
+
+- [ ] **Step 4: Implement `markOffline()` and `close()`**
+
+`markOffline()`:
+- set page `OFFLINE`,
+- cancel all active operation timeouts/executions,
+- convert only rows that were `RUNNING` to `FAILED`,
+- disable all rows because page is offline,
+- if any row failed, retain rows for `2_000L`, then clear them and emit offline-empty,
+- otherwise clear rows immediately.
+
+`close()` silently cancels all active operation handles, script timeouts, result-reset tasks, and any offline-collapse task. It must not emit `Done` or `Didn’t run` during destruction.
+
+- [ ] **Step 5: Run green**
+
+```bash
+gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
+```
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add shield-overlay/app/src/main/java/com/boop/shieldoverlay/RoutinesController.java \
@@ -773,23 +905,43 @@ git commit -m "feat: manage Shield routine state"
 
 ---
 
-### Task 5: Replace the Routines placeholder with a remote-first scrolling list
+### Task 5: Remote-first scrolling Routines view
 
 **Files:**
 - Modify: `shield-overlay/app/src/main/java/com/boop/shieldoverlay/TvRoutinesView.java`
 - Modify: `tests/test_shield_overlay_source.py`
 
 **Interfaces:**
-- Consumes: `RoutinesController.ViewState` and `RowState`.
-- Produces:
-  - `TvRoutinesView.Listener.onRun(String entityId)`
-  - `TvRoutinesView.Listener.onContentLeft()`
-  - `render(RoutinesController.ViewState state)`
-  - `View firstFocusable()`.
 
-- [ ] **Step 1: Write the source regression test first**
+```java
+public final class TvRoutinesView extends ScrollView {
+    public interface Listener {
+        void onRun(String entityId);
+        void onContentLeft();
+    }
 
-Add:
+    public TvRoutinesView(Context context, Listener listener);
+    public void render(RoutinesController.ViewState state);
+    public View firstFocusable();
+}
+```
+
+Private view helpers/state:
+
+```java
+private final LinearLayout content;
+private final LinearLayout rows;
+private final LinkedHashMap<String, FocusCardView> cards = new LinkedHashMap<>();
+private FocusCardView statusCard;
+
+private void rebuildRows(List<RoutinesController.RowState> states);
+private void updateRows(List<RoutinesController.RowState> states);
+private boolean sameEntityOrder(List<RoutinesController.RowState> states);
+private CharSequence cardText(RoutinesController.RowState row);
+private FocusCardView statusCard(String text);
+```
+
+- [ ] **Step 1: Add red source regression**
 
 ```python
 def test_routines_page_is_scrollable_remote_first_and_does_not_reorder_cards(self):
@@ -802,68 +954,48 @@ def test_routines_page_is_scrollable_remote_first_and_does_not_reorder_cards(sel
     self.assertNotIn("bringToFront()", source)
 ```
 
-- [ ] **Step 2: Run source test and verify red**
+- [ ] **Step 2: Run red**
 
 ```bash
 python3 tests/test_shield_overlay_source.py -v
 ```
 
-Expected: new Routines test fails because the current placeholder extends `LinearLayout` and has no run callback.
+Expected: the new test fails against the current placeholder `LinearLayout`.
 
-- [ ] **Step 3: Implement the scrolling view**
+- [ ] **Step 3: Implement `ScrollView` layout and exact copy**
 
-Change `TvRoutinesView` to extend `ScrollView`. Internally use one vertical `LinearLayout` root plus a dedicated routine-row container. Keep the same black background/padding family as the existing Home page.
+Use one internal vertical `LinearLayout` and `setFillViewport(true)`. Keep black background and the Home page's large/chunky spacing family.
 
-Constructor shape:
+Empty/status copy:
+- `LOADING`, no rows -> `Finding routines…`
+- `OFFLINE`, no rows -> `Routines unavailable right now`
+- `LIVE`, no rows -> `No routines found`
 
-```java
-public interface Listener {
-    void onRun(String entityId);
-    void onContentLeft();
-}
+Routine card first line always remains the routine name. The second line is:
+- ready -> `Script` / `Scene`
+- running -> `Running…`
+- done -> `Done`
+- failed -> `Didn’t run`
 
-public TvRoutinesView(Context context, Listener listener) {
-    super(context);
-    if (listener == null) {
-        throw new IllegalArgumentException("routines listener is required");
-    }
-    this.listener = listener;
-    setFillViewport(true);
-    setBackgroundColor(Color.BLACK);
-    addView(content, new ScrollView.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT));
-}
-```
+Use `SpannableString`, `RelativeSizeSpan(0.72f)`, and `StyleSpan(Typeface.NORMAL)` on the second line. Do not change shared `FocusCardView`.
 
-Render copy exactly:
+Each row:
+- remains focusable,
+- calls `listener.onRun(entityId)` only when `RowState.enabled()` is true,
+- handles D-pad Left by calling `listener.onContentLeft()` and returning `true`.
 
-- `LOADING` + no rows -> focusable non-clickable card `Finding routines…`
-- `OFFLINE` + no rows -> focusable non-clickable card `Routines unavailable right now`
-- `LIVE` + no rows -> focusable non-clickable card `No routines found`
-- normal row second line -> `Script` or `Scene`
-- running row second line -> `Running…`
-- done row second line -> `Done`
-- failed row second line -> `Didn’t run`
+Preserve focus during status updates: if the ordered entity-ID list is unchanged, update the existing `FocusCardView` objects in place. Rebuild only when entity order/list changes. This prevents `Running…` / `Done` refreshes from resetting or moving focus.
 
-Keep the routine name on the first line while status replaces the small second-line type label. Use `SpannableString` + `RelativeSizeSpan(0.72f)` and `StyleSpan(Typeface.NORMAL)` on the second line; do not modify shared `FocusCardView`.
+Android `ScrollView` handles descendant focus scrolling for Up/Down; do not add paging and do not reorder children.
 
-Every routine card remains focusable. Set clickability from `RowState.enabled()`. The Left key listener must call `listener.onContentLeft()` from every routine/status card.
-
-Maintain a `LinkedHashMap<String, FocusCardView>` and update existing card text/clickability in place when only statuses change. Rebuild the row container only when the ordered routine entity-ID list changes. This prevents execution feedback from destroying focus or reordering cards.
-
-`ScrollView` should rely on Android descendant-focus scrolling for D-pad Up/Down; do not add paging or manual child reordering.
-
-- [ ] **Step 4: Run source and Java tests**
+- [ ] **Step 4: Run green source + Java tests**
 
 ```bash
 python3 tests/test_shield_overlay_source.py -v
 gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 ```
 
-Expected: source regression and all Shield unit tests pass.
-
-- [ ] **Step 5: Commit Task 5**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add shield-overlay/app/src/main/java/com/boop/shieldoverlay/TvRoutinesView.java \
@@ -873,27 +1005,35 @@ git commit -m "feat: render Shield routines list"
 
 ---
 
-### Task 6: Wire Routines into the existing authenticated Home socket
+### Task 6: Activity composition on the existing Home Assistant socket
 
 **Files:**
 - Modify: `shield-overlay/app/src/main/java/com/boop/shieldoverlay/BoopHomeActivity.java`
 - Modify: `tests/test_shield_overlay_source.py`
 
-**Interfaces:**
-- Consumes:
-  - `HomeAssistantWebSocket.send(...)`
-  - `HomeAssistantWebSocket.subscribeStateChanges(...)`
-  - `RoutinesRepository`
-  - `RoutinesController`
-  - `TvRoutinesView`
-- Produces no new public API; Activity remains a composition root only.
+**Consumes:**
+- `HomeAssistantWebSocket.send(...)`
+- `HomeAssistantWebSocket.subscribeStateChanges(...)`
+- all Routines interfaces from Tasks 1-5.
 
-- [ ] **Step 1: Write the wiring regression test first**
+**Activity fields added:**
 
-Add:
+```java
+private RoutinesController routinesController;
+private RoutinesController.ViewState routinesState;
+private TvRoutinesView routinesView;
+```
+
+**Private Activity helper added:**
+
+```java
+private void closeRoutinesController();
+```
+
+- [ ] **Step 1: Add red wiring regression**
 
 ```python
-def test_home_activity_wires_routines_to_existing_ha_socket_without_touching_overlay_runtime(self):
+def test_home_activity_wires_routines_to_existing_ha_socket(self):
     home = self.read("java/com/boop/shieldoverlay/BoopHomeActivity.java")
     self.assertIn("RoutinesRepository", home)
     self.assertIn("RoutinesController", home)
@@ -902,40 +1042,30 @@ def test_home_activity_wires_routines_to_existing_ha_socket_without_touching_ove
     self.assertIn("routinesView.render", home)
 ```
 
-- [ ] **Step 2: Run source test and verify red**
+- [ ] **Step 2: Run red**
 
 ```bash
 python3 tests/test_shield_overlay_source.py -v
 ```
 
-Expected: failure because Activity still creates the old placeholder view and no Routines controller/repository exists in its composition path.
+- [ ] **Step 3: Initialize Routines shell state**
 
-- [ ] **Step 3: Add Routines Activity fields and initial state**
-
-Add fields beside the existing dashboard fields:
+In `showHomeShell()` initialize:
 
 ```java
-private RoutinesController routinesController;
-private RoutinesController.ViewState routinesState;
-private TvRoutinesView routinesView;
-```
-
-When `showHomeShell()` starts, initialize:
-
-```java
-routinesController = null;
+closeRoutinesController();
 routinesState = RoutinesController.ViewState.loading();
 routinesView = null;
 ```
 
-Do not create a second WebSocket connection.
+Do not create a second socket.
 
-- [ ] **Step 4: Compose repository/controller in `connectForHomeDashboard(...).onReady()`**
+- [ ] **Step 4: Compose Routines after the existing socket reaches `onReady()`**
 
-After the existing Home dashboard repository/controller is created, build a separate routines state-change adapter against the **same** `socket`:
+Map the same socket's state subscription into the separate routines port:
 
 ```java
-RoutinesRepository.StateChangePort routinesStateChangePort =
+RoutinesRepository.StateChangePort stateChangePort =
         new RoutinesRepository.StateChangePort() {
             @Override
             public void subscribe(
@@ -952,16 +1082,40 @@ RoutinesRepository.StateChangePort routinesStateChangePort =
         };
 ```
 
-Create the repository:
+Create repository:
 
 ```java
-RoutinesRepository repository =
-        new RoutinesRepository(socket::send, routinesStateChangePort);
+RoutinesRepository repository = new RoutinesRepository(socket::send, stateChangePort);
 ```
 
-Adapt it to `RoutinesController.RepositoryPort`, catching `RuntimeException` from a no-longer-ready socket and converting it to a failed callback rather than throwing into the UI.
+Create exact controller adapter:
 
-Create the scheduler from the existing main handler:
+```java
+RoutinesController.RepositoryPort repositoryPort = new RoutinesController.RepositoryPort() {
+    @Override
+    public void loadRoutines(RoutinesRepository.LoadCallback callback) {
+        try {
+            repository.loadRoutines(callback);
+        } catch (RuntimeException unavailable) {
+            callback.onResult(null, "Home Assistant is offline.");
+        }
+    }
+
+    @Override
+    public RoutinesRepository.Execution run(
+            RoutineItem routine,
+            RoutinesRepository.RunCallback callback) {
+        try {
+            return repository.run(routine, callback);
+        } catch (RuntimeException unavailable) {
+            callback.onResult(false, "Home Assistant is offline.");
+            return () -> { };
+        }
+    }
+};
+```
+
+Create scheduler from existing `mainHandler`:
 
 ```java
 RoutinesController.SchedulerPort scheduler = (delayMs, runnable) -> {
@@ -970,15 +1124,14 @@ RoutinesController.SchedulerPort scheduler = (delayMs, runnable) -> {
 };
 ```
 
-Close any previous routines controller before replacing it. The listener stores `routinesState` and renders only when `routinesView != null`, always through `runOnUiThread` and with the same stale-socket guards already used by Home.
+Before assigning a new controller, call `closeRoutinesController()`. Controller listener must use `runOnUiThread`, reject stale socket/activity states exactly as the Home listener does, assign `routinesState`, and call `routinesView.render(state)` when the view is visible. Then call `routinesController.start()`.
 
-Call `routinesController.start()` once after construction.
+- [ ] **Step 5: Replace placeholder page construction**
 
-- [ ] **Step 5: Render the real Routines page from the rail**
-
-Replace the placeholder constructor path with:
+Routines branch in `renderNavigationPage(...)`:
 
 ```java
+homeView = null;
 routinesView = new TvRoutinesView(this, new TvRoutinesView.Listener() {
     @Override
     public void onRun(String entityId) {
@@ -999,20 +1152,38 @@ pageView = routinesView;
 currentPageFirstFocusable = routinesView.firstFocusable();
 ```
 
-When rendering Home or Settings, set `routinesView = null`; when rendering Routines/Settings, preserve the existing `homeView = null` behaviour.
+When rendering Home or Settings, set `routinesView = null` so an off-screen page is never rendered into a detached view.
 
-- [ ] **Step 6: Wire socket-loss and lifecycle cleanup**
+- [ ] **Step 6: Wire disconnect and cleanup**
 
-In `onOffline` and `onReauthRequired` for the Home socket:
+In the Home socket's `onOffline` and `onReauthRequired` callbacks:
 
-- if `routinesController != null`, call `routinesController.markOffline()`;
-- otherwise set `routinesState = RoutinesController.ViewState.offline()` and render it if the Routines page is visible.
+```java
+if (routinesController != null) {
+    routinesController.markOffline();
+} else {
+    routinesState = RoutinesController.ViewState.offline();
+    if (routinesView != null) {
+        routinesView.render(routinesState);
+    }
+}
+```
 
-Before replacing a routines controller on reconnect, call `close()` on the old one.
+`closeRoutinesController()`:
 
-In `clearNavigationShellState()` and `onDestroy()`, call a private helper that closes the current routines controller, nulls it, and prevents timer/subscription leaks. Do not add routine cleanup to protected overlay service code.
+```java
+private void closeRoutinesController() {
+    RoutinesController controller = routinesController;
+    routinesController = null;
+    if (controller != null) {
+        controller.close();
+    }
+}
+```
 
-- [ ] **Step 7: Run all local regression tests**
+Call it from `clearNavigationShellState()`, `onDestroy()`, and before replacing the controller after reconnect. Do not add cleanup or Home Assistant code to `BoopOverlayService`.
+
+- [ ] **Step 7: Run full local regression**
 
 ```bash
 python3 -m unittest discover -s tests -p 'test_*.py' -v
@@ -1020,11 +1191,9 @@ gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 gradle -p shield-overlay :app:assembleDebug --stacktrace
 ```
 
-Expected: all Python source tests pass, all Java unit tests pass, and `shield-overlay/app/build/outputs/apk/debug/app-debug.apk` is produced.
+Expected: all source tests green, all Java tests green, APK built at `shield-overlay/app/build/outputs/apk/debug/app-debug.apk`.
 
-- [ ] **Step 8: Verify checkpointed Home internals were not modified**
-
-Run:
+- [ ] **Step 8: Verify checkpointed shared Home internals were not modified**
 
 ```bash
 git diff --exit-code checkpoint-shield-home-f8e8135 -- \
@@ -1032,9 +1201,9 @@ git diff --exit-code checkpoint-shield-home-f8e8135 -- \
   shield-overlay/app/src/main/java/com/boop/shieldoverlay/FocusCardView.java
 ```
 
-Expected: no diff and exit code 0.
+Expected: exit code 0, no diff.
 
-- [ ] **Step 9: Commit Task 6**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add shield-overlay/app/src/main/java/com/boop/shieldoverlay/BoopHomeActivity.java \
@@ -1044,17 +1213,13 @@ git commit -m "feat: wire Shield routines dashboard"
 
 ---
 
-### Task 7: Fresh Shield CI and physical sofa verification
+### Task 7: Fresh CI, APK, and sofa verification
 
 **Files:**
-- No production file changes expected.
-- CI workflow: `.github/workflows/build-shield-overlay-poc.yml` (read-only unless CI itself reveals a genuine workflow defect).
+- No code changes expected.
+- Read-only CI contract: `.github/workflows/build-shield-overlay-poc.yml`.
 
-**Interfaces:**
-- Consumes the complete implementation from Tasks 1-6.
-- Produces one verified installable debug APK artifact and a physical pass/fail report.
-
-- [ ] **Step 1: Run the exact CI test commands locally one final time**
+- [ ] **Step 1: Re-run exact local CI-equivalent gates**
 
 ```bash
 python3 -m unittest discover -s tests -p 'test_*.py' -v
@@ -1062,27 +1227,15 @@ gradle -p shield-overlay :app:testDebugUnitTest --stacktrace
 gradle -p shield-overlay :app:assembleDebug --stacktrace
 ```
 
-Expected: all pass.
+Expected: all green.
 
-- [ ] **Step 2: Confirm no new permission or package drift locally when Android build tools are available**
-
-```bash
-AAPT="${ANDROID_HOME}/build-tools/36.0.0/aapt"
-APK=shield-overlay/app/build/outputs/apk/debug/app-debug.apk
-"$AAPT" dump badging "$APK" | grep "package: name='com.boop.shieldoverlay'"
-"$AAPT" dump permissions "$APK"
-```
-
-Expected: package remains `com.boop.shieldoverlay`; no `RECORD_AUDIO`, `RECEIVE_BOOT_COMPLETED`, or accessibility permission appears.
-
-- [ ] **Step 3: Push the implementation branch and require a fresh Shield workflow**
+- [ ] **Step 2: Push and require a fresh workflow run**
 
 ```bash
 git push origin boop-shield-home-implementation
 ```
 
-The pushed `shield-overlay/**` / source-test changes trigger `Build BOOP Shield Overlay POC`. Do not accept a stale earlier run. Required green steps are:
-
+Required green workflow steps:
 1. Run BOOP source regression suite
 2. Copy approved BOOP eye artwork
 3. Set up Java 17
@@ -1094,28 +1247,28 @@ The pushed `shield-overlay/**` / source-test changes trigger `Build BOOP Shield 
 9. Verify stable BOOP signer
 10. Upload `BOOP-Shield-Overlay-POC-debug`
 
-- [ ] **Step 4: Install the artifact on the Shield and run the minimum physical test**
+Do not accept an older workflow run as evidence for the new implementation commit.
 
-Use at least one known scene and one script whose execution is long enough to observe the running state.
+- [ ] **Step 3: Install the fresh artifact and perform the sofa checklist**
 
-Physical checklist:
+Use one known scene and one script that stays active long enough to see `Running…`.
 
-1. Launch BOOP and confirm the existing Home page still loads.
-2. Open `Routines` from the left rail.
-3. Confirm scripts and scenes appear together in one alphabetical list.
-4. Confirm each normal row shows a small `Script` or `Scene` second line.
-5. Navigate far enough down the list to prove D-pad Up/Down scrolling follows focus.
-6. Run a scene and observe `Running…` -> `Done` -> normal card after about 2 seconds.
-7. Run the long script and observe `Running…` while it is active.
-8. Confirm the script does **not** say `Done` until the exact script has visibly completed in Home Assistant.
-9. Press Select twice rapidly on the same running script and confirm it does not start twice.
-10. While that script is running, run a different ready routine and confirm the page remains usable.
-11. Press Left and confirm focus returns to the `Routines` rail item.
-12. Return to Home and toggle the existing favourite; confirm the physical device still changes and BOOP updates only after real Home Assistant confirmation.
+1. Launch BOOP; confirm Home still loads.
+2. Open Routines from the rail.
+3. Confirm scripts + scenes are one alphabetical list.
+4. Confirm normal rows show small `Script` / `Scene` second lines.
+5. Navigate far enough to prove D-pad Up/Down scrolling follows focus.
+6. Run a scene; observe `Running…` -> `Done` -> normal row after about two seconds.
+7. Run the long script; observe `Running…` while active.
+8. Confirm the script says `Done` only after that exact script has finished.
+9. Double-press Select on the running script; confirm it does not start twice.
+10. While that script runs, trigger another ready routine; confirm the rest of the page remains usable.
+11. Press Left; confirm focus returns to the Routines rail item.
+12. Return Home; toggle the existing favourite and confirm physical control + real state confirmation still work.
 
-- [ ] **Step 5: If all physical checks pass, create the functional checkpoint**
+- [ ] **Step 4: Create functional checkpoint only after physical green**
 
-Create a branch from the exact physically verified implementation commit, using the project naming pattern:
+From the exact physically verified implementation commit create:
 
 ```text
 checkpoint-shield-routines-<short-sha>
@@ -1123,19 +1276,13 @@ checkpoint-shield-routines-<short-sha>
 
 Do not move `checkpoint-shield-home-f8e8135`.
 
-If any sofa check fails, do **not** create the functional checkpoint. Capture the exact symptom, reproduce it, and return to systematic debugging with a failing test before changing production code.
+If any physical check fails, do not checkpoint the feature. Capture the exact symptom, reproduce it, add a failing test, then make the smallest evidence-backed fix.
 
 ---
 
-## Final self-review checklist before execution
+## Plan Self-Review
 
-- Every approved spec requirement is mapped to Tasks 1-7.
-- Disabled routine exclusion is implemented by the documented `list_for_display` contract; hidden/config/diagnostic filtering is local and tested.
-- Script completion cannot succeed on an isolated `off` event.
-- Service reply and script lifecycle can arrive in either order without false success.
-- Timeout policy lives in the controller, not the repository.
-- Result timers are testable without sleeping.
-- Socket loss during a running routine shows `Didn’t run` before collapsing to the unavailable state.
-- Routine UI state updates do not rebuild/reorder unchanged cards.
-- No Home repository or shared FocusCardView changes are planned.
-- No overlay/runtime permissions or voice/sensor/cloud work are introduced.
+- Spec coverage: discovery, filtering, alphabetical list, scenes, strict script lifecycle, races, duplicate suppression, other-row concurrency, 120-second timeout, 2-second results, offline failure feedback, no stale routine list, D-pad Left, scrolling, and Home preservation all map to Tasks 1-7.
+- Placeholder scan: no `TODO`, `TBD`, unnamed helper type, or deferred implementation step remains.
+- Type consistency: `RoutineItem`, `RoutinesRepository` ports/callbacks/execution handle, `RoutinesController` ports/states/scheduler, `TvRoutinesView.Listener`, and Activity adapters use the same signatures throughout.
+- Isolation: no task requires modifying `HomeAssistantRepository`, `FocusCardView`, or protected overlay runtime.
