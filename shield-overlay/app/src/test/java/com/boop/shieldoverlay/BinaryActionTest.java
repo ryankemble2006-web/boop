@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +30,13 @@ public final class BinaryActionTest {
         assertNotNull(HomeAssistantRepository.class.getConstructor(
                 HomeAssistantRepository.CommandPort.class,
                 stateChangePort));
+    }
+
+    @Test
+    public void confirmationWindowAllowsSlowHomeAssistantStatePropagation() throws Exception {
+        Field timeout = HomeAssistantRepository.class.getDeclaredField("BINARY_CONFIRM_TIMEOUT_MS");
+        timeout.setAccessible(true);
+        assertEquals("5-7 second integrations need confirmation headroom", 10_000L, timeout.getLong(null));
     }
 
     @Test
