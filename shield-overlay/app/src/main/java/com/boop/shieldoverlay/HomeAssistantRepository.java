@@ -17,7 +17,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class HomeAssistantRepository {
-    private static final long BINARY_CONFIRM_TIMEOUT_MS = 5000L;
+    private static final long BINARY_CONFIRM_TIMEOUT_MS = 10000L;
     private static final ScheduledExecutorService BINARY_CONFIRM_EXECUTOR =
             Executors.newSingleThreadScheduledExecutor(runnable -> {
                 Thread thread = new Thread(runnable, "boop-ha-confirm");
