@@ -1,15 +1,18 @@
 # BOOP Status
 
 ## Current
-BOOP Wall resurrection is implemented on branch `boop-wall-resurrection` at
-`c9a7d07f60d0ed7cd2c96247c28552c1d3da10f3`. It restores the Alpha 6.5.5
+BOOP Wall resurrection is CI-green on branch `boop-wall-resurrection` at
+`595e1daa43393882a0e5de43967545ac526b8b66`. It restores the Alpha 6.5.5
 puppet and local-first control lineage, preserves all 33 natural wake phrases,
 prefers the current Home Assistant conversation agent named `BOOP`, retains
 direct media control, and integrates the separate Shield QR companion plus the
 stable BOOP development signer. Timed voice routines remain deliberately absent.
 
-Local source verification: 121 Python tests pass. GitHub CI has not yet run for
-this branch. Physical Pixel 7 Pro status: **NOT YET TESTED**.
+Local source verification: 122 Python tests pass. GitHub Actions run
+`33992704568` passed every job, including Android unit tests, exact package and
+version inspection, stable signing, real wake-microphone capture, launch
+survival, and the separate Shield pairing return route. Physical Pixel 7 Pro
+status: **NOT YET TESTED**.
 
 ## Green
 - Shield Home launch/pairing/room discovery
@@ -29,8 +32,6 @@ this branch. Physical Pixel 7 Pro status: **NOT YET TESTED**.
 - Protected Home regression physically verified: correct favourite changes, its real state appears almost immediately, and the 10-second confirmation safety window has ample margin
 
 ## Next
-- Push `boop-wall-resurrection` and require the complete named GitHub Actions
-  workflow to pass before presenting its signed APK for installation
 - Install the exact CI-green APK on the Pixel 7 Pro and run the physical Wall
   acceptance checklist
 - Keep timed voice routines excluded pending a separate redesign
@@ -48,9 +49,13 @@ this branch. Physical Pixel 7 Pro status: **NOT YET TESTED**.
 ## Active Branch
 boop-wall-resurrection
 
-## BOOP Wall Implementation Head
-- c9a7d07f60d0ed7cd2c96247c28552c1d3da10f3 — ci: require actual wake microphone capture before launch passes
+## BOOP Wall CI-Green Head
+- 595e1daa43393882a0e5de43967545ac526b8b66 — ci: select supplied-audio recognizer for wake gate
 - Version: `versionCode 29`, `versionName 0.4.9-alpha6.5.6-wall`
+- Package: `com.boop.alpha1`
+- Workflow: https://github.com/ryankemble2006-web/boop/actions/runs/33992704568
+- APK SHA-256: `79ac40677687c4225989fa095644d5d97d36876150afe704e80eb6091d55530b`
+- Signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 - Physical status: **NOT YET TESTED**
 
 ## Latest Physically Green Routines Code Head

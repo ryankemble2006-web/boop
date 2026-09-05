@@ -296,8 +296,8 @@ Active branch:
 
 Current code HEAD at the time of reconciliation:
 
-    c9a7d07f60d0ed7cd2c96247c28552c1d3da10f3
-    ci: require actual wake microphone capture before launch passes
+    595e1daa43393882a0e5de43967545ac526b8b66
+    ci: select supplied-audio recognizer for wake gate
 
 BOOP Wall resurrection implementation status:
 
@@ -313,8 +313,19 @@ BOOP Wall resurrection implementation status:
 - The CI gate requires real positive microphone capture before treating the
   wake path as armed; a merely live Android process is not enough.
 - Timed voice routines remain deliberately absent pending redesign.
-- Local source verification passes 121 tests.
-- CI status: NOT YET RUN for this branch.
+- Local source verification passes 122 tests.
+- GitHub Actions run 33992704568 is green for exact commit
+  595e1daa43393882a0e5de43967545ac526b8b66. Its single build job passed every
+  source, bridge, JVM, Android, package/version, signer, wake capture, launch
+  survival and Shield pairing-route gate.
+- Verified APK identity: package `com.boop.alpha1`, versionCode 29, versionName
+  `0.4.9-alpha6.5.6-wall`.
+- APK SHA-256:
+  79ac40677687c4225989fa095644d5d97d36876150afe704e80eb6091d55530b.
+- Stable signer SHA-256:
+  f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+- The exact green artifact is staged as
+  `C:\Users\ryank\Desktop\BOOP-Wall-Resurrection.apk` for physical testing.
 - Physical Pixel 7 Pro status: NOT YET TESTED.
 
 No BOOP Wall physical checkpoint exists and none may be created until the exact
