@@ -6,6 +6,25 @@ import java.util.Collections;
 import org.junit.Test;
 
 public final class HomeAssistantOpenCodeAgentSelectorTest {
+    @Test public void exactBoopNameWinsEvenWhenIdDoesNotContainOpenCode() {
+        String selected = HomeAssistantOpenCodeAgentSelector.select(Arrays.asList(
+                new HomeAssistantOpenCodeAgentSelector.Agent("conversation.generic_opencode", "OpenCode"),
+                new HomeAssistantOpenCodeAgentSelector.Agent("conversation.boop", "BOOP")));
+        assertEquals("conversation.boop", selected);
+    }
+
+    @Test public void exactBoopMatchIsTrimmedAndCaseInsensitive() {
+        String selected = HomeAssistantOpenCodeAgentSelector.select(Arrays.asList(
+                new HomeAssistantOpenCodeAgentSelector.Agent("conversation.current", "  boop  ")));
+        assertEquals("conversation.current", selected);
+    }
+
+    @Test public void unrelatedBoopSubstringIsIgnored() {
+        String selected = HomeAssistantOpenCodeAgentSelector.select(Arrays.asList(
+                new HomeAssistantOpenCodeAgentSelector.Agent("conversation.sboop", "Sboop")));
+        assertEquals("", selected);
+    }
+
     @Test public void selectsOnlyOpenCodeAgent() {
         String selected = HomeAssistantOpenCodeAgentSelector.select(Arrays.asList(
                 new HomeAssistantOpenCodeAgentSelector.Agent("home_assistant", "Home Assistant"),

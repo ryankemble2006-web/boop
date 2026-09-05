@@ -17,21 +17,22 @@ final class HomeAssistantOpenCodeAgentSelector {
     private HomeAssistantOpenCodeAgentSelector() { }
 
     static String select(List<Agent> agents) {
-        String fallback = "";
+        String boopOpenCode = "";
+        String genericOpenCode = "";
         for (Agent agent : agents) {
-            String id = agent.id.toLowerCase(Locale.ROOT);
-            String name = agent.name.toLowerCase(Locale.ROOT);
-            if (!id.contains("opencode") && !name.contains("opencode")) {
-                continue;
-            }
-            if ((id.contains("boop") && id.contains("opencode"))
-                    || (name.contains("boop") && name.contains("opencode"))) {
+            String id = agent.id.trim().toLowerCase(Locale.ROOT);
+            String name = agent.name.trim().toLowerCase(Locale.ROOT);
+            if (name.equals("boop") || id.equals("conversation.boop")) {
                 return agent.id;
             }
-            if (fallback.isBlank()) {
-                fallback = agent.id;
+            boolean openCode = id.contains("opencode") || name.contains("opencode");
+            boolean boop = id.contains("boop") || name.contains("boop");
+            if (openCode && boop && boopOpenCode.isBlank()) {
+                boopOpenCode = agent.id;
+            } else if (openCode && genericOpenCode.isBlank()) {
+                genericOpenCode = agent.id;
             }
         }
-        return fallback;
+        return boopOpenCode.isBlank() ? genericOpenCode : boopOpenCode;
     }
 }
