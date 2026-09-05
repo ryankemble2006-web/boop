@@ -289,9 +289,9 @@ Implemented and previously CI-green, but NOT yet physically verified as a whole:
 - Scrollable remote-first Routines view.
 - Activity composition on the existing authenticated Home Assistant WebSocket.
 
-The d7be623 automation-compatibility correction still requires fresh CI and the
-remaining Shield sofa checklist before a Routines physical checkpoint may be
-created.
+The later 3fa18c6 start-confirmation correction is CI-green and partially
+physically verified. The remaining Shield sofa checklist must pass before a
+Routines physical checkpoint may be created.
 
 Partial physical verification on 2026-09-05:
 
@@ -300,24 +300,27 @@ Partial physical verification on 2026-09-05:
 - This physically verifies the automation discovery and trigger correction in
   d7be623, but does not by itself verify scene/script lifecycle behaviour,
   scrolling, duplicate suppression, Left navigation or the Home regression.
-- Follow-up physical feedback found that activated automations remained visually
-  on Running... because Home Assistant's WebSocket call_service reply can wait
-  for the complete automation sequence. The local correction subscribes to
-  automation_triggered before calling automation.trigger, accepts only the exact
-  entity ID, then releases the subscription and shows Done when start is
-  confirmed. Repository, WebSocket and full Android tests plus APK assembly are
-  green locally; this new feedback path is not physically green until the next
-  signed APK passes the sofa check.
+- Follow-up physical feedback first found that activated automations remained
+  visually on Running... because Home Assistant's WebSocket call_service reply
+  can wait for the complete automation sequence.
+- Commit 3fa18c6 subscribes to automation_triggered before calling
+  automation.trigger, accepts only the exact entity ID, then releases the
+  subscription and shows Done when start is confirmed.
+- The signed 3fa18c6 APK physically produced precisely the intended sequence on
+  Shield: Running... -> Done -> the normal Routine row. Exact-target automation
+  start feedback is therefore physically green. Navigation, scrolling where
+  applicable, duplicate suppression, scene/script lifecycle coverage and the
+  existing Home regression remain outside that specific confirmation.
 
 Do not call Routines v1 physically green as a whole until the remaining sofa
 checks pass.
 
 Current intended work order:
 
-1. Run/confirm fresh Shield CI for the exact automation-compatible commit.
-2. Physically test Routines on Shield, including automations and Home regression.
-3. Create a Routines checkpoint only after physical green.
-4. Return to the latest Pixel Alpha and rebuild its setup around the newer secure
+1. Finish the remaining Routines sofa checks, especially navigation and the Home
+   regression.
+2. Create a Routines checkpoint only after physical green as a whole.
+3. Return to the latest Pixel Alpha and rebuild its setup around the newer secure
    QR pairing/authentication flow without discarding its proven puppet behaviour.
 
 
