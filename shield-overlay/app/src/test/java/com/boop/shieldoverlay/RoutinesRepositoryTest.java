@@ -129,6 +129,127 @@ public final class RoutinesRepositoryTest {
         assertFalse(callbackSeen.get());
     }
 
+    @Test
+    public void scriptSubscribesBeforeServiceAndNeedsTargetOnThenOffPlusServiceSuccess() throws Exception {
+        RecordingPorts ports = new RecordingPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(false);
+
+        repository.run(
+                new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
+                (ok, message) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+
+        assertTrue(ports.subscriptionRequested);
+        assertEquals(0, ports.commands.size());
+        ports.ackSubscription();
+
+        Command command = ports.command(0);
+        assertEquals("call_service", command.type);
+        assertEquals("script", command.body.getString("domain"));
+        assertEquals("turn_on", command.body.getString("service"));
+        assertEquals("script.bedtime",
+                command.body.getJSONObject("target").getString("entity_id"));
+
+        ports.emit("script.other", "on");
+        ports.emit("script.bedtime", "off");
+        command.callback.onResult(true, null, null);
+        assertFalse(callbackSeen.get());
+
+        ports.emit("script.bedtime", "on");
+        assertFalse(callbackSeen.get());
+        ports.emit("script.bedtime", "off");
+
+        assertTrue(callbackSeen.get());
+        assertTrue(success.get());
+        assertTrue(ports.cancelled);
+    }
+
+    @Test
+    public void scriptLifecycleMayArriveBeforeServiceReplyButCannotFinishEarly() throws Exception {
+        RecordingPorts ports = new RecordingPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+
+        repository.run(
+                new RoutineItem("script.goodnight", "Goodnight", RoutineItem.Type.SCRIPT),
+                (ok, message) -> callbackSeen.set(true));
+        ports.ackSubscription();
+        Command command = ports.command(0);
+
+        ports.emit("script.goodnight", "on");
+        ports.emit("script.goodnight", "off");
+        assertFalse(callbackSeen.get());
+
+        command.callback.onResult(true, null, null);
+        assertTrue(callbackSeen.get());
+    }
+
+    @Test
+    public void scriptSubscriptionFailureDoesNotCallService() {
+        RecordingPorts ports = new RecordingPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(true);
+
+        repository.run(
+                new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
+                (ok, message) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+        ports.failSubscription("No subscription");
+
+        assertTrue(callbackSeen.get());
+        assertFalse(success.get());
+        assertEquals(0, ports.commands.size());
+    }
+
+    @Test
+    public void scriptServiceRejectionCancelsSubscriptionAndFails() {
+        RecordingPorts ports = new RecordingPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(true);
+
+        repository.run(
+                new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
+                (ok, message) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+        ports.ackSubscription();
+        ports.command(0).callback.onResult(false, null, "Rejected");
+
+        assertTrue(callbackSeen.get());
+        assertFalse(success.get());
+        assertTrue(ports.cancelled);
+    }
+
+    @Test
+    public void cancelledScriptReleasesSubscriptionAndIgnoresLateCompletion() {
+        RecordingPorts ports = new RecordingPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+
+        RoutinesRepository.Execution execution = repository.run(
+                new RoutineItem("script.bedtime", "Bedtime", RoutineItem.Type.SCRIPT),
+                (ok, message) -> callbackSeen.set(true));
+        ports.ackSubscription();
+        Command command = ports.command(0);
+
+        execution.cancel();
+        ports.emit("script.bedtime", "on");
+        ports.emit("script.bedtime", "off");
+        command.callback.onResult(true, null, null);
+
+        assertTrue(ports.cancelled);
+        assertFalse(callbackSeen.get());
+    }
+
     private static JSONObject state(String entityId, String value, String friendlyName) throws Exception {
         return new JSONObject()
                 .put("entity_id", entityId)
@@ -148,7 +269,7 @@ public final class RoutinesRepositoryTest {
         }
     }
 
-    private static final class RecordingCommands implements RoutinesRepository.CommandPort {
+    private static class RecordingCommands implements RoutinesRepository.CommandPort {
         final List<Command> commands = new ArrayList<>();
 
         @Override
@@ -158,6 +279,36 @@ public final class RoutinesRepositoryTest {
 
         Command command(int index) {
             return commands.get(index);
+        }
+    }
+
+    private static final class RecordingPorts extends RecordingCommands
+            implements RoutinesRepository.StateChangePort {
+        boolean subscriptionRequested;
+        boolean cancelled;
+        Listener listener;
+        Callback subscriptionCallback;
+
+        @Override
+        public void subscribe(Listener listener, Callback callback) {
+            subscriptionRequested = true;
+            this.listener = listener;
+            this.subscriptionCallback = callback;
+        }
+
+        void ackSubscription() {
+            assertNotNull(subscriptionCallback);
+            subscriptionCallback.onResult(() -> cancelled = true, null);
+        }
+
+        void failSubscription(String message) {
+            assertNotNull(subscriptionCallback);
+            subscriptionCallback.onResult(null, message);
+        }
+
+        void emit(String entityId, String state) {
+            assertNotNull(listener);
+            listener.onStateChanged(entityId, state);
         }
     }
 }
