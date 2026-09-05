@@ -135,12 +135,13 @@ No room membership test is applied.
 When Select is pressed on an automation:
 
 1. That row changes to `Running…`.
-2. BOOP calls `automation.trigger` targeted at that exact automation entity.
-3. If Home Assistant accepts the service call, the row becomes `Done`.
-4. `Done` remains visible for about two seconds.
-5. The normal routine name/type returns.
+2. BOOP subscribes for Home Assistant's exact-target `automation_triggered` event.
+3. BOOP calls `automation.trigger` targeted at that exact automation entity.
+4. When that exact automation is confirmed started, the row becomes `Done`.
+5. `Done` remains visible for about two seconds.
+6. The normal routine name/type returns.
 
-An automation is considered done when Home Assistant accepts the trigger request. This is the Home Assistant-style immediate **Run actions** path; enabling and disabling automations are deferred.
+An automation is considered done when Home Assistant confirms that the exact target automation has started. BOOP subscribes before sending `automation.trigger`, because Home Assistant's WebSocket `call_service` result may be delayed until a long automation sequence finishes. A successful service result remains a safe fallback, while rejection remains failure. This is the Home Assistant-style immediate **Run actions** path; enabling and disabling automations are deferred.
 
 ### Scene
 
@@ -246,7 +247,7 @@ Automated tests must cover at least:
 5. Results are one case-insensitive alphabetical list.
 6. Automation execution calls `automation.trigger` for the exact entity.
 7. Scene execution calls `scene.turn_on` for the exact entity.
-8. A successful automation or scene service result produces `Running…` then `Done`.
+8. An exact-target automation-trigger event, or a successful fallback service result, produces `Running…` then `Done`; a successful scene service result does the same.
 9. Script execution establishes the state subscription before `script.turn_on`.
 10. Script completion ignores state events for every other entity.
 11. A script `off` event without a prior observed target-script `on` does not count as completion.

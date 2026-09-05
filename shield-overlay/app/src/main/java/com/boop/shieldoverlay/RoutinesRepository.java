@@ -32,6 +32,22 @@ public final class RoutinesRepository {
         void subscribe(Listener listener, Callback callback);
     }
 
+    public interface AutomationTriggerPort {
+        interface Listener {
+            void onTriggered(String entityId);
+        }
+
+        interface Subscription {
+            void cancel();
+        }
+
+        interface Callback {
+            void onResult(Subscription subscription, String error);
+        }
+
+        void subscribe(Listener listener, Callback callback);
+    }
+
     public interface LoadCallback {
         void onResult(List<RoutineItem> routines, String error);
     }
@@ -46,17 +62,26 @@ public final class RoutinesRepository {
 
     private final CommandPort commandPort;
     private final StateChangePort stateChangePort;
+    private final AutomationTriggerPort automationTriggerPort;
 
     public RoutinesRepository(CommandPort commandPort) {
-        this(commandPort, null);
+        this(commandPort, null, null);
     }
 
     public RoutinesRepository(CommandPort commandPort, StateChangePort stateChangePort) {
+        this(commandPort, stateChangePort, null);
+    }
+
+    public RoutinesRepository(
+            CommandPort commandPort,
+            StateChangePort stateChangePort,
+            AutomationTriggerPort automationTriggerPort) {
         if (commandPort == null) {
             throw new IllegalArgumentException("Home Assistant command port is required");
         }
         this.commandPort = commandPort;
         this.stateChangePort = stateChangePort;
+        this.automationTriggerPort = automationTriggerPort;
     }
 
     public void loadRoutines(LoadCallback callback) {
@@ -113,9 +138,114 @@ public final class RoutinesRepository {
             return execution;
         }
 
+        if (routine.type() == RoutineItem.Type.AUTOMATION && automationTriggerPort != null) {
+            AutomationExecution execution = new AutomationExecution(routine, callback);
+            execution.start();
+            return execution;
+        }
+
         ImmediateExecution execution = new ImmediateExecution(callback);
         execution.start(routine);
         return execution;
+    }
+
+    private final class AutomationExecution implements Execution {
+        private final RoutineItem routine;
+        private final RunCallback callback;
+
+        private AutomationTriggerPort.Subscription subscription;
+        private boolean done;
+
+        AutomationExecution(RoutineItem routine, RunCallback callback) {
+            this.routine = routine;
+            this.callback = callback;
+        }
+
+        void start() {
+            try {
+                automationTriggerPort.subscribe(this::onTriggered, this::onSubscribed);
+            } catch (RuntimeException unavailable) {
+                complete(false, "I couldn't watch that routine start.");
+            }
+        }
+
+        private void onSubscribed(AutomationTriggerPort.Subscription active, String error) {
+            if (active == null || error != null) {
+                if (active != null) {
+                    active.cancel();
+                }
+                complete(false, "I couldn't watch that routine start.");
+                return;
+            }
+
+            synchronized (this) {
+                if (done) {
+                    active.cancel();
+                    return;
+                }
+                subscription = active;
+            }
+
+            final JSONObject body;
+            try {
+                body = serviceBody("automation", "trigger", routine.entityId());
+            } catch (JSONException couldNotEncode) {
+                complete(false, "I couldn't prepare that routine.");
+                return;
+            }
+
+            try {
+                commandPort.send("call_service", body, this::onServiceResult);
+            } catch (RuntimeException unavailable) {
+                complete(false, "Home Assistant is offline.");
+            }
+        }
+
+        private void onTriggered(String entityId) {
+            if (routine.entityId().equals(clean(entityId))) {
+                complete(true, null);
+            }
+        }
+
+        private void onServiceResult(boolean success, Object result, String error) {
+            if (!success) {
+                complete(false, "Home Assistant didn't run that.");
+                return;
+            }
+            complete(true, null);
+        }
+
+        private void complete(boolean success, String error) {
+            final AutomationTriggerPort.Subscription toCancel;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                done = true;
+                toCancel = subscription;
+                subscription = null;
+            }
+            if (toCancel != null) {
+                toCancel.cancel();
+            }
+            callback.onResult(success, error);
+        }
+
+        @Override
+        public void cancel() {
+            final AutomationTriggerPort.Subscription toCancel;
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                done = true;
+                toCancel = subscription;
+                subscription = null;
+            }
+            if (toCancel != null) {
+                toCancel.cancel();
+            }
+        }
     }
 
     private Map<String, Candidate> collectCandidates(JSONArray entities, Object categories) {

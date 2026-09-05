@@ -2,7 +2,7 @@
 
 ## Current
 Routines v1 is wired end to end on the existing authenticated Home Assistant WebSocket.
-The current compatibility correction restores the original BOOP contract: Home Assistant automations, scripts and scenes all appear as `Routine`, and automations run through exact-target `automation.trigger`. Fresh CI and Shield sofa verification are still required.
+The compatibility correction restores the original BOOP contract: Home Assistant automations, scripts and scenes all appear as `Routine`, and automations run through exact-target `automation.trigger`. On the physical Shield, all three existing automations appear and activate, but the installed build stayed on `Running…` because Home Assistant delays its WebSocket service reply until the automation sequence finishes. A tested correction now listens for the exact automation's start event before triggering it. A new APK and sofa retest are required before declaring the result feedback physically green.
 
 ## Green
 - Shield Home launch/pairing/room discovery
@@ -16,10 +16,13 @@ The current compatibility correction restores the original BOOP contract: Home A
 - Routines Task 4: controller state, timers, timeout and concurrency
 - Routines Task 5: scrollable remote-first TV routines list implemented
 - Routines Task 6: Activity composition on the existing authenticated Home Assistant WebSocket
+- Routines automation compatibility: all three existing Home Assistant automations physically discovered and activated from the Shield UI
+- Exact-target automation start confirmation: source/unit/build gates green locally; physical Shield verification pending
 
 ## Next
-- Run the full source/unit/build gates in fresh Shield CI for the automation-compatible commit
-- Install the fresh APK and complete the Shield sofa verification checklist
+- Run fresh Shield CI for the exact-target automation start-confirmation correction
+- Install the resulting APK and verify `Running…` -> `Done` -> normal row for an existing automation
+- Complete the remaining Shield sofa verification checklist: result feedback, navigation, scrolling where applicable, duplicate suppression where testable, and the existing Home favourite regression
 - Create a Routines functional checkpoint only after physical green
 - Then return to the Pixel Alpha and rebuild its setup around the newer QR pairing/authentication flow
 

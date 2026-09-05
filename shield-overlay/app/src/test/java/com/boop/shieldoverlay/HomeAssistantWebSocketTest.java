@@ -177,6 +177,96 @@ public final class HomeAssistantWebSocketTest {
     }
 
     @Test
+    public void automationTriggerSubscriptionDeliversExactEntityAndUnsubscribes()
+            throws Exception {
+        CountDownLatch ready = new CountDownLatch(1);
+        CountDownLatch subscribeSeen = new CountDownLatch(1);
+        CountDownLatch subscribed = new CountDownLatch(1);
+        CountDownLatch eventSeen = new CountDownLatch(1);
+        CountDownLatch unsubscribeSeen = new CountDownLatch(1);
+        AtomicReference<WebSocket> serverSocket = new AtomicReference<>();
+        AtomicReference<JSONObject> subscribeMessage = new AtomicReference<>();
+        AtomicReference<String> entitySeen = new AtomicReference<>();
+        AtomicReference<HomeAssistantWebSocket.Subscription> active = new AtomicReference<>();
+
+        server.enqueue(new MockResponse().withWebSocketUpgrade(new WebSocketListener() {
+            @Override
+            public void onOpen(WebSocket webSocket, Response response) {
+                serverSocket.set(webSocket);
+                webSocket.send("{\"type\":\"auth_required\",\"ha_version\":\"2026.9\"}");
+            }
+
+            @Override
+            public void onMessage(WebSocket webSocket, String text) {
+                try {
+                    JSONObject message = new JSONObject(text);
+                    String type = message.optString("type", "");
+                    if ("auth".equals(type)) {
+                        webSocket.send("{\"type\":\"auth_ok\",\"ha_version\":\"2026.9\"}");
+                    } else if ("subscribe_events".equals(type)) {
+                        subscribeMessage.set(message);
+                        subscribeSeen.countDown();
+                        webSocket.send(new JSONObject()
+                                .put("id", message.getInt("id"))
+                                .put("type", "result")
+                                .put("success", true)
+                                .put("result", JSONObject.NULL)
+                                .toString());
+                    } else if ("unsubscribe_events".equals(type)) {
+                        unsubscribeSeen.countDown();
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+            @Override
+            public void onClosing(WebSocket webSocket, int code, String reason) {
+                webSocket.close(code, reason);
+            }
+        }));
+
+        HomeAssistantWebSocket socket = new HomeAssistantWebSocket(new OkHttpClient());
+        socket.connect(server.url("/").toString(), "access-secret", new HomeAssistantWebSocket.Listener() {
+            @Override public void onReady() { ready.countDown(); }
+            @Override public void onOffline(String message) { }
+            @Override public void onReauthRequired(String message) { }
+        });
+        assertTrue(ready.await(3, TimeUnit.SECONDS));
+
+        socket.subscribeAutomationTriggers(
+                entityId -> {
+                    entitySeen.set(entityId);
+                    eventSeen.countDown();
+                },
+                (subscription, error) -> {
+                    active.set(subscription);
+                    subscribed.countDown();
+                });
+
+        assertTrue(subscribeSeen.await(3, TimeUnit.SECONDS));
+        JSONObject subscribe = subscribeMessage.get();
+        assertEquals("automation_triggered", subscribe.getString("event_type"));
+        int subscriptionId = subscribe.getInt("id");
+        assertTrue(subscribed.await(3, TimeUnit.SECONDS));
+        assertNotNull(active.get());
+
+        serverSocket.get().send(new JSONObject()
+                .put("id", subscriptionId)
+                .put("type", "event")
+                .put("event", new JSONObject()
+                        .put("event_type", "automation_triggered")
+                        .put("data", new JSONObject().put(
+                                "entity_id", "automation.tv_on_living_room_lights_on")))
+                .toString());
+
+        assertTrue(eventSeen.await(3, TimeUnit.SECONDS));
+        assertEquals("automation.tv_on_living_room_lights_on", entitySeen.get());
+        active.get().cancel();
+        assertTrue(unsubscribeSeen.await(3, TimeUnit.SECONDS));
+        socket.close();
+    }
+
+    @Test
     public void authenticatesThenUsesMonotonicCommandIds() throws Exception {
         CountDownLatch authSeen = new CountDownLatch(1);
         CountDownLatch commandsSeen = new CountDownLatch(2);

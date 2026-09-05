@@ -638,7 +638,16 @@ public final class BoopHomeActivity extends Activity {
                             };
                     RoutinesRepository routinesRepository = new RoutinesRepository(
                             socket::send,
-                            routinesStateChangePort);
+                            routinesStateChangePort,
+                            (listener, callback) -> socket.subscribeAutomationTriggers(
+                                    listener::onTriggered,
+                                    (subscription, error) -> {
+                                        RoutinesRepository.AutomationTriggerPort.Subscription mapped =
+                                                subscription == null
+                                                        ? null
+                                                        : subscription::cancel;
+                                        callback.onResult(mapped, error);
+                                    }));
                     RoutinesController.RepositoryPort routinesRepositoryPort =
                             new RoutinesController.RepositoryPort() {
                                 @Override

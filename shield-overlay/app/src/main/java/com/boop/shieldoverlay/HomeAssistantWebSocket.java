@@ -29,6 +29,10 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
         void onStateChanged(String entityId, String state);
     }
 
+    public interface AutomationTriggerListener {
+        void onTriggered(String entityId);
+    }
+
     public interface Subscription {
         void cancel();
     }
@@ -41,6 +45,8 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
     private final Object lock = new Object();
     private final Map<Integer, Callback> callbacks = new HashMap<>();
     private final Map<Integer, StateChangeListener> stateChangeSubscriptions = new HashMap<>();
+    private final Map<Integer, AutomationTriggerListener> automationTriggerSubscriptions =
+            new HashMap<>();
 
     private WebSocket webSocket;
     private Listener listener;
@@ -69,6 +75,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
             webSocket = null;
             callbacks.clear();
             stateChangeSubscriptions.clear();
+            automationTriggerSubscriptions.clear();
             nextId = 1;
             ready = false;
             deliberateClose = false;
@@ -178,6 +185,68 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
         }
     }
 
+    public void subscribeAutomationTriggers(
+            AutomationTriggerListener listener,
+            SubscriptionCallback callback) {
+        if (listener == null) {
+            throw new IllegalArgumentException("automation-trigger listener is required");
+        }
+        if (callback == null) {
+            throw new IllegalArgumentException("subscription callback is required");
+        }
+
+        final WebSocket socket;
+        final int subscriptionId;
+        final String payload;
+        synchronized (lock) {
+            if (!ready || webSocket == null) {
+                throw new IllegalStateException("Home Assistant socket is not ready");
+            }
+            subscriptionId = nextId++;
+            try {
+                payload = new HaCommand(
+                        subscriptionId,
+                        "subscribe_events",
+                        new JSONObject().put("event_type", "automation_triggered"))
+                        .toJson()
+                        .toString();
+            } catch (JSONException impossible) {
+                throw new IllegalArgumentException(
+                        "Home Assistant subscription could not be encoded", impossible);
+            }
+            callbacks.put(subscriptionId, (success, result, error) -> {
+                if (!success) {
+                    callback.onResult(null, error);
+                    return;
+                }
+
+                boolean active;
+                synchronized (lock) {
+                    active = ready && webSocket != null && !deliberateClose;
+                    if (active) {
+                        automationTriggerSubscriptions.put(subscriptionId, listener);
+                    }
+                }
+                if (!active) {
+                    callback.onResult(null, "Home Assistant connection is unavailable");
+                    return;
+                }
+                callback.onResult(new ActiveSubscription(subscriptionId), null);
+            });
+            socket = webSocket;
+        }
+
+        if (!socket.send(payload)) {
+            Callback failed;
+            synchronized (lock) {
+                failed = callbacks.remove(subscriptionId);
+            }
+            if (failed != null) {
+                failed.onResult(false, null, "Home Assistant connection is unavailable");
+            }
+        }
+    }
+
     public boolean isReady() {
         synchronized (lock) {
             return ready;
@@ -198,6 +267,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
             pending = new HashMap<>(callbacks);
             callbacks.clear();
             stateChangeSubscriptions.clear();
+            automationTriggerSubscriptions.clear();
         }
         if (socket != null) {
             socket.close(1000, "BOOP Home closed");
@@ -310,6 +380,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
             }
             if ("event".equals(type)) {
                 handleStateChangeEvent(message);
+                handleAutomationTriggerEvent(message);
                 return;
             }
 
@@ -415,6 +486,31 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
         target.onStateChanged(entityId, state);
     }
 
+    private void handleAutomationTriggerEvent(JSONObject message) {
+        int subscriptionId = message.optInt("id", -1);
+        if (subscriptionId < 1) {
+            return;
+        }
+
+        final AutomationTriggerListener target;
+        synchronized (lock) {
+            target = automationTriggerSubscriptions.get(subscriptionId);
+        }
+        if (target == null) {
+            return;
+        }
+
+        JSONObject event = message.optJSONObject("event");
+        if (event == null || !"automation_triggered".equals(event.optString("event_type", ""))) {
+            return;
+        }
+        JSONObject data = event.optJSONObject("data");
+        String entityId = data == null ? null : clean(data.optString("entity_id", null));
+        if (entityId != null) {
+            target.onTriggered(entityId);
+        }
+    }
+
     private boolean isDeliberatelyClosed(WebSocket socket) {
         synchronized (lock) {
             return deliberateClose || socket != webSocket;
@@ -433,6 +529,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
             pending = new HashMap<>(callbacks);
             callbacks.clear();
             stateChangeSubscriptions.clear();
+            automationTriggerSubscriptions.clear();
         }
         for (Callback callback : pending.values()) {
             callback.onResult(false, null, message);
@@ -458,6 +555,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
                 }
                 cancelled = true;
                 stateChangeSubscriptions.remove(subscriptionId);
+                automationTriggerSubscriptions.remove(subscriptionId);
                 if (!ready || webSocket == null || deliberateClose) {
                     return;
                 }

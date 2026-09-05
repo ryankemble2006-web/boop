@@ -1,12 +1,14 @@
 # BOOP Shield Routines v1 Implementation Plan
 
 > **2026-09-05 compatibility amendment:** Home Assistant `automation.*`, `script.*` and `scene.*` entities are all BOOP **Routines**. The correction extends discovery with `automation.*`, invokes exact targets with `automation.trigger`, and uses the visible type label `Routine` for all three.
+>
+> **2026-09-05 physical-test amendment:** Home Assistant's WebSocket `call_service` reply for `automation.trigger` can remain pending until the complete automation sequence finishes. BOOP therefore subscribes to `automation_triggered` before sending the command and completes the row from the exact entity's start event. Service rejection still fails, and a successful eventual result is retained as a fallback. This corrects the original accepted-result assumption without changing scene or script semantics.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a whole-house Shield Routines page that discovers usable Home Assistant automations, scripts and scenes, runs them locally, and gives truthful `Running…` / `Done` / `Didn’t run` feedback without regressing the checkpointed Home dashboard.
 
-**Architecture:** Keep Routines as a separate vertical slice: `RoutineItem` holds routine identity/type, `RoutinesRepository` owns Home Assistant discovery and execution protocol, `RoutinesController` owns per-row state/timers/concurrency, `TvRoutinesView` owns remote-first rendering, and `BoopHomeActivity` only composes those pieces on the already-authenticated Home Assistant WebSocket. Reuse `HomeAssistantWebSocket.subscribeStateChanges(...)`; do not move routine logic into `HomeAssistantRepository`, `FocusCardView`, or the protected overlay runtime.
+**Architecture:** Keep Routines as a separate vertical slice: `RoutineItem` holds routine identity/type, `RoutinesRepository` owns Home Assistant discovery and execution protocol, `RoutinesController` owns per-row state/timers/concurrency, `TvRoutinesView` owns remote-first rendering, and `BoopHomeActivity` only composes those pieces on the already-authenticated Home Assistant WebSocket. Reuse `HomeAssistantWebSocket.subscribeStateChanges(...)` and `subscribeAutomationTriggers(...)`; do not move routine logic into `HomeAssistantRepository`, `FocusCardView`, or the protected overlay runtime.
 
 **Tech Stack:** Java 17, Android SDK 36 / minSdk 26, Android Views, OkHttp 4.12.0 WebSocket, `org.json`, JUnit 4.13.2, Python `unittest`, Gradle 9.6.0 in CI.
 
@@ -20,7 +22,7 @@
 - Core routine execution remains local to Home Assistant; no OpenAI/cloud dependency.
 - Routines v1 contains `automation.*`, `script.*` and `scene.*`; no sensors, voice, editing, history, room filtering, paging, routine favourites, or automation enable/disable controls.
 - All three Home Assistant entity types use the BOOP-facing label `Routine`.
-- Automation success means the exact `automation.trigger` service request was accepted.
+- Automation success means Home Assistant emitted `automation_triggered` for the exact target; a successful eventual `automation.trigger` result is a fallback.
 - Discovery is whole-house and sorted case-insensitively by display name.
 - Use `config/entity_registry/list_for_display`; Home Assistant's API contract excludes disabled entities from that response. Still filter hidden entries and `config`/`diagnostic` categories locally.
 - Scene success means the exact `scene.turn_on` service request was accepted.

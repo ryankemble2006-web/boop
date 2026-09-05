@@ -131,9 +131,10 @@ public final class RoutinesRepositoryTest {
     }
 
     @Test
-    public void automationTargetsExactEntityAndFinishesWhenTriggerAccepted() throws Exception {
-        RecordingCommands commands = new RecordingCommands();
-        RoutinesRepository repository = new RoutinesRepository(commands);
+    public void automationFinishesFromExactTriggeredEventBeforeBlockingServiceReply()
+            throws Exception {
+        RecordingAutomationPorts ports = new RecordingAutomationPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, null, ports);
         AtomicBoolean callbackSeen = new AtomicBoolean(false);
         AtomicBoolean success = new AtomicBoolean(false);
 
@@ -147,7 +148,11 @@ public final class RoutinesRepositoryTest {
                     success.set(ok);
                 });
 
-        Command command = commands.command(0);
+        assertTrue(ports.subscriptionRequested);
+        assertEquals(0, ports.commands.size());
+        ports.ackSubscription();
+
+        Command command = ports.command(0);
         assertEquals("call_service", command.type);
         assertEquals("automation", command.body.getString("domain"));
         assertEquals("trigger", command.body.getString("service"));
@@ -155,15 +160,22 @@ public final class RoutinesRepositoryTest {
                 command.body.getJSONObject("target").getString("entity_id"));
         assertFalse(callbackSeen.get());
 
-        command.callback.onResult(true, null, null);
+        ports.emit("automation.some_other_routine");
+        assertFalse(callbackSeen.get());
+
+        ports.emit("automation.tv_on_living_room_lights_on");
         assertTrue(callbackSeen.get());
+        assertTrue(success.get());
+        assertTrue(ports.cancelled);
+
+        command.callback.onResult(true, null, null);
         assertTrue(success.get());
     }
 
     @Test
     public void automationRejectionReportsFailure() {
-        RecordingCommands commands = new RecordingCommands();
-        RoutinesRepository repository = new RoutinesRepository(commands);
+        RecordingAutomationPorts ports = new RecordingAutomationPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, null, ports);
         AtomicBoolean callbackSeen = new AtomicBoolean(false);
         AtomicBoolean success = new AtomicBoolean(true);
 
@@ -176,10 +188,35 @@ public final class RoutinesRepositoryTest {
                     callbackSeen.set(true);
                     success.set(ok);
                 });
-        commands.command(0).callback.onResult(false, null, "Rejected");
+        ports.ackSubscription();
+        ports.command(0).callback.onResult(false, null, "Rejected");
 
         assertTrue(callbackSeen.get());
         assertFalse(success.get());
+        assertTrue(ports.cancelled);
+    }
+
+    @Test
+    public void automationSubscriptionFailureDoesNotSendTrigger() {
+        RecordingAutomationPorts ports = new RecordingAutomationPorts();
+        RoutinesRepository repository = new RoutinesRepository(ports, null, ports);
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(true);
+
+        repository.run(
+                new RoutineItem(
+                        "automation.keep_awake",
+                        "Keep Awake",
+                        RoutineItem.Type.AUTOMATION),
+                (ok, message) -> {
+                    callbackSeen.set(true);
+                    success.set(ok);
+                });
+        ports.subscriptionCallback.onResult(null, "Rejected");
+
+        assertTrue(callbackSeen.get());
+        assertFalse(success.get());
+        assertEquals(0, ports.commands.size());
     }
 
     @Test
@@ -377,6 +414,31 @@ public final class RoutinesRepositoryTest {
         void emit(String entityId, String state) {
             assertNotNull(listener);
             listener.onStateChanged(entityId, state);
+        }
+    }
+
+    private static final class RecordingAutomationPorts extends RecordingCommands
+            implements RoutinesRepository.AutomationTriggerPort {
+        boolean subscriptionRequested;
+        boolean cancelled;
+        Listener listener;
+        Callback subscriptionCallback;
+
+        @Override
+        public void subscribe(Listener listener, Callback callback) {
+            subscriptionRequested = true;
+            this.listener = listener;
+            this.subscriptionCallback = callback;
+        }
+
+        void ackSubscription() {
+            assertNotNull(subscriptionCallback);
+            subscriptionCallback.onResult(() -> cancelled = true, null);
+        }
+
+        void emit(String entityId) {
+            assertNotNull(listener);
+            listener.onTriggered(entityId);
         }
     }
 }
