@@ -85,7 +85,9 @@ jobs:
           "$AAPT" dump badging "$APK" | tee badging.txt
           "$AAPT" dump permissions "$APK" | tee permissions.txt
           grep -q "package: name='com.boop.shieldoverlay'" badging.txt
-          for forbidden in android.permission.RECORD_AUDIO android.permission.INTERNET android.permission.ACCESS_NETWORK_STATE android.permission.RECEIVE_BOOT_COMPLETED android.permission.BIND_ACCESSIBILITY_SERVICE; do
+          grep -q "android.permission.INTERNET" permissions.txt
+          grep -q "android.permission.ACCESS_NETWORK_STATE" permissions.txt
+          for forbidden in android.permission.RECORD_AUDIO android.permission.RECEIVE_BOOT_COMPLETED android.permission.BIND_ACCESSIBILITY_SERVICE; do
             if grep -q "$forbidden" permissions.txt; then
               echo "Forbidden permission present: $forbidden"
               exit 1
