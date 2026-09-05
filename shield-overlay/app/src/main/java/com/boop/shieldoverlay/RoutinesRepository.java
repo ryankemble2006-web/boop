@@ -1,6 +1,7 @@
 package com.boop.shieldoverlay;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -17,6 +18,14 @@ public final class RoutinesRepository {
 
     public interface LoadCallback {
         void onResult(List<RoutineItem> routines, String error);
+    }
+
+    public interface RunCallback {
+        void onResult(boolean success, String error);
+    }
+
+    public interface Execution {
+        void cancel();
     }
 
     private final CommandPort commandPort;
@@ -62,6 +71,23 @@ public final class RoutinesRepository {
         } catch (RuntimeException unavailable) {
             callback.onResult(null, "I couldn't load routines from Home Assistant.");
         }
+    }
+
+    public Execution run(RoutineItem routine, RunCallback callback) {
+        if (routine == null) {
+            throw new IllegalArgumentException("routine is required");
+        }
+        if (callback == null) {
+            throw new IllegalArgumentException("run callback is required");
+        }
+        if (routine.type() != RoutineItem.Type.SCENE) {
+            callback.onResult(false, "That routine isn't ready to run yet.");
+            return () -> { };
+        }
+
+        SceneExecution execution = new SceneExecution(callback);
+        execution.start(routine);
+        return execution;
     }
 
     private Map<String, Candidate> collectCandidates(JSONArray entities, Object categories) {
@@ -199,6 +225,53 @@ public final class RoutinesRepository {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private final class SceneExecution implements Execution {
+        private final RunCallback callback;
+        private boolean done;
+
+        SceneExecution(RunCallback callback) {
+            this.callback = callback;
+        }
+
+        void start(RoutineItem routine) {
+            final JSONObject body;
+            try {
+                body = new JSONObject()
+                        .put("domain", "scene")
+                        .put("service", "turn_on")
+                        .put("target", new JSONObject().put("entity_id", routine.entityId()));
+            } catch (JSONException couldNotEncode) {
+                complete(false, "I couldn't prepare that routine.");
+                return;
+            }
+
+            try {
+                commandPort.send("call_service", body, this::onServiceResult);
+            } catch (RuntimeException unavailable) {
+                complete(false, "Home Assistant is offline.");
+            }
+        }
+
+        void onServiceResult(boolean success, Object result, String error) {
+            complete(success, success ? null : "Home Assistant didn't run that.");
+        }
+
+        private void complete(boolean success, String error) {
+            synchronized (this) {
+                if (done) {
+                    return;
+                }
+                done = true;
+            }
+            callback.onResult(success, error);
+        }
+
+        @Override
+        public synchronized void cancel() {
+            done = true;
+        }
     }
 
     private static final class Candidate {
