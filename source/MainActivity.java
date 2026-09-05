@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -70,6 +72,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean voiceSettingsOpen = false;
     private boolean pendingListenAfterPermission = false;
     private boolean assistantFollowUpAfterTts = false;
+    private boolean sleepFaceAfterTts = false;
     private boolean assistantFollowUpListening = false;
     private boolean suppressNextRecognizerError = false;
     private String latestAssistantFollowUpPartial = null;
@@ -186,6 +189,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     @Override
     protected void onPause() {
         assistantFollowUpAfterTts = false;
+        sleepFaceAfterTts = false;
         assistantFollowUpListening = false;
         latestAssistantFollowUpPartial = null;
         cancelAssistantFollowUpSilenceTimeout();
@@ -223,7 +227,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
     private void finishTtsUtterance() {
         boolean openAssistantFollowUp = assistantFollowUpAfterTts;
+        boolean sleepAfterTts = sleepFaceAfterTts;
         assistantFollowUpAfterTts = false;
+        sleepFaceAfterTts = false;
 
         // Preserve the proven hand-off: reserve the tap recognizer before releasing TTS,
         // so the wake-word engine cannot race the follow-up microphone.
@@ -232,6 +238,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         if (wakeCoordinator != null) {
             wakeCoordinator.onTtsFinished();
+        }
+        if (sleepAfterTts) {
+            sleepFaceImmediately();
+            return;
         }
         if (!openAssistantFollowUp) {
             return;
@@ -275,6 +285,27 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
     }
 
+    private void playWakeAcceptedCue() {
+        final ToneGenerator tone;
+        try {
+            tone = new ToneGenerator(AudioManager.STREAM_SYSTEM, 35);
+        } catch (RuntimeException unavailable) {
+            return;
+        }
+        tone.startTone(ToneGenerator.TONE_PROP_BEEP, 90);
+        if (presenceHandler != null) {
+            presenceHandler.postDelayed(() -> {
+                try {
+                    tone.release();
+                } catch (RuntimeException ignored) {
+                    // A cue must never interfere with waking BOOP.
+                }
+            }, 140L);
+        } else {
+            tone.release();
+        }
+    }
+
     private void finishAssistantFollowUpSilently() {
         if (!assistantFollowUpListening || recognitionMode != RecognitionMode.TAP) {
             return;
@@ -307,6 +338,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
                         return;
                     }
                     wakeFaceForInteraction();
+                    playWakeAcceptedCue();
                     startWakeRecognition(session);
                 });
             }
@@ -729,7 +761,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         String exitReply = BoopConversationExitIntent.replyFor(transcript);
         if (exitReply != null) {
-            speak(exitReply);
+            speakThenSleep(exitReply);
             return;
         }
 
@@ -892,6 +924,12 @@ public final class MainActivity extends Activity implements RecognitionListener,
                 face.invalidate();
             }
         }
+    }
+
+    private void speakThenSleep(String text) {
+        assistantFollowUpAfterTts = false;
+        sleepFaceAfterTts = true;
+        speak(text);
     }
 
     private void speakThenOpenAssistantFollowUp(String text) {
