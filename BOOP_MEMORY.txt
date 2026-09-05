@@ -231,10 +231,14 @@ PRODUCT EVOLUTION AND THE REASONS FOR IT
    The stable-signed BOOP Wall APK used for the newer Shield pairing companion
    carried an old echo-only MainActivity under the same com.boop.alpha1 package.
    Installing it updated the Pixel app in place, leaving eyes and speech echo but
-   replacing the smart Alpha behaviour. The missing brain was not lost: Alpha
-   6.6.3 survives on the alpha6.6.3-scheduling-acknowledgement branch with the
-   wake stack, local HA control, direct media control and general conversation
-   client intact.
+   replacing the smart Alpha behaviour. The missing brain was not lost.
+
+   The version history split after Alpha 6.5. Alpha 6.5.3 natural wake expanded
+   the local detector to exactly 33 phrases, all mapped to the same BOOP event;
+   Alpha 6.5.4 and 6.5.5 continued from it with customization fixes and
+   shake/puppet work. The apparently newer 6.6.x timed-routine line forked before
+   those changes and is not their superset. The correct resurrection base is
+   alpha6.5.5-shake-muppet, not alpha6.6.3-scheduling-acknowledgement.
 
    Ordinary conversation in that Alpha was routed through Home Assistant to the
    OpenCode conversation agent, not through a direct OpenAI key in Android. On
@@ -242,12 +246,11 @@ PRODUCT EVOLUTION AND THE REASONS FOR IT
    and confirmed the current agent named BOOP answers again.
 
    The approved direction is to modernise the preserved Alpha with stable signing
-   and secure QR pairing. Restore the established local BOOP wake word, normal
-   conversation, immediate local HA control and direct media control. Although
-   the wake behaviour was remembered conversationally as a roughly 33-item
-   collection, the preserved Alpha 6.4-6.6.3 design and KWS asset contain exactly
-   one wake keyword: BOOP. Do not invent a replacement phrase list without new
-   evidence; the remembered count may refer to the wider command vocabulary.
+   and secure QR pairing. Restore the full 33-phrase natural wake collection,
+   normal conversation, immediate local HA control and direct media control.
+   The user correctly remembered examples including "ey BOOP", "hey BOOP" and
+   "hello BOOP"; Git commit 0724326 preserves the complete generated asset and
+   tests. Do not collapse it back to the older single-keyword Alpha 6.4 asset.
    Deliberately remove timed voice routines from the new runtime because their
    follow-up flow needs a separate rethink. Do not create a physical checkpoint
    until all restored paths pass on the wall Pixel.
@@ -277,6 +280,8 @@ LOCKED PRODUCT AND ARCHITECTURE DECISIONS
 - Preserve working behaviour and checkpoints; make small evidence-backed changes.
 - BOOP Wall ordinary conversation uses Home Assistant's BOOP OpenCode agent;
   Android must not contain a direct OpenAI credential.
+- The correct BOOP Wall resurrection base is Alpha 6.5.5; do not assume the
+  later-numbered 6.6.x timed branch contains its natural-wake improvements.
 - Timed voice routines are excluded from the BOOP Wall resurrection and require
   a separate future redesign.
 - CI green and physically green are different states and must be labelled as such.

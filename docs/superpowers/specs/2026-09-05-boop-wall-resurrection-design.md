@@ -6,10 +6,17 @@
 
 ## Background
 
-BOOP Wall's last smart Alpha survives on
-`alpha6.6.3-scheduling-acknowledgement`. It contains the working wake stack,
-local Home Assistant command path, direct media path, and Home Assistant
-conversation path that selected BOOP's OpenCode agent.
+BOOP Wall's correct pre-timed resurrection line survives on
+`alpha6.5.5-shake-muppet`. It contains the working 33-phrase natural wake
+collection, local Home Assistant command path, direct media path, Home Assistant
+conversation path that selected BOOP's OpenCode agent, wake sensitivity fixes,
+and the later eye/puppet work.
+
+The apparent newer Alpha 6.6.x line forked from Alpha 6.5 before the natural-wake
+6.5.3, customization 6.5.4, and shake/puppet 6.5.5 work. Its higher version
+number therefore does not make it the correct superset. It contains the timed
+routine experiments but omits the later natural-wake lineage. This branch split
+caused the earlier reconstruction mistake.
 
 The current Shield development branch builds the same Android package with an
 older echo-only `MainActivity`. Installing that stable-signed APK updated BOOP
@@ -22,7 +29,7 @@ again. The current Home Assistant conversation agent is named `BOOP`.
 
 ## Decision
 
-Resurrect BOOP Wall from Alpha 6.6.3 and modernise it with the current secure QR
+Resurrect BOOP Wall from Alpha 6.5.5 and modernise it with the current secure QR
 pairing companion and stable BOOP development signing. Do not rebuild the smart
 behaviour on the echo shell or ship the old Alpha unchanged. Preserve all Shield
 checkpoints and Alpha history.
@@ -34,7 +41,8 @@ this build.
 
 ## Goals
 
-- Restore the established local wake word `BOOP` and continuous wake readiness.
+- Restore all 33 established natural BOOP wake phrases and continuous wake
+  readiness.
 - Restore ordinary conversation through Home Assistant's `BOOP` OpenCode agent.
 - Restore immediate local Home Assistant control without depending on OpenCode
   or WAN availability.
@@ -58,7 +66,7 @@ this build.
 
 ## Source and Integration Strategy
 
-Create an isolated resurrection branch from Alpha 6.6.3, not from a protected
+Create an isolated resurrection branch from Alpha 6.5.5, not from a protected
 Shield checkpoint. Bring forward only the modern pieces BOOP Wall needs:
 
 1. Stable BOOP development signing and certificate verification.
@@ -79,11 +87,13 @@ trigger gate, transcript normaliser, and recognition intent form one lifecycle.
 A recognised BOOP phrase opens one speech capture. BOOP visibly changes state
 while listening and rearms after the request completes or fails.
 
-The preserved Alpha design and KWS asset define exactly one wake keyword:
-`BOOP`. The user's remembered "33-ish" collection is not represented as 33 wake
-phrases in Alpha 6.6.3 and must not be invented during restoration. It may refer
-to the wider command vocabulary and can be reconciled separately from the wake
-detector if later evidence identifies it.
+The source of truth is Alpha 6.5.5's inherited
+`wake-assets/boop-kws/keywords_raw.txt`, introduced by
+`alpha6.5.3-natural-wake-cook`. It contains exactly 33 phrases, including
+`BOOP`, `HEY BOOP`, `EY BOOP`, `HI BOOP`, `HELLO BOOP`, `OI BOOP`,
+`OKAY BOOP`, `WAKE UP BOOP`, `ARE YOU THERE BOOP`, `GOOD MORNING BOOP`,
+and `EXCUSE ME BOOP`. Every tokenized variant maps to the same `@BOOP` event.
+Restore that asset intact rather than recreating the collection from memory.
 
 ### Command routing
 
@@ -162,7 +172,8 @@ remain `Routine` under their protected checkpoint.
 
 Tests must protect:
 
-- the preserved `BOOP` wake keyword and transcript normalisation rules;
+- all 33 preserved natural wake phrases, their shared `@BOOP` mapping, and
+  transcript normalisation rules;
 - trigger gating, one capture at a time, and wake rearming;
 - local success stopping before OpenCode;
 - local no-match reaching `BOOP` exactly once;
@@ -181,8 +192,9 @@ The signed APK is installed as an update on the Pixel 7 Pro. BOOP earns a new
 physical checkpoint only when all these pass:
 
 1. Eyes launch and remain responsive.
-2. `BOOP`, both alone and continuously before a command, wakes her and she rearms
-   cleanly.
+2. Representative short, greeting, attention, and wake-up variants from the
+   33-phrase collection wake her; `BOOP <command>` also works continuously; she
+   rearms cleanly.
 3. Ordinary speech receives a useful response from the Home Assistant `BOOP`
    OpenCode agent and speaks/displays it normally.
 4. Immediate home commands change the correct devices, including a room-scoped
@@ -199,7 +211,7 @@ recorded before further changes; protected Shield tags are never moved.
 
 ## Rollback and Checkpointing
 
-The echo build, Alpha 6.6.3 branch, and Shield checkpoints remain recoverable.
+The echo build, Alpha 6.5.5 and 6.6.3 branches, and Shield checkpoints remain recoverable.
 No existing tag is rewritten. If the resurrection regresses the wall device,
 repair forward from the isolated branch or reinstall the last appropriate signed
 package.

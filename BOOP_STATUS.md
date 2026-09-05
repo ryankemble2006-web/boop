@@ -24,7 +24,7 @@ The compatibility correction restores the original BOOP contract: Home Assistant
 ## Next
 - Review and plan the approved BOOP Wall resurrection design in
   `docs/superpowers/specs/2026-09-05-boop-wall-resurrection-design.md`
-- Restore Alpha 6.6.3's local BOOP wake word, BOOP OpenCode conversation, immediate local
+- Restore Alpha 6.5.5's 33 natural BOOP wake phrases, BOOP OpenCode conversation, immediate local
   Home Assistant control and direct media control with the newer QR pairing and
   stable signing
 - Exclude timed voice routines pending a separate redesign
