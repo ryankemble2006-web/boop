@@ -52,10 +52,10 @@ class Alpha653NaturalWakeTests(unittest.TestCase):
         self.assertIn("speak(LocalReply.forOutcome(outcome));", main)
         self.assertNotIn("BoopTimedRoutineFlow", main)
 
-    def test_build_is_alpha653(self):
+    def test_build_is_alpha654(self):
         gradle = Path("source/app-build.gradle").read_text(encoding="utf-8")
-        self.assertIn("versionCode 26", gradle)
-        self.assertIn('versionName "0.4.9-alpha6.5.3"', gradle)
+        self.assertIn("versionCode 27", gradle)
+        self.assertIn('versionName "0.4.9-alpha6.5.4"', gradle)
 
 
 if __name__ == "__main__":
