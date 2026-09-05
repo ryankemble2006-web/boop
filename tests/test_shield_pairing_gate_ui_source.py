@@ -50,10 +50,12 @@ class ShieldPairingGateUiSourceTest(unittest.TestCase):
         ):
             self.assertIn(text, strings)
 
-        source = self.read_main("java/com/boop/shieldoverlay/BoopHomeActivity.java")
-        self.assertIn("setOnClickListener", source)
-        self.assertIn("requestFocus", source)
-        self.assertIn("postDelayed", source)
+        home = self.read_main("java/com/boop/shieldoverlay/BoopHomeActivity.java")
+        pairing_view = self.read_main("java/com/boop/shieldoverlay/TvPairingView.java")
+        combined = home + "\n" + pairing_view
+        self.assertIn("setOnClickListener", combined)
+        self.assertIn("requestFocus", combined)
+        self.assertIn("postDelayed", home)
 
 
 if __name__ == "__main__":
