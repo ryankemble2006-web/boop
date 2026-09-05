@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -36,16 +37,21 @@ public final class BoopHomeActivity extends Activity {
 
     private Handler mainHandler;
     private ExecutorService pairingExecutor;
+    private ExecutorService homeExecutor;
     private PairingGateController pairingController;
+    private HomeAssistantWebSocket homeSocket;
+    private BoopPreferences preferences;
     private Runnable expiryRunnable;
     private Runnable successRunnable;
     private TvPairingView pairingView;
+    private TvRoomPickerView roomPickerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         keepAwakeAndHideSystemUi();
 
+        preferences = new BoopPreferences(this);
         mainHandler = new Handler(Looper.getMainLooper());
         expiryRunnable = () -> {
             PairingGateController controller = pairingController;
@@ -96,9 +102,14 @@ public final class BoopHomeActivity extends Activity {
             pairingController.close();
             pairingController = null;
         }
+        closeHomeSocket();
         if (pairingExecutor != null) {
             pairingExecutor.shutdownNow();
             pairingExecutor = null;
+        }
+        if (homeExecutor != null) {
+            homeExecutor.shutdownNow();
+            homeExecutor = null;
         }
         super.onDestroy();
     }
@@ -131,6 +142,7 @@ public final class BoopHomeActivity extends Activity {
     private void showPairingGate() {
         firstRun.start(false, false);
         pairingView = new TvPairingView(this, this::restartPairing);
+        roomPickerView = null;
         pairingView.showSearching(getString(R.string.pairing_title_searching));
         setContentView(pairingView, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -288,27 +300,150 @@ public final class BoopHomeActivity extends Activity {
         if (isFinishing() || isDestroyed()) {
             return;
         }
-        FirstRunCoordinator.State next = firstRun.afterPairingSuccess(false);
+        boolean hasRoom = preferences != null && preferences.hasSelectedRoom();
+        FirstRunCoordinator.State next = firstRun.afterPairingSuccess(hasRoom);
         if (next == FirstRunCoordinator.State.ROOM_PICKER) {
-            showRoomPickerPlaceholder();
+            showRoomPicker();
         } else if (next == FirstRunCoordinator.State.HOME) {
             showHomePlaceholder();
         }
     }
 
-    private void showRoomPickerPlaceholder() {
-        LinearLayout root = simpleStage();
-        TextView title = stageTitle(getString(R.string.room_picker_title));
-        TextView detail = stageDetail(getString(R.string.room_picker_loading));
-        root.addView(title);
-        root.addView(detail);
-        setContentView(root);
+    private void showRoomPicker() {
+        closeHomeSocket();
         pairingView = null;
+        roomPickerView = new TvRoomPickerView(this, new TvRoomPickerView.Listener() {
+            @Override
+            public void onSelected(AreaInfo area) {
+                rememberRoomAndContinue(area);
+            }
+
+            @Override
+            public void onRetry() {
+                loadRooms();
+            }
+        });
+        setContentView(roomPickerView, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        roomPickerView.showLoading();
+        loadRooms();
+    }
+
+    private void loadRooms() {
+        TvRoomPickerView view = roomPickerView;
+        if (view == null || isFinishing() || isDestroyed()) {
+            return;
+        }
+        view.showLoading();
+        closeHomeSocket();
+        ensureHomeExecutor().execute(() -> {
+            try {
+                HomeAssistantSession session = new HomeAssistantSession(
+                        new SecureCredentialStore(this),
+                        new HomeAssistantAuthClient(new OkHttpClient.Builder().build()));
+                HomeAssistantSession.Access access = session.ensureAccessToken();
+                runOnUiThread(() -> connectForRooms(access));
+            } catch (Exception e) {
+                runOnUiThread(() -> showRoomError("I couldn't reach the house right now."));
+            }
+        });
+    }
+
+    private void connectForRooms(HomeAssistantSession.Access access) {
+        if (access == null || roomPickerView == null || isFinishing() || isDestroyed()) {
+            return;
+        }
+        closeHomeSocket();
+        HomeAssistantWebSocket socket = new HomeAssistantWebSocket(
+                new OkHttpClient.Builder().build());
+        homeSocket = socket;
+        socket.connect(access.baseUrl(), access.accessToken(), new HomeAssistantWebSocket.Listener() {
+            @Override
+            public void onReady() {
+                HomeAssistantRepository repository = new HomeAssistantRepository(socket::send);
+                repository.loadAreas((areas, error) -> runOnUiThread(() -> {
+                    if (socket != homeSocket || roomPickerView == null
+                            || isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    if (error != null) {
+                        showRoomError(error);
+                    } else {
+                        showRoomAreas(areas);
+                    }
+                }));
+            }
+
+            @Override
+            public void onOffline(String message) {
+                runOnUiThread(() -> {
+                    if (socket == homeSocket) {
+                        showRoomError(message);
+                    }
+                });
+            }
+
+            @Override
+            public void onReauthRequired(String message) {
+                runOnUiThread(() -> {
+                    if (socket == homeSocket) {
+                        showRoomError("Home Assistant needs BOOP to pair again.");
+                    }
+                });
+            }
+        });
+    }
+
+    private void showRoomAreas(List<AreaInfo> areas) {
+        if (roomPickerView != null) {
+            roomPickerView.showAreas(areas);
+        }
+    }
+
+    private void showRoomError(String message) {
+        if (roomPickerView != null) {
+            roomPickerView.showError(message);
+        }
+    }
+
+    private void rememberRoomAndContinue(AreaInfo area) {
+        if (area == null || preferences == null) {
+            return;
+        }
+        preferences.setSelectedRoom(area);
+        closeHomeSocket();
+        firstRun.afterPairingSuccess(true);
+        showHomePlaceholder();
+    }
+
+    private ExecutorService ensureHomeExecutor() {
+        if (homeExecutor == null || homeExecutor.isShutdown()) {
+            homeExecutor = Executors.newSingleThreadExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "boop-ha-home");
+                thread.setDaemon(true);
+                return thread;
+            });
+        }
+        return homeExecutor;
+    }
+
+    private void closeHomeSocket() {
+        HomeAssistantWebSocket socket = homeSocket;
+        homeSocket = null;
+        if (socket != null) {
+            socket.close();
+        }
     }
 
     private void showHomePlaceholder() {
+        roomPickerView = null;
         LinearLayout root = simpleStage();
+        AreaInfo room = preferences == null ? null : preferences.selectedRoom();
         root.addView(stageTitle(getString(R.string.home_title)));
+        if (room != null) {
+            root.addView(stageDetail(room.name()));
+        }
         setContentView(root);
         pairingView = null;
     }
