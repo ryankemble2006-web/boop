@@ -82,6 +82,13 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("Theme.BoopHome", themes)
         self.assertIn("@android:color/black", themes)
 
+    def test_home_immersive_mode_keeps_the_min_sdk_26_fallback(self):
+        home = self.read("java/com/boop/shieldoverlay/BoopHomeActivity.java")
+        self.assertIn("Build.VERSION.SDK_INT >= Build.VERSION_CODES.R", home)
+        self.assertIn("SYSTEM_UI_FLAG_IMMERSIVE_STICKY", home)
+        self.assertIn("SYSTEM_UI_FLAG_HIDE_NAVIGATION", home)
+        self.assertIn("SYSTEM_UI_FLAG_FULLSCREEN", home)
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
