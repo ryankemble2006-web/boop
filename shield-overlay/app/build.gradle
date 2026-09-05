@@ -2,10 +2,25 @@ plugins {
     id 'com.android.application'
 }
 
+def boopStore = System.getenv('BOOP_SIGNING_STORE_FILE')
+def boopStorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
+def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
+
 android {
     namespace 'com.boop.shieldoverlay'
     compileSdk 36
     enableKotlin = false
+
+    signingConfigs {
+        boopDev {
+            if (boopStore != null) {
+                storeFile file(boopStore)
+                storePassword boopStorePassword
+                keyAlias 'boop-dev'
+                keyPassword boopKeyPassword
+            }
+        }
+    }
 
     defaultConfig {
         applicationId 'com.boop.shieldoverlay'
@@ -13,6 +28,14 @@ android {
         targetSdk 36
         versionCode 1
         versionName '0.1-poc'
+    }
+
+    buildTypes {
+        debug {
+            if (boopStore != null) {
+                signingConfig signingConfigs.boopDev
+            }
+        }
     }
 }
 
