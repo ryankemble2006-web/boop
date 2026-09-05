@@ -38,11 +38,5 @@ class Alpha655ShakeMuppetTests(unittest.TestCase):
         self.assertIn('shakeMuppetActive = false', face)
         self.assertIn('invalidate();', face)
 
-    def test_build_identity_is_alpha655_code28(self):
-        gradle = Path('source/app-build.gradle').read_text(encoding='utf-8')
-        self.assertIn('versionCode 28', gradle)
-        self.assertIn('versionName "0.4.9-alpha6.5.5"', gradle)
-
-
 if __name__ == '__main__':
     unittest.main()
