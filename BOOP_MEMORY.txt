@@ -1,0 +1,504 @@
+BOOP DURABLE MEMORY
+===================
+
+Last reconciled: 2026-09-05
+Repository: C:\Users\ryank\Documents\Codex\BOOP
+
+PURPOSE
+-------
+
+This is BOOP's durable project memory for future conversations and coding
+sessions. Read it before planning or changing BOOP. It preserves not only what
+the project currently is, but why it became that way.
+
+This is a decision ledger, not a replacement for live evidence:
+
+1. The user's current instruction wins.
+2. Physical behaviour and the current Home Assistant state beat documentation.
+3. BOOP_RULES.md contains the short operational guardrails.
+4. BOOP_STATUS.md contains the current engineering whiteboard.
+5. Approved specs, plans, tests and source define implementation details.
+6. This file supplies the product history, intent and reasons connecting them.
+
+Never put passwords, Home Assistant tokens, signing keys, private certificates,
+recovery codes or other secrets in this file. Public fingerprints and the fact
+that private signing material exists are enough.
+
+
+THE SHORTEST TRUE DESCRIPTION
+-----------------------------
+
+BOOP began as a smart speaker inside a cute, ownable plastic robot and is still
+heading toward that embodied product. It has expressive eyes, behaves as an
+honest puppet rather than pretending to be alive, and works FOR its owner. Home
+Assistant is its local smart-home spinal cord. Phones, walls and the Nvidia
+Shield are useful BOOP bodies and proving grounds, not evidence that the original
+robot quietly stopped mattering.
+
+
+ORIGIN: THE CUTE PLASTIC ROBOT
+------------------------------
+
+The original proposition was deliberately easy to love and easy to explain:
+put a genuinely useful smart speaker inside a cute plastic robot called BOOP.
+Do not sell fear, an abstract AI appliance, or a black box that claims to be a
+person. Sell something useful, funny, physical and obviously ownable.
+
+The robot concept grew a head, belly/arms and a tracked base. Tracks were not
+feature creep for their own sake. They made BOOP's attention physically mobile:
+the eyes could turn toward things, BOOP could move into useful positions, and a
+voice interface could gain visible manners and presence. The face was described
+as "a cursor with manners". Eyes show where the system's attention is without
+requiring fake consciousness.
+
+The larger product idea became a BOOP family. Historic concepts included BOOP
+Home, BOOP Wall, BOOP Staff Entry, BOOP Dock, BOOP Splash and BOOP & BEEP. These
+names are evidence of the product exploration, not promises that every named
+device must ship. The stable idea underneath them is that BOOP can inhabit more
+than one appropriate body while retaining one identity and one account:
+
+    New body. Same BOOP.
+    Every BOOP is different. Every BOOP is still BOOP.
+
+The user's relationship is with BOOP before it is with any particular shell.
+Hardware gives that existing relationship a body.
+
+
+WHY BOOP IS A PUPPET
+--------------------
+
+BOOP is not a second fictional personality living inside ChatGPT and is not to
+claim sentience, loneliness, love, need or emotional dependence. BOOP is the
+visible performance of useful machinery: expressive, funny and surprising while
+the humans remain obviously in charge.
+
+This is not a demand for sterile software. Puppetry is the permission to be
+charming without lying about what the system is. Show the performance first and
+the strings when they are useful. Physical privacy cues and plain explanations
+should make the mechanism understandable without ruining the magic.
+
+Do not manufacture loneliness or use emotional coercion to retain attention.
+BOOP works FOR the user. The companion mark for compatible products is:
+
+    Works FOR BOOP
+
+It is not "Made for BOOP" and must not imply a proprietary smart-device network.
+BOOP should work with normal devices through Home Assistant, not force the house
+into another ecosystem.
+
+
+THE HUMAN IDEAS BAKED INTO BOOP
+-------------------------------
+
+Curiosity has no target demographic. BOOP should invite children, adults,
+disabled people, experts, beginners and bored people to investigate and make.
+Accessibility is ordinary product quality, not a patronising special mode.
+BSL, ASL and other sign languages are first-class interaction ideas. Capability
+and responsibility can be the reward; compulsory points, badges and gamification
+are not required.
+
+The Russell principle:
+
+    Make failure safe enough that curiosity wins.
+
+Trust is part of the sandbox. Safety must not become reflexive distrust. A good
+system creates a protected place in which a person can try something and then
+says, in effect, "Come see."
+
+The John Paxton method:
+
+    Have a go. Write it down. Repeat.
+
+Offer the minimum useful interjection and do not rob the discovery. "Dunno" can
+be an honest and productive answer. When the user says "I'm actually stuck",
+switch from hints to full expert depth. Safety-critical situations also justify
+direct intervention.
+
+The Filing Cabinet is the model for learning systems: broken things, useful
+failures, odd hardware, repair notes and discoveries are preserved safely enough
+to explore again. BOOP should help a human teacher, parent, maker or expert join
+at the learner's current level, supply only the missing information, and hand the
+work back. BOOP must not replace the garage, teacher or shared moment.
+
+Whimsy belongs above a serious foundation. A bug that creates harmless play may
+become folklore; a bug that destroys trust, data, safety or agency gets fixed.
+Do not make BOOP boring merely because predictability is easier to specify.
+
+
+OPEN, OWNABLE AND REPAIRABLE
+----------------------------
+
+The physical BOOP should be understandable and repairable. Prefer screws,
+standard fasteners, common connectors and replaceable modules. Avoid glue, heat
+guns, gratuitous Torx and sealed assemblies used only to deny access.
+
+Open hardware does not mean putting a Raspberry Pi in a shell and declaring the
+problem solved. A Pi may be a BOOP Staff/development tool, but it is not the
+default consumer brain merely because it is familiar to makers. The foundation
+must be safe and reliable; the playground above it should remain open.
+
+A BOOP Staff device was imagined as a helpful specialist that advertises its
+capabilities plainly - for example, "I'm a lamp. Come find me" - and can use a
+look-at-the-thing handshake instead of serial-number and button-combination
+rituals. Preserve the principle even if the eventual hardware differs.
+
+
+PRODUCT EVOLUTION AND THE REASONS FOR IT
+----------------------------------------
+
+1. Smart-speaker robot concept
+
+   BOOP started as a useful speaker with an expressive robot body. The name and
+   face made advanced computing approachable without disguising its nature.
+   Mobility, tracks, docks and accessories explored what a physical BOOP could
+   do around a home.
+
+2. Product family and accessibility exploration
+
+   Wall, Staff, portable/wall-mount and sign-language ideas expanded BOOP beyond
+   one chassis. The reason was not to fragment the brand; it was to let the same
+   BOOP relationship inhabit bodies suited to different rooms, people and jobs.
+   Historic family names remain concepts until deliberately revived.
+
+3. Home Assistant as the local spinal cord
+
+   Home Assistant was chosen because it already knows the house: entities,
+   areas, integrations, permissions, state and automations. BOOP must not copy
+   that database or grow a second automation engine. Deterministic home control
+   stays local and continues without cloud AI. Cloud intelligence may add
+   language and charm after a local action, but cannot be required to turn on a
+   light.
+
+4. Pixel 7 Pro puppet-body Alpha
+
+   A spare Pixel became the fastest available physical body for proving BOOP's
+   eyes, tap-to-speak, speech, local HA control, room context, wake behaviour and
+   puppetry. This was a pragmatic prototype: use excellent existing display,
+   microphones, sensors and compute before custom plastic exists.
+
+   Alpha work progressed through launch/speech hardening, real room-scoped HA
+   actions, media control, Muppet-style expression, wake-word and shake-to-wake
+   experiments, colour control and timed-command experiments. Physical tests
+   proved important behaviour such as controlling only the intended room and
+   changing only lights that were already on.
+
+   Voice was substantially working in the last Alpha and must not be remembered
+   as a failed or discarded feature. The remaining trouble was concentrated in
+   the newer timed-command automatic follow-up path, especially repeated
+   NO_MATCH/error 7 responses. Small patches relying on optional partial
+   recognition were not a trustworthy fix for that edge. Future Alpha work may
+   revisit and strengthen voice while preserving the behaviour that was already
+   working on the physical Pixel.
+
+5. Shield overlay proof of concept
+
+   The Nvidia Shield offered a different experiment: let BOOP's eyes appear over
+   the launcher, Kodi and video, as though she had escaped the phone to explore.
+   This was explicitly puppetry. The first Shield build was disposable and
+   isolated so it could answer one question without importing Pixel speech or HA
+   complexity.
+
+   The protected overlay therefore has strict boundaries: transparent eyes,
+   non-focusable, non-touchable, no microphone, and no Home Assistant logic.
+   The remote continues to control the app beneath it. HDR/display-mode fixes
+   were made only to keep the overlay alive and visually stable.
+
+6. Shield BOOP Home
+
+   Once the overlay was viable, Shield became a useful living-room BOOP body and
+   remote-first control surface. The project added secure local pairing, a BOOP
+   Wall companion handoff, encrypted credential storage, room selection and a
+   large TV dashboard. This did not replace the robot or Pixel. It proved a
+   low-friction local setup model and a sofa-appropriate interface.
+
+   The current pairing direction is QR-based and keeps credentials out of the QR
+   payload. The successful Shield flow should later be brought back into the
+   latest Pixel Alpha rather than restarting the Pixel puppet from Alpha 1.
+
+7. Routines as one BOOP word
+
+   Home Assistant exposes automations, scripts and scenes as different technical
+   types. BOOP deliberately presents all three to a person as one thing:
+
+       Routine
+
+   This is a language decision, not a protocol shortcut. Internally each exact
+   entity still uses the correct Home Assistant service and truthful completion
+   rule. User-facing screens should not drift back to three competing nouns.
+
+8. BOOP Wall resurrection after the Shield companion update
+
+   The stable-signed BOOP Wall APK used for the newer Shield pairing companion
+   carried an old echo-only MainActivity under the same com.boop.alpha1 package.
+   Installing it updated the Pixel app in place, leaving eyes and speech echo but
+   replacing the smart Alpha behaviour. The missing brain was not lost.
+
+   The version history split after Alpha 6.5. Alpha 6.5.3 natural wake expanded
+   the local detector to exactly 33 phrases, all mapped to the same BOOP event;
+   Alpha 6.5.4 and 6.5.5 continued from it with customization fixes and
+   shake/puppet work. The apparently newer 6.6.x timed-routine line forked before
+   those changes and is not their superset. The correct resurrection base is
+   alpha6.5.5-shake-muppet, not alpha6.6.3-scheduling-acknowledgement.
+
+   Ordinary conversation in that Alpha was routed through Home Assistant to the
+   OpenCode conversation agent, not through a direct OpenAI key in Android. On
+   2026-09-05 the OpenCode token was found expired, the user re-authenticated it,
+   and confirmed the current agent named BOOP answers again.
+
+   The approved direction is to modernise the preserved Alpha with stable signing
+   and secure QR pairing. Restore the full 33-phrase natural wake collection,
+   normal conversation, immediate local HA control and direct media control.
+   The user correctly remembered examples including "ey BOOP", "hey BOOP" and
+   "hello BOOP"; Git commit 0724326 preserves the complete generated asset and
+   tests. Do not collapse it back to the older single-keyword Alpha 6.4 asset.
+   Deliberately remove timed voice routines from the new runtime because their
+   follow-up flow needs a separate rethink. Do not create a physical checkpoint
+   until all restored paths pass on the wall Pixel.
+
+
+LOCKED PRODUCT AND ARCHITECTURE DECISIONS
+-----------------------------------------
+
+- Master user-facing brand: BOOP.
+- BOOP is an honest puppet/interface, not a fake sentient companion.
+- BOOP works FOR the user; compatible products may be labelled Works FOR BOOP.
+- Home Assistant is the local authority and smart-home spinal cord.
+- Basic control must work without OpenAI or any other cloud service.
+- Do not duplicate HA entities, rooms, permissions or automation state.
+- If HA exposes an entity to Assist/BOOP, BOOP may use it; do not bypass that
+  boundary with a second BOOP permission model.
+- Normal device control can execute immediately. Creating, changing or deleting
+  a routine requires a plain-English read-back and explicit confirmation.
+- Fail plainly. Never claim an action succeeded merely because it probably did.
+- Never silently substitute a same-named device in another room.
+- TV interaction is remote-first, chunky, high contrast and not touch-dependent.
+- The protected Shield overlay contains eyes and puppetry only: no microphone,
+  HA logic, focus capture or touch capture.
+- Automations, scripts and scenes are all called Routines in BOOP-facing copy.
+- Open/repairable hardware and physical privacy cues remain long-term values.
+- Accessibility is first-class product design, not a separate lesser experience.
+- Preserve working behaviour and checkpoints; make small evidence-backed changes.
+- BOOP Wall ordinary conversation uses Home Assistant's BOOP OpenCode agent;
+  Android must not contain a direct OpenAI credential.
+- The correct BOOP Wall resurrection base is Alpha 6.5.5; do not assume the
+  later-numbered 6.6.x timed branch contains its natural-wake improvements.
+- Timed voice routines are excluded from the BOOP Wall resurrection and require
+  a separate future redesign.
+- CI green and physically green are different states and must be labelled as such.
+
+
+CURRENT ENGINEERING TRUTH (2026-09-05)
+--------------------------------------
+
+Active branch:
+
+    boop-shield-home-implementation
+
+Current code HEAD at the time of reconciliation:
+
+    d7be623c89f270a3466336f7d0c306c83b6a2ced
+    fix: restore Home Assistant automations as routines
+
+Physically verified green:
+
+- Shield Home launch and local pairing.
+- Home Assistant room discovery and room selection.
+- Real favourite discovery.
+- Remote navigation.
+- Physical Home Assistant favourite control.
+- Truthful confirmation from real state_changed events.
+- Focus ordering fix and the protected Shield Home checkpoint.
+
+Protected physical checkpoints:
+
+    checkpoint-shield-home-f8e8135
+    checkpoint-shield-routines-3fa18c6
+
+Routines v1 at signed physical code head 3fa18c6:
+
+- Shield Routines v1 discovery and execution for automation.*, script.* and
+  scene.* entities.
+- One alphabetical BOOP-facing list in which every type is labelled Routine.
+- Exact-target automation.trigger, script.turn_on and scene.turn_on calls.
+- Truthful script completion after the exact target is observed on -> off.
+- Per-row Running..., Done and Didn't run state, timeout and duplicate suppression.
+- Scrollable remote-first Routines view.
+- Activity composition on the existing authenticated Home Assistant WebSocket.
+
+The later 3fa18c6 start-confirmation correction is CI-green and physically green
+for the routine types available in the paired Home Assistant instance.
+
+Physical verification on 2026-09-05:
+
+- All three existing Home Assistant automations appeared in BOOP's Routines UI.
+- The user could select each of those three rows and activate the routine.
+- This physically verifies the automation discovery and trigger correction in
+  d7be623, but does not by itself verify scene/script lifecycle behaviour,
+  scrolling, duplicate suppression, Left navigation or the Home regression.
+- Follow-up physical feedback first found that activated automations remained
+  visually on Running... because Home Assistant's WebSocket call_service reply
+  can wait for the complete automation sequence.
+- Commit 3fa18c6 subscribes to automation_triggered before calling
+  automation.trigger, accepts only the exact entity ID, then releases the
+  subscription and shows Done when start is confirmed.
+- The signed 3fa18c6 APK physically produced precisely the intended sequence on
+  Shield: Running... -> Done -> the normal Routine row. Exact-target automation
+  start feedback is therefore physically green. Navigation, scrolling where
+  applicable, duplicate suppression, scene/script lifecycle coverage and the
+  existing Home regression remain outside that specific confirmation.
+- Routines remote navigation is also physically green on signed build 3fa18c6:
+  Up/Down navigation had no issues, Left returned to the Routines rail item, and
+  the routine order remained stable.
+- The protected Home favourite path also passed regression testing: the correct
+  device changed, its real state appeared almost immediately, and the existing
+  10-second confirmation safety window had ample margin.
+- This Home Assistant inventory exposed three automations and no script or scene
+  routines. Scrolling was unnecessary with three rows, and script/scene physical
+  lifecycle checks were therefore not applicable. Their automated contracts
+  remain green.
+
+Routines v1 is physically green for the available Shield/Home Assistant setup.
+Its protected functional code checkpoint is:
+
+    checkpoint-shield-routines-3fa18c6
+
+Current intended work order:
+
+1. Preserve checkpoint-shield-routines-3fa18c6 and the older protected Home
+   checkpoint.
+2. Return to the latest Pixel Alpha and rebuild its setup around the newer secure
+   QR pairing/authentication flow without discarding its proven puppet behaviour.
+
+
+PROTECTED CODE AND CHECKPOINTS
+------------------------------
+
+Do not move, rewrite or repoint:
+
+    checkpoint-shield-home-f8e8135
+    checkpoint-shield-routines-3fa18c6
+
+Treat these files as protected unless a failing regression proves a change is
+required:
+
+    shield-overlay/app/src/main/java/com/boop/shieldoverlay/
+        HomeAssistantRepository.java
+        FocusCardView.java
+        BoopOverlayService.java
+        BoopOverlayView.java
+        OverlayGeometry.java
+        OverlayWindowSpec.java
+
+Do not create a second Home Assistant socket for Routines. The Routines vertical
+slice shares the Activity's existing authenticated socket while remaining
+separate from the working Home favourite path.
+
+
+DEFERRED OR SUPERSEDED - DO NOT ACCIDENTALLY RESURRECT
+------------------------------------------------------
+
+- BOOP is not a standalone fake personality separate from the intelligence
+  serving the user.
+- A Raspberry Pi is not automatically the consumer BOOP brain.
+- Basic controls must not depend on cloud AI.
+- BOOP does not own a parallel HA entity database, permission system or
+  automation engine.
+- Shield is not touch-first and the overlay must not steal focus or input.
+- Voice was mostly working in the last Alpha. Preserve that baseline when it is
+  rebuilt; revisit the unreliable timed-command follow-up seam with fresh tests
+  rather than treating the whole voice system as broken.
+- Advanced routine editing, history, room filtering and enable/disable controls
+  were deliberately outside Routines v1.
+- Historic product-family names are explorations, not current shipping promises.
+- "Made for BOOP" and vague proprietary smart-network language were replaced by
+  "Works FOR BOOP".
+- The old Alpha 1 README contract is history, not the current roadmap.
+
+
+WORKING STYLE WITH RYAN
+-----------------------
+
+- Keep live physical tests short and give one clear step at a time.
+- Preserve known-good setups and checkpoints.
+- Make the smallest change that answers the current question.
+- Explain failures in plain English, without dumping protocol jargon into BOOP's
+  interface.
+- Be playful, but be exact about evidence.
+- The physical device gets the deciding vote.
+- Write down durable discoveries so a new conversation does not make Ryan repeat
+  the history.
+
+
+HOW TO MAINTAIN THIS MEMORY
+---------------------------
+
+Update this file whenever any of these changes:
+
+- a product principle is explicitly accepted, rejected or renamed;
+- a prototype pivots and the reason matters;
+- a feature crosses from planned to implemented, CI-green or physically green;
+- a checkpoint becomes protected;
+- a previous fact becomes false;
+- a repeated conversation-memory failure reveals missing context.
+
+Maintenance rules:
+
+1. Read the current file before editing it.
+2. Change the old statement instead of stacking a contradictory new one.
+3. Preserve the reason behind a pivot, not only the latest outcome.
+4. Date material reconciliations and evidence changes.
+5. Explicitly label physical, CI, implementation and design-only claims.
+6. Keep tentative ideas separate from locked decisions.
+7. Do not promote an old assistant suggestion into a decision unless the user or
+   later evidence accepted it.
+8. Never record secrets.
+9. Reconcile BOOP_STATUS.md when the current engineering state changes.
+10. If this file disagrees with the user's current words or a physical test,
+    correct this file.
+
+
+HISTORICAL SOURCES READ FOR THIS RECONCILIATION
+-----------------------------------------------
+
+Conversation trail (titles are retrieval labels, not authorities):
+
+- OpenAI Device Preorder Watch
+  ChatGPT conversation 6a8e29a3-29d4-83eb-bb5f-33ae5f7cb844
+- Boop zip handoff
+  ChatGPT conversation 6a92185a-ff8c-83eb-a7d1-06e7a3a0870d
+- Continue BOOP APK Build
+  ChatGPT conversation 6a99ea72-82f0-83eb-93be-ddbdf79b3a44
+- BOOP Subscription Support
+  ChatGPT conversation 6a9b6b91-9d4c-83ed-af84-d8e354031436
+- Resume BOOP Testing
+  ChatGPT conversation 6a9b8b14-2968-83ed-abf9-6c65e123c6ec
+- Rollback voice behaviour changes
+  ChatGPT conversation 6a9b9c9a-19e0-83eb-ae9b-c4ba311e56a0
+- Shield Overlay POC Build
+  ChatGPT conversation 6a9bc6c2-8df4-83ed-983d-9c9802eadadc
+- Continue Sofa Test
+  ChatGPT conversation 6a9c17af-9c24-83ed-8a6c-d203e21f3413
+
+Historical handoff documents:
+
+- BOOP_PRINCIPLES.md
+- BOOP_CONVERSATION_RECONSTRUCTION.md
+- BOOP_CONTEXT.md
+
+Repository evidence:
+
+- README.md
+- BOOP_RULES.md
+- BOOP_STATUS.md
+- docs/superpowers/specs/
+- docs/superpowers/plans/
+- source regression tests, Android tests and Git history
+
+
+FINAL REMINDER
+--------------
+
+BOOP is allowed to evolve. The job of memory is not to freeze the first idea; it
+is to stop good reasons from being lost when the implementation changes bodies.
+Keep the thread connecting the cute plastic smart-speaker robot, the expressive
+Pixel puppet, the Shield eyes, BOOP Home and whatever body comes next.
