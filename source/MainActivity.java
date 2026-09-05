@@ -647,6 +647,12 @@ public final class MainActivity extends Activity implements RecognitionListener,
             return;
         }
 
+        String exitReply = BoopConversationExitIntent.replyFor(transcript);
+        if (exitReply != null) {
+            speak(exitReply);
+            return;
+        }
+
         if (!tokenStore.hasConnection()) {
             speak("I need to connect to the house first.");
             ensureHouseConnection();
