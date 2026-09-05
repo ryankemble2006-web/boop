@@ -1,0 +1,29 @@
+name: Apply Alpha 6.6.2 follow-up partial recovery
+
+on:
+  push:
+    branches: [ "alpha6.6.2-followup-partial-recovery" ]
+    paths: [ "scripts/apply-alpha662-partial-recovery.py" ]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: alpha6.6.2-followup-partial-recovery
+          fetch-depth: 0
+      - name: Apply bounded partial-result recovery
+        run: python3 scripts/apply-alpha662-partial-recovery.py
+      - name: Commit source fix
+        run: |
+          set -euo pipefail
+          git config user.name "boop-ci"
+          git config user.email "boop-ci@users.noreply.github.com"
+          git add source/MainActivity.java
+          git diff --cached --exit-code && exit 1 || true
+          git commit -m "Recover follow-up answer from partial speech result"
+          git push origin HEAD:alpha6.6.2-followup-partial-recovery
