@@ -22,8 +22,8 @@ The compatibility correction restores the original BOOP contract: Home Assistant
 - Protected Home regression physically verified: correct favourite changes, its real state appears almost immediately, and the 10-second confirmation safety window has ample margin
 
 ## Next
-- Review and plan the approved BOOP Wall resurrection design in
-  `docs/superpowers/specs/2026-09-05-boop-wall-resurrection-design.md`
+- Execute the approved BOOP Wall resurrection plan in
+  `docs/superpowers/plans/2026-09-05-boop-wall-resurrection.md`
 - Restore Alpha 6.5.5's 33 natural BOOP wake phrases, BOOP OpenCode conversation, immediate local
   Home Assistant control and direct media control with the newer QR pairing and
   stable signing
