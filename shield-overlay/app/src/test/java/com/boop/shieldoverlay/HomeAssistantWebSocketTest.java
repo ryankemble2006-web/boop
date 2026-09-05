@@ -3,6 +3,7 @@ package com.boop.shieldoverlay;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Method;
@@ -53,6 +54,126 @@ public final class HomeAssistantWebSocketTest {
                 stateListener,
                 subscriptionCallback);
         assertNotNull(method);
+    }
+
+    @Test
+    public void stateChangeSubscriptionDeliversEventAndUnsubscribes() throws Exception {
+        CountDownLatch ready = new CountDownLatch(1);
+        CountDownLatch subscribeSeen = new CountDownLatch(1);
+        CountDownLatch subscribed = new CountDownLatch(1);
+        CountDownLatch eventSeen = new CountDownLatch(1);
+        CountDownLatch unsubscribeSeen = new CountDownLatch(1);
+        CountDownLatch serverClosed = new CountDownLatch(1);
+        AtomicReference<WebSocket> serverSocket = new AtomicReference<>();
+        AtomicReference<JSONObject> subscribeMessage = new AtomicReference<>();
+        AtomicReference<JSONObject> unsubscribeMessage = new AtomicReference<>();
+        AtomicReference<String> entitySeen = new AtomicReference<>();
+        AtomicReference<String> stateSeen = new AtomicReference<>();
+        AtomicReference<HomeAssistantWebSocket.Subscription> active = new AtomicReference<>();
+        AtomicReference<String> subscriptionError = new AtomicReference<>();
+
+        server.enqueue(new MockResponse().withWebSocketUpgrade(new WebSocketListener() {
+            @Override
+            public void onOpen(WebSocket webSocket, Response response) {
+                serverSocket.set(webSocket);
+                webSocket.send("{\"type\":\"auth_required\",\"ha_version\":\"2026.9\"}");
+            }
+
+            @Override
+            public void onMessage(WebSocket webSocket, String text) {
+                try {
+                    JSONObject message = new JSONObject(text);
+                    String type = message.optString("type", "");
+                    if ("auth".equals(type)) {
+                        webSocket.send("{\"type\":\"auth_ok\",\"ha_version\":\"2026.9\"}");
+                        return;
+                    }
+                    if ("subscribe_events".equals(type)) {
+                        subscribeMessage.set(message);
+                        subscribeSeen.countDown();
+                        webSocket.send(new JSONObject()
+                                .put("id", message.getInt("id"))
+                                .put("type", "result")
+                                .put("success", true)
+                                .put("result", JSONObject.NULL)
+                                .toString());
+                        return;
+                    }
+                    if ("unsubscribe_events".equals(type)) {
+                        unsubscribeMessage.set(message);
+                        unsubscribeSeen.countDown();
+                        webSocket.send(new JSONObject()
+                                .put("id", message.getInt("id"))
+                                .put("type", "result")
+                                .put("success", true)
+                                .put("result", JSONObject.NULL)
+                                .toString());
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+            @Override
+            public void onClosing(WebSocket webSocket, int code, String reason) {
+                webSocket.close(code, reason);
+            }
+
+            @Override
+            public void onClosed(WebSocket webSocket, int code, String reason) {
+                serverClosed.countDown();
+            }
+        }));
+
+        HomeAssistantWebSocket socket = new HomeAssistantWebSocket(new OkHttpClient());
+        socket.connect(server.url("/").toString(), "access-secret", new HomeAssistantWebSocket.Listener() {
+            @Override public void onReady() { ready.countDown(); }
+            @Override public void onOffline(String message) { }
+            @Override public void onReauthRequired(String message) { }
+        });
+        assertTrue(ready.await(3, TimeUnit.SECONDS));
+
+        socket.subscribeStateChanges(
+                (entityId, state) -> {
+                    entitySeen.set(entityId);
+                    stateSeen.set(state);
+                    eventSeen.countDown();
+                },
+                (subscription, error) -> {
+                    active.set(subscription);
+                    subscriptionError.set(error);
+                    subscribed.countDown();
+                });
+
+        assertTrue("subscribe_events must be sent", subscribeSeen.await(3, TimeUnit.SECONDS));
+        JSONObject subscribe = subscribeMessage.get();
+        assertEquals("state_changed", subscribe.getString("event_type"));
+        int subscriptionId = subscribe.getInt("id");
+        assertTrue("subscription must be acknowledged", subscribed.await(3, TimeUnit.SECONDS));
+        assertNotNull(active.get());
+        assertNull(subscriptionError.get());
+
+        serverSocket.get().send(new JSONObject()
+                .put("id", subscriptionId)
+                .put("type", "event")
+                .put("event", new JSONObject()
+                        .put("event_type", "state_changed")
+                        .put("data", new JSONObject()
+                                .put("entity_id", "switch.sync_box")
+                                .put("new_state", new JSONObject().put("state", "off"))))
+                .toString());
+
+        assertTrue("state_changed event must reach BOOP", eventSeen.await(3, TimeUnit.SECONDS));
+        assertEquals("switch.sync_box", entitySeen.get());
+        assertEquals("off", stateSeen.get());
+
+        active.get().cancel();
+        assertTrue("unsubscribe_events must be sent", unsubscribeSeen.await(3, TimeUnit.SECONDS));
+        JSONObject unsubscribe = unsubscribeMessage.get();
+        assertEquals(subscriptionId, unsubscribe.getInt("subscription"));
+        assertTrue(unsubscribe.getInt("id") > subscriptionId);
+
+        socket.close();
+        assertTrue(serverClosed.await(3, TimeUnit.SECONDS));
     }
 
     @Test
