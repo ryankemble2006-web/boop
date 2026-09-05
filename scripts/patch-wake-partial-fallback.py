@@ -35,11 +35,24 @@ if 'wakeTranscriptAccumulator.chooseFinal(best)' not in text:
         raise SystemExit('wake result anchor missing')
     text = text.replace(result_anchor, result_anchor + result_lines, 1)
 
-partial_anchor = '    @Override public void onPartialResults(Bundle partialResults) { }\n'
-partial_method = '''    @Override\n    public void onPartialResults(Bundle partialResults) {\n        if (recognitionMode != RecognitionMode.WAKE || partialResults == null) {\n            return;\n        }\n        ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);\n        if (matches != null && !matches.isEmpty()) {\n            wakeTranscriptAccumulator.rememberPartial(matches.get(0));\n        }\n    }\n'''
+empty_partial_anchor = '    @Override public void onPartialResults(Bundle partialResults) { }\n'
+empty_partial_method = '''    @Override\n    public void onPartialResults(Bundle partialResults) {\n        if (recognitionMode != RecognitionMode.WAKE || partialResults == null) {\n            return;\n        }\n        ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);\n        if (matches != null && !matches.isEmpty()) {\n            wakeTranscriptAccumulator.rememberPartial(matches.get(0));\n        }\n    }\n'''
+
+expanded_partial_anchor = '''    @Override\n    public void onPartialResults(Bundle partialResults) {\n'''
+wake_partial_prefix = '''        if (recognitionMode == RecognitionMode.WAKE && partialResults != null) {\n            ArrayList<String> wakeMatches = partialResults.getStringArrayList(\n                    SpeechRecognizer.RESULTS_RECOGNITION);\n            if (wakeMatches != null && !wakeMatches.isEmpty()) {\n                wakeTranscriptAccumulator.rememberPartial(wakeMatches.get(0));\n            }\n            return;\n        }\n'''
+
 if 'wakeTranscriptAccumulator.rememberPartial' not in text:
-    if partial_anchor not in text:
+    if empty_partial_anchor in text:
+        text = text.replace(empty_partial_anchor, empty_partial_method, 1)
+    elif expanded_partial_anchor in text:
+        # Newer BOOP builds also use partial results for conversational TAP follow-ups.
+        # Add WAKE handling first, then leave the existing TAP logic intact below it.
+        text = text.replace(
+            expanded_partial_anchor,
+            expanded_partial_anchor + wake_partial_prefix,
+            1,
+        )
+    else:
         raise SystemExit('wake partial-results anchor missing')
-    text = text.replace(partial_anchor, partial_method, 1)
 
 path.write_text(text, encoding='utf-8')
