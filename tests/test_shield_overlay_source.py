@@ -24,22 +24,21 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertNotIn("Color.BLACK", source)
         self.assertNotIn("drawColor", source)
 
-    def test_manifest_isolated_from_voice_network_boot_and_accessibility(self):
+    def test_manifest_allows_local_network_but_still_blocks_voice_boot_and_accessibility(self):
         manifest = self.read("AndroidManifest.xml")
         self.assertIn("android.permission.SYSTEM_ALERT_WINDOW", manifest)
         self.assertIn("android.permission.FOREGROUND_SERVICE", manifest)
         self.assertIn("android.permission.FOREGROUND_SERVICE_SPECIAL_USE", manifest)
+        self.assertIn("android.permission.INTERNET", manifest)
+        self.assertIn("android.permission.ACCESS_NETWORK_STATE", manifest)
         self.assertIn("android:foregroundServiceType=\"specialUse\"", manifest)
         self.assertIn("persistent_noninteractive_visual_overlay_poc", manifest)
         for forbidden in (
             "RECORD_AUDIO",
-            "INTERNET",
-            "ACCESS_NETWORK_STATE",
             "RECEIVE_BOOT_COMPLETED",
             "BIND_ACCESSIBILITY_SERVICE",
             "SpeechRecognizer",
             "RecognizerIntent",
-            "homeassistant",
         ):
             self.assertNotIn(forbidden, manifest)
 
