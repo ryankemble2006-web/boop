@@ -1,0 +1,81 @@
+name: Build BOOP Shield HDR Debug
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "boop-shield-hdr-debug" ]
+    paths:
+      - "shield-hdr-debug/**"
+      - "tests/test_shield_hdr_debug_source.py"
+      - ".github/workflows/build-shield-hdr-debug.yml"
+      - "BOOP-Alpha1-project.zip"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run BOOP source regression suite
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Copy approved BOOP eye artwork
+        run: |
+          rm -rf "${RUNNER_TEMP}/boop-alpha1"
+          unzip -q BOOP-Alpha1-project.zip -d "${RUNNER_TEMP}/boop-alpha1"
+          ASSET="$(find "${RUNNER_TEMP}/boop-alpha1" -type f -name 'boop_eyes.png' -print -quit)"
+          if [ -z "$ASSET" ]; then
+            echo "Approved boop_eyes.png not found"
+            exit 1
+          fi
+          mkdir -p shield-hdr-debug/app/src/main/res/drawable-nodpi
+          cp "$ASSET" shield-hdr-debug/app/src/main/res/drawable-nodpi/boop_eyes.png
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Run HDR debug unit tests
+        run: gradle -p shield-hdr-debug :app:testDebugUnitTest --stacktrace
+
+      - name: Build HDR debug APK
+        run: gradle -p shield-hdr-debug :app:assembleDebug --stacktrace
+
+      - name: Inspect package and permissions
+        run: |
+          APK=shield-hdr-debug/app/build/outputs/apk/debug/app-debug.apk
+          AAPT="${ANDROID_HOME}/build-tools/36.0.0/aapt"
+          "$AAPT" dump badging "$APK" | tee badging.txt
+          "$AAPT" dump permissions "$APK" | tee permissions.txt
+          grep -q "package: name='com.boop.shieldhdrdebug'" badging.txt
+          for required in android.permission.SYSTEM_ALERT_WINDOW android.permission.FOREGROUND_SERVICE android.permission.FOREGROUND_SERVICE_SPECIAL_USE; do
+            grep -q "$required" permissions.txt
+          done
+          for forbidden in android.permission.RECORD_AUDIO android.permission.INTERNET android.permission.ACCESS_NETWORK_STATE android.permission.RECEIVE_BOOT_COMPLETED android.permission.BIND_ACCESSIBILITY_SERVICE; do
+            if grep -q "$forbidden" permissions.txt; then
+              echo "Forbidden permission present: $forbidden"
+              exit 1
+            fi
+          done
+
+      - name: Upload BOOP Shield HDR Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Shield-HDR-Debug
+          path: shield-hdr-debug/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
