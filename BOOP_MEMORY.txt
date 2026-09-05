@@ -324,12 +324,34 @@ BOOP Wall resurrection implementation status:
   79ac40677687c4225989fa095644d5d97d36876150afe704e80eb6091d55530b.
 - Stable signer SHA-256:
   f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
-- The exact green artifact is staged as
-  `C:\Users\ryank\Desktop\BOOP-Wall-Resurrection.apk` for physical testing.
-- Physical Pixel 7 Pro status: NOT YET TESTED.
+- The exact green artifact at
+  `C:\Users\ryank\Desktop\BOOP-Wall-Resurrection.apk` passed physical testing.
+- Physical Pixel 7 Pro status: GREEN on 2026-09-05.
+- Protected physical code checkpoint: checkpoint-boop-wall-595e1da.
 
-No BOOP Wall physical checkpoint exists and none may be created until the exact
-signed APK passes the complete Pixel acceptance checklist.
+BOOP Wall physical verification on 2026-09-05:
+
+- Android accepted the signed APK as an update without uninstalling, preserving
+  app data and proving signer continuity.
+- The eyes, tap-to-talk and the representative natural-wake set worked: BOOP,
+  Hey BOOP, Ey BOOP, Hello BOOP, Oi BOOP, Wake up BOOP, Are you there BOOP?,
+  and Excuse me BOOP.
+- A continuous wake-plus-command phrase worked, and wake detection rearmed.
+- Ordinary non-house questions routed through Home Assistant to the agent named
+  BOOP and returned useful spoken/displayed replies.
+- Room-scoped lighting and direct play, pause and skip media controls all changed
+  the intended real targets.
+- With OpenCode stopped, an ordinary question failed plainly with `That didn't
+  work`, while local lights and media remained fully functional. OpenCode was
+  restarted afterward and ordinary conversation recovered.
+- A timed request failed plainly and did not enter the retired `Once or
+  recurring?` follow-up flow.
+- After Android app data was cleared, the Shield companion displayed the QR,
+  phone login succeeded, room selection succeeded and control returned to BOOP.
+- Shake-to-eye-bounce works physically at the current firm threshold. The user
+  wants a later refinement so lifting the phone from its magnetic base is enough
+  to trigger the visual response; that is future animation/sensor work, not a
+  defect in this protected resurrection baseline.
 
 Physically verified green:
 
@@ -343,6 +365,7 @@ Physically verified green:
 
 Protected physical checkpoints:
 
+    checkpoint-boop-wall-595e1da
     checkpoint-shield-home-f8e8135
     checkpoint-shield-routines-3fa18c6
 
@@ -396,10 +419,11 @@ Its protected functional code checkpoint is:
 
 Current intended work order:
 
-1. Preserve checkpoint-shield-routines-3fa18c6 and the older protected Home
-   checkpoint.
-2. Return to the latest Pixel Alpha and rebuild its setup around the newer secure
-   QR pairing/authentication flow without discarding its proven puppet behaviour.
+1. Preserve checkpoint-boop-wall-595e1da, checkpoint-shield-routines-3fa18c6
+   and the older protected Home checkpoint.
+2. Refine the shake threshold around removal from the magnetic base and explore
+   further eye animation from this protected BOOP Wall baseline.
+3. Keep timed voice routines absent until their interaction is redesigned.
 
 
 PROTECTED CODE AND CHECKPOINTS
@@ -407,6 +431,7 @@ PROTECTED CODE AND CHECKPOINTS
 
 Do not move, rewrite or repoint:
 
+    checkpoint-boop-wall-595e1da
     checkpoint-shield-home-f8e8135
     checkpoint-shield-routines-3fa18c6
 
