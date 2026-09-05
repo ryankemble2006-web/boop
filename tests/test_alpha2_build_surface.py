@@ -44,9 +44,11 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
         ):
             self.assertIn('secrets.' + secret, workflow)
         self.assertIn('base64 --decode', workflow)
-        self.assertIn('BOOP_KEYSTORE_PATH', gradle)
+        self.assertIn('BOOP_SIGNING_STORE_FILE', gradle)
+        self.assertIn('BOOP_DEV_STORE_PASSWORD', gradle)
+        self.assertIn('BOOP_DEV_KEY_PASSWORD', gradle)
         self.assertIn('signingConfigs', gradle)
-        self.assertIn('signingConfig signingConfigs.boop', gradle)
+        self.assertIn('signingConfig signingConfigs.boopDev', gradle)
 
     def test_no_literal_credentials_are_committed(self):
         text = '\n'.join(

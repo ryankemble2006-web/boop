@@ -2,10 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
-def boopKeystorePath = System.getenv('BOOP_KEYSTORE_PATH')
-def boopKeystorePassword = System.getenv('BOOP_KEYSTORE_PASSWORD')
-def boopKeyAlias = System.getenv('BOOP_KEY_ALIAS')
-def boopKeyPassword = System.getenv('BOOP_KEY_PASSWORD')
+def boopKeystorePath = System.getenv('BOOP_SIGNING_STORE_FILE')
+def boopKeystorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
+def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
 
 android {
     namespace 'com.boop.alpha1'
@@ -20,11 +19,11 @@ android {
     }
 
     signingConfigs {
-        boop {
+        boopDev {
             if (boopKeystorePath) {
                 storeFile file(boopKeystorePath)
                 storePassword boopKeystorePassword
-                keyAlias boopKeyAlias
+                keyAlias 'boop-dev'
                 keyPassword boopKeyPassword
             }
         }
@@ -32,7 +31,7 @@ android {
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.boop
+            signingConfig signingConfigs.boopDev
         }
     }
 
