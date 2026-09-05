@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,6 +56,47 @@ public final class BinaryActionTest {
     }
 
     @Test
+    public void staleFirstReadWaitsForRequestedStateBeforeReportingSuccess() throws Exception {
+        RecordingPort port = new RecordingPort();
+        HomeAssistantRepository repository = new HomeAssistantRepository(port);
+        EntityCard original = card("switch.sync_box", "living_room", "AI Sync Box strip", "on");
+        AtomicBoolean callbackSeen = new AtomicBoolean(false);
+        AtomicBoolean success = new AtomicBoolean(false);
+        AtomicReference<EntityCard> refreshed = new AtomicReference<>();
+
+        repository.toggleBinary(original, (ok, card, error) -> {
+            callbackSeen.set(true);
+            success.set(ok);
+            refreshed.set(card);
+        });
+
+        port.commands.get(0).callback.onResult(true, null, null);
+        assertEquals("get_states", port.commands.get(1).type);
+
+        JSONArray staleStates = new JSONArray()
+                .put(new JSONObject()
+                        .put("entity_id", "switch.sync_box")
+                        .put("state", "on")
+                        .put("attributes", new JSONObject().put("friendly_name", "AI Sync Box strip")));
+        port.commands.get(1).callback.onResult(true, staleStates, null);
+
+        assertFalse("old state must not be accepted as confirmation", callbackSeen.get());
+        waitForCommandCount(port, 3, 2000L);
+        assertEquals("get_states", port.commands.get(2).type);
+
+        JSONArray settledStates = new JSONArray()
+                .put(new JSONObject()
+                        .put("entity_id", "switch.sync_box")
+                        .put("state", "off")
+                        .put("attributes", new JSONObject().put("friendly_name", "AI Sync Box strip")));
+        port.commands.get(2).callback.onResult(true, settledStates, null);
+
+        assertTrue(callbackSeen.get());
+        assertTrue(success.get());
+        assertEquals("off", refreshed.get().state());
+    }
+
+    @Test
     public void onEntityCallsTurnOffUsingItsActualDomain() throws Exception {
         RecordingPort port = new RecordingPort();
         HomeAssistantRepository repository = new HomeAssistantRepository(port);
@@ -96,6 +138,15 @@ public final class BinaryActionTest {
         assertEquals(1, port.commands.size());
     }
 
+    private static void waitForCommandCount(RecordingPort port, int expected, long timeoutMs)
+            throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (port.commands.size() < expected && System.currentTimeMillis() < deadline) {
+            Thread.sleep(20L);
+        }
+        assertEquals(expected, port.commands.size());
+    }
+
     private static EntityCard card(String id, String area, String name, String state) {
         return new EntityCard(id, area, name, state, false, null);
     }
@@ -113,7 +164,7 @@ public final class BinaryActionTest {
     }
 
     private static final class RecordingPort implements HomeAssistantRepository.CommandPort {
-        final List<Command> commands = new ArrayList<>();
+        final List<Command> commands = Collections.synchronizedList(new ArrayList<>());
 
         @Override
         public void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback) {
