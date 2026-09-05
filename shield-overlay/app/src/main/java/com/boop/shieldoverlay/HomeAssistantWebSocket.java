@@ -40,6 +40,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
     private final OkHttpClient client;
     private final Object lock = new Object();
     private final Map<Integer, Callback> callbacks = new HashMap<>();
+    private final Map<Integer, StateChangeListener> stateChangeSubscriptions = new HashMap<>();
 
     private WebSocket webSocket;
     private Listener listener;
@@ -67,6 +68,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
             previous = webSocket;
             webSocket = null;
             callbacks.clear();
+            stateChangeSubscriptions.clear();
             nextId = 1;
             ready = false;
             deliberateClose = false;
@@ -124,7 +126,56 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
         if (callback == null) {
             throw new IllegalArgumentException("subscription callback is required");
         }
-        callback.onResult(null, "Home Assistant state-change subscriptions are not wired yet.");
+
+        final WebSocket socket;
+        final int subscriptionId;
+        final String payload;
+        synchronized (lock) {
+            if (!ready || webSocket == null) {
+                throw new IllegalStateException("Home Assistant socket is not ready");
+            }
+            subscriptionId = nextId++;
+            try {
+                payload = new HaCommand(
+                        subscriptionId,
+                        "subscribe_events",
+                        new JSONObject().put("event_type", "state_changed"))
+                        .toJson()
+                        .toString();
+            } catch (JSONException impossible) {
+                throw new IllegalArgumentException("Home Assistant subscription could not be encoded", impossible);
+            }
+            callbacks.put(subscriptionId, (success, result, error) -> {
+                if (!success) {
+                    callback.onResult(null, error);
+                    return;
+                }
+
+                boolean active;
+                synchronized (lock) {
+                    active = ready && webSocket != null && !deliberateClose;
+                    if (active) {
+                        stateChangeSubscriptions.put(subscriptionId, listener);
+                    }
+                }
+                if (!active) {
+                    callback.onResult(null, "Home Assistant connection is unavailable");
+                    return;
+                }
+                callback.onResult(new ActiveSubscription(subscriptionId), null);
+            });
+            socket = webSocket;
+        }
+
+        if (!socket.send(payload)) {
+            Callback failed;
+            synchronized (lock) {
+                failed = callbacks.remove(subscriptionId);
+            }
+            if (failed != null) {
+                failed.onResult(false, null, "Home Assistant connection is unavailable");
+            }
+        }
     }
 
     public boolean isReady() {
@@ -146,6 +197,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
             webSocket = null;
             pending = new HashMap<>(callbacks);
             callbacks.clear();
+            stateChangeSubscriptions.clear();
         }
         if (socket != null) {
             socket.close(1000, "BOOP Home closed");
@@ -256,6 +308,10 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
                 socket.close(1000, "Home Assistant authentication rejected");
                 return;
             }
+            if ("event".equals(type)) {
+                handleStateChangeEvent(message);
+                return;
+            }
 
             if (message.has("id")) {
                 handleCommandResult(message);
@@ -331,6 +387,34 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
         callback.onResult(success, result, error);
     }
 
+    private void handleStateChangeEvent(JSONObject message) {
+        int subscriptionId = message.optInt("id", -1);
+        if (subscriptionId < 1) {
+            return;
+        }
+
+        final StateChangeListener target;
+        synchronized (lock) {
+            target = stateChangeSubscriptions.get(subscriptionId);
+        }
+        if (target == null) {
+            return;
+        }
+
+        JSONObject event = message.optJSONObject("event");
+        if (event == null || !"state_changed".equals(event.optString("event_type", ""))) {
+            return;
+        }
+        JSONObject data = event.optJSONObject("data");
+        JSONObject newState = data == null ? null : data.optJSONObject("new_state");
+        String entityId = data == null ? null : clean(data.optString("entity_id", null));
+        String state = newState == null ? null : clean(newState.optString("state", null));
+        if (entityId == null || state == null) {
+            return;
+        }
+        target.onStateChanged(entityId, state);
+    }
+
     private boolean isDeliberatelyClosed(WebSocket socket) {
         synchronized (lock) {
             return deliberateClose || socket != webSocket;
@@ -348,6 +432,7 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
             target = listener;
             pending = new HashMap<>(callbacks);
             callbacks.clear();
+            stateChangeSubscriptions.clear();
         }
         for (Callback callback : pending.values()) {
             callback.onResult(false, null, message);
@@ -355,6 +440,46 @@ public final class HomeAssistantWebSocket implements AutoCloseable {
         if (target != null) {
             target.onOffline(message);
         }
+    }
+
+    private final class ActiveSubscription implements Subscription {
+        private final int subscriptionId;
+        private boolean cancelled;
+
+        ActiveSubscription(int subscriptionId) {
+            this.subscriptionId = subscriptionId;
+        }
+
+        @Override
+        public void cancel() {
+            synchronized (lock) {
+                if (cancelled) {
+                    return;
+                }
+                cancelled = true;
+                stateChangeSubscriptions.remove(subscriptionId);
+                if (!ready || webSocket == null || deliberateClose) {
+                    return;
+                }
+            }
+
+            try {
+                send(
+                        "unsubscribe_events",
+                        new JSONObject().put("subscription", subscriptionId),
+                        null);
+            } catch (JSONException | IllegalStateException ignored) {
+                // Cancellation is best-effort; the local listener is already gone.
+            }
+        }
+    }
+
+    private static String clean(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private static String requireText(String value, String label) {
