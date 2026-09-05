@@ -51,4 +51,11 @@ public final class TvNavigationModelTest {
         TvNavigationModel model = new TvNavigationModel();
         assertTrue(model.onBack());
     }
+
+    @Test
+    public void backFromHomeContentAlsoRequestsActivityFinish() {
+        TvNavigationModel model = new TvNavigationModel();
+        model.enterContent();
+        assertTrue(model.onBack());
+    }
 }
