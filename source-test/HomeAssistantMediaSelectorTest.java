@@ -36,6 +36,30 @@ public final class HomeAssistantMediaSelectorTest {
         assertEquals("media_player.speaker", candidates.get(0).entityId());
     }
 
+    @Test public void pauseIgnoresOnScreenUiPlayerAndChoosesActualPlayback() throws Exception {
+        JSONArray areaEntities = new JSONArray("[\"media_player.shield\",\"media_player.music\"]");
+        JSONArray states = new JSONArray("["
+                + "{\"entity_id\":\"media_player.shield\",\"state\":\"on\",\"attributes\":{\"friendly_name\":\"Shield\",\"app_id\":\"com.google.android.tvlauncher\",\"supported_features\":1}},"
+                + "{\"entity_id\":\"media_player.music\",\"state\":\"playing\",\"attributes\":{\"friendly_name\":\"Music\",\"media_title\":\"Song\",\"supported_features\":1}}"
+                + "]");
+
+        List<HomeAssistantMediaSelector.Candidate> candidates =
+                HomeAssistantMediaSelector.rank(areaEntities, states, MediaCommand.PAUSE);
+
+        assertEquals(1, candidates.size());
+        assertEquals("media_player.music", candidates.get(0).entityId());
+    }
+
+    @Test public void commandAwareSelectionRejectsUnsupportedPlaybackService() throws Exception {
+        JSONArray areaEntities = new JSONArray("[\"media_player.music\"]");
+        JSONArray states = new JSONArray("["
+                + "{\"entity_id\":\"media_player.music\",\"state\":\"playing\",\"attributes\":{\"friendly_name\":\"Music\",\"media_title\":\"Song\",\"supported_features\":0}}"
+                + "]");
+
+        assertTrue(HomeAssistantMediaSelector.rank(
+                areaEntities, states, MediaCommand.PAUSE).isEmpty());
+    }
+
     @Test public void ignoresNonMediaAndUnavailableEntities() throws Exception {
         JSONArray areaEntities = new JSONArray("[\"light.candle\",\"media_player.dead\"]");
         JSONArray states = new JSONArray("[{\"entity_id\":\"media_player.dead\",\"state\":\"unavailable\",\"attributes\":{}}]");
