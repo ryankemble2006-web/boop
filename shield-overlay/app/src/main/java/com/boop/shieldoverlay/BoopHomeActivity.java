@@ -2,7 +2,6 @@ package com.boop.shieldoverlay;
 
 import android.app.Activity;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.LinkAddress;
 import android.net.LinkProperties;
@@ -12,15 +11,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -45,6 +44,14 @@ public final class BoopHomeActivity extends Activity {
     private Runnable successRunnable;
     private TvPairingView pairingView;
     private TvRoomPickerView roomPickerView;
+
+    private TvNavigationModel navigationModel;
+    private FrameLayout navigationContent;
+    private FocusCardView homeRailCard;
+    private FocusCardView routinesRailCard;
+    private FocusCardView settingsRailCard;
+    private View currentPageFirstFocusable;
+    private boolean homeShellVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +84,14 @@ public final class BoopHomeActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        if (homeShellVisible && navigationModel != null) {
+            if (navigationModel.onBack()) {
+                finish();
+            } else {
+                renderNavigationPage(navigationModel.page(), true);
+            }
+            return;
+        }
         finish();
     }
 
@@ -140,6 +155,7 @@ public final class BoopHomeActivity extends Activity {
     }
 
     private void showPairingGate() {
+        clearNavigationShellState();
         firstRun.start(false, false);
         pairingView = new TvPairingView(this, this::restartPairing);
         roomPickerView = null;
@@ -305,11 +321,12 @@ public final class BoopHomeActivity extends Activity {
         if (next == FirstRunCoordinator.State.ROOM_PICKER) {
             showRoomPicker();
         } else if (next == FirstRunCoordinator.State.HOME) {
-            showHomePlaceholder();
+            showHomeShell();
         }
     }
 
     private void showRoomPicker() {
+        clearNavigationShellState();
         closeHomeSocket();
         pairingView = null;
         roomPickerView = new TvRoomPickerView(this, new TvRoomPickerView.Listener() {
@@ -414,7 +431,7 @@ public final class BoopHomeActivity extends Activity {
         preferences.setSelectedRoom(area);
         closeHomeSocket();
         firstRun.afterPairingSuccess(true);
-        showHomePlaceholder();
+        showHomeShell();
     }
 
     private ExecutorService ensureHomeExecutor() {
@@ -436,45 +453,162 @@ public final class BoopHomeActivity extends Activity {
         }
     }
 
-    private void showHomePlaceholder() {
-        roomPickerView = null;
-        LinearLayout root = simpleStage();
-        AreaInfo room = preferences == null ? null : preferences.selectedRoom();
-        root.addView(stageTitle(getString(R.string.home_title)));
-        if (room != null) {
-            root.addView(stageDetail(room.name()));
-        }
-        setContentView(root);
+    private void showHomeShell() {
+        closeHomeSocket();
         pairingView = null;
-    }
+        roomPickerView = null;
+        homeShellVisible = true;
+        navigationModel = new TvNavigationModel();
 
-    private LinearLayout simpleStage() {
         LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER);
-        root.setPadding(dp(64), dp(48), dp(64), dp(48));
+        root.setOrientation(LinearLayout.HORIZONTAL);
         root.setBackgroundColor(Color.BLACK);
-        return root;
+        root.setPadding(dp(28), dp(26), dp(28), dp(26));
+
+        LinearLayout rail = new LinearLayout(this);
+        rail.setOrientation(LinearLayout.VERTICAL);
+        rail.setPadding(0, dp(24), dp(20), 0);
+
+        homeRailCard = createRailCard("Home", TvNavigationModel.Page.HOME);
+        routinesRailCard = createRailCard("Routines", TvNavigationModel.Page.ROUTINES);
+        settingsRailCard = createRailCard("Settings", TvNavigationModel.Page.SETTINGS);
+        rail.addView(homeRailCard, railCardParams());
+        rail.addView(routinesRailCard, railCardParams());
+        rail.addView(settingsRailCard, railCardParams());
+
+        navigationContent = new FrameLayout(this);
+
+        root.addView(rail, new LinearLayout.LayoutParams(dp(270),
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(navigationContent, new LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                1f));
+
+        setContentView(root);
+        renderNavigationPage(TvNavigationModel.Page.HOME, true);
     }
 
-    private TextView stageTitle(String text) {
-        TextView view = new TextView(this);
-        view.setText(text);
-        view.setTextColor(Color.WHITE);
-        view.setTextSize(52f);
-        view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        view.setGravity(Gravity.CENTER);
-        return view;
+    private FocusCardView createRailCard(String label, TvNavigationModel.Page page) {
+        FocusCardView card = new FocusCardView(this).label(label);
+        card.setOnClickListener(view -> {
+            if (navigationModel == null) {
+                return;
+            }
+            navigationModel.selectRail(page);
+            renderNavigationPage(page, true);
+        });
+        card.setOnKeyListener((view, keyCode, event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN
+                    || keyCode != KeyEvent.KEYCODE_DPAD_RIGHT
+                    || navigationModel == null) {
+                return false;
+            }
+            navigationModel.selectRail(page);
+            renderNavigationPage(page, false);
+            navigationModel.enterContent();
+            if (currentPageFirstFocusable != null) {
+                currentPageFirstFocusable.requestFocus();
+            }
+            return true;
+        });
+        return card;
     }
 
-    private TextView stageDetail(String text) {
-        TextView view = new TextView(this);
-        view.setText(text);
-        view.setTextColor(Color.LTGRAY);
-        view.setTextSize(26f);
-        view.setGravity(Gravity.CENTER);
-        view.setPadding(0, dp(18), 0, 0);
-        return view;
+    private LinearLayout.LayoutParams railCardParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.bottomMargin = dp(12);
+        return params;
+    }
+
+    private void renderNavigationPage(TvNavigationModel.Page page, boolean focusRail) {
+        if (!homeShellVisible || navigationModel == null || navigationContent == null) {
+            return;
+        }
+
+        AreaInfo room = preferences == null ? null : preferences.selectedRoom();
+        Runnable onContentLeft = this::returnContentFocusToRail;
+        View pageView;
+
+        if (page == TvNavigationModel.Page.ROUTINES) {
+            TvRoutinesView routinesView = new TvRoutinesView(this, onContentLeft);
+            pageView = routinesView;
+            currentPageFirstFocusable = routinesView.firstFocusable();
+        } else if (page == TvNavigationModel.Page.SETTINGS) {
+            TvSettingsView settingsView = new TvSettingsView(
+                    this,
+                    room,
+                    this::showRoomPicker,
+                    onContentLeft);
+            pageView = settingsView;
+            currentPageFirstFocusable = settingsView.firstFocusable();
+        } else {
+            TvHomeView homeView = new TvHomeView(this, room, onContentLeft);
+            pageView = homeView;
+            currentPageFirstFocusable = homeView.firstFocusable();
+        }
+
+        navigationContent.removeAllViews();
+        navigationContent.addView(pageView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        updateRailVisuals();
+
+        if (focusRail) {
+            View railCard = railCardFor(navigationModel.page());
+            if (railCard != null) {
+                railCard.post(railCard::requestFocus);
+            }
+        }
+    }
+
+    private void returnContentFocusToRail() {
+        if (navigationModel == null) {
+            return;
+        }
+        navigationModel.onContentLeft();
+        View railCard = railCardFor(navigationModel.page());
+        if (railCard != null) {
+            railCard.requestFocus();
+        }
+    }
+
+    private View railCardFor(TvNavigationModel.Page page) {
+        if (page == TvNavigationModel.Page.ROUTINES) {
+            return routinesRailCard;
+        }
+        if (page == TvNavigationModel.Page.SETTINGS) {
+            return settingsRailCard;
+        }
+        return homeRailCard;
+    }
+
+    private void updateRailVisuals() {
+        if (navigationModel == null) {
+            return;
+        }
+        TvNavigationModel.Page page = navigationModel.page();
+        if (homeRailCard != null) {
+            homeRailCard.setActivatedVisual(page == TvNavigationModel.Page.HOME);
+        }
+        if (routinesRailCard != null) {
+            routinesRailCard.setActivatedVisual(page == TvNavigationModel.Page.ROUTINES);
+        }
+        if (settingsRailCard != null) {
+            settingsRailCard.setActivatedVisual(page == TvNavigationModel.Page.SETTINGS);
+        }
+    }
+
+    private void clearNavigationShellState() {
+        homeShellVisible = false;
+        navigationModel = null;
+        navigationContent = null;
+        homeRailCard = null;
+        routinesRailCard = null;
+        settingsRailCard = null;
+        currentPageFirstFocusable = null;
     }
 
     private void restartPairing() {
