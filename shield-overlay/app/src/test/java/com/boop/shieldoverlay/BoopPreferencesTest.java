@@ -30,6 +30,49 @@ public final class BoopPreferencesTest {
         assertNull(preferences.selectedRoom());
     }
 
+    @Test
+    public void cachedFavouriteRoundTripsOnlyForTheMatchingRoom() {
+        FakeStore store = new FakeStore();
+        BoopPreferences preferences = new BoopPreferences(store);
+        AreaInfo livingRoom = new AreaInfo("living_room", "Living Room");
+        EntityCard lamp = new EntityCard(
+                "light.floor_lamp",
+                "living_room",
+                "Floor lamp",
+                "on",
+                false,
+                null);
+
+        preferences.setCachedFavourite(livingRoom, lamp);
+
+        EntityCard cached = preferences.cachedFavourite(livingRoom);
+        assertEquals("light.floor_lamp", cached.entityId());
+        assertEquals("living_room", cached.areaId());
+        assertEquals("Floor lamp", cached.displayName());
+        assertEquals("on", cached.state());
+        assertNull(preferences.cachedFavourite(new AreaInfo("bedroom", "Bedroom")));
+    }
+
+    @Test
+    public void clearingCachedFavouriteRemovesLastKnownControl() {
+        FakeStore store = new FakeStore();
+        BoopPreferences preferences = new BoopPreferences(store);
+        AreaInfo livingRoom = new AreaInfo("living_room", "Living Room");
+        preferences.setCachedFavourite(
+                livingRoom,
+                new EntityCard(
+                        "switch.corner_lamp",
+                        "living_room",
+                        "Corner lamp",
+                        "off",
+                        false,
+                        null));
+
+        preferences.clearCachedFavourite(livingRoom);
+
+        assertNull(preferences.cachedFavourite(livingRoom));
+    }
+
     private static final class FakeStore implements BoopPreferences.Store {
         private final Map<String, String> values = new HashMap<>();
 
