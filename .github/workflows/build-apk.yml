@@ -85,9 +85,18 @@ jobs:
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
 
       - name: Inspect built APK
+        shell: bash
         run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          AAPT="${ANDROID_HOME}/build-tools/36.0.0/aapt"
           echo '=== APK BADGING ==='
-          ${ANDROID_HOME}/build-tools/36.0.0/aapt dump badging boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          "$AAPT" dump badging "$APK" | tee badging.txt
+          echo '=== APK MANIFEST TREE ==='
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml | tee manifest-tree.txt
+          grep -q "package: name='com.boop.alpha1'" badging.txt
+          grep -q "targetSdkVersion:'36'" badging.txt
+          grep -q "ShieldPairingActivity" manifest-tree.txt
 
       - name: Verify stable BOOP signer
         shell: bash
