@@ -31,6 +31,22 @@ public final class TvRoutinesView extends ScrollView {
     private final LinkedHashMap<String, FocusCardView> cards = new LinkedHashMap<>();
     private FocusCardView statusCard;
 
+    public TvRoutinesView(Context context, Runnable onContentLeft) {
+        this(context, new Listener() {
+            @Override
+            public void onRun(String entityId) {
+                // The existing shell has no routine controller until Task 6 wires it.
+            }
+
+            @Override
+            public void onContentLeft() {
+                if (onContentLeft != null) {
+                    onContentLeft.run();
+                }
+            }
+        });
+    }
+
     public TvRoutinesView(Context context, Listener listener) {
         super(context);
         if (listener == null) {
