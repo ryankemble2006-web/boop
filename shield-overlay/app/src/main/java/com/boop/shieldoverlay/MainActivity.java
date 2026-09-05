@@ -13,6 +13,17 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        LaunchCrashRecorder crashRecorder = new LaunchCrashRecorder(this);
+        String crashReport = crashRecorder.consume();
+        if (crashReport != null) {
+            Intent reportIntent = new Intent(this, CrashReportActivity.class);
+            reportIntent.putExtra(CrashReportActivity.EXTRA_REPORT, crashReport);
+            startActivity(reportIntent);
+            finish();
+            return;
+        }
+
         if (Settings.canDrawOverlays(this)) {
             startOverlayAndOpenHome();
             return;
