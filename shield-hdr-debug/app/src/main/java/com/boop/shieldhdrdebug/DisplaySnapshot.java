@@ -65,8 +65,7 @@ final class DisplaySnapshot {
         String displayLine = "id=" + display.getDisplayId()
                 + " name=" + display.getName()
                 + " state=" + display.getState()
-                + " rot=" + display.getRotation()
-                + " colorMode=" + display.getColorMode();
+                + " rot=" + display.getRotation();
         String modeLine = "modeId=" + currentMode.getModeId()
                 + " " + currentMode.getPhysicalWidth() + "x" + currentMode.getPhysicalHeight()
                 + " @" + String.format(Locale.US, "%.3fHz", currentMode.getRefreshRate());
@@ -79,6 +78,17 @@ final class DisplaySnapshot {
 
         return new DisplaySnapshot(deviceLine, displayLine, modeLine, windowLine,
                 hdrLine, luminanceLine, "modes " + modes);
+    }
+
+    static DisplaySnapshot failure() {
+        return new DisplaySnapshot(
+                "device capture failed",
+                "display capture failed",
+                "mode capture failed",
+                "window capture failed",
+                "HDR capture failed",
+                "luminance capture failed",
+                "modes capture failed");
     }
 
     String signature() {
