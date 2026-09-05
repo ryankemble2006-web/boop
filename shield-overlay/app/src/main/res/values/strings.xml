@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">BOOP Shield Eyes</string>
     <string name="notification_channel_name">BOOP eyes</string>
-    <string name="notification_channel_description">Keeps BOOP&apos;s Shield overlay alive.</string>
+    <string name="notification_channel_description">Keeps the BOOP Shield overlay alive.</string>
     <string name="notification_title">BOOP eyes are floating</string>
     <string name="notification_text">Transparent Shield overlay POC is running.</string>
 </resources>
