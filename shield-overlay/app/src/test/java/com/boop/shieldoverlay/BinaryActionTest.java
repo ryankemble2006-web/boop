@@ -2,6 +2,7 @@ package com.boop.shieldoverlay;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -15,6 +16,22 @@ import org.json.JSONObject;
 import org.junit.Test;
 
 public final class BinaryActionTest {
+    @Test
+    public void repositoryExposesStateChangeConfirmationPort() throws Exception {
+        Class<?> stateChangePort = null;
+        for (Class<?> nested : HomeAssistantRepository.class.getDeclaredClasses()) {
+            if ("StateChangePort".equals(nested.getSimpleName())) {
+                stateChangePort = nested;
+                break;
+            }
+        }
+
+        assertNotNull("binary confirmation needs a state-change port", stateChangePort);
+        assertNotNull(HomeAssistantRepository.class.getConstructor(
+                HomeAssistantRepository.CommandPort.class,
+                stateChangePort));
+    }
+
     @Test
     public void offEntityCallsTurnOnForExactTargetThenRefreshesState() throws Exception {
         RecordingPort port = new RecordingPort();
