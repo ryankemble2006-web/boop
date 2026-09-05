@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -20,12 +21,16 @@ public final class BoopOverlayService extends Service {
     private static final String CHANNEL_ID = "boop_overlay_poc";
 
     private WindowManager windowManager;
+    private DisplayManager displayManager;
+    private DisplayManager.DisplayListener displayListener;
     private BoopOverlayView overlayView;
 
     @Override
     public void onCreate() {
         super.onCreate();
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+        displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
+        registerDisplayListener();
         promoteToForeground();
     }
 
@@ -44,6 +49,9 @@ public final class BoopOverlayService extends Service {
 
     @Override
     public void onDestroy() {
+        if (displayManager != null && displayListener != null) {
+            displayManager.unregisterDisplayListener(displayListener);
+        }
         removeOverlay();
         super.onDestroy();
     }
@@ -51,6 +59,28 @@ public final class BoopOverlayService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private void registerDisplayListener() {
+        displayListener = new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+                // No action needed for the single-display Shield POC.
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                // No action needed for the single-display Shield POC.
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+                if (overlayView != null) {
+                    overlayView.postInvalidateOnAnimation();
+                }
+            }
+        };
+        displayManager.registerDisplayListener(displayListener, null);
     }
 
     private void promoteToForeground() {
