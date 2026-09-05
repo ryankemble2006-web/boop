@@ -22,7 +22,14 @@ The compatibility correction restores the original BOOP contract: Home Assistant
 - Protected Home regression physically verified: correct favourite changes, its real state appears almost immediately, and the 10-second confirmation safety window has ample margin
 
 ## Next
-- Return to the Pixel Alpha and rebuild its setup around the newer QR pairing/authentication flow
+- Review and plan the approved BOOP Wall resurrection design in
+  `docs/superpowers/specs/2026-09-05-boop-wall-resurrection-design.md`
+- Restore Alpha 6.6.3's local BOOP wake word, BOOP OpenCode conversation, immediate local
+  Home Assistant control and direct media control with the newer QR pairing and
+  stable signing
+- Exclude timed voice routines pending a separate redesign
+- Do not create a BOOP Wall checkpoint until the signed APK passes the physical
+  acceptance gate on the Pixel 7 Pro
 
 ## Do Not Touch
 - checkpoint-shield-home-f8e8135

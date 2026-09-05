@@ -226,6 +226,32 @@ PRODUCT EVOLUTION AND THE REASONS FOR IT
    entity still uses the correct Home Assistant service and truthful completion
    rule. User-facing screens should not drift back to three competing nouns.
 
+8. BOOP Wall resurrection after the Shield companion update
+
+   The stable-signed BOOP Wall APK used for the newer Shield pairing companion
+   carried an old echo-only MainActivity under the same com.boop.alpha1 package.
+   Installing it updated the Pixel app in place, leaving eyes and speech echo but
+   replacing the smart Alpha behaviour. The missing brain was not lost: Alpha
+   6.6.3 survives on the alpha6.6.3-scheduling-acknowledgement branch with the
+   wake stack, local HA control, direct media control and general conversation
+   client intact.
+
+   Ordinary conversation in that Alpha was routed through Home Assistant to the
+   OpenCode conversation agent, not through a direct OpenAI key in Android. On
+   2026-09-05 the OpenCode token was found expired, the user re-authenticated it,
+   and confirmed the current agent named BOOP answers again.
+
+   The approved direction is to modernise the preserved Alpha with stable signing
+   and secure QR pairing. Restore the established local BOOP wake word, normal
+   conversation, immediate local HA control and direct media control. Although
+   the wake behaviour was remembered conversationally as a roughly 33-item
+   collection, the preserved Alpha 6.4-6.6.3 design and KWS asset contain exactly
+   one wake keyword: BOOP. Do not invent a replacement phrase list without new
+   evidence; the remembered count may refer to the wider command vocabulary.
+   Deliberately remove timed voice routines from the new runtime because their
+   follow-up flow needs a separate rethink. Do not create a physical checkpoint
+   until all restored paths pass on the wall Pixel.
+
 
 LOCKED PRODUCT AND ARCHITECTURE DECISIONS
 -----------------------------------------
@@ -249,6 +275,10 @@ LOCKED PRODUCT AND ARCHITECTURE DECISIONS
 - Open/repairable hardware and physical privacy cues remain long-term values.
 - Accessibility is first-class product design, not a separate lesser experience.
 - Preserve working behaviour and checkpoints; make small evidence-backed changes.
+- BOOP Wall ordinary conversation uses Home Assistant's BOOP OpenCode agent;
+  Android must not contain a direct OpenAI credential.
+- Timed voice routines are excluded from the BOOP Wall resurrection and require
+  a separate future redesign.
 - CI green and physically green are different states and must be labelled as such.
 
 
