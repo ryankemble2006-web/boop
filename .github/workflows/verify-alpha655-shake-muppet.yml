@@ -1,0 +1,54 @@
+name: Verify BOOP Alpha 6.5.5 Shake Muppet
+
+on:
+  push:
+    branches: [ "alpha6.5.5-shake-muppet" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Run Alpha 6.5.5 shake regressions
+        shell: bash
+        run: |
+          set +e
+          python3 -m unittest tests/test_alpha655_shake_muppet.py -v
+          PY_STATUS=$?
+
+          rm -rf /tmp/boop-shake-tests
+          mkdir -p /tmp/boop-shake-tests
+          javac -d /tmp/boop-shake-tests \
+            source/BoopShakeDetector.java \
+            tests/java/BoopShakeDetectorHarness.java
+          DETECTOR_COMPILE=$?
+          DETECTOR_RUN=1
+          if [ "$DETECTOR_COMPILE" -eq 0 ]; then
+            java -cp /tmp/boop-shake-tests com.boop.alpha1.BoopShakeDetectorHarness
+            DETECTOR_RUN=$?
+          fi
+
+          rm -rf /tmp/boop-shake-motion-tests
+          mkdir -p /tmp/boop-shake-motion-tests
+          javac -d /tmp/boop-shake-motion-tests \
+            source/BoopShakeEyeMotion.java \
+            tests/java/BoopShakeEyeMotionHarness.java
+          MOTION_COMPILE=$?
+          MOTION_RUN=1
+          if [ "$MOTION_COMPILE" -eq 0 ]; then
+            java -cp /tmp/boop-shake-motion-tests com.boop.alpha1.BoopShakeEyeMotionHarness
+            MOTION_RUN=$?
+          fi
+
+          if [ "$PY_STATUS" -ne 0 ] || [ "$DETECTOR_COMPILE" -ne 0 ] || [ "$DETECTOR_RUN" -ne 0 ] \
+              || [ "$MOTION_COMPILE" -ne 0 ] || [ "$MOTION_RUN" -ne 0 ]; then
+            exit 1
+          fi
