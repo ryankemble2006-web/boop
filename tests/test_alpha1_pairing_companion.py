@@ -60,6 +60,13 @@ class Alpha1PairingCompanionSourceTest(unittest.TestCase):
         self.assertIn("source/companion", workflow)
         self.assertIn("patch_alpha1_companion.py", workflow)
 
+    def test_ci_smoke_tests_pairing_deep_link_routing(self):
+        workflow = self.read(WORKFLOW)
+        self.assertIn("Smoke test BOOP pairing deep link", workflow)
+        self.assertIn("boop://shield-pair-return?sid=test", workflow)
+        self.assertIn("android.intent.action.VIEW", workflow)
+        self.assertIn("ShieldPairingActivity", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
