@@ -1,7 +1,7 @@
 # BOOP Shield Home — TV Dashboard, Local Pairing, and HA Control Design
 
 Date: 2026-09-05
-Status: Approved design awaiting user review before implementation planning
+Status: Approved in chat; awaiting written-spec review before implementation planning
 Target branch: `boop-shield-overlay-poc`
 Known-good baseline: `37c8c22f69c37908b1fd68b07ed1f6b638be93cf`
 
@@ -48,7 +48,7 @@ Dolby Vision remains unverified and must not be claimed as tested until a physic
 
 ## Application shell
 
-There is one installed BOOP Shield APK, not two cooperating packages.
+There is one installed BOOP Shield APK, not two cooperating Shield packages.
 
 It contains two intentionally separate UI worlds:
 
@@ -88,9 +88,9 @@ Before Home Assistant is paired, BOOP Home shows almost nothing:
 
 No dashboard clutter appears behind this state.
 
-The Shield should discover a local Home Assistant instance via Home Assistant's documented `_home-assistant._tcp.local.` mDNS/Zeroconf discovery path. The normal successful path must not ask the user to type a Home Assistant URL on the Shield.
+The Shield discovers a local Home Assistant instance via Home Assistant's documented `_home-assistant._tcp.local.` mDNS/Zeroconf discovery path. The normal successful path must not ask the user to type a Home Assistant URL on the Shield.
 
-If discovery cannot find an instance, the TV should explain the problem plainly and offer phone handoff rather than exposing a Shield keyboard. Manual/fiddly connection settings belong on BOOP Wall / phone, not the TV.
+If discovery cannot find an instance, the TV explains the problem plainly and offers phone handoff rather than exposing a Shield keyboard. Manual/fiddly connection settings belong on BOOP Wall / phone, not the TV.
 
 ## QR pairing philosophy
 
@@ -100,7 +100,7 @@ When the pairing screen is visible, the Shield creates a short-lived local pairi
 
 Rules:
 
-- pairing session lifetime: approximately 2 minutes
+- pairing session lifetime: 120 seconds
 - one successful use invalidates it immediately
 - leaving/cancelling the pairing screen invalidates it
 - retrying creates fresh session material
@@ -112,13 +112,13 @@ User-facing stale-session wording: **“That one went stale.”** with a simple 
 
 ## Local pairing transport
 
-The phone-to-Shield pairing channel is direct over the LAN.
+The phone-to-Shield pairing channel is direct over the LAN and uses temporary pinned TLS.
 
-The temporary channel must be cryptographically bound to the QR so BOOP Wall can prove it is talking to the exact Shield/session that produced that code. The intended implementation is a temporary TLS-capable local channel with certificate/key identity pinned from QR session material, or an equivalently strong authenticated local channel if Android platform constraints make ephemeral TLS impractical.
+For each pairing session the Shield creates fresh ephemeral TLS identity/session material. The QR carries the information BOOP Wall needs to pin that exact temporary Shield identity. BOOP Wall must reject a peer that does not match the QR-pinned identity.
 
-The security property is mandatory; a specific crypto/library choice is not.
+This requirement must not silently fall back to unauthenticated LAN HTTP. If Android platform constraints prevent the pinned temporary channel from being implemented cleanly, implementation stops at that boundary and the pairing design is revisited while preserving the LAN-only rule.
 
-No long-lived listener remains after pairing.
+No long-lived listener or reusable pairing key remains after pairing.
 
 ## Home Assistant authorization handoff
 
@@ -127,19 +127,36 @@ BOOP owns the setup experience, but Home Assistant owns credential entry and aut
 Phone flow:
 
 1. Scan the Shield QR.
-2. BOOP Wall opens the local pairing session.
+2. BOOP Wall opens the pinned local pairing session.
 3. BOOP Wall explains that the Shield BOOP wants to join the house.
 4. User continues into Home Assistant's real authorization/sign-in UI.
-5. Home Assistant performs authentication and returns a one-time authorization result.
-6. BOOP Wall passes that short-lived result to the waiting Shield through the authenticated local pairing channel.
-7. The Shield completes its own Home Assistant token exchange and stores its own refresh credential securely.
-8. The temporary pairing session shuts down.
-9. BOOP Shield gives a small puppet reaction and says **“Found it.”**
-10. BOOP automatically continues to **“Where am I?”**
+5. Home Assistant performs authentication and returns a one-time authorization code/result.
+6. BOOP Wall passes only that short-lived authorization result to the waiting Shield through the pinned local pairing channel.
+7. The Shield completes its own Home Assistant token exchange using the same client ID used for authorization.
+8. The Shield stores its own refresh credential in Android Keystore-backed secure storage and uses short-lived access tokens for API calls.
+9. The temporary pairing session shuts down.
+10. BOOP Shield gives a small puppet reaction and says **“Found it.”**
+11. BOOP automatically continues to **“Where am I?”**
 
 The Shield must end up with its own Home Assistant credential. Do not copy BOOP Wall's existing refresh token onto the Shield.
 
-Home Assistant's current IndieAuth/OAuth behavior requires the authorization-code token exchange to use the same client ID used during authorization. The implementation plan must preserve that invariant. A local/same-origin callback strategy should be preferred so the auth path does not require a BOOP-hosted internet service merely to validate redirects.
+Home Assistant's IndieAuth/OAuth validation requires the authorization-code token exchange to preserve the client ID used during authorization. The implementation must use a local/same-origin authorization callback strategy so normal pairing does not depend on a BOOP-hosted public website or relay merely to validate redirects.
+
+The intended first approach is for BOOP Wall's controlled auth surface to intercept the one-time callback and relay the authorization code to the Shield over the already pinned pairing channel, while the client ID and redirect origin remain same-origin for Home Assistant validation. This exact callback flow must be proven in a small implementation spike before broad dashboard work. If current Home Assistant or Android behavior blocks the local callback cleanly, stop and revise the design rather than introducing a cloud dependency.
+
+## BOOP Wall companion boundary for the first slice
+
+The existing BOOP Wall/Pixel application remains a separate app and keeps its current interaction behavior.
+
+For this first Shield slice, BOOP Wall gains only the minimum companion behavior required for pairing:
+
+- open a BOOP Shield pairing QR/deep link
+- connect to the QR-pinned temporary Shield session over LAN
+- host/launch the Home Assistant authorization handoff
+- return the one-time authorization result to that Shield session
+- show plain success/failure and then close the temporary pairing context
+
+The friendly routine editor is a later BOOP Wall slice and must not be bundled into this first Shield milestone.
 
 ## Room identity
 
@@ -308,7 +325,8 @@ It must add:
 - explicit hide/show bridge to the protected overlay service
 - first-run **“I found your house”** pairing screen
 - local Home Assistant discovery
-- short-lived LAN QR pairing handoff to BOOP Wall
+- 120-second LAN QR pairing handoff to BOOP Wall using QR-pinned temporary TLS
+- the minimum BOOP Wall pairing companion change described above
 - secure storage of the Shield's own HA credential
 - **“Found it.”** puppet success moment
 - one-click **“Where am I?”** area picker
@@ -316,10 +334,13 @@ It must add:
 - one real binary Home Assistant control from a favourite card to prove the end-to-end local path
 - cached/offline presentation sufficient to prove that loss of HA does not kill BOOP Home
 
+The first binary control is selected from a real Home Assistant entity exposed in the chosen room during physical testing; it is not hard-coded as a permanent BOOP device model.
+
 It must not add yet:
 
 - routine creation/editing
 - full routine list translation
+- BOOP Wall routine editor
 - voice control
 - mic-button ownership work
 - rich dimmer/fan/climate/media control panels beyond what is needed to scaffold the navigation boundary
@@ -367,9 +388,11 @@ Automated coverage should include:
 - overlay window type/flags and HDR display-change redraw remain present
 - hide/show does not destroy the overlay service or replace its renderer
 - activity lifecycle restores the overlay when BOOP Home leaves foreground through normal Back flow
-- pairing sessions expire, are single-use, and are destroyed on cancellation/success
+- pairing sessions expire after 120 seconds, are single-use, and are destroyed on cancellation/success
+- BOOP Wall verifies the QR-pinned temporary TLS identity before passing authorization data
 - QR/session material never serializes HA passwords or persistent HA tokens
 - HA authorization result is accepted only for the active authenticated pairing session
+- the Shield stores its own refresh credential and does not copy BOOP Wall's refresh token
 - persisted room identity is per installation/device
 - favourites are local presentation data rather than copied HA entities
 - offline state prevents action dispatch and cannot report false success
