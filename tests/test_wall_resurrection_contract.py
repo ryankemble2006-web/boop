@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 import unittest
 
 
@@ -13,6 +14,15 @@ class WallResurrectionContractTest(unittest.TestCase):
         compiled_lines = [line.strip() for line in compiled.splitlines() if line.strip()]
         self.assertEqual(33, len(raw_lines))
         self.assertEqual(33, len(compiled_lines))
+        normalize = lambda lines: "\n".join(lines)
+        self.assertEqual(
+            "5bf3fc9d69d2038da50c1da97a0df5908f2c3b462da5a2ecbf15edbb8afba71d",
+            hashlib.sha256(normalize(raw_lines).encode()).hexdigest(),
+        )
+        self.assertEqual(
+            "6e6eda57e99827d9acad5a0b7ed8711d75cf839694d5c30507c929e780b9fbb0",
+            hashlib.sha256(normalize(compiled_lines).encode()).hexdigest(),
+        )
         for phrase in ("BOOP", "HEY BOOP", "EY BOOP", "HELLO BOOP", "OI BOOP",
                        "WAKE UP BOOP", "ARE YOU THERE BOOP", "EXCUSE ME BOOP"):
             self.assertTrue(any(line.startswith(phrase + " :") for line in raw_lines), phrase)
@@ -37,8 +47,8 @@ class WallResurrectionContractTest(unittest.TestCase):
 
     def test_resurrection_build_identity_is_monotonic(self):
         gradle = (ROOT / "source/app-build.gradle").read_text(encoding="utf-8")
-        self.assertIn("versionCode 29", gradle)
-        self.assertIn('versionName "0.4.9-alpha6.5.6-wall"', gradle)
+        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+29\s*$")
+        self.assertRegex(gradle, r'(?m)^\s*versionName\s+"0\.4\.9-alpha6\.5\.6-wall"\s*$')
 
 
 if __name__ == "__main__":
