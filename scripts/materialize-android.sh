@@ -7,6 +7,7 @@ MAIN="$ROOT/app/src/main/java/com/boop/alpha1"
 TEST="$ROOT/app/src/test/java/com/boop/alpha1"
 mkdir -p "$MAIN" "$TEST"
 cp source/*.java "$MAIN"/
+cp source/companion/*.java "$MAIN"/
 python3 scripts/patch-wake-partial-fallback.py
 python3 scripts/patch-toast-easter-egg.py
 cp source/AndroidManifest.xml "$ROOT/app/src/main/AndroidManifest.xml"

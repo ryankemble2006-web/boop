@@ -33,5 +33,18 @@
                 <data android:scheme="boop" android:host="auth-callback" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ShieldPairingActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="boop" android:host="shield-pair" />
+                <data android:scheme="boop" android:host="shield-pair-return" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
