@@ -55,6 +55,15 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("postInvalidateOnAnimation", source)
         self.assertNotIn("postDelayed", source)
 
+    def test_home_visibility_does_not_recreate_overlay(self):
+        source = self.read("java/com/boop/shieldoverlay/BoopOverlayService.java")
+        self.assertIn("ACTION_HIDE_EYES", source)
+        self.assertIn("ACTION_SHOW_EYES", source)
+        self.assertIn("setVisibility(View.GONE)", source)
+        self.assertIn("setVisibility(View.VISIBLE)", source)
+        self.assertIn("return START_STICKY", source)
+        self.assertNotIn("removeOverlay(); // hide", source)
+
     def test_java_only_module_disables_builtin_kotlin(self):
         gradle = (ROOT / "shield-overlay" / "app" / "build.gradle").read_text(encoding="utf-8")
         self.assertIn("enableKotlin = false", gradle)
