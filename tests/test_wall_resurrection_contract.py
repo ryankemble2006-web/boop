@@ -7,6 +7,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class WallResurrectionContractTest(unittest.TestCase):
+    def test_unified_workflow_gates_resurrection_apk(self):
+        workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
+        for required in ("boop-wall-resurrection", "testDebugUnitTest", "versionCode='29'",
+                         "assets/boop-kws/keywords.txt", "libsherpa-onnx-jni.so",
+                         "BOOP-Wall-Resurrection-debug"):
+            self.assertIn(required, workflow)
+
     def test_exact_natural_wake_collection_is_preserved(self):
         raw = (ROOT / "wake-assets/boop-kws/keywords_raw.txt").read_text(encoding="utf-8")
         compiled = (ROOT / "wake-assets/boop-kws/keywords.txt").read_text(encoding="utf-8")

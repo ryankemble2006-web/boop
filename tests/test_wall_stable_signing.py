@@ -6,6 +6,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class WallStableSigningTest(unittest.TestCase):
+    def test_unified_workflow_verifies_stable_signer(self):
+        workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
+        for required in ("BOOP_DEV_KEYSTORE_B64", "BOOP_SIGNING_STORE_FILE",
+                         "boop-dev-cert-sha256.txt", "apksigner"):
+            self.assertIn(required, workflow)
+
     def test_gradle_uses_current_stable_signer_contract(self):
         gradle = (ROOT / "source/app-build.gradle").read_text(encoding="utf-8")
         for required in ("BOOP_SIGNING_STORE_FILE", "BOOP_DEV_STORE_PASSWORD",

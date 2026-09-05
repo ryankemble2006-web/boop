@@ -6,6 +6,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class WallPairingCompanionTest(unittest.TestCase):
+    def test_unified_workflow_smokes_pairing_route(self):
+        workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
+        for required in ("ShieldPairingActivity", "boop://shield-pair-return?sid=test"):
+            self.assertIn(required, workflow)
+
     def test_companion_is_token_free_and_pinned(self):
         files = {p.name: p.read_text(encoding="utf-8") for p in (ROOT / "source/companion").glob("*.java")}
         self.assertEqual({"PairingLink.java", "HaLoopbackAuthServer.java",

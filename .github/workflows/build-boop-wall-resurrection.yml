@@ -1,0 +1,222 @@
+name: Build BOOP Wall Resurrection APK
+
+on:
+  push:
+    branches: [ "boop-wall-resurrection" ]
+  workflow_dispatch:
+
+concurrency:
+  group: boop-wall-resurrection-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+  BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+  BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove reviewed resurrection runtime and wake assets stayed frozen
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=62ce633d63a9590fc20cecbde22025d18f0b0d2d
+          git diff --exit-code "$BASE" HEAD -- source/ wake-assets/
+
+      - name: Prove shake stays visual-only and routines stay absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -R -n -E 'BoopTimedRoutineFlow|Once or recurring\?|Recurring routines need setup first' source/
+          python3 - <<'PY'
+          from pathlib import Path
+          main = Path('source/MainActivity.java').read_text()
+          start = main.index('private void handleShakeWake')
+          end = main.index('\n    private ', start + 1)
+          block = main[start:end]
+          assert 'face.playShakeMuppet' in block
+          assert 'startListening' not in block
+          assert 'playWakeAcceptedCue' not in block
+          assert 'ToneGenerator' not in block
+          face = Path('source/BoopFaceView.java').read_text()
+          assert 'drawRect(' not in face and 'drawRoundRect(' not in face
+          PY
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install bridge test dependencies
+        run: python -m pip install 'aiohttp==3.14.3' 'wyoming==1.10.0'
+
+      - name: Run bridge and source regression tests
+        run: |
+          python3 -m unittest bridge/test_boop_wyoming_bridge.py -v
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run shake detector and eye-motion harnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/boop-shake-tests /tmp/boop-shake-motion-tests
+          mkdir -p /tmp/boop-shake-tests /tmp/boop-shake-motion-tests
+          javac -d /tmp/boop-shake-tests \
+            source/BoopShakeDetector.java \
+            tests/java/BoopShakeDetectorHarness.java
+          java -cp /tmp/boop-shake-tests com.boop.alpha1.BoopShakeDetectorHarness
+          javac -d /tmp/boop-shake-motion-tests \
+            source/BoopShakeEyeMotion.java \
+            tests/java/BoopShakeEyeMotionHarness.java
+          java -cp /tmp/boop-shake-motion-tests com.boop.alpha1.BoopShakeEyeMotionHarness
+
+      - name: Run conversation-exit behavior harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/boop-alpha655-exit-test
+          mkdir -p /tmp/boop-alpha655-exit-test
+          javac -d /tmp/boop-alpha655-exit-test \
+            source/BoopConversationExitIntent.java \
+            tests/java/BoopConversationExitIntentHarness.java
+          java -cp /tmp/boop-alpha655-exit-test com.boop.alpha1.BoopConversationExitIntentHarness
+
+      - name: Materialize editable BOOP project
+        run: bash scripts/materialize-android.sh
+
+      - name: Verify pinned wake runtime assets and shake sources materialized
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=boop-build/BOOP-Alpha1/app
+          KWS="$APP/src/main/assets/boop-kws/keywords.txt"
+          test -s "$APP/libs/sherpa-onnx-1.13.7.aar"
+          test -s "$APP/src/main/assets/boop-kws/encoder-epoch-12-avg-2-chunk-16-left-64.int8.onnx"
+          test -s "$APP/src/main/assets/boop-kws/decoder-epoch-12-avg-2-chunk-16-left-64.onnx"
+          test -s "$APP/src/main/assets/boop-kws/joiner-epoch-12-avg-2-chunk-16-left-64.int8.onnx"
+          test -s "$APP/src/main/assets/boop-kws/tokens.txt"
+          test -s "$KWS"
+          test "$(grep -c '@BOOP$' "$KWS")" -eq 33
+          test -s "$APP/src/main/java/com/boop/alpha1/BoopShakeDetector.java"
+          test -s "$APP/src/main/java/com/boop/alpha1/BoopShakeEyeMotion.java"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 36 SDK and emulator
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" "emulator" "system-images;android-36;google_apis;x86_64"
+
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Run Android unit tests
+        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
+
+      - name: Prepare permanent BOOP signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
+          chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
+          keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
+          echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
+
+      - name: Build BOOP Wall Resurrection code29 APK
+        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+
+      - name: Inspect and verify BOOP Wall Resurrection APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          AAPT="${ANDROID_HOME}/build-tools/36.0.0/aapt"
+          APKSIGNER="${ANDROID_HOME}/build-tools/36.0.0/apksigner"
+          "$AAPT" dump badging "$APK" | tee badging.txt
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml | tee manifest-tree.txt
+          grep -q "package: name='com.boop.alpha1'" badging.txt
+          grep -q "versionCode='29'" badging.txt
+          grep -q "versionName='0.4.9-alpha6.5.6-wall'" badging.txt
+          grep -q "MainActivity" manifest-tree.txt
+          grep -q "ShieldPairingActivity" manifest-tree.txt
+          unzip -l "$APK" > apk-contents.txt
+          grep -q 'assets/boop-kws/keywords.txt' apk-contents.txt
+          grep -q 'lib/.*/libsherpa-onnx-jni.so' apk-contents.txt
+          "$APKSIGNER" verify --print-certs "$APK" | tee signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
+          test -n "$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          unzip -tq "$APK"
+
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+
+      - name: Boot clean Android 16 Pixel 7 Pro emulator
+        timeout-minutes: 6
+        run: |
+          export ANDROID_AVD_HOME="${RUNNER_TEMP}/android-avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | avdmanager create avd -n boop-test -k "system-images;android-36;google_apis;x86_64" --device "pixel_7_pro"
+          nohup "${ANDROID_HOME}/emulator/emulator" -avd boop-test -no-window -no-boot-anim -gpu swiftshader_indirect -no-snapshot -wipe-data > emulator.log 2>&1 &
+          if ! timeout 300s bash -c 'adb wait-for-device && until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 2; done'; then
+            tail -n 160 emulator.log || true
+            exit 1
+          fi
+          adb shell input keyevent 82 || true
+
+      - name: Launch BOOP with wake microphone armed and verify process survives
+        run: |
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          adb install -r "$APK"
+          adb shell pm grant com.boop.alpha1 android.permission.RECORD_AUDIO
+          adb logcat -c
+          adb shell am start -W -n com.boop.alpha1/.MainActivity
+          sleep 8
+          if ! adb shell pidof com.boop.alpha1 >/dev/null 2>&1; then
+            adb logcat -d -v threadtime | grep -i -E 'boop|FATAL EXCEPTION|AndroidRuntime|Process: com\.boop\.alpha1|Caused by:|sensor|onnx|sherpa' || true
+            exit 1
+          fi
+
+      - name: Smoke test pairing return route
+        shell: bash
+        run: |
+          set -euo pipefail
+          adb shell am start -W -a android.intent.action.VIEW \
+            -d 'boop://shield-pair-return?sid=test' com.boop.alpha1
+          sleep 2
+          adb shell dumpsys activity activities | grep -E 'com\.boop\.alpha1/.ShieldPairingActivity'
+          adb shell pidof com.boop.alpha1
+
+      - name: Upload BOOP Wall resurrection APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Wall-Resurrection-debug
+          path: boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
