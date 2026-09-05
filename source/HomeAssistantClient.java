@@ -111,8 +111,11 @@ final class HomeAssistantClient {
 
             switch (response.kind()) {
                 case ACTION_DONE:
-                    if (!response.successTargets().isEmpty() && response.failedTargets().isEmpty()) {
-                        return CommandOutcome.success(response.successTargets().get(0).name());
+                    // Scheduling succeeds before any device is acted on, so Home
+                    // Assistant can acknowledge it without listing affected targets.
+                    if (response.failedTargets().isEmpty()) {
+                        return CommandOutcome.success(response.successTargets().isEmpty()
+                                ? "" : response.successTargets().get(0).name());
                     }
                     if (!response.failedTargets().isEmpty()) {
                         HomeAssistantResponse.Target failed = response.failedTargets().get(0);
