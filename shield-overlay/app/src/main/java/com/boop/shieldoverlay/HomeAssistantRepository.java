@@ -1,6 +1,7 @@
 package com.boop.shieldoverlay;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -89,11 +90,17 @@ public final class HomeAssistantRepository {
         }
 
         String service = "off".equals(card.state()) ? "turn_on" : "turn_off";
-        JSONObject target = new JSONObject().put("entity_id", card.entityId());
-        JSONObject body = new JSONObject()
-                .put("domain", card.domain())
-                .put("service", service)
-                .put("target", target);
+        final JSONObject body;
+        try {
+            JSONObject target = new JSONObject().put("entity_id", card.entityId());
+            body = new JSONObject()
+                    .put("domain", card.domain())
+                    .put("service", service)
+                    .put("target", target);
+        } catch (JSONException jsonError) {
+            callback.onResult(false, null, "I couldn't prepare that Home Assistant command.");
+            return;
+        }
 
         commandPort.send("call_service", body, (success, result, error) -> {
             if (!success) {
