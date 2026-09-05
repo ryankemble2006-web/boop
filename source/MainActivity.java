@@ -35,6 +35,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -70,6 +71,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean voiceSettingsOpen = false;
     private boolean pendingListenAfterPermission = false;
     private boolean listenAfterTts = false;
+    private boolean followUpDiagnosticActive = false;
+    private boolean followUpReadyForSpeech = false;
+    private boolean followUpBeginningOfSpeech = false;
+    private boolean followUpEndOfSpeech = false;
     private boolean pendingDiscoveryAfterPermission = false;
     private boolean connectPromptShowing = false;
     private boolean setupFailureSpoken = false;
@@ -848,6 +853,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private void speakThenListen(String text) {
+        followUpDiagnosticActive = true;
+        followUpReadyForSpeech = false;
+        followUpBeginningOfSpeech = false;
+        followUpEndOfSpeech = false;
         listenAfterTts = true;
         speak(text);
     }
@@ -948,16 +957,38 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
     }
 
-    @Override public void onReadyForSpeech(Bundle params) { }
-    @Override public void onBeginningOfSpeech() { }
+    @Override
+    public void onReadyForSpeech(Bundle params) {
+        if (followUpDiagnosticActive && recognitionMode == RecognitionMode.TAP) {
+            followUpReadyForSpeech = true;
+        }
+    }
+
+    @Override
+    public void onBeginningOfSpeech() {
+        if (followUpDiagnosticActive && recognitionMode == RecognitionMode.TAP) {
+            followUpBeginningOfSpeech = true;
+        }
+    }
     @Override public void onRmsChanged(float rmsdB) { }
     @Override public void onBufferReceived(byte[] buffer) { }
 
     @Override
     public void onEndOfSpeech() {
+        if (followUpDiagnosticActive && recognitionMode == RecognitionMode.TAP) {
+            followUpEndOfSpeech = true;
+        }
         if (recognitionMode == RecognitionMode.WAKE && wakeAudioSession != null) {
             wakeAudioSession.finishCapture();
         }
+    }
+
+    private void showFollowUpSpeechDiagnostic(int error) {
+        String message = "Follow-up ASR ready=" + followUpReadyForSpeech
+                + " speech=" + followUpBeginningOfSpeech
+                + " end=" + followUpEndOfSpeech
+                + " error=" + error;
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     private String speechErrorName(int error) {
@@ -1003,6 +1034,10 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
 
         if (failedMode == RecognitionMode.TAP) {
+            if (followUpDiagnosticActive) {
+                showFollowUpSpeechDiagnostic(error);
+                followUpDiagnosticActive = false;
+            }
             speak("Speech error " + error + ", " + speechErrorName(error) + ".");
             if (wakeCoordinator != null) {
                 wakeCoordinator.onTapFinished();
@@ -1048,6 +1083,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
 
         if (completedMode == RecognitionMode.TAP) {
             if (best != null) {
+                followUpDiagnosticActive = false;
                 if (wakeCoordinator != null) {
                     wakeCoordinator.onTapFinished();
                 }
