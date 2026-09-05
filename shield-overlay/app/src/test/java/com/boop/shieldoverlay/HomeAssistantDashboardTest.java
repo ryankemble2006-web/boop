@@ -80,7 +80,7 @@ public final class HomeAssistantDashboardTest {
         assertEquals(2, snapshot.get().cards().size());
         assertEquals("light.sofa", snapshot.get().cards().get(0).entityId());
         assertEquals("switch.tv_plug", snapshot.get().cards().get(1).entityId());
-        assertNull(snapshot.get().cards().get(1).areaId());
+        assertEquals("living_room", snapshot.get().cards().get(1).areaId());
     }
 
     @Test
