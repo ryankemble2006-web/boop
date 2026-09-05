@@ -5,6 +5,7 @@ plugins {
 android {
     namespace 'com.boop.shieldoverlay'
     compileSdk 36
+    enableKotlin = false
 
     defaultConfig {
         applicationId 'com.boop.shieldoverlay'
