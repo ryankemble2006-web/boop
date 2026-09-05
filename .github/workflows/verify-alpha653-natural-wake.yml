@@ -1,0 +1,17 @@
+name: Verify BOOP Alpha 6.5.3 Natural Wake
+
+on:
+  push:
+    branches: [ "alpha6.5.3-natural-wake-cook" ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Alpha 6.5.3 regression tests
+        run: python3 -m unittest tests/test_alpha653_natural_wake.py -v
