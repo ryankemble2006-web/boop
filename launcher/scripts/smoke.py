@@ -53,7 +53,7 @@ try:
     checks.append('Release installs, starts and receives real default HOME dispatch')
     swipe_up(); find('Search apps'); shot('02-drawer')
     tap('Search apps'); shell('input','text','Settings'); shell('input','keyevent','4'); time.sleep(.5)
-    tap('Settings',hold=True); find('Done'); tap('Done'); find('Settings'); shot('03-pinned-app')
+    tap('Settings. Long press to add to home',hold=True); find('Done'); tap('Done'); find('Settings'); shot('03-pinned-app')
     checks.append('Drawer search and long-press pin create home shortcut')
     shell('am','force-stop',PKG); shell('am','start','-W','-n',PKG+'/.MainActivity'); time.sleep(.5)
     find('Settings'); checks.append('Pinned shortcut survives process death')
