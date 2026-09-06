@@ -27,6 +27,19 @@
 - Hyper-V optional-feature state could not be read without an elevated Windows
   administrator token. No virtualization setting was changed.
 
+## BOOP debug smoke test
+
+- Build: `:app:assembleDebug` passed from `shield-overlay/` with the verified
+  local Android SDK supplied only to the Gradle process.
+- Install/launch: passed on `emulator-5554` only. No physical-device serial was
+  used.
+- Remote behaviour: Android's overlay-access settings opened as expected, with
+  no access automatically granted. D-pad/Select/Back returned control to the
+  underlying stock TV launcher.
+- Visual overlay placement and live input pass-through are unsupported in this
+  stock-AVD run because overlay access was intentionally not granted. This is
+  not a BOOP defect claim and is not physical-Shield evidence.
+
 ## Evidence boundary
 
 All results in this document are local/automated emulator evidence. Physical
