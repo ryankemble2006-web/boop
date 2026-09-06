@@ -8,6 +8,7 @@
 
     <queries>
         <intent><action android:name="android.speech.RecognitionService" /></intent>
+        <package android:name="com.boop.launcher" />
     </queries>
 
     <application

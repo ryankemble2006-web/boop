@@ -1,5 +1,9 @@
 # BOOP Alpha 1
 
+> BOOP developers on either device: read BOOP_START_HERE.md, BOOP_CONTEXT.md and
+> SESSION_HANDOFF.md first. This branch is a Wall-to-Launcher swipe WIP, not a
+> verified installable checkpoint. The older Alpha text below is historical.
+
 First physical BOOP face for the spare Pixel 7 Pro.
 
 ## Alpha 1 contract

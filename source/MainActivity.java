@@ -3,6 +3,7 @@ package com.boop.alpha1;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -41,6 +42,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,6 +56,7 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private static final String HOME_AREA = "Living Room";
     private static final long IDLE_TIMEOUT_MS = 30_000L;
     private static final long ASSISTANT_FOLLOW_UP_SILENCE_MS = 5_000L;
+    private static final String BOOP_LAUNCHER_PACKAGE = "com.boop.launcher";
 
     private enum RecognitionMode { NONE, TAP, WAKE }
 
@@ -88,6 +91,8 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean setupFailureSpoken = false;
     private boolean memberBerryConsumed = false;
     private int memberBerryVariant = 0;
+    private float touchDownX;
+    private float touchDownY;
 
     private ExecutorService executor;
     private SecureTokenStore tokenStore;
@@ -434,8 +439,17 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
             memberBerryConsumed = false;
+            touchDownX = event.getX();
+            touchDownY = event.getY();
             wakeFaceForInteraction();
             scheduleMemberBerryHold();
+            return true;
+        }
+        if (event.getAction() == MotionEvent.ACTION_MOVE) {
+            if (Math.abs(event.getX() - touchDownX) > ViewConfiguration.get(this).getScaledTouchSlop()
+                    || Math.abs(event.getY() - touchDownY) > ViewConfiguration.get(this).getScaledTouchSlop()) {
+                cancelMemberBerryHold();
+            }
             return true;
         }
         if (event.getAction() == MotionEvent.ACTION_CANCEL) {
@@ -448,6 +462,15 @@ public final class MainActivity extends Activity implements RecognitionListener,
         }
 
         cancelMemberBerryHold();
+        if (BoopLauncherSwipeGesture.isDeliberateLeftSwipe(
+                touchDownX,
+                touchDownY,
+                event.getX(),
+                event.getY(),
+                getResources().getDisplayMetrics().density)) {
+            openBoopLauncher();
+            return true;
+        }
         if (memberBerryConsumed) {
             memberBerryConsumed = false;
             return true;
@@ -459,6 +482,19 @@ public final class MainActivity extends Activity implements RecognitionListener,
             beginTapToSpeak();
         }
         return true;
+    }
+
+    private void openBoopLauncher() {
+        Intent launcherIntent = getPackageManager().getLaunchIntentForPackage(BOOP_LAUNCHER_PACKAGE);
+        if (launcherIntent == null) {
+            Toast.makeText(this, "BOOP Launcher is not installed.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            startActivity(launcherIntent);
+        } catch (ActivityNotFoundException unavailable) {
+            Toast.makeText(this, "BOOP Launcher could not be opened.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void scheduleMemberBerryHold() {
