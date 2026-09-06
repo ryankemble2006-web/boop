@@ -1,0 +1,96 @@
+name: BOOP Launcher Alpha 1 signed APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [boop-launcher-alpha1]
+    paths: ['launcher/**', '.github/workflows/build-launcher-alpha1.yml']
+permissions:
+  contents: read
+concurrency:
+  group: launcher-alpha1-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+      - name: Unit tests and Android lint
+        run: gradle -p launcher :app:testDebugUnitTest :app:lintDebug --stacktrace
+      - name: Build with permanent BOOP signer
+        env:
+          BOOP_KEYSTORE_BASE64: ${{ secrets.BOOP_KEYSTORE_BASE64 }}
+          BOOP_KEYSTORE_PASSWORD: ${{ secrets.BOOP_KEYSTORE_PASSWORD }}
+          BOOP_KEY_ALIAS: ${{ secrets.BOOP_KEY_ALIAS }}
+          BOOP_KEY_PASSWORD: ${{ secrets.BOOP_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in BOOP_KEYSTORE_BASE64 BOOP_KEYSTORE_PASSWORD BOOP_KEY_ALIAS BOOP_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing signing secret: $name"
+              exit 1
+            fi
+          done
+          export BOOP_KEYSTORE_PATH="$RUNNER_TEMP/boop-launcher-signing.jks"
+          trap 'rm -f "$BOOP_KEYSTORE_PATH"' EXIT
+          printf '%s' "$BOOP_KEYSTORE_BASE64" | base64 --decode > "$BOOP_KEYSTORE_PATH"
+          chmod 600 "$BOOP_KEYSTORE_PATH"
+          gradle -p launcher :app:assembleRelease --stacktrace
+          mkdir -p launcher-delivery
+          cp launcher/app/build/outputs/apk/release/app-release.apk launcher-delivery/BOOP-Launcher-Alpha1.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs launcher-delivery/BOOP-Launcher-Alpha1.apk > launcher-delivery/signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging launcher-delivery/BOOP-Launcher-Alpha1.apk > launcher-delivery/package.txt
+          sha256sum launcher-delivery/BOOP-Launcher-Alpha1.apk > launcher-delivery/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Launcher-Alpha1-signed
+          path: launcher-delivery/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: BOOP-Launcher-test-reports
+          path: |
+            launcher/app/build/reports/
+            launcher/app/build/test-results/
+  smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: BOOP-Launcher-Alpha1-signed
+          path: launcher-delivery
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install and exercise signed APK on Android 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: python3 launcher/scripts/smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: BOOP-Launcher-emulator-evidence
+          path: launcher-evidence/
+          if-no-files-found: error
