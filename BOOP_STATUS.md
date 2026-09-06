@@ -2,6 +2,9 @@
 
 ## Current cross-project status — 2026-09-06
 
+Continuity records were refreshed against live `main` on 2026-09-06. No new
+application result, checkpoint, or release claim was created by that refresh.
+
 Main is now the context entry point. Read BOOP_START_HERE.md and BOOP_CONTEXT.md.
 Shield's latest development is on boop-shield-media-puppetry; working Wall is on
 boop-wall-resurrection; Android-led Launcher is on boop-launcher-alpha1.

@@ -1,5 +1,14 @@
 # Shared-context hub handoff — 2026-09-06
 
+## Continuity refresh — 2026-09-06
+
+Ryan explicitly requested an "update your memory" refresh. No new product
+decision, implementation result, physical test, or app-branch task was supplied.
+The shared context, rules, status, and this handoff were reread; live `main` was
+fetched and verified at `7c0cf6b` before this documentation-only update. This
+does not promote any app state or substitute for fetching an owning app branch
+before its next change.
+
 Main is the cross-project entry point, NOT a consolidated latest build of all apps.
 This change is documentation only. Application source/build configuration on main
 is left at its previous8fcd6da baseline; do not build current Wall from it.

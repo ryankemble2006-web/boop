@@ -1,6 +1,7 @@
 # BOOP shared context
 
-Reconciled 2026-09-06. Current user instructions and fresh device evidence win.
+Reconciled 2026-09-06; continuity refreshed against live `main` 2026-09-06.
+Current user instructions and fresh device evidence win.
 This compact file is shared across active app branches; detailed product history
 remains in BOOP_MEMORY.txt where present. Use BOOP_START_HERE.md for branch routing.
 
