@@ -39,7 +39,10 @@ try:
     tap('Start'); alive(); shot('01-home')
     home=shell('cmd','package','resolve-activity','--brief','-a','android.intent.action.MAIN','-c','android.intent.category.HOME','-p',PKG)
     assert PKG in home, home
-    checks.append('Release installs, starts and resolves as Android HOME')
+    shell('cmd','package','set-home-activity',PKG+'/.MainActivity')
+    shell('am','start','-a','android.settings.SETTINGS'); shell('input','keyevent','3'); time.sleep(.7)
+    find('Home canvas')
+    checks.append('Release installs, starts and receives real default HOME dispatch')
     swipe_up(); find('Search apps'); shot('02-drawer')
     tap('Search apps'); shell('input','text','Settings'); shell('input','keyevent','4'); time.sleep(.5)
     tap('Settings',hold=True); find('Done'); tap('Done'); find('Settings'); shot('03-pinned-app')
