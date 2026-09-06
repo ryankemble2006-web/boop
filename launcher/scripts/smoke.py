@@ -36,6 +36,18 @@ def shot(name):
     (OUT/(name+'.xml')).write_text(ET.tostring(tree(),encoding='unicode'))
 def alive(): assert shell('pidof',PKG), 'Launcher process died'
 def swipe_up(): shell('input','swipe',720,2400,720,900,350); time.sleep(.5)
+def enter_home():
+    for _ in range(6):
+        nodes=list(tree().iter('node'))
+        tutorial=next((n for n in nodes if n.get('package')=='com.android.systemui' and (n.get('text') or '').casefold()=='got it'),None)
+        start=next((n for n in nodes if (n.get('text') or '').casefold()=='start'),None)
+        button=tutorial if tutorial is not None else start
+        if button is not None:
+            x1,y1,x2,y2=map(int,re.findall(r'\d+',button.get('bounds')))
+            shell('input','tap',(x1+x2)//2,(y1+y2)//2)
+        elif any(n.get('content-desc')=='Home canvas' for n in nodes): return
+        time.sleep(.7)
+    raise AssertionError('First-launch welcome did not reach home')
 checks=[]
 try:
     adb('install','-r','launcher-delivery/BOOP-Launcher-Alpha1.apk')
@@ -46,8 +58,7 @@ try:
     time.sleep(4); shell('input','keyevent','82'); shell('logcat','-c')
     print(shell('am','start','-W','-n',PKG+'/.MainActivity'),flush=True); time.sleep(2)
     alive()
-    try: tap('Start')
-    except AssertionError: find('Home canvas')
+    enter_home()
     shot('01-home')
     home=shell('cmd','package','resolve-activity','--brief','-a','android.intent.action.MAIN','-c','android.intent.category.HOME','-p',PKG)
     assert PKG in home, home

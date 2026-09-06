@@ -31,6 +31,18 @@ def tap(label, hold=False):
 def shot(name):
     with (OUT / (name+'.png')).open('wb') as f:
         subprocess.run(['adb', 'exec-out', 'screencap', '-p'], stdout=f, check=True)
+def enter_home():
+    # A fullscreen tutorial can consume the first tap on the welcome button.
+    # Check the result, rather than treating a sent tap as a dismissed dialog.
+    for _ in range(6):
+        nodes = tree()
+        got_it = next((n for n in nodes if n.get('package') == 'com.android.systemui' and (n.get('text') or '').casefold() == 'got it'), None)
+        start = next((n for n in nodes if (n.get('text') or '').casefold() == 'start'), None)
+        if got_it is not None: shell('input', 'tap', *center(got_it))
+        elif start is not None: shell('input', 'tap', *center(start))
+        elif any(n.get('content-desc') == 'Home canvas' for n in nodes): return
+        time.sleep(.7)
+    raise AssertionError('First-launch welcome did not reach home')
 def pin():
     shell('input', 'swipe', 720, 2400, 720, 900, 350)
     tap('Search apps'); shell('input', 'text', 'Settings'); shell('input', 'keyevent', 4)
@@ -46,8 +58,7 @@ try:
     time.sleep(4)
     shell('input', 'keyevent', 82); shell('logcat', '-c')
     shell('am', 'start', '-W', '-n', PKG+'/.MainActivity'); time.sleep(2)
-    try: tap('Start')
-    except AssertionError: find('Home canvas')
+    enter_home()
     # Leave the system's existing default Home app unchanged. An unintended
     # Home intent must not be hidden by setting BOOP as the default in this test.
     x, y = pin()
