@@ -63,7 +63,7 @@ class WallResurrectionContractTest(unittest.TestCase):
 
     def test_unified_workflow_gates_resurrection_apk(self):
         workflow = (ROOT / ".github/workflows/build-boop-wall-resurrection.yml").read_text(encoding="utf-8")
-        for required in ("boop-wall-resurrection", "testDebugUnitTest", "versionCode='29'",
+        for required in ("boop-wall-resurrection", "testDebugUnitTest", "versionCode='30'",
                          "assets/boop-kws/keywords.txt", "libsherpa-onnx-jni.so",
                          "BOOP-Wall-Resurrection-debug"):
             self.assertIn(required, workflow)
@@ -108,8 +108,8 @@ class WallResurrectionContractTest(unittest.TestCase):
 
     def test_resurrection_build_identity_is_monotonic(self):
         gradle = (ROOT / "source/app-build.gradle").read_text(encoding="utf-8")
-        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+29\s*$")
-        self.assertRegex(gradle, r'(?m)^\s*versionName\s+"0\.4\.9-alpha6\.5\.6-wall"\s*$')
+        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+30\s*$")
+        self.assertRegex(gradle, r'(?m)^\s*versionName\s+"0\.4\.10-wall-launcher-swipe"\s*$')
 
 
 if __name__ == "__main__":
