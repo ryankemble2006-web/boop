@@ -35,7 +35,8 @@ try:
     shell('wm','size','1440x3120'); shell('wm','density','560')
     shell('settings','put','system','accelerometer_rotation','0')
     shell('settings','put','system','user_rotation','0')
-    shell('am','start','-W','-n',PKG+'/.MainActivity'); time.sleep(1)
+    time.sleep(4); shell('input','keyevent','82'); shell('logcat','-c')
+    print(shell('am','start','-W','-n',PKG+'/.MainActivity'),flush=True); time.sleep(2)
     tap('Start'); alive(); shot('01-home')
     home=shell('cmd','package','resolve-activity','--brief','-a','android.intent.action.MAIN','-c','android.intent.category.HOME','-p',PKG)
     assert PKG in home, home
@@ -65,6 +66,9 @@ try:
     print('\n'.join('PASS '+c for c in checks))
 finally:
     (OUT/'completed-checks.json').write_text(json.dumps(checks,indent=2))
+    logs=adb('logcat','-d','-s','AndroidRuntime:E'); (OUT/'runtime-log.txt').write_text(logs); print(logs,flush=True)
+    (OUT/'activity-state.txt').write_text(shell('dumpsys','activity','activities'))
+    print(shell('dumpsys','activity','exit-info',PKG),flush=True)
     try: shot('final-state')
     except Exception: pass
     shell('wm','size','reset'); shell('wm','density','reset')
