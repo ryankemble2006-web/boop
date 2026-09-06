@@ -16,8 +16,15 @@ def tree():
         except (ET.ParseError,subprocess.CalledProcessError): time.sleep(1)
     raise AssertionError('No Android UI hierarchy')
 def find(label):
-    for n in tree().iter('node'):
-        if label.casefold() in ((n.get('text') or '').casefold(),(n.get('content-desc') or '').casefold()): return n
+    for attempt in range(3):
+        nodes=list(tree().iter('node'))
+        for n in nodes:
+            if label.casefold() in ((n.get('text') or '').casefold(),(n.get('content-desc') or '').casefold()): return n
+        tutorial=next((n for n in nodes if n.get('package')=='com.android.systemui' and (n.get('text') or '').casefold()=='got it'),None)
+        if tutorial is not None:
+            x1,y1,x2,y2=map(int,re.findall(r'\d+',tutorial.get('bounds')))
+            shell('input','tap',(x1+x2)//2,(y1+y2)//2)
+        time.sleep(.7)
     raise AssertionError('Missing control: '+label)
 def tap(label,hold=False):
     n=find(label); x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds')))
