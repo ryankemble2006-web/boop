@@ -1,3 +1,8 @@
+> **BOOP developers on either device:** read [BOOP_START_HERE.md](BOOP_START_HERE.md),
+> [BOOP_CONTEXT.md](BOOP_CONTEXT.md) and [SESSION_HANDOFF.md](SESSION_HANDOFF.md) first.
+> Each app has its own current branch. Older Alpha text below is historical and
+> must not be used to replace the current Wall voice app.
+
 # BOOP Alpha 1
 
 First physical BOOP face for the spare Pixel 7 Pro.
