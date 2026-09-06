@@ -98,6 +98,13 @@ jobs:
       - name: Set up Android emulator
         uses: android-actions/setup-android@v3
 
+      - name: Enable KVM for Android emulator
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+
       - name: Install and boot Android 16 Pixel 7 Pro emulator
         timeout-minutes: 6
         shell: bash

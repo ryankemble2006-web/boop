@@ -22,6 +22,7 @@ class LauncherSwipeBuildWorkflowTest(unittest.TestCase):
         self.assertIn("versionCode='30'", workflow)
         self.assertIn("BOOP-Wall-Launcher-Swipe-debug", workflow)
         self.assertIn("adb install -r", workflow)
+        self.assertIn('KERNEL=="kvm"', workflow)
 
 
 if __name__ == "__main__":
