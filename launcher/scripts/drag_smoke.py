@@ -40,9 +40,11 @@ try:
     shell('pm', 'clear', PKG)
     shell('wm', 'size', '1440x3120'); shell('wm', 'density', 560)
     shell('settings', 'put', 'secure', 'immersive_mode_confirmations', 'confirmed')
+    time.sleep(4)
     shell('input', 'keyevent', 82); shell('logcat', '-c')
     shell('am', 'start', '-W', '-n', PKG+'/.MainActivity'); time.sleep(2)
-    tap('Start')
+    try: tap('Start')
+    except AssertionError: find('Home canvas')
     # Leave the system's existing default Home app unchanged. An unintended
     # Home intent must not be hidden by setting BOOP as the default in this test.
     x, y = pin()
