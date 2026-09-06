@@ -10,6 +10,14 @@
   Android permission/access change, physical Shield interaction, or GPU-policy
   change has occurred.
 
+## Android TV AVD boot
+
+- AVD: `BOOP_Android_TV_API_36` using the 1080p Television profile.
+- Graphics configuration: `hw.gpu.enabled=yes`, `hw.gpu.mode=auto`.
+- Boot and ADB: passed locally on `emulator-5554`.
+- Renderer: hardware-accelerated Android Emulator OpenGL translation through
+  the NVIDIA GeForce RTX 3050 Laptop GPU.
+
 ## Evidence boundary
 
 All results in this document are local/automated emulator evidence. Physical
