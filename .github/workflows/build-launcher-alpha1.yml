@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [boop-launcher-alpha1]
-    paths: ['launcher/app/**', 'launcher/*.gradle', '.github/workflows/build-launcher-alpha1.yml']
+    paths: ['launcher/app/**', 'launcher/*.gradle', 'launcher/scripts/**', '.github/workflows/build-launcher-alpha1.yml']
 permissions:
   contents: read
 concurrency:

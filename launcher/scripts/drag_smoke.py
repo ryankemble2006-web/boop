@@ -84,7 +84,8 @@ try:
     checks.append('Holding then dragging across home moves the shortcut')
     # Releasing at toolbar height must stay owned by the icon, including over
     # where Bail out normally sits. There is no second tap for removal.
-    shell('input', 'swipe', moved_x, moved_y, 500, 80, 400); time.sleep(.5)
+    bailout_x, bailout_y = center(find('Bail out'))
+    shell('input', 'swipe', moved_x, moved_y, bailout_x, bailout_y, 400); time.sleep(.5)
     find('Home canvas')
     assert not any(n.get('content-desc') == 'Settings' for n in tree()), 'Edit-mode drag did not remove shortcut'
     checks.append('An edit-mode drag across toolbar space removes without opening Home settings')
