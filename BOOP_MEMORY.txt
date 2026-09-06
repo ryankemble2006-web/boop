@@ -1,6 +1,11 @@
 BOOP DURABLE MEMORY
 ===================
 
+Current handoff: 2026-09-06. Read BOOP_START_HERE.md and SESSION_HANDOFF.md.
+This branch retains the dated history below; use fetched main BOOP_CONTEXT.md
+for shared decisions and the owning app branch for current implementation.
+Do not mistake the dated history below for the latest app state.
+
 Last reconciled: 2026-09-05
 Repository: C:\Users\ryank\Documents\Codex\BOOP
 
