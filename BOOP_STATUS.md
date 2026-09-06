@@ -2,7 +2,8 @@
 
 Launcher Alpha 1 installs on Ryan's phone and can pin apps. A physical hold/drag
 regression was reported; the old signed APK reproduced its premature menu in run
-34060777148. Alpha 1.1 fix is under review and awaiting signed emulator verification.
+34060777148. Alpha 1.1 signed build, lint, 10 unit tests and 15 emulator checks pass at
+source 41f250d, run 34062128943. Physical acceptance of this update is pending.
 See SESSION_HANDOFF.md for current Launcher state. The inherited Shield status
 below is historical reference, not Launcher work or permission to change Shield.
 
