@@ -7,10 +7,11 @@ for shared decisions and the owning app branch for current implementation.
 Do not mistake the dated history below for the latest app state.
 
 Wall-to-Launcher boundary: Wall and Launcher remain separate Android apps.
-The `boop-wall-launcher-swipe` candidate opens `com.boop.launcher` only after a
-deliberate left swipe (96dp minimum, 1.5x horizontal confidence); it must not
-turn taps, holds, cancelled gestures, or multi-touch into navigation. This is a
-candidate until a signed artifact and emulator/physical acceptance exist.
+Wall v30 opens `com.boop.launcher` only after a deliberate left swipe (96dp
+minimum, 1.5x horizontal confidence); it must not turn taps, holds, cancelled
+gestures, or multi-touch into navigation. The signed v30 update passed local
+Pixel 7 Pro emulator left/right/vertical gesture checks; physical acceptance is
+still required before changing the protected physical checkpoint.
 
 Last reconciled: 2026-09-05
 Repository: C:\Users\ryank\Documents\Codex\BOOP

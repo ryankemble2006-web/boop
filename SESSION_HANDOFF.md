@@ -17,19 +17,18 @@ Fresh snapshot verification:123 Python source checks PASS; four-case Java gestur
 harness PASS. No verified signed swipe APK or physical test. Full touch/hold/
 cancellation/multitouch coexistence still needs review. Do not call it finished.
 
-Swipe candidate: branch `boop-wall-launcher-swipe` is based on the live Wall
-branch head `f5a86db`; source commit `9587e6c` is published to GitHub. It adds
-a deliberate single-finger left swipe from Wall
+Permanent swipe promotion: `boop-wall-launcher-permanent` merges the reviewed
+candidate into the Wall line. Version 30 / `0.4.10-wall-launcher-swipe` uses the
+existing stable signer and normal Wall workflow; its new source baseline is
+locked by that workflow. It adds a deliberate single-finger left swipe from Wall
 to the separately installed `com.boop.launcher`: at least 96dp leftward with
 1.5x horizontal confidence. Move, cancellation, and multi-touch cannot trigger
 it; movement cancels the hidden MemberBerry hold; the swipe is consumed before
 tap-to-speak. Missing Launcher shows `BOOP Launcher is not installed.`
 
-Candidate verification: 125 Python source checks pass except the pre-existing
-Windows-only Git-Bash PATH issue in the wake-workflow simulation; 26 Android
-JVM test reports passed; the focused Java gesture harness passed. Local Android
-compilation completed. Local APK assembly is intentionally blocked because the
-stable `boopDev` signing key is GitHub-only. The frozen resurrection workflow
-also rejects arbitrary Wall source changes by design, so no signed CI APK or
-emulator install has been claimed. Preserve the physical checkpoint and do not
-call this candidate physically verified.
+Verification: signed v30 candidate APK from GitHub Actions installed in-place
+on the local Pixel 7 Pro emulator. Left swipe opened `com.boop.launcher`; right
+and vertical swipes stayed in Wall. This is emulator evidence only, not a new
+physical checkpoint. Linux CI source/JVM/signing checks passed for the candidate;
+the pre-existing Windows-only Git-Bash PATH issue remains in one local workflow
+simulation. Preserve the physical checkpoint until a device acceptance pass.
