@@ -21,6 +21,7 @@ public final class MainActivity extends Activity {
  private final ArrayDeque<Integer> history=new ArrayDeque<>();
  private AppWidgetHost host; private AppWidgetManager widgets;
  private AlertDialog activeDialog;
+ private ItemFrame touchingItem;
  private LinearLayout root; private FrameLayout canvas; private boolean editing,drawer,secondPage; private int page=0;
  private int pendingId=-1,pendingPage=1; private String pendingProvider="";
  private boolean waitingNotification, resumeBoop;
@@ -37,7 +38,7 @@ public final class MainActivity extends Activity {
  @android.annotation.SuppressLint("GestureBackNavigation")
  @Override public void onBackPressed(){handleBack();}
  private void handleBack(){String action=Navigation.back(editing,drawer,page);if("edit".equals(action)){editing=false;render();}else if("drawer".equals(action)){drawer=false;render();}else if(!history.isEmpty()){page=history.pop();render();}else if("page".equals(action)){page=0;render();}}
- public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(focused)immersive();}
+ public void onWindowFocusChanged(boolean focused){super.onWindowFocusChanged(focused);if(focused)immersive();else if(touchingItem!=null)touchingItem.cancelTouch(true);}
  private void immersive(){if(Build.VERSION.SDK_INT>=30){getWindow().setDecorFitsSystemWindows(false);WindowInsetsController c=getWindow().getDecorView().getWindowInsetsController();if(c!=null){c.hide(WindowInsets.Type.systemBars());c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);}}else getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_STABLE|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);}
  private void welcome(){prefs().edit().putBoolean("welcome",true).apply();activeDialog=new AlertDialog.Builder(this).setTitle("Your BOOP home").setMessage("Swipe up for apps. Long press an app to add it. Long press empty home to edit. Swipe left for widgets. You can always change your default Home app in Android settings.").setPositiveButton("Start",(d,w)->{}).setNeutralButton("Open BOOP",(d,w)->openBoop()).setNegativeButton("Home settings",(d,w)->bailout()).show();}
  private void bailout(){try{startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));}catch(ActivityNotFoundException e){startActivity(new Intent(Settings.ACTION_SETTINGS));}}
@@ -45,11 +46,11 @@ public final class MainActivity extends Activity {
  private TextView label(String s){TextView t=new TextView(this);t.setText(s);t.setTextSize(20);t.setTextColor(Color.WHITE);t.setGravity(Gravity.CENTER);t.setPadding(dp(12),dp(12),dp(12),dp(12));return t;}
  private void render(){
   if(!drawer&&getCurrentFocus()!=null)getSystemService(android.view.inputmethod.InputMethodManager.class).hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),0);
-  root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.BLACK);root.setFitsSystemWindows(true);setContentView(root);
+  root=new LinearLayout(this);root.setMotionEventSplittingEnabled(false);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.BLACK);root.setFitsSystemWindows(true);setContentView(root);
   root.setOnApplyWindowInsetsListener((v,in)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=in.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout()|WindowInsets.Type.ime());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);}else{int left=in.getSystemWindowInsetLeft(),top=in.getSystemWindowInsetTop(),right=in.getSystemWindowInsetRight(),bottom=in.getSystemWindowInsetBottom();DisplayCutout cut=in.getDisplayCutout();if(cut!=null){left=Math.max(left,cut.getSafeInsetLeft());top=Math.max(top,cut.getSafeInsetTop());right=Math.max(right,cut.getSafeInsetRight());bottom=Math.max(bottom,cut.getSafeInsetBottom());}v.setPadding(left,top,right,bottom);}return in;});
   if(drawer){renderDrawer();return;}
-  if(editing){HorizontalScrollView bar=new HorizontalScrollView(this);LinearLayout row=new LinearLayout(this);row.addView(button("Done",()->{editing=false;render();}));row.addView(button("Bail out",this::bailout));row.addView(button("Apps",()->{drawer=true;render();}));row.addView(button("Add widget",this::chooseWidget));row.addView(button("Home",()->changePage(0)));row.addView(button("Widgets 1",()->changePage(1)));row.addView(button(secondPage?"Widgets 2":"Enable page 2",()->{secondPage=true;prefs().edit().putBoolean("second",true).apply();changePage(2);}));row.addView(button("Open BOOP",this::openBoop));bar.addView(row);root.addView(bar);TextView help=label("Drag to move • swipe above home to remove • swipe down to finish");help.setTextSize(14);root.addView(help);}
-  canvas=new FrameLayout(this);canvas.setBackgroundColor(Color.BLACK);canvas.setContentDescription(page==0?"Home canvas":"Widget page "+page);root.addView(canvas,new LinearLayout.LayoutParams(-1,0,1));
+  if(editing){HorizontalScrollView bar=new HorizontalScrollView(this);LinearLayout row=new LinearLayout(this);row.addView(button("Done",()->{editing=false;render();}));row.addView(button("Bail out",this::bailout));row.addView(button("Apps",()->{drawer=true;render();}));row.addView(button("Add widget",this::chooseWidget));row.addView(button("Home",()->changePage(0)));row.addView(button("Widgets 1",()->changePage(1)));row.addView(button(secondPage?"Widgets 2":"Enable page 2",()->{secondPage=true;prefs().edit().putBoolean("second",true).apply();changePage(2);}));row.addView(button("Open BOOP",this::openBoop));bar.addView(row);root.addView(bar);TextView help=label("Hold and drag up to remove • tap an item for options • swipe down to finish");help.setTextSize(14);root.addView(help);}
+  canvas=new FrameLayout(this);canvas.setMotionEventSplittingEnabled(false);canvas.setBackgroundColor(Color.BLACK);canvas.setContentDescription(page==0?"Home canvas":"Widget page "+page);root.addView(canvas,new LinearLayout.LayoutParams(-1,0,1));
   installCanvasGestures();canvas.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(r-l!=or-ol||b-t!=ob-ot)canvas.post(()->{if(canvas.getWidth()>0&&canvas.getHeight()>0)drawItems();});});
   canvas.post(()->{if(canvas.getWidth()>0 && canvas.getHeight()>0)drawItems();});
  }
@@ -97,12 +98,114 @@ public final class MainActivity extends Activity {
   }
  }
  private final class ItemFrame extends FrameLayout {
-  final Item item;float x,y,startX,startY;boolean held,moved;Runnable hold;
+  final Item item;
+  final FrameLayout surface=canvas;
+  final LinearLayout container=root;
+  float x,y,localX,localY,startX,startY;
+  long downTime;
+  boolean tracking,ownsTouch,wasEditing,moved,dragging,cancelled;
+  boolean surfaceClipped,containerClipped;
+  Runnable hold;
+  TextView removeTarget;
+
   ItemFrame(Item i){super(MainActivity.this);item=i;}
-  public boolean onInterceptTouchEvent(MotionEvent e){if(e.getActionMasked()==MotionEvent.ACTION_DOWN){x=e.getRawX();y=e.getRawY();startX=item.box.x;startY=item.box.y;moved=false;held=editing;hold=()->{held=true;editing=true;performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);itemMenu(item);};if(!editing)handler.postDelayed(hold,ViewConfiguration.getLongPressTimeout());}else if(e.getActionMasked()==MotionEvent.ACTION_MOVE && (Math.abs(e.getRawX()-x)>dp(8)||Math.abs(e.getRawY()-y)>dp(8))){handler.removeCallbacks(hold);}else if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL){handler.removeCallbacks(hold);}return editing||held;}
-  public boolean onTouchEvent(MotionEvent e){switch(e.getActionMasked()){case MotionEvent.ACTION_MOVE:float dx=e.getRawX()-x,dy=e.getRawY()-y;if(Math.abs(dx)>dp(8)||Math.abs(dy)>dp(8))moved=true;setTranslationX(dx);setTranslationY(dy);break;case MotionEvent.ACTION_UP:handler.removeCallbacks(hold);if(!moved){itemMenu(item);break;}int[] loc=new int[2];canvas.getLocationOnScreen(loc);if(e.getRawY()<loc[1]-dp(12)){remove(item);break;}if(e.getRawY()>loc[1]+canvas.getHeight()+dp(12)){editing=false;render();break;}Layout.Box b=Layout.clamp(new Layout.Box(startX+(e.getRawX()-x)/canvas.getWidth(),startY+(e.getRawY()-y)/canvas.getHeight(),item.box.w,item.box.h));if(Layout.free(b,occupied(item.page,item))){item.box=b;save();}else toast("That spot overlaps another item.");render();break;case MotionEvent.ACTION_CANCEL:handler.removeCallbacks(hold);render();break;}return true;}
+
+  // Keep terminal events here: intercepting a widget for the first time on UP
+  // would cancel its child without delivering that same UP to onTouchEvent.
+  @Override public boolean dispatchTouchEvent(MotionEvent e){
+   int action=e.getActionMasked();
+   if(action==MotionEvent.ACTION_DOWN){
+    x=e.getRawX();y=e.getRawY();localX=e.getX();localY=e.getY();downTime=e.getDownTime();
+    startX=item.box.x;startY=item.box.y;wasEditing=editing;
+    tracking=true;ownsTouch=wasEditing||item.widget<0;moved=false;dragging=false;cancelled=false;
+    touchingItem=this;
+    hold=()->{if(tracking&&!cancelled&&isAttachedToWindow())beginDrag();};
+    handler.postDelayed(hold,ViewConfiguration.getLongPressTimeout());
+   }
+   if(!tracking)return super.dispatchTouchEvent(e);
+   if(action==MotionEvent.ACTION_POINTER_DOWN){cancelTouch(true);return true;}
+   if(cancelled){if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL)finishTracking();return true;}
+   if(action==MotionEvent.ACTION_MOVE){
+    float dx=e.getRawX()-x,dy=e.getRawY()-y;
+    if(Math.abs(dx)>ViewConfiguration.get(MainActivity.this).getScaledTouchSlop()||Math.abs(dy)>ViewConfiguration.get(MainActivity.this).getScaledTouchSlop()){
+     moved=true;handler.removeCallbacks(hold);
+     if(wasEditing&&!dragging)beginDrag();
+    }
+    if(dragging){setTranslationX(dx);setTranslationY(dy);boolean removing=overRemove(e);removeTarget.setText(removing?"Release to remove":"Drag here to remove");removeTarget.setBackgroundColor(removing?0xff602828:0xff202020);}
+   }
+   if(action==MotionEvent.ACTION_CANCEL){
+    if(!ownsTouch)super.dispatchTouchEvent(e);
+    cancelTouch(true);finishTracking();return true;
+   }
+   if(action==MotionEvent.ACTION_UP){
+    if(!ownsTouch){boolean handled=super.dispatchTouchEvent(e);finishTracking();return handled;}
+    boolean removeOnDrop=dragging&&moved&&overRemove(e),wasDragging=dragging;
+    float dx=e.getRawX()-x,dy=e.getRawY()-y;
+    endDragVisuals();finishTracking();
+    if(removeOnDrop){remove(item);return true;}
+    if(wasDragging){
+     if(moved&&surface.getWidth()>0&&surface.getHeight()>0){
+      Layout.Box box=Layout.clamp(new Layout.Box(startX+dx/surface.getWidth(),startY+dy/surface.getHeight(),item.box.w,item.box.h));
+      if(Layout.free(box,occupied(item.page,item))){item.box=box;save();}else toast("That spot overlaps another item.");
+     }
+     render();
+    }else if(!moved){if(wasEditing)itemMenu(item);else if(item.widget<0)launch(item.component);}
+    return true;
+   }
+   if(ownsTouch)return true;
+   // A non-clickable widget must still retain its pending long press.
+   super.dispatchTouchEvent(e);return true;
+  }
+
+  private void beginDrag(){
+   if(dragging||cancelled||!tracking)return;
+   if(!ownsTouch)cancelWidgetTouch();
+   ownsTouch=true;dragging=true;editing=true;
+   getParent().requestDisallowInterceptTouchEvent(true);
+   performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+   surfaceClipped=surface.getClipChildren();containerClipped=container.getClipChildren();
+   surface.setClipChildren(false);container.setClipChildren(false);setAlpha(.7f);
+   // Overlay the existing layout: no resize, dialog or new touch target while held.
+   removeTarget=label("Drag here to remove");removeTarget.setBackgroundColor(0xff202020);
+   removeTarget.setPadding(dp(12),container.getPaddingTop(),dp(12),dp(12));
+   int height=container.getPaddingTop()+dp(72);
+   removeTarget.measure(MeasureSpec.makeMeasureSpec(container.getWidth(),MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(height,MeasureSpec.EXACTLY));
+   removeTarget.layout(0,0,container.getWidth(),height);
+   container.getOverlay().add(removeTarget);
+  }
+
+  private boolean overRemove(MotionEvent e){
+   if(removeTarget==null)return false;
+   int[] pos=new int[2];removeTarget.getLocationOnScreen(pos);
+   return e.getRawX()>=pos[0]&&e.getRawX()<pos[0]+removeTarget.getWidth()&&e.getRawY()>=pos[1]&&e.getRawY()<pos[1]+removeTarget.getHeight();
+  }
+
+  private void cancelWidgetTouch(){
+   MotionEvent cancel=MotionEvent.obtain(downTime,SystemClock.uptimeMillis(),MotionEvent.ACTION_CANCEL,localX,localY,0);
+   cancel.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+   super.dispatchTouchEvent(cancel);cancel.recycle();
+  }
+
+  private void endDragVisuals(){
+   if(removeTarget!=null){container.getOverlay().remove(removeTarget);removeTarget=null;}
+   if(dragging){surface.setClipChildren(surfaceClipped);container.setClipChildren(containerClipped);}
+   setTranslationX(0);setTranslationY(0);setAlpha(1);dragging=false;
+   if(getParent()!=null)getParent().requestDisallowInterceptTouchEvent(false);
+  }
+
+  private void cancelTouch(boolean restoreEditing){
+   if(!tracking)return;
+   if(!ownsTouch)cancelWidgetTouch();
+   ownsTouch=true;cancelled=true;handler.removeCallbacks(hold);
+   if(dragging&&restoreEditing)editing=wasEditing;
+   endDragVisuals();
+   if(touchingItem==this)touchingItem=null;
+  }
+
+  private void finishTracking(){if(hold!=null)handler.removeCallbacks(hold);tracking=false;if(touchingItem==this)touchingItem=null;}
+  @Override protected void onDetachedFromWindow(){cancelTouch(false);finishTracking();super.onDetachedFromWindow();}
  }
- private void itemMenu(Item i){editing=true;String[] choices={"Move: drag after closing this menu","Small","Medium","Large","Move to Home","Move to Widgets 1","Move to Widgets 2","Remove","Done editing"};activeDialog=new AlertDialog.Builder(this).setTitle(i.widget>=0?"Edit widget":i.label).setItems(choices,(d,n)->{if(n==1||n==2||n==3){float factor=n==1?.8f:n==2?1f:1.25f;float bw=i.widget>=0?.7f:.22f,bh=i.widget>=0?.32f:.18f;Layout.Box box=Layout.place(new Layout.Box(i.box.x,i.box.y,bw*factor,bh*factor),occupied(i.page,i));if(box!=null){i.box=box;save();}else toast("Not enough free space for that size.");}else if(n>=4&&n<=6){int target=n-4;Layout.Box box=Layout.place(i.box,occupied(target,i));if(box!=null){i.page=target;i.box=box;if(target==2){secondPage=true;prefs().edit().putBoolean("second",true).apply();}save();navigatePage(target);}else toast("That page is full.");}else if(n==7){remove(i);return;}else if(n==8)editing=false;render();}).setOnCancelListener(d->render()).show();}
+ private void itemMenu(Item i){editing=true;String[] choices={"Small","Medium","Large","Move to Home","Move to Widgets 1","Move to Widgets 2","Remove","Done editing"};activeDialog=new AlertDialog.Builder(this).setTitle(i.widget>=0?"Edit widget":i.label).setItems(choices,(d,n)->{if(n>=0&&n<=2){float factor=n==0?.8f:n==1?1f:1.25f;float bw=i.widget>=0?.7f:.22f,bh=i.widget>=0?.32f:.18f;Layout.Box box=Layout.place(new Layout.Box(i.box.x,i.box.y,bw*factor,bh*factor),occupied(i.page,i));if(box!=null){i.box=box;save();}else toast("Not enough free space for that size.");}else if(n>=3&&n<=5){int target=n-3;Layout.Box box=Layout.place(i.box,occupied(target,i));if(box!=null){i.page=target;i.box=box;if(target==2){secondPage=true;prefs().edit().putBoolean("second",true).apply();}save();navigatePage(target);}else toast("That page is full.");}else if(n==6){remove(i);return;}else if(n==7)editing=false;render();}).setOnCancelListener(d->render()).show();}
  private void remove(Item i){items.remove(i);if(i.widget>=0)host.deleteAppWidgetId(i.widget);save();render();}
  private void launch(String component){try{startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(ComponentName.unflattenFromString(component)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}catch(Exception e){toast("This app is no longer available. Long press its icon to remove it.");}}
  private void chooseWidget(){if(pendingId>=0){activeDialog=new AlertDialog.Builder(this).setTitle("Unfinished widget").setMessage("Discard the unfinished widget setup and choose again?").setPositiveButton("Discard",(d,w)->{cancelPending();chooseWidget();}).setNegativeButton("Keep",null).show();return;}List<AppWidgetProviderInfo> providers=widgets.getInstalledProviders();providers.sort((a,b)->a.loadLabel(getPackageManager()).compareToIgnoreCase(b.loadLabel(getPackageManager())));if(providers.isEmpty()){toast("Install an app with Android widgets, such as Home Assistant, then try again.");return;}String[] names=new String[providers.size()];for(int j=0;j<names.length;j++)names[j]=providers.get(j).loadLabel(getPackageManager())+" — "+providers.get(j).provider.getPackageName();activeDialog=new AlertDialog.Builder(this).setTitle("Choose Android widget").setItems(names,(d,n)->{AppWidgetProviderInfo provider=providers.get(n);pendingId=host.allocateAppWidgetId();pendingPage=page==0?1:page;pendingProvider=provider.provider.flattenToString();persistPending();try{if(widgets.bindAppWidgetIdIfAllowed(pendingId,provider.provider))configureWidget();else startActivityForResult(new Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,pendingId).putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER,provider.provider),BIND);}catch(RuntimeException e){cancelPending();toast("Android could not start widget binding.");}}).setNegativeButton("Cancel",null).show();}

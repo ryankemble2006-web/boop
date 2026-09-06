@@ -94,9 +94,20 @@ try:
     shell('input', 'motionevent', 'DOWN', x, y); time.sleep(.8)
     shell('am', 'start', '-a', 'android.settings.SETTINGS'); time.sleep(.5)
     shell('input', 'motionevent', 'UP', x, y)
-    shell('am', 'start', '-W', '-n', PKG+'/.MainActivity'); time.sleep(.5)
+    shell('input', 'keyevent', 4); time.sleep(.5)
     find('Home canvas'); find('Settings')
+    assert not any((n.get('text') or '').casefold() in ('small', 'drag here to remove', 'release to remove') for n in tree()), 'Interrupted hold left a menu or drag target open'
     checks.append('Interrupted hold cancels without removing the shortcut or opening a menu')
+
+    x, y = center(find('Settings'))
+    shell('input', 'swipe', x, y, x, y, 900); time.sleep(.5)
+    find('Done')
+    x, y = center(find('Settings'))
+    shell('input', 'motionevent', 'DOWN', x, y); time.sleep(.8)
+    shell('input', 'keyevent', 4); shell('input', 'motionevent', 'UP', x, y); time.sleep(.5)
+    find('Home canvas'); find('Settings')
+    assert not any((n.get('text') or '').casefold() == 'done' for n in tree()), 'Detaching the dragged icon restored editing after Back'
+    checks.append('Back during an edit-mode hold cancels and exits editing')
     shot('drag-regressions-passed')
     print('\n'.join('PASS '+c for c in checks), flush=True)
 finally:

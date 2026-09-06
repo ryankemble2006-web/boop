@@ -88,7 +88,10 @@ jobs:
           profile: pixel_7_pro
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: python3 launcher/scripts/smoke.py
+          script: |
+            python3 launcher/scripts/drag_smoke.py
+            adb shell pm clear com.boop.launcher
+            python3 launcher/scripts/smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

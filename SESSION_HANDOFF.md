@@ -27,3 +27,17 @@ A pinned app's long press opens an instruction menu and release can reach Androi
 Home selector. Reproducing against signed run 34058128961 before changing app code.
 A continuous DOWN/hold/MOVE/UP emulator regression is being added. Existing APK
 remains the delivered build; no drag fix is claimed yet.
+
+## Alpha 1.1 touch fix — verification in progress
+- Old delivered APK reproduced the held-finger modal bug in GitHub run
+  34060777148 (job 101560788856), assertion: long press opened a modal before UP.
+- Icons now own the original touch stream through release. Long hold shows a
+  temporary overlay removal target without opening a dialog or rebuilding home.
+  Widgets receive normal short touches; takeover cancels their child explicitly.
+- Short tap in pre-existing editing still opens size/page options. Focus loss,
+  cancellation and detach clear drag state without saving or deleting.
+- VersionCode 2 / versionName 0.1.1 keeps package/signature and stored layout.
+- Added live gesture regression for hold, upward removal, persistence, stationary
+  release, size options, movement, toolbar crossing and interrupted touch.
+- New signed build and emulator verification pending. Do not distribute as fixed
+  until those checks finish. HA widget/provider device checks remain outstanding.
