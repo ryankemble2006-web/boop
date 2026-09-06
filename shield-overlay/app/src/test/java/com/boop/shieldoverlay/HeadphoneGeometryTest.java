@@ -17,12 +17,13 @@ public final class HeadphoneGeometryTest {
     }
 
     @Test public void tvLayoutsAnchorEyesOnLeftAboveDeezerPlayerControls() {
-        // Hand-derived anchors: 25% across, 35% down the TV viewport.
+        // Hand-derived anchors: 25% across, 50% down the TV viewport.
+        // Down-only sofa correction: the curtain notch showed through the headband at 35%.
         // The existing overlay uses TOP | END, so x is the right-edge inset.
         for (int[] fixture : new int[][] {
-                {1280, 720, 320, 252},
-                {1920, 1080, 480, 378},
-                {3840, 2160, 960, 756}}) {
+                {1280, 720, 320, 360},
+                {1920, 1080, 480, 540},
+                {3840, 2160, 960, 1080}}) {
             HeadphoneGeometry.Layout layout = HeadphoneGeometry.calculate(fixture[0], fixture[1]);
             int windowLeft = fixture[0] - layout.x - layout.width;
             assertEquals("eye anchor horizontal", fixture[2], windowLeft + layout.originX, 1.0);
@@ -30,7 +31,8 @@ public final class HeadphoneGeometryTest {
             assertTrue("full motion stays left of track details",
                     windowLeft + layout.width < fixture[0] * .4);
             assertTrue("full motion stays above lower player controls",
-                    layout.y + layout.height < fixture[1] * .6);
+                    // Supplied paused layout's progress bar begins below 65% height.
+                    layout.y + layout.height < fixture[1] * .63);
             assertEnvelope(layout);
         }
     }

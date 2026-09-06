@@ -25,12 +25,12 @@ public final class HeadphoneGeometry {
         int height = Math.min(displayH - marginY, Math.max(1, (int) Math.ceil(envelopeH * scale)));
         float originX = (float) (-LEFT * scale);
         float originY = (float) (-TOP * scale);
-        // Keep the original size/envelope. Place the eye pivot at 25% across, 35% down.
+        // Keep the original size/envelope. Place the eye pivot at 25% across, 50% down.
         // The overlay keeps TOP | END gravity: x is an end inset, not a left offset.
         int left = (int) Math.round(displayW * .25 - originX);
         int x = Math.max(0, Math.min(displayW - width, displayW - width - left));
         int y = Math.max(0, Math.min(displayH - height,
-                (int) Math.round(displayH * .35 - originY)));
+                (int) Math.round(displayH * .50 - originY)));
         return new Layout(width, height, x, y, (float) scale, originX, originY);
     }
     public static final class Layout {
