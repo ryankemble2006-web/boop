@@ -1,4 +1,9 @@
 .gradle/
+# Local diagnostics and generated caches are not project handoff material.
+.superpowers/
+__pycache__/
+*.pyc
+/work/
 .idea/
 local.properties
 .DS_Store

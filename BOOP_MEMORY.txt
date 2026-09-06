@@ -1,7 +1,13 @@
 BOOP DURABLE MEMORY
 ===================
 
+Current handoff: 2026-09-06. Read BOOP_START_HERE.md and SESSION_HANDOFF.md.
+This branch retains the dated history below; use fetched main BOOP_CONTEXT.md
+for shared decisions and the owning app branch for current implementation.
+Do not mistake the dated history below for the latest app state.
+
 Last reconciled: 2026-09-05
+Visual decision added: 2026-09-06 (Shield H1/P1; design-only)
 Repository: C:\Users\ryank\Documents\Codex\BOOP
 
 PURPOSE
@@ -254,6 +260,31 @@ PRODUCT EVOLUTION AND THE REASONS FOR IT
    Deliberately remove timed voice routines from the new runtime because their
    follow-up flow needs a separate rethink. Do not create a physical checkpoint
    until all restored paths pass on the wall Pixel.
+
+
+SHIELD MEDIA PUPPETRY - APPROVED VISUALS (2026-09-06)
+---------------------------------------------------
+
+Ryan selected H1 Soft groove and P1 Quiet nibble from six concept renders.
+His reason for H1: it "makes him 3d finaly". Preserve the dimensional shading
+and tactile finish while keeping BOOP's recognisable blue/cyan floating eyes.
+
+- Deezer playing: H1 graphite/cyan over-ear headphones around the eye pair.
+- Kodi or Forki open: P1 red/cream striped popcorn tub, yellow articulated hands,
+  and a single-kernel nibble pantomime beneath the eyes.
+- Match the depth of the headphones in the hands and popcorn props.
+- Preserve transparent surroundings, remote pass-through and the no-microphone
+  overlay boundary. The charcoal render background is presentation only.
+- The yellow hands recall the user's early ASL/BSL design direction; the eating
+  gesture is puppetry, not a validated sign-language implementation.
+- H2/H3/P2/P3 remain unselected alternatives; extra gags are not approved.
+
+This approves the look, not a claim that animation or media awareness is built
+or physically verified. The next design must distinguish Deezer playback from
+Kodi/Forki being open and establish how the Shield observes those states.
+
+Renders, complete prompts and animation-specific memory are saved in:
+C:\Users\ryank\Documents\Codex\2026-09-05\referenced-chatgpt-conversation-this-is-an\outputs\boop-shield-concepts-2026-09-06
 
 
 LOCKED PRODUCT AND ARCHITECTURE DECISIONS
