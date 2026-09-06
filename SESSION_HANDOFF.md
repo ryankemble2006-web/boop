@@ -18,7 +18,8 @@ harness PASS. No verified signed swipe APK or physical test. Full touch/hold/
 cancellation/multitouch coexistence still needs review. Do not call it finished.
 
 Swipe candidate: branch `boop-wall-launcher-swipe` is based on the live Wall
-branch head `f5a86db`. It adds a deliberate single-finger left swipe from Wall
+branch head `f5a86db`; source commit `9587e6c` is published to GitHub. It adds
+a deliberate single-finger left swipe from Wall
 to the separately installed `com.boop.launcher`: at least 96dp leftward with
 1.5x horizontal confidence. Move, cancellation, and multi-touch cannot trigger
 it; movement cancels the hidden MemberBerry hold; the swipe is consumed before
