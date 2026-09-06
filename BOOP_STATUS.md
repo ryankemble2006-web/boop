@@ -41,6 +41,10 @@ then passed the complete Pixel 7 Pro acceptance gate on 2026-09-05.
 - Shake-to-eye-bounce physically verified at the current firm threshold
 
 ## Next
+- Validate the `boop-wall-launcher-swipe` candidate: Wall opens the separately
+  installed Launcher only after a deliberate 96dp left swipe; taps, holds,
+  vertical/right swipes, cancellation, and multi-touch must stay unchanged.
+  It is source/JVM-tested only, with no signed APK or physical acceptance yet.
 - Refine shake sensitivity so removal from the magnetic base is enough to trigger
   the visual response, then explore further eye animations
 - Keep timed voice routines excluded pending a separate redesign

@@ -41,6 +41,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -88,6 +89,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
     private boolean setupFailureSpoken = false;
     private boolean memberBerryConsumed = false;
     private int memberBerryVariant = 0;
+    private float faceTouchDownX;
+    private float faceTouchDownY;
+    private boolean swipeHadMultiplePointers = false;
 
     private ExecutorService executor;
     private SecureTokenStore tokenStore;
@@ -432,18 +436,37 @@ public final class MainActivity extends Activity implements RecognitionListener,
         if (voiceSettingsOpen) {
             return true;
         }
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
             memberBerryConsumed = false;
+            faceTouchDownX = event.getX();
+            faceTouchDownY = event.getY();
+            swipeHadMultiplePointers = false;
             wakeFaceForInteraction();
             scheduleMemberBerryHold();
             return true;
         }
-        if (event.getAction() == MotionEvent.ACTION_CANCEL) {
+        if (action == MotionEvent.ACTION_POINTER_DOWN) {
+            swipeHadMultiplePointers = true;
             cancelMemberBerryHold();
-            memberBerryConsumed = false;
             return true;
         }
-        if (event.getAction() != MotionEvent.ACTION_UP) {
+        if (action == MotionEvent.ACTION_MOVE) {
+            float movedX = Math.abs(event.getX() - faceTouchDownX);
+            float movedY = Math.abs(event.getY() - faceTouchDownY);
+            if (movedX > ViewConfiguration.get(this).getScaledTouchSlop()
+                    || movedY > ViewConfiguration.get(this).getScaledTouchSlop()) {
+                cancelMemberBerryHold();
+            }
+            return true;
+        }
+        if (action == MotionEvent.ACTION_CANCEL) {
+            cancelMemberBerryHold();
+            memberBerryConsumed = false;
+            swipeHadMultiplePointers = false;
+            return true;
+        }
+        if (action != MotionEvent.ACTION_UP) {
             return true;
         }
 
@@ -453,12 +476,29 @@ public final class MainActivity extends Activity implements RecognitionListener,
             return true;
         }
 
+        if (BoopLauncherSwipeGesture.shouldOpenLauncher(
+                faceTouchDownX, faceTouchDownY, event.getX(), event.getY(), false,
+                swipeHadMultiplePointers, dp(96))) {
+            swipeHadMultiplePointers = false;
+            launchLauncher();
+            return true;
+        }
+        swipeHadMultiplePointers = false;
         if (listening) {
             stopListening();
         } else {
             beginTapToSpeak();
         }
         return true;
+    }
+
+    private void launchLauncher() {
+        Intent launcherIntent = getPackageManager().getLaunchIntentForPackage("com.boop.launcher");
+        if (launcherIntent == null) {
+            Toast.makeText(this, "BOOP Launcher is not installed.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        startActivity(launcherIntent);
     }
 
     private void scheduleMemberBerryHold() {

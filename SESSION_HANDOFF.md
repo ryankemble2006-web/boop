@@ -17,6 +17,18 @@ Fresh snapshot verification:123 Python source checks PASS; four-case Java gestur
 harness PASS. No verified signed swipe APK or physical test. Full touch/hold/
 cancellation/multitouch coexistence still needs review. Do not call it finished.
 
-Next: Android develops Launcher from boop-launcher-alpha1. Coordinate the
-com.boop.alpha1 -> com.boop.launcher contract using the WIP reference before
-changing Wall. Preserve taps, voice, 33 wake phrases, local control and pairing.
+Swipe candidate: branch `boop-wall-launcher-swipe` is based on the live Wall
+branch head `f5a86db`. It adds a deliberate single-finger left swipe from Wall
+to the separately installed `com.boop.launcher`: at least 96dp leftward with
+1.5x horizontal confidence. Move, cancellation, and multi-touch cannot trigger
+it; movement cancels the hidden MemberBerry hold; the swipe is consumed before
+tap-to-speak. Missing Launcher shows `BOOP Launcher is not installed.`
+
+Candidate verification: 125 Python source checks pass except the pre-existing
+Windows-only Git-Bash PATH issue in the wake-workflow simulation; 26 Android
+JVM test reports passed; the focused Java gesture harness passed. Local Android
+compilation completed. Local APK assembly is intentionally blocked because the
+stable `boopDev` signing key is GitHub-only. The frozen resurrection workflow
+also rejects arbitrary Wall source changes by design, so no signed CI APK or
+emulator install has been claimed. Preserve the physical checkpoint and do not
+call this candidate physically verified.
