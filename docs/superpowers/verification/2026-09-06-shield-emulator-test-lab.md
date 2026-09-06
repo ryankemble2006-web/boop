@@ -18,6 +18,15 @@
 - Renderer: hardware-accelerated Android Emulator OpenGL translation through
   the NVIDIA GeForce RTX 3050 Laptop GPU.
 
+## Host graphics environment
+
+- Adapters observed: AMD Radeon(TM) Graphics and NVIDIA GeForce RTX 3050 Laptop
+  GPU.
+- The emulator renderer identifies the NVIDIA adapter directly, so no Windows
+  per-app graphics-preference change was necessary.
+- Hyper-V optional-feature state could not be read without an elevated Windows
+  administrator token. No virtualization setting was changed.
+
 ## Evidence boundary
 
 All results in this document are local/automated emulator evidence. Physical
