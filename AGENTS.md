@@ -32,6 +32,14 @@ request first. These rules are for BOOP work, not permission to do unrelated wor
 
 ## During work and before ending a session
 
+- **"Update memory" trigger:** When Ryan says `update memory` from any device,
+  update the BOOP handoff, context, status, and memory files that are relevant
+  to the work; stage only those reviewed documentation changes, commit them,
+  push the owning branch (and main when shared context changes), then verify
+  the live GitHub heads. Treat this as a documentation-sync request, not
+  authority to change application code, install software, grant permissions,
+  merge apps, or publish unrelated work.
+
 - Maintain a concise SESSION_HANDOFF.md as material results arrive, so an abrupt
   close does not lose the whole session. Record decisions and their reasons,
   exact source/build references, test results, physical results, unfinished
