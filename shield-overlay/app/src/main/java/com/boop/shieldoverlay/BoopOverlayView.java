@@ -8,6 +8,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.SystemClock;
+import android.os.PowerManager;
+import android.provider.Settings;
+import android.view.Choreographer;
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
 
@@ -24,6 +28,16 @@ final class BoopOverlayView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final Bitmap leftEye;
     private final Bitmap rightEye;
+    private final HeadphoneRenderer headphoneRenderer;
+    private final MediaPuppetFrameLoop frameLoop;
+    private HeadphoneGeometry.Layout headphoneLayout;
+    private DeezerPuppetPolicy.Mode puppetMode = DeezerPuppetPolicy.Mode.EYES;
+    private long puppetSessionId;
+    private long sampleTimeMs;
+    private boolean attached;
+    private boolean displayActive;
+    private boolean animationObservationAvailable;
+    private boolean powerObservationAvailable;
 
     BoopOverlayView(Context context) {
         super(context);
@@ -31,9 +45,20 @@ final class BoopOverlayView extends View {
         Bitmap source = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);
         leftEye = isolateEye(source, LEFT_SOURCE);
         rightEye = isolateEye(source, RIGHT_SOURCE);
+        headphoneRenderer = new HeadphoneRenderer(getResources());
+        frameLoop = new MediaPuppetFrameLoop(new FrameScheduler(), SystemClock::uptimeMillis,
+                sample -> {
+                    sampleTimeMs = sample;
+                    invalidate();
+                });
+        refreshAnimationPreference();
     }
 
     void wakeOnce() {
+        // A queued creation-time wake may run after a Deezer snapshot has arrived.
+        if (puppetMode != DeezerPuppetPolicy.Mode.EYES) {
+            return;
+        }
         animate().cancel();
         setPivotX(getWidth() / 2f);
         setPivotY(getHeight() / 2f);
@@ -47,6 +72,121 @@ final class BoopOverlayView extends View {
                 .start();
     }
 
+    void setPuppetSnapshot(MediaPuppetState.Snapshot snapshot) {
+        if (snapshot.mode != DeezerPuppetPolicy.Mode.EYES
+                && puppetMode == DeezerPuppetPolicy.Mode.EYES) {
+            animate().cancel();
+            setScaleX(1f);
+            setScaleY(1f);
+            setAlpha(1f);
+        }
+        puppetMode = snapshot.mode;
+        if (puppetSessionId != snapshot.sessionId) {
+            puppetSessionId = snapshot.sessionId;
+            frameLoop.reset();
+        }
+        updateFrameLoop();
+    }
+
+    void setHeadphoneLayout(HeadphoneGeometry.Layout layout) {
+        headphoneLayout = layout;
+        invalidate();
+    }
+
+    void setDisplayActive(boolean active) {
+        displayActive = active;
+        updateFrameLoop();
+    }
+
+    void refreshAnimationPreference() {
+        updateFrameLoop();
+    }
+
+    void setPowerObservationAvailable(boolean available) {
+        powerObservationAvailable = available;
+        updateFrameLoop();
+    }
+
+    void setAnimationObservationAvailable(boolean available) {
+        animationObservationAvailable = available;
+        updateFrameLoop();
+    }
+
+    private boolean powerSaveActiveOrUnknown() {
+        if (!powerObservationAvailable) {
+            return true;
+        }
+        PowerManager manager = getContext().getSystemService(PowerManager.class);
+        return manager == null || manager.isPowerSaveMode();
+    }
+
+    private void updateFrameLoop() {
+        if (frameLoop != null) {
+            frameLoop.update(puppetMode,
+                    attached && isShown() && getWindowVisibility() == VISIBLE && displayActive,
+                    animationObservationAvailable,
+                    // ValueAnimator's process cache can lag this setting's observer notification.
+                    () -> Settings.Global.getFloat(getContext().getContentResolver(),
+                            Settings.Global.ANIMATOR_DURATION_SCALE, 1f),
+                    this::powerSaveActiveOrUnknown);
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        attached = true;
+        refreshAnimationPreference();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        attached = false;
+        frameLoop.detach();
+        animate().cancel();
+        super.onDetachedFromWindow();
+    }
+
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        updateFrameLoop();
+    }
+
+    @Override
+    protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        updateFrameLoop();
+    }
+
+    private static final class FrameScheduler implements MediaPuppetFrameLoop.Scheduler {
+        private final Choreographer choreographer = Choreographer.getInstance();
+        private Runnable posted;
+        private Choreographer.FrameCallback callback;
+
+        @Override
+        public void post(Runnable frame) {
+            posted = frame;
+            callback = time -> {
+                if (posted == frame) {
+                    posted = null;
+                    callback = null;
+                }
+                frame.run();
+            };
+            choreographer.postFrameCallback(callback);
+        }
+
+        @Override
+        public void cancel(Runnable frame) {
+            if (posted == frame && callback != null) {
+                choreographer.removeFrameCallback(callback);
+                posted = null;
+                callback = null;
+            }
+        }
+    }
+
     @Override
     protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
         super.onSizeChanged(width, height, oldWidth, oldHeight);
@@ -58,6 +198,11 @@ final class BoopOverlayView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (getWidth() <= 0 || getHeight() <= 0) {
+            return;
+        }
+
+        if (puppetMode != DeezerPuppetPolicy.Mode.EYES) {
+            headphoneRenderer.draw(canvas, headphoneLayout, sampleTimeMs);
             return;
         }
 

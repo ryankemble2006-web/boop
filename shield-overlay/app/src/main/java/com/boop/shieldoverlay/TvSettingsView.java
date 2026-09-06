@@ -1,5 +1,6 @@
 package com.boop.shieldoverlay;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -8,28 +9,57 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 public final class TvSettingsView extends LinearLayout {
     private final FocusCardView firstCard;
+    private final MediaPuppetState puppetState;
+    private final DeezerPuppetSettingsModel puppetModel;
+    private FocusCardView puppetToggle;
+    private TextView puppetExplanation;
+    private Runnable unsubscribePuppet;
+    private AlertDialog enableDialog;
 
     public TvSettingsView(
             Context context,
             AreaInfo selectedRoom,
             Runnable onChangeRoom,
             Runnable onContentLeft) {
+        this(context, selectedRoom, onChangeRoom, onContentLeft, null, null);
+    }
+
+    public TvSettingsView(
+            Context context,
+            AreaInfo selectedRoom,
+            Runnable onChangeRoom,
+            Runnable onContentLeft,
+            MediaPuppetState puppetState,
+            DeezerPuppetSettingsModel.Actions puppetActions) {
         super(context);
+        this.puppetState = puppetState;
+        puppetModel = puppetActions == null ? null : new DeezerPuppetSettingsModel(puppetActions);
         setOrientation(VERTICAL);
         setGravity(Gravity.TOP);
-        setPadding(dp(36), dp(34), dp(44), dp(34));
         setBackgroundColor(Color.BLACK);
 
-        addView(title("Settings", 42f));
-        addView(detail("The useful TV-safe bits only."));
+        ScrollView scroll = new ScrollView(context);
+        scroll.setFillViewport(true);
+        scroll.setFocusable(false);
+        LinearLayout content = new LinearLayout(context);
+        content.setOrientation(VERTICAL);
+        content.setPadding(dp(36), dp(34), dp(44), dp(34));
+        scroll.addView(content, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        addView(scroll, new LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        content.addView(title("Settings", 42f));
+        content.addView(detail("The useful TV-safe bits only."));
 
         FocusCardView connection = card("House connection — Connected", onContentLeft);
         connection.setClickable(false);
-        addView(connection, cardParams());
+        content.addView(connection, cardParams());
 
         String roomName = selectedRoom == null ? "Choose this Shield's room" : selectedRoom.name();
         firstCard = card("Where am I?  " + roomName, onContentLeft);
@@ -38,7 +68,78 @@ public final class TvSettingsView extends LinearLayout {
                 onChangeRoom.run();
             }
         });
-        addView(firstCard, cardParams());
+        content.addView(firstCard, cardParams());
+
+        if (puppetState != null && puppetModel != null) {
+            puppetToggle = card("Deezer headphones — Off", onContentLeft);
+            puppetToggle.setOnClickListener(view -> {
+                if (enableDialog == null && puppetModel.toggle(puppetState.snapshot())) {
+                    showEnableConfirmation();
+                }
+            });
+            content.addView(puppetToggle, cardParams());
+            FocusCardView manageAccess = card("Manage Deezer access", onContentLeft);
+            manageAccess.setOnClickListener(view -> {
+                puppetModel.manageAccess();
+                renderPuppet(puppetState.snapshot());
+            });
+            content.addView(manageAccess, cardParams());
+            puppetExplanation = detail("");
+            puppetExplanation.setFocusable(false);
+            content.addView(puppetExplanation);
+            renderPuppet(puppetState.snapshot());
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (puppetState != null && puppetModel != null && unsubscribePuppet == null) {
+            unsubscribePuppet = puppetState.subscribe(this::renderPuppet);
+        }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        close();
+        super.onDetachedFromWindow();
+    }
+
+    void close() {
+        if (unsubscribePuppet != null) {
+            unsubscribePuppet.run();
+            unsubscribePuppet = null;
+        }
+        if (puppetModel != null) {
+            puppetModel.cancelEnable();
+        }
+        if (enableDialog != null) {
+            enableDialog.dismiss();
+            enableDialog = null;
+        }
+    }
+
+    private void renderPuppet(MediaPuppetState.Snapshot snapshot) {
+        puppetToggle.label("Deezer headphones — " + snapshot.status());
+        puppetExplanation.setText(puppetModel.explanation(snapshot));
+    }
+
+    private void showEnableConfirmation() {
+        enableDialog = new AlertDialog.Builder(getContext())
+                .setTitle("Enable Deezer headphones?")
+                .setMessage("Android notification access is broader than playback access. "
+                        + "BOOP will ignore notification contents and observe only Deezer playback. "
+                        + "Enabling this feature does not grant Android access. "
+                        + "Use Manage Deezer access for setup.")
+                .setNegativeButton("Cancel", (dialog, which) -> puppetModel.cancelEnable())
+                .setPositiveButton("Enable", (dialog, which) -> puppetModel.confirmEnable())
+                .create();
+        enableDialog.setOnDismissListener(dialog -> {
+            puppetModel.cancelEnable();
+            enableDialog = null;
+        });
+        enableDialog.show();
+        enableDialog.getButton(AlertDialog.BUTTON_NEGATIVE).requestFocus();
     }
 
     public View firstFocusable() {

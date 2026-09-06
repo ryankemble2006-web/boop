@@ -55,6 +55,7 @@ public final class BoopHomeActivity extends Activity {
     private FocusCardView settingsRailCard;
     private View currentPageFirstFocusable;
     private boolean homeShellVisible;
+    private TvSettingsView settingsView;
 
     private HomeDashboardController dashboardController;
     private HomeDashboardController.ViewState dashboardState;
@@ -99,6 +100,14 @@ public final class BoopHomeActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (settingsView != null) {
+            DeezerPuppetAccess.get(this).refresh();
+        }
+    }
+
+    @Override
     public void onBackPressed() {
         if (homeShellVisible && navigationModel != null) {
             if (navigationModel.onBack()) {
@@ -121,6 +130,7 @@ public final class BoopHomeActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        closeSettingsPage();
         if (mainHandler != null) {
             if (expiryRunnable != null) {
                 mainHandler.removeCallbacks(expiryRunnable);
@@ -854,6 +864,8 @@ public final class BoopHomeActivity extends Activity {
             return;
         }
 
+        closeSettingsPage();
+
         AreaInfo room = preferences == null ? null : preferences.selectedRoom();
         Runnable onContentLeft = this::returnContentFocusToRail;
         View pageView;
@@ -881,11 +893,28 @@ public final class BoopHomeActivity extends Activity {
         } else if (page == TvNavigationModel.Page.SETTINGS) {
             homeView = null;
             routinesView = null;
-            TvSettingsView settingsView = new TvSettingsView(
+            DeezerPuppetAccess puppetAccess = DeezerPuppetAccess.get(this);
+            puppetAccess.refresh();
+            settingsView = new TvSettingsView(
                     this,
                     room,
-                    this::showRoomPicker,
-                    onContentLeft);
+                    () -> {
+                        closeSettingsPage();
+                        showRoomPicker();
+                    },
+                    onContentLeft,
+                    puppetAccess.state(),
+                    new DeezerPuppetSettingsModel.Actions() {
+                        @Override
+                        public void setEnabled(boolean enabled) {
+                            puppetAccess.setEnabled(enabled);
+                        }
+
+                        @Override
+                        public boolean openAccessSettings() {
+                            return puppetAccess.openAccessSettings(BoopHomeActivity.this);
+                        }
+                    });
             pageView = settingsView;
             currentPageFirstFocusable = settingsView.firstFocusable();
         } else {
@@ -928,6 +957,13 @@ public final class BoopHomeActivity extends Activity {
         View railCard = railCardFor(navigationModel.page());
         if (railCard != null) {
             railCard.requestFocus();
+        }
+    }
+
+    private void closeSettingsPage() {
+        if (settingsView != null) {
+            settingsView.close();
+            settingsView = null;
         }
     }
 

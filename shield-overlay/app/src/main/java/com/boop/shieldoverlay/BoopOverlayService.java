@@ -5,15 +5,23 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.content.Context;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.content.pm.ServiceInfo;
+import android.database.ContentObserver;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
+import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -30,6 +38,16 @@ public final class BoopOverlayService extends Service {
     private DisplayManager displayManager;
     private DisplayManager.DisplayListener displayListener;
     private BoopOverlayView overlayView;
+    private MediaPuppetState.Snapshot puppetSnapshot;
+    private Runnable unsubscribePuppet;
+    private ContentObserver animationObserver;
+    private boolean animationObserverRegistered;
+    private BroadcastReceiver powerSaveReceiver;
+    private boolean powerSaveReceiverRegistered;
+    private WindowManager.LayoutParams overlayParams;
+    private int layoutDisplayWidth = -1;
+    private int layoutDisplayHeight = -1;
+    private boolean layoutHeadphones;
 
     @Override
     public void onCreate() {
@@ -37,6 +55,15 @@ public final class BoopOverlayService extends Service {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         displayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
         registerDisplayListener();
+        registerAnimationObserver();
+        registerPowerSaveReceiver();
+        unsubscribePuppet = DeezerPuppetAccess.get(this).state().subscribe(snapshot -> {
+            puppetSnapshot = snapshot;
+            if (overlayView != null) {
+                overlayView.setPuppetSnapshot(snapshot);
+                updateOverlayLayout();
+            }
+        });
         promoteToForeground();
     }
 
@@ -60,8 +87,11 @@ public final class BoopOverlayService extends Service {
         if (ACTION_SHOW_EYES.equals(action)) {
             ensureOverlay();
             if (overlayView != null) {
+                updateDisplayState();
                 overlayView.setVisibility(View.VISIBLE);
-                overlayView.postInvalidateOnAnimation();
+                if (isDisplayActive()) {
+                    overlayView.postInvalidateOnAnimation();
+                }
             }
             return START_STICKY;
         }
@@ -72,6 +102,23 @@ public final class BoopOverlayService extends Service {
 
     @Override
     public void onDestroy() {
+        if (unsubscribePuppet != null) {
+            unsubscribePuppet.run();
+            unsubscribePuppet = null;
+        }
+        if (animationObserverRegistered) {
+            getContentResolver().unregisterContentObserver(animationObserver);
+            animationObserverRegistered = false;
+        }
+        if (powerSaveReceiverRegistered) {
+            try {
+                unregisterReceiver(powerSaveReceiver);
+            } catch (IllegalArgumentException ignored) {
+                // The receiver was already removed by the system.
+            }
+            powerSaveReceiverRegistered = false;
+        }
+        powerSaveReceiver = null;
         if (displayManager != null && displayListener != null) {
             displayManager.unregisterDisplayListener(displayListener);
         }
@@ -99,11 +146,70 @@ public final class BoopOverlayService extends Service {
             @Override
             public void onDisplayChanged(int displayId) {
                 if (overlayView != null) {
-                    overlayView.postInvalidateOnAnimation();
+                    updateDisplayState();
+                    updateOverlayLayout();
+                    if (overlayView.isShown() && isDisplayActive()) {
+                        overlayView.postInvalidateOnAnimation();
+                    }
                 }
             }
         };
         displayManager.registerDisplayListener(displayListener, null);
+    }
+
+    private void registerAnimationObserver() {
+        animationObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+            @Override
+            public void onChange(boolean selfChange) {
+                if (overlayView != null) {
+                    overlayView.refreshAnimationPreference();
+                }
+            }
+        };
+        try {
+            getContentResolver().registerContentObserver(
+                    Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE),
+                    false, animationObserver);
+            animationObserverRegistered = true;
+        } catch (SecurityException ignored) {
+            // The view holds still if animator-setting changes cannot be observed.
+        }
+    }
+
+    private boolean isDisplayActive() {
+        Display display = windowManager == null ? null : windowManager.getDefaultDisplay();
+        return display != null && display.getState() == Display.STATE_ON;
+    }
+
+    private void registerPowerSaveReceiver() {
+        powerSaveReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (PowerManager.ACTION_POWER_SAVE_MODE_CHANGED.equals(intent.getAction())
+                        && overlayView != null) {
+                    overlayView.refreshAnimationPreference();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(powerSaveReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(powerSaveReceiver, filter);
+            }
+            powerSaveReceiverRegistered = true;
+        } catch (SecurityException | IllegalArgumentException unavailable) {
+            // The view holds still if power changes cannot be observed safely.
+            powerSaveReceiver = null;
+        }
+    }
+
+    private void updateDisplayState() {
+        if (overlayView != null) {
+            overlayView.setDisplayActive(isDisplayActive());
+            overlayView.refreshAnimationPreference();
+        }
     }
 
     private void promoteToForeground() {
@@ -141,23 +247,33 @@ public final class BoopOverlayService extends Service {
             return;
         }
 
-        OverlayGeometry.Geometry geometry = currentGeometry();
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                geometry.width(),
-                geometry.height(),
+        overlayParams = new WindowManager.LayoutParams(
+                1,
+                1,
                 OverlayWindowSpec.type(),
                 OverlayWindowSpec.flags(),
                 PixelFormat.TRANSLUCENT);
-        params.gravity = Gravity.TOP | Gravity.END;
-        params.x = geometry.x();
-        params.y = geometry.y();
+        overlayParams.gravity = Gravity.TOP | Gravity.END;
 
         overlayView = new BoopOverlayView(this);
-        windowManager.addView(overlayView, params);
+        overlayView.setAnimationObservationAvailable(animationObserverRegistered);
+        overlayView.setPowerObservationAvailable(powerSaveReceiverRegistered);
+        if (puppetSnapshot != null) {
+            overlayView.setPuppetSnapshot(puppetSnapshot);
+        }
+        updateDisplayState();
+        applyCurrentGeometry();
+        windowManager.addView(overlayView, overlayParams);
         overlayView.post(overlayView::wakeOnce);
     }
 
-    private OverlayGeometry.Geometry currentGeometry() {
+    private void updateOverlayLayout() {
+        if (overlayView != null && overlayParams != null && applyCurrentGeometry()) {
+            windowManager.updateViewLayout(overlayView, overlayParams);
+        }
+    }
+
+    private boolean applyCurrentGeometry() {
         int width;
         int height;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -170,10 +286,36 @@ public final class BoopOverlayService extends Service {
             width = metrics.widthPixels;
             height = metrics.heightPixels;
         }
-        return OverlayGeometry.calculate(width, height);
+        boolean headphones = puppetSnapshot != null
+                && puppetSnapshot.mode != DeezerPuppetPolicy.Mode.EYES;
+        if (width == layoutDisplayWidth && height == layoutDisplayHeight
+                && headphones == layoutHeadphones) {
+            return false;
+        }
+        layoutDisplayWidth = width;
+        layoutDisplayHeight = height;
+        layoutHeadphones = headphones;
+        if (headphones) {
+            HeadphoneGeometry.Layout layout = HeadphoneGeometry.calculate(width, height);
+            overlayParams.width = layout.width;
+            overlayParams.height = layout.height;
+            overlayParams.x = layout.x;
+            overlayParams.y = layout.y;
+            overlayView.setHeadphoneLayout(layout);
+        } else {
+            OverlayGeometry.Geometry geometry = OverlayGeometry.calculate(width, height);
+            overlayParams.width = geometry.width();
+            overlayParams.height = geometry.height();
+            overlayParams.x = geometry.x();
+            overlayParams.y = geometry.y();
+        }
+        return true;
     }
 
     private void removeOverlay() {
+        overlayParams = null;
+        layoutDisplayWidth = -1;
+        layoutDisplayHeight = -1;
         if (overlayView == null || windowManager == null) {
             overlayView = null;
             return;
