@@ -193,10 +193,13 @@ Expected: documentation only.
 
 ```powershell
 git status --short
-.\gradlew.bat :shield-overlay:assembleDebug
+$env:ANDROID_HOME = 'C:\Users\ryank\AppData\Local\Android\Sdk'
+& 'C:\Users\ryank\Documents\Codex\2026-09-05\referenced-chatgpt-conversation-this-is-an\work\gradle-9.6.0\bin\gradle.bat' -p .\shield-overlay :app:assembleDebug
 ```
 
-Expected: debug build success. If the untracked `boop_eyes.png` affects the build, stop and report it; do not add, edit, or delete it.
+Expected: debug build success from the nested Shield Gradle project. If the
+untracked `boop_eyes.png` affects the build, stop and report it; do not add,
+edit, or delete it.
 
 - [ ] **Step 2: Install only on the emulator**
 
