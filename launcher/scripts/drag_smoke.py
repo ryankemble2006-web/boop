@@ -5,7 +5,7 @@ from pathlib import Path
 OUT = Path('launcher-evidence'); OUT.mkdir(exist_ok=True)
 PKG = 'com.boop.launcher'
 checks = []
-def adb(*args): return subprocess.check_output(['adb', *map(str, args)], text=True).strip()
+def adb(*args): return subprocess.check_output(['adb', *map(str, args)], text=True, timeout=40).strip()
 def shell(*args): return adb('shell', *args)
 def tree():
     shell('uiautomator', 'dump', '/sdcard/drag-ui.xml')
@@ -14,8 +14,11 @@ def tree():
     return list(ET.fromstring(xml).iter('node'))
 def find(label):
     for _ in range(4):
-        for n in tree():
-            if label in (n.get('text'), n.get('content-desc')): return n
+        nodes = tree()
+        for n in nodes:
+            if label.casefold() in ((n.get('text') or '').casefold(), (n.get('content-desc') or '').casefold()): return n
+        tutorial = next((n for n in nodes if n.get('package') == 'com.android.systemui' and (n.get('text') or '').casefold() == 'got it'), None)
+        if tutorial is not None: shell('input', 'tap', *center(tutorial))
         time.sleep(.5)
     raise AssertionError('Missing control: ' + label)
 def center(n):
@@ -63,6 +66,38 @@ try:
     time.sleep(.5)
     assert not any(n.get('content-desc') == 'Settings' for n in tree()), 'Removed shortcut returned after restart'
     checks.append('Removal survives a process restart')
+
+    x, y = pin()
+    shell('input', 'motionevent', 'DOWN', x, y); time.sleep(.8)
+    shell('input', 'motionevent', 'UP', x, y); time.sleep(.5)
+    find('Home canvas'); find('Done'); find('Settings')
+    assert not any(n.get('text') == 'Small' for n in tree()), 'Stationary long release opened a menu'
+    checks.append('Stationary hold enters editing only after release and keeps the shortcut')
+    tap('Settings'); tap('Small'); tap('Done')
+    checks.append('A separate short edit tap still provides icon size controls')
+
+    x, y = center(find('Settings'))
+    shell('input', 'touchscreen', 'draganddrop', x, y, 950, 1700, 650)
+    time.sleep(.6); find('Home canvas')
+    moved_x, moved_y = center(find('Settings'))
+    assert moved_x > 700 and moved_y > 1200, 'Continuous drag did not move the shortcut'
+    checks.append('Holding then dragging across home moves the shortcut')
+    # Releasing at toolbar height must stay owned by the icon, including over
+    # where Bail out normally sits. There is no second tap for removal.
+    shell('input', 'swipe', moved_x, moved_y, 500, 80, 400); time.sleep(.5)
+    find('Home canvas')
+    assert not any(n.get('content-desc') == 'Settings' for n in tree()), 'Edit-mode drag did not remove shortcut'
+    checks.append('An edit-mode drag across toolbar space removes without opening Home settings')
+
+    tap('Done')
+    x, y = pin()
+    shell('input', 'motionevent', 'DOWN', x, y); time.sleep(.8)
+    shell('am', 'start', '-a', 'android.settings.SETTINGS'); time.sleep(.5)
+    shell('input', 'motionevent', 'UP', x, y)
+    shell('am', 'start', '-W', '-n', PKG+'/.MainActivity'); time.sleep(.5)
+    find('Home canvas'); find('Settings')
+    checks.append('Interrupted hold cancels without removing the shortcut or opening a menu')
+    shot('drag-regressions-passed')
     print('\n'.join('PASS '+c for c in checks), flush=True)
 finally:
     shell('input', 'motionevent', 'UP', 720, 80)
