@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public final class HeadphoneGeometryTest {
-    @Test public void hdAndUhdKeepEyeSpanAndFullAlphaMotionInsideCorner() {
+    @Test public void hdAndUhdKeepEyeSpanAndFullAlphaMotionInsideWindow() {
         for (int[] screen : new int[][] {{1920, 1080}, {3840, 2160}}) {
             HeadphoneGeometry.Layout layout = HeadphoneGeometry.calculate(screen[0], screen[1]);
             assertEquals(screen[0] * .14, 686 * layout.scale, 1.0);
@@ -12,6 +12,25 @@ public final class HeadphoneGeometryTest {
             assertTrue(layout.y >= screen[1] * .03);
             assertTrue(layout.width < screen[0] * .25);
             assertTrue(layout.height < screen[1] * .4);
+            assertEnvelope(layout);
+        }
+    }
+
+    @Test public void tvLayoutsAnchorEyesOnLeftAboveDeezerPlayerControls() {
+        // Hand-derived anchors: 25% across, 35% down the TV viewport.
+        // The existing overlay uses TOP | END, so x is the right-edge inset.
+        for (int[] fixture : new int[][] {
+                {1280, 720, 320, 252},
+                {1920, 1080, 480, 378},
+                {3840, 2160, 960, 756}}) {
+            HeadphoneGeometry.Layout layout = HeadphoneGeometry.calculate(fixture[0], fixture[1]);
+            int windowLeft = fixture[0] - layout.x - layout.width;
+            assertEquals("eye anchor horizontal", fixture[2], windowLeft + layout.originX, 1.0);
+            assertEquals("eye anchor vertical", fixture[3], layout.y + layout.originY, 1.0);
+            assertTrue("full motion stays left of track details",
+                    windowLeft + layout.width < fixture[0] * .4);
+            assertTrue("full motion stays above lower player controls",
+                    layout.y + layout.height < fixture[1] * .6);
             assertEnvelope(layout);
         }
     }
