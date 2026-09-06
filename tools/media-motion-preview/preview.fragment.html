@@ -1,0 +1,130 @@
+<div id="boop-media-motion" aria-label="BOOP headphones and popcorn motion preview">
+  <style>
+    #boop-media-motion { color:var(--foreground, #e8eef4); font-family:system-ui,sans-serif; }
+    #boop-media-motion .boop-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    #boop-media-motion figure { margin:0; min-width:0; }
+    #boop-media-motion figcaption { padding:10px 0 7px; }
+    #boop-media-motion .boop-art { display:block; width:100%; aspect-ratio:1160/940; background:#111922; border-radius:14px; }
+    #boop-media-motion .boop-tv { display:block; width:100%; aspect-ratio:16/9; background:#182a38; border-radius:6px; }
+    #boop-media-motion .boop-scale { padding:9px 0; opacity:.8; }
+    #boop-media-motion .boop-controls { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:16px 0 0; }
+    @media(max-width:470px) { #boop-media-motion .boop-pair { grid-template-columns:1fr; gap:20px; } }
+  </style>
+  <div class="boop-pair">
+    <figure>
+      <figcaption>H1 · Soft groove</figcaption>
+      <canvas class="boop-art" data-puppet="music" width="696" height="564" role="img" aria-label="BOOP wearing graphite and cyan headphones, gently bobbing and tilting"></canvas>
+      <div class="boop-scale text-small">Deezer · TV-corner scale study</div>
+      <canvas class="boop-tv" data-puppet="music" width="768" height="432" role="img" aria-label="Music BOOP at proposed TV-corner size, on a simulated background"></canvas>
+    </figure>
+    <figure>
+      <figcaption>P1 · Quiet nibble</figcaption>
+      <canvas class="boop-art" data-puppet="cinema" width="696" height="564" role="img" aria-label="BOOP quietly lifts popcorn with a yellow hand, nibbles, and returns the empty hand to the tub"></canvas>
+      <div class="boop-scale text-small">Kodi / Forki · TV-corner scale study</div>
+      <canvas class="boop-tv" data-puppet="cinema" width="768" height="432" role="img" aria-label="Cinema BOOP at proposed TV-corner size, on a simulated background"></canvas>
+    </figure>
+  </div>
+  <div class="boop-controls">
+    <button type="button" class="btn" data-action="pause">Pause motion</button>
+    <span class="text-small" data-status="motion" aria-live="polite">Motion preview · not connected to the Shield</span>
+  </div>
+  <script>
+  (() => {
+    const root = document.getElementById('boop-media-motion');
+    const motion = __MOTION__;
+    const sources = __SOURCES__;
+    const playbackSpeed = 1.2; // Ryan: a wee bit quicker; keep the same poses.
+    const art = {};
+    const views = [...root.querySelectorAll('canvas')].map(canvas => ({
+      canvas, ctx:canvas.getContext('2d'), mode:canvas.dataset.puppet,
+      tv:canvas.classList.contains('boop-tv')
+    }));
+    const button = root.querySelector('[data-action="pause"]');
+    const status = root.querySelector('[data-status="motion"]');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const design = { background:'#111922' };
+    let running = !reduced.matches && root.dataset.startPaused !== 'true';
+    let ready = false, frameId = null, last = null, elapsed = Number(root.dataset.startMs || 0);
+    function sample(mode, milliseconds) {
+      const rows = motion[mode], count = rows.length;
+      const index = ((milliseconds / motion.stepMs) % count + count) % count;
+      const first = Math.floor(index), mix = index-first;
+      return rows[first].map((value, i) => value + (rows[(first+1)%count][i]-value)*mix);
+    }
+    function puppet(ctx, mode, time) {
+      const pose = sample(mode, time);
+      ctx.save();
+      if(mode === 'music') {
+        ctx.translate(768 + pose[0], 580 + pose[1]);
+        ctx.rotate(pose[2]*Math.PI/180);
+        ctx.translate(-768, -580);
+        ctx.drawImage(art.music, 0, 0, 1536, 1024);
+      } else {
+        ctx.drawImage(art['cinema-base'], 0, 0, 1536, 1024);
+        // Resting pinch is at the tub. Motion lifts it to the implied mouth.
+        ctx.translate(775 + pose[0], 700 + pose[1]);
+        ctx.rotate(pose[2]*Math.PI/180);
+        ctx.scale(.7,.7);
+        ctx.translate(-650,-520);
+        ctx.drawImage(art.hand, 0, 0, 1536, 1024);
+        ctx.globalAlpha = pose[3];
+        ctx.drawImage(art.kernel, 598*art.kernel.width/1536, 442*art.kernel.height/1024,
+          98*art.kernel.width/1536, 100*art.kernel.height/1024, 627, 488, 46, 47);
+      }
+      ctx.restore();
+    }
+    function draw(time=elapsed) {
+      if(!ready) return;
+      for(const {ctx,canvas,mode,tv} of views) {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.save();
+        if(tv) {
+          ctx.scale(canvas.width/1920,canvas.height/1080);
+          // A deliberately abstract scale backdrop, not a live programme.
+          const grad=ctx.createLinearGradient(0,0,1920,1080);
+          grad.addColorStop(0,'#355368'); grad.addColorStop(.56,'#152935'); grad.addColorStop(1,'#1a4044');
+          ctx.fillStyle=grad; ctx.fillRect(0,0,1920,1080);
+          ctx.fillStyle='#ffffff09'; ctx.fillRect(0,500,1920,8);
+          // Retain approximately the protected 14%-of-display eye-pair width.
+          const scale = 1920*.14/686;
+          ctx.translate(1920-1920*.03-1300*scale,1080*.03-110*scale);
+          ctx.scale(scale,scale);
+        } else {
+          ctx.fillStyle=design.background; ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.scale(canvas.width/1160,canvas.height/940);
+          ctx.translate(-180,-70);
+        }
+        puppet(ctx,mode,time);
+        ctx.restore();
+      }
+    }
+    function stopFrame() { if(frameId!==null) cancelAnimationFrame(frameId); frameId=null; last=null; }
+    function tick(now) {
+      frameId=null;
+      if(!root.isConnected || !running || document.hidden || !ready) { last=null; return; }
+      if(last!==null) elapsed += Math.min(100,Math.max(0,now-last)) * playbackSpeed;
+      last=now; draw(); frameId=requestAnimationFrame(tick);
+    }
+    function refresh() {
+      stopFrame(); button.textContent=running ? 'Pause motion' : 'Play motion';
+      button.setAttribute('aria-pressed',String(!running)); draw();
+      if(running && ready && !document.hidden) frameId=requestAnimationFrame(tick);
+    }
+    button.addEventListener('click',()=>{ running=!running; refresh(); });
+    document.addEventListener('visibilitychange',refresh);
+    reduced.addEventListener('change',()=>{running=!reduced.matches;refresh();});
+    Promise.all(Object.entries(sources).map(([name,src])=>new Promise((resolve,reject)=>{
+      const im=new Image(); im.onload=()=>{art[name]=im;resolve();}; im.onerror=reject; im.src=src;
+    }))).then(()=>{ready=true;root.dataset.ready='true';refresh();}).catch(()=>{
+      running=false;button.disabled=true;status.textContent='Artwork could not load.';
+    });
+    if(globalThis.Tweak) {
+      const tweak=new Tweak({container:root,onChange:()=>draw()});
+      tweak.addColorPicker(design,'background',{label:'Preview backdrop'});
+    }
+    // Read-only deterministic render hook for local visual QA; no external calls.
+    root.boopPreview={drawAt:draw,sample,setPaused(value){running=!value;refresh();},get elapsed(){return elapsed;}};
+    refresh();
+  })();
+  </script>
+</div>

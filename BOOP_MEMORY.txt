@@ -1,7 +1,199 @@
 BOOP DURABLE MEMORY
 ===================
 
-Last reconciled: 2026-09-05
+LATEST CONTEXT — 2026-09-06
+Read SESSION_HANDOFF.md, BOOP_START_HERE.md and BOOP_CONTEXT.md first.
+Ryan subsequently confirmed "awesome placement" for4fe28a4. Placement, dancing
+and pausing are user-verified; the all-layout/HDR/lifecycle checkpoint is not.
+Fanart presence was not distinguishable from MediaSession artwork presence.
+The private internal-background clue did not expose its proposed description in
+two complete72-node external UI samples. No usable fanart signal or auto-move.
+Private inspection artifacts stay local. New tasks must fetch/read the owning
+GitHub branch before work and publish reviewed code/context at handoff.
+
+PRIOR SHIELD SOFA STEP — 2026-09-06 (chronology; acceptance updated above)
+CURRENT CORRECTION: Ryan confirmed the black triangle inside the headband
+looks odd and requested pulling H1 down enough to eliminate it. Local geometry
+now targets25% across/50% down (was35% down), preserving x/size/art/envelope/nod and
+ordinary eyes/runtime. Full motion remains below63% height, above the supplied
+paused progress bar (~65%+). This is a clip-derived correction, not proof of all
+Deezer layouts or a physical acceptance. Test observed RED at720p vertical360 vs
+251.5496, then GREEN. Fresh154 Android/42 source tests and local assembleDebug pass.
+Independent read-only review found no scoped blockers; full-motion bottom~62.4%
+leaves limited clearance above observed~65% pause bar. Ryan approved publication:
+"yes , thanks boop :)". Fresh154 Android/42 source checks and full local build pass.
+Exact two-file commit4fe28a490d4a6a6954cb94e3cf8a2bbaf8ccb075 is pushed on animation
+branch, parent9529072. Signed CI run34014467071 PASSED; downloaded APK independently
+verified (stable signer, package/version/SDK/permissions/services, unchanged art).
+Deliverable: task outputs/boop-shield-deezer-lower-4fe28a4/
+BOOP-Shield-Deezer-Lower-4fe28a4.apk. SHA256:
+DF1458FD2B2C6139B92EFC10895FA8A03189A841E8CB140C6E06D9CCE033781A.
+BUILD_RECEIPT.txt beside it, previous APKs retained. Main verified unchanged; no
+PR/merge; dirty notes/private clip not published. No install/device/grant change.
+Placement subsequently accepted; broader physical verification still required.
+Local debug APK is not an installable update.
+
+PREVIOUS SIGNED PLACEMENT: Ryan supplied paused/art-present and maximum-curtain
+photos, then approved the bounded placement-only proposal with "yes and i will send
+you a video perhaps if he needs minor budging". H1 eye pivot is now positioned at
+25% across /35% down the English Shield viewport, same size/art/gentle nod. Anchor
+stays steady through play/pause; ordinary idle eyes remain unchanged. Only
+HeadphoneGeometry.java and its regression test changed in application/test code.
+The test failed against7d8ca54 (horizontal anchor320 expected,1095.5377 observed),
+then passed with the change. Fresh local verification:154 Android tests,42 source
+checks, and assembleDebug PASS. Existing Java/Gradle deprecation warnings remain;
+lint not rerun or claimed green. The local APK is verification-only, not a stable-
+signed installable update. Independent read-only review found no code blockers.
+Ryan approved the signed release ("yes you may :)"). Exact two-file commit
+95290726a7a20ee928122da9561a56afe8b4c97e is pushed to the separate animation branch;
+fresh154 Android/42 source checks and full local build pass. Signed GitHub build
+34013239912 PASSED at exact SHA. Downloaded APK signature/package/SDK/permissions/
+services and unchanged H1/original-eye artwork independently verified. Deliverable:
+task outputs/boop-shield-deezer-placement-9529072/BOOP-Shield-Deezer-Placement-9529072.apk
+SHA256 A69BE86EE9B30532D209CD10208873ADAFDEDDBE54FA53ED596181501429DC22;
+BUILD_RECEIPT.txt beside it. Main independently verified unchanged; no PR/merge.
+Pre-existing dirty memory/preview work and private photos were not published.
+No install/device/grant change by Codex. Ryan's subsequent06:19:55 video shows H1
+on the left, clear of track text, but his feedback is "we were so close...".
+Sampled frames show the curtain edge passing through the open headband space;
+Ryan then confirmed that black gap was the objection and requested the down-only
+correction above, not a motion/art change. Private clip/analysis frames saved beside
+BOOP_ANIMATION_MEMORY.txt. Physical acceptance of the correction remains pending.
+Existing TOP|END gravity retained (English/LTR target); do not claim RTL coverage.
+Minimise on leaving Deezer and restore on return remains separate/unimplemented.
+Until then the fixed H1 position also applies when Deezer plays behind Kodi.
+Approved read-only feasibility check found Shield API30 has Usage Access settings
+at com.android.tv.settings/.device.apps.specialaccess.AppUsageAccessActivity, but
+BOOP lacks usage permission. Public usage events are a candidate with separate
+informed opt-in and bounded queries; app-level timing/reliability still untested.
+Shell can see resumed Deezer activity but that is not unprivileged-app proof.
+No app installs/launches, grants, playback or source changes in this spike.
+Full findings/sources in task outputs/boop-shield-concepts-2026-09-06/
+BOOP_ANIMATION_MEMORY.txt. Do not infer visualizer/control layout from foreground alone.
+
+ANIMATION TEST RESULT: Ryan confirms actual H1 dancing, quick response to scale
+change and pausing with the track. The blocker was his old animator_duration_scale0.0
+speed tweak. Codex changed only that scale to1.0 with approval, verified read-back;
+Ryan then explicitly chose "nah keep them on". KEEP1.0; no automatic restoration.
+Other scales/settings untouched. Play/pause user-verified, full checkpoint not sealed.
+UI overlap remains: live private screenshot shows H1 covers top-right track info;
+Ryan wants him amongst Deezer's dancing curtain (left side in captured frame).
+The newly approved bounded H1-only placement move is locally implemented/tested
+as above, not yet installed or physically verified. It deliberately does not add
+foreground-app awareness; no animation checkpoint is sealed by local tests alone.
+
+Ryan installed the new build and enabled Deezer headphones. Manage access cannot
+open Android's notification-listener screen on this Shield (no activity exists).
+After the explicit broad-permission explanation, Ryan approved "yes please".
+Codex granted ONLY com.boop.shieldoverlay/com.boop.shieldoverlay.DeezerMediaListenerService
+for the paired Shield,user0 using cmd notification allow_listener. Read-back
+verified that exact addition and preserved TV-recommendations access; probe stays
+revoked. Android reports BOOP listener hasBound=true/received=true. No reinstall,
+data clearing, pairing change, other grant, or media-control command was performed.
+Physical H1 play/pause/rendering now user-verified as above; remaining cases pending.
+FUTURE REQUIREMENT: offer a guided Deezer permission/setup step at first startup,
+minimal button presses, no buried Settings hunt. Retain explicit informed Android
+access consent. Shield's missing settings route remains a product onboarding issue;
+do not promise silent self-grant or computer-free setup until supported path is proven.
+This live grant supersedes older build-time "no access granted" notes below.
+
+SHIELD H1/P1 MOTION PREVIEW — 2026-09-06
+---------------------------------------
+Speed feedback: Ryan asked "speed him up just a wee bit". Preview now plays at
+1.2x (music cycle 3 seconds; popcorn cycle 10 seconds). Artwork, amplitudes and
+Java-exported base curves unchanged. Preserve the multiplier in later integration.
+Ryan approved H1 Soft groove (3D graphite/cyan headphones) and P1 Quiet nibble
+(popcorn, floating yellow articulated hands), then approved gentle movement.
+Preview saved in tools/media-motion-preview/index.html on isolated branch
+boop-shield-media-puppetry, based on d3d7f7e. Seven Java motion tests and a
+390-pose export check pass locally. Art has real alpha after explicitly approved
+local cleanup; original rendered sources are preserved. Preview has enlarged
+art, TV-corner scale studies, pause and reduced-motion support.
+The preview itself is NOT an APK or physically verified Shield checkpoint.
+It left runtime files untouched; the separately approved integration below is now
+adding playback observation and narrow overlay/Settings wiring.
+Future behavior: headphones when Deezer is PLAYING; popcorn when Kodi/Forki is
+foreground. Relevant package IDs have now been observed (see probe evidence below);
+foreground detection for Kodi/Forki and production Android access remain unresolved.
+Do not turn the motion study into a claim that the installed app already does it.
+See docs/superpowers/specs/2026-09-06-shield-media-motion-preview.md.
+
+SHIELD MEDIA PROBE AND NEXT DIRECTION — 2026-09-06
+------------------------------------------------
+A separate disposable com.boop.mediasignalprobe APK physically received Deezer
+PLAYING, PAUSED, resumed PLAYING and SKIPPING_TO_NEXT callbacks on the actual
+Shield. Pause/resume callbacks arrived while Deezer was foreground. This is
+app-level callback evidence, not just shell snapshots, but NOT working-BOOP
+integration or long-term stability proof. Previous, buffering, stop, natural
+session loss, reboot and Kodi/Forki behavior remain untested.
+
+Use PlaybackState, not active=true or playback speed: Deezer reported speed=1.0
+even while PAUSED. Duplicate PLAYING callbacks are normal. The observed next/skip
+transition lasted about 59 ms; do not swallow transient events with a blanket
+300-500 ms debounce or infer skips from metadata changes alone. No media ID was
+supplied in the observed metadata. Raw title/artist values were not logged.
+
+Observed installed packages: deezer.android.app, org.xbmc.kodi,
+net.kodinerds.maven.kodi21, com.forki.app, com.fork2.app, com.boop.shieldoverlay.
+Their presence does not establish which Kodi/Forki package is foreground.
+
+Probe notification access was explicitly temporary and HAS BEEN REVOKED.
+The exact original other-listener baseline was restored; no probe service remained
+active in the cleanup check. Probe package remains installed but inert. Working
+BOOP, HA, pairing and app data were untouched. Network debugging was not disabled.
+The ordinary notification-access settings activity is absent on this Shield;
+production permission UX is unresolved. Do not re-enable any listener silently.
+
+Detailed evidence and asset history are in this task's outputs/
+boop-shield-concepts-2026-09-06/BOOP_ANIMATION_MEMORY.txt under
+C:/Users/ryank/Documents/Codex/2026-09-05/referenced-chatgpt-conversation-this-is-an.
+
+Ryan's current order: Deezer-only integration first, then a physically tested
+checkpoint before Kodi/Forki popcorn or track-specific Easter eggs. On 2026-09-06
+he approved "lets do deezer first so we get a nice checkpoint" after the read-back:
+PLAYING -> H1 headphones/gentle nod; PAUSED -> resting headphones; resume continues;
+track updates do not repeatedly restart it; stopped/lost access -> original eyes.
+Preserve the approved 1.2x pace. P1 quiet nibble remains approved but deferred.
+Written integration design is in docs/superpowers/specs/
+2026-09-06-shield-deezer-puppet-design.md. Ryan approved the written spec with
+"happy" and selected helper-agent implementation with task reviews (option 1).
+Plan: docs/superpowers/plans/2026-09-06-shield-deezer-puppet.md. All four tasks,
+whole-change review and one final combined fix/re-review are complete. Root freshly
+verified 153 Android and 42 source tests, and assembled the candidate. Reviews fixed
+the stale animator-cache race, preserved conservative Power Saver holds, prevented
+reentrant stale playback delivery, and froze motion when animator observation fails.
+Direct setting/power callbacks resume held motion without polling.
+Ryan approved root committing/pushing the
+reviewed Deezer + required H1 work to this separate animation branch and building
+the stable-signed APK after checks/reviews. No merge, installation or Android grant
+is authorized. Reviewed exact30-file commit 7d8ca54f53d57a66ac4432dfbcf0c2b6636328f2
+has been pushed to boop-shield-media-puppetry, not merged to main. Stable-signed CI
+run34010543556 PASSED. Root independently verified the downloaded APK's stable BOOP
+certificate, package/permissions/protected services and exact H1 artwork/alpha.
+Deliverable: task outputs/boop-shield-deezer-7d8ca54/BOOP-Shield-Deezer-7d8ca54.apk.
+SHA256:91454F6D25770F3CFF3F2789021AC0BC910BA7C8467441308A0E774DFD79DEDB.
+BUILD_RECEIPT.txt beside it records provenance/recovery/limits. Feature defaultsOFF;
+actual install/access/sofa regression testing remain pending and separately authorized.
+The local debug-signed candidate is NOT an installable BOOP update. No new physical
+checkpoint. Lint is not green:
+3 errors/22 warnings match the independently built unchanged baseline exactly.
+Ryan explicitly approved the signed test build with those existing issues documented.
+The old probe remains
+separate and access-revoked. Per-task recovery ledger is .superpowers/sdd/
+2026-09-06-shield-deezer-puppet/progress.md; do not re-dispatch completed tasks.
+
+Future Easter eggs (ideas, not implemented):
+- Armin van Buuren / Blah Blah Blah: yellow hands become hand puppets in response
+  to the hand-puppets invitation Ryan recalls from the intended recording. Preserve
+  the participation joke. Exact recording, metadata and timing need verification;
+  choreography/duration are not locked. No microphone or lyric recognition.
+- Queen / Freddie Mercury: Ryan requested one for "any queen track ... just cos".
+  Any Queen track, not one song; do not silently expand to solo recordings.
+  Appearance, choreography, duration and replay behavior are not yet designed.
+
+Animation section reconciled: 2026-09-06. The historical engineering snapshot
+below remains dated 2026-09-05; it is not the current animation worktree roadmap.
+Historical reconciliation: 2026-09-05
 Repository: C:\Users\ryank\Documents\Codex\BOOP
 
 PURPOSE
