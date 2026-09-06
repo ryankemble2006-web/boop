@@ -40,11 +40,15 @@ checks=[]
 try:
     adb('install','-r','launcher-delivery/BOOP-Launcher-Alpha1.apk')
     shell('wm','size','1440x3120'); shell('wm','density','560')
+    shell('settings','put','secure','immersive_mode_confirmations','confirmed')
     shell('settings','put','system','accelerometer_rotation','0')
     shell('settings','put','system','user_rotation','0')
     time.sleep(4); shell('input','keyevent','82'); shell('logcat','-c')
     print(shell('am','start','-W','-n',PKG+'/.MainActivity'),flush=True); time.sleep(2)
-    alive(); tap('Start'); shot('01-home')
+    alive()
+    try: tap('Start')
+    except AssertionError: find('Home canvas')
+    shot('01-home')
     home=shell('cmd','package','resolve-activity','--brief','-a','android.intent.action.MAIN','-c','android.intent.category.HOME','-p',PKG)
     assert PKG in home, home
     shell('cmd','package','set-home-activity',PKG+'/.MainActivity')
