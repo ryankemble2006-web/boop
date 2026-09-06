@@ -1,5 +1,8 @@
 name: Verify signed BOOP Launcher Alpha 1
 on:
+  push:
+    branches: [boop-launcher-alpha1]
+    paths: ['launcher/scripts/drag_smoke.py']
   workflow_dispatch:
     inputs:
       build_run_id:
@@ -19,7 +22,7 @@ jobs:
         with:
           name: BOOP-Launcher-Alpha1-signed
           path: launcher-delivery
-          run-id: ${{ inputs.build_run_id }}
+          run-id: ${{ inputs.build_run_id || '34058128961' }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Enable emulator acceleration
         run: |
@@ -35,7 +38,7 @@ jobs:
           profile: pixel_7_pro
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: python3 launcher/scripts/smoke.py
+          script: python3 launcher/scripts/drag_smoke.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

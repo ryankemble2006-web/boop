@@ -19,3 +19,11 @@ source inherited on this Launcher branch. Keep the two apps separate.
 
 Shield reference:boop-shield-media-puppetry. Read its SESSION_HANDOFF.md when
 needed; no need to merge Shield into Launcher to consult its latest source.
+
+
+## Active Launcher drag regression
+Ryan confirmed Alpha 1 installs after its download attachment type was corrected.
+A pinned app's long press opens an instruction menu and release can reach Android's
+Home selector. Reproducing against signed run 34058128961 before changing app code.
+A continuous DOWN/hold/MOVE/UP emulator regression is being added. Existing APK
+remains the delivered build; no drag fix is claimed yet.
