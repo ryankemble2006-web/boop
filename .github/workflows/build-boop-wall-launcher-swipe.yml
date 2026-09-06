@@ -95,6 +95,13 @@ jobs:
           test "$ACTUAL" = "$EXPECTED"
           unzip -tq "$APK"
 
+      - name: Upload signed BOOP Wall Launcher Swipe APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Wall-Launcher-Swipe-debug
+          path: boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
       - name: Set up Android emulator
         uses: android-actions/setup-android@v3
 
@@ -127,10 +134,3 @@ jobs:
           adb shell am start -W -n com.boop.alpha1/.MainActivity
           sleep 5
           adb shell pidof com.boop.alpha1
-
-      - name: Upload signed BOOP Wall Launcher Swipe APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: BOOP-Wall-Launcher-Swipe-debug
-          path: boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
