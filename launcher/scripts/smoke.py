@@ -17,7 +17,7 @@ def tree():
     raise AssertionError('No Android UI hierarchy')
 def find(label):
     for n in tree().iter('node'):
-        if label in (n.get('text'),n.get('content-desc')): return n
+        if label.casefold() in ((n.get('text') or '').casefold(),(n.get('content-desc') or '').casefold()): return n
     raise AssertionError('Missing control: '+label)
 def tap(label,hold=False):
     n=find(label); x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds')))
@@ -37,7 +37,7 @@ try:
     shell('settings','put','system','user_rotation','0')
     time.sleep(4); shell('input','keyevent','82'); shell('logcat','-c')
     print(shell('am','start','-W','-n',PKG+'/.MainActivity'),flush=True); time.sleep(2)
-    tap('Start'); alive(); shot('01-home')
+    alive(); tap('Start'); shot('01-home')
     home=shell('cmd','package','resolve-activity','--brief','-a','android.intent.action.MAIN','-c','android.intent.category.HOME','-p',PKG)
     assert PKG in home, home
     shell('cmd','package','set-home-activity',PKG+'/.MainActivity')
@@ -58,7 +58,7 @@ try:
     alive(); find('Settings'); shot('06-second-screen-size'); checks.append('Rotation and second phone-sized viewport preserve shortcut')
     tap('Home canvas',hold=True); find('Bail out'); shot('07-editor'); tap('Bail out'); time.sleep(.5)
     activity=shell('dumpsys','activity','activities'); (OUT/'bailout-activity.txt').write_text(activity)
-    assert 'com.android.settings' in activity, 'Bail out did not open Settings'
+    assert any('com.android.settings' in line for line in activity.splitlines() if 'mResumedActivity:' in line or 'topResumedActivity=' in line), 'Bail out did not foreground Settings'
     checks.append('Bail out opens Android Settings')
     logs=adb('logcat','-d','-s','AndroidRuntime:E'); (OUT/'runtime-log.txt').write_text(logs)
     assert 'Process: '+PKG not in logs, logs
