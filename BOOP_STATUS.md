@@ -2,6 +2,15 @@
 
 ## Current handoff — 2026-09-06
 
+### Cancelled voice-to-Deezer Cast route — 2026-09-07
+
+Do not implement the Music Assistant/Deezer/Cast bridge proposed in temporary
+2026-09-07 documents: Ryan rejected it because it requires installation,
+authorization and target binding, contrary to BOOP's zero-setup, dad-friendly
+requirement. The documents were deleted before source/configuration work began.
+Google Assistant is being removed and is not an allowed fallback. Existing Deezer
+puppetry is untouched; no BOOP app, HA or device state changed.
+
 Read SESSION_HANDOFF.md for the current app state and BOOP_START_HERE.md for
 cross-device branch routing. Ryan accepted4fe28a4's lower placement ("awesome
 placement"); H1 dancing and pausing with Deezer are physically user-verified.

@@ -1,7 +1,17 @@
 BOOP DURABLE MEMORY
 ===================
 
-LATEST CONTEXT — 2026-09-06
+LATEST CONTEXT — 2026-09-07
+VOICE MUSIC PIVOT: Ryan rejected the proposed Music Assistant/Deezer/Cast bridge
+before implementation because setup, Deezer authorization and per-user target
+binding violate the required zero-setup, dad-friendly experience. The temporary
+spec and plan were deleted; do not resurrect them as a setup flow, a background
+PC service, a Google Assistant fallback, or a generic-Cast workaround. No BOOP
+source, APK, permission, device/HA setting, playback or account state changed.
+Google Assistant is being removed. BOOP must not depend on it or silently hand
+off a music command to it. Future music-control work needs a genuinely
+zero-configuration, local-first route before design/implementation resumes.
+
 Read SESSION_HANDOFF.md, BOOP_START_HERE.md and BOOP_CONTEXT.md first.
 Ryan subsequently confirmed "awesome placement" for4fe28a4. Placement, dancing
 and pausing are user-verified; the all-layout/HDR/lifecycle checkpoint is not.

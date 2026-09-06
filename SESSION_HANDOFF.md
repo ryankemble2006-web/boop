@@ -1,4 +1,21 @@
-# Shield handoff — 2026-09-06
+# Shield handoff — 2026-09-07
+
+## Cancelled: voice-to-Deezer Cast bridge
+
+Ryan rejected the proposed Music Assistant / Deezer / Cast route before any app or
+Home Assistant configuration work began: it requires provider installation,
+Deezer authorization and a target-binding setup, so it fails the project's
+zero-setup, dad-friendly bar. Do not revive it as a hidden setup wizard, a PC
+service, a Google Assistant fallback or a generic-Cast workaround. The temporary
+design and implementation-plan documents were deliberately removed. No source,
+APK, Android permission, device setting, Home Assistant configuration, Deezer
+account or playback state changed. BOOP's existing Deezer observer/puppet remains
+unchanged.
+
+The durable product requirement is now: BOOP must provide useful music control
+without requiring a separate music-server installation, account authorization or
+per-user destination setup. Google Assistant is being removed; do not depend on
+it or silently delegate to it.
 
 Owner: Ryan's laptop task. Branch:boop-shield-media-puppetry.
 Latest application code:4fe28a490d4a6a6954cb94e3cf8a2bbaf8ccb075.
