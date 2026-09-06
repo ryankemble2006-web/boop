@@ -45,6 +45,9 @@ public final class MainActivity extends Activity {
  private Button button(String text,Runnable action){Button b=new Button(this);b.setText(text);b.setTextSize(18);b.setMinHeight(dp(56));b.setOnClickListener(v->action.run());return b;}
  private TextView label(String s){TextView t=new TextView(this);t.setText(s);t.setTextSize(20);t.setTextColor(Color.WHITE);t.setGravity(Gravity.CENTER);t.setPadding(dp(12),dp(12),dp(12),dp(12));return t;}
  private void render(){
+  // Removing the old root sends CANCEL before detach. Preserve the navigation
+  // state just chosen by Back/HOME instead of restoring the drag's old mode.
+  if(touchingItem!=null)touchingItem.cancelTouch(false);
   if(!drawer&&getCurrentFocus()!=null)getSystemService(android.view.inputmethod.InputMethodManager.class).hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),0);
   root=new LinearLayout(this);root.setMotionEventSplittingEnabled(false);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.BLACK);root.setFitsSystemWindows(true);setContentView(root);
   root.setOnApplyWindowInsetsListener((v,in)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=in.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.displayCutout()|WindowInsets.Type.ime());v.setPadding(bars.left,bars.top,bars.right,bars.bottom);}else{int left=in.getSystemWindowInsetLeft(),top=in.getSystemWindowInsetTop(),right=in.getSystemWindowInsetRight(),bottom=in.getSystemWindowInsetBottom();DisplayCutout cut=in.getDisplayCutout();if(cut!=null){left=Math.max(left,cut.getSafeInsetLeft());top=Math.max(top,cut.getSafeInsetTop());right=Math.max(right,cut.getSafeInsetRight());bottom=Math.max(bottom,cut.getSafeInsetBottom());}v.setPadding(left,top,right,bottom);}return in;});

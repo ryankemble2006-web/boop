@@ -41,3 +41,11 @@ remains the delivered build; no drag fix is claimed yet.
   release, size options, movement, toolbar crossing and interrupted touch.
 - New signed build and emulator verification pending. Do not distribute as fixed
   until those checks finish. HA widget/provider device checks remain outstanding.
+
+### First signed fix validation
+Build/lint/10 unit tests passed for source 8606a1d, run 34061237800.
+Eight continuous-touch emulator checks passed, including the reported removal
+gesture and release across the Bail out toolbar area. The additional Back-during-
+hold check failed. Android sends CANCEL while removing the old root before detach;
+that cancellation restored the previous editing flag. render() now cancels the
+active item without restoring its old mode before replacing views. Rebuild pending.
