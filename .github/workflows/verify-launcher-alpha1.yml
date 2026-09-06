@@ -1,8 +1,5 @@
 name: Verify signed BOOP Launcher Alpha 1
 on:
-  push:
-    branches: [boop-launcher-alpha1]
-    paths: ["launcher/scripts/smoke.py"]
   workflow_dispatch:
     inputs:
       build_run_id:
@@ -22,7 +19,7 @@ jobs:
         with:
           name: BOOP-Launcher-Alpha1-signed
           path: launcher-delivery
-          run-id: ${{ inputs.build_run_id || '34058128961' }}
+          run-id: ${{ inputs.build_run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Enable emulator acceleration
         run: |

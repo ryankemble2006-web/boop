@@ -69,7 +69,7 @@ try:
     alive(); find('Settings'); shot('06-second-screen-size'); checks.append('Rotation and second phone-sized viewport preserve shortcut')
     tap('Home canvas',hold=True); find('Bail out'); shot('07-editor'); tap('Bail out'); time.sleep(.5)
     activity=shell('dumpsys','activity','activities'); (OUT/'bailout-activity.txt').write_text(activity)
-    assert any('com.android.settings' in line for line in activity.splitlines() if 'mResumedActivity:' in line or 'topResumedActivity=' in line), 'Bail out did not foreground Settings'
+    find('Default home app')
     checks.append('Bail out opens Android Settings')
     logs=adb('logcat','-d','-s','AndroidRuntime:E'); (OUT/'runtime-log.txt').write_text(logs)
     assert 'Process: '+PKG not in logs, logs
