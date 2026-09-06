@@ -55,7 +55,33 @@ public final class MainActivity extends Activity {
  }
  private void navigatePage(int dest){if(dest!=page){history.push(page);page=dest;}}
  private void changePage(int dest){navigatePage(dest);drawer=false;render();}
- private void installCanvasGestures(){GestureDetector detector=new GestureDetector(this,new GestureDetector.SimpleOnGestureListener(){public boolean onDown(MotionEvent e){return true;}public void onLongPress(MotionEvent e){editing=true;render();}public boolean onFling(MotionEvent a,MotionEvent b,float vx,float vy){if(a==null)return false;float dx=b.getX()-a.getX(),dy=b.getY()-a.getY();if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>dp(60)){if(dx<0)changePage(Math.min(secondPage?2:1,page+1));else changePage(Math.max(0,page-1));}else if(dy < -dp(60)){drawer=true;render();}else if(dy>dp(60)&&editing){editing=false;render();}return true;}});canvas.setOnTouchListener((v,e)->detector.onTouchEvent(e));}
+ private void installCanvasGestures(){
+  canvas.setOnTouchListener(new View.OnTouchListener(){
+   float startX,startY;boolean active,longPressed;Runnable hold;
+   public boolean onTouch(View view,MotionEvent event){
+    switch(event.getActionMasked()){
+     case MotionEvent.ACTION_DOWN:
+      startX=event.getX();startY=event.getY();active=true;longPressed=false;
+      hold=()->{if(active){longPressed=true;editing=true;view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);render();}};
+      handler.postDelayed(hold,ViewConfiguration.getLongPressTimeout());return true;
+     case MotionEvent.ACTION_MOVE:
+      if(Math.abs(event.getX()-startX)>ViewConfiguration.get(MainActivity.this).getScaledTouchSlop()||Math.abs(event.getY()-startY)>ViewConfiguration.get(MainActivity.this).getScaledTouchSlop())handler.removeCallbacks(hold);
+      return true;
+     case MotionEvent.ACTION_UP:
+      handler.removeCallbacks(hold);boolean navigate=active&&!longPressed;active=false;
+      if(navigate){String direction=Swipe.classify(event.getX()-startX,event.getY()-startY,dp(60));
+       if("left".equals(direction))changePage(Math.min(secondPage?2:1,page+1));
+       else if("right".equals(direction))changePage(Math.max(0,page-1));
+       else if("up".equals(direction)){drawer=true;render();}
+       else if("down".equals(direction)&&editing){editing=false;render();}
+      }return true;
+     case MotionEvent.ACTION_CANCEL:handler.removeCallbacks(hold);active=false;return true;
+     default:return true;
+    }
+   }
+  });
+ }
+
  private void renderDrawer(){
   EditText search=new EditText(this);search.setSingleLine(true);search.setTextColor(Color.WHITE);search.setHintTextColor(Color.LTGRAY);search.setTextSize(22);search.setHint("Search apps");search.setContentDescription("Search apps");root.addView(search);ScrollView scroll=new ScrollView(this);LinearLayout list=new LinearLayout(this);list.setOrientation(LinearLayout.VERTICAL);scroll.addView(list);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));root.addView(button("Back to home",()->{drawer=false;editing=false;render();}));
   apps.clear();apps.addAll(getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),0));apps.sort((a,b)->a.loadLabel(getPackageManager()).toString().compareToIgnoreCase(b.loadLabel(getPackageManager()).toString()));
