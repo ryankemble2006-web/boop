@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class WallPolishInstrumentation extends Instrumentation {
     private MainActivity activity;
     private File evidence;
+    private final StringBuilder observations = new StringBuilder();
 
     @Override public void onCreate(Bundle args) { super.onCreate(args); start(); }
 
@@ -48,10 +49,10 @@ public final class WallPolishInstrumentation extends Instrumentation {
             SystemClock.sleep(700);
             verifyIdleBlinkAndSleep();
             verifyLandscapeAndBackground();
-            result.putString("stream", "\nPASS: styled notice, visible background toast, awake blink, busy-state gates, original sleep deadline, landscape and background cancellation\n");
+            result.putString("stream", "\n" + observations + "\nPASS: styled notice, visible background toast, awake blink, busy-state gates, original sleep deadline, landscape and background cancellation\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable failure) {
-            result.putString("stream", "\nFAIL: " + android.util.Log.getStackTraceString(failure));
+            result.putString("stream", "\n" + observations + "\nFAIL: " + android.util.Log.getStackTraceString(failure));
             finish(Activity.RESULT_CANCELED, result);
         }
     }
@@ -172,12 +173,27 @@ public final class WallPolishInstrumentation extends Instrumentation {
         Canvas canvas = new Canvas(image);
         CountDownLatch captured = new CountDownLatch(1);
         AtomicReference<Throwable> failure = new AtomicReference<>();
+        final float[] minimumOpenness = {1f};
+        final int[] frameCount = {0};
+        final long[] previousFrame = {0L};
+        final long[] largestFrameGap = {0L};
+        Runnable scheduled = (Runnable) onMain(() -> get(face, "idleBlinkRunnable"));
+        observations.append("BLINK_OBSERVATION_START " + name + " queued="
+                + onMain(() -> face.getHandler().hasCallbacks(scheduled))
+                + " eligible=" + onMain(() -> (Boolean) invoke(face, "canIdleBlink"))
+                + " animationScale=" + android.animation.ValueAnimator.getDurationScale()).append("\n");
         // Observe the actual drawing frame. Sampling a 220ms animation and then
         // posting a second screenshot task can miss the entire closed frame.
         android.view.ViewTreeObserver.OnPreDrawListener observer = () -> {
             if (captured.getCount() == 0) return true;
             try {
-                if ((Float) get(face, "idleBlinkOpenness") < 0.15f) {
+                long now = SystemClock.uptimeMillis();
+                float openness = (Float) get(face, "idleBlinkOpenness");
+                frameCount[0]++;
+                if (previousFrame[0] != 0L) largestFrameGap[0] = Math.max(largestFrameGap[0], now - previousFrame[0]);
+                previousFrame[0] = now;
+                minimumOpenness[0] = Math.min(minimumOpenness[0], openness);
+                if (openness < 0.15f) {
                     face.draw(canvas);
                     captured.countDown();
                 }
@@ -188,6 +204,10 @@ public final class WallPolishInstrumentation extends Instrumentation {
         boolean observed;
         try { observed = captured.await(8500, TimeUnit.MILLISECONDS); }
         finally { onMain(() -> { face.getViewTreeObserver().removeOnPreDrawListener(observer); return null; }); }
+        observations.append("BLINK_OBSERVATION_END " + name + " frames=" + frameCount[0]
+                + " minOpenness=" + minimumOpenness[0] + " largestFrameGapMs=" + largestFrameGap[0]
+                + " queued=" + onMain(() -> face.getHandler().hasCallbacks(scheduled))
+                + " eligible=" + onMain(() -> (Boolean) invoke(face, "canIdleBlink"))).append("\n");
         if (failure.get() != null) { image.recycle(); throw new Exception(failure.get()); }
         if (!observed) {
             image.recycle();
