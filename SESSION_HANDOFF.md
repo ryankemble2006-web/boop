@@ -1,72 +1,60 @@
 # BOOP Launcher Alpha 2 handoff — 2026-09-07
 
-Owner: Ryan's Launcher work. Authoritative development branch: `boop-launcher-alpha2`.
+Owner: Ryan's Launcher work. Authoritative branch: `boop-launcher-alpha2`.
 Project: `launcher/`; package remains `com.boop.launcher`.
 
-## Current state
+## Latest verified state
 
-Ryan rejected the Alpha 1 visual/interaction direction as old-fashioned and approved a clean-sheet replacement inspired by current Pixel Launcher interaction patterns without copying Google proprietary code or assets.
+Ryan physically installed the first Alpha 2 baseline (`0.2.0` / code `3`) and confirmed the core direction works: pure black launcher canvas and a functioning swipe-up app drawer. The physical screenshot then exposed two concrete problems: Android's status bar and 3-button navigation bar remained visible over the launcher, and the bottom drawer row could sit underneath the navigation area.
 
-Alpha 1 remains preserved on `boop-launcher-alpha1` only as a historical escape hatch. Do not reuse its monolithic UI architecture merely to save effort.
+Ryan explicitly approved immersive Home + drawer. The launcher should hide status and navigation bars, allow Android to reveal them transiently with an edge swipe, then return to the uninterrupted black canvas. The drawer must retain safe bottom space so its final row is not clipped.
 
-Approved design:
-`docs/superpowers/specs/2026-09-07-boop-launcher-alpha2-design.md`
+Implementation source commit: `92c34d47b19e6d2191891e9eb9ffe5a329394cf1` (`feat: make Alpha 2 immersive and protect drawer bottom`).
 
-Implementation plan:
-`docs/superpowers/plans/2026-09-07-boop-launcher-alpha2.md`
+GitHub Actions run `34080350338` completed successfully. Unit tests, the immersive regression tests, Android lint, permanent-signer release build, artifact upload and Android 16 signed-APK launch/survival smoke all passed.
 
-## First signed Alpha 2 physical-feel baseline
+Signed artifact: `BOOP-Launcher-Alpha2-signed`, artifact ID `10003492030`.
+APK SHA-256: `1dfcd87412b8308704325db9d1045f08294942e01ff53d62cddd20cf21d8435c`.
 
-Current tested application source: `844301bfe264a52b202787e8224fb43452dd3ff6`.
-
-GitHub Actions run `34077665229` completed successfully. Unit tests, Android lint, release assemble and the permanent BOOP signing step all passed. Signed artifact `BOOP-Launcher-Alpha2-signed`, artifact ID `10002643933`, contains `BOOP-Launcher-Alpha2.apk` plus package/signature/hash receipts.
-
-APK SHA-256:
-`89a5cd50f97dd87e513d86d79bfae71b5f962d86f760190c57527a92fd289b96`
-
-Package receipt:
-- package `com.boop.launcher`
-- versionCode `3`
-- versionName `0.2.0`
+Package receipt for this build:
+- `com.boop.launcher`
+- versionName `0.2.1`
+- versionCode `4`
 - minSdk `29`
-- targetSdk / compileSdk `36`
+- target/compile SDK `36`
+- existing permanent BOOP signing identity unchanged
 
-Signature receipt:
-- one signer
-- APK Signature Scheme v2 verifies
-- BOOP signer certificate SHA-256 `c0f4549b7d367f7823a76ef32468f5ef7695e3a3380b2145d5a94ff3b1aa9e61`
+This build is CI-green and launch-smoke-green, but the new immersive behavior is not yet physically accepted on Ryan's Pixel. Do not call the immersive fix physically green until he installs it.
 
-This is CI-green only. It has not yet been installed or physically accepted on Ryan's Pixel 10 Pro XL. Do not promote Alpha 2 over Alpha 1 in the shared main app map until physical acceptance.
+## Immersive implementation
 
-## What changed from Alpha 1
+`EdgeToEdge` now hides `WindowInsets.Type.systemBars()` on Android 11+ and uses `BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE`, preserving an Android escape gesture while keeping Home visually clean. Legacy devices use immersive-sticky fullscreen/navigation flags. `MainActivity` reapplies hidden bars whenever launcher window focus returns.
 
-Alpha 2 replaces the old single-Activity/editor-heavy interaction structure with smaller launcher units for state, edge-to-edge window setup, app enumeration, local search, workspace persistence, app placement/drag and widget-host plumbing.
+`AllAppsView` now uses `clipToPadding(false)` and reserves bottom padding based on the navigation-bar inset ignoring visibility, so the last app row stays usable even if system navigation is transiently revealed.
 
-The baseline deliberately removes Alpha 1 furniture and permissions that are not needed for the clean Home experience: no permanent clock, At a Glance, Google search pill, dock/hotseat, introduction/editor mode, BOOP return-strip overlay, foreground service, Internet permission or microphone permission.
+The version was bumped from `0.2.0`/3 to `0.2.1`/4 for a clean update installation.
 
-Home is pure black and edge-to-edge. Swipe up on empty Home opens All Apps. Native installed icons/labels are shown. Tap launches; hold from All Apps pins to Home. Search appears only when intentionally opened. Placed apps persist, launch on tap, can be picked up after a hold, moved, or removed by releasing in the top band. Alpha 1 workspace preferences are intentionally discarded once on first Alpha 2 start rather than carrying its old schema forward.
+## Core Alpha 2 direction
 
-Back behavior is explicit: Search -> All Apps -> Home. Android 13+ uses predictive-back registration; older Android keeps the legacy fallback.
+Ryan rejected Alpha 1's old-fashioned visual/interaction direction and approved a clean-sheet launcher inspired by current Pixel Launcher interaction patterns without copying Google proprietary code or assets. Alpha 1 remains preserved on `boop-launcher-alpha1` as historical fallback only.
 
-## Known incomplete areas
+Approved design: `docs/superpowers/specs/2026-09-07-boop-launcher-alpha2-design.md`.
+Implementation plan: `docs/superpowers/plans/2026-09-07-boop-launcher-alpha2.md`.
 
-Do not overstate this baseline:
+Alpha 2 deliberately removes permanent clock, At a Glance, Google search pill, dock/hotseat, introduction/editor furniture, BOOP return-strip overlay, foreground service, Internet permission and microphone permission. Home is a black canvas; swipe up opens All Apps; native icons/labels are used; search is contextual; apps can be pinned, persisted, moved and removed; Back flows Search -> All Apps -> Home.
 
-1. Drawer motion is not yet Launcher3-quality direct-finger spring physics. The current threshold/settle transition exists so Ryan can install and judge the overall direction; Pixel 10 Pro XL feel is the authority for the next motion pass.
-2. Widget host selection/configuration plumbing exists and cleans cancelled IDs, but widget views are not yet rendered/movable/resizable on the Alpha 2 workspace. Widget support is therefore incomplete.
-3. Dynamic multi-page workspace behavior from the approved full Alpha 2 design is not complete in this baseline.
-4. No physical checks yet for icon scale, drawer motion, search discoverability, app move/remove, gesture-navigation visual blending, rotation/process death or real widget flows.
+## Still incomplete
+
+- Drawer transition is not yet Launcher3-quality direct-finger/spring physics.
+- Widget picker/config plumbing exists but widget views are not yet fully rendered/movable/resizable on the workspace.
+- Dynamic multi-page workspace behavior is incomplete.
+- Rotation/process-death and real widget flows still need physical checks.
+- The new immersive system-bar behavior and drawer safe-bottom fix need Ryan's physical acceptance.
 
 ## Next physical step
 
-Install `BOOP-Launcher-Alpha2.apk` over the existing `com.boop.launcher` package. Because the GitHub workflow uses the existing permanent BOOP signing identity, this should be an update rather than a side-load identity change.
-
-On Pixel 10 Pro XL, first judge only the fundamentals: empty pure-black Home, absence of permanent furniture, swipe-up to All Apps, native icon scale/spacing, contextual search, hold-to-pin, app move/remove, Home/Back and the bottom gesture area blending into black. Record anything that feels old-fashioned or awkward as a bug/feel list rather than tuning from emulator screenshots.
-
-After that physical baseline, prioritize true Launcher3-grade drawer/finger physics and fix any blocking interaction issues before finishing widgets/pages or reintroducing BOOP-specific flourishes.
+Install the signed `0.2.1` / code `4` APK over the existing launcher. Confirm first that Home is genuinely uninterrupted black, the clock/Wi-Fi/battery and 3-button nav are hidden during normal use, an edge swipe can temporarily recover Android's bars, and the final drawer row is no longer clipped. Then continue collecting the feel/bug list, especially drawer physics, spacing and icon scale.
 
 ## Cross-app boundaries
 
-Wall remains `com.boop.alpha1`; Launcher remains `com.boop.launcher`; Shield remains `com.boop.shieldoverlay`. Keep the apps independent. Main owns shared cross-project contracts; this branch owns Launcher implementation state.
-
-Before further edits, fetch/recheck live main and `boop-launcher-alpha2`, preserve concurrent work, use the existing release signing workflow, run appropriate checks, commit reviewed changes, push, and verify live GitHub HEAD. CI-green, signed, physically installed and physically accepted are separate states.
+Wall remains `com.boop.alpha1`; Launcher remains `com.boop.launcher`; Shield remains `com.boop.shieldoverlay`. Keep apps independent. Main owns shared cross-project contracts; this branch owns Launcher implementation state. Preserve the existing signing identity and Alpha 1 fallback. CI-green, launch-smoke-green and physically accepted are separate states.
