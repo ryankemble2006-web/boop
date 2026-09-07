@@ -230,6 +230,8 @@ jobs:
           test "$(adb get-serialno)" = emulator-5554
           adb shell am force-stop com.boop.alpha1
           adb install -r boop-build/BOOP-Alpha1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          adb logcat -c
+          trap 'adb logcat -d -v threadtime -s NotificationService:V Toast:V ToastUI:V SystemUIToast:V AndroidRuntime:E "*:S" > wall-polish-system.log' EXIT
           adb shell am instrument -w com.boop.alpha1.test/com.boop.alpha1.WallPolishInstrumentation | tee wall-polish-instrumentation.txt
           grep -q 'PASS: styled notice, visible background toast, awake blink' wall-polish-instrumentation.txt
           grep -q 'INSTRUMENTATION_CODE: -1' wall-polish-instrumentation.txt
@@ -246,6 +248,7 @@ jobs:
           name: BOOP-Wall-v32-polish-evidence
           path: |
             wall-polish-instrumentation.txt
+            wall-polish-system.log
             wall-polish-evidence/
           if-no-files-found: ignore
           retention-days: 7
