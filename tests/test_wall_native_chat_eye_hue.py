@@ -15,8 +15,8 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert "patch-wall-eye-hue.py" in materialize
     assert "ActivityOptions.makeCustomAnimation" in materialize
 
-    assert "versionCode 39" in build
-    assert 'versionName "0.4.19-wall-sleepy-close"' in build
+    assert "versionCode 40" in build
+    assert 'versionName "0.4.20-wall-landscape-eye-match"' in build
     assert "BOOP_RELAY_URL" in build
     assert "BOOP_RELAY_TOKEN" in build
 
@@ -42,6 +42,14 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert "BoopSleepCharm.alpha(progress)" in sleep_patch
     assert "cancelSleepCharm();" in sleep_patch
     assert ".setDuration(SLEEP_DURATION_MS)" not in sleep_patch.split("new_sleep =", 1)[1].split("return replace_once", 1)[0]
+
+
+def test_landscape_eye_spacing_preserves_portrait_face_geometry():
+    layout = Path("source/BoopEyeLayout.java").read_text()
+
+    assert "SOURCE_EYE_CENTRE_DISTANCE * baseScale * LANDSCAPE_EYE_SCALE" in layout
+    assert "SOURCE_EYE_WIDTH * baseScale * LANDSCAPE_EYE_SCALE" in layout
+    assert "SOURCE_EYE_HEIGHT * baseScale * LANDSCAPE_EYE_SCALE" in layout
 
 
 def test_hue_overlay_is_one_persisted_full_spectrum_control_under_the_eyes():
