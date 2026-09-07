@@ -12,11 +12,16 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Archive tracked inputs only
-        run: git archive --format=zip --output=boop-source-audit.zip HEAD
+      - name: Read the existing pinned wake assets
+        run: |
+          bash scripts/fetch-wake-assets.sh audit-app
+          mkdir -p wake-audit
+          cp .cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/bpe.model wake-audit/
+          cp .cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/tokens.txt wake-audit/
+          cp -R .cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/test_wavs wake-audit/
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Source-Audit
-          path: boop-source-audit.zip
+          name: BOOP-Wake-Audit
+          path: wake-audit/
           retention-days: 3
           if-no-files-found: error
