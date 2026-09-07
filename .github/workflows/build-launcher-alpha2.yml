@@ -77,7 +77,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           script: |
-            set -euo pipefail
+            set -eu
             mkdir -p launcher-evidence
             adb logcat -c
             adb install -r launcher-delivery/BOOP-Launcher-Alpha2.apk
