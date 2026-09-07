@@ -64,6 +64,8 @@ replace_once(
 old_resume = '''    @Override
     protected void onResume() {
         super.onResume();
+        activityInForeground = true;
+        if (wakeCoordinator != null) wakeCoordinator.setVoiceSettingsOpen(voiceSettingsOpen || chatModeOpen);
         shakeDetector.reset();
         if (sensorManager != null && shakeSensor != null) {
             sensorManager.registerListener(this, shakeSensor, SensorManager.SENSOR_DELAY_GAME);
@@ -82,6 +84,8 @@ old_resume = '''    @Override
 new_resume = '''    @Override
     protected void onResume() {
         super.onResume();
+        activityInForeground = true;
+        if (wakeCoordinator != null) wakeCoordinator.setVoiceSettingsOpen(voiceSettingsOpen || chatModeOpen);
         shakeDetector.reset();
         if (sensorManager != null && shakeSensor != null) {
             sensorManager.registerListener(this, shakeSensor, SensorManager.SENSOR_DELAY_GAME);
