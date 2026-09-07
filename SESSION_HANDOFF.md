@@ -2,29 +2,58 @@
 
 Owner: isolated combined Wall candidate on `boop-wall-native-chat-eye-hue`.
 Package: `com.boop.alpha1`.
-Candidate version: versionCode 38 / `0.4.18-wall-eye-hue-local-intent`.
+Candidate version: versionCode 39 / `0.4.19-wall-sleepy-close`.
 
-## Current UX
+## Current physical result
 
-Eye colour is not in Voice Settings. The v36 two-eye one-second gesture physically failed and is superseded. The first v37 voice implementation also physically failed because its matcher required an exact phrase, so `BOOP, change eye colour` and recognizer wording could fall through to Free Chat/assistant handling.
+Ryan installed/tested the v38 local eye-colour intent and reported it was **literally perfect**. That confirms the eye-colour summon/slider UX itself on-device: tolerant local command routing works, the control opens locally instead of Free Chat, and the live hue UI is accepted. Do not regress this path.
 
-v38 fixes that by treating eye colour exactly like Voice Settings: a tolerant **local intent** checked at the start of `handleRecognizedSpeech(...)`, before Home Assistant, OpenCode, Native Chat or Free Chat routing. It accepts `change eye colour`, `change eye color`, wake-word-prefixed wording such as `BOOP, change eye colour`, plural eyes, `eye hue`, and a narrow recognizer homophone form where `eye` is heard as `I`.
+This does not automatically promote the older protected Wall checkpoint or imply every unrelated v38 regression item was exhaustively retested.
 
-When matched, BOOP opens the single hue slider underneath the visible eyes. The eyes update live while the slider moves. Tap anywhere outside the slider area to dismiss it.
+## Eye-colour contract retained
 
-Hue remains 0..359 degrees. The accepted cyan/blue default is 190 degrees and deliberately applies no ColorFilter. Non-default values hue-rotate the existing shared `boop_eyes` Paint, so both eyes use the original artwork/geometry/render path. Hue persists in SharedPreferences `boop_eyes` / `hue_degrees`.
+Eye colour is not in Voice Settings. The v36 two-eye one-second gesture physically failed and is superseded. The first v37 voice implementation also physically failed because its matcher required an exact phrase.
 
-Native Chat/OpenAI relay, browser/free-chat mode, wake path, idle blink, thinking, shake, Member Berry, Chat-mode hold, caller-owned Wall -> Launcher transition, black background, package and permanent BOOP signer are preserved. No mouth or extra visual controls were added.
+v38+ treats eye colour like Voice Settings: a tolerant local intent checked at the start of `handleRecognizedSpeech(...)`, before Home Assistant, OpenCode, Native Chat or Free Chat routing. It accepts UK/US colour wording, wake-word prefixes, plural eyes, `eye hue`, and the narrow recognizer `I color/colour` homophone.
+
+The single hue slider appears underneath the visible eyes, updates both eyes live, dismisses on outside tap, and persists in SharedPreferences `boop_eyes` / `hue_degrees`. The accepted cyan/blue default is 190 degrees and applies no ColorFilter.
+
+## v39 sleep animation tweak
+
+Ryan asked to replace the old sleep animation with the existing idle blink language, then close the eyes slowly with sleepy charm.
+
+v39 changes only the sleep puppetry:
+- the first 183 ms reuses the exact accepted `BoopIdleBlink.openness(...)` geometry;
+- the eyes reopen fully after that blink;
+- a brief open settle follows;
+- the lids droop slowly to about half-open and pause there;
+- a longer eased final close settles to a thin 4% eyelid line;
+- alpha stays fully visible through 92% of the sequence, then fades gently to black at the end;
+- total sleep animation duration is about 1.24 seconds;
+- wake animation is unchanged and cancels any in-progress sleepy close safely.
+
+The old 300 ms whole-face squash/fade sleep path is no longer used by the materialized v39 app. Eye artwork, geometry/cropping/render path, hue tint, black background, wake, idle blink, thinking, shake, Member Berry, hitboxes/gestures, Chat mode, Native Chat/OpenAI relay and Launcher swipe are otherwise preserved.
 
 ## Verification
 
-GitHub Actions run `34093926250` built the v38 candidate successfully from `3c29d4b28f5430710d7b189a9cf10a2929ca986d`.
+GitHub Actions run `34094925623` completed successfully for build commit `240a12869d8871ed4245e7476bec279f36dd75d7`.
 
-The focused local-intent JVM harness explicitly passed `change eye colour`, `change eye color`, `BOOP, change eye colour`, natural wording, plural eyes, `eye hue`, and recognizer `I color`, while rejecting unrelated colour questions/house commands. Existing hue/Chat/shake harnesses, source guards, materialization, effective Native Chat/OpenAI integration checks, Android unit tests, signed build, package/version inspection and permanent signer continuity also passed.
+Passed gates include:
+- focused source guards;
+- exact blink-parity sleep harness;
+- full reopen after the lead-in blink;
+- half-lid pause and >1 second slow close timing;
+- near-shut final eyelid line and late fade-to-black;
+- materialized `BOOP_SLEEP_CHARM_V1` integration;
+- existing eye hue/local-intent, Chat, Member Berry, thinking and shake harnesses;
+- Native Chat/OpenAI relay markers and 33 wake mappings;
+- Android unit tests;
+- stable signed v39 build;
+- package/version inspection and permanent BOOP signer continuity.
 
-Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v38`, artifact ID `10007905660`.
-Extracted APK SHA-256: `4e82b828c3eafcc6f650b9e76bd5d27c34973845158bb174d70a4c68741ca28e`.
+Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v39`, artifact ID `10008263855`.
+Extracted APK SHA-256: `195e02f914436fcdadfe4cd9fd570499e6f4afa67c394d1020f5dfd89c48b0ce`.
 
-CI green is not physical green. Physical acceptance still needs: install v38 over the current Wall build; test tap-to-talk `change eye colour` and wake-word `BOOP, change eye colour`; verify neither route opens Free Chat; confirm slider placement below visible eyes, live colour changes, outside-tap dismissal and persistence after restart; then regression-check wake/sleep, Chat-mode hold, tap-to-speak, thinking, shake, Member Berry, Launcher swipe and Native Chat conversation.
+CI green is not physical green for the new sleep animation. Physical acceptance still needs: install v39 over v38, allow/tell BOOP to sleep, judge the blink -> drowsy droop -> slow close timing, then wake it again and confirm wake remains correct. Also spot-check the already-accepted eye-colour command plus Native Chat/Member Berry/thinking/shake as convenient.
 
-The protected physical Wall checkpoint remains unchanged until Ryan physically accepts the candidate.
+The protected physical Wall checkpoint remains unchanged until Ryan explicitly promotes a newer candidate.
