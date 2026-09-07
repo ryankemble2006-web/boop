@@ -2,61 +2,51 @@
 
 Owner branch: `shield-turbo-v01`. Package: `com.boop.shieldturbo`.
 Candidate: `0.1.0`, versionCode `1`.
-Verification: CI, established signer and installed-release emulator smoke tests passed. Physical NVIDIA Shield acceptance is pending.
+Verification: CI, established signer and installed-release emulator smoke tests passed. Physical NVIDIA Shield acceptance of the new brightness control is pending.
 
-## Verified release receipt, 2026-09-07
+## Brightness live-test candidate, 2026-09-07
 
-- Built source: `7bb3bf8fce1910f20165b3a7649a70a634528dab`.
-- GitHub Actions run: `34124583278`, job `101750141430`, completed successfully.
-- Run URL: https://github.com/ryankemble2006-web/boop/actions/runs/34124583278
-- Signed candidate artifact: `SHIELD-TURBO`, ID `10019673866`, ZIP size `689584` bytes.
-- Artifact URL: https://github.com/ryankemble2006-web/boop/actions/runs/34124583278/artifacts/10019673866
+This is the current source/build receipt and supersedes the older read-only candidate for live testing.
+
+- Built source: `192879ba87082b9daf5275c89a706bfd5f1106d2`.
+- GitHub Actions workflow: `Build SHIELD TURBO`, run `34129557124`, job `101766129743`, completed successfully.
+- Run URL: https://github.com/ryankemble2006-web/boop/actions/runs/34129557124
+- Signed candidate artifact: `SHIELD-TURBO`, ID `10021629767`, ZIP size `693490` bytes.
+- Artifact URL: https://github.com/ryankemble2006-web/boop/actions/runs/34129557124/artifacts/10021629767
 - APK in the bundle: `shield-turbo/app/build/outputs/apk/release/app-release.apk`.
-- APK SHA-256: `b203358f8babc094c274096ec9852dd4015769bafb168ecfd8486307d4dad24f`.
-- Artifact ZIP SHA-256: `b963906192f9d12e907835f7496e24cfe8c6a2d717dc8489d011bcbf9c1501b2`.
+- APK SHA-256: `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
+- Artifact ZIP SHA-256: `918c3f47787d13b14ab050ab3d22f3bcb33fb9632f17b6f2355019b39c507ac3`.
 - Signer certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, matching the established BOOP development signer.
-- Test-report artifact: `SHIELD-TURBO-TESTS`, ID `10019674284`.
+- Test-report artifact: `SHIELD-TURBO-TESTS`, ID `10021630297`, ZIP size `29423` bytes, digest `6f438e3c5af7f0a9e5519de29946bf88f0f536d76e24950822a82794f71f6ca2`.
 
-Observed in the completed job logs: 15 Kotlin unit tests passed with zero failures/errors/skips, four source safety guards passed, Android lint finished with zero errors and six non-blocking warnings, release assembly succeeded, package/version/TV entry/non-debuggable identity checks passed, signer comparison passed and APK archive integrity passed. The temporary signing key was removed after assembly.
+Fresh run evidence: 17 Kotlin unit tests passed with zero failures/errors/skips; four source safety contracts passed; Android lint finished with zero errors and nine non-blocking warnings; signed release assembly succeeded; package/version/Leanback entry/non-debuggable identity checks passed; signer comparison and APK archive integrity passed. The temporary signing key was removed after assembly.
 
-The signed release APK was installed in an API 30 emulator with a handheld `pixel_2` profile. Cold launch succeeded; centre activated analysis (`EMULATOR_RELEASE_ANALYSIS=PASS`); D-pad Down reached a measurement card (`EMULATOR_DPAD_CARD_FOCUS=PASS`); Back followed by a warm relaunch succeeded. The script found no fatal exception associated with this app during that smoke test. This is not an NVIDIA Shield hardware or Tegra sensor test, an exhaustive navigation test, or a power/performance benchmark.
+The release APK installed successfully in an API 30 emulator. Cold launch and warm relaunch succeeded, centre-to-analysis passed (`EMULATOR_RELEASE_ANALYSIS=PASS`), D-pad navigation to a result card passed (`EMULATOR_DPAD_CARD_FOCUS=PASS`), and the smoke script found no fatal exception for `com.boop.shieldturbo`.
 
-The six lint warnings concern target/compile SDK currency, fixed orientation, pluralisation, newer backup configuration and the missing dedicated application icon. No checks were disabled to turn the build green. Keep these as polish work rather than claiming a warning-free build.
+The brightness feature is now intentionally outside the original read-only diagnostic boundary. It provides a remote-focusable 10–100% picture-brightness control. `100%` removes/avoids the dim overlay and leaves the picture untouched. Values below 100% require Android's display-over-other-apps permission and are applied by the private, non-exported `BrightnessService` using an application overlay. The chosen percentage is persisted locally. Manifest permissions are now `ACCESS_NETWORK_STATE` plus `SYSTEM_ALERT_WINDOW`; there are no receivers.
 
-This documentation-only receipt does not rebuild or replace the tested APK. Subsequent documentation heads must be distinguished from the built-source commit above. The artifact bundle was retrieved through the GitHub connector for delivery in chat; no local build, physical deployment or laptop synchronisation is claimed.
+CI did not prove actual dimming on NVIDIA Shield hardware, the Shield permission UI, cross-app persistence, Tegra-specific behavior, or recovery across Shield sleep/reboot. Those are the live-test targets in `MEMORY.md`. Do not call the brightness feature physically accepted until Ryan tests this exact APK.
+
+The nine lint warnings are non-blocking polish items: SDK currency, fixed landscape orientation, pluralisation, newer backup configuration, missing dedicated app icon, and percentage-text localisation warnings. No checks were disabled to make the run green.
 
 ## Implementation and regression history
 
 Ryan requested GitHub-only chat-mode development, existing signing keys only, and a separately installable utility in this repository. No BOOP runtime or unified-app changes are authorised by this utility task.
 
-The initial candidate `5f9e636b7851f0512792b6296aacc12dcd007f53` compiled and passed its four initial tests, but run `34123083174` failed Android lint on hard-coded view IDs. Signing was not reached; that run did not produce a signed candidate.
+The original read-only candidate was built from `7bb3bf8fce1910f20165b3a7649a70a634528dab` in run `34124583278`; its signed artifact was `10019673866`, APK SHA-256 `b203358f8babc094c274096ec9852dd4015769bafb168ecfd8486307d4dad24f`. That exact older APK was later published as prerelease `shield-turbo-v0.1.0`. It does not contain the brightness feature and must not be confused with the current Actions artifact above.
 
-Regression commit `2d0d5776d5e83ee5c15eb8999b272390a0af3591` added real edge-case tests, source guards and installed-release remote-input verification. A concurrent worker then pushed `b7a9ee279be97d9b10f744f3c899ff8468b23065`, fixing numeric IDs with generated IDs. That change is preserved in ancestry; stable resource IDs now identify persistent controls and generated IDs identify result cards.
-
-Red-test evidence: run `34123950576`, job `101748196618`, executed 15 Kotlin tests with seven failures (invalid CPU value, temperature units/non-finite values, isolated probe exceptions, privilege evidence failure) and four source guards with three failures. Repair `7bb3bf8` addressed those reproduced cases, moved scanning off the UI thread, removed unnecessary screen retention and made result cards D-pad focusable. It retained the original app permission boundary. The green run above verifies the repaired candidate.
-
-The commit comparison against base `92576982a74f7beff0056e35bd1a6e6df19534cf` confirmed that implementation changes were confined to `shield-turbo/**` and `.github/workflows/shield-turbo.yml`. Do not merge inherited old BOOP runtime from main into `boop-unified`.
+Brightness development used a red test first at `5d131e4d47ae633d31c6753240060e434f1c7942`, where `Brightness` was intentionally unresolved. The first implementation series reached `80b8019a441f710f94ba82c488b2cac548ba5f41`, then CI exposed two concrete integration defects: Android resource parsing of an apostrophe in `access_explanation`, and the old source contract still forbidding all services. Commit `192879ba87082b9daf5275c89a706bfd5f1106d2` fixed those root causes by using a valid Android string and narrowing the contract to allow exactly the private non-exported brightness service. Run `34129557124` is the green verification receipt.
 
 ## Product and verification limits
 
-v0.1 is read-only diagnostics, not an optimisation release. ADB setup/helper and actual tuning are deferred. Tier detection reports app authority, not guessed device root status. Only network-state permission is requested. No app installations or permission changes on Ryan's physical devices are part of this task.
+Diagnostics remain on-demand and local. CPU frequency is not CPU load; generic thermal zones are not automatically named CPU/GPU sensors. ADB helper/setup and arbitrary tuning remain deferred. The brightness overlay is the one explicitly authorised setting-changing feature in this candidate.
 
-Physical NVIDIA Shield acceptance is pending. The next safe step is the real-device checklist in `MEMORY.md`: launcher visibility, remote scan/detail/navigation, genuine exposed CPU/thermal sources, leaving and reopening the app, and normal sleep/media/BOOP behaviour. Record Ryan's physical result against the exact APK and source receipt, not just the latest filename.
+Physical NVIDIA Shield acceptance is pending. Record Ryan's result against the exact source commit, run, artifact ID and APK checksum above. A successful emulator run is not a hardware rollback checkpoint.
 
 The existing GitHub `BOOP_DEV_KEYSTORE_B64`, `BOOP_DEV_STORE_PASSWORD`, `BOOP_DEV_KEY_PASSWORD` secrets and alias `boop-dev` are used inside the runner. Private signing material is never published; temporary key material is removed after assembly. No relay or other BOOP credentials are used.
 
-## Direct APK publication, 2026-09-07
+## Delivery note
 
-Delivery is now available without unpacking the Actions bundle:
+For brightness live testing use Actions artifact `10021629767` from run `34129557124`. The older direct prerelease URL points to the pre-brightness APK and is retained only as historical evidence. Do not repoint that existing tag/release to new bytes.
 
-- Direct APK: https://github.com/ryankemble2006-web/boop/releases/download/shield-turbo-v0.1.0/SHIELD-TURBO-v0.1.0.apk
-- Prerelease: https://github.com/ryankemble2006-web/boop/releases/tag/shield-turbo-v0.1.0
-- Release ID `384094141`; APK asset ID `548800195`; APK size `2142650` bytes.
-- Publication workflow `.github/workflows/shield-turbo-publish-v01.yml` added at `cbfd286427fa164f20d0ff0d97af19e69a20722a`.
-- Publication run `34125252347` completed successfully. It validated the successful source run, pinned source SHA, original artifact ID/digest and exact APK checksum before publishing the existing bytes. It did not rebuild, re-sign, access signing secrets or deploy to a physical device.
-- GitHub's uploaded APK asset digest was fetched after publication and equals the original APK SHA-256 `b203358f8babc094c274096ec9852dd4015769bafb168ecfd8486307d4dad24f`.
-- `SHA256SUMS.txt` and sanitized `BUILD-RECEIPT.txt` accompany the APK. No diagnostic dumps, signing material or unrelated assets were published by this step.
-
-The new tag targets the exact built source `7bb3bf8fce1910f20165b3a7649a70a634528dab`. Publication uses a separate prerelease with `--latest=false`; it neither repoints an old checkpoint nor replaces BOOP's latest stable release. The publisher refuses to overwrite an existing release/tag. Do not rerun it to modify this checkpoint.
-
-Current application source and build verification remain the receipt above. Only delivery workflow and documentation changed in this publication pass. Concurrent documentation commits were preserved. Physical acceptance is still pending.
+Documentation-only commits after built source `192879ba87082b9daf5275c89a706bfd5f1106d2` do not rebuild or replace the tested APK. Distinguish the current documentation branch HEAD from the built-source receipt above.
