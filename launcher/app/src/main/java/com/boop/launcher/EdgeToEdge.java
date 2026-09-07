@@ -7,11 +7,13 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.view.WindowManager;
 
 public final class EdgeToEdge {
  private EdgeToEdge(){}
  public static void apply(Activity activity){
   Window w=activity.getWindow();
+  w.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
   w.setStatusBarColor(Color.TRANSPARENT);
   w.setNavigationBarColor(Color.TRANSPARENT);
   if(Build.VERSION.SDK_INT>=30)w.setDecorFitsSystemWindows(false);
@@ -19,6 +21,7 @@ public final class EdgeToEdge {
  }
  public static void hideBars(Activity activity){
   Window w=activity.getWindow();
+  w.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
   View decor=w.getDecorView();
   if(Build.VERSION.SDK_INT>=30){
    WindowInsetsController c=decor.getWindowInsetsController();
