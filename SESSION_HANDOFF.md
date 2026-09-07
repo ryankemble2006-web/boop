@@ -7,39 +7,35 @@ Project: `launcher/`; package remains `com.boop.launcher`.
 
 Ryan physically confirmed the `0.2.2` fullscreen build removed the stubborn Pixel status-bar clock and physically confirmed `0.2.3` swipe-up / swipe-down drawer navigation works perfectly.
 
-`0.3.0` added the approved widget/page plumbing, but Ryan physically found the entry point was dead: holding the empty black HOME screen produced no menu, so the widget functionality was unreachable. Do not treat `0.3.0` as accepted.
+`0.3.0` added the approved widget/page plumbing, but Ryan physically found the entry point was dead: holding empty HOME produced no menu. `0.3.1` fixed that long-press menu and added Launcher page-0 swipe right -> BOOP Wall. CI run `34084595483` proved the menu appears and the Wall handoff path fires.
 
-The failure was reproduced in GitHub Actions run `34084147192`: the signed app launched and survived, CI performed a 900 ms HOME hold, then the UI hierarchy did not contain `Add widget`.
+Ryan then physically reported one remaining navigation-polish bug in `0.3.1`: Launcher -> Wall looked correct, but Wall -> Launcher reused the same left-to-right page transition instead of mirroring the swipe direction.
 
-`0.3.1` / code `8` fixes that interaction and adds the approved inverse Wall gesture.
+`0.3.2` / code `9` fixes only that transition direction on the Launcher side. Wall source/branches were deliberately left untouched because Wall has concurrent work.
 
-Application source commit: `9f49ccfdc23b8dddb8a0173e1f369c79dc051b96` (`fix: restore Home menu and add Wall return swipe`).
+Application source/version commit: `3d2066d8bafa2ba69be70984ce3f060c79ff3b78` (`build: bump Launcher to 0.3.2`).
 
 Signed build:
 - package `com.boop.launcher`
-- versionName `0.3.1`
-- versionCode `8`
-- GitHub Actions run `34084595483`
+- versionName `0.3.2`
+- versionCode `9`
+- GitHub Actions run `34085524812` — success
 - signed artifact `BOOP-Launcher-Alpha2-signed`
-- artifact ID `10004790724`
-- APK SHA-256 `294206b2ff3f50c7c0f880b952f454980582bb7970bda47430036bfb4fe86d88`
+- artifact ID `10005093325`
+- APK SHA-256 `83a1ead52fb1ccdce8fb59912101e80a6fd3c98d85c07fc12002c772af0667bb`
 - existing permanent BOOP signing identity unchanged
 
-## 0.3.1 interaction fix
+## Transition-direction fix
 
-The HOME long-press callback already existed, but its `PopupMenu` was anchored to the entire fullscreen workspace. `0.3.1` anchors the menu to a tiny temporary view at the actual hold point instead, then removes that anchor when the menu closes. This lets the contextual menu appear where Android can actually place it.
+Android 14+ Launcher OPEN transitions now explicitly enter Launcher from the right while the previous activity exits left. This mirrors the already-good Launcher -> Wall direction so Wall swipe-left -> Launcher visually travels right-to-left instead of replaying the opposite transition.
 
-The green CI smoke now:
-1. installs and launches the signed APK on Android 16;
-2. confirms the launcher process survives;
-3. performs a 900 ms hold on empty HOME;
-4. dumps the UI hierarchy and requires visible `Add widget` text;
-5. dismisses the menu;
-6. swipes right on HOME;
-7. requires the `BOOP_WALL_SWIPE` handoff path to fire;
-8. scans for BOOP launcher fatal crashes.
+TDD evidence:
+- red run `34085403670` failed the new transition-direction regression before production code/resources existed;
+- green run `34085524812` passes that regression, unit tests, lint, permanent-signer release build, and the existing Android 16 interaction smoke.
 
-Run `34084595483` passed all of those checks plus unit tests, lint, release build and permanent signing.
+The Android 16 smoke still verifies launcher survival, empty-HOME long press -> visible `Add widget`, menu dismissal, and Launcher page-0 right swipe -> `BOOP_WALL_SWIPE` handoff path with no launcher fatal crash.
+
+The animation direction itself remains a physical visual check for Ryan; CI verifies the mirrored resource geometry and Launcher transition wiring, not subjective device motion.
 
 ## Wall / Launcher gesture loop
 
@@ -47,9 +43,9 @@ Approved contract:
 - BOOP Wall (`com.boop.alpha1`) -> deliberate swipe left -> Launcher;
 - Launcher page 0 -> swipe right -> BOOP Wall.
 
-Launcher uses Android's launch intent for `com.boop.alpha1` and brings it forward without merging the apps. If Wall is absent, Launcher stays open and shows a plain-English message. Extra Launcher content pages keep normal page navigation: right swipe from a later page returns toward page 0; only right swipe from page 0 exits to Wall.
+Extra Launcher content pages keep normal page navigation: right swipe from a later page returns toward page 0; only right swipe from page 0 exits to Wall.
 
-## Widget/page implementation retained from 0.3.0
+## Widget/page implementation retained
 
 - Real `AppWidgetHostView` rendering on HOME.
 - Widget pick, bind, configure and cancellation cleanup.
@@ -74,19 +70,13 @@ Launcher uses Android's launch intent for `com.boop.alpha1` and brings it forwar
 - No launcher clock, At a Glance, Google search pill, dock/hotseat, Internet permission, microphone permission, or Google proprietary launcher code/assets.
 - `com.boop.launcher` and permanent BOOP signing identity unchanged.
 
-## Physical checklist for 0.3.1
+## Physical checklist for 0.3.2
 
-Ryan is still the final acceptance test. Check:
-- hold empty black HOME -> menu visibly appears;
-- tap Add widget -> Android widget picker/config flow opens;
-- add a real widget and confirm it renders;
-- ordinary widget controls work;
-- long-press move and bottom-right resize work;
-- widget remove leaves no ghost;
-- page spill/navigation persists;
-- from launcher page 0 swipe right -> BOOP Wall;
-- from BOOP Wall swipe left -> Launcher;
-- fullscreen and drawer gestures remain intact.
+Primary new check:
+- Wall swipe left -> Launcher should animate right-to-left;
+- Launcher page-0 swipe right -> Wall should keep the already-good opposite direction.
+
+Widget/page checks from 0.3.1 remain pending until Ryan exercises them on-device.
 
 ## Remaining polish
 
