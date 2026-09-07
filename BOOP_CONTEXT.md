@@ -1,6 +1,6 @@
 # BOOP shared context
 
-Reconciled 2026-09-06; Wall candidate evidence appended 2026-09-07.
+Reconciled 2026-09-06; Wall candidate evidence updated 2026-09-07.
 Current user instructions and fresh device evidence win.
 This compact file is shared across active app branches; detailed product history
 remains in BOOP_MEMORY.txt where present. Use BOOP_START_HERE.md for branch routing.
@@ -54,21 +54,23 @@ redesign. Routine-authoring capability evidence is not proof of a finished featu
 
 ## Wall Free Chat candidate, 2026-09-07
 
-Owning task branch: `boop-wall-free-chat-wip`; APK code `e5c5598`.
-This is separate from the accepted physical Wall, not a new accepted checkpoint.
+Owning branch: `boop-wall-free-chat-wip`; verified APK code `0ceb97b`, v31.
 Ryan approved holding the face for three seconds past the playful animation,
 then selecting OpenCode / Free Chat / Cancel. OpenCode defaults on; the choice
 persists and the same menu reverses it. Immediate house/media remain local first.
 Free Chat is an explicit ChatGPT browser session with a copied question for manual
 paste/send, not an invisible backend, embedded subscription API or unlimited quota.
 
-Run 34070255788 built and verified the stable-signed v31 APK. Source/JVM/Android
-unit checks and real emulator wake startup passed. The subsequent menu interaction
-test failed; pairing was skipped and physical acceptance is absent. The downloaded
-APK's provenance, integrity and certificate identity were independently checked.
-Do not equate a signed APK with a completed, working mode switch. Exact artifact
-fingerprints and remaining debugging work are in SESSION_HANDOFF.md/BOOP_STATUS.md.
-The accepted annotated tag was checked live and still resolves to 595e1da.
+Full run 34071614834 is GREEN: source/bridge/JVM/Android tests, stable-signed APK
+inspection, real emulator wake startup, actual three-second menu/default, Free
+Chat selection, process-restart persistence, revert, drag/background cancellation,
+and Shield pairing return. Artifact 10000728933 was downloaded and its build
+receipt, ZIP/APK integrity and digests independently verified. Earlier menu-gate
+failures were traced to specific emulator onboarding and capture-readiness issues;
+actual UI assertions remain intact. Physical Pixel/update/browser/login/Back and
+real-house acceptance are still pending. This is not a new physical checkpoint.
+The accepted annotated Wall tag was checked live and still resolves to 595e1da;
+preserved Wall branch still points to 3a702f8. See SESSION_HANDOFF.md/BOOP_STATUS.md.
 
 ## Protect the working puppet
 
@@ -83,8 +85,11 @@ Record them separately. Never manufacture a physical checkpoint from a CI pass.
 
 ## Cross-device working agreement
 
-Ryan develops Shield on the laptop and Launcher through Android Work. GitHub is
-the code/context handoff. Before edits fetch/check the owning branch and read
-its handoff; before stopping record results and publish reviewed scoped work.
-No blind overwrites/force pushes. Shared context is not automatic chat-history
-replication, and an unattached/offline task must say what it cannot access.
+Ryan develops Shield on the laptop and Launcher/Wall through Android, including
+Pixel 7 for easier screenshot testing. GitHub is the code/context handoff. Before
+edits fetch/check the owning branch and read its handoff; before stopping record
+results and publish reviewed scoped work. No blind overwrites/force pushes.
+Shared context is not automatic chat-history replication. Already-open Work tasks
+must reread fetched main and the owning handoff. "Update memory" remains docs-only
+unless Ryan explicitly requests code, permissions, installs or signing changes.
+This GitHub session does not imply access to or synchronization of laptop files.

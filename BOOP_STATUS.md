@@ -1,28 +1,33 @@
 # BOOP Wall status: Free Chat test candidate
 
-Updated 2026-09-07. This is the isolated `boop-wall-free-chat-wip` branch, not a
-replacement for the accepted Wall physical checkpoint or another app's branch.
+Updated 2026-09-07. Owning branch: `boop-wall-free-chat-wip`.
 
-## Candidate: built and signed, NOT fully verified
+## Candidate: signed and CI/emulator GREEN; physical acceptance pending
 
 - Base: `boop-wall-resurrection@3a702f89b7f317649d267f25c34c6c9655edcff8` (v30 swipe).
-- Built code: `e5c5598c2915a0a12b51f91cecebf9f51c1b8662`.
+- Verified build: `0ceb97bc7c258835ce292391d483849398016020`.
 - Version: 31 / `0.4.11-wall-free-chat`; package `com.boop.alpha1`.
-- Implemented in source: deliberate three-second mode menu after the playful hold,
-  persistent OpenCode/Free Chat choice, local-first routing and browser handoff.
-- Free Chat copies the question for manual paste/send; it is not a hidden API.
-- Final run 34070255788, job 101586202899: source/bridge/JVM checks, Android unit
-  tests, APK assembly, package/version/signature checks and real emulator wake
-  startup PASS. The menu/persistence/revert/cancellation test FAILS. Pairing test
-  SKIPPED. Exact latest interaction failure cause is not established.
-- Physical acceptance: NOT TESTED. Do not promote this as a fully working release.
-- Artifact: 10000300048 / `BOOP-Wall-Free-Chat-candidate`.
+- Full successful run: `34071614834`; build job `101589892017`.
+- All source/bridge/JVM/Android unit, materialization, package/version/archive,
+  stable-signature and real emulator wake-microphone checks PASS.
+- Actual emulator UI PASS: short hold does not open menu, three-second menu,
+  OpenCode default, Free Chat selection, force-stop/restart persistence, revert
+  through the same menu, vertical drag cancellation and background cancellation.
+- Existing Shield pairing-return check PASS.
+- Artifact: `10000728933`, `BOOP-Wall-Free-Chat-candidate`.
 - Downloaded APK: `BOOP-Wall-v31-Free-Chat.apk`, 139485298 bytes.
-- Candidate APK SHA-256:
-  `2d8c858da399c2e6f1f9e7cbbed8199de6bcb9ca3d207442fd49252bb3626d29`.
-- Downloaded provenance/archive/certificate identity independently checked;
-  full cryptographic APK signature verification passed in CI.
+- APK SHA-256: `2d8c858da399c2e6f1f9e7cbbed8199de6bcb9ca3d207442fd49252bb3626d29`.
+- Artifact ZIP SHA-256: `3d2d7e818413640c0a9ed887fac90e5123336e5c8fe858f56ba402476d7e52d7`.
+- Downloaded build receipt, ZIP digest/integrity, APK digest and inner archive
+  integrity independently checked. Full cryptographic APK signature passed in CI.
 - Stable-signed debug variant; not an optimized release.
+- Physical Pixel 7 / Pixel 10, v31 in-place update, real browser/login/Back and
+  real-house command acceptance are NOT TESTED on this candidate.
+
+Free Chat copies the question for manual browser paste/send; it is not a hidden
+API or unlimited quota. Local control runs first; only NO_MATCH may reach chat.
+The earlier failed UI gates are resolved by specific emulator onboarding/capture
+fixes. Actual interaction assertions were not removed or weakened. See handoff.
 
 ## Accepted Wall baseline (unchanged)
 
@@ -35,10 +40,10 @@ replacement for the accepted Wall physical checkpoint or another app's branch.
 - With OpenCode stopped, local house/media continued working.
 - Signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 - Accepted APK SHA-256: `79ac40677687c4225989fa095644d5d97d36876150afe704e80eb6091d55530b`.
-- v30 swipe inherited from the current base has emulator evidence only; do not
-  call either v30 or this new candidate physically green without user testing.
+- Preserved Wall branch is still `3a702f8`. Its v30 swipe has emulator evidence
+  only. Do not promote a physical checkpoint without Ryan's device acceptance.
 
-## Protected
+## Protected / next
 
 `checkpoint-boop-wall-595e1da`, `checkpoint-shield-home-f8e8135`,
 `checkpoint-shield-routines-3fa18c6` and their accepted APKs remain untouched.
@@ -47,4 +52,6 @@ HomeAssistantRepository, FocusCardView or the local HA clients.
 No automatic physical installations or permission grants. Timed voice routines
 remain excluded. Shared app ownership is still defined by fetched main.
 
-See SESSION_HANDOFF.md for history, exact evidence and the remaining menu test.
+Next: physical Pixel 7 update and hold/menu/persistence/revert, local media,
+general-question browser handoff and Back acceptance. Record results before
+promoting. Documentation-only updates do not change the verified APK build.

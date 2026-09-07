@@ -13,29 +13,41 @@ Boundary: local control always runs first, regardless of mode. Only a genuine
 local NO_MATCH can use the selected conversation route. Do not send house auth
 failures, offline targets or device-control errors to a web chatbot.
 
-Honesty: Free Chat is the browser ChatGPT session with its own login and limits,
-not unlimited free service, an embedded consumer-account API, or spoken answers
-behind the BOOP eyes. The question is copied for manual paste/send; the user was
-told this in chat and it is disclosed in the mode menu. No scraping or injection.
+Honesty: Free Chat is a visible browser ChatGPT session with its own login and
+limits, not unlimited service, an embedded consumer API, or spoken answers
+behind the BOOP eyes. The question is copied for manual paste/send; the menu
+explains this. No scraping, injection, account-cookie extraction or direct key.
 
 Preservation: Wall and Launcher remain separate packages. Existing swipe and
-short playful hold are intended to coexist with the longer menu hold. Movement,
-multi-touch, release, loss of focus and backgrounding cancel pending activation
-in the implementation; physical interaction acceptance remains outstanding.
+short playful hold coexist with the longer mode-menu hold. Movement, multi-touch,
+release, focus loss and backgrounding cancel pending activation in source.
+Physical interaction acceptance is still required before promotion.
 
-Build: use scripts/materialize-android.sh, including wake, toast and chat patches.
-Use existing permanent GitHub signer, never a replacement key. Candidate branch
-boop-wall-free-chat-wip starts from Wall 3a702f8; accepted physical checkpoint
-595e1da is untouched and its annotated tag was reread live.
+Build: scripts/materialize-android.sh applies wake, toast and chat patches.
+Raw MainActivity stays frozen; do not mistake that file alone for the built app.
+Existing permanent GitHub signer only. Candidate branch boop-wall-free-chat-wip
+starts from preserved Wall 3a702f8. Physical checkpoint 595e1da remains unchanged.
 
-Current delivered test candidate: v31 / 0.4.11-wall-free-chat, code
-e5c5598c2915a0a12b51f91cecebf9f51c1b8662, run 34070255788,
-artifact 10000300048. Source/JVM/Android tests, stable-signed APK assembly and
-signature checks, and real emulator wake startup PASS. Menu/persistence/revert/
-cancellation interaction test FAILS; pairing SKIPPED. Exact latest menu failure
-cause is not established. Neither physical Pixel is verified on this candidate.
-The signed APK was downloaded; receipt, archive and certificate identity checked.
-This is not a fully green release. Preserve the accepted Wall rather than
-promoting a checkpoint by inference. See SESSION_HANDOFF.md for exact hashes
-and the remaining focused UI diagnosis. Documentation-only advances do not
-change the APK or imply that tests were rerun.
+CURRENT VERIFIED CANDIDATE: v31 / 0.4.11-wall-free-chat, built commit
+0ceb97bc7c258835ce292391d483849398016020, full successful run 34071614834,
+job 101589892017, artifact 10000728933. Source/bridge/JVM/Android checks,
+stable-signed APK assembly/inspection/signature, real wake-microphone startup,
+actual three-second menu, OpenCode default, Free Chat save, process-restart
+persistence, revert, drag/background cancellation and Shield pairing return PASS.
+The exact artifact was downloaded and its receipt/archive/digests verified.
+APK SHA256 2d8c858da399c2e6f1f9e7cbbed8199de6bcb9ca3d207442fd49252bb3626d29.
+
+Earlier UI failures were diagnosed: Android's first-run fullscreen tutorial
+covered BOOP, then UIAutomator returned no capture just after restart. The test
+now acknowledges only the observed tutorial and bounds retries for fresh capture
+failures. It never retries failed UI assertions into a pass. Final gates are green.
+
+Still pending: physical Pixel tests, in-place v31 update, browser login/paste/send/
+Back, and current real-house acceptance. CI is not a physical checkpoint. Preserve
+595e1da until Ryan tests and accepts. See SESSION_HANDOFF.md for exact provenance.
+
+Cross-device: main@2912a19 maps this candidate. Work must fetch/reread the owning
+branch, not assume a local/main app copy is newest. "Update memory" is docs-only
+unless Ryan separately requests implementation, installs, permissions or signing.
+Do not overwrite concurrent work or claim laptop synchronization from GitHub-only
+access. Documentation-only commits do not change the verified APK.

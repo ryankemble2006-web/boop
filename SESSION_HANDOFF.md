@@ -1,107 +1,106 @@
-# BOOP Wall Free Chat candidate handoff
+# BOOP Wall Free Chat handoff
 
-Updated 2026-09-07. Task branch: `boop-wall-free-chat-wip`.
-Base: live `boop-wall-resurrection@3a702f89b7f317649d267f25c34c6c9655edcff8`.
-Wall package remains `com.boop.alpha1`; candidate version 31 / `0.4.11-wall-free-chat`.
+Updated 2026-09-07. Owning branch: `boop-wall-free-chat-wip`.
+Status: **signed and CI/emulator green; physical acceptance pending**.
+This supersedes the earlier unresolved UI-gate notes, not the accepted physical
+Wall checkpoint. Keep the candidate isolated until Ryan tests it on a phone.
 
-## Current delivery status: signed test candidate, NOT fully verified
+## Exact verified build
 
-Built code: `e5c5598c2915a0a12b51f91cecebf9f51c1b8662`.
-Completed GitHub run: 34070255788; job: 101586202899.
-The final job-step report was reread after completion. It confirms:
-- PASS: source/bridge/chat-routing regressions, preserved Java harnesses,
-  materialization and wake mappings, Android unit tests and APK assembly.
-- PASS: package/version/archive inspection and full apksigner verification against
-  the existing permanent BOOP certificate.
-- PASS: disposable emulator startup, supplied-audio recognizer selection, and
-  signed-app startup with the real positive-read wake microphone gate.
-- FAIL: menu/persistence/revert/gesture-cancellation interaction test.
-- SKIPPED: subsequent Shield pairing-return test.
-
-The menu test's exact latest failing assertion/root cause has not been established
-from the bounded final step report. Do not mislabel this as a startup/wake failure,
-assume an emulator-only problem, or call the requested interaction fully working.
-No physical phone test or installation was performed.
-
-Artifact 10000300048, `BOOP-Wall-Free-Chat-candidate`, was downloaded and extracted
-as `BOOP-Wall-v31-Free-Chat.apk` for delivery. Independent checks confirmed the
-artifact's built-commit receipt, archive integrity, APK SHA-256 and certificate
-identity. CI performed full cryptographic APK signature verification.
-- APK bytes: 139485298.
+- App: `com.boop.alpha1`, versionCode 31, `0.4.11-wall-free-chat`.
+- Built commit: `0ceb97bc7c258835ce292391d483849398016020`.
+- Base: `boop-wall-resurrection@3a702f89b7f317649d267f25c34c6c9655edcff8`.
+- GitHub Actions run: `34071614834`; build job: `101589892017`.
+- Artifact: `10000728933`, `BOOP-Wall-Free-Chat-candidate`.
+- Downloaded APK: `BOOP-Wall-v31-Free-Chat.apk`, 139485298 bytes.
 - APK SHA-256: `2d8c858da399c2e6f1f9e7cbbed8199de6bcb9ca3d207442fd49252bb3626d29`.
-- Certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-This is the stable-signed debug variant, not an optimized release or an accepted
-physical checkpoint. The known-good physical Wall remains the preferred baseline.
+- Artifact ZIP SHA-256: `3d2d7e818413640c0a9ed887fac90e5123336e5c8fe858f56ba402476d7e52d7`.
+- Effective materialized MainActivity SHA-256:
+  `64605902f7198dc9f6596d852ada7aa995e5febfa2486dc3dd35f9c2e10bfef0`.
+- Existing signer SHA-256:
+  `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-## Approved change
+The completed job-step report was reread: all steps passed, including source and
+bridge regressions, preserved Java harnesses, Android unit tests, materialization,
+all 33 wake mappings, APK assembly, package/version/archive checks, full apksigner
+verification, clean Android 16 Pixel 7 Pro emulator startup, the real wake-microphone
+armed gate, actual menu/persistence/revert/cancellation interaction, and the Shield
+pairing-return route. The exact successful artifact was downloaded; its build
+receipt, ZIP digest/integrity, APK digest and inner archive integrity were checked.
+This remains the stable-signed debug variant, not an optimized release.
 
-Hold the face for three seconds, past the existing MemberBerry animation, to
-choose OpenCode / Free Chat / Cancel. OpenCode remains the default; selection
-persists separately from house credentials. Same menu reverses the choice.
-The local processor always runs first. Free Chat handles only NO_MATCH; it must
-not receive local successes, missing targets, offline devices or auth failures.
+The actual UI gate proves: a 1.6-second playful hold does not open the menu; a
+3.3-second hold does; fresh default is OpenCode; selecting Free Chat saves it;
+force-stop/restart retains the selection; the same menu restores OpenCode; a
+vertical drag and backgrounded/cancelled hold do not open the menu later.
+Fourteen focused capture/bounds/onboarding tests also pass in the Linux scratch
+review. No physical phone, browser login, in-place v31 update, or real-house
+acceptance was performed here. Do not extrapolate CI to physical verification.
 
-Free Chat is an explicit browser-backed ChatGPT handoff. The question is copied
-for the user to paste and send. No invisible webpage injection, response scraping,
-credential extraction, direct OpenAI key, or promise of unlimited/free quota.
-The menu explains the browser and clipboard behaviour. Browser Back is the intended
-return route to Wall; login and service limits belong to the browser/ChatGPT session.
-The physical browser/login/Back flow has not been verified on either Pixel.
+## Approved behaviour
 
-## Implementation and prior evidence
+Hold the face for three seconds, past the existing MemberBerry animation, for
+Chat mode: OpenCode / Free Chat / Cancel. OpenCode remains default. Selection
+persists separately from house credentials and is reversed through the same menu.
+No permanent settings button. Existing Wall-to-Launcher swipe remains in the base.
 
-The repository already applies wake-partial and toast patches when materializing
-MainActivity. `scripts/patch-wall-chat-mode.py` follows that existing convention,
-after those patches. It fails on changed/ambiguous source anchors and is tested
-for idempotency. Do not build directly from raw MainActivity without materializing.
-Checked-in MainActivity, face drawing, wake assets, HA clients, voice and companion
-sources remain frozen. Existing launcher swipe is retained; gesture cancellation
-is strengthened so moved/multi-pointer releases do not become speech taps.
+Local processing always runs first. Only genuine NO_MATCH can use the selected
+conversation route. Local successes, missing targets, offline devices and auth
+failures must not be sent to the web. No timed voice routines were reintroduced.
+Free Chat is a visible browser-backed ChatGPT session: the question is copied
+for manual paste/send. Its own login and usage limits apply. The menu discloses
+this. No hidden webpage injection, scraping, extracted credentials, direct OpenAI
+key, embedded consumer API, or native spoken answer behind the eyes is claimed.
+Browser Back is the intended return route; verify that on Ryan's actual phone.
 
-Initial implementation was already on this branch at `5c717c8` when the parallel
-session located it. Run 34069260038 built and signed v31, but failed emulator readiness.
-Workflow-only fix `c1a5e965ffd8aecb0ca0f1bcdb1062c9f30fd3e6` made the disposable
-emulator service readiness explicit and bounded, without weakening the wake gate.
+## Build and source boundaries
 
-Run 34069662757 at `c1a5e965ffd8aecb0ca0f1bcdb1062c9f30fd3e6` passed:
-- 7 bridge tests, 134 Python/source tests, preserved Java harnesses, Android unit tests;
-- materialization and all 33 wake phrase mappings;
-- APK assembly, package/version/archive inspection and permanent signer verification;
-- clean emulator install, startup, and the real positive-read wake microphone gate.
-It FAILED the first real UI assertion: the three-second hold did not leave a
-Chat mode menu visible. Later menu/persistence/revert checks and pairing were
-not completed. A signed APK existed, but it was NOT a fully green candidate.
+Always use `scripts/materialize-android.sh`. The repository already applies wake
+and toast patches; `scripts/patch-wall-chat-mode.py` follows those during the same
+materialization pipeline. It rejects changed/ambiguous anchors and checks
+idempotency. Raw checked-in MainActivity remains frozen; the feature is present
+in the effective materialized source. Face drawing, wake assets, HA clients,
+companion source and the existing stable signer remain protected.
 
-A concurrent advance `7e06da7` added background recognizer ownership cleanup,
-scrollable mode choices and non-all-caps labels. It was reviewed and preserved,
-not overwritten. `e5c5598c2915a0a12b51f91cecebf9f51c1b8662` adds UI diagnostics,
-uses actual visible BOOP-face bounds rather than natural panel dimensions,
-and prevents stale UI dumps. Six focused bounds tests and Python compilation
-passed locally. The completed run for that code is recorded above.
+## Resolved CI diagnosis and history
 
-This session has GitHub connector access, not the Windows laptop filesystem or
-LAN. The Linux scratch snapshot has no Android SDK and no working direct DNS.
-No laptop synchronization, physical installation or physical test is claimed.
-Main documentation commit `2912a198e3f9f2b67f89a39739159c8172c654f2` maps this
-candidate and the approved product contract for Work/phone handoffs. Already-open
-Work sessions must fetch/reread it. Ryan's "update memory" request is documentation
-only unless he separately requests code, signing, permissions or installs.
+- `5c717c8`: existing implementation found on this branch; run 34069260038 built
+  and signed but failed emulator readiness.
+- `c1a5e9`: bounded recognizer readiness without weakening the real microphone gate.
+- Concurrent `7e06da7` added responsive/scrollable choices and non-all-caps labels;
+  its source and subsequent concurrent documentation were preserved.
+- `e5c5598` / run 34070255788 exposed Android's first-run fullscreen tutorial
+  covering the actual BOOP input surface. `d9a271b` acknowledged only that exact
+  disposable-emulator tutorial, guarded by package/resource IDs and unit tests.
+- `d9a271b` / run 34070906442 then passed the initial menu/default/Free Chat save,
+  but UIAutomator produced no XML just after process restart. The failure was a
+  missing capture file, not a failed mode assertion. Focused evidence is in
+  diagnostic run 34071469075, artifact 10000594439.
+- `0ceb97b` retries only failed fresh UI captures, at most four attempts, deleting
+  stale dumps each time. Actual UI assertions are unchanged and never retried
+  into a pass. Tests first reproduced missing/invalid capture failures, then
+  passed after the bounded fix. The final full run above is green.
+- `boop-wall-chat-ci-diagnostics@80f507a` is a historical CI-log helper only,
+  not an application branch. It uses read-only Actions permission, no signer.
 
-## Preserve
+## Cross-device handoff and preservation
 
-- Physical Wall checkpoint: `595e1daa43393882a0e5de43967545ac526b8b66`,
-  version 29 / `0.4.9-alpha6.5.6-wall`, signed run 33992704568, Pixel 7 Pro accepted
-  2026-09-05. The annotated tag `checkpoint-boop-wall-595e1da` was reread live and
-  still resolves to that exact commit. Do not move it.
-- Current base v30 includes the reviewed 96dp / 1.5x left swipe to the separately
-  installed `com.boop.launcher`; inherited evidence is emulator-only.
-- Existing permanent signer and existing Wall workflow are untouched. Candidate
-  signing uses the same GitHub secrets and checks the public certificate digest.
-- Shield Home/Routines checkpoints and all other app branches stay unchanged.
-- Timed voice routines remain absent.
+Shared main map/context at `2912a198e3f9f2b67f89a39739159c8172c654f2` directs
+Work to this candidate. Main remains the authority for shared decisions; this
+handoff owns current candidate evidence. Already-open Work tasks must fetch and
+reread it. Ryan's "update memory" instruction means documentation-only commits
+and pushes, not changes to app code, permissions, signing or physical installs.
+This session used GitHub and a Linux scratch review, not the Windows laptop or
+its LAN. No laptop-filesystem synchronization is claimed. Reviewed work is in
+GitHub; temporary downloads/test logs are not project changes to commit.
 
-Next: diagnose the latest menu interaction failure from focused UI evidence and
-fix its demonstrated cause without weakening the test. Re-run the full gates,
-then obtain physical acceptance before promoting any checkpoint. See
-`BOOP_CHAT_MODE_MEMORY.txt` and `docs/BOOP-WALL-FREE-CHAT.md`; fetched main remains
-the shared-context authority. Documentation-only advances do not change the APK.
+Accepted physical Wall stays `595e1daa43393882a0e5de43967545ac526b8b66`, v29,
+run 33992704568, Pixel 7 Pro accepted 2026-09-05. Its annotated checkpoint was
+reread live and still resolves there. Preserved Wall branch remains `3a702f8`;
+v30 swipe has inherited emulator evidence only. Shield Home/Routines checkpoints,
+Launcher, existing workflows and signing credentials are untouched.
+
+Next safe step: Ryan tests the signed v31 update on Pixel 7, including hold/menu,
+mode persistence/revert, one local media command, and general-question browser
+paste/send/Back. Record actual results before promoting a physical checkpoint.
+See BOOP_STATUS.md, BOOP_CHAT_MODE_MEMORY.txt and docs/BOOP-WALL-FREE-CHAT.md.
