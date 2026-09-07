@@ -1,0 +1,1 @@
+Visual target: a clean six-pose performance sheet of Freddie Mercury on black, built for animation blocking rather than finished illustration. Focus on silhouette, microphone-led gesture, shoulder rhythm, and readable weight transfer.
