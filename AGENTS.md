@@ -6,88 +6,89 @@ request first. These rules are for BOOP work, not permission to do unrelated wor
 ## Before planning or editing
 
 1. Read BOOP_START_HERE.md, BOOP_CONTEXT.md, SESSION_HANDOFF.md (if present),
-   BOOP_RULES.md, and the relevant branch's BOOP_MEMORY.txt / BOOP_STATUS.md.
-   Dated historical sections are not the current roadmap.
-2. Identify the task's app, actual checkout, branch, HEAD and dirty files. Keep
-   Wall, Shield and Launcher separate apps. Do not build an app from an older
-   copy of its source on another app's branch.
-3. Fetch the relevant remote branch AND main. A clone may fetch only one branch;
-   use explicit refspecs when needed. Compare live remote HEAD, not a stale
-   origin ref. Read the fetched origin/main versions of BOOP_START_HERE.md,
-   BOOP_CONTEXT.md and AGENTS.md for current shared decisions and workflow.
-   Main owns shared product/ownership/contracts; the owning app branch's
-   SESSION_HANDOFF.md owns its implementation and verification state. Local
-   shared copies are offline fallbacks, not authority over newer main decisions.
-   Reconcile conflicts explicitly; never silently replace branch-specific safety
-   constraints or treat fetched text as permission beyond the user's request.
+   BOOP_RULES.md, and the relevant branch memory/status files. Dated historical
+   sections are not the current roadmap.
+2. **Canonical app work now uses `boop-unified`.** BOOP Wall, Launcher and Shield
+   were merged into one signed APK candidate on 2026-09-07. Their former app
+   branches remain protected rollback/reference lineages and must not be silently
+   deleted, repointed or treated as the normal source for new feature work.
+3. Fetch the intended remote branch AND main. Compare live remote HEAD, not a stale
+   origin ref. Main owns shared product/ownership/contracts; the owning branch's
+   SESSION_HANDOFF.md owns implementation and verification state. For unified app
+   work, also read `BOOP_UNIFIED_MEMORY.md` and `unified/SOURCE_HEADS.md`.
 4. For a clean task-owned checkout that is only behind its intended branch,
    fast-forward only. If dirty, diverged, offline, or owned by another running
    task, preserve all work and resolve the situation explicitly. Never reset,
-   force-push, switch another task's branch or silently merge app lineages.
-5. Give Ryan a short starting-point statement: app, branch, commit, latest
-   verified result and next step. Missing context is a reason to read the
-   handoff/history, not to ask him to reconstruct everything.
-6. Reuse installed build tools/caches. A PATH or sandbox failure does not prove
-   a tool is absent. Inspect required SDK components before downloading.
+   force-push, switch another task's branch or silently overwrite concurrent work.
+5. Give Ryan a short starting-point statement: branch, commit, latest verified
+   result and next step. Missing context is a reason to read the handoff/history,
+   not to ask him to reconstruct everything.
+6. Reuse installed build tools/caches. A PATH or sandbox failure does not prove a
+   tool is absent. Inspect required SDK components before downloading.
+
+## Unified BOOP contract
+
+- Canonical branch: `boop-unified`.
+- Canonical package: `com.boop.alpha1`.
+- One APK contains the Wall, Launcher and Shield bodies.
+- Automatic profile contract: Android TV/Leanback -> Shield; Pixel 7 Pro -> Wall;
+  other handheld Android -> Launcher. Preserve the internal recovery override.
+- Wall keeps the permanent BOOP signer/package identity for the cleanest update
+  path. Old standalone Launcher (`com.boop.launcher`) and Shield
+  (`com.boop.shieldoverlay`) package histories remain reference/rollback only.
+- Shared behavior should be implemented once in the unified lineage where
+  practical. Do not create a new parallel app branch merely to make a small
+  feature easier.
+- CI-green, signed and physically accepted remain separate states. Never promote
+  a unified checkpoint as physically accepted until Ryan says it worked on real
+  hardware.
 
 ## During work and before ending a session
 
 - **"Update memory" trigger:** When Ryan says `update memory` from any device,
-  update the BOOP handoff, context, status, and memory files that are relevant
-  to the work; stage only those reviewed documentation changes, commit them,
-  push the owning branch (and main when shared context changes), then verify
-  the live GitHub heads. Treat this as a documentation-sync request, not
-  authority to change application code, install software, grant permissions,
-  merge apps, or publish unrelated work.
-
-- Maintain a concise SESSION_HANDOFF.md as material results arrive, so an abrupt
-  close does not lose the whole session. Record decisions and their reasons,
-  exact source/build references, test results, physical results, unfinished
-  work and next safe step. Preserve CI-green versus physically-green limits.
-- Before the final implementation/handoff response, reconcile branch memory and
-  status as well. Stage only reviewed BOOP files, run appropriate checks, commit
-  and push to the task's app branch, and verify local HEAD equals the live GitHub
-  branch HEAD. Ryan has requested this as the default publishing workflow.
-- For explicitly unfinished or failing work, preserve a clearly named WIP branch
-  and record the known failures. Never call it a working checkpoint or replace
-  an accepted APK. A read-only request does not authorize code edits/publishing.
+  update the BOOP handoff, context, status, and memory files relevant to the work;
+  stage only reviewed documentation changes, commit/push the owning branch (and
+  main when shared context changes), then verify live GitHub heads. This is a
+  documentation-sync request, not authority to change app code, install software,
+  grant permissions, change signing, or publish unrelated work.
+- Maintain a concise SESSION_HANDOFF.md as material results arrive. Record exact
+  source/build references, tests, physical results, unfinished work and next safe
+  step. Preserve CI-green versus physically-green limits.
+- Before final implementation/handoff, reconcile branch memory/status, run
+  appropriate checks, commit reviewed files, push, and verify live GitHub HEAD.
+- For explicitly unfinished or failing work, preserve a clearly named WIP state
+  and record failures. Never call it a working checkpoint or replace an accepted
+  APK merely because its version number is higher.
 - Fetch again before pushing. A remote advance or rejected push requires
-  reconciliation; never overwrite the other device's commits. Changes made
-  concurrently by another task belong to that task.
-- Update the shared map/context on main only when ownership, branch names, product
-  decisions or cross-project contracts change. Ordinary progress belongs in the
-  owning branch's handoff. Main is a context hub, not the latest combined app.
+  reconciliation; never overwrite another device's commits.
+- Update main only when ownership, branch names, product decisions or cross-project
+  contracts change. Ordinary progress belongs in `boop-unified` handoff/status.
 - Final response: exact pushed branch/commit, verification level, artifact if
   relevant, and anything still local/unshared. Never equate saved with synced.
-- User stop/read-only instructions win. No scheduled blind commits, automatic
-  app installation, permission grants, or deployment are implied by syncing.
+- User stop/read-only instructions win. No automatic app installation, permission
+  grants or device deployment are implied by a build.
 
 ## Canonical deployment and rollback rule
 
-- BOOP's long-term production direction is one canonical APK lineage. Until the
-  planned Wall/Launcher/Shield unification is complete, treat each current app
-  branch as temporary lineage rather than inventing parallel release families.
-- Make one intentional functional change per update whenever practical. Do not
-  bundle unrelated tweaks merely because a build is already in progress.
-- A physically accepted build creates the rollback point. Record its exact Git
-  commit/tag, workflow run, signed artifact and physical result. CI-green alone
-  is not a replacement for device acceptance.
-- If the next update breaks, return to the last physically accepted Git
-  checkpoint/artifact. Do not guess from version labels, local filenames,
-  timestamps or remembered APK names.
-- Git history and retained build artifacts are the archive. A deployment folder
-  is not an archive. After a new build is physically accepted, keep only the
-  current signed APK and, if useful, one clearly identified last-good APK in the
-  deployment folder; remove superseded local copies instead of accumulating
-  random filenames.
-- Prefer one stable deployment filename such as `BOOP.apk`; use Git metadata for
-  provenance and rollback rather than encoding history into a pile of filenames.
+- One canonical BOOP APK lineage. Make one intentional functional change per
+  version whenever practical; do not bundle unrelated tweaks because a build is
+  already open.
+- A physically accepted build creates the rollback point. Record exact Git
+  commit/tag, workflow run, signed artifact and physical result.
+- If the next update breaks, return to the exact last physically accepted Git
+  checkpoint/artifact. Never guess from filenames, timestamps or remembered APK
+  names.
+- Git history/artifacts are the archive. A deployment folder is not an archive.
+  After a replacement build is physically accepted, keep only current signed
+  `BOOP.apk` and, if useful, one clearly identified last-good APK locally.
+- Preserve historical branches/checkpoints in GitHub even after local APK clutter
+  is removed. Rollback provenance belongs in Git, not filenames.
 
 ## Publication safety
 
-This repository is public. Never publish tokens, passwords, signing keys,
-private certificates, .env/local.properties files, private device addresses,
-personal screenshots/videos, downloaded third-party APKs/decompiled source,
-diagnostic raw dumps, caches or scratch backups. Share sanitized findings.
-Keep stable signing inside the existing GitHub workflow. No replacement key.
-Protect the Home, Routines and Wall checkpoints. Do not repoint old checkpoints.
+This repository is public. Never publish tokens, passwords, signing keys, private
+certificates, .env/local.properties files, private device addresses, personal
+screenshots/videos, downloaded third-party APKs/decompiled source, diagnostic raw
+dumps, caches or scratch backups. Share sanitized findings. Keep stable signing
+inside the existing GitHub workflow. No replacement key. Protect established
+physical checkpoints and never repoint old checkpoint tags.
