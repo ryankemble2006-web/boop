@@ -8,8 +8,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.SystemClock;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Choreographer;
 import android.view.View;
@@ -32,8 +32,12 @@ final class BoopOverlayView extends View {
     private final MediaPuppetFrameLoop frameLoop;
     private HeadphoneGeometry.Layout headphoneLayout;
     private DeezerPuppetPolicy.Mode puppetMode = DeezerPuppetPolicy.Mode.EYES;
+    private Integer playbackState;
     private long puppetSessionId;
     private long sampleTimeMs;
+    private long settleStartedAtMs = -1L;
+    private long trackAccentStartedAtMs = -1L;
+    private MediaPuppetMotion.Pose settleFrom = FullscreenPuppetMotion.rest();
     private boolean attached;
     private boolean displayActive;
     private boolean animationObservationAvailable;
@@ -73,20 +77,59 @@ final class BoopOverlayView extends View {
     }
 
     void setPuppetSnapshot(MediaPuppetState.Snapshot snapshot) {
+        DeezerPuppetPolicy.Mode oldMode = puppetMode;
+        Integer oldPlaybackState = playbackState;
         if (snapshot.mode != DeezerPuppetPolicy.Mode.EYES
-                && puppetMode == DeezerPuppetPolicy.Mode.EYES) {
+                && oldMode == DeezerPuppetPolicy.Mode.EYES) {
             animate().cancel();
             setScaleX(1f);
             setScaleY(1f);
             setAlpha(1f);
         }
+
         puppetMode = snapshot.mode;
+        playbackState = snapshot.playbackState;
+        long now = SystemClock.uptimeMillis();
+
         if (puppetSessionId != snapshot.sessionId) {
             puppetSessionId = snapshot.sessionId;
             frameLoop.reset();
+            clearActingBeat();
         }
+
+        if (puppetMode == DeezerPuppetPolicy.Mode.EYES) {
+            clearActingBeat();
+        } else if (puppetMode == DeezerPuppetPolicy.Mode.HEADPHONES_PLAYING) {
+            // Resume the accumulated groove clock rather than restarting the dance.
+            clearActingBeat();
+        } else if (isTrackChangeState(playbackState)
+                && !isTrackChangeState(oldPlaybackState)) {
+            trackAccentStartedAtMs = now;
+            settleStartedAtMs = -1L;
+        } else if (isPausedState(playbackState)
+                && oldMode == DeezerPuppetPolicy.Mode.HEADPHONES_PLAYING) {
+            // Finish the current pose with a short, eased settle instead of snapping to rest.
+            settleFrom = FullscreenPuppetMotion.groove(sampleTimeMs);
+            settleStartedAtMs = now;
+            trackAccentStartedAtMs = -1L;
+        }
+
         updateFrameLoop();
         invalidate();
+    }
+
+    private static boolean isPausedState(Integer state) {
+        return state != null && state == 2;
+    }
+
+    private static boolean isTrackChangeState(Integer state) {
+        return state != null && (state == 9 || state == 10 || state == 11);
+    }
+
+    private void clearActingBeat() {
+        settleStartedAtMs = -1L;
+        trackAccentStartedAtMs = -1L;
+        settleFrom = FullscreenPuppetMotion.rest();
     }
 
     void setHeadphoneLayout(HeadphoneGeometry.Layout layout) {
@@ -207,7 +250,7 @@ final class BoopOverlayView extends View {
             // continues to own playback underneath. The overlay window remains
             // NOT_FOCUSABLE + NOT_TOUCHABLE, so Shield/Deezer remote input passes through.
             canvas.drawColor(Color.BLACK);
-            headphoneRenderer.draw(canvas, headphoneLayout, sampleTimeMs);
+            headphoneRenderer.draw(canvas, headphoneLayout, currentPuppetPose());
             return;
         }
 
@@ -234,6 +277,36 @@ final class BoopOverlayView extends View {
         if (rightEye != null) {
             canvas.drawBitmap(rightEye, null, rightDestination, paint);
         }
+    }
+
+    private MediaPuppetMotion.Pose currentPuppetPose() {
+        if (puppetMode == DeezerPuppetPolicy.Mode.HEADPHONES_PLAYING) {
+            return FullscreenPuppetMotion.groove(sampleTimeMs);
+        }
+
+        long now = SystemClock.uptimeMillis();
+        if (trackAccentStartedAtMs >= 0L) {
+            long elapsed = now - trackAccentStartedAtMs;
+            if (elapsed < FullscreenPuppetMotion.TRACK_CHANGE_DURATION_MS) {
+                if (attached && isShown() && displayActive) {
+                    postInvalidateOnAnimation();
+                }
+                return FullscreenPuppetMotion.trackChange(elapsed);
+            }
+            trackAccentStartedAtMs = -1L;
+        }
+
+        if (settleStartedAtMs >= 0L) {
+            long elapsed = now - settleStartedAtMs;
+            if (elapsed < FullscreenPuppetMotion.SETTLE_DURATION_MS) {
+                if (attached && isShown() && displayActive) {
+                    postInvalidateOnAnimation();
+                }
+                return FullscreenPuppetMotion.settle(settleFrom, elapsed);
+            }
+            settleStartedAtMs = -1L;
+        }
+        return FullscreenPuppetMotion.rest();
     }
 
     private static Bitmap isolateEye(Bitmap source, Rect crop) {
