@@ -5,6 +5,7 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     materialize = Path("scripts/materialize-android.sh").read_text()
     build = Path("source/app-build.gradle").read_text()
     patch = Path("scripts/patch-wall-eye-hue.py").read_text()
+    intent = Path("source/BoopEyeHueVoiceIntent.java").read_text()
 
     assert "patch-wall-chat-mode.py" in materialize
     assert "patch-wall-openai-relay.py" in materialize
@@ -12,19 +13,23 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert "patch-wall-eye-hue.py" in materialize
     assert "ActivityOptions.makeCustomAnimation" in materialize
 
-    assert "versionCode 36" in build
-    assert 'versionName "0.4.16-wall-eye-hue-gesture"' in build
+    assert "versionCode 37" in build
+    assert 'versionName "0.4.17-wall-eye-hue-voice"' in build
     assert "BOOP_RELAY_URL" in build
     assert "BOOP_RELAY_TOKEN" in build
 
     assert "BoopEyeHueSettings.addSlider" not in patch
     assert "BoopEyeHueOverlay" in patch
-    assert "postDelayed(eyeHueHoldRunnable, 1_000L)" in patch
-    assert "touchesBothEyes(face, event)" in patch
+    assert "BoopEyeHueVoiceIntent.matches(transcript)" in patch
+    assert "showEyeHueControl();" in patch
+    assert "postDelayed(eyeHueHoldRunnable" not in patch
+    assert "touchesBothEyes(face, event)" not in patch
     assert "eyeHueOverlay.hide()" in patch
     assert "BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes)" in patch
     assert "paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));" in patch
     assert "setEyeHueDegrees(BoopEyeHue.loadHue(context));" in patch
+    assert "change eye colour" in intent
+    assert "change eye color" in intent
     assert "mouth" not in patch.lower()
 
 
@@ -49,7 +54,6 @@ def test_hue_overlay_is_one_persisted_full_spectrum_control_under_the_eyes():
     assert "face.setEyeHueDegrees(progress)" in overlay
     assert "eyeBottom" in overlay
     assert "params.topMargin" in overlay
-    assert "touchesBothEyes" in overlay
     assert "isSliderTouch" in overlay
 
     forbidden = ("brightness", "saturation", "opacity", "theme", "effect")
