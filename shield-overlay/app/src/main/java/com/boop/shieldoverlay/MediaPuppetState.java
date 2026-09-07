@@ -10,6 +10,7 @@ public final class MediaPuppetState {
         public final boolean granted;
         public final boolean connected;
         public final long sessionId;
+        public final Integer playbackState;
         public final DeezerPuppetPolicy.Mode mode;
 
         private Snapshot(
@@ -17,11 +18,13 @@ public final class MediaPuppetState {
                 boolean granted,
                 boolean connected,
                 long sessionId,
+                Integer playbackState,
                 DeezerPuppetPolicy.Mode mode) {
             this.enabled = enabled;
             this.granted = granted;
             this.connected = connected;
             this.sessionId = sessionId;
+            this.playbackState = playbackState;
             this.mode = mode;
         }
 
@@ -44,6 +47,7 @@ public final class MediaPuppetState {
                     && granted == other.granted
                     && connected == other.connected
                     && sessionId == other.sessionId
+                    && java.util.Objects.equals(playbackState, other.playbackState)
                     && mode == other.mode;
         }
     }
@@ -125,6 +129,6 @@ public final class MediaPuppetState {
     private Snapshot buildSnapshot() {
         DeezerPuppetPolicy.Mode mode = DeezerPuppetPolicy.mode(
                 enabled, granted, connected, playbackState);
-        return new Snapshot(enabled, granted, connected, sessionId, mode);
+        return new Snapshot(enabled, granted, connected, sessionId, playbackState, mode);
     }
 }
