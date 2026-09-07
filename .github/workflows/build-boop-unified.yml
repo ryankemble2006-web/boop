@@ -140,8 +140,11 @@ jobs:
           script: |
             adb install -r boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
             adb shell appops set com.boop.alpha1 SYSTEM_ALERT_WINDOW allow
+            adb shell run-as com.boop.alpha1 mkdir -p shared_prefs
+            printf '%s\n' '<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map><string name="device_profile_override">SHIELD</string></map>' | adb shell run-as com.boop.alpha1 tee shared_prefs/boop_unified.xml >/dev/null
+            adb shell am force-stop com.boop.alpha1
             adb logcat -c
-            adb shell run-as com.boop.alpha1 am start -W -n com.boop.alpha1/com.boop.shieldoverlay.MainActivity
+            adb shell am start -W -n com.boop.alpha1/com.boop.alpha1.UnifiedEntryActivity
             sleep 4
             adb shell pidof com.boop.alpha1
             adb shell dumpsys activity activities | tee shield-activity.txt
