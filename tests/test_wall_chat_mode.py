@@ -80,5 +80,17 @@ class RelayRoutingTest(unittest.TestCase):
         script = (ROOT/'scripts/materialize-android.sh').read_text()
         self.assertIn('OpenAiRelayAssistantClientHarness.java', script)
 
+class NativeRepliesTest(unittest.TestCase):
+    def test_native_failures_use_existing_speech_mapper_without_house_auth_side_effects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args = ['javac', '--release', '17', '-d', tmp]
+            args += [str(ROOT / 'source' / p) for p in ('CommandOutcome.java', 'LocalReply.java')]
+            args += [str(ROOT/'tests/java/BoopNativeReplyHarness.java')]
+            compiled = subprocess.run(args, capture_output=True, text=True)
+            self.assertEqual(0, compiled.returncode, compiled.stderr)
+            run = subprocess.run(['java', '-cp', tmp, 'com.boop.alpha1.BoopNativeReplyHarness'], capture_output=True, text=True)
+            self.assertEqual(0, run.returncode, run.stderr)
+            self.assertIn('BOOP_NATIVE_REPLIES_PASS', run.stdout)
+
 if __name__ == '__main__':
     unittest.main()
