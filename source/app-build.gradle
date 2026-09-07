@@ -6,17 +6,47 @@ def boopKeystorePath = System.getenv('BOOP_SIGNING_STORE_FILE')
 def boopKeystorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
 def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
 
+// Only a separate private-prototype relay credential belongs in the APK.
+// OpenAI provider credentials always remain in the Worker, never in this build.
+def boopRelayUrl = (System.getenv('BOOP_RELAY_URL') ?: '').trim()
+def boopRelayToken = (System.getenv('BOOP_RELAY_TOKEN') ?: '').trim()
+if (System.getenv('GITHUB_ACTIONS') == 'true' && boopRelayToken
+        && System.getenv('BOOP_REPOSITORY_PRIVATE') != 'true') {
+    throw new GradleException('Configured relay builds require a private repository; APK credentials are extractable.')
+}
+if (!boopRelayUrl || !boopRelayToken) {
+    // Do not bake a partially configured credential into a setup-only APK.
+    boopRelayUrl = ''
+    boopRelayToken = ''
+} else {
+    boolean validRelayUrl = false
+    try {
+        def uri = new java.net.URI(boopRelayUrl)
+        validRelayUrl = uri.scheme == 'https' && uri.host && !uri.userInfo
+                && uri.rawQuery == null && uri.rawFragment == null
+                && !uri.host.equalsIgnoreCase('api.openai.com')
+                && (uri.port == -1 || (uri.port > 0 && uri.port <= 65535))
+    } catch (Exception ignored) { }
+    if (!validRelayUrl || boopRelayToken.startsWith('sk-')
+            || !(boopRelayToken ==~ /[!-~]{1,4096}/)) {
+        throw new GradleException('Invalid BOOP relay configuration. Use an HTTPS relay and a separate relay credential.')
+    }
+}
+
 android {
     namespace 'com.boop.alpha1'
     compileSdk 36
+    buildFeatures { buildConfig true }
 
     defaultConfig {
         applicationId 'com.boop.alpha1'
         minSdk 29
+        buildConfigField 'String', 'BOOP_RELAY_URL', groovy.json.JsonOutput.toJson(boopRelayUrl)
+        buildConfigField 'String', 'BOOP_RELAY_TOKEN', groovy.json.JsonOutput.toJson(boopRelayToken)
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 33
-        versionName "0.4.13-wall-blink-speed"
+        versionCode 34
+        versionName "0.4.14-wall-native-chat"
     }
 
     signingConfigs {

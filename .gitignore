@@ -13,3 +13,11 @@ local.properties
 *.jks
 *.keystore
 .cache/boop-wake/
+
+# Private Worker configuration and local tool output
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+.wrangler/
+node_modules/

@@ -27,6 +27,12 @@ OpenAI key. Deployment without secrets rejects requests and cannot call OpenAI.
 The default model is `gpt-4.1-mini`; change the nonsecret `OPENAI_MODEL` Worker
 variable to another Responses-compatible model when appropriate for your account.
 
+Before injecting a relay token, make the repository private or use an equivalent
+private build/distribution route. **The workflow refuses configured builds in a
+public repository** because a configured APK would expose the bearer token to
+any artifact recipient. It does not change repository visibility for you. Builds
+with empty relay configuration remain safe to publish as setup candidates.
+
 Then add these **repository Actions secrets** through GitHub's private interface:
 `BOOP_RELAY_URL` = the deployed HTTPS Worker URL (no query/fragment/userinfo), and
 `BOOP_RELAY_TOKEN` = that same separate relay token. Re-run the normal Wall build

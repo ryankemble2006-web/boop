@@ -35,6 +35,10 @@ jobs:
           BASE=3a702f89b7f317649d267f25c34c6c9655edcff8
           git diff --exit-code "$BASE" HEAD -- source/ wake-assets/ scripts/ \
             ':(exclude)source/BoopCommandRouter.java' \
+            ':(exclude)source/OpenAiRelayConfig.java' \
+            ':(exclude)source/OpenAiRelayAssistantClient.java' \
+            ':(exclude)source/CommandOutcome.java' \
+            ':(exclude)source/LocalReply.java' \
             ':(exclude)source/BoopChatMode.java' \
             ':(exclude)source/BoopChatModeHold.java' \
             ':(exclude)source/BoopChatModeStore.java' \
@@ -71,6 +75,17 @@ jobs:
         run: |
           python3 -m unittest bridge/test_boop_wyoming_bridge.py -v
           python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Set up Node for isolated relay tests
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify Worker protocol without live provider traffic
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
+        working-directory: relay/cloudflare
+        run: npm test
 
       - name: Run preserved shake and conversation-exit harnesses
         if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
@@ -148,10 +163,13 @@ jobs:
           keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
 
-      - name: Build the stable-signed Wall v33 candidate
+      - name: Build the stable-signed Wall v34 candidate
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+          BOOP_RELAY_URL: ${{ secrets.BOOP_RELAY_URL }}
+          BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
+          BOOP_REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
 
       - name: Build separate instrumentation only for the full verification path
@@ -159,6 +177,9 @@ jobs:
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+          BOOP_RELAY_URL: ${{ secrets.BOOP_RELAY_URL }}
+          BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
+          BOOP_REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
         run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebugAndroidTest --stacktrace
 
       - name: Verify package, version, archive and signer continuity
@@ -169,8 +190,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='33'" badging.txt
-          grep -q "versionName='0.4.13-wall-blink-speed'" badging.txt
+          grep -q "versionCode='34'" badging.txt
+          grep -q "versionName='0.4.14-wall-native-chat'" badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
@@ -179,6 +200,13 @@ jobs:
           unzip -tq "$APK"
           sha256sum "$APK" > apk-sha256.txt
           git rev-parse HEAD > built-commit.txt
+          python3 - <<'PYCONFIG'
+          from pathlib import Path
+          p = Path('boop-build/BOOP-Alpha1/app/build/generated/source/buildConfig/debug/com/boop/alpha1/BuildConfig.java')
+          text = p.read_text()
+          empty = 'BOOP_RELAY_URL = "";' in text or 'BOOP_RELAY_TOKEN = "";' in text
+          Path('relay-config-state.txt').write_text('setup-required\n' if empty else 'configured-private-prototype\n')
+          PYCONFIG
 
       - name: Enable emulator KVM
         if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
@@ -280,7 +308,7 @@ jobs:
         if: ${{ always() && !contains(github.event.head_commit.message, '[boop-build-only]') }}
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Wall-v33-polish-evidence
+          name: BOOP-Wall-v34-polish-evidence
           path: |
             wall-polish-instrumentation.txt
             wall-polish-system.log
@@ -309,6 +337,7 @@ jobs:
             signer.txt
             badging.txt
             verification-level.txt
+            relay-config-state.txt
           if-no-files-found: error
 
       - name: Remove temporary signing material

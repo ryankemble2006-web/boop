@@ -66,6 +66,10 @@ class Alpha2BuildSurfaceTest(unittest.TestCase):
             if p.is_file() and p.suffix in {'.java', '.xml', '.gradle', '.html', '.js'}
         )
         self.assertIsNone(re.search(r'Bearer\s+[A-Za-z0-9_-]{20,}', text))
+        # Exact prefix-rejection predicates are not literal provider credentials.
+        # A full key anywhere else (including a different startsWith argument)
+        # still trips the original guard.
+        text = text.replace('startsWith("sk-")', '').replace("startsWith('sk-')", '')
         self.assertNotIn('sk-', text)
 
     def test_discovery_is_local_android_nsd(self):
