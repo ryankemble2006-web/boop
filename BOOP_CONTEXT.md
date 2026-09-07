@@ -1,8 +1,10 @@
 # BOOP shared context
 
-Reconciled 2026-09-06. Current user instructions and fresh device evidence win.
+Reconciled 2026-09-06; Wall candidate evidence appended 2026-09-07.
+Current user instructions and fresh device evidence win.
 This compact file is shared across active app branches; detailed product history
 remains in BOOP_MEMORY.txt where present. Use BOOP_START_HERE.md for branch routing.
+Fetched main is the authority for newer shared context across other app branches.
 
 ## Identity and decisions
 
@@ -49,6 +51,24 @@ redesign. Routine-authoring capability evidence is not proof of a finished featu
   app access. Do not silently grant Android access.
 - Next Shield UI question: revisit settings and the rest of the living-room
   inventory, after reading current source/HA evidence; it has not been diagnosed.
+
+## Wall Free Chat candidate, 2026-09-07
+
+Owning task branch: `boop-wall-free-chat-wip`; APK code `e5c5598`.
+This is separate from the accepted physical Wall, not a new accepted checkpoint.
+Ryan approved holding the face for three seconds past the playful animation,
+then selecting OpenCode / Free Chat / Cancel. OpenCode defaults on; the choice
+persists and the same menu reverses it. Immediate house/media remain local first.
+Free Chat is an explicit ChatGPT browser session with a copied question for manual
+paste/send, not an invisible backend, embedded subscription API or unlimited quota.
+
+Run 34070255788 built and verified the stable-signed v31 APK. Source/JVM/Android
+unit checks and real emulator wake startup passed. The subsequent menu interaction
+test failed; pairing was skipped and physical acceptance is absent. The downloaded
+APK's provenance, integrity and certificate identity were independently checked.
+Do not equate a signed APK with a completed, working mode switch. Exact artifact
+fingerprints and remaining debugging work are in SESSION_HANDOFF.md/BOOP_STATUS.md.
+The accepted annotated tag was checked live and still resolves to 595e1da.
 
 ## Protect the working puppet
 
