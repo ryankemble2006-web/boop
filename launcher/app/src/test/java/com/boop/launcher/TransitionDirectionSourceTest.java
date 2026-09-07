@@ -11,7 +11,7 @@ public class TransitionDirectionSourceTest {
   throw new AssertionError("Could not locate expected launcher file");
  }
 
- @Test public void crossAppHandoffUsesBlackSafeFadeWithoutSystemSlide() throws Exception {
+ @Test public void crossAppHandoffUsesNoAnimationAndKeepsBlackImmersiveSurface() throws Exception {
   String main=read(
    Paths.get("src/main/java/com/boop/launcher/MainActivity.java"),
    Paths.get("app/src/main/java/com/boop/launcher/MainActivity.java"),
@@ -31,11 +31,13 @@ public class TransitionDirectionSourceTest {
 
   assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_OPEN,0,0)"));
   assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE,0,0)"));
-  assertFalse(main.contains("Intent.FLAG_ACTIVITY_NO_ANIMATION"));
-  assertFalse(main.contains("overridePendingTransition(0,0)"));
-  assertTrue(main.contains("ActivityOptions.makeCustomAnimation(this,android.R.anim.fade_in,0)"));
-  assertTrue(main.contains("root.animate().alpha(0f).setDuration(120)"));
-  assertTrue(main.contains("root.animate().alpha(1f).setDuration(180)"));
+  assertTrue(main.contains("Intent.FLAG_ACTIVITY_NO_ANIMATION"));
+  assertTrue(main.contains("overridePendingTransition(0,0)"));
+  assertTrue(main.contains("EdgeToEdge.hideBars(this);startActivity(i)"));
+  assertTrue(main.contains("showLauncherImmediately()"));
+  assertFalse(main.contains("ActivityOptions.makeCustomAnimation"));
+  assertFalse(main.contains("root.animate().alpha(0f)"));
+  assertFalse(main.contains("root.animate().alpha(1f)"));
   assertFalse(main.contains("R.anim.boop_enter_from_"));
   assertFalse(main.contains("R.anim.boop_exit_to_"));
 
