@@ -35,15 +35,26 @@ class ShieldHomeDashboardSourceTest(unittest.TestCase):
         self.assertIn("dashboardController.markOffline", activity)
         self.assertIn("Home Assistant is offline.", activity)
 
-    def test_home_view_shows_confirmed_state_and_plain_stale_label(self):
+    def test_home_view_shows_all_room_cards_and_plain_stale_label(self):
         home = (JAVA / "TvHomeView.java").read_text(encoding="utf-8")
 
+        self.assertIn("class TvHomeView extends ScrollView", home)
         self.assertIn("void render(HomeDashboardController.ViewState state)", home)
+        self.assertIn("List<EntityCard> cards = state.cards()", home)
+        self.assertIn("for (EntityCard card : cards)", home)
+        self.assertIn("card.displayName()", home)
+        self.assertIn("card.state()", home)
+        self.assertIn("current.toggle(card)", home)
         self.assertIn("Last known", home)
-        self.assertIn("favourite.displayName()", home)
-        self.assertIn("favourite.state()", home)
-        self.assertIn("onFavouriteClick", home)
+        self.assertIn("Use Up/Down to see the room", home)
         self.assertNotIn("entity_id", home)
+
+    def test_activity_scaling_does_not_use_late_override_configuration(self):
+        application = (JAVA / "BoopApplication.java").read_text(encoding="utf-8")
+
+        self.assertIn("UI_SCALE = 0.80f", application)
+        self.assertIn("resources.updateConfiguration", application)
+        self.assertNotIn("applyOverrideConfiguration", application)
 
 
 if __name__ == "__main__":
