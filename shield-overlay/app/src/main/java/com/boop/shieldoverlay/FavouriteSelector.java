@@ -18,8 +18,9 @@ public final class FavouriteSelector {
         return null;
     }
 
-    private static boolean isCandidate(String selectedAreaId, EntityCard card) {
-        if (card == null || !selectedAreaId.equals(card.areaId()) || card.hidden()) {
+    boolean isCandidate(String selectedAreaId, EntityCard card) {
+        String areaId = clean(selectedAreaId);
+        if (areaId == null || card == null || !areaId.equals(card.areaId()) || card.hidden()) {
             return false;
         }
 
