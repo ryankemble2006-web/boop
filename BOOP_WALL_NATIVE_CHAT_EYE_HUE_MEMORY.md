@@ -22,6 +22,6 @@ Hue contract:
 - do not change eye geometry/crops/layout/animations/hitboxes/gestures, black background, voice behavior, Native Chat, wake behavior, Member Berry, thinking or shake behavior;
 - no mouth, replacement artwork, RGB channels, brightness, saturation, opacity, effects or themes.
 
-Concurrency note: while the combined candidate was being prepared, `boop-wall-free-chat-wip` independently advanced to `36e31998219c518e96730ff54e96b8e4fdf5b680` with the same hue concept embedded directly in `scripts/materialize-android.sh`. Preserve that commit. The combined branch reconciles it rather than blindly stacking duplicate implementations and keeps the hue helpers/patch isolated for testing.
+Concurrency note: while the combined candidate was being prepared, `boop-wall-free-chat-wip` independently advanced to `36e31998219c518e96730ff54e96b8e4fdf5b680` with the same hue concept embedded directly in `scripts/materialize-android.sh`. Preserve that commit. The combined branch reconciles it in ancestry rather than blindly stacking duplicate implementations and keeps the hue helpers/patch isolated for testing.
 
 CI green is not physical green. The protected physical Wall checkpoint remains unchanged until the v35 APK installs over v34 and passes the physical colour/persistence/animation/gesture/Native Chat checklist.
