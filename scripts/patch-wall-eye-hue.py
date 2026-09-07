@@ -6,27 +6,11 @@ FACE = ROOT / "BoopFaceView.java"
 
 main_text = MAIN.read_text()
 
-# The eye-colour control is deliberately not part of Voice Settings. It is a
-# face interaction: hold both visible eyes for one second, then adjust the
-# slider beneath the eyes. A tap anywhere outside the slider dismisses it.
+# The eye-colour control is deliberately not part of Voice Settings. It is
+# summoned by voice and drawn beneath the eyes so colour changes are visible
+# live. A tap anywhere outside the slider dismisses it.
 fields_marker = "    private boolean faceGestureMoved;\n"
-fields_insert = fields_marker + """    private BoopEyeHueOverlay eyeHueOverlay;
-    private boolean eyeHueChordActive;
-    private boolean eyeHueGestureConsumed;
-    private final Runnable eyeHueHoldRunnable = () -> {
-        if (!eyeHueChordActive || !faceTouchActive || voiceSettingsOpen || chatModeOpen
-                || eyeHueOverlay == null || eyeHueOverlay.isVisible()
-                || isFinishing() || isDestroyed()) return;
-        eyeHueChordActive = false;
-        eyeHueGestureConsumed = true;
-        memberBerryConsumed = true;
-        cancelFaceHolds();
-        interactionSurface.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-        wakeFaceForInteraction();
-        eyeHueOverlay.show();
-        if (wakeCoordinator != null) wakeCoordinator.setVoiceSettingsOpen(true);
-    };
-"""
+fields_insert = fields_marker + "    private BoopEyeHueOverlay eyeHueOverlay;\n"
 if "private BoopEyeHueOverlay eyeHueOverlay;" not in main_text:
     if main_text.count(fields_marker) != 1:
         raise SystemExit("BOOP eye hue fields marker not found")
@@ -59,6 +43,7 @@ new_touch_start = """    private boolean onFaceTouch(View view, MotionEvent even
             if (action == MotionEvent.ACTION_DOWN && !eyeHueOverlay.isSliderTouch(event)) {
                 eyeHueOverlay.hide();
                 if (wakeCoordinator != null) wakeCoordinator.setVoiceSettingsOpen(false);
+                wakeFaceForInteraction();
                 scheduleFaceIdle();
             }
             return true;
@@ -69,113 +54,44 @@ if new_touch_start not in main_text:
         raise SystemExit("BOOP eye hue touch-start marker not found")
     main_text = main_text.replace(old_touch_start, new_touch_start, 1)
 
-old_down = """        if (action == MotionEvent.ACTION_DOWN) {
-            cancelFaceHolds();
-            faceTouchActive = true;
-            faceGestureMoved = false;
-            memberBerryConsumed = false;
-            swipeHadMultiplePointers = false;
+handle_marker = """    private void handleRecognizedSpeech(String transcript) {
+        if (BoopVoiceSettingsIntent.matches(transcript)) {
 """
-new_down = """        if (action == MotionEvent.ACTION_DOWN) {
-            cancelFaceHolds();
-            cancelEyeHueHold();
-            eyeHueGestureConsumed = false;
-            faceTouchActive = true;
-            faceGestureMoved = false;
-            memberBerryConsumed = false;
-            swipeHadMultiplePointers = false;
-"""
-if new_down not in main_text:
-    if main_text.count(old_down) != 1:
-        raise SystemExit("BOOP eye hue ACTION_DOWN marker not found")
-    main_text = main_text.replace(old_down, new_down, 1)
-
-old_pointer = """        if (action == MotionEvent.ACTION_POINTER_DOWN) {
-            swipeHadMultiplePointers = true;
-            cancelFaceHolds();
-            return true;
+handle_replacement = """    private void handleRecognizedSpeech(String transcript) {
+        if (BoopEyeHueVoiceIntent.matches(transcript)) {
+            showEyeHueControl();
+            return;
         }
+        if (BoopVoiceSettingsIntent.matches(transcript)) {
 """
-new_pointer = """        if (action == MotionEvent.ACTION_POINTER_DOWN) {
-            swipeHadMultiplePointers = true;
-            cancelFaceHolds();
-            cancelEyeHueHold();
-            if (BoopEyeHueOverlay.touchesBothEyes(face, event)) {
-                eyeHueChordActive = true;
-                if (presenceHandler != null) {
-                    presenceHandler.postDelayed(eyeHueHoldRunnable, 1_000L);
-                }
-            }
-            return true;
-        }
-"""
-if new_pointer not in main_text:
-    if main_text.count(old_pointer) != 1:
-        raise SystemExit("BOOP eye hue ACTION_POINTER_DOWN marker not found")
-    main_text = main_text.replace(old_pointer, new_pointer, 1)
-
-old_move = """        if (action == MotionEvent.ACTION_MOVE) {
-            chatModeHold.move(event.getX(), event.getY(), event.getPointerCount());
-            float movedX = Math.abs(event.getX() - faceTouchDownX);
-"""
-new_move = """        if (action == MotionEvent.ACTION_MOVE) {
-            if (eyeHueChordActive) {
-                if (!BoopEyeHueOverlay.touchesBothEyes(face, event)) cancelEyeHueHold();
-                return true;
-            }
-            chatModeHold.move(event.getX(), event.getY(), event.getPointerCount());
-            float movedX = Math.abs(event.getX() - faceTouchDownX);
-"""
-if new_move not in main_text:
-    if main_text.count(old_move) != 1:
-        raise SystemExit("BOOP eye hue ACTION_MOVE marker not found")
-    main_text = main_text.replace(old_move, new_move, 1)
-
-old_cancel = """        if (action == MotionEvent.ACTION_CANCEL) {
-            cancelFaceHolds();
-            faceTouchActive = false;
-"""
-new_cancel = """        if (action == MotionEvent.ACTION_POINTER_UP) {
-            cancelEyeHueHold();
-            return true;
-        }
-        if (action == MotionEvent.ACTION_CANCEL) {
-            cancelFaceHolds();
-            cancelEyeHueHold();
-            faceTouchActive = false;
-"""
-if new_cancel not in main_text:
-    if main_text.count(old_cancel) != 1:
-        raise SystemExit("BOOP eye hue cancel marker not found")
-    main_text = main_text.replace(old_cancel, new_cancel, 1)
-
-old_release = """        if (action != MotionEvent.ACTION_UP) return true;
-        cancelFaceHolds();
-        if (!faceTouchActive) return true;
-"""
-new_release = """        if (action != MotionEvent.ACTION_UP) return true;
-        cancelFaceHolds();
-        cancelEyeHueHold();
-        if (eyeHueGestureConsumed) {
-            eyeHueGestureConsumed = false;
-            faceTouchActive = false;
-            return true;
-        }
-        if (!faceTouchActive) return true;
-"""
-if new_release not in main_text:
-    if main_text.count(old_release) != 1:
-        raise SystemExit("BOOP eye hue release marker not found")
-    main_text = main_text.replace(old_release, new_release, 1)
+if handle_replacement not in main_text:
+    if main_text.count(handle_marker) != 1:
+        raise SystemExit("BOOP eye hue recognized-speech marker not found")
+    main_text = main_text.replace(handle_marker, handle_replacement, 1)
 
 methods_marker = "    private void cancelFaceHolds() {\n"
-methods_insert = """    private void cancelEyeHueHold() {
-        eyeHueChordActive = false;
-        if (presenceHandler != null) presenceHandler.removeCallbacks(eyeHueHoldRunnable);
+methods_insert = """    private void showEyeHueControl() {
+        if (eyeHueOverlay == null || eyeHueOverlay.isVisible() || voiceSettingsOpen || chatModeOpen) {
+            return;
+        }
+        cancelFaceHolds();
+        assistantFollowUpAfterTts = false;
+        sleepFaceAfterTts = false;
+        cancelAssistantFollowUpSilenceTimeout();
+        if (listening) {
+            suppressNextRecognizerError = true;
+            stopListening();
+        }
+        if (tts != null) tts.stop();
+        wakeFaceForInteraction();
+        interactionSurface.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
+        eyeHueOverlay.show();
+        if (wakeCoordinator != null) wakeCoordinator.setVoiceSettingsOpen(true);
+        scheduleFaceIdle();
     }
 
 """ + methods_marker
-if "private void cancelEyeHueHold()" not in main_text:
+if "private void showEyeHueControl()" not in main_text:
     if main_text.count(methods_marker) != 1:
         raise SystemExit("BOOP eye hue method marker not found")
     main_text = main_text.replace(methods_marker, methods_insert, 1)
