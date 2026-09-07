@@ -15,8 +15,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 32
-        versionName "0.4.12-wall-blink-text"
+        versionCode 33
+        versionName "0.4.13-wall-blink-speed"
     }
 
     signingConfigs {

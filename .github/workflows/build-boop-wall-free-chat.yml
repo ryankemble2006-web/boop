@@ -12,6 +12,8 @@ concurrency:
   group: boop-wall-free-chat-${{ github.ref }}
   cancel-in-progress: true
 
+# Explicit build-only marker is used only when Ryan requests no tests.
+# Ordinary pushes and manual runs retain the full existing verification path.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,6 +28,7 @@ jobs:
           fetch-depth: 0
 
       - name: Protect the preserved voice, eyes, wake assets and companion source
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -54,19 +57,23 @@ jobs:
           java-version: '17'
 
       - name: Set up Python 3.12
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install existing bridge test dependencies
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         run: python -m pip install 'aiohttp==3.14.3' 'wyoming==1.10.0'
 
       - name: Run bridge, source and chat-routing regression tests
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         run: |
           python3 -m unittest bridge/test_boop_wyoming_bridge.py -v
           python3 -m unittest discover -s tests -p 'test_*.py' -v
 
       - name: Run preserved shake and conversation-exit harnesses
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -82,6 +89,7 @@ jobs:
         run: bash scripts/materialize-android.sh
 
       - name: Verify effective source and all natural-wake mappings
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -94,10 +102,23 @@ jobs:
           sha256sum "$APP/src/main/java/com/boop/alpha1/MainActivity.java" > effective-source-sha256.txt
 
       - name: Set up Android SDK
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         uses: android-actions/setup-android@v3
 
       - name: Install the existing Android 36 toolchain and emulator image
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools" "emulator" "system-images;android-36;google_apis;x86_64"
+
+      - name: Reuse installed build tools only; no emulator or tests requested
+        if: ${{ contains(github.event.head_commit.message, '[boop-build-only]') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f "${ANDROID_HOME}/platforms/android-36/android.jar" ] || [ ! -x "${ANDROID_HOME}/build-tools/36.0.0/apksigner" ]; then
+            "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
+          fi
+          sha256sum boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java > effective-source-sha256.txt
+          echo 'Tests and emulator runs skipped at Ryan request.' > verification-level.txt
 
       - name: Set up the existing Gradle version
         uses: gradle/actions/setup-gradle@v4
@@ -105,6 +126,7 @@ jobs:
           gradle-version: '9.6.0'
 
       - name: Run Android unit tests
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
 
       - name: Prepare the existing permanent BOOP signer
@@ -126,11 +148,18 @@ jobs:
           keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
 
-      - name: Build the stable-signed Wall v32 candidate
+      - name: Build the stable-signed Wall v33 candidate
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
-        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+
+      - name: Build separate instrumentation only for the full verification path
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebugAndroidTest --stacktrace
 
       - name: Verify package, version, archive and signer continuity
         shell: bash
@@ -140,8 +169,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='32'" badging.txt
-          grep -q "versionName='0.4.12-wall-blink-text'" badging.txt
+          grep -q "versionCode='33'" badging.txt
+          grep -q "versionName='0.4.13-wall-blink-speed'" badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
@@ -152,12 +181,14 @@ jobs:
           git rev-parse HEAD > built-commit.txt
 
       - name: Enable emulator KVM
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm || true
 
       - name: Boot a disposable Android 16 Pixel 7 Pro emulator
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         timeout-minutes: 6
         shell: bash
         run: |
@@ -174,6 +205,7 @@ jobs:
           adb shell input keyevent 82 || true
 
       - name: Select and verify the emulator supplied-audio recognizer
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         timeout-minutes: 2
         shell: bash
         run: |
@@ -202,6 +234,7 @@ jobs:
           echo 'BOOP_EMULATOR_RECOGNIZER_SELECTED=1'
 
       - name: Verify the signed app starts with the real wake microphone armed
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         timeout-minutes: 2
         shell: bash
         run: |
@@ -220,9 +253,11 @@ jobs:
           adb shell pidof com.boop.alpha1
 
       - name: Exercise the menu, persistence, revert and gesture cancellation
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         run: python3 scripts/smoke-wall-chat-mode.py
 
       - name: Verify readable notice, actual idle blink, sleep deadline and lifecycle
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         timeout-minutes: 4
         shell: bash
         run: |
@@ -237,15 +272,15 @@ jobs:
           grep -q 'INSTRUMENTATION_CODE: -1' wall-polish-instrumentation.txt
 
       - name: Collect disposable-emulator polish evidence
-        if: always()
+        if: ${{ always() && !contains(github.event.head_commit.message, '[boop-build-only]') }}
         continue-on-error: true
         run: adb pull /sdcard/Android/data/com.boop.alpha1/files/wall-polish-evidence wall-polish-evidence
 
       - name: Publish disposable-emulator polish evidence
-        if: always()
+        if: ${{ always() && !contains(github.event.head_commit.message, '[boop-build-only]') }}
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Wall-v32-polish-evidence
+          name: BOOP-Wall-v33-polish-evidence
           path: |
             wall-polish-instrumentation.txt
             wall-polish-system.log
@@ -254,6 +289,7 @@ jobs:
           retention-days: 7
 
       - name: Verify the existing Shield pairing return route
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         run: |
           adb shell am start -W -a android.intent.action.VIEW -d 'boop://shield-pair-return?sid=test' com.boop.alpha1
           sleep 2
@@ -261,7 +297,7 @@ jobs:
           adb shell pidof com.boop.alpha1
 
       - name: Upload candidate APK and public build fingerprints
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: BOOP-Wall-Free-Chat-candidate
@@ -270,7 +306,10 @@ jobs:
             built-commit.txt
             apk-sha256.txt
             effective-source-sha256.txt
-          if-no-files-found: ignore
+            signer.txt
+            badging.txt
+            verification-level.txt
+          if-no-files-found: error
 
       - name: Remove temporary signing material
         if: always()

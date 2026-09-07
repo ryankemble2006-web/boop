@@ -5,7 +5,7 @@ import java.util.Random;
 
 /** Pure timing/eyelid geometry; never changes presence or the sleep deadline. */
 final class BoopIdleBlink {
-    static final long DURATION_MS = 220L;
+    static final long DURATION_MS = 183L;
     private BoopIdleBlink() { }
 
     static long nextDelayMillis(Random random) {
