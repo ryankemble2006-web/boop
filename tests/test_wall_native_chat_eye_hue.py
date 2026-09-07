@@ -13,8 +13,8 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert "patch-wall-eye-hue.py" in materialize
     assert "ActivityOptions.makeCustomAnimation" in materialize
 
-    assert "versionCode 37" in build
-    assert 'versionName "0.4.17-wall-eye-hue-voice"' in build
+    assert "versionCode 38" in build
+    assert 'versionName "0.4.18-wall-eye-hue-local-intent"' in build
     assert "BOOP_RELAY_URL" in build
     assert "BOOP_RELAY_TOKEN" in build
 
@@ -28,8 +28,10 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert "BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes)" in patch
     assert "paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));" in patch
     assert "setEyeHueDegrees(BoopEyeHue.loadHue(context));" in patch
-    assert "change eye colour" in intent
-    assert "change eye color" in intent
+    assert 'value.contains("eye colour")' in intent
+    assert 'value.contains("eye color")' in intent
+    assert 'value.contains("eye hue")' in intent
+    assert 'value.contains("i color")' in intent
     assert "mouth" not in patch.lower()
 
 
