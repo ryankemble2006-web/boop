@@ -1,6 +1,7 @@
 package com.boop.launcher;
 
 import org.junit.Test;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import static org.junit.Assert.*;
 
@@ -11,7 +12,7 @@ public class ImmersiveModeSourceTest {
    Paths.get("app/src/main/java/com/boop/launcher",file),
    Paths.get("launcher/app/src/main/java/com/boop/launcher",file)
   };
-  for(Path p:candidates)if(Files.exists(p))return Files.readString(p);
+  for(Path p:candidates)if(Files.exists(p))return new String(Files.readAllBytes(p),StandardCharsets.UTF_8);
   throw new AssertionError("Could not locate launcher source: "+file);
  }
 
