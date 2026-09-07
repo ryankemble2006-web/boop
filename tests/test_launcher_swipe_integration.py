@@ -27,12 +27,12 @@ class LauncherSwipeIntegrationTest(unittest.TestCase):
         self.assertIn('<package android:name="com.boop.launcher" />', manifest)
 
     def test_wall_owns_the_mirrored_cross_app_transition(self):
-        patch = Path('scripts/patch-wall-chat-mode.py').read_text(encoding='utf-8')
-        self.assertIn('ActivityOptions.makeCustomAnimation', patch)
-        self.assertIn('R.anim.boop_launcher_enter_from_right', patch)
-        self.assertIn('R.anim.boop_wall_exit_to_left', patch)
-        self.assertIn('android:fromXDelta="100%p"', patch)
-        self.assertIn('android:toXDelta="-100%p"', patch)
+        materialize = Path('scripts/materialize-android.sh').read_text(encoding='utf-8')
+        self.assertIn('ActivityOptions.makeCustomAnimation', materialize)
+        self.assertIn('R.anim.boop_launcher_enter_from_right', materialize)
+        self.assertIn('R.anim.boop_wall_exit_to_left', materialize)
+        self.assertIn('android:fromXDelta="100%p"', materialize)
+        self.assertIn('android:toXDelta="-100%p"', materialize)
 
 
 if __name__ == '__main__':
