@@ -1,0 +1,32 @@
+name: Export current Wall source for relay work
+on:
+  push:
+    branches: [boop-relay-source-7aa871f]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 7aa871f70d620093e1e2e176df13820b1fd51964
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Export current tracked source and shallow Git objects, without credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 7aa871f70d620093e1e2e176df13820b1fd51964
+          git remote remove origin
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          test -z "$(git config --local --get-regexp 'extraheader|credential' || true)"
+          tar --exclude='./.git/logs' --exclude='./.git/hooks' -czf "${RUNNER_TEMP}/boop-relay-source.tar.gz" .
+          sha256sum "${RUNNER_TEMP}/boop-relay-source.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-relay-source-7aa871f
+          path: ${{ runner.temp }}/boop-relay-source.tar.gz
+          retention-days: 1
+          if-no-files-found: error
