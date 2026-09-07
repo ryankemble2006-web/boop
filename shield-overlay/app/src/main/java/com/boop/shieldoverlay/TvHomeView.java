@@ -14,11 +14,10 @@ import android.widget.TextView;
 import java.util.List;
 
 public final class TvHomeView extends ScrollView {
-    private final LinearLayout content;
     private final LinearLayout favouritesContainer;
     private final FocusCardView firstCard;
     private final TextView favouriteStatus;
-    private final Runnable onFavouriteClick;
+    private final Runnable onContentLeft;
     private HomeDashboardController.ViewState currentState;
     private EntityCard firstCardEntity;
     private boolean favouriteActionEnabled;
@@ -27,15 +26,15 @@ public final class TvHomeView extends ScrollView {
             Context context,
             AreaInfo selectedRoom,
             Runnable onContentLeft,
-            Runnable onFavouriteClick) {
+            Runnable ignoredLegacyFavouriteClick) {
         super(context);
-        this.onFavouriteClick = onFavouriteClick;
+        this.onContentLeft = onContentLeft;
         setFillViewport(true);
         setSmoothScrollingEnabled(true);
         setBackgroundColor(Color.BLACK);
         setFocusable(false);
 
-        content = new LinearLayout(context);
+        LinearLayout content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.TOP);
         content.setPadding(dp(36), dp(34), dp(44), dp(34));
@@ -53,15 +52,11 @@ public final class TvHomeView extends ScrollView {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        firstCard = card("Finding useful controls…", onContentLeft);
+        firstCard = card("Finding useful controls…");
         firstCard.setOnClickListener(view -> {
-            if (!favouriteActionEnabled || firstCardEntity == null) {
-                return;
-            }
-            if (onFavouriteClick != null) {
-                onFavouriteClick.run();
-            } else if (currentState != null) {
-                currentState.toggle(firstCardEntity);
+            HomeDashboardController.ViewState current = currentState;
+            if (favouriteActionEnabled && firstCardEntity != null && current != null) {
+                current.toggle(firstCardEntity);
             }
         });
         favouritesContainer.addView(firstCard, cardParams());
@@ -71,8 +66,7 @@ public final class TvHomeView extends ScrollView {
 
         content.addView(section("Rooms"));
         FocusCardView roomCard = card(
-                selectedRoom == null ? "Choose a room" : selectedRoom.name(),
-                onContentLeft);
+                selectedRoom == null ? "Choose a room" : selectedRoom.name());
         content.addView(roomCard, cardParams());
     }
 
@@ -119,7 +113,7 @@ public final class TvHomeView extends ScrollView {
             if (card == null || card.entityId().equals(primary.entityId())) {
                 continue;
             }
-            FocusCardView extra = card(cardLabel(card, state.stale()), this::returnFocusLeft);
+            FocusCardView extra = card(cardLabel(card, state.stale()));
             extra.setAlpha(state.actionsEnabled() ? 1f : 0.72f);
             extra.setOnClickListener(view -> {
                 HomeDashboardController.ViewState current = currentState;
@@ -149,17 +143,12 @@ public final class TvHomeView extends ScrollView {
         }
     }
 
-    private void returnFocusLeft() {
-        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT);
-        firstCard.dispatchKeyEvent(event);
-    }
-
     private String cardLabel(EntityCard card, boolean stale) {
         String stateLabel = "on".equals(card.state()) ? "On" : "Off";
         return card.displayName() + "\n" + stateLabel + (stale ? " · Last known" : "");
     }
 
-    private FocusCardView card(String label, Runnable onContentLeft) {
+    private FocusCardView card(String label) {
         FocusCardView card = new FocusCardView(getContext()).label(label);
         card.setOnKeyListener((view, keyCode, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN
