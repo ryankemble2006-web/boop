@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from shutil import copy2
 
 main = Path('boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java')
 text = main.read_text(encoding='utf-8')
@@ -94,4 +95,11 @@ replace_once('''    private void handleRecognizedSpeech(String transcript) {
 ''', 'verbal wake-name routing')
 
 main.write_text(text, encoding='utf-8')
-print('Unified spoken wake-name UI/routing patched')
+
+model = Path('.cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/bpe.model')
+destination = Path('boop-build/BOOP-Alpha1/app/src/main/assets/boop-kws/bpe.model')
+if not model.is_file():
+    raise SystemExit(f'Wake-name BPE model missing from verified model cache: {model}')
+destination.parent.mkdir(parents=True, exist_ok=True)
+copy2(model, destination)
+print('Unified spoken wake-name UI/routing and BPE runtime asset patched')
