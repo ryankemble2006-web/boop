@@ -12,7 +12,13 @@ final class CommandOutcome {
         ASSISTANT_REPLY,
         ASSISTANT_NO_AGENT,
         ASSISTANT_UNREACHABLE,
-        ASSISTANT_FAILED
+        ASSISTANT_FAILED,
+        ASSISTANT_SETUP_REQUIRED,
+        ASSISTANT_AUTH_REQUIRED,
+        ASSISTANT_QUOTA,
+        ASSISTANT_RATE_LIMIT,
+        ASSISTANT_TIMEOUT,
+        ASSISTANT_SERVICE
     }
 
     private final Status status;
@@ -77,6 +83,30 @@ final class CommandOutcome {
 
     static CommandOutcome assistantFailed() {
         return new CommandOutcome(Status.ASSISTANT_FAILED, "", "");
+    }
+
+    static CommandOutcome assistantSetupRequired() {
+        return new CommandOutcome(Status.ASSISTANT_SETUP_REQUIRED, "", "");
+    }
+
+    static CommandOutcome assistantAuthRequired() {
+        return new CommandOutcome(Status.ASSISTANT_AUTH_REQUIRED, "", "");
+    }
+
+    static CommandOutcome assistantQuota() {
+        return new CommandOutcome(Status.ASSISTANT_QUOTA, "", "");
+    }
+
+    static CommandOutcome assistantRateLimit() {
+        return new CommandOutcome(Status.ASSISTANT_RATE_LIMIT, "", "");
+    }
+
+    static CommandOutcome assistantTimeout() {
+        return new CommandOutcome(Status.ASSISTANT_TIMEOUT, "", "");
+    }
+
+    static CommandOutcome assistantService() {
+        return new CommandOutcome(Status.ASSISTANT_SERVICE, "", "");
     }
 
     Status status() { return status; }
