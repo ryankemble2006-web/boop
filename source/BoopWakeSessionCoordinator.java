@@ -37,6 +37,12 @@ final class BoopWakeSessionCoordinator {
         syncEngine();
     }
 
+    void setWakeAllowed(boolean allowed) {
+        if (shutdown) return;
+        state.setWakeAllowed(allowed);
+        syncEngine();
+    }
+
     void setMicrophonePermission(boolean granted) {
         if (shutdown) return;
         state.setMicrophonePermission(granted);

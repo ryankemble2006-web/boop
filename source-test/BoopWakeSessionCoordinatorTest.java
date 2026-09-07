@@ -30,9 +30,24 @@ public final class BoopWakeSessionCoordinatorTest {
     private static BoopWakeSessionCoordinator ready(FakeEngine engine) {
         BoopWakeSessionCoordinator coordinator = new BoopWakeSessionCoordinator(engine);
         coordinator.beginForegroundSession();
+        coordinator.setWakeAllowed(true);
         coordinator.setMicrophonePermission(true);
         coordinator.setRecognitionSupported(true);
         return coordinator;
+    }
+
+    @Test public void undockedPolicyNeverArmsTheEngine() {
+        FakeEngine engine = new FakeEngine();
+        BoopWakeSessionCoordinator coordinator = new BoopWakeSessionCoordinator(engine);
+        coordinator.beginForegroundSession();
+        coordinator.setMicrophonePermission(true);
+        coordinator.setRecognitionSupported(true);
+        assertEquals(BoopWakeSessionState.State.DISARMED, coordinator.state());
+        assertEquals(0, engine.armCalls);
+        coordinator.setWakeAllowed(true);
+        assertEquals(1, engine.armCalls);
+        coordinator.setWakeAllowed(false);
+        assertEquals(1, engine.suspendCalls);
     }
 
     @Test public void readyStateArmsOnceAndRepeatedSyncIsHarmless() {
@@ -42,6 +57,7 @@ public final class BoopWakeSessionCoordinatorTest {
         assertEquals(1, engine.armCalls);
         coordinator.setRecognitionSupported(true);
         coordinator.setMicrophonePermission(true);
+        coordinator.setWakeAllowed(true);
         assertEquals(1, engine.armCalls);
     }
 
@@ -53,6 +69,7 @@ public final class BoopWakeSessionCoordinatorTest {
         assertEquals(1, engine.suspendCalls);
 
         coordinator.beginForegroundSession();
+        coordinator.setWakeAllowed(true);
         coordinator.setMicrophonePermission(true);
         coordinator.setRecognitionSupported(true);
         coordinator.onTapStarted();
@@ -95,6 +112,7 @@ public final class BoopWakeSessionCoordinatorTest {
         engine.armResult = false;
         BoopWakeSessionCoordinator coordinator = new BoopWakeSessionCoordinator(engine);
         coordinator.beginForegroundSession();
+        coordinator.setWakeAllowed(true);
         coordinator.setMicrophonePermission(true);
         coordinator.setRecognitionSupported(true);
         assertTrue(coordinator.wakeFailed());
@@ -105,6 +123,7 @@ public final class BoopWakeSessionCoordinatorTest {
         coordinator.endForegroundSession();
         engine.armResult = true;
         coordinator.beginForegroundSession();
+        coordinator.setWakeAllowed(true);
         coordinator.setMicrophonePermission(true);
         assertFalse(coordinator.wakeFailed());
         assertEquals(BoopWakeSessionState.State.DISARMED, coordinator.state());

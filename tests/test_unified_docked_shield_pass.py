@@ -1,0 +1,44 @@
+from pathlib import Path
+
+
+def test_unified_dock_mirror_and_shield_settings_contract():
+    manifest = Path("source/AndroidManifest.xml").read_text()
+    materializer = Path("scripts/materialize-unified.sh").read_text()
+    patch = Path("scripts/patch-unified-dock-mirror.py").read_text()
+    settings = Path(
+        "shield-overlay/app/src/main/java/com/boop/shieldoverlay/TvSettingsView.java"
+    ).read_text()
+    dashboard = Path(
+        "shield-overlay/app/src/main/java/com/boop/shieldoverlay/HomeDashboardController.java"
+    ).read_text()
+    repository = Path(
+        "shield-overlay/app/src/main/java/com/boop/shieldoverlay/HomeAssistantRepository.java"
+    ).read_text()
+
+    assert 'android.permission.CAMERA' in manifest
+    assert 'python3 scripts/patch-unified-dock-mirror.py' in materializer
+    assert 'wakeCoordinator.setWakeAllowed(docked)' in patch
+    assert 'BoopMirrorIntent.actionFor(transcript)' in patch
+    assert 'REQ_CAMERA' in patch
+    assert 'onPresenceNudge' in patch
+
+    assert 'BOOP Settings' in settings
+    assert 'KEYCODE_DPAD_LEFT' in settings
+    assert 'KEYCODE_DPAD_DOWN' in settings
+    assert 'KEYCODE_DPAD_UP' in settings
+    assert 'setStateListAnimator(null)' in settings
+    assert 'Color.rgb(61, 220, 255)' in settings
+    assert 'Only ' in settings and ' controls are shown' in settings
+
+    assert 'RoomScopedEntities.keep(room, snapshot.cards())' in dashboard
+    assert "I couldn't confirm this room, so I hid the controls." in dashboard
+    assert 'extract_from_target' in repository
+    assert 'config/entity_registry/list_for_display' in repository
+
+
+def test_mirror_parser_has_open_close_and_false_positive_guards():
+    parser = Path("source/BoopMirrorIntent.java").read_text()
+    assert 'enum Action { NONE, OPEN, CLOSE }' in parser
+    assert 'show me the mirror' in parser
+    assert 'turn off mirror' in parser
+    assert 'what is' not in parser

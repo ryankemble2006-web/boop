@@ -2,6 +2,7 @@
 set -euo pipefail
 
 bash scripts/materialize-android.sh
+python3 scripts/patch-unified-dock-mirror.py
 ROOT=boop-build/BOOP-Alpha1
 APP="$ROOT/app"
 

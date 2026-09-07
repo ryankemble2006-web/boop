@@ -47,12 +47,13 @@ jobs:
               ('Wall head', 'a28364f98fba1b3a5dbab7e66075c0fb166e08e3', heads),
               ('Launcher head', '953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2', heads),
               ('Shield head', '1a487a4aaecd098d6854905ee64d60253ad6b4b7', heads),
-              ('versionCode', 'versionCode 42', build),
-              ('versionName', '1.0.1-unified-shield-startup', build),
+              ('versionCode', 'versionCode 43', build),
+              ('versionName', '1.1.0-unified-dock-mirror-shield-settings', build),
               ('wall device', 'pixel 7 pro', profile),
               ('shield route', 'BoopDeviceProfile.Mode.SHIELD', entry),
               ('launcher route', 'com.boop.launcher.MainActivity', entry),
               ('shield activity', 'com.boop.shieldoverlay.MainActivity', entry),
+              ('dock/mirror patch', 'patch-unified-dock-mirror.py', materializer),
               ('Shield detail overlay route', 'Settings.ACTION_MANAGE_OVERLAY_PERMISSION,', materializer),
               ('Shield generic overlay fallback', 'new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)', materializer),
               ('Shield settings fallback', 'new Intent(Settings.ACTION_SETTINGS)', materializer),
@@ -60,7 +61,7 @@ jobs:
           missing = [name for name, token, text in required if token not in text]
           if missing:
               raise SystemExit('Missing unified contract markers: ' + ', '.join(missing))
-          print('Unified source-head and Shield-startup contract verified')
+          print('Unified source-head, dock/mirror and Shield-startup contract verified')
           PY
 
       - name: Run preserved Wall source guards
@@ -70,7 +71,8 @@ jobs:
             tests/test_wall_native_chat_eye_hue.py \
             tests/test_member_berries.py \
             tests/test_alpha61_thinking_puppet.py \
-            tests/test_alpha655_shake_muppet.py
+            tests/test_alpha655_shake_muppet.py \
+            tests/test_unified_docked_shield_pass.py
 
       - name: Materialize one APK
         run: bash scripts/materialize-unified.sh
@@ -160,8 +162,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" | tee badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='42'" badging.txt
-          grep -q "versionName='1.0.1-unified-shield-startup'" badging.txt
+          grep -q "versionCode='43'" badging.txt
+          grep -q "versionName='1.1.0-unified-dock-mirror-shield-settings'" badging.txt
           grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml | tee manifest-tree.txt
           grep -q 'com.boop.alpha1.UnifiedEntryActivity' manifest-tree.txt

@@ -123,10 +123,10 @@ public final class HomeDashboardController {
         final EntityCard cached = cache.load(room);
         repository.loadDashboard(room, (snapshot, error) -> {
             if (error != null || snapshot == null) {
-                favourite = cached;
-                cards = cached == null
+                favourite = RoomScopedEntities.belongsTo(room, cached) ? cached : null;
+                cards = favourite == null
                         ? Collections.emptyList()
-                        : Collections.singletonList(cached);
+                        : Collections.singletonList(favourite);
                 status = Status.STALE;
                 toggleInFlight = false;
                 message = plainError(error, "I couldn't reach Home Assistant right now.");
@@ -134,11 +134,26 @@ public final class HomeDashboardController {
                 return;
             }
 
-            favourite = favouriteSelector.select(room.id(), snapshot.cards());
-            cards = favouriteFirst(favourite, snapshot.cards());
+            if (snapshot.room() == null || !room.id().equals(snapshot.room().id())) {
+                favourite = null;
+                cards = Collections.emptyList();
+                status = Status.LIVE;
+                toggleInFlight = false;
+                message = "I couldn't confirm this room, so I hid the controls.";
+                cache.clear(room);
+                emit();
+                return;
+            }
+
+            List<EntityCard> scoped = RoomScopedEntities.keep(room, snapshot.cards());
+            boolean rejectedUnscoped = scoped.size() != snapshot.cards().size();
+            favourite = favouriteSelector.select(room.id(), scoped);
+            cards = favouriteFirst(favourite, scoped);
             status = Status.LIVE;
             toggleInFlight = false;
-            message = null;
+            message = rejectedUnscoped
+                    ? "I hid controls that aren't confirmed in " + room.name() + "."
+                    : null;
             if (favourite == null) {
                 cache.clear(room);
             } else {
@@ -165,7 +180,7 @@ public final class HomeDashboardController {
         }
 
         EntityCard current = findCard(requested.entityId());
-        if (current == null) {
+        if (current == null || !RoomScopedEntities.belongsTo(room, current)) {
             return;
         }
 
@@ -173,9 +188,9 @@ public final class HomeDashboardController {
         emit();
         repository.toggleBinary(current, (success, confirmed, error) -> {
             toggleInFlight = false;
-            if (!success || confirmed == null) {
+            if (!success || confirmed == null || !RoomScopedEntities.belongsTo(room, confirmed)) {
                 status = Status.STALE;
-                message = plainError(error, "Home Assistant didn't do that.");
+                message = plainError(error, "Home Assistant didn't confirm that room control.");
                 emit();
                 return;
             }

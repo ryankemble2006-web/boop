@@ -9,15 +9,29 @@ public final class BoopWakeSessionStateTest {
     private BoopWakeSessionState readyState() {
         BoopWakeSessionState state = new BoopWakeSessionState();
         state.beginForegroundSession();
+        state.setWakeAllowed(true);
         state.setMicrophonePermission(true);
         state.setRecognitionSupported(true);
         return state;
     }
 
-    @Test public void armsOnlyWhenForegroundPermissionAndSupportAreReady() {
+    @Test public void wakeRemainsDisarmedUntilDockPolicyAllowsIt() {
+        BoopWakeSessionState state = new BoopWakeSessionState();
+        state.beginForegroundSession();
+        state.setMicrophonePermission(true);
+        state.setRecognitionSupported(true);
+        assertEquals(BoopWakeSessionState.State.DISARMED, state.state());
+        state.setWakeAllowed(true);
+        assertEquals(BoopWakeSessionState.State.ARMED, state.state());
+        state.setWakeAllowed(false);
+        assertEquals(BoopWakeSessionState.State.DISARMED, state.state());
+    }
+
+    @Test public void armsOnlyWhenForegroundDockPermissionAndSupportAreReady() {
         BoopWakeSessionState state = new BoopWakeSessionState();
         assertEquals(BoopWakeSessionState.State.DISARMED, state.state());
         state.beginForegroundSession();
+        state.setWakeAllowed(true);
         assertEquals(BoopWakeSessionState.State.DISARMED, state.state());
         state.setMicrophonePermission(true);
         assertEquals(BoopWakeSessionState.State.DISARMED, state.state());
@@ -67,6 +81,7 @@ public final class BoopWakeSessionStateTest {
         assertEquals(BoopWakeSessionState.State.DISARMED, state.state());
         state.endForegroundSession();
         state.beginForegroundSession();
+        state.setWakeAllowed(true);
         assertFalse(state.wakeFailed());
         assertEquals(BoopWakeSessionState.State.DISARMED, state.state());
         state.setRecognitionSupported(true);

@@ -45,7 +45,44 @@ public final class HomeDashboardControllerTest {
     }
 
     @Test
-    public void failedLoadKeepsCachedFavouriteVisibleButDisablesActions() {
+    public void crossRoomCardsAreHiddenBeforeTheyReachTheTv() {
+        EntityCard loungeLamp = card("light.floor_lamp", "Floor lamp", "off");
+        EntityCard bedroomLamp = new EntityCard(
+                "light.bedroom", "bedroom", "Bedroom lamp", "on", false, null);
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(
+                LOUNGE,
+                Arrays.asList(loungeLamp, bedroomLamp));
+        FakeCache cache = new FakeCache();
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+
+        new HomeDashboardController(LOUNGE, repository, cache, rendered::set).start();
+
+        HomeDashboardController.ViewState state = rendered.get();
+        assertEquals(1, state.cards().size());
+        assertEquals("light.floor_lamp", state.cards().get(0).entityId());
+        assertEquals("I hid controls that aren't confirmed in Living Room.", state.message());
+    }
+
+    @Test
+    public void wrongRoomSnapshotFailsClosedInsteadOfShowingWholeHouse() {
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(
+                new AreaInfo("bedroom", "Bedroom"),
+                Collections.singletonList(new EntityCard(
+                        "light.bedroom", "bedroom", "Bedroom lamp", "on", false, null)));
+        FakeCache cache = new FakeCache();
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+
+        new HomeDashboardController(LOUNGE, repository, cache, rendered::set).start();
+
+        assertTrue(rendered.get().cards().isEmpty());
+        assertFalse(rendered.get().actionsEnabled());
+        assertEquals("I couldn't confirm this room, so I hid the controls.", rendered.get().message());
+    }
+
+    @Test
+    public void failedLoadKeepsOnlySameRoomCachedFavouriteVisibleButDisablesActions() {
         FakeRepository repository = new FakeRepository();
         repository.loadError = "Home Assistant is offline.";
         FakeCache cache = new FakeCache();
@@ -65,6 +102,22 @@ public final class HomeDashboardControllerTest {
         assertTrue(state.stale());
         assertFalse(state.actionsEnabled());
         assertEquals("Home Assistant is offline.", state.message());
+    }
+
+    @Test
+    public void crossRoomCacheIsNeverShownWhenOffline() {
+        FakeRepository repository = new FakeRepository();
+        repository.loadError = "Offline";
+        FakeCache cache = new FakeCache();
+        cache.loaded = new EntityCard(
+                "fan.bedroom", "bedroom", "Bedroom fan", "off", false, null);
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+
+        new HomeDashboardController(LOUNGE, repository, cache, rendered::set).start();
+
+        assertNull(rendered.get().favourite());
+        assertTrue(rendered.get().cards().isEmpty());
+        assertFalse(rendered.get().actionsEnabled());
     }
 
     @Test
@@ -112,6 +165,29 @@ public final class HomeDashboardControllerTest {
         assertEquals("on", rendered.get().favourite().state());
         assertEquals("on", cache.saved.state());
         assertTrue(rendered.get().actionsEnabled());
+    }
+
+    @Test
+    public void crossRoomToggleConfirmationIsRejected() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        FakeCache cache = new FakeCache();
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+
+        HomeDashboardController controller = new HomeDashboardController(
+                LOUNGE,
+                repository,
+                cache,
+                rendered::set);
+        controller.start();
+        controller.toggleFavourite();
+        repository.completeToggle(true, new EntityCard(
+                lamp.entityId(), "bedroom", lamp.displayName(), "on", false, null), null);
+
+        assertEquals(HomeDashboardController.Status.STALE, rendered.get().status());
+        assertEquals("off", rendered.get().favourite().state());
+        assertFalse(rendered.get().actionsEnabled());
     }
 
     @Test

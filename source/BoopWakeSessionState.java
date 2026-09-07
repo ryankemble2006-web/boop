@@ -13,6 +13,7 @@ final class BoopWakeSessionState {
 
     private State state = State.DISARMED;
     private boolean foreground;
+    private boolean wakeAllowed;
     private boolean microphonePermission;
     private boolean recognitionSupported;
     private boolean voiceSettingsOpen;
@@ -46,6 +47,11 @@ final class BoopWakeSessionState {
         foreground = false;
         commandDeadlineMs = -1L;
         state = State.DISARMED;
+    }
+
+    void setWakeAllowed(boolean allowed) {
+        wakeAllowed = allowed;
+        reevaluate();
     }
 
     void setMicrophonePermission(boolean granted) {
@@ -115,6 +121,7 @@ final class BoopWakeSessionState {
     private void reevaluate() {
         if (wakeFailed
                 || !foreground
+                || !wakeAllowed
                 || !microphonePermission
                 || !recognitionSupported
                 || voiceSettingsOpen
