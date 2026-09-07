@@ -52,22 +52,28 @@ redesign. Routine-authoring capability evidence is not proof of a finished featu
 - Next Shield UI question: revisit settings and the rest of the living-room
   inventory, after reading current source/HA evidence; it has not been diagnosed.
 
-## Wall Free Chat and v32 polish, 2026-09-07
+## Wall Free Chat and faster blink, 2026-09-07
 
-Owning branch: `boop-wall-free-chat-wip`; current signed test APK v32, built
-`6e48e3bc05f7269376d54179ab32025e1a0b72b9`. Read its SESSION_HANDOFF.md for exact verification.
+Owning branch: `boop-wall-free-chat-wip`; v33 application/build commit
+`e3507bde3f296dcb419a1dcef0faf735c7243525`. Exact artifact and signing receipt:
+`docs/BOOP-WALL-V33-BUILD-RECEIPT.md`. Read SESSION_HANDOFF.md for evidence limits.
 The three-second OpenCode/Free Chat menu remains reversible and persistent.
 Immediate house/media stay local first. Browser chat requires manual paste/send
 and has its own login/limits; no invisible backend or direct API key.
 
 Ryan physically confirmed v31's query-copy/new-chat/paste-instruction handoff.
-He approved bigger bold two-line instructions and gentle 3-7 second awake-idle
-blinks, never resetting sleep. Both are implemented in v32 with no extra taps,
-screens or permissions. Full latest CI is NOT green: compile/signing/wake/menu
-checks pass, but the new natural-blink capture fails. Text spans/callbacks pass;
-actual screenshots do not verify text visibility/size. Earlier partial portrait
-blink/sleep evidence is not a complete release pass. v32 physical visuals and
-landscape remain pending. Do not promote a checkpoint or hide this test gap.
+v32 implements 1.5x bold two-line instructions and irregular 3-7 second awake-idle
+blinks without extra taps/screens/permissions or resetting sleep. Ryan now reports
+v32 "he blinks just fine". Do not treat the old failed automated frame capture as
+proof of broken physical blinking. Text readability, sleep and every orientation
+were not confirmed by that comment. Exact old CI gaps remain archived in
+`docs/BOOP-WALL-V32-HANDOFF.md`.
+
+At Ryan's explicit request, v33 changes only the blink duration 220 -> 183 ms
+(1.2x speed, rounded) plus version metadata. Blink gaps and all other app behavior
+remain unchanged. No tests/emulator runs for this update. Existing signing workflow
+has an opt-in [boop-build-only] marker; use it only on an explicit no-tests request.
+Normal builds retain full checks. Build/sign-only is not runtime acceptance.
 
 Last full-green v31 run34071614834, built0ceb97b; its history is archived in
 `docs/BOOP-WALL-V31-HANDOFF.md`. Protect accepted physical Wall595e1da and separate
