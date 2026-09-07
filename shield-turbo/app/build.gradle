@@ -1,0 +1,35 @@
+plugins { id 'com.android.application' }
+
+def boopStore = System.getenv('BOOP_SIGNING_STORE_FILE')
+def boopStorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
+def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
+
+android {
+    namespace 'com.boop.shieldturbo'
+    compileSdk 36
+    enableKotlin = true
+    signingConfigs {
+        boopDev {
+            if (boopStore != null) {
+                storeFile file(boopStore)
+                storePassword boopStorePassword
+                keyAlias 'boop-dev'
+                keyPassword boopKeyPassword
+            }
+        }
+    }
+    defaultConfig {
+        applicationId 'com.boop.shieldturbo'
+        minSdk 28
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+    }
+    buildTypes {
+        debug { if (boopStore != null) signingConfig signingConfigs.boopDev }
+        release { if (boopStore != null) signingConfig signingConfigs.boopDev; minifyEnabled false }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+
+dependencies { testImplementation 'junit:junit:4.13.2' }
