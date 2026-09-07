@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 public final class TvSettingsView extends LinearLayout {
     private final FocusCardView firstCard;
+    private final ScrollView scroll;
     private final MediaPuppetState puppetState;
     private final DeezerPuppetSettingsModel puppetModel;
     private FocusCardView puppetToggle;
@@ -43,9 +44,11 @@ public final class TvSettingsView extends LinearLayout {
         setGravity(Gravity.TOP);
         setBackgroundColor(Color.BLACK);
 
-        ScrollView scroll = new ScrollView(context);
+        scroll = new ScrollView(context);
         scroll.setFillViewport(true);
-        scroll.setFocusable(false);
+        scroll.setFocusable(true);
+        scroll.setFocusableInTouchMode(false);
+        scroll.setSmoothScrollingEnabled(true);
         LinearLayout content = new LinearLayout(context);
         content.setOrientation(VERTICAL);
         content.setPadding(dp(36), dp(34), dp(44), dp(34));
@@ -149,15 +152,52 @@ public final class TvSettingsView extends LinearLayout {
     private FocusCardView card(String label, Runnable onContentLeft) {
         FocusCardView card = new FocusCardView(getContext()).label(label);
         card.setOnKeyListener((view, keyCode, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN
-                    && keyCode == KeyEvent.KEYCODE_DPAD_LEFT
-                    && onContentLeft != null) {
+            if (event.getAction() != KeyEvent.ACTION_DOWN) {
+                return false;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && onContentLeft != null) {
                 onContentLeft.run();
                 return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                return moveFocusOrScroll(view, View.FOCUS_DOWN);
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                return moveFocusOrScroll(view, View.FOCUS_UP);
             }
             return false;
         });
         return card;
+    }
+
+    private boolean moveFocusOrScroll(View from, int direction) {
+        View next = from.focusSearch(direction);
+        if (next != null && next != from && isInsideScroll(next)) {
+            next.requestFocus();
+            return true;
+        }
+
+        int sign = direction == View.FOCUS_DOWN ? 1 : -1;
+        if (!scroll.canScrollVertically(sign)) {
+            return false;
+        }
+        int distance = Math.max(dp(96), scroll.getHeight() * 2 / 3);
+        scroll.smoothScrollBy(0, sign * distance);
+        return true;
+    }
+
+    private boolean isInsideScroll(View candidate) {
+        View current = candidate;
+        while (current != null) {
+            if (current == scroll) {
+                return true;
+            }
+            if (!(current.getParent() instanceof View)) {
+                return false;
+            }
+            current = (View) current.getParent();
+        }
+        return false;
     }
 
     private TextView title(String text, float size) {
