@@ -7,35 +7,46 @@ Project: `launcher/`; package remains `com.boop.launcher`.
 
 Ryan physically confirmed the `0.2.2` fullscreen build removed the stubborn Pixel status-bar clock and physically confirmed `0.2.3` swipe-up / swipe-down drawer navigation works perfectly.
 
-`0.3.0` added the approved widget/page plumbing, but Ryan physically found the entry point was dead: holding empty HOME produced no menu. `0.3.1` fixed that long-press menu and added Launcher page-0 swipe right -> BOOP Wall. CI run `34084595483` proved the menu appears and the Wall handoff path fires.
+`0.3.0` added the approved widget/page plumbing, but Ryan physically found the entry point was dead: holding empty HOME produced no menu. `0.3.1` fixed that long-press menu and added Launcher page-0 swipe right -> BOOP Wall.
 
-Ryan then reported that the cross-app transition still looked visually the same in both directions. Launcher `0.3.2` tried an enter-from-right/exit-left OPEN transition and Wall v34 later tried caller-owned transition control, but Ryan still saw no visual difference.
+Ryan then physically found the Wall/Launcher cross-app transition still looked the same despite deliberately reversing the Launcher animation in `0.3.2` and `0.3.3`. Most importantly, he confirmed `0.3.3` still showed the same unwanted white swish. Treat that physical result as authoritative: changing left/right resource geometry did not solve the visible transition.
 
-`0.3.3` / code `10` is the requested clean opposite experiment on the Launcher only. BOOP Wall v34 is left untouched. Launcher OPEN is now literally reversed from the 0.3.2 geometry:
-- Launcher enters from LEFT (`-100%p -> 0`);
-- previous activity exits RIGHT (`0 -> 100%p`).
+`0.3.4` / code `11` therefore changes strategy completely. It no longer tries to steer the Android cross-app slide. Instead, Launcher uses a black-safe handoff:
+- Launcher activity OPEN/CLOSE system transitions are disabled on Android 14+;
+- Launcher uses a pure-black window background and black Android 12+ splash background;
+- window preview is disabled;
+- the old directional animation XML resources have been removed;
+- Launcher -> Wall fades Launcher content to black over 110 ms, launches Wall with `FLAG_ACTIVITY_NO_ANIMATION`, and requests a zero pending transition;
+- when Launcher becomes visible it fades its own content in from black over 140 ms.
 
-Application/source test head: `86a3971d173887c2b641f95d175e5fd30426b59f`.
+BOOP Wall v34/source is deliberately untouched. The purpose of this build is specifically to test whether replacing the cross-app slide with a black fade/cut removes the visible white swish on Ryan's Pixel.
+
+Application/source head before documentation: `61606736fea597e86c37c9c9a5259fdb54617abb`.
 
 Signed build:
 - package `com.boop.launcher`
-- versionName `0.3.3`
-- versionCode `10`
-- GitHub Actions run `34088140401`
+- versionName `0.3.4`
+- versionCode `11`
+- GitHub Actions run `34089318255`
 - unit tests and Android lint: success
 - permanent-signer release build: success
 - signed artifact `BOOP-Launcher-Alpha2-signed`
-- artifact ID `10005926195`
-- APK SHA-256 `359dd04b3268d16d88feac1ebfcb9030ed48057feed2c06d9df81f7334599310`
+- artifact ID `10006292363`
+- APK SHA-256 `412cd7162e6c7562a93ce62534559ab255bf6f5b040145941c586c743b4474e9`
 - existing permanent BOOP signing identity unchanged
 
-The first 0.3.3 CI attempt failed only because the old transition regression still asserted the previous 0.3.2 direction. Production compilation had succeeded. The regression was then updated to assert the user-requested reverse geometry and run `34088140401` passed unit tests, lint, release build and signing.
+The first Android 16 smoke attempt for run `34089318255` failed in emulator infrastructure after a successful install and cold launch: UIAutomator returned a null root node while trying to dump the HOME hierarchy, so the smoke could not continue to its menu/swipe assertions. No Launcher fatal crash was shown in that failure. The smoke job was explicitly retried; check the latest run/job state before claiming full smoke-green status.
 
 ## Physical check now
 
-Install Launcher `0.3.3` over the current Launcher while keeping Wall v34 unchanged. This creates a clean A/B test: same Wall build, opposite Launcher transition geometry.
+Install Launcher `0.3.4` over the current Launcher while keeping Wall v34 unchanged.
 
-CI proves the requested resources and wiring exist; it does not prove what Pixel's cross-app animation compositor will visibly present. Ryan's device observation remains the authority for the visual result.
+Expected visual experiment:
+- no directional white cross-app slide should be requested by Launcher;
+- Launcher -> Wall should briefly fade into the existing pure-black background, then reveal Wall;
+- Wall -> Launcher should reveal Launcher from black rather than using the old Launcher slide resource.
+
+This is intentionally a different animation family, not another left/right reversal. Pixel physical observation remains the authority for whether the white swish is actually gone.
 
 ## Wall / Launcher gesture loop
 
@@ -72,13 +83,13 @@ Extra Launcher content pages keep normal page navigation: right swipe from a lat
 
 ## Remaining physical checks
 
-Primary 0.3.3 check: does Wall swipe-left -> Launcher now visibly move opposite to Launcher swipe-right -> Wall?
+Primary `0.3.4` check: does the new black fade/cut path remove the white swish on the Pixel in both directions?
 
 Widget move/resize/remove, real third-party widget behavior, and page spill/persistence still await Ryan's on-device acceptance.
 
 ## Remaining polish
 
-Drawer transition is still not full Launcher3 direct-finger/spring physics. Third-party widget rotation/process-death quirks remain physical-test territory. CI-green and physically accepted remain separate states.
+Drawer transition is still not full Launcher3 direct-finger/spring physics. Third-party widget rotation/process-death quirks remain physical-test territory. CI/build-green and physically accepted remain separate states.
 
 ## Cross-app boundaries
 
