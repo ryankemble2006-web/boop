@@ -1,0 +1,146 @@
+name: Build BOOP Unified APK
+
+on:
+  push:
+    branches: [ "boop-unified" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boop-unified-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out unified branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify pinned source heads and unified shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'a28364f98fba1b3a5dbab7e66075c0fb166e08e3' unified/SOURCE_HEADS.md
+          grep -q '953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2' unified/SOURCE_HEADS.md
+          grep -q '1a487a4aaecd098d6854905ee64d60253ad6b4b7' unified/SOURCE_HEADS.md
+          grep -q 'versionCode 41' unified/app-build.gradle
+          grep -q 'versionName "1.0.0-unified-alpha1"' unified/app-build.gradle
+          grep -q 'Pixel 7 Pro' unified/BoopDeviceProfile.java
+          grep -q 'Mode.SHIELD' unified/UnifiedEntryActivity.java
+          grep -q 'com.boop.launcher.MainActivity' unified/UnifiedEntryActivity.java
+          grep -q 'com.boop.shieldoverlay.MainActivity' unified/UnifiedEntryActivity.java
+
+      - name: Run preserved Wall source guards
+        run: |
+          python -m pip install pytest
+          python -m pytest -q \
+            tests/test_wall_native_chat_eye_hue.py \
+            tests/test_member_berries.py \
+            tests/test_alpha61_thinking_puppet.py \
+            tests/test_alpha655_shake_muppet.py
+
+      - name: Materialize one APK
+        run: bash scripts/materialize-unified.sh
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Test latest Launcher source
+        run: gradle --no-daemon -p launcher :app:testDebugUnitTest lintDebug --stacktrace
+
+      - name: Test latest Shield source
+        run: gradle --no-daemon -p shield-overlay :app:testDebugUnitTest --stacktrace
+
+      - name: Test unified app
+        run: |
+          unset BOOP_RELAY_URL BOOP_RELAY_TOKEN
+          gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
+
+      - name: Prepare permanent BOOP signer
+        shell: bash
+        env:
+          BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do
+            test -n "${!name:-}"
+          done
+          printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
+          chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
+          keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
+          echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed unified APK
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+          BOOP_RELAY_URL: ${{ secrets.BOOP_RELAY_URL }}
+          BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
+        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+
+      - name: Verify one-package identity and signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
+          "$TOOLS/aapt" dump badging "$APK" | tee badging.txt
+          grep -q "package: name='com.boop.alpha1'" badging.txt
+          grep -q "versionCode='41'" badging.txt
+          grep -q "versionName='1.0.0-unified-alpha1'" badging.txt
+          grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml | tee manifest-tree.txt
+          grep -q 'com.boop.alpha1.UnifiedEntryActivity' manifest-tree.txt
+          grep -q 'com.boop.alpha1.MainActivity' manifest-tree.txt
+          grep -q 'com.boop.launcher.MainActivity' manifest-tree.txt
+          grep -q 'com.boop.shieldoverlay.MainActivity' manifest-tree.txt
+          grep -q 'com.boop.shieldoverlay.BoopOverlayService' manifest-tree.txt
+          grep -q 'com.boop.shieldoverlay.DeezerMediaListenerService' manifest-tree.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" | tee signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
+          test -n "$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          unzip -tq "$APK"
+          sha256sum "$APK" | tee apk-sha256.txt
+          git rev-parse HEAD | tee built-commit.txt
+          cp unified/SOURCE_HEADS.md source-heads.txt
+
+      - name: Upload BOOP
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Unified
+          path: |
+            boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+            apk-sha256.txt
+            built-commit.txt
+            source-heads.txt
+          if-no-files-found: error
