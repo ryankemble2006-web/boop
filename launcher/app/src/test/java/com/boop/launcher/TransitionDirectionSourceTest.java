@@ -24,6 +24,10 @@ public class TransitionDirectionSourceTest {
    Paths.get("src/main/res/values/styles.xml"),
    Paths.get("app/src/main/res/values/styles.xml"),
    Paths.get("launcher/app/src/main/res/values/styles.xml"));
+  String styles31=read(
+   Paths.get("src/main/res/values-v31/styles.xml"),
+   Paths.get("app/src/main/res/values-v31/styles.xml"),
+   Paths.get("launcher/app/src/main/res/values-v31/styles.xml"));
 
   assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_OPEN,0,0)"));
   assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE,0,0)"));
@@ -36,10 +40,11 @@ public class TransitionDirectionSourceTest {
 
   assertTrue(manifest.contains("android:theme=\"@style/Theme.BoopLauncher\""));
   assertTrue(styles.contains("<item name=\"android:windowBackground\">@android:color/black</item>"));
-  assertTrue(styles.contains("<item name=\"android:windowSplashScreenBackground\">@android:color/black</item>"));
   assertTrue(styles.contains("<item name=\"android:windowDisablePreview\">true</item>"));
   assertTrue(styles.contains("<item name=\"android:windowAnimationStyle\">@style/BoopNoWindowAnimation</item>"));
   assertTrue(styles.contains("<item name=\"android:activityOpenEnterAnimation\">@null</item>"));
   assertTrue(styles.contains("<item name=\"android:activityCloseExitAnimation\">@null</item>"));
+  assertTrue(styles31.contains("<item name=\"android:windowSplashScreenBackground\">@android:color/black</item>"));
+  assertTrue(styles31.contains("<item name=\"android:windowSplashScreenAnimationDuration\">0</item>"));
  }
 }
