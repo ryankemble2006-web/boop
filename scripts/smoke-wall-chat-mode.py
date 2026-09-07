@@ -83,6 +83,18 @@ def tap_description(root, description):
     raise AssertionError('Missing menu choice: ' + description)
 
 
+
+def assert_selected_mode(root, label):
+    # Android can transform a Button's displayed case; the app-owned accessible
+    # description is stable. Still require this exact mode and its selected mark.
+    matches = [node for node in root.iter('node')
+               if node.get('package') == PACKAGE
+               and node.get('class') == 'android.widget.Button'
+               and node.get('content-desc') == 'Use ' + label]
+    assert len(matches) == 1, 'Mode choice is missing or ambiguous: ' + label
+    assert matches[0].get('text', '').rstrip().endswith('\u2713'), 'Mode is not selected: ' + label
+
+
 def assert_saved(expected):
     xml = adb('shell', 'run-as', PACKAGE, 'cat', 'shared_prefs/boop_chat_mode.xml')
     value = ET.fromstring(xml).find("string[@name='mode']")
@@ -126,7 +138,7 @@ def exercise():
     hold(3300)
     root = hierarchy('long_hold')
     assert has_text(root, 'Chat mode'), 'Three-second hold did not open the menu'
-    assert has_text(root, 'OpenCode  \u2713'), 'Fresh install did not default to OpenCode'
+    assert_selected_mode(root, 'OpenCode')
     tap_description(root, 'Use Free Chat')
     assert_saved('free_chat')
 
@@ -136,7 +148,7 @@ def exercise():
     time.sleep(1)
     hold(3300)
     root = hierarchy('restart')
-    assert has_text(root, 'Free Chat  \u2713'), 'Free Chat choice did not survive restart'
+    assert_selected_mode(root, 'Free Chat')
     tap_description(root, 'Use OpenCode')
     assert_saved('opencode')
 

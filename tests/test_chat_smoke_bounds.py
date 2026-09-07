@@ -102,5 +102,36 @@ class HierarchyReadinessTest(unittest.TestCase):
             self.assertTrue(smoke.has_text(smoke.hierarchy('current'), 'current'))
 
 
+
+def mode_menu(text='OPENCODE  ✓', description='Use OpenCode', package='com.boop.alpha1'):
+    return ET.fromstring(f'''<hierarchy><node class="android.widget.Button"
+        package="{package}" text="{text}" content-desc="{description}"
+        clickable="true" enabled="true" bounds="[100,200][500,400]" /></hierarchy>''')
+
+
+class ModeSelectionTest(unittest.TestCase):
+    def test_selection_uses_stable_description_not_transformed_display_case(self):
+        for text in ('OpenCode  ✓', 'OPENCODE  ✓'):
+            with self.subTest(text=text):
+                smoke.assert_selected_mode(mode_menu(text), 'OpenCode')
+
+    def test_unselected_or_wrong_mode_cannot_pass(self):
+        for root in (mode_menu('OPENCODE'), mode_menu(description='Use Free Chat'),
+                     mode_menu(package='com.example.other')):
+            with self.assertRaises(AssertionError):
+                smoke.assert_selected_mode(root, 'OpenCode')
+
+    def test_duplicate_description_is_ambiguous(self):
+        root = mode_menu()
+        root.append(ET.fromstring(ET.tostring(root[0])))
+        with self.assertRaises(AssertionError):
+            smoke.assert_selected_mode(root, 'OpenCode')
+
+    def test_description_click_is_independent_of_display_case(self):
+        with patch.object(smoke, 'adb') as adb:
+            smoke.tap_description(mode_menu(), 'Use OpenCode')
+            adb.assert_called_once_with('shell', 'input', 'tap', '300', '300')
+
+
 if __name__ == '__main__':
     unittest.main()

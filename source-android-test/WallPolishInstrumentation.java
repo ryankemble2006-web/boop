@@ -64,30 +64,43 @@ public final class WallPolishInstrumentation extends Instrumentation {
         check(sizes.length == 1 && sizes[0].getSizeChange() == 1.5f, "Notice is not 50 percent larger");
         check(styles.length == 1 && styles[0].getStyle() == android.graphics.Typeface.BOLD, "Notice is not bold");
         check(!BoopFreeChatNotice.text(false).toString().contains("copied"), "Failed copy must not claim success");
-        // A plain text toast is still visible after another app becomes foreground.
-        // Settings is used instead of contacting a real chatbot or account.
-        getTargetContext().startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        SystemClock.sleep(1000);
+        // Each capture models the real foreground Activity -> browser handoff.
+        // Two unrelated background toasts do not exercise that production path.
         captureNotice("notice-original.png", text.toString());
         captureNotice("notice-larger.png", text);
     }
 
+    private void bringWallToForeground() throws Exception {
+        getTargetContext().startActivity(new Intent(getTargetContext(), MainActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        long deadline = SystemClock.uptimeMillis() + 6000;
+        while (SystemClock.uptimeMillis() < deadline) {
+            if (onMain(() -> activity.hasWindowFocus()
+                    && (Boolean) get(activity, "activityInForeground"))) return;
+            SystemClock.sleep(50);
+        }
+        throw new AssertionError("Wall did not regain foreground focus");
+    }
+
     private void captureNotice(String name, CharSequence text) throws Exception {
+        bringWallToForeground();
         CountDownLatch shown = new CountDownLatch(1);
-        AtomicReference<Toast> toast = new AtomicReference<>();
+        CountDownLatch hidden = new CountDownLatch(1);
         runOnMainSync(() -> {
-            Toast message = Toast.makeText(getTargetContext(), text, Toast.LENGTH_LONG);
+            // Same ordering and Activity context as BoopFreeChat.open(). The
+            // real destination is substituted only to avoid a network/account.
+            activity.startActivity(new Intent(Settings.ACTION_SETTINGS));
+            Toast message = Toast.makeText(activity, text, Toast.LENGTH_LONG);
             message.addCallback(new Toast.Callback() {
                 @Override public void onToastShown() { shown.countDown(); }
+                @Override public void onToastHidden() { hidden.countDown(); }
             });
-            toast.set(message);
             message.show();
         });
         check(shown.await(6, TimeUnit.SECONDS), "System did not show " + name);
-        SystemClock.sleep(450);
+        SystemClock.sleep(750);
         save(getUiAutomation().takeScreenshot(), name);
-        runOnMainSync(() -> toast.get().cancel());
-        SystemClock.sleep(500);
+        check(hidden.await(6, TimeUnit.SECONDS), "System did not finish " + name);
     }
 
     private void verifyIdleBlinkAndSleep() throws Exception {
