@@ -2,26 +2,28 @@
 
 Updated 2026-09-07.
 
-This file exists to prevent future sessions from repeating the v31/v34 lineage mistake.
+This file exists to prevent future sessions from repeating the v31/v34 lineage mistake and the failed two-eye summon experiment.
 
-The user is running BOOP Wall `0.4.14-wall-native-chat` / versionCode 34. Any eye-colour build intended to install over that app must continue from the Native Chat/Free Chat Wall lineage and use a versionCode greater than 34 with the existing BOOP signer. The older `boop-wall-eye-hue-wip` v31 experiment is useful implementation history but is not an install candidate for the current device.
+The user's current Wall lineage is Native Chat. Eye-colour builds for this device must continue from that lineage, preserve package `com.boop.alpha1`, use a monotonically higher versionCode, and keep the permanent BOOP signer. The old `boop-wall-eye-hue-wip` v31 build is historical only.
 
 Current combined candidate branch: `boop-wall-native-chat-eye-hue`.
-Candidate version: versionCode 35 / `0.4.15-wall-native-chat-eye-hue`.
-Build commit: `1256fb33f198659d7afd1310e5c8afbadd5d53d3`.
-Green workflow run: `34090520672`.
-Artifact ID: `10006695690`.
-APK SHA-256: `013c4db3b3fc9e21eb2b4bf0a255bfbaf84d9b2c94a06c7a996cc875ff917819`.
+Candidate version: versionCode 37 / `0.4.17-wall-eye-hue-voice`.
+Build commit: `07c6751afdbdb50ccf96a9b1809d29c68ffdf2f7`.
+Green workflow run: `34093159649`.
+Artifact ID: `10007619095`.
+APK SHA-256: `31aba85aef107940eeac68d574d7a16b28ae959a79925cb68bc9bd53497ba248`.
 
 Hue contract:
-- one hue-only slider labelled `Eye colour` beside voice settings;
+- exactly one hue-only slider, not part of Voice Settings;
+- summon by saying `change eye colour` (UK) or `change eye color` (US); the v36 two-eye one-second gesture physically failed and is superseded/removed;
+- slider appears underneath the visible eyes for live preview and dismisses when the user taps outside it;
 - 0..359 full hue range;
 - default 190 degrees represents the accepted cyan/blue and deliberately applies no ColorFilter;
 - persistence uses SharedPreferences `boop_eyes` / `hue_degrees`;
 - both eyes reuse the exact existing `boop_eyes` bitmap and shared Paint;
-- do not change eye geometry/crops/layout/animations/hitboxes/gestures, black background, voice behavior, Native Chat, wake behavior, Member Berry, thinking or shake behavior;
+- do not change eye geometry/crops/layout/animations/hitboxes, black background, voice behavior outside this local intent, Native Chat, wake behavior, Member Berry, thinking, shake or Launcher swipe;
 - no mouth, replacement artwork, RGB channels, brightness, saturation, opacity, effects or themes.
 
-Concurrency note: while the combined candidate was being prepared, `boop-wall-free-chat-wip` independently advanced to `36e31998219c518e96730ff54e96b8e4fdf5b680` with the same hue concept embedded directly in `scripts/materialize-android.sh`. Preserve that commit. The combined branch reconciles it in ancestry rather than blindly stacking duplicate implementations and keeps the hue helpers/patch isolated for testing.
+Concurrency note: preserve the earlier concurrent hue implementation on `boop-wall-free-chat-wip@36e3199`; the combined branch already reconciles that history in ancestry. Do not blindly stack duplicate hue implementations.
 
-CI green is not physical green. The protected physical Wall checkpoint remains unchanged until the v35 APK installs over v34 and passes the physical colour/persistence/animation/gesture/Native Chat checklist.
+CI green is not physical green. The protected physical Wall checkpoint remains unchanged until v37 passes the physical voice-summon/colour/persistence/regression checklist.
