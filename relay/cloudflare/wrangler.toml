@@ -1,0 +1,7 @@
+name = "boop-openai-relay"
+main = "src/index.js"
+compatibility_date = "2026-09-07"
+workers_dev = true
+
+# Secrets are deliberately not declared here.
+# Configure OPENAI_API_KEY and BOOP_RELAY_TOKEN with Wrangler/Cloudflare secrets.
