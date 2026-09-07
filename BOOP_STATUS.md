@@ -6,28 +6,35 @@ Updated 2026-09-07. Owning experiment branch: `boop-shield-fullscreen-deezer-wip
 
 - Base: live `boop-shield-media-puppetry@4f57a5b45adec5d4872dd83ec9301093f4c4d5d5`.
 - Package: `com.boop.shieldoverlay`; permanent BOOP signer preserved.
-- Existing Deezer media-session observation, play/pause policy, H1 asset and motion clock are preserved.
-- Eligible Deezer headphone states now expand the noninteractive application overlay to the complete Shield display.
-- Deezer puppet mode paints a pure-black full-screen canvas and centres/enlarges H1 using measured motion-envelope geometry.
+- Candidate identity: versionCode 2 / `0.2-fullscreen-puppetry`.
+- Existing Deezer media-session observation, controller selection, H1 asset and motion clock are preserved.
+- Eligible Deezer headphone states expand the noninteractive application overlay to the complete Shield display on a pure-black canvas.
+- PLAYING now uses richer `FullscreenPuppetMotion.groove` acting while preserving the accumulated media clock.
+- PAUSED eases the current playing pose to neutral over 520 ms.
+- Explicit skip states 9/10/11 trigger a 700 ms perk/lift/tilt acknowledgement, peaking around 180 ms.
+- Other REST states remain neutral; equivalent non-skip REST transitions remain quiet.
 - Remote input remains pass-through because `FLAG_NOT_FOCUSABLE` and `FLAG_NOT_TOUCHABLE` are unchanged.
-- BOOP Home keeps its existing hide/show behaviour.
-- Fallback `EYES` state keeps the existing compact transparent overlay.
+- BOOP Home keeps its existing hide/show behaviour; fallback `EYES` keeps the compact transparent overlay.
+- Useful debug/diagnostic machinery is preserved for later work rather than deleted.
 - No new microphone, accessibility, UsageStats, foreground-app, HA or network permission/path was added.
 
 ## Verification
 
-GitHub Actions run `34096866418` passed for build commit `cd56e3bd0bf4ff6547e8cd2ea45631cde1418c36`.
+TDD RED run `34097940701` failed as intended because the motion test referenced missing `FullscreenPuppetMotion`.
 
-Passed: complete Python source regression suite, complete Shield unit suite, new full-screen H1 geometry/envelope tests, signed APK assembly, package/permission inspection and permanent signer continuity.
+Final green build commit: `0d9f5e6f2cc3249541667976a41405efd686a52a`.
+GitHub Actions run: `34098619403`.
 
-Artifact: `BOOP-Shield-Fullscreen-Deezer` / ID `10008967780`.
-APK SHA-256: `bb225e7c7f9fbfed13d758155b42208482921c4ef815d509e78dc5bb5edf5b4e`.
+Passed: complete Python source regression suite, complete Shield unit suite, fullscreen acting-motion tests, preserved MediaPuppetState quiet-state contract, explicit track-change delivery, full groove/settle/accent geometry envelope tests, stable-signed APK assembly, package/permission inspection and permanent signer continuity.
+
+Artifact: `BOOP-Shield-Fullscreen-Deezer` / ID `10009620031`.
+APK SHA-256: `ea9fa94f0868943cf559b5b8e1406dcf28e07264a415aed7d58e7cc61c292a18`.
 
 ## Physical status
 
-CI green only. No physical Shield install is claimed yet.
+The earlier v1 full-screen experiment reached Ryan's Shield and exposed the large presentation. v2 puppetry itself is CI-green but physical acceptance is pending.
 
-The first WIP intentionally follows the existing Deezer-session contract, so full-screen BOOP can remain visible while Deezer continues playing in the background. Physical testing should decide whether that is desirable. Do not add broad foreground-tracking permissions without an explicit follow-up decision.
+The WIP intentionally follows the existing Deezer-session contract, so full-screen BOOP can remain visible while Deezer continues playing in the background. Physical testing should decide whether that is desirable. Do not add broad foreground-tracking permissions without an explicit follow-up decision.
 
 ## Protected references
 
@@ -36,4 +43,4 @@ The first WIP intentionally follows the existing Deezer-session contract, so ful
 - `checkpoint-shield-routines-3fa18c6` remains protected.
 - Existing Deezer notification-listener access, HA auth/socket and app data are not changed by this branch.
 
-Read `SESSION_HANDOFF.md` and `BOOP_SHIELD_FULLSCREEN_DEEZER_MEMORY.md` for the exact test checklist and implementation boundary.
+Read `SESSION_HANDOFF.md` and `BOOP_SHIELD_FULLSCREEN_DEEZER_MEMORY.md` for the exact physical test checklist and implementation boundary.
