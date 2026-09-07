@@ -52,3 +52,47 @@ jobs:
           path: |
             launcher/app/build/reports/
             launcher/app/build/test-results/
+  smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: BOOP-Launcher-Alpha2-signed
+          path: launcher-delivery
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install and launch signed APK on Android 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: |
+            set -euo pipefail
+            mkdir -p launcher-evidence
+            adb logcat -c
+            adb install -r launcher-delivery/BOOP-Launcher-Alpha2.apk
+            adb shell am force-stop com.boop.launcher
+            adb shell am start -W -n com.boop.launcher/.MainActivity | tee launcher-evidence/start.txt
+            sleep 2
+            adb shell pidof com.boop.launcher | tee launcher-evidence/pid.txt
+            adb logcat -d -v threadtime > launcher-evidence/logcat.txt
+            if grep -A40 -B5 'FATAL EXCEPTION' launcher-evidence/logcat.txt | grep -q 'com.boop.launcher'; then
+              grep -A80 -B10 'FATAL EXCEPTION' launcher-evidence/logcat.txt >&2
+              exit 1
+            fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: BOOP-Launcher-Alpha2-emulator-evidence
+          path: launcher-evidence/
+          if-no-files-found: error
