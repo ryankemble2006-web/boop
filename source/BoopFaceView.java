@@ -42,6 +42,12 @@ final class BoopFaceView extends View {
         super(context);
         setBackgroundColor(Color.BLACK);
         faceBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);
+        setEyeHueDegrees(BoopEyeHue.loadHue(context));
+    }
+
+    void setEyeHueDegrees(int hueDegrees) {
+        paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));
+        invalidate();
     }
 
     void showIdleBlackImmediately() {
@@ -165,8 +171,6 @@ final class BoopFaceView extends View {
         setPivotY(getHeight() / 2f);
         setAlpha(1f);
 
-        // A tiny puppet "hmm": cock the head, peek the other way, then settle.
-        // Deliberately organic rather than a spinner/loading UI.
         thinkingAnimator = ObjectAnimator.ofPropertyValuesHolder(
                 this,
                 PropertyValuesHolder.ofFloat(
