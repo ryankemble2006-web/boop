@@ -56,3 +56,11 @@ Ryan chose the approved mirrored, hands-only PNG as BOOP's official yellow hands
 Full contract and exact checksum: `BOOP_YELLOW_HANDS.md`. Canonical app reference folder: `unified/assets/boop-yellow-hands/`. Animation counterpart: `animation-lab/shared-assets/boop-yellow-hands/` on `animation-freddie-mercury`. The master is 1774 x 887 RGBA with SHA-256 `74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556`.
 
 This session saved documentation/manifest records only; PNG upload remains pending from the checked ZIP. No generator layers exist, and the master must not be replaced with rejected earlier creature images. This approval does not implement hands or Easter eggs in the APK and changes no physical acceptance state.
+
+## Shield GPU / 2.5D puppetry direction, 2026-09-07
+
+Save the promising hand-pose studies and investigate richer 2.5D animation using the Shield's graphics hardware. Preserve all five digits in every pose and transition: thumb, index, middle, ring and little finger. Hands may grip/adjust headphones, point or wave without changing the official yellow plush design. Keep eye-led motion, earcup lag/recoil and subtle depth; do not replace the character.
+
+Read `docs/animation/SHIELD_2_5D_HANDS.md` before this future animation pass. Profile first, compare the existing hardware-accelerated drawing path with a small GPU renderer if needed, target paced motion without harming media playback, and preserve idle/screen-off/reduced-motion safeguards. No measured spare-GPU percentage, beat synchronisation or working rig is claimed.
+
+A small corrected open-hand WebP preview is archived under `unified/assets/boop-yellow-hands/pose-studies/`. It is a lossy black-background display reference, not the transparent official master. Its manifest distinguishes that stored preview from the full-resolution PNGs still awaiting transfer and from other pose examples unavailable as files. This is documentation/reference art only; app behavior, builds, permissions, signing, deployment and acceptance checkpoints remain unchanged.

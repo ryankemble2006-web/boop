@@ -23,7 +23,7 @@ Passed: unified source-head contract checks, preserved Wall guards, Launcher tes
 ## Physical status
 
 - Wall input lineage includes the physically approved v38 eye-colour UX and Ryan's positive physical v40 landscape-eye report.
-- Launcher input is the latest 0.3.7 source; widget picker was physically reported better but later polish was deferred.
+- Launcher input is the latest 0.3.7 source; widget picker was physically reported better, with later polish deferred.
 - Shield input is the latest v3 friendly Deezer-access/full-screen puppet source; unified Shield behavior is not physically accepted yet.
 - Unified v41 itself is CI/signer green only until it is installed and tested on real Wall, handheld and Shield bodies.
 
@@ -38,3 +38,9 @@ Once v41 or a successor is physically accepted, mark that exact Git commit/tag +
 ## Official yellow hands, 2026-09-07
 
 Design approved and locked across all BOOP bodies and animations. See `BOOP_YELLOW_HANDS.md` and `unified/assets/boop-yellow-hands/manifest.json`. The approved master is a hands-only transparent RGBA PNG, 1774 x 887, with five digits per hand and no arms. The master checksum is recorded; its binary transfer to GitHub is still pending manual upload from the supplied ZIP. No runtime integration, new build or deployment has been performed. Existing candidate and verification status above are unchanged.
+
+## Shield 2.5D animation archive, 2026-09-07
+
+Design direction saved in `docs/animation/SHIELD_2_5D_HANDS.md`: deliberately explore Shield GPU-backed 2.5D puppetry, independent five-digit hands, headphone grips/adjustments and restrained layered depth. Five digits means four fingers plus one thumb on every hand throughout all poses/transitions. The actual hardware headroom and sustained frame rate remain unmeasured.
+
+Stored reference: one 448 x 448 lossy corrected open-hand WebP preview plus checksum/source manifest in `unified/assets/boop-yellow-hands/pose-studies/`. Exact original master/source PNG transfer remains pending; other generated poses were not available as separate files. Byte counts, dimensions, hashes and preview blob identity were checked. No app implementation, new CI build, Shield test, signing, permission or deployment change. Existing app candidate/physical status remains unchanged.

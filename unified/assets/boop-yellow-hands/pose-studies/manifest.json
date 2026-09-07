@@ -1,0 +1,37 @@
+{
+  "date": "2026-09-07",
+  "status": "design-reference-only",
+  "digit_contract": "Exactly four fingers plus one thumb on EACH hand, in every pose and transition.",
+  "preview": {
+    "file": "five-digit-open-pose-preview.webp",
+    "bytes": 8230,
+    "dimensions": [448, 448],
+    "sha256": "d1209ef642d722ff17f1c3d334121d9ac5cfa82ea43f3f50788a1098fdf65192",
+    "git_blob_sha1": "854fd36b870f1c6e647c5fdce853003cd05e5e2f",
+    "derived": true,
+    "lossy": true,
+    "has_alpha": false,
+    "role": "Display preview only; not an official master or runtime asset."
+  },
+  "source_study": {
+    "file": "five-digit-open-pose-study.png",
+    "original_filename": "imagegen.png",
+    "bytes": 1199789,
+    "dimensions": [1254, 1254],
+    "mode": "RGB",
+    "sha256": "7e9f0dea25283626b004f4dbf0c0633544f2310bbe94ce50b0463bc7f6cffdee",
+    "github_transfer": "pending"
+  },
+  "official_master": {
+    "file": "boop-yellow-hands-approved.png",
+    "bytes": 1541931,
+    "dimensions": [1774, 887],
+    "mode": "RGBA",
+    "sha256": "74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556",
+    "github_transfer": "pending",
+    "design_authority": "BOOP_YELLOW_HANDS.md"
+  },
+  "other_pose_images": "Not available as separate source files in this session; described in the brief only.",
+  "runtime_integration": false,
+  "shield_performance_tested": false
+}
