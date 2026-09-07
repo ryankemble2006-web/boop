@@ -3,7 +3,7 @@ name: Build BOOP Shield Overlay POC
 on:
   workflow_dispatch:
   push:
-    branches: [ "boop-shield-overlay-poc", "boop-shield-home-implementation" ]
+    branches: [ "boop-shield-overlay-poc", "boop-shield-home-implementation", "boop-shield-media-puppetry" ]
     paths:
       - "shield-overlay/**"
       - "scripts/**"
