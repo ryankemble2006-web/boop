@@ -19,11 +19,13 @@ final class HeadphoneRenderer {
     }
 
     void draw(Canvas canvas, HeadphoneGeometry.Layout layout, long sampleTimeMs) {
-        if (bitmap == null || layout == null) {
+        draw(canvas, layout, MediaPuppetMotion.music(sampleTimeMs));
+    }
+
+    void draw(Canvas canvas, HeadphoneGeometry.Layout layout, MediaPuppetMotion.Pose pose) {
+        if (bitmap == null || layout == null || pose == null) {
             return;
         }
-        // The clock already supplies the approved 1.2x time; do not scale it again.
-        MediaPuppetMotion.Pose pose = MediaPuppetMotion.music(sampleTimeMs);
         int save = canvas.save();
         canvas.translate(layout.originX, layout.originY);
         canvas.scale(layout.scale, layout.scale);
