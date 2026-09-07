@@ -2,44 +2,51 @@
 
 ## Current
 
-Clean-sheet Launcher Alpha 2 physical-feel baseline is built and signed on `boop-launcher-alpha2`.
+Launcher Alpha 2 has a physically useful baseline and a new immersive follow-up build.
 
-Tested app source: `844301bfe264a52b202787e8224fb43452dd3ff6`.
-GitHub Actions run: `34077665229` — success.
-Signed artifact ID: `10002643933`.
-APK SHA-256: `89a5cd50f97dd87e513d86d79bfae71b5f962d86f760190c57527a92fd289b96`.
+Ryan physically installed the earlier `0.2.0` / code `3` baseline and confirmed a black Home screen plus functioning app drawer. Physical evidence then showed Android status/navigation bars remained visible and the bottom app row could be clipped by navigation.
 
-## CI green
+Ryan approved immersive Home + drawer.
 
-- Package remains `com.boop.launcher`, version `0.2.0` / code `3`.
+Current application source: `92c34d47b19e6d2191891e9eb9ffe5a329394cf1`.
+GitHub Actions run: `34080350338` — success.
+Signed artifact ID: `10003492030`.
+APK SHA-256: `1dfcd87412b8308704325db9d1045f08294942e01ff53d62cddd20cf21d8435c`.
+
+## CI / smoke green
+
+- Package `com.boop.launcher`, version `0.2.1` / code `4`.
 - Android API 29 minimum, target/compile 36.
-- Unit tests pass.
+- Unit tests pass, including immersive-mode regression checks.
 - Android lint passes.
-- Release assemble passes.
-- Existing permanent BOOP signer verifies with APK Signature Scheme v2.
-- Pure-black edge-to-edge Home baseline implemented.
-- No permanent clock, At a Glance, search pill or dock/hotseat.
-- All Apps local enumeration and contextual local search implemented.
-- App pin, persistence, basic move/remove and Home/Back state implemented.
+- Release assemble and permanent BOOP signer pass.
+- Signed APK installs and survives launch on Android 16 smoke emulator.
+- Status and navigation bars are hidden with transient edge-swipe recovery.
+- System bars are re-hidden when launcher focus returns.
+- All Apps bottom padding now accounts for navigation-bar size and scrolls safely within padding.
+- Pure-black Home, no permanent clock/At a Glance/search pill/dock remains the intended visual baseline.
 
-## Not physically green
+## Physical state
 
-Ryan has not yet installed/accepted this Alpha 2 baseline on Pixel 10 Pro XL. Do not promote it as the authoritative accepted Launcher or update the main app map yet.
+Physically confirmed on the previous build: black Home screen and app drawer work.
 
-Known incomplete before full Alpha 2 acceptance:
-- drawer transition is not yet full Launcher3 direct-finger spring physics;
-- widget host flow exists but widget views are not yet rendered/movable/resizable;
-- dynamic multi-page workspace behavior is incomplete;
-- rotation/process-death and real widget flows have not had current physical checks.
+Not yet physically confirmed on `0.2.1`: immersive status/nav hiding, transient recovery gesture and corrected final drawer row. Do not mark this specific fix physically green until Ryan installs it.
+
+## Still incomplete
+
+- Drawer motion is not yet full Launcher3 direct-finger/spring physics.
+- Widget host flow exists but widget rendering/move/resize is incomplete.
+- Dynamic multi-page workspace behavior is incomplete.
+- Rotation/process-death and real widget flows still need current physical checks.
 
 ## Next
 
-Install `BOOP-Launcher-Alpha2.apk` on Pixel 10 Pro XL and collect a short physical feel/bug list. Prioritize any blocking launch/gesture issues and true Pixel-like drawer motion before adding deferred launcher furniture or BOOP-specific flourishes.
+Install the signed `0.2.1` / code `4` APK and verify: uninterrupted black Home, no persistent clock/Wi-Fi/battery/nav buttons, edge-swipe temporary system-bar recovery, and no clipped bottom drawer row. Continue the physical feel/bug list from there.
 
 ## Protect
 
-- Preserve `boop-launcher-alpha1` as historical fallback until Alpha 2 is physically accepted.
-- Keep package `com.boop.launcher` and the existing BOOP signing identity.
-- Do not publish signing keys or private certificates.
-- Keep Wall and Shield branches/source independent.
-- CI-green is not physical acceptance.
+- Preserve `boop-launcher-alpha1` as historical fallback until Alpha 2 is accepted.
+- Keep package `com.boop.launcher` and existing BOOP signing identity.
+- Do not publish signing keys/private certificates.
+- Keep Wall and Shield app lineages independent.
+- CI-green, smoke-green and physical acceptance are distinct states.
