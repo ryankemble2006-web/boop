@@ -138,8 +138,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r "$APK"
+            adb install -r boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
             adb shell appops set com.boop.alpha1 SYSTEM_ALERT_WINDOW allow
             adb logcat -c
             adb shell am start -W -n com.boop.alpha1/com.boop.shieldoverlay.MainActivity
