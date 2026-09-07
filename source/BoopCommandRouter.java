@@ -25,9 +25,7 @@ final class BoopCommandRouter {
     private final AssistantProcessor assistant;
     private final AssistantActivity assistantActivity;
 
-    BoopCommandRouter(
-            HomeAssistantClient local,
-            HomeAssistantGeneralAssistantClient assistant) {
+    BoopCommandRouter(HomeAssistantClient local, HomeAssistantGeneralAssistantClient assistant) {
         this(local::process, assistant::ask, NO_ASSISTANT_ACTIVITY);
     }
 
@@ -35,10 +33,7 @@ final class BoopCommandRouter {
         this(local, assistant, NO_ASSISTANT_ACTIVITY);
     }
 
-    BoopCommandRouter(
-            LocalProcessor local,
-            AssistantProcessor assistant,
-            AssistantActivity assistantActivity) {
+    BoopCommandRouter(LocalProcessor local, AssistantProcessor assistant, AssistantActivity assistantActivity) {
         this.local = local;
         this.assistant = assistant;
         this.assistantActivity = assistantActivity;
@@ -53,6 +48,17 @@ final class BoopCommandRouter {
     }
 
     CommandOutcome process(String text, BooleanSupplier useAssistant) {
+        return processInternal(text, assistant, useAssistant);
+    }
+
+    CommandOutcome processWithAssistant(String text, AssistantProcessor selectedAssistant) {
+        return processInternal(text, selectedAssistant, () -> true);
+    }
+
+    private CommandOutcome processInternal(
+            String text,
+            AssistantProcessor selectedAssistant,
+            BooleanSupplier useAssistant) {
         CommandOutcome localOutcome = local.process(text);
         if (localOutcome.status() != CommandOutcome.Status.NO_MATCH) {
             return localOutcome;
@@ -63,7 +69,7 @@ final class BoopCommandRouter {
 
         assistantActivity.onAssistantStarted();
         try {
-            return assistant.ask(text);
+            return selectedAssistant.ask(text);
         } finally {
             assistantActivity.onAssistantFinished();
         }

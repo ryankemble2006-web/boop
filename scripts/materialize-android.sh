@@ -12,6 +12,7 @@ cp source/companion/*.java "$MAIN"/
 python3 scripts/patch-wake-partial-fallback.py
 python3 scripts/patch-toast-easter-egg.py
 python3 scripts/patch-wall-chat-mode.py
+python3 scripts/patch-wall-openai-relay.py
 python3 scripts/patch-wall-idle-blink.py
 cp source/AndroidManifest.xml "$ROOT/app/src/main/AndroidManifest.xml"
 cp source/app-build.gradle "$ROOT/app/build.gradle"

@@ -12,6 +12,9 @@ public final class BoopChatModeHarness {
         for (BoopChatMode mode : BoopChatMode.values()) {
             check(BoopChatMode.fromStored(mode.storedValue()) == mode, "stored choice round trip");
         }
+        check(BoopChatMode.fromStored("native_chat") == BoopChatMode.NATIVE_CHAT,
+                "native ChatGPT mode persists explicitly");
+
         BoopChatModeHold hold = new BoopChatModeHold();
         hold.begin(100, 50, 80, 8);
         check(!hold.tryOpen(3099), "no early menu");
@@ -40,23 +43,30 @@ public final class BoopChatModeHarness {
         hold.move(Float.NaN, 80, 1);
         check(!hold.tryOpen(5000), "non-finite coordinates cancel");
 
-        final int[] calls = new int[3];
+        final int[] calls = new int[4];
         BoopCommandRouter.AssistantActivity activity = new BoopCommandRouter.AssistantActivity() {
             public void onAssistantStarted() { calls[1]++; }
             public void onAssistantFinished() { calls[2]++; }
         };
         BoopCommandRouter noMatch = new BoopCommandRouter(
                 text -> CommandOutcome.noMatch(),
-                text -> { calls[0]++; return CommandOutcome.assistantReply("reply"); }, activity);
+                text -> { calls[0]++; return CommandOutcome.assistantReply("opencode"); }, activity);
         check(noMatch.process("a silly question", false).status() == CommandOutcome.Status.NO_MATCH,
                 "Free Chat returns a web handoff only after a local no-match");
         check(calls[0] == 0 && calls[1] == 0 && calls[2] == 0, "Free Chat never touches OpenCode or its animation");
         check(noMatch.process("a silly question").status() == CommandOutcome.Status.ASSISTANT_REPLY,
                 "default OpenCode behavior is unchanged");
         check(calls[0] == 1 && calls[1] == 1 && calls[2] == 1, "OpenCode lifecycle balances");
-        noMatch.process("another question", false);
-        noMatch.process("back to OpenCode", true);
-        check(calls[0] == 2, "switching both ways works");
+
+        CommandOutcome nativeReply = noMatch.processWithAssistant("native question", text -> {
+            calls[3]++;
+            return CommandOutcome.assistantReply("native");
+        });
+        check(nativeReply.status() == CommandOutcome.Status.ASSISTANT_REPLY,
+                "native assistant can be selected after local no-match");
+        check(calls[3] == 1, "native assistant invoked exactly once");
+        check(calls[1] == 2 && calls[2] == 2, "native assistant lifecycle balances");
+
         final boolean[] enabled = {true};
         BoopCommandRouter switchedWhileLocal = new BoopCommandRouter(text -> {
             enabled[0] = false;
@@ -64,15 +74,23 @@ public final class BoopChatModeHarness {
         }, text -> { throw new AssertionError("mode changed during local processing"); });
         check(switchedWhileLocal.process("question", () -> enabled[0]).status() == CommandOutcome.Status.NO_MATCH,
                 "mode is checked after local processing, not before it");
+
         CommandOutcome[] localResults = {CommandOutcome.success("Media"), CommandOutcome.noTarget(),
                 CommandOutcome.targetOffline("Light", "Room"), CommandOutcome.failed(),
                 CommandOutcome.unreachable(), CommandOutcome.authRequired()};
         for (CommandOutcome result : localResults) {
+            final int[] assistantCalls = {0};
             BoopCommandRouter local = new BoopCommandRouter(text -> result,
-                    text -> { throw new AssertionError("local result must not go to chat"); }, activity);
+                    text -> { assistantCalls[0]++; return CommandOutcome.assistantReply("wrong"); }, activity);
             check(local.process("local command", false) == result, "Free Chat preserves local outcome " + result.status());
             check(local.process("local command", true) == result, "OpenCode preserves local outcome " + result.status());
+            check(local.processWithAssistant("local command", text -> {
+                assistantCalls[0]++;
+                return CommandOutcome.assistantReply("wrong");
+            }) == result, "native ChatGPT preserves local outcome " + result.status());
+            check(assistantCalls[0] == 0, "non-NO_MATCH never invokes any conversation processor");
         }
+
         BoopCommandRouter failing = new BoopCommandRouter(text -> CommandOutcome.noMatch(),
                 text -> { throw new IllegalStateException("offline"); }, activity);
         int started = calls[1], finished = calls[2];

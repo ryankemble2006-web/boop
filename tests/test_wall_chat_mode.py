@@ -29,6 +29,26 @@ class WallChatModeSourceTests(unittest.TestCase):
             self.assertIn(status, outcome)
         self.assertIn("conversationId = response.conversationId", client)
 
+    def test_native_mode_is_additive_and_persistent(self):
+        mode = self.read("source/BoopChatMode.java")
+        patch = self.read("scripts/patch-wall-openai-relay.py")
+        materialize = self.read("scripts/materialize-android.sh")
+        self.assertIn('NATIVE_CHAT("native_chat")', mode)
+        self.assertIn('chatModeButton(BoopChatMode.NATIVE_CHAT, "ChatGPT")', patch)
+        self.assertIn("commandRouter.processWithAssistant(transcript, nativeChatClient::ask)", patch)
+        self.assertIn("patch-wall-chat-mode.py", materialize)
+        self.assertIn("patch-wall-openai-relay.py", materialize)
+        self.assertLess(materialize.index("patch-wall-chat-mode.py"), materialize.index("patch-wall-openai-relay.py"))
+
+    def test_router_keeps_local_first_boundary(self):
+        router = self.read("source/BoopCommandRouter.java")
+        local_index = router.index("CommandOutcome localOutcome = local.process(text);")
+        no_match_index = router.index("localOutcome.status() != CommandOutcome.Status.NO_MATCH")
+        assistant_index = router.index("return selectedAssistant.ask(text);")
+        self.assertLess(local_index, no_match_index)
+        self.assertLess(no_match_index, assistant_index)
+        self.assertIn("processWithAssistant", router)
+
     def test_relay_sources_do_not_embed_provider_credentials(self):
         combined = "\n".join(
             self.read(path)
@@ -36,6 +56,7 @@ class WallChatModeSourceTests(unittest.TestCase):
                 "source/OpenAiRelayConfig.java",
                 "source/OpenAiRelayAssistantClient.java",
                 "source/OpenAiRelayOkHttpTransport.java",
+                "scripts/patch-wall-openai-relay.py",
             )
         )
         self.assertNotIn("sk-proj-", combined)
