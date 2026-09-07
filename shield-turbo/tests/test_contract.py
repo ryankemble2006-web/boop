@@ -36,7 +36,10 @@ class ContractTest(unittest.TestCase):
             'android.permission.SYSTEM_ALERT_WINDOW',
         }, permissions)
         app = manifest.find('application')
-        self.assertEqual([], app.findall('service'))
+        services = app.findall('service')
+        self.assertEqual(1, len(services))
+        self.assertEqual('.BrightnessService', services[0].get(ANDROID + 'name'))
+        self.assertEqual('false', services[0].get(ANDROID + 'exported'))
         self.assertEqual([], app.findall('receiver'))
         categories = {c.get(ANDROID + 'name') for c in app.findall('.//category')}
         self.assertIn('android.intent.category.LEANBACK_LAUNCHER', categories)
