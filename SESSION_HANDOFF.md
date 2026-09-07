@@ -1,58 +1,49 @@
-# BOOP Wall v33: 20 percent faster blink
+# BOOP Wall v34: caller-owned Launcher swipe animation
 
 Updated 2026-09-07. Owning branch: `boop-wall-free-chat-wip`.
-Application/build commit: `e3507bde3f296dcb419a1dcef0faf735c7243525`.
-Shared main checked: `2912a198e3f9f2b67f89a39739159c8172c654f2`.
-VersionCode 33 / `0.4.13-wall-blink-speed`, package `com.boop.alpha1`.
-Exact signing/artifact receipt: `docs/BOOP-WALL-V33-BUILD-RECEIPT.md`.
+Package: `com.boop.alpha1`. VersionCode 34 / `0.4.14-wall-native-chat`.
 
-## Latest user evidence and request
+## Latest user evidence
 
-Ryan physically observed v32 and said: "he blinks just fine". This establishes
-that the shipped v32 blink works on his tested device; it does not establish
-text readability, sleep behavior or every other flow. The previous automated
-visual gate remains unresolved, not evidence that the physical blink is broken.
-Ryan requested only 20 percent faster blink animation, no tests, and the fastest
-possible build/sign/delivery. No tests or emulator runs are authorized for this
-update. Do not turn build/sign success into a full-CI/runtime pass.
+Ryan physically reported that the first Launcher-side attempt did not change the cross-app swipe animation at all. Treat that as a rejected approach. The reason is architectural: the activity that calls `startActivity()` owns the custom transition, so a receiving-Launcher OPEN override cannot reliably control the Wall -> Launcher launch.
 
-## Scoped change
+The direction Ryan already likes remains Launcher -> Wall on a right swipe. The requested mirror is Wall -> Launcher on a left swipe: Launcher should enter from the right while Wall exits left.
 
-Only production behavior change: BoopIdleBlink.DURATION_MS 220 -> 183 ms,
-220/1.2 rounded to the nearest whole millisecond. This is 1.2x animation speed,
-not 20 percent more frequent blinking. Irregular 3-7 second gaps, shape, text,
-sleep deadline, voice, wake, local HA/media, gestures, permissions and signer
-are unchanged. Build identity is incremented to distinguish the faster candidate.
+## Current scoped fix
 
-Existing GitHub build/sign workflow recognizes an explicit `[boop-build-only]`
-commit marker. Use it only when Ryan expressly requests no tests. It skips test
-dependencies, tests, instrumentation assembly and emulator steps, reuses installed
-build tools and retains permanent signer/package checks. The separate polish test
-workflow skips the same marked push. Normal pushes/manual runs retain the full
-verification route. Never claim that a skipped test passed. Do not automatically
-retry the old visual tests after a no-tests request.
+Transition implementation commit: `19731b3c223f9b94ba264f07fddd345f08b245bb`.
 
-## Evidence and preservation
+Protected `source/MainActivity.java` remains byte-for-byte untouched. `scripts/materialize-android.sh` patches only the materialized build output at the existing Wall `startActivity(launcherIntent)` call and supplies `ActivityOptions.makeCustomAnimation` with:
 
-The complete previous v32 handoff, exact APK receipt and failed visual-gate history
-are preserved at `docs/BOOP-WALL-V32-HANDOFF.md`; v31 history remains in
-`docs/BOOP-WALL-V31-HANDOFF.md`. Ryan confirmed v31 query-copy/new-chat/paste
-instructions and now v32 blinking. New v33 animation speed still awaits his use.
-Text appearance, landscape and other unreported physical behavior stay unverified.
+- `boop_launcher_enter_from_right`: 100% -> 0% X, 220 ms;
+- `boop_wall_exit_to_left`: 0% -> -100% X, 220 ms.
 
-Do not promote or repoint accepted checkpoints. Preserve checkpoint-boop-wall-595e1da
-and all Home/Routines/Shield/Launcher work. No physical install or permission
-change was performed. Existing permanent GitHub signer only. Timed routines remain
-excluded. Keep the accepted APKs and preserved Wall branch unchanged.
+This keeps the Wall and Launcher packages independent and does not alter the already-liked Launcher -> Wall right-swipe path. Existing tap/hold/voice/HA/chat/wake behavior, permissions and signing setup are not intentionally changed by this transition patch.
 
-## Session environment and next step
+## Verification and signed artifact
 
-This session used the connected GitHub repository and hosted signing workflow,
-not the laptop's Windows checkout, GPU or LAN. Direct local clone access was
-unavailable; no user checkout or concurrent local work was overwritten.
-Source review: the app delta is one timing constant plus version metadata; the
-other changes implement explicit no-test build routing and update documentation.
+Focused/full run `34086706588` verified the transition source assertion plus the normal Wall source/JVM/build/sign path, but later failed an unrelated idle-blink midpoint instrumentation assertion (`openness=0.57552963`). Do not modify blink behavior as part of this animation task and do not describe that full run as green.
 
-Next: record only Ryan's actual v33 feedback. Further tests require a later request;
-this build deliberately omits them. Final handoff/docs commit uses [skip ci] so
-recordkeeping cannot start a new build/test run. "Update memory" stays docs-only.
+A separate explicit build-only run was triggered by documentation commit `593abaf232727b62cd3d49f0e7fb53ea7f572214` using the repository's existing `[boop-build-only]` route:
+
+- GitHub Actions run: `34087312865`
+- conclusion: success
+- stable-signed Wall v34 build: success
+- package/version/archive/signer continuity: success
+- emulator/instrumentation/tests deliberately skipped in this build-only run
+- artifact: `BOOP-Wall-Native-Chat-candidate`
+- artifact ID: `10005662085`
+- extracted APK SHA-256: `82e01c9a68cb104882b6401803584069ba9085f5a450fe354af6b210c470b5e6`
+- existing permanent BOOP signer unchanged
+
+Physical animation acceptance is still pending Ryan's Pixel test. Do not call this transition physically fixed until he confirms the visual direction changed.
+
+## Preservation
+
+The accepted Wall physical checkpoint remains `595e1daa43393882a0e5de43967545ac526b8b66` / `checkpoint-boop-wall-595e1da`. Do not move it. v33 faster-blink history remains in repository history/docs; Ryan previously reported v32 blinking worked physically. The independent blink work is not part of this transition change.
+
+Launcher remains a separate app (`com.boop.launcher`). Preserve its accepted fullscreen, drawer and reverse-swipe behavior. No automatic installation or permission change was performed.
+
+## Next safe step
+
+Install the signed Wall v34 candidate over the current Wall and physically check only the left-swipe Wall -> Launcher visual transition. Expected: Launcher enters from the right and Wall exits left. If it still uses Android's default same-direction animation, capture that as Pixel runtime evidence and investigate task/window transition policy rather than changing Launcher again.
