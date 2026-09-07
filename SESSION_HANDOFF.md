@@ -1,3 +1,17 @@
+# BOOP animation-lab handoff: official yellow hands, 2026-09-07
+
+Owner: `animation-freddie-mercury`. This is an art-only workspace, not an alternate app lineage. Normal application work belongs on `boop-unified` per fetched main.
+
+Ryan approved the latest mirrored, hands-only yellow pair as BOOP's official hands everywhere. Read `BOOP_YELLOW_HANDS.md`, `animation-lab/shared-assets/boop-yellow-hands/README.md`, its manifest and `animation-lab/freddie-mercury/STATUS.md`. Preserve the exact plush yellow material/proportions, rounded cuffs, four fingers plus a thumb per hand, floating hands and true transparency. Poses may change; the design and underlying BOOP character must not. The talking-hand gesture uses fingers, not an animal transformation.
+
+Source image: `a_clean_isolated_png_style_image_on_a_transparent.png`. Reserved filename: `boop-yellow-hands-approved.png`. Dimensions 1774 x 887 RGBA, 1541931 bytes. SHA-256 `74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556`. No original editable generator layers were supplied.
+
+Starting live remote heads checked: animation `3548e6aeb787556b1994cbafb3bffb4c6c017d05`, unified `8cfb14e001b946f0bdb33011c8cbe3778ed59019`, main `4323bb747f1ddaced24a5372854377acccaa4228`.
+
+Publication boundary: this change saves documentation and checksum records only. The binary PNG is still pending manual upload from `boop-official-yellow-hands.zip`, which supplies it in both branch destination folder layouts. Next safe step is uploading the exact file, verifying its SHA-256 and updating the transfer record. This task did not change app code, build settings, signing, permissions, version or deployment; it does not implement an Easter egg or establish device acceptance. No laptop checkout synchronization is claimed.
+
+## Historical inherited handoff, retained for provenance
+
 # Shared-context hub handoff — 2026-09-06
 
 ## Continuity refresh — 2026-09-06
