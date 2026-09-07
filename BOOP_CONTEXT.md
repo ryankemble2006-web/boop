@@ -52,25 +52,26 @@ redesign. Routine-authoring capability evidence is not proof of a finished featu
 - Next Shield UI question: revisit settings and the rest of the living-room
   inventory, after reading current source/HA evidence; it has not been diagnosed.
 
-## Wall Free Chat candidate, 2026-09-07
+## Wall Free Chat and v32 polish, 2026-09-07
 
-Owning branch: `boop-wall-free-chat-wip`; verified APK code `0ceb97b`, v31.
-Ryan approved holding the face for three seconds past the playful animation,
-then selecting OpenCode / Free Chat / Cancel. OpenCode defaults on; the choice
-persists and the same menu reverses it. Immediate house/media remain local first.
-Free Chat is an explicit ChatGPT browser session with a copied question for manual
-paste/send, not an invisible backend, embedded subscription API or unlimited quota.
+Owning branch: `boop-wall-free-chat-wip`; current signed test APK v32, built
+`6e48e3bc05f7269376d54179ab32025e1a0b72b9`. Read its SESSION_HANDOFF.md for exact verification.
+The three-second OpenCode/Free Chat menu remains reversible and persistent.
+Immediate house/media stay local first. Browser chat requires manual paste/send
+and has its own login/limits; no invisible backend or direct API key.
 
-Full run 34071614834 is GREEN: source/bridge/JVM/Android tests, stable-signed APK
-inspection, real emulator wake startup, actual three-second menu/default, Free
-Chat selection, process-restart persistence, revert, drag/background cancellation,
-and Shield pairing return. Artifact 10000728933 was downloaded and its build
-receipt, ZIP/APK integrity and digests independently verified. Earlier menu-gate
-failures were traced to specific emulator onboarding and capture-readiness issues;
-actual UI assertions remain intact. Physical Pixel/update/browser/login/Back and
-real-house acceptance are still pending. This is not a new physical checkpoint.
-The accepted annotated Wall tag was checked live and still resolves to 595e1da;
-preserved Wall branch still points to 3a702f8. See SESSION_HANDOFF.md/BOOP_STATUS.md.
+Ryan physically confirmed v31's query-copy/new-chat/paste-instruction handoff.
+He approved bigger bold two-line instructions and gentle 3-7 second awake-idle
+blinks, never resetting sleep. Both are implemented in v32 with no extra taps,
+screens or permissions. Full latest CI is NOT green: compile/signing/wake/menu
+checks pass, but the new natural-blink capture fails. Text spans/callbacks pass;
+actual screenshots do not verify text visibility/size. Earlier partial portrait
+blink/sleep evidence is not a complete release pass. v32 physical visuals and
+landscape remain pending. Do not promote a checkpoint or hide this test gap.
+
+Last full-green v31 run34071614834, built0ceb97b; its history is archived in
+`docs/BOOP-WALL-V31-HANDOFF.md`. Protect accepted physical Wall595e1da and separate
+preserved branch3a702f8. Shared ownership/main and other app branches unchanged.
 
 ## Protect the working puppet
 

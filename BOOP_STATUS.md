@@ -1,33 +1,35 @@
-# BOOP Wall status: Free Chat test candidate
+# BOOP Wall v32: larger instructions and idle blinks
 
-Updated 2026-09-07. Owning branch: `boop-wall-free-chat-wip`.
+Updated 2026-09-07. Branch `boop-wall-free-chat-wip`.
 
-## Candidate: signed and CI/emulator GREEN; physical acceptance pending
+## Signed test candidate; NOT full CI-green
 
-- Base: `boop-wall-resurrection@3a702f89b7f317649d267f25c34c6c9655edcff8` (v30 swipe).
-- Verified build: `0ceb97bc7c258835ce292391d483849398016020`.
-- Version: 31 / `0.4.11-wall-free-chat`; package `com.boop.alpha1`.
-- Full successful run: `34071614834`; build job `101589892017`.
-- All source/bridge/JVM/Android unit, materialization, package/version/archive,
-  stable-signature and real emulator wake-microphone checks PASS.
-- Actual emulator UI PASS: short hold does not open menu, three-second menu,
-  OpenCode default, Free Chat selection, force-stop/restart persistence, revert
-  through the same menu, vertical drag cancellation and background cancellation.
-- Existing Shield pairing-return check PASS.
-- Artifact: `10000728933`, `BOOP-Wall-Free-Chat-candidate`.
-- Downloaded APK: `BOOP-Wall-v31-Free-Chat.apk`, 139485298 bytes.
-- APK SHA-256: `2d8c858da399c2e6f1f9e7cbbed8199de6bcb9ca3d207442fd49252bb3626d29`.
-- Artifact ZIP SHA-256: `3d2d7e818413640c0a9ed887fac90e5123336e5c8fe858f56ba402476d7e52d7`.
-- Downloaded build receipt, ZIP digest/integrity, APK digest and inner archive
-  integrity independently checked. Full cryptographic APK signature passed in CI.
-- Stable-signed debug variant; not an optimized release.
-- Physical Pixel 7 / Pixel 10, v31 in-place update, real browser/login/Back and
-  real-house command acceptance are NOT TESTED on this candidate.
+- Version 32 / `0.4.12-wall-blink-text`, package `com.boop.alpha1`.
+- Built `6e48e3bc05f7269376d54179ab32025e1a0b72b9`; run34077206213/job101605575582.
+- Artifact10002578514; `BOOP-Wall-v32-Blink-Text.apk`, 139485310 bytes.
+- APK SHA-256 `3316a193188cb0b9a0cc31846771b3f57c7987da13747d6b1fe11da22647c96b`.
+- ZIP SHA-256 `e99a5258e1e5e6d3191818d5f63ec7950d8de889640f475f59808d058784dfd1`.
+- Existing permanent signer verified in CI. Downloaded receipts, ZIP/APK digests,
+  archive integrity and presence of new production classes independently checked.
 
-Free Chat copies the question for manual browser paste/send; it is not a hidden
-API or unlimited quota. Local control runs first; only NO_MATCH may reach chat.
-The earlier failed UI gates are resolved by specific emulator onboarding/capture
-fixes. Actual interaction assertions were not removed or weakened. See handoff.
+Implemented: 50%-larger bold two-line paste instructions with the same browser
+handoff; irregular 3-7 second awake-idle blinks; original sleep deadline unchanged.
+No new permissions, settings screens, signer or other app changes.
+
+PASS: 159 local source/JVM regressions; CI bridge/Java/Android unit/build/signing,
+real wake-microphone startup, existing mode menu, persistence/revert/cancellation.
+FAIL: new instrumented natural-blink frame capture on the portrait emulator.
+Exact cause remains unresolved; awake/focused/attached/foreground were true.
+Earlier same-app run passed portrait blink/reopen/busy/sleep but failed landscape
+sampling. Final landscape/pairing checks were not completed. Do not call either
+feature's physical rendering verified by these tests.
+
+Toast callback and span checks passed, but inspected PNGs did not show the toast;
+font rendering/clipping remain unverified. Evidence artifact10002576627.
+This signed debug APK is delivered for user testing, not an accepted checkpoint.
+
+Ryan's v31 feedback confirmed copied query -> new chat -> paste instruction on
+his phone. That does not verify v32 or every v31 flow on both Pixels.
 
 ## Accepted Wall baseline (unchanged)
 
@@ -45,13 +47,10 @@ fixes. Actual interaction assertions were not removed or weakened. See handoff.
 
 ## Protected / next
 
-`checkpoint-boop-wall-595e1da`, `checkpoint-shield-home-f8e8135`,
-`checkpoint-shield-routines-3fa18c6` and their accepted APKs remain untouched.
-No changes to Shield overlay/Home/Routines, Launcher, signing credentials,
-HomeAssistantRepository, FocusCardView or the local HA clients.
-No automatic physical installations or permission grants. Timed voice routines
-remain excluded. Shared app ownership is still defined by fetched main.
+Wall/Home/Routines checkpoints and accepted APKs remain untouched. No changes to
+Launcher, Shield, local house/media clients, signing credentials or permissions.
+No automatic physical installation. Timed voice routines remain excluded.
 
-Next: physical Pixel 7 update and hold/menu/persistence/revert, local media,
-general-question browser handoff and Back acceptance. Record results before
-promoting. Documentation-only updates do not change the verified APK build.
+Next: actual Pixel check of the new text and awake blink/sleep; diagnose the
+remaining visual gate. Record observations before any promotion. Source/build
+and physical evidence are different states. See SESSION_HANDOFF.md.

@@ -28,23 +28,29 @@ Raw MainActivity stays frozen; do not mistake that file alone for the built app.
 Existing permanent GitHub signer only. Candidate branch boop-wall-free-chat-wip
 starts from preserved Wall 3a702f8. Physical checkpoint 595e1da remains unchanged.
 
-CURRENT VERIFIED CANDIDATE: v31 / 0.4.11-wall-free-chat, built commit
-0ceb97bc7c258835ce292391d483849398016020, full successful run 34071614834,
-job 101589892017, artifact 10000728933. Source/bridge/JVM/Android checks,
-stable-signed APK assembly/inspection/signature, real wake-microphone startup,
-actual three-second menu, OpenCode default, Free Chat save, process-restart
-persistence, revert, drag/background cancellation and Shield pairing return PASS.
-The exact artifact was downloaded and its receipt/archive/digests verified.
-APK SHA256 2d8c858da399c2e6f1f9e7cbbed8199de6bcb9ca3d207442fd49252bb3626d29.
+CURRENT SIGNED TEST CANDIDATE: v32 / 0.4.12-wall-blink-text.
+Built 6e48e3bc05f7269376d54179ab32025e1a0b72b9, run34077206213/job101605575582,
+artifact10002578514. APK SHA256 3316a193188cb0b9a0cc31846771b3f57c7987da13747d6b1fe11da22647c96b.
+Includes 1.5x bold two-line paste instructions and irregular 3-7 second, 220ms
+awake-idle blinks. No extra user actions/permissions. Original30s sleep unchanged.
+Use the full materializer including patch-wall-idle-blink.py after chat-mode.
 
-Earlier UI failures were diagnosed: Android's first-run fullscreen tutorial
-covered BOOP, then UIAutomator returned no capture just after restart. The test
-now acknowledges only the observed tutorial and bounds retries for fresh capture
-failures. It never retries failed UI assertions into a pass. Final gates are green.
+159 local source/JVM tests pass. CI compile/unit/signature/real wake/menu gates
+pass. New instrumented natural-blink capture FAILS with awake/focused/attached
+state true; root cause unresolved. Earlier portrait blink/reopen/busy/sleep
+checks passed with this app source, but not the complete landscape/visual suite.
+Do not turn partial evidence into full-green. Span/callback assertions pass;
+inspected screenshots do not verify the enlarged toast or lack of clipping.
+Physical v32 test pending. Candidate delivered with this gap disclosed.
 
-Still pending: physical Pixel tests, in-place v31 update, browser login/paste/send/
-Back, and current real-house acceptance. CI is not a physical checkpoint. Preserve
-595e1da until Ryan tests and accepts. See SESSION_HANDOFF.md for exact provenance.
+Ryan confirmed v31 copied his query, opened a new chat and instructed him to paste.
+That is limited positive physical browser-handoff evidence, not every scenario.
+Last full-green v31 is0ceb97b/run34071614834/artifact10000728933; detailed history
+is preserved at docs/BOOP-WALL-V31-HANDOFF.md. Keep physical checkpoint595e1da and
+preserved branch3a702f8 unchanged; don't silently promote v32.
+
+Next: actual Pixel test of text and blinking/normal sleep, then record evidence
+and diagnose remaining visual capture before full acceptance. See handoff.
 
 Cross-device: main@2912a19 maps this candidate. Work must fetch/reread the owning
 branch, not assume a local/main app copy is newest. "Update memory" is docs-only
