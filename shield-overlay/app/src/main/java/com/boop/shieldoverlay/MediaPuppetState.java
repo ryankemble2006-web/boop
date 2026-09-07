@@ -47,8 +47,24 @@ public final class MediaPuppetState {
                     && granted == other.granted
                     && connected == other.connected
                     && sessionId == other.sessionId
-                    && java.util.Objects.equals(playbackState, other.playbackState)
-                    && mode == other.mode;
+                    && mode == other.mode
+                    && playbackEquivalent(playbackState, other.playbackState);
+        }
+
+        private static boolean playbackEquivalent(Integer first, Integer second) {
+            // Existing consumers treat all non-playing headphone REST states alike.
+            // The fullscreen puppet only needs extra delivery for explicit track-change
+            // states so it can perform the brief acknowledgement beat.
+            boolean firstTrackChange = isTrackChange(first);
+            boolean secondTrackChange = isTrackChange(second);
+            if (!firstTrackChange && !secondTrackChange) {
+                return true;
+            }
+            return java.util.Objects.equals(first, second);
+        }
+
+        private static boolean isTrackChange(Integer state) {
+            return state != null && (state == 9 || state == 10 || state == 11);
         }
     }
 
