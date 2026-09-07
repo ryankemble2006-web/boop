@@ -296,11 +296,13 @@ public final class BoopOverlayService extends Service {
         layoutDisplayHeight = height;
         layoutHeadphones = headphones;
         if (headphones) {
-            HeadphoneGeometry.Layout layout = HeadphoneGeometry.calculate(width, height);
-            overlayParams.width = layout.width;
-            overlayParams.height = layout.height;
-            overlayParams.x = layout.x;
-            overlayParams.y = layout.y;
+            // Deezer music-puppet mode owns the entire picture. The window flags remain
+            // non-focusable/non-touchable, so this is a visual curtain rather than a new foreground UI.
+            HeadphoneGeometry.Layout layout = FullscreenDeezerGeometry.calculate(width, height);
+            overlayParams.width = width;
+            overlayParams.height = height;
+            overlayParams.x = 0;
+            overlayParams.y = 0;
             overlayView.setHeadphoneLayout(layout);
         } else {
             OverlayGeometry.Geometry geometry = OverlayGeometry.calculate(width, height);
