@@ -19,9 +19,9 @@ class MainActivity:Activity(){
         val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(64,36,64,36);setBackgroundColor(Color.BLACK)}
         root.addView(text("SHIELD TURBO",34f,Color.CYAN).apply{setTypeface(typeface,Typeface.BOLD)})
         root.addView(text("Measure first. Turbo only what earns it.",18f,Color.LTGRAY))
-        val button=Button(this).apply{id=1001;text="ANALYSE SHIELD";textSize=22f;isFocusable=true;isFocusableInTouchMode=true;setOnClickListener{analyse()}}
+        val button=Button(this).apply{id=View.generateViewId();text="ANALYSE SHIELD";textSize=22f;isFocusable=true;isFocusableInTouchMode=true;setOnClickListener{analyse()}}
         root.addView(button,LinearLayout.LayoutParams(-1,72))
-        val scroll=ScrollView(this); results=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;id=1002};scroll.addView(results);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f));button.requestFocus();return root
+        val scroll=ScrollView(this); results=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;id=View.generateViewId()};scroll.addView(results);root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f));button.requestFocus();return root
     }
     private fun analyse(){
         results.removeAllViews()
