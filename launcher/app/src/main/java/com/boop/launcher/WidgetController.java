@@ -3,6 +3,7 @@ package com.boop.launcher;
 import android.app.Activity;
 import android.appwidget.*;
 import android.content.*;
+import android.os.Bundle;
 import java.util.*;
 
 public final class WidgetController {
