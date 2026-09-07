@@ -9,6 +9,7 @@ and read the other branches when cross-project context is needed.
 | Work | Authoritative branch | Source | Owner / state |
 | --- | --- | --- | --- |
 | Shield Home + Deezer puppet | [boop-shield-media-puppetry](https://github.com/ryankemble2006-web/boop/tree/boop-shield-media-puppetry) | shield-overlay/ | Laptop; H1 play/pause and lower placement user-tested |
+| Shield full-screen Deezer puppet experiment | [boop-shield-fullscreen-deezer-wip](https://github.com/ryankemble2006-web/boop/tree/boop-shield-fullscreen-deezer-wip) | shield-overlay/ | Isolated WIP from current Shield puppetry: full-TV black BOOP canvas driven by existing Deezer state; CI/signer green, physical Shield acceptance pending; read SESSION_HANDOFF.md and BOOP_SHIELD_FULLSCREEN_DEEZER_MEMORY.md |
 | BOOP Wall voice/eyes | [boop-wall-resurrection](https://github.com/ryankemble2006-web/boop/tree/boop-wall-resurrection) | source/ plus materialization scripts | Working voice/control baseline; preserve it |
 | Wall Native Chat + eye hue + sleepy close candidate | [boop-wall-native-chat-eye-hue](https://github.com/ryankemble2006-web/boop/tree/boop-wall-native-chat-eye-hue) | Native Chat lineage + isolated hue/sleep helpers/materialization patches | v39 sleepy-close candidate; v38 eye-colour UX physically accepted, v39 sleep CI/signer green, physical sleep acceptance pending; read SESSION_HANDOFF.md and BOOP_WALL_NATIVE_CHAT_EYE_HUE_MEMORY.md |
 | Historical Wall eye-hue experiment | [boop-wall-eye-hue-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-eye-hue-wip) | source/, scripts/patch-wall-eye-hue.py, focused tests/workflow | v31 experiment layered on Wall v30. Do NOT install it over newer Native Chat builds |
@@ -120,6 +121,9 @@ publishing workflow.
 - The v38 eye-colour local-intent/slider UX is physically accepted behavior and
   should not be regressed while tuning v39 sleep.
 - The old v31 hue candidate is historical and is not an update for newer devices.
+- Shield full-screen Deezer work is isolated on `boop-shield-fullscreen-deezer-wip`;
+  do not overwrite the physically accepted corner-H1 lineage on `boop-shield-media-puppetry`
+  until Ryan physically accepts the full-screen experiment.
 - Launcher may open Wall by its package; permissions/return-strip behaviour
   require their own consent and device testing.
 - Stable update signing remains in the existing GitHub workflows.
