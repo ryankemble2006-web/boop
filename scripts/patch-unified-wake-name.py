@@ -94,6 +94,11 @@ replace_once('''    private void handleRecognizedSpeech(String transcript) {
         BoopMirrorIntent.Action mirrorAction = BoopMirrorIntent.actionFor(transcript);
 ''', 'verbal wake-name routing')
 
+replace_once(
+    'BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best);',
+    'BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best, BoopWakeNameStore.load(this));',
+    'custom call prefix before command routing')
+
 main.write_text(text, encoding='utf-8')
 
 model = Path('.cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/bpe.model')
