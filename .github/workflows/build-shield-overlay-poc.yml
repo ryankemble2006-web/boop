@@ -138,9 +138,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           script: |
-            set -eu
-            APK=shield-overlay/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r "$APK"
+            adb install -r shield-overlay/app/build/outputs/apk/debug/app-debug.apk
             adb shell appops set com.boop.shieldoverlay SYSTEM_ALERT_WINDOW allow
             adb logcat -c
             adb shell am start -W -n com.boop.shieldoverlay/.MainActivity
@@ -148,11 +146,8 @@ jobs:
             adb shell pidof com.boop.shieldoverlay
             adb shell dumpsys activity activities | tee activity.txt
             grep -q "com.boop.shieldoverlay/.BoopHomeActivity" activity.txt
-            adb logcat -d | tee launch-logcat.txt
-            if grep -A8 -B2 "FATAL EXCEPTION" launch-logcat.txt | grep -q "com.boop.shieldoverlay"; then
-              echo "BOOP crashed during Home launch"
-              exit 1
-            fi
+            adb logcat -d > launch-logcat.txt
+            ! grep -A8 -B2 "FATAL EXCEPTION" launch-logcat.txt | grep -q "com.boop.shieldoverlay"
 
       - name: Upload BOOP Shield Overlay POC APK
         uses: actions/upload-artifact@v4
