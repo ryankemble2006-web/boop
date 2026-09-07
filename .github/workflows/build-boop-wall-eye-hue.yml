@@ -1,0 +1,162 @@
+name: Build BOOP Wall Eye Hue APK
+
+on:
+  push:
+    branches: [ "boop-wall-eye-hue-wip" ]
+  workflow_dispatch:
+
+concurrency:
+  group: boop-wall-eye-hue-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+  BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+  BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Protect the Wall v30 baseline and scope this experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=3a702f89b7f317649d267f25c34c6c9655edcff8
+          git diff --exit-code "$BASE" HEAD -- \
+            source/MainActivity.java source/BoopEyeLayout.java source/BoopLauncherSwipeGesture.java \
+            source/BoopShakeDetector.java source/BoopShakeEyeMotion.java source/BoopPresenceState.java \
+            source/BoopVoiceController.java source/BoopWakeSensitivity.java wake-assets/
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          base = subprocess.check_output([
+              'git','show','3a702f89b7f317649d267f25c34c6c9655edcff8:source/BoopFaceView.java'
+          ], text=True)
+          current = Path('source/BoopFaceView.java').read_text()
+          current = current.replace('        setEyeHueDegrees(BoopEyeHue.loadHue(context));\n', '')
+          method = '''\n    void setEyeHueDegrees(int hueDegrees) {\n        paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));\n        invalidate();\n    }\n'''
+          current = current.replace(method, '')
+          # Comment text is not runtime; normalize the one pre-existing thinking comment.
+          base = base.replace('        // A tiny puppet "hmm": cock the head, peek the other way, then settle.\n        // Deliberately organic rather than a spinner/loading UI.\n', '')
+          if current != base:
+              raise SystemExit('BoopFaceView changed outside the approved hue hook')
+          PY
+
+      - name: Run source regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run hue and preserved gesture/animation harnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/boop-harnesses
+          mkdir -p /tmp/boop-harnesses
+          javac -d /tmp/boop-harnesses \
+            source/BoopEyeHueMath.java tests/java/BoopEyeHueMathHarness.java \
+            source/BoopLauncherSwipeGesture.java tests/java/BoopLauncherSwipeGestureHarness.java \
+            source/BoopShakeDetector.java tests/java/BoopShakeDetectorHarness.java \
+            source/BoopShakeEyeMotion.java tests/java/BoopShakeEyeMotionHarness.java
+          java -cp /tmp/boop-harnesses com.boop.alpha1.BoopEyeHueMathHarness
+          java -cp /tmp/boop-harnesses com.boop.alpha1.BoopLauncherSwipeGestureHarness
+          java -cp /tmp/boop-harnesses com.boop.alpha1.BoopShakeDetectorHarness
+          java -cp /tmp/boop-harnesses com.boop.alpha1.BoopShakeEyeMotionHarness
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install bridge test dependencies
+        run: python -m pip install 'aiohttp==3.14.3' 'wyoming==1.10.0'
+
+      - name: Run bridge regression
+        run: python3 -m unittest bridge/test_boop_wyoming_bridge.py -v
+
+      - name: Materialize editable BOOP project
+        run: bash scripts/materialize-android.sh
+
+      - name: Verify one hue slider was inserted and existing eye asset remains authoritative
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP=boop-build/BOOP-Alpha1/app
+          MAIN="$APP/src/main/java/com/boop/alpha1/MainActivity.java"
+          FACE="$APP/src/main/java/com/boop/alpha1/BoopFaceView.java"
+          test "$(grep -c 'BoopEyeHueSettings.addSlider(this, voiceSettingsOverlay, face);' "$MAIN")" -eq 1
+          grep -q 'R.drawable.boop_eyes' "$FACE"
+          grep -q 'paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees))' "$FACE"
+          ! grep -R -n -i 'mouth' "$APP/src/main/java/com/boop/alpha1/BoopFaceView.java" "$APP/src/main/java/com/boop/alpha1/BoopEyeHue"*.java
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 36 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Run Android unit tests
+        run: gradle -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
+
+      - name: Prepare permanent BOOP signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
+          chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
+          keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
+          echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed BOOP Wall eye hue v31 APK
+        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+
+      - name: Verify package, version and stable signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          AAPT="${ANDROID_HOME}/build-tools/36.0.0/aapt"
+          APKSIGNER="${ANDROID_HOME}/build-tools/36.0.0/apksigner"
+          "$AAPT" dump badging "$APK" | tee badging.txt
+          grep -q "package: name='com.boop.alpha1'" badging.txt
+          grep -q "versionCode='31'" badging.txt
+          grep -q "versionName='0.4.11-wall-eye-hue'" badging.txt
+          "$APKSIGNER" verify --print-certs "$APK" | tee signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
+          test -n "$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          unzip -tq "$APK"
+          sha256sum "$APK" | tee apk-sha256.txt
+
+      - name: Upload signed BOOP Wall eye hue APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Wall-Eye-Hue-v31
+          path: |
+            boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+            signer.txt
+            apk-sha256.txt
+          if-no-files-found: error
