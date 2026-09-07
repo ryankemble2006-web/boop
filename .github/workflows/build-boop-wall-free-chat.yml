@@ -167,11 +167,36 @@ jobs:
             tail -n 100 emulator.log
             exit 1
           fi
-          adb shell input keyevent 82
-          RECOGNITION_SERVICES="$(adb shell cmd package query-services --brief --components --user 0 -a android.speech.RecognitionService)"
-          ON_DEVICE_RECOGNIZER="$(printf '%s\n' "$RECOGNITION_SERVICES" | tr -d '\r' | grep '^com\.google\.android\.as/' | head -n 1 || true)"
-          test -n "$ON_DEVICE_RECOGNIZER"
+          echo 'BOOP_EMULATOR_BOOTED=1'
+          adb shell input keyevent 82 || true
+
+      - name: Select and verify the emulator supplied-audio recognizer
+        timeout-minutes: 2
+        shell: bash
+        run: |
+          set -euo pipefail
+          ON_DEVICE_RECOGNIZER=''
+          RECOGNITION_SERVICES=''
+          # First boot may report completion before package services are ready.
+          # Retain the proven component requirement and the real audio-read gate.
+          for attempt in {1..30}; do
+            if RECOGNITION_SERVICES="$(adb shell cmd package query-services --brief --components --user 0 -a android.speech.RecognitionService 2>&1)"; then
+              ON_DEVICE_RECOGNIZER="$(printf '%s\n' "$RECOGNITION_SERVICES" | tr -d '\r' | grep '^com\.google\.android\.as/' | head -n 1 || true)"
+              if [ -n "$ON_DEVICE_RECOGNIZER" ]; then break; fi
+            fi
+            sleep 2
+          done
+          printf '%s\n' "$RECOGNITION_SERVICES"
+          if [ -z "$ON_DEVICE_RECOGNIZER" ]; then
+            echo '::error::Expected Android System Intelligence recognition service was not discovered'
+            adb shell settings get secure voice_recognition_service || true
+            adb shell pm list packages | grep -E 'google.*(as|tts|search)' || true
+            exit 1
+          fi
           adb shell settings put secure voice_recognition_service "$ON_DEVICE_RECOGNIZER"
+          SELECTED_RECOGNIZER="$(adb shell settings get secure voice_recognition_service | tr -d '\r')"
+          test "$SELECTED_RECOGNIZER" = "$ON_DEVICE_RECOGNIZER"
+          echo 'BOOP_EMULATOR_RECOGNIZER_SELECTED=1'
 
       - name: Verify the signed app starts with the real wake microphone armed
         timeout-minutes: 2
