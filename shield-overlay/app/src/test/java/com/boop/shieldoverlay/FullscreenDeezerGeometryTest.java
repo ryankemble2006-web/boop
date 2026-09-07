@@ -23,23 +23,32 @@ public final class FullscreenDeezerGeometryTest {
             assertTrue(layout.width >= 1);
             assertTrue(layout.height >= 1);
             assertTrue(layout.scale > 0f);
-            assertEnvelope(layout);
         }
     }
 
     private static void assertEnvelope(HeadphoneGeometry.Layout layout) {
-        for (long time = 0; time < 3600; time += 8) {
-            MediaPuppetMotion.Pose pose = MediaPuppetMotion.music(time);
-            double radians = Math.toRadians(pose.rotationDegrees);
-            for (double x : new double[] {218 - 768, 1300 - 768}) {
-                for (double y : new double[] {120 - 580, 902 - 580}) {
-                    double px = layout.originX + layout.scale *
-                            (pose.x + x * Math.cos(radians) - y * Math.sin(radians));
-                    double py = layout.originY + layout.scale *
-                            (pose.y + x * Math.sin(radians) + y * Math.cos(radians));
-                    assertTrue("alpha clipped horizontally", px >= -0.0001 && px <= layout.width);
-                    assertTrue("alpha clipped vertically", py >= -0.0001 && py <= layout.height);
-                }
+        for (long time = 0; time < MediaPuppetMotion.MUSIC_PERIOD_MS; time += 8) {
+            assertPoseInside(layout, FullscreenPuppetMotion.groove(time));
+        }
+        MediaPuppetMotion.Pose settleStart = FullscreenPuppetMotion.groove(711L);
+        for (long time = 0; time <= FullscreenPuppetMotion.SETTLE_DURATION_MS; time += 8) {
+            assertPoseInside(layout, FullscreenPuppetMotion.settle(settleStart, time));
+        }
+        for (long time = 0; time <= FullscreenPuppetMotion.TRACK_CHANGE_DURATION_MS; time += 8) {
+            assertPoseInside(layout, FullscreenPuppetMotion.trackChange(time));
+        }
+    }
+
+    private static void assertPoseInside(HeadphoneGeometry.Layout layout, MediaPuppetMotion.Pose pose) {
+        double radians = Math.toRadians(pose.rotationDegrees);
+        for (double x : new double[] {218 - 768, 1300 - 768}) {
+            for (double y : new double[] {120 - 580, 902 - 580}) {
+                double px = layout.originX + layout.scale *
+                        (pose.x + x * Math.cos(radians) - y * Math.sin(radians));
+                double py = layout.originY + layout.scale *
+                        (pose.y + x * Math.sin(radians) + y * Math.cos(radians));
+                assertTrue("alpha clipped horizontally", px >= -0.0001 && px <= layout.width);
+                assertTrue("alpha clipped vertically", py >= -0.0001 && py <= layout.height);
             }
         }
     }
