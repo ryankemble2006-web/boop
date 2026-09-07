@@ -9,33 +9,33 @@ Ryan physically confirmed the `0.2.2` fullscreen build removed the stubborn Pixe
 
 `0.3.0` added the approved widget/page plumbing, but Ryan physically found the entry point was dead: holding empty HOME produced no menu. `0.3.1` fixed that long-press menu and added Launcher page-0 swipe right -> BOOP Wall. CI run `34084595483` proved the menu appears and the Wall handoff path fires.
 
-Ryan then physically reported one remaining navigation-polish bug in `0.3.1`: Launcher -> Wall looked correct, but Wall -> Launcher reused the same left-to-right page transition instead of mirroring the swipe direction.
+Ryan then reported that the cross-app transition still looked visually the same in both directions. Launcher `0.3.2` tried an enter-from-right/exit-left OPEN transition and Wall v34 later tried caller-owned transition control, but Ryan still saw no visual difference.
 
-`0.3.2` / code `9` fixes only that transition direction on the Launcher side. Wall source/branches were deliberately left untouched because Wall has concurrent work.
+`0.3.3` / code `10` is the requested clean opposite experiment on the Launcher only. BOOP Wall v34 is left untouched. Launcher OPEN is now literally reversed from the 0.3.2 geometry:
+- Launcher enters from LEFT (`-100%p -> 0`);
+- previous activity exits RIGHT (`0 -> 100%p`).
 
-Application source/version commit: `3d2066d8bafa2ba69be70984ce3f060c79ff3b78` (`build: bump Launcher to 0.3.2`).
+Application/source test head: `86a3971d173887c2b641f95d175e5fd30426b59f`.
 
 Signed build:
 - package `com.boop.launcher`
-- versionName `0.3.2`
-- versionCode `9`
-- GitHub Actions run `34085524812` — success
+- versionName `0.3.3`
+- versionCode `10`
+- GitHub Actions run `34088140401`
+- unit tests and Android lint: success
+- permanent-signer release build: success
 - signed artifact `BOOP-Launcher-Alpha2-signed`
-- artifact ID `10005093325`
-- APK SHA-256 `83a1ead52fb1ccdce8fb59912101e80a6fd3c98d85c07fc12002c772af0667bb`
+- artifact ID `10005926195`
+- APK SHA-256 `359dd04b3268d16d88feac1ebfcb9030ed48057feed2c06d9df81f7334599310`
 - existing permanent BOOP signing identity unchanged
 
-## Transition-direction fix
+The first 0.3.3 CI attempt failed only because the old transition regression still asserted the previous 0.3.2 direction. Production compilation had succeeded. The regression was then updated to assert the user-requested reverse geometry and run `34088140401` passed unit tests, lint, release build and signing.
 
-Android 14+ Launcher OPEN transitions now explicitly enter Launcher from the right while the previous activity exits left. This mirrors the already-good Launcher -> Wall direction so Wall swipe-left -> Launcher visually travels right-to-left instead of replaying the opposite transition.
+## Physical check now
 
-TDD evidence:
-- red run `34085403670` failed the new transition-direction regression before production code/resources existed;
-- green run `34085524812` passes that regression, unit tests, lint, permanent-signer release build, and the existing Android 16 interaction smoke.
+Install Launcher `0.3.3` over the current Launcher while keeping Wall v34 unchanged. This creates a clean A/B test: same Wall build, opposite Launcher transition geometry.
 
-The Android 16 smoke still verifies launcher survival, empty-HOME long press -> visible `Add widget`, menu dismissal, and Launcher page-0 right swipe -> `BOOP_WALL_SWIPE` handoff path with no launcher fatal crash.
-
-The animation direction itself remains a physical visual check for Ryan; CI verifies the mirrored resource geometry and Launcher transition wiring, not subjective device motion.
+CI proves the requested resources and wiring exist; it does not prove what Pixel's cross-app animation compositor will visibly present. Ryan's device observation remains the authority for the visual result.
 
 ## Wall / Launcher gesture loop
 
@@ -70,13 +70,11 @@ Extra Launcher content pages keep normal page navigation: right swipe from a lat
 - No launcher clock, At a Glance, Google search pill, dock/hotseat, Internet permission, microphone permission, or Google proprietary launcher code/assets.
 - `com.boop.launcher` and permanent BOOP signing identity unchanged.
 
-## Physical checklist for 0.3.2
+## Remaining physical checks
 
-Primary new check:
-- Wall swipe left -> Launcher should animate right-to-left;
-- Launcher page-0 swipe right -> Wall should keep the already-good opposite direction.
+Primary 0.3.3 check: does Wall swipe-left -> Launcher now visibly move opposite to Launcher swipe-right -> Wall?
 
-Widget/page checks from 0.3.1 remain pending until Ryan exercises them on-device.
+Widget move/resize/remove, real third-party widget behavior, and page spill/persistence still await Ryan's on-device acceptance.
 
 ## Remaining polish
 
