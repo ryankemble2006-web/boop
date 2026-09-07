@@ -48,7 +48,7 @@ jobs:
               ('Shield head', '1a487a4aaecd098d6854905ee64d60253ad6b4b7', heads),
               ('versionCode', 'versionCode 41', build),
               ('versionName', '1.0.0-unified-alpha1', build),
-              ('wall device', 'Pixel 7 Pro', profile),
+              ('wall device', 'pixel 7 pro', profile),
               ('shield route', 'BoopDeviceProfile.Mode.SHIELD', entry),
               ('launcher route', 'com.boop.launcher.MainActivity', entry),
               ('shield activity', 'com.boop.shieldoverlay.MainActivity', entry),
