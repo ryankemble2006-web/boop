@@ -1,41 +1,31 @@
-# BOOP Wall v33: faster blink, build/sign only
+# BOOP Wall Native Chat v34: isolated setup candidate
 
-Updated 2026-09-07. Branch `boop-wall-free-chat-wip`.
+Updated 2026-09-07. Owning branch: boop-relay-reviewed-v34.
+**Code/build/CI green; Worker undeployed; real native chat and physical acceptance unverified.**
 
-## Current candidate
+- App/build commit `453bda9ec5bcd12f44fe50d63c7db5ce7a718295`; com.boop.alpha1, versionCode 34 /0.4.14-wall-native-chat.
+- Full successful run `34084002048`, job `101624466469`, APK artifact `10004727824`.
+- Existing permanent signer verified; stable-signed debug variant.
+- APK SHA-256 `1bb448d6f458cf4b527a69f7137f65ef3dd5a1a1da7dfab958b5cfe8efaeba97`; 139485306 bytes.
+- Configuration receipt: setup-required. Installing this APK alone does not enable
+  live native conversation. Use the matching Worker and private configuration.
 
-- VersionCode 33 / `0.4.13-wall-blink-speed`, package `com.boop.alpha1`.
-- Application/build commit `e3507bde3f296dcb419a1dcef0faf735c7243525`.
-- Exact artifact, signing and build receipt: `docs/BOOP-WALL-V33-BUILD-RECEIPT.md`.
-- One behavior change: blink duration 220 -> 183 ms (1.2x speed, rounded).
-- Irregular 3-7 second gaps, eye geometry, v32 larger text and original sleep
-  deadline remain unchanged. No new permissions or changes to other apps.
-- Ryan explicitly requested no tests/emulators. This is a build/sign-only
-  candidate, not a fresh regression-tested or physically accepted checkpoint.
+PASS: 177 local source/Python/JVM and 13 mock Worker tests; CI bridge/Android units,
+materialization, assembly, signature/package/archive, real wake microphone,
+three-mode menu/persistence/revert/cancellation, natural portrait+landscape blink,
+notice formatting, original sleep deadline, background cancellation, pairing return.
+The last UI run uses a 720x1560 @280 dpi emulator (same dp/aspect as 1440x3120 @560),
+not a physical Pixel or a full-panel performance claim. Earlier exact failed
+captures and the unknown first wake failure remain recorded in SESSION_HANDOFF.md.
 
-## Actual physical evidence
+Local-first routing is unchanged: only NO_MATCH may reach conversation. OpenCode
+and browser Free Chat stay reversible. Native replies/errors reuse existing voice.
+No provider key in Android; public CI rejects configured bearer-token APKs.
+Worker deployment/private billing/secrets, real provider success and physical phone
+verification are absent. No install, permission grant or secret change occurred.
 
-Ryan reported v32: "he blinks just fine". The earlier CI visual-capture failure
-must not be described as proof that the physical blink is broken. Its exact
-unresolved history remains in `docs/BOOP-WALL-V32-HANDOFF.md`.
-That comment does not verify v32 text size/clipping, sleep or every orientation.
-The new v33 speed remains untested. v31's browser copy/open/paste path was also
-confirmed by Ryan; that is limited evidence for the path he actually used.
-
-## Accepted Wall baseline (unchanged)
-
-- Physical code: `595e1daa43393882a0e5de43967545ac526b8b66`.
-- Protected tag: `checkpoint-boop-wall-595e1da` (not moved by this work).
-- Version: 29 / `0.4.9-alpha6.5.6-wall`.
-- CI: 33992704568; Pixel 7 Pro acceptance 2026-09-05.
-- Natural wake, tap speech, conversation, immediate house/media, QR pairing and
-  firm shake-to-puppet response were physically verified on that baseline.
-- With OpenCode stopped, local house/media continued working.
-- Signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-- Accepted APK SHA-256: `79ac40677687c4225989fa095644d5d97d36876150afe704e80eb6091d55530b`.
-- Preserved Wall branch remains separate. Its v30 swipe has emulator evidence
-  only. Do not promote a physical checkpoint without Ryan's device acceptance.
-
-No automatic physical installation. Launcher, Shield, local house/media clients,
-signing credentials and permissions are untouched. Record Ryan's next feedback;
-do not restart the old visual-test loop for this explicitly no-tests update.
+The concurrent boop-wall-free-chat-wip implementation was preserved, not merged.
+Do not interchange the two v34 variants by version label. Main 85d08eb maps both.
+Protect accepted Wall 595e1da and Home/Routines checkpoints; no tag was promoted.
+Exact APK fingerprints/provenance: docs/BOOP-WALL-V34-BUILD-RECEIPT.md.
+Method/scoped review: docs/BOOP-RELAY-V34-REVIEW.md. Prior v33 history is archived.

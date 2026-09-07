@@ -1,6 +1,6 @@
 # BOOP — start here on either device
 
-Updated 2026-09-06. Repository: [ryankemble2006-web/boop](https://github.com/ryankemble2006-web/boop).
+Updated 2026-09-07. Repository: [ryankemble2006-web/boop](https://github.com/ryankemble2006-web/boop).
 
 **One repository, separate app branches.** The branches do not need the same
 commit ID. Each task must match the current GitHub HEAD of its own app branch
@@ -10,11 +10,31 @@ and read the other branches when cross-project context is needed.
 | --- | --- | --- | --- |
 | Shield Home + Deezer puppet | [boop-shield-media-puppetry](https://github.com/ryankemble2006-web/boop/tree/boop-shield-media-puppetry) | shield-overlay/ | Laptop; H1 play/pause and lower placement user-tested |
 | BOOP Wall voice/eyes | [boop-wall-resurrection](https://github.com/ryankemble2006-web/boop/tree/boop-wall-resurrection) | source/ plus materialization scripts | Working voice/control baseline; preserve it |
+| Wall Free Chat candidate | [boop-wall-free-chat-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-free-chat-wip) | source/, scripts/patch-wall-chat-mode.py, focused tests | Android-led; three-second mode menu. Read its SESSION_HANDOFF.md for exact signed-build and test state; not a physical checkpoint |
+| Isolated Native Chat relay candidate | [boop-relay-reviewed-v34](https://github.com/ryankemble2006-web/boop/tree/boop-relay-reviewed-v34) | source/, relay/cloudflare/, focused tests | Current phone-chat implementation of the approved relay plan; read its handoff/receipt for verification and setup limits; NOT merged into the concurrent Wall implementation |
 | BOOP Launcher | [boop-launcher-alpha1](https://github.com/ryankemble2006-web/boop/tree/boop-launcher-alpha1) | launcher/ | Android-led development; read launcher/README.md |
-| Wall-to-Launcher swipe draft | [boop-wall-launcher-handoff-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-launcher-handoff-wip) | source/ and focused tests | WIP snapshot, not a verified installable update |
+| Wall-to-Launcher swipe draft | [boop-wall-launcher-handoff-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-launcher-handoff-wip) | source/ and focused tests | Historical preserved draft; Wall v30 now owns the reviewed swipe, with physical acceptance still pending |
 | Routine-authoring research | [boop-routine-authoring-v1](https://github.com/ryankemble2006-web/boop/tree/boop-routine-authoring-v1) | docs/superpowers/ and tests/ | Capability evidence/design; do not infer full authoring implementation |
 | Older Shield Home lineage | [boop-shield-home-implementation](https://github.com/ryankemble2006-web/boop/tree/boop-shield-home-implementation) | shield-overlay/ | Historical/reference; new Shield work uses puppetry branch |
 | Cross-project context | main | AGENTS.md, BOOP_CONTEXT.md, this map | Context hub; app files here can be historical |
+
+## Native Chat relay ownership (2026-09-07)
+
+The relay plan was executed from `boop-wall-free-chat-wip@7aa871f`. Another
+session independently implemented the same plan on that branch while this task
+worked. Its commits (`bbd50a6`, then `1201678` when inspected) were preserved.
+This session's variant is isolated on **boop-relay-reviewed-v34**. These are
+separate implementations, not interchangeable copies just because both say v34.
+Use the APK, Worker source and build receipt from the SAME branch. Do not deploy
+one Worker and install the other variant by version number or blindly merge them.
+Read both current handoffs and perform an explicit reconciliation before promotion.
+
+Native Chat is conversation-only: local NO_MATCH -> authenticated Worker -> OpenAI
+Responses -> existing BOOP voice/eyes. OpenCode and browser Free Chat stay available.
+Empty configuration is a setup candidate, NOT live chat. No provider key belongs
+in Android. Configured bearer-token APKs require private build/distribution;
+public-repository CI rejects token-bearing builds. Deployment and private account
+configuration must be verified separately from a signed APK or mock tests.
 
 ## Start a new Work task
 
@@ -26,6 +46,13 @@ Main owns shared decisions/contracts; the app branch's SESSION_HANDOFF.md owns
 its current implementation and verification evidence. Branch-local shared files
 are fallback copies when offline, and must not hide newer main decisions.
 Root README files inherited from Alpha 1 do not override the current app map.
+
+For the approved Wall chat-mode work, read the Free Chat candidate branch, not
+only the preserved Wall branch. BOOP_CHAT_MODE_MEMORY.txt supplements its dated
+BOOP_MEMORY.txt. A Work request to "update memory" remains documentation-only:
+fetch current handoffs, reconcile, commit/push documentation, and verify the live
+branch. Do not change app code, permissions, installs or signing without a new
+explicit request. An already-open Work task must reread these GitHub records.
 
 Cross-project reference does not require merging the apps. For example, a
 Launcher task can read Wall's current manifest/source from the Wall branch and
@@ -54,8 +81,9 @@ can still leave unpushed changes, so record/publish at useful milestones.
 
 - Wall: com.boop.alpha1. Launcher: com.boop.launcher. Shield: com.boop.shieldoverlay.
 - Wall and Launcher stay independently launchable. Do not merge packages.
-- Proposed Wall eyes -> deliberate left swipe -> Launcher is still WIP.
-- Existing tap/hold/voice/HA behaviour must survive the swipe work.
+- Wall v30 includes eyes -> deliberate left swipe -> Launcher. Its owning Wall
+  handoff records emulator verification; physical acceptance remains pending.
+- Existing tap/hold/voice/HA behaviour must survive further gesture work.
 - Launcher may open Wall by its package; permissions/return-strip behaviour
   require their own consent and device testing.
 - Stable update signing remains in the existing GitHub workflows.

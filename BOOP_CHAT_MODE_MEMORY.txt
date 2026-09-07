@@ -1,59 +1,46 @@
-BOOP WALL CHAT MODE: CURRENT FEATURE MEMORY
-Updated 2026-09-07; supplements the preserved dated BOOP_MEMORY.txt history.
+BOOP WALL CHAT MODES: CURRENT IMPLEMENTATION MEMORY
+Updated 2026-09-07. Owning variant: boop-relay-reviewed-v34.
 
-Why: OpenCode credit exhaustion broke open-ended conversation while local media
-and house control remained useful. Ryan approved a reversible fallback rather
-than making the whole puppet depend on that credit pool.
+Reason: keep house/media control independent of exhausted conversation credits.
+Hold eyes for 3 seconds past the playful hold: OpenCode / Free Chat / Native Chat / Cancel.
+OpenCode remains default. Selection persists; same gesture reverses it. No new
+settings screen, permissions, cloud device control or timed routines.
+Local executes exactly once first. Only genuine NO_MATCH may invoke conversation.
 
-Approved UX: hold the eyes for three seconds, past the playful animation; menu
-Chat mode -> OpenCode / Free Chat / Cancel. Default OpenCode. Remember the choice
-across restarts; same gesture restores OpenCode. No permanent settings button.
+Free Chat: visible browser session, copied question for manual paste/send and its
+own login/limits. Native Chat: authenticated Worker/OpenAI request-response using
+existing BOOP voice/eyes/follow-up. Short errors stay conversation-specific and
+cannot clear HA credentials. No provider key in Android and no hidden scraping.
 
-Boundary: local control always runs first, regardless of mode. Only a genuine
-local NO_MATCH can use the selected conversation route. Do not send house auth
-failures, offline targets or device-control errors to a web chatbot.
+Implementation tasks 1-5 complete; task 6 signed setup delivery/full CI completed.
+Built `453bda9ec5bcd12f44fe50d63c7db5ce7a718295`, run 34084002048, job 101624466469, artifact 10004727824.
+APK SHA256 1bb448d6f458cf4b527a69f7137f65ef3dd5a1a1da7dfab958b5cfe8efaeba97.
+177 local source/Python/JVM checks and 13 mock Worker checks passed; actual Android
+build/unit/signing and full normal emulator gates passed. Final visual profile
+720x1560@280dpi preserves dp/aspect/time. Live View renders at observed natural blink phases, not forced poses.
+The earlier incomplete high-resolution captures and initial unknown wake failure
+remain historical evidence; do not erase or recast them as physical failures.
 
-Honesty: Free Chat is a visible browser ChatGPT session with its own login and
-limits, not unlimited service, an embedded consumer API, or spoken answers
-behind the BOOP eyes. The question is copied for manual paste/send; the menu
-explains this. No scraping, injection, account-cookie extraction or direct key.
+Worker is NOT deployed. APK configuration is setup-required; no real API conversation
+or physical v34 test. Native Chat cannot work from this APK alone. Private Worker
+and build configuration/rebuild is still required. API use is separately billed,
+not the consumer ChatGPT credit pool. Configured APK relay tokens are extractable;
+public CI refuses token-bearing builds. Private single-owner prototype only; no
+per-device enrollment, independent revocation or hard spending cap yet.
 
-Preservation: Wall and Launcher remain separate packages. Existing swipe and
-short playful hold coexist with the longer mode-menu hold. Movement, multi-touch,
-release, focus loss and backgrounding cancel pending activation in source.
-Physical interaction acceptance is still required before promotion.
+Concurrency: another session advanced boop-wall-free-chat-wip with its own relay.
+This variant is isolated, not merged. Match APK+Worker+receipt on the same branch;
+v34 label alone is not identity. Main 85d08eb records ownership. Read live handoffs.
+No subagent launcher here; serial implementation/review, not independent agents.
 
-Build: scripts/materialize-android.sh applies wake, toast, chat and idle-blink
-patches. Raw MainActivity stays frozen; do not mistake it alone for the built app.
-Existing permanent GitHub signer only. Owning branch boop-wall-free-chat-wip.
-Physical checkpoint 595e1da remains unchanged.
+Preserved: raw MainActivity, voice/wake/HA/media, v33 183ms blink, 1.5x bold paste
+instructions, permissions and permanent signer. No physical installation/settings
+changes. Wall checkpoint 595e1da, Shield Home/Routines and Launcher unchanged.
+Ryan physically observed v31 browser handoff and v32 blinking; do not extrapolate
+those reports to v34 native success. Prior receipts/handoffs remain archived.
 
-CURRENT CANDIDATE: v33 / 0.4.13-wall-blink-speed.
-Application/build commit e3507bde3f296dcb419a1dcef0faf735c7243525.
-Exact artifact/signing receipt: docs/BOOP-WALL-V33-BUILD-RECEIPT.md.
-Ryan confirmed v32: "he blinks just fine". He requested only 20 percent faster
-animation and expressly no tests. DURATION_MS changes 220 -> 183 (220/1.2 rounded).
-The irregular 3-7 second interval, geometry, enlarged text, original30s sleep,
-voice/wake/HA, gestures, signer and permissions do not change.
-No runtime tests/emulator runs for v33; build/sign-only is not full-CI-green.
-The optional [boop-build-only] workflow marker requires an explicit user request;
-normal pushes/manual runs retain full checks. Docs use [skip ci] for this handoff.
-
-v32's new automated natural-blink capture failed, despite earlier partial checks;
-its cause remains unresolved. Ryan's physical blink observation is positive
-independent evidence, not a retroactive CI pass. v32 text visibility/size/clipping,
-sleep and unreported orientations remain unverified. v33 speed awaits his use.
-Exact v32 history/receipt: docs/BOOP-WALL-V32-HANDOFF.md.
-
-Ryan confirmed v31 copied his query, opened a new chat and instructed him to paste.
-That is limited positive physical browser-handoff evidence, not every scenario.
-Last full-green v31 is0ceb97b/run34071614834/artifact10000728933; detailed history
-is preserved at docs/BOOP-WALL-V31-HANDOFF.md. Keep physical checkpoint595e1da and
-preserved Wall lineage unchanged; don't silently promote later candidates.
-
-Next: record Ryan's actual faster-blink feedback. Do not run deferred visual tests
-under this no-tests request. Cross-device main@2912a19 maps the owning candidate.
-Work must fetch/reread the owning branch, not assume local/main app files are newest.
-"Update memory" is docs-only unless Ryan separately requests implementation,
-installs, permissions or signing. No concurrent work was overwritten; GitHub-only
-access is not laptop synchronization. Docs-only commits do not change the APK.
+Next: private matching Worker/build setup, then actual native speech/follow-up,
+failures, local media during relay outage and physical gesture/sleep acceptance.
+SESSION_HANDOFF.md and docs/BOOP-WALL-V34-BUILD-RECEIPT.md hold exact evidence.
+"Update memory" remains docs-only unless code/install/permission/signing separately
+requested. Already-open Work tasks must fetch/reread; no laptop sync is implied.

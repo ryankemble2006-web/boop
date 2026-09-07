@@ -1,79 +1,117 @@
-# Native conversation relay implementation (v34), verification pending
+# BOOP Wall Native Chat v34: isolated relay handoff
 
-Updated 2026-09-07. Current explicit user request is to execute the committed
-OpenAI relay plan through tests, signing and publication. It supersedes the older
-v33 no-tests instruction below for THIS relay change. Normal tests are required.
+Updated 2026-09-07. Owning branch: **boop-relay-reviewed-v34**.
+Status: **signed setup candidate; full CI green; live deployment and physical acceptance absent**.
+App/build commit `453bda9ec5bcd12f44fe50d63c7db5ce7a718295`. Full receipt: `docs/BOOP-WALL-V34-BUILD-RECEIPT.md`.
+Shared map verified on main at `85d08eb7733febc6c976afaa36755be3fa35ec36`.
 
-The native relay/client, additive Native Chat menu, existing speech-error mapper,
-Cloudflare Worker and private build configuration have been implemented. Local
-source/JVM tests and mocked Worker tests pass; signed Android CI is not yet checked.
-No live relay is deployed or authenticated. A build without relay URL/token is a
-setup candidate, not functioning native conversation. Configured APKs contain an
-extractable relay bearer token; CI refuses configured builds in a public repository.
-No provider credential belongs in Android. No secrets/visibility/installs changed.
+## Ownership and method
 
-The subagent launcher is not available in this chat. Execution and scoped review
-were serial, not independently delegated. Existing v33 blink/text/wake/house/media
-source and protected checkpoints remain untouched. Full current build evidence
-will replace this pending notice when CI finishes. Previous v33 handoff follows.
+Started from approved relay plan on `boop-wall-free-chat-wip@7aa871f70d620093e1e2e176df13820b1fd51964`.
+Another session independently implemented that same plan and advanced the original
+Wall branch to bbd50a6 then 1201678 when inspected. Its commits were read and
+preserved. THIS variant is isolated; no application merge or force push occurred.
+Both variants say v34; use exact branch/commit/APK receipts, not version labels.
+Never mix one variant's Worker source with the other's APK. Reconcile explicitly
+before any promotion. Main is a context hub, not a combined application branch.
 
----
+This chat had no subagent launcher. Implementation and spec/security/diff reviews
+were serial with red/green tests; no independent agent review is claimed. The six
+implementation task commits and findings are in `docs/BOOP-RELAY-V34-REVIEW.md`.
+The approved plan is preserved verbatim; execution results are recorded here.
 
-# BOOP Wall v33: 20 percent faster blink
+## Implemented contract
 
-Updated 2026-09-07. Owning branch: `boop-wall-free-chat-wip`.
-Application/build commit: `e3507bde3f296dcb419a1dcef0faf735c7243525`.
-Shared main checked: `2912a198e3f9f2b67f89a39739159c8172c654f2`.
-VersionCode 33 / `0.4.13-wall-blink-speed`, package `com.boop.alpha1`.
-Exact signing/artifact receipt: `docs/BOOP-WALL-V33-BUILD-RECEIPT.md`.
+Hold eyes for three seconds: **OpenCode / Free Chat / Native Chat / Cancel**.
+OpenCode stays default, existing preference values remain valid, and the choice
+persists/reverts through the same menu. All modes run local processing exactly
+once first. Only NO_MATCH can invoke the selected conversational assistant; local
+auth/offline/missing-target/device failures never become relay questions.
+Native success uses existing TTS/follow-up/puppetry. Short conversation errors use
+existing LocalReply, not a second TTS engine or credential-clearing HA auth path.
+The relay client owns/cancels its transport and retains only a response ID in RAM.
+Browser Free Chat still copies the utterance and needs manual paste/send.
 
-## Latest user evidence and request
+The Worker authenticates before reading the utterance, bounds input/output,
+fixes the upstream/model server-side, parses real Responses output arrays, supports
+opaque continuation, and emits sanitized short error codes. There are no tools,
+automatic paid retries, prompt logs or provider keys in Android. Only the Worker
+holds OPENAI_API_KEY; Android receives a separate private-prototype relay token.
+Read relay/cloudflare/README.md for request bounds, stored conversation privacy,
+billing, missing multi-user/cost protections and deployment steps.
 
-Ryan physically observed v32 and said: "he blinks just fine". This establishes
-that the shipped v32 blink works on his tested device; it does not establish
-text readability, sleep behavior or every other flow. The previous automated
-visual gate remains unresolved, not evidence that the physical blink is broken.
-Ryan requested only 20 percent faster blink animation, no tests, and the fastest
-possible build/sign/delivery. No tests or emulator runs are authorized for this
-update. Do not turn build/sign success into a full-CI/runtime pass.
+## Verified build and tests
 
-## Scoped change
+App: com.boop.alpha1, versionCode 34, 0.4.14-wall-native-chat, stable-signed debug.
+CI run `34084002048`, job `101624466469`, artifact `10004727824`: **all normal required gates PASS**.
+177 local source/Python/JVM tests and 13 mock Worker tests PASS. CI also passed
+bridge tests, Android units, materialization, signature/package/archive validation,
+real wake-microphone activation, actual three-mode menu/persist/revert/cancellation,
+notice/portrait+landscape natural blink/sleep/background tests and pairing return.
+Downloaded APK `1bb448d6f458cf4b527a69f7137f65ef3dd5a1a1da7dfab958b5cfe8efaeba97`, 139485306 bytes; full provenance in the receipt.
 
-Only production behavior change: BoopIdleBlink.DURATION_MS 220 -> 183 ms,
-220/1.2 rounded to the nearest whole millisecond. This is 1.2x animation speed,
-not 20 percent more frequent blinking. Irregular 3-7 second gaps, shape, text,
-sleep deadline, voice, wake, local HA/media, gestures, permissions and signer
-are unchanged. Build identity is incremented to distinguish the faster candidate.
+The final UI run uses half pixel dimensions and half density (720x1560 @280),
+preserving dp/aspect and animation time. Live View renders are captured at observed natural OnPreDraw blink phases;
+toast and sleep images use UiAutomation screenshots. There is no forced blink,
+synthetic time, paused animator or altered closed-frame threshold. No physical phone or live provider test is claimed.
 
-Existing GitHub build/sign workflow recognizes an explicit `[boop-build-only]`
-commit marker. Use it only when Ryan expressly requests no tests. It skips test
-dependencies, tests, instrumentation assembly and emulator steps, reuses installed
-build tools and retains permanent signer/package checks. The separate polish test
-workflow skips the same marked push. Normal pushes/manual runs retain the full
-verification route. Never claim that a skipped test passed. Do not automatically
-retry the old visual tests after a no-tests request.
+## CI history retained, not hidden
 
-## Evidence and preservation
+- Run 34081435081 at 59554c1: compile/units/signing passed; 30-second wake-marker
+  assertion failed without focused runtime diagnostics. Root cause remains unknown.
+- Run 34082040808 at 0bfe1b5: same production code, added read-only diagnostics;
+  wake and menu passed. Natural portrait blink/reopen/sleep passed; landscape
+  closed-frame capture failed while face was awake, foreground and eligible.
+- Run 34082686491 at a0db9bf added observation-only frame diagnostics; wake/menu
+  passed. Portrait natural blink ran, but min drawn openness was 0.19216101 over 10
+  observed frames, never the unchanged test threshold <0.15. Queue/eligibility
+  stayed true at animation scale 1.0. Artifact 10004315430 preserves that report.
+- ddf4e2b reduces only disposable-emulator pixel workload. Five tests protect exact
+  proportional scaling, physical-device rejection and observed override checks.
+  No production blink code, duration, sleep deadline or assertion was weakened.
+- Run 34083364637 at ddf4e2b: every actual visual assertion passed, including
+  both natural blink orientations, notice, sleep and background cancellation.
+  The wrapper still failed because `am instrument -w` decoded the stream result
+  rather than printing the raw completion code that its grep required.
+- 453bda9 requests raw `am instrument -w -r` output and retains the exact
+  `INSTRUMENTATION_CODE: -1` check. A regression test catches the previous mismatch;
+  another catches pipeline masking of the render-profile command. Both were red
+  before their focused fixes. No production animation or threshold changed.
+- Final successful run is above. Earlier high-resolution frame-capture/wake failures
+  are not proof of broken physical blinking, nor a proven full-resolution fix.
 
-The complete previous v32 handoff, exact APK receipt and failed visual-gate history
-are preserved at `docs/BOOP-WALL-V32-HANDOFF.md`; v31 history remains in
-`docs/BOOP-WALL-V31-HANDOFF.md`. Ryan confirmed v31 query-copy/new-chat/paste
-instructions and now v32 blinking. New v33 animation speed still awaits his use.
-Text appearance, landscape and other unreported physical behavior stay unverified.
+## Configuration still required
 
-Do not promote or repoint accepted checkpoints. Preserve checkpoint-boop-wall-595e1da
-and all Home/Routines/Shield/Launcher work. No physical install or permission
-change was performed. Existing permanent GitHub signer only. Timed routines remain
-excluded. Keep the accepted APKs and preserved Wall branch unchanged.
+The downloaded APK is **setup-required**: no Worker deployment or live OpenAI call.
+Do not call Native Chat operational from installing this APK alone. This route uses
+separate API billing, not consumer ChatGPT/Codex credits. OpenCode and Free Chat
+remain available while Native Chat is unconfigured.
 
-## Session environment and next step
+Configured APK tokens are extractable: never publish them through public builds.
+This variant rejects nonempty relay credentials in public-repository CI. No repo
+visibility or credentials were changed. Use a private build/distribution route,
+then configure the Worker with OPENAI_API_KEY and a separate random BOOP_RELAY_TOKEN;
+set BOOP_RELAY_URL and that matching token privately in Actions, rebuild/sign,
+and test a real response. Do not paste secrets into chat or committed files.
+Per-device enrollment, revocation, multi-user isolation and hard cost limits are
+not implemented. This is a single-owner prototype, not a public service.
 
-This session used the connected GitHub repository and hosted signing workflow,
-not the laptop's Windows checkout, GPU or LAN. Direct local clone access was
-unavailable; no user checkout or concurrent local work was overwritten.
-Source review: the app delta is one timing constant plus version metadata; the
-other changes implement explicit no-test build routing and update documentation.
+## Preservation and next acceptance
 
-Next: record only Ryan's actual v33 feedback. Further tests require a later request;
-this build deliberately omits them. Final handoff/docs commit uses [skip ci] so
-recordkeeping cannot start a new build/test run. "Update memory" stays docs-only.
+Accepted physical Wall stays 595e1daa43393882a0e5de43967545ac526b8b66; its tag must not move.
+Preserved Wall 3a702f8, Shield Home/Routines checkpoints, Launcher and other app
+lineages remain separate. Existing permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` is unchanged.
+Raw MainActivity, face artwork/drawing, v33 183ms blink, bigger paste notice,
+permissions, wake assets, local HA clients and Shield/Launcher sources are unchanged
+from 7aa871f. No phone installs, settings/permission changes or signer changes occurred.
+
+Ryan's earlier observations: v31 query-copy/new-chat/paste prompt worked; v32 blink
+worked on his tested phone. They do not establish v34 native or physical acceptance.
+v31/v32 receipts remain preserved; v33 history is docs/BOOP-WALL-V33-HANDOFF.md.
+
+Next: choose this matching implementation for private relay setup, then verify
+native speech and follow-up, offline/quota/auth messages, local media with relay
+unavailable, and physical hold/revert/Back/sleep. Record actual device evidence
+before promoting. Already-open Work sessions must reread main and this branch.
+"Update memory" stays documentation-only unless Ryan separately authorizes code,
+permissions, installs or signing. GitHub sync does not claim a laptop/LAN connection.
