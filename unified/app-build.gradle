@@ -1,0 +1,65 @@
+plugins {
+    id 'com.android.application'
+}
+
+def boopKeystorePath = System.getenv('BOOP_SIGNING_STORE_FILE')
+def boopKeystorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
+def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
+def relayUrl = System.getenv('BOOP_RELAY_URL') ?: ''
+def relayToken = System.getenv('BOOP_RELAY_TOKEN') ?: ''
+def buildConfigEscape = { value ->
+    value.replace('\\', '\\\\').replace('"', '\\"').replace('\r', '\\r').replace('\n', '\\n')
+}
+
+android {
+    namespace 'com.boop.alpha1'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'com.boop.alpha1'
+        minSdk 29
+        targetSdk 36
+        testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
+        versionCode 41
+        versionName "1.0.0-unified-alpha1"
+        buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
+        buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        boopDev {
+            if (boopKeystorePath) {
+                storeFile file(boopKeystorePath)
+                storePassword boopKeystorePassword
+                keyAlias 'boop-dev'
+                keyPassword boopKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.boopDev
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation project(':launcher-lib')
+    implementation project(':shield-lib')
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation files('libs/sherpa-onnx-1.13.7.aar')
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.20'
+    implementation 'androidx.browser:browser:1.9.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}
