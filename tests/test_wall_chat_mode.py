@@ -65,6 +65,12 @@ class RelayRoutingTest(unittest.TestCase):
             self.assertEqual(0,run.returncode,run.stderr)
             self.assertIn('BOOP_NATIVE_ROUTING_PASS',run.stdout)
 
+    def test_native_choice_is_exercised_by_the_real_emulator_gate(self):
+        smoke = (ROOT/'scripts/smoke-wall-chat-mode.py').read_text()
+        self.assertIn("tap_description(root, 'Use Native Chat')", smoke)
+        self.assertIn("assert_saved('native_chat')", smoke)
+        self.assertIn("assert_selected_mode(root, 'Native Chat')", smoke)
+
     def test_materialized_native_route_keeps_existing_response_path(self):
         import importlib.util
         spec = importlib.util.spec_from_file_location('chat_patch', ROOT/'scripts/patch-wall-chat-mode.py')

@@ -21,3 +21,6 @@ local.properties
 .dev.vars.*
 .wrangler/
 node_modules/
+
+# Materialized Android source may contain private generated build configuration
+/boop-build/

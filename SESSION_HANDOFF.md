@@ -1,3 +1,24 @@
+# Native conversation relay implementation (v34), verification pending
+
+Updated 2026-09-07. Current explicit user request is to execute the committed
+OpenAI relay plan through tests, signing and publication. It supersedes the older
+v33 no-tests instruction below for THIS relay change. Normal tests are required.
+
+The native relay/client, additive Native Chat menu, existing speech-error mapper,
+Cloudflare Worker and private build configuration have been implemented. Local
+source/JVM tests and mocked Worker tests pass; signed Android CI is not yet checked.
+No live relay is deployed or authenticated. A build without relay URL/token is a
+setup candidate, not functioning native conversation. Configured APKs contain an
+extractable relay bearer token; CI refuses configured builds in a public repository.
+No provider credential belongs in Android. No secrets/visibility/installs changed.
+
+The subagent launcher is not available in this chat. Execution and scoped review
+were serial, not independently delegated. Existing v33 blink/text/wake/house/media
+source and protected checkpoints remain untouched. Full current build evidence
+will replace this pending notice when CI finishes. Previous v33 handoff follows.
+
+---
+
 # BOOP Wall v33: 20 percent faster blink
 
 Updated 2026-09-07. Owning branch: `boop-wall-free-chat-wip`.

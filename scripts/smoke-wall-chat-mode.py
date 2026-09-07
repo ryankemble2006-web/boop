@@ -152,6 +152,21 @@ def exercise():
     tap_description(root, 'Use OpenCode')
     assert_saved('opencode')
 
+    # Native Chat is a third persistent, reversible mode, not a replacement.
+    # Do not submit any provider question from CI even if private configuration exists.
+    hold(3300)
+    root = hierarchy('native_choice')
+    tap_description(root, 'Use Native Chat')
+    assert_saved('native_chat')
+    adb('shell', 'am', 'force-stop', PACKAGE)
+    adb('shell', 'am', 'start', '-W', '-n', PACKAGE + '/.MainActivity')
+    time.sleep(1)
+    hold(3300)
+    root = hierarchy('native_restart')
+    assert_selected_mode(root, 'Native Chat')
+    tap_description(root, 'Use OpenCode')
+    assert_saved('opencode')
+
     # A mostly vertical drag must neither open the menu nor be interpreted as a tap.
     x, y = face_center(hierarchy('before_drag'))
     adb('shell', 'input', 'swipe', str(x), str(y), str(x), str(max(1, y - 200)), '3300')
@@ -169,7 +184,7 @@ def exercise():
     assert not has_text(hierarchy('after_background'), 'Chat mode'), 'Backgrounded hold later opened a menu'
     assert adb('shell', 'pidof', PACKAGE), 'BOOP stopped running'
     adb('shell', 'rm', '-f', DUMP)
-    print('PASS: short hold, three-second menu, default, Free Chat, process restart, revert, drag and pause cancellation')
+    print('PASS: short hold, three-second menu, default, Free Chat, Native Chat, process restart, revert, drag and pause cancellation')
 
 
 def main():
