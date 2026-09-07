@@ -3,6 +3,7 @@ package com.boop.launcher;
 import android.content.*;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.text.*;
 import android.view.*;
 import android.view.inputmethod.InputMethodManager;
@@ -13,7 +14,8 @@ public final class AllAppsView extends FrameLayout {
  public interface Listener{void launch(AppEntry app);void pin(AppEntry app);void searchOpened();void searchClosed();}
  private final GridView grid;private final ImageButton searchButton;private final EditText search;private final Listener listener;private List<AppEntry> all=new ArrayList<>();private List<AppEntry> shown=new ArrayList<>();
  public AllAppsView(Context c,Listener listener){super(c);this.listener=listener;setBackgroundColor(Color.BLACK);setContentDescription("All apps");
-  grid=new GridView(c);grid.setNumColumns(4);grid.setVerticalSpacing(dp(14));grid.setHorizontalSpacing(dp(8));grid.setPadding(dp(12),dp(52),dp(12),dp(24));grid.setSelector(new ColorDrawable(Color.TRANSPARENT));addView(grid,new LayoutParams(-1,-1));
+  grid=new GridView(c);grid.setNumColumns(4);grid.setVerticalSpacing(dp(14));grid.setHorizontalSpacing(dp(8));grid.setPadding(dp(12),dp(52),dp(12),dp(24));grid.setClipToPadding(false);grid.setSelector(new ColorDrawable(Color.TRANSPARENT));addView(grid,new LayoutParams(-1,-1));
+  if(Build.VERSION.SDK_INT>=30)grid.setOnApplyWindowInsetsListener((v,insets)->{int nav=insets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom;grid.setPadding(dp(12),dp(52),dp(12),Math.max(dp(24),nav+dp(16)));return insets;});
   searchButton=new ImageButton(c);searchButton.setImageResource(android.R.drawable.ic_menu_search);searchButton.setBackgroundColor(Color.TRANSPARENT);searchButton.setColorFilter(Color.WHITE);searchButton.setContentDescription("Search apps");LayoutParams sp=new LayoutParams(dp(48),dp(48),Gravity.TOP|Gravity.END);sp.topMargin=dp(8);sp.rightMargin=dp(10);addView(searchButton,sp);searchButton.setOnClickListener(v->openSearch());
   search=new EditText(c);search.setSingleLine();search.setTextColor(Color.WHITE);search.setHintTextColor(0xffaaaaaa);search.setTextSize(20);search.setHint("Search apps");search.setBackgroundColor(0xff111111);search.setPadding(dp(18),0,dp(18),0);search.setVisibility(GONE);LayoutParams ep=new LayoutParams(-1,dp(52),Gravity.TOP);ep.leftMargin=dp(16);ep.rightMargin=dp(16);ep.topMargin=dp(8);addView(search,ep);
   search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int c,int a){}public void onTextChanged(CharSequence s,int st,int b,int c){shown=AppSearch.filter(all,s.toString());refresh();}public void afterTextChanged(Editable e){}});

@@ -13,6 +13,7 @@ import java.util.*;
 public final class MainActivity extends Activity {
  private final AppRepository appRepository=new AppRepository();private ArrayList<WorkspaceItem> items;private WorkspaceStore store;private WorkspaceView workspace;private AllAppsView drawer;private FrameLayout root;private LauncherState state=LauncherState.HOME;private WidgetController widgets;
  @Override public void onCreate(Bundle b){super.onCreate(b);EdgeToEdge.apply(this);getWindow().getDecorView().setBackgroundColor(Color.BLACK);store=new WorkspaceStore(this);if(!getPreferences(MODE_PRIVATE).getBoolean("alpha2_started",false)){store.clearLegacy();getPreferences(MODE_PRIVATE).edit().putBoolean("alpha2_started",true).apply();}items=store.load();widgets=new WidgetController(this);if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,this::handleBack);build();}
+ @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);if(hasFocus)EdgeToEdge.hideBars(this);}
  @Override protected void onStart(){super.onStart();widgets.start();}
  @Override protected void onStop(){widgets.stop();super.onStop();}
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);state=LauncherState.HOME;showState(false);}
