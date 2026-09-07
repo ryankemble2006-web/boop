@@ -1,30 +1,36 @@
-# BOOP Wall v40: Native Chat + eye hue + sleepy close + landscape eye match
+# BOOP unified status
 
-Updated 2026-09-07. Owning branch `boop-wall-native-chat-eye-hue`.
+Updated 2026-09-07. Owning branch `boop-unified`.
 
 ## Current candidate
 
-- VersionCode 40 / `0.4.20-wall-landscape-eye-match`, package `com.boop.alpha1`.
-- Directly continues the v39 `BOOP-Wall-v39-Sleepy-Close-signed.apk` baseline requested by Ryan.
-- v38 eye-colour local intent/slider UX remains physically accepted and unchanged.
-- v39 sleepy-close behavior remains unchanged in v40.
-- v40 changes only landscape eye geometry: the centre-to-centre spacing now scales by the same `LANDSCAPE_EYE_SCALE` as eye width/height, preserving portrait face proportions in landscape.
-- Portrait layout path is unchanged.
-- Native Chat/OpenAI relay, Chat-mode hold, hue persistence/rendering, wake, idle blink, sleepy close, Member Berry, thinking, shake, hitboxes/gestures and Launcher swipe are preserved.
+- One APK: package `com.boop.alpha1`.
+- VersionCode 41 / `1.0.0-unified-alpha1`.
+- Permanent BOOP signer preserved.
+- Wall, Launcher and Shield are now compiled into one application from their exact latest pinned GitHub heads listed in `unified/SOURCE_HEADS.md`.
+- Automatic routing: Android TV/Leanback -> Shield; Pixel 7 Pro -> Wall; other handheld Android -> Launcher.
+- Wall/Launcher transitions are internal to the one APK.
 
-## Verification evidence
+## Build evidence
 
-GitHub Actions run `34098623797` completed successfully for build head `c1bcdb1b2bc48482148f923514c17f73ca2668bd`.
+Green build head: `bb4797de5005952d0d27a6647ea17c15781b76f7`.
+Workflow run: `34104002238`.
+Artifact: `BOOP-Unified` / ID `10011710184`.
+APK SHA-256: `62ccac0b767fc7005bfeb0eae013f0bad42ad7db7eeeecf054ad42da949f9aba`.
 
-Passed: focused source guards, preserved Java harnesses, materialization, effective integration checks, Android unit tests including updated `BoopEyeLayoutTest`, permanent BOOP signer setup, signed v40 build, exact package/version inspection, signer continuity and artifact upload.
-
-Artifact: `BOOP-Wall-v40-Landscape-Eye-Match` / ID `10009632722`.
-APK SHA-256: `2c5cf84722a05981eb80928cb4e7a835e3d8818fb2999b4c44c926778f336892`.
+Passed: unified source-head contract checks, preserved Wall guards, Launcher tests/lint, Shield tests with the approved eye materialization used by its own CI, unified Android unit tests, signed build, exact package/version/entry checks, manifest presence for all three bodies, signer continuity and archive integrity.
 
 ## Physical status
 
-- v38 eye-colour intent/slider: physically accepted by Ryan; preserve.
-- v39 sleepy-close: CI green, physical acceptance not promoted in this record.
-- v40 landscape eye match: CI green, physical acceptance pending. Compare portrait and landscape and judge whether the horizontal eye gap/face proportions now match.
+- Wall input lineage includes the physically approved v38 eye-colour UX and Ryan's positive physical v40 landscape-eye report.
+- Launcher input is the latest 0.3.7 source; widget picker was physically reported better but later polish was deferred.
+- Shield input is the latest v3 friendly Deezer-access/full-screen puppet source; unified Shield behavior is not physically accepted yet.
+- Unified v41 itself is CI/signer green only until it is installed and tested on real Wall, handheld and Shield bodies.
 
-Accepted protected Wall checkpoint remains `595e1daa43393882a0e5de43967545ac526b8b66` / `checkpoint-boop-wall-595e1da`; do not overwrite it solely from CI.
+## Migration note
+
+The unified package keeps Wall's `com.boop.alpha1` identity. Existing separate Launcher and Shield packages keep their own private Android state and grants; moving to unified BOOP may require one-time HOME selection, Shield special-access setup and other device-local setup. This is expected migration work, not evidence that the unified APK failed to compile.
+
+## Release discipline
+
+Once v41 or a successor is physically accepted, mark that exact Git commit/tag + artifact as the last-good checkpoint. Future versions make one intentional functional change at a time. Roll back by exact checkpoint, not by local filenames. GitHub is the archive; deployment folders keep current `BOOP.apk` plus optionally one last-good APK after acceptance.
