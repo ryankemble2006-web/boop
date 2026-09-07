@@ -11,11 +11,30 @@ and read the other branches when cross-project context is needed.
 | Shield Home + Deezer puppet | [boop-shield-media-puppetry](https://github.com/ryankemble2006-web/boop/tree/boop-shield-media-puppetry) | shield-overlay/ | Laptop; H1 play/pause and lower placement user-tested |
 | BOOP Wall voice/eyes | [boop-wall-resurrection](https://github.com/ryankemble2006-web/boop/tree/boop-wall-resurrection) | source/ plus materialization scripts | Working voice/control baseline; preserve it |
 | Wall Free Chat candidate | [boop-wall-free-chat-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-free-chat-wip) | source/, scripts/patch-wall-chat-mode.py, focused tests | Android-led; three-second mode menu. Read its SESSION_HANDOFF.md for exact signed-build and test state; not a physical checkpoint |
+| Isolated Native Chat relay candidate | [boop-relay-reviewed-v34](https://github.com/ryankemble2006-web/boop/tree/boop-relay-reviewed-v34) | source/, relay/cloudflare/, focused tests | Current phone-chat implementation of the approved relay plan; read its handoff/receipt for verification and setup limits; NOT merged into the concurrent Wall implementation |
 | BOOP Launcher | [boop-launcher-alpha1](https://github.com/ryankemble2006-web/boop/tree/boop-launcher-alpha1) | launcher/ | Android-led development; read launcher/README.md |
 | Wall-to-Launcher swipe draft | [boop-wall-launcher-handoff-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-launcher-handoff-wip) | source/ and focused tests | Historical preserved draft; Wall v30 now owns the reviewed swipe, with physical acceptance still pending |
 | Routine-authoring research | [boop-routine-authoring-v1](https://github.com/ryankemble2006-web/boop/tree/boop-routine-authoring-v1) | docs/superpowers/ and tests/ | Capability evidence/design; do not infer full authoring implementation |
 | Older Shield Home lineage | [boop-shield-home-implementation](https://github.com/ryankemble2006-web/boop/tree/boop-shield-home-implementation) | shield-overlay/ | Historical/reference; new Shield work uses puppetry branch |
 | Cross-project context | main | AGENTS.md, BOOP_CONTEXT.md, this map | Context hub; app files here can be historical |
+
+## Native Chat relay ownership (2026-09-07)
+
+The relay plan was executed from `boop-wall-free-chat-wip@7aa871f`. Another
+session independently implemented the same plan on that branch while this task
+worked. Its commits (`bbd50a6`, then `1201678` when inspected) were preserved.
+This session's variant is isolated on **boop-relay-reviewed-v34**. These are
+separate implementations, not interchangeable copies just because both say v34.
+Use the APK, Worker source and build receipt from the SAME branch. Do not deploy
+one Worker and install the other variant by version number or blindly merge them.
+Read both current handoffs and perform an explicit reconciliation before promotion.
+
+Native Chat is conversation-only: local NO_MATCH -> authenticated Worker -> OpenAI
+Responses -> existing BOOP voice/eyes. OpenCode and browser Free Chat stay available.
+Empty configuration is a setup candidate, NOT live chat. No provider key belongs
+in Android. Configured bearer-token APKs require private build/distribution;
+public-repository CI rejects token-bearing builds. Deployment and private account
+configuration must be verified separately from a signed APK or mock tests.
 
 ## Start a new Work task
 

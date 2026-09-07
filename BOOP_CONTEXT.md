@@ -47,6 +47,31 @@ replace the preserved Wall app branch or the accepted physical checkpoint.
 Wall v30's reviewed launcher swipe is in boop-wall-resurrection; its handoff
 records emulator evidence, not a new physical acceptance.
 
+## Native conversation relay, approved 2026-09-07
+
+Ryan approved the stored OpenAI conversation relay design/plan, followed by full
+implementation, tests and signed APK delivery. This is a separate Native Chat
+choice, not a replacement for OpenCode or the browser Free Chat fallback. Local
+processing still runs exactly once first, and only NO_MATCH may call the selected
+assistant. Successful native replies reuse BOOP's existing TTS/follow-up/puppetry.
+Conversation failures must not clear Home Assistant credentials or imply that a
+house command failed. No new device permissions or timed routines are implied.
+
+The provider API key stays only in Worker secrets. Android uses a separate relay
+token from private build configuration. Such a token is extractable from an APK:
+configured artifacts must remain private, and this variant's public CI refuses
+token-bearing builds. Empty configuration remains buildable but means setup is
+required. The relay uses separately billed API usage, not consumer ChatGPT credits.
+No Worker deployment or live provider call is established by local mock tests.
+
+The phone-chat implementation is on **boop-relay-reviewed-v34**, isolated from a
+concurrent implementation on **boop-wall-free-chat-wip**. Both descend from the
+plan at 7aa871f. Do not overwrite either session, silently merge them, or mix one
+variant's APK/Worker with the other. Use exact commit/artifact receipts; matching
+v34 labels alone prove nothing. The isolated branch's SESSION_HANDOFF.md and
+BOOP_STATUS.md own its current CI/runtime evidence. Preserve accepted checkpoints;
+no physical or end-to-end deployment acceptance is implied by this shared map.
+
 ## Current evidence, not a blanket release claim
 
 - Shield Home and Routines: protected physically verified functional checkpoints
