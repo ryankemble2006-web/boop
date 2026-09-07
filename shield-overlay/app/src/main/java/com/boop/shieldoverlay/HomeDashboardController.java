@@ -1,5 +1,9 @@
 package com.boop.shieldoverlay;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public final class HomeDashboardController {
     public enum Status {
         LIVE,
@@ -21,21 +25,32 @@ public final class HomeDashboardController {
         void onViewState(ViewState state);
     }
 
+    private interface CardAction {
+        void toggle(EntityCard card);
+    }
+
     public static final class ViewState {
         private final Status status;
         private final EntityCard favourite;
+        private final List<EntityCard> cards;
         private final boolean actionsEnabled;
         private final String message;
+        private final CardAction cardAction;
 
         private ViewState(
                 Status status,
                 EntityCard favourite,
+                List<EntityCard> cards,
                 boolean actionsEnabled,
-                String message) {
+                String message,
+                CardAction cardAction) {
             this.status = status;
             this.favourite = favourite;
+            this.cards = Collections.unmodifiableList(new ArrayList<>(
+                    cards == null ? Collections.emptyList() : cards));
             this.actionsEnabled = actionsEnabled;
             this.message = clean(message);
+            this.cardAction = cardAction;
         }
 
         public Status status() {
@@ -44,6 +59,10 @@ public final class HomeDashboardController {
 
         public EntityCard favourite() {
             return favourite;
+        }
+
+        public List<EntityCard> cards() {
+            return cards;
         }
 
         public boolean stale() {
@@ -57,6 +76,12 @@ public final class HomeDashboardController {
         public String message() {
             return message;
         }
+
+        public void toggle(EntityCard card) {
+            if (actionsEnabled && card != null && cardAction != null) {
+                cardAction.toggle(card);
+            }
+        }
     }
 
     private final AreaInfo room;
@@ -66,6 +91,7 @@ public final class HomeDashboardController {
     private final FavouriteSelector favouriteSelector = new FavouriteSelector();
 
     private EntityCard favourite;
+    private List<EntityCard> cards = Collections.emptyList();
     private Status status = Status.STALE;
     private boolean toggleInFlight;
     private String message;
@@ -98,6 +124,9 @@ public final class HomeDashboardController {
         repository.loadDashboard(room, (snapshot, error) -> {
             if (error != null || snapshot == null) {
                 favourite = cached;
+                cards = cached == null
+                        ? Collections.emptyList()
+                        : Collections.singletonList(cached);
                 status = Status.STALE;
                 toggleInFlight = false;
                 message = plainError(error, "I couldn't reach Home Assistant right now.");
@@ -106,6 +135,7 @@ public final class HomeDashboardController {
             }
 
             favourite = favouriteSelector.select(room.id(), snapshot.cards());
+            cards = favouriteFirst(favourite, snapshot.cards());
             status = Status.LIVE;
             toggleInFlight = false;
             message = null;
@@ -119,28 +149,7 @@ public final class HomeDashboardController {
     }
 
     public void toggleFavourite() {
-        if (status != Status.LIVE || favourite == null || toggleInFlight) {
-            return;
-        }
-
-        toggleInFlight = true;
-        EntityCard requested = favourite;
-        emit();
-        repository.toggleBinary(requested, (success, confirmed, error) -> {
-            toggleInFlight = false;
-            if (!success || confirmed == null) {
-                status = Status.STALE;
-                message = plainError(error, "Home Assistant didn't do that.");
-                emit();
-                return;
-            }
-
-            favourite = confirmed;
-            status = Status.LIVE;
-            message = null;
-            cache.save(room, confirmed);
-            emit();
-        });
+        toggleCard(favourite);
     }
 
     public void markOffline(String reason) {
@@ -150,12 +159,96 @@ public final class HomeDashboardController {
         emit();
     }
 
+    private void toggleCard(EntityCard requested) {
+        if (status != Status.LIVE || requested == null || toggleInFlight) {
+            return;
+        }
+
+        EntityCard current = findCard(requested.entityId());
+        if (current == null) {
+            return;
+        }
+
+        toggleInFlight = true;
+        emit();
+        repository.toggleBinary(current, (success, confirmed, error) -> {
+            toggleInFlight = false;
+            if (!success || confirmed == null) {
+                status = Status.STALE;
+                message = plainError(error, "Home Assistant didn't do that.");
+                emit();
+                return;
+            }
+
+            replaceCard(confirmed);
+            if (favourite != null && favourite.entityId().equals(confirmed.entityId())) {
+                favourite = confirmed;
+                cache.save(room, confirmed);
+            }
+            status = Status.LIVE;
+            message = null;
+            emit();
+        });
+    }
+
+    private EntityCard findCard(String entityId) {
+        if (entityId == null) {
+            return null;
+        }
+        for (EntityCard card : cards) {
+            if (card != null && entityId.equals(card.entityId())) {
+                return card;
+            }
+        }
+        return null;
+    }
+
+    private void replaceCard(EntityCard confirmed) {
+        List<EntityCard> updated = new ArrayList<>(cards.size());
+        boolean replaced = false;
+        for (EntityCard card : cards) {
+            if (card != null && card.entityId().equals(confirmed.entityId())) {
+                updated.add(confirmed);
+                replaced = true;
+            } else {
+                updated.add(card);
+            }
+        }
+        if (!replaced) {
+            updated.add(confirmed);
+        }
+        cards = Collections.unmodifiableList(updated);
+    }
+
     private void emit() {
         listener.onViewState(new ViewState(
                 status,
                 favourite,
-                status == Status.LIVE && favourite != null && !toggleInFlight,
-                message));
+                cards,
+                status == Status.LIVE && !cards.isEmpty() && !toggleInFlight,
+                message,
+                this::toggleCard));
+    }
+
+    private static List<EntityCard> favouriteFirst(
+            EntityCard favourite,
+            List<EntityCard> source) {
+        List<EntityCard> ordered = new ArrayList<>();
+        if (favourite != null) {
+            ordered.add(favourite);
+        }
+        if (source != null) {
+            for (EntityCard card : source) {
+                if (card == null) {
+                    continue;
+                }
+                if (favourite != null && favourite.entityId().equals(card.entityId())) {
+                    continue;
+                }
+                ordered.add(card);
+            }
+        }
+        return Collections.unmodifiableList(ordered);
     }
 
     private static String plainError(String value, String fallback) {
