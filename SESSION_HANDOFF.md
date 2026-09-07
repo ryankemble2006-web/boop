@@ -2,58 +2,41 @@
 
 Owner: isolated combined Wall candidate on `boop-wall-native-chat-eye-hue`.
 Package: `com.boop.alpha1`.
-Candidate version: versionCode 39 / `0.4.19-wall-sleepy-close`.
+Current candidate: versionCode 40 / `0.4.20-wall-landscape-eye-match`.
+Baseline requested by Ryan for this tweak: `BOOP-Wall-v39-Sleepy-Close-signed.apk`.
 
 ## Current physical result
 
-Ryan installed/tested the v38 local eye-colour intent and reported it was **literally perfect**. That confirms the eye-colour summon/slider UX itself on-device: tolerant local command routing works, the control opens locally instead of Free Chat, and the live hue UI is accepted. Do not regress this path.
+Ryan installed/tested the v38 local eye-colour intent and reported it was **literally perfect**. Preserve that local intent, slider UX, hue persistence and shared eye-render path.
 
-This does not automatically promote the older protected Wall checkpoint or imply every unrelated v38 regression item was exhaustively retested.
+v39 sleepy-close remains the direct functional baseline for v40. v40 does not alter the sleepy-close, Native Chat, wake, blink, thinking, shake, Member Berry, hue, hitboxes/gestures, or Launcher swipe behavior.
 
-## Eye-colour contract retained
+## v40 landscape eye geometry tweak
 
-Eye colour is not in Voice Settings. The v36 two-eye one-second gesture physically failed and is superseded. The first v37 voice implementation also physically failed because its matcher required an exact phrase.
+Ryan reported that the horizontal/landscape eyes did not visually match portrait because the eye gap looked strange.
 
-v38+ treats eye colour like Voice Settings: a tolerant local intent checked at the start of `handleRecognizedSpeech(...)`, before Home Assistant, OpenCode, Native Chat or Free Chat routing. It accepts UK/US colour wording, wake-word prefixes, plural eyes, `eye hue`, and the narrow recognizer `I color/colour` homophone.
+Root cause: `BoopEyeLayout` enlarged each landscape eye by `LANDSCAPE_EYE_SCALE = 1.20f` but left the centre-to-centre eye spacing at the unscaled portrait value. That changed the face proportions in landscape.
 
-The single hue slider appears underneath the visible eyes, updates both eyes live, dismisses on outside tap, and persists in SharedPreferences `boop_eyes` / `hue_degrees`. The accepted cyan/blue default is 190 degrees and applies no ColorFilter.
-
-## v39 sleep animation tweak
-
-Ryan asked to replace the old sleep animation with the existing idle blink language, then close the eyes slowly with sleepy charm.
-
-v39 changes only the sleep puppetry:
-- the first 183 ms reuses the exact accepted `BoopIdleBlink.openness(...)` geometry;
-- the eyes reopen fully after that blink;
-- a brief open settle follows;
-- the lids droop slowly to about half-open and pause there;
-- a longer eased final close settles to a thin 4% eyelid line;
-- alpha stays fully visible through 92% of the sequence, then fades gently to black at the end;
-- total sleep animation duration is about 1.24 seconds;
-- wake animation is unchanged and cancels any in-progress sleepy close safely.
-
-The old 300 ms whole-face squash/fade sleep path is no longer used by the materialized v39 app. Eye artwork, geometry/cropping/render path, hue tint, black background, wake, idle blink, thinking, shake, Member Berry, hitboxes/gestures, Chat mode, Native Chat/OpenAI relay and Launcher swipe are otherwise preserved.
+v40 changes only that relationship:
+- portrait code path is untouched;
+- landscape eye width remains 1.20x the portrait-derived size;
+- landscape eye height remains 1.20x the portrait-derived size;
+- landscape eye centre distance now also scales by the same 1.20x;
+- the entire eye pair therefore preserves the portrait eye-size/spacing proportions while fitting the wider canvas.
 
 ## Verification
 
-GitHub Actions run `34094925623` completed successfully for build commit `240a12869d8871ed4245e7476bec279f36dd75d7`.
+Production/layout change commit: `8c0d46db4229beae86c19d733bb024510dc05c97`.
+Version bump commit: `4a76570b1d28facdaa15d5b6ee781b4e5b26efb3`.
+Focused source-test commit: `4f86a7f6f193731a8b493d8cc96fbd99ed020919`.
+Workflow update commit: `1c652f92a47d744636c3593a8873271d2fc5c9fe`.
+Updated Android layout-contract test commit: `c1bcdb1b2bc48482148f923514c17f73ca2668bd`.
 
-Passed gates include:
-- focused source guards;
-- exact blink-parity sleep harness;
-- full reopen after the lead-in blink;
-- half-lid pause and >1 second slow close timing;
-- near-shut final eyelid line and late fade-to-black;
-- materialized `BOOP_SLEEP_CHARM_V1` integration;
-- existing eye hue/local-intent, Chat, Member Berry, thinking and shake harnesses;
-- Native Chat/OpenAI relay markers and 33 wake mappings;
-- Android unit tests;
-- stable signed v39 build;
-- package/version inspection and permanent BOOP signer continuity.
+GitHub Actions run `34098623797` completed successfully.
+Passed gates include focused source guards, sleepy-close/hue/Chat/shake harnesses, materialization, effective integration checks, Android unit tests including the new landscape geometry contract, permanent signer setup, signed v40 build, exact package/version inspection, signer continuity and artifact upload.
 
-Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v39`, artifact ID `10008263855`.
-Extracted APK SHA-256: `195e02f914436fcdadfe4cd9fd570499e6f4afa67c394d1020f5dfd89c48b0ce`.
+Artifact: `BOOP-Wall-v40-Landscape-Eye-Match`.
+Artifact ID: `10009632722`.
+Extracted APK SHA-256: `2c5cf84722a05981eb80928cb4e7a835e3d8818fb2999b4c44c926778f336892`.
 
-CI green is not physical green for the new sleep animation. Physical acceptance still needs: install v39 over v38, allow/tell BOOP to sleep, judge the blink -> drowsy droop -> slow close timing, then wake it again and confirm wake remains correct. Also spot-check the already-accepted eye-colour command plus Native Chat/Member Berry/thinking/shake as convenient.
-
-The protected physical Wall checkpoint remains unchanged until Ryan explicitly promotes a newer candidate.
+CI green is not physical green for the new landscape look. Physical check: install v40 over v39, rotate to portrait and landscape, and confirm the horizontal eye size/gap now reads as the same face geometry as portrait. The protected physical Wall checkpoint remains unchanged until Ryan explicitly promotes a newer candidate.
