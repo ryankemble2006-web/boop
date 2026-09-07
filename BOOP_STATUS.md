@@ -10,37 +10,43 @@ Physically confirmed baseline:
 
 `0.3.0` widget/page plumbing was not accepted because the HOME long-press menu was unreachable. `0.3.1` fixed the menu and added Launcher page-0 swipe right -> BOOP Wall; its CI interaction smoke passed.
 
-Ryan physically reported that the cross-app transition direction in `0.3.1` was asymmetric: Launcher -> Wall looked correct, but Wall -> Launcher replayed the same left-to-right page motion instead of mirroring the left swipe.
+Ryan then physically reported the Wall/Launcher cross-app page motion still looked the same in both directions. Launcher `0.3.2` used enter-from-right/exit-left; Wall v34 later tried caller-owned transition control, but the visible result remained unchanged.
 
-`0.3.2` / code `9` fixes that direction on the Launcher side only. Wall branches were not modified.
+`0.3.3` / code `10` is the explicit opposite Launcher-only experiment. Wall v34 is unchanged.
 
-Application source/version: `3d2066d8bafa2ba69be70984ce3f060c79ff3b78`.
-GitHub Actions run: `34085524812` — success.
-Signed artifact ID: `10005093325`.
-APK SHA-256: `83a1ead52fb1ccdce8fb59912101e80a6fd3c98d85c07fc12002c772af0667bb`.
+Launcher OPEN geometry now is:
+- enter Launcher from LEFT: `-100%p -> 0`;
+- previous activity exits RIGHT: `0 -> 100%p`.
+
+Application/source test head: `86a3971d173887c2b641f95d175e5fd30426b59f`.
+GitHub Actions run: `34088140401`.
+Signed artifact ID: `10005926195`.
+APK SHA-256: `359dd04b3268d16d88feac1ebfcb9030ed48057feed2c06d9df81f7334599310`.
 Existing permanent BOOP signing identity unchanged.
 
-## Red -> green evidence
+## Verification
 
-Red run `34085403670` failed the new transition-direction source regression before the production transition/resources were added.
+The first 0.3.3 run failed because the old regression test still asserted 0.3.2's direction. Production compilation succeeded. The test was updated to assert the newly requested reverse geometry.
 
-Green run `34085524812` passes:
-- transition-direction regression;
-- unit tests and Android lint;
+Run `34088140401` passed:
+- reversed transition-direction regression;
+- unit tests;
+- Android lint;
 - permanent-signer release build;
-- signed APK install and launcher survival on Android 16;
-- empty-HOME long press -> visible `Add widget`;
-- dismiss menu -> Launcher page-0 right swipe -> BOOP Wall handoff path;
-- BOOP launcher fatal-crash scan.
+- signed artifact upload.
 
-CI validates that Launcher OPEN uses a right-to-left mirrored transition (`enter from right`, prior activity `exit left`). The visual feel remains Ryan's physical acceptance check.
+This verifies source geometry and build/sign integrity. It does NOT establish that Pixel visually renders the cross-app transition in the expected direction. Ryan's physical observation decides that.
 
-## 0.3.2 behavior
+## 0.3.3 behavior retained
 
-- Wall swipe left -> Launcher should now visually travel right-to-left.
-- Launcher page-0 swipe right -> Wall keeps the already-good opposite transition behavior.
-- No Wall source/branch changes were made.
-- Existing fullscreen, drawer, long-press, widget and dynamic-page code remains intact.
+- Pure-black fullscreen HOME.
+- Swipe up HOME -> All Apps.
+- Swipe down All Apps -> HOME.
+- Empty-HOME long press menu and widget entry point.
+- Launcher page-0 swipe right -> BOOP Wall.
+- Dynamic Launcher content pages.
+- Existing widget rendering/persistence/editing code.
+- No change to BOOP Wall v34.
 
 ## Widget/page fundamentals present
 
@@ -53,9 +59,7 @@ CI validates that Launcher OPEN uses a right-to-left mirrored transition (`enter
 
 ## Physical acceptance pending
 
-Primary 0.3.2 check:
-- Wall swipe left -> Launcher animation direction;
-- Launcher swipe right -> Wall remains the mirrored opposite.
+Primary 0.3.3 check: with the same Wall v34 installed, does Wall swipe-left -> Launcher now visually move opposite to Launcher swipe-right -> Wall?
 
 Widget move/resize/remove, real third-party widget behavior, and page spill/persistence still need Ryan's on-device acceptance.
 
