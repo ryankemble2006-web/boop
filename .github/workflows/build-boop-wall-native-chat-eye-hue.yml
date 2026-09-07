@@ -1,4 +1,4 @@
-name: Build BOOP Wall Native Chat Eye Hue v38
+name: Build BOOP Wall Native Chat Eye Hue v39
 
 on:
   push:
@@ -43,13 +43,15 @@ jobs:
             tests/test_alpha61_thinking_puppet.py \
             tests/test_alpha655_shake_muppet.py
 
-      - name: Run hue and preserved Java harnesses
+      - name: Run hue, sleepy close and preserved Java harnesses
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/boop-hue /tmp/boop-chat /tmp/boop-shake /tmp/boop-shake-motion /tmp/boop-exit /tmp/boop-eye-intent
+          mkdir -p /tmp/boop-hue /tmp/boop-sleep /tmp/boop-chat /tmp/boop-shake /tmp/boop-shake-motion /tmp/boop-exit /tmp/boop-eye-intent
           javac -d /tmp/boop-hue source/BoopEyeHueMath.java tests/java/BoopEyeHueMathHarness.java
           java -cp /tmp/boop-hue com.boop.alpha1.BoopEyeHueMathHarness
+          javac -d /tmp/boop-sleep source/BoopIdleBlink.java source/BoopSleepCharm.java tests/java/BoopSleepCharmHarness.java
+          java -cp /tmp/boop-sleep com.boop.alpha1.BoopSleepCharmHarness
           javac -d /tmp/boop-eye-intent source/BoopEyeHueVoiceIntent.java tests/java/BoopEyeHueVoiceIntentHarness.java
           java -cp /tmp/boop-eye-intent com.boop.alpha1.BoopEyeHueVoiceIntentHarness
           javac -d /tmp/boop-chat source/CommandOutcome.java source/BoopChatMode.java source/BoopChatModeHold.java source/BoopCommandRouter.java tests/java/BoopChatModeHarness.java
@@ -61,7 +63,7 @@ jobs:
           javac -d /tmp/boop-exit source/BoopConversationExitIntent.java tests/java/BoopConversationExitIntentHarness.java
           java -cp /tmp/boop-exit com.boop.alpha1.BoopConversationExitIntentHarness
 
-      - name: Materialize native chat plus local eye hue intent
+      - name: Materialize native chat plus sleepy close
         run: bash scripts/materialize-android.sh
 
       - name: Verify effective integration
@@ -80,6 +82,10 @@ jobs:
           ! grep -q 'eyeHueHoldRunnable' "$MAIN"
           ! grep -q 'BoopEyeHueOverlay.touchesBothEyes(face, event)' "$MAIN"
           ! grep -q 'BoopEyeHueSettings.addSlider' "$MAIN"
+          grep -q 'BOOP_SLEEP_CHARM_V1' "$FACE"
+          grep -q 'BoopSleepCharm.TOTAL_DURATION_MS' "$FACE"
+          grep -q 'BoopSleepCharm.openness(progress)' "$FACE"
+          grep -q 'cancelSleepCharm();' "$FACE"
           grep -q 'setEyeHueDegrees(BoopEyeHue.loadHue(context));' "$FACE"
           grep -q 'paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));' "$FACE"
           grep -q 'BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes)' "$FACE"
@@ -119,7 +125,7 @@ jobs:
           keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
 
-      - name: Build signed v38 with current Native Chat relay config
+      - name: Build signed v39 with current Native Chat relay config
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
@@ -135,8 +141,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" | tee badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='38'" badging.txt
-          grep -q "versionName='0.4.18-wall-eye-hue-local-intent'" badging.txt
+          grep -q "versionCode='39'" badging.txt
+          grep -q "versionName='0.4.19-wall-sleepy-close'" badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" | tee signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
@@ -149,6 +155,6 @@ jobs:
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Wall-Native-Chat-Eye-Hue-v38
+          name: BOOP-Wall-Native-Chat-Eye-Hue-v39
           path: boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
