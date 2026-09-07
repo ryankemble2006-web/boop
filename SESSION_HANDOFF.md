@@ -35,3 +35,13 @@ and update/publish handoffs at the end. Never silently overwrite concurrent work
 The local clone had been fetching only the old Shield Home branch; active app
 fetch mappings and a local Launcher checkout were added.
 New tasks need BOOP repo access. This is not automatic raw conversation syncing.
+
+## Latest save: Shield 2.5D and five-digit pose studies, 2026-09-07
+
+Ryan asked to save the hand posing work together with deliberately using the Shield GPU for 2.5D animation. Read `animation-lab/shield-2.5d/README.md` and `STATUS.md`; the complete engineering/evidence brief is `docs/animation/SHIELD_2_5D_HANDS.md` on `boop-unified`. Preserve the official yellow plush design and existing BOOP eyes/headphones. Every hand keeps four fingers plus a thumb throughout every pose/transition. Retain grip/earcup-adjustment, pointing, wave, gaze-led motion, headphone lag/recoil and subtle layered-depth ideas as future work, not a working rig.
+
+This later save publishes one small corrected open-hand WebP preview in `animation-lab/shared-assets/boop-yellow-hands/pose-studies/`, with checksum/source manifest. Blob SHA `854fd36b870f1c6e647c5fdce853003cd05e5e2f` matches the locally verified derivative. The exact approved master was reverified unchanged from the ZIP. Full-resolution master/source PNG transfer remains pending; the other pose studies were unavailable as separate source files. The earlier PNG-pending notes above remain true. This preview is lossy, black-background reference art, not the transparent master or a complete archive of the illustrated set.
+
+Starting live heads checked for this save: animation `193b7b7c798cdf5dfec44cc32a152e1461b52f1c`, unified `0eedc515edda55ec9a8c6c5584f27b985e0b66e2`, main `4a7036a6a4066d19a3a7c5c5af3862c242c8a426`. The laptop checkout/receipt is not mounted here; no laptop synchronization is claimed. Main's existing shared five-digit hand contract is unchanged.
+
+Verification is limited to available image bytes/dimensions/hashes, preview blob identity and reviewed documentation. No app code, live resources, build/workflow, version, signer, permission, deployment or accepted checkpoint changed. No 2.5D animation, GPU benchmark, target frame rate or physical Shield acceptance is claimed. Next safe step is exact-PNG transfer/checksum verification; a separate request is needed for rigging/runtime integration, with actual-device profiling and media/lifecycle/reduced-motion safeguards.
