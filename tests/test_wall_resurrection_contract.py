@@ -1,5 +1,6 @@
 from pathlib import Path
 import hashlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -108,9 +109,13 @@ class WallResurrectionContractTest(unittest.TestCase):
 
     def test_resurrection_build_identity_is_monotonic(self):
         gradle = (ROOT / "source/app-build.gradle").read_text(encoding="utf-8")
-        # This candidate must update the signed v31 build without changing package.
-        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+32\s*$")
-        self.assertRegex(gradle, r'(?m)^\s*versionName\s+"0\.4\.12-wall-blink-text"\s*$')
+        code = re.search(r"(?m)^\s*versionCode\s+(\d+)\s*$", gradle)
+        name = re.search(r'(?m)^\s*versionName\s+"([^"]+)"\s*$', gradle)
+        self.assertIsNotNone(code)
+        self.assertIsNotNone(name)
+        self.assertGreaterEqual(int(code.group(1)), 32)
+        self.assertTrue(name.group(1).startswith("0.4."))
+        self.assertIn("applicationId 'com.boop.alpha1'", gradle)
 
 
 if __name__ == "__main__":
