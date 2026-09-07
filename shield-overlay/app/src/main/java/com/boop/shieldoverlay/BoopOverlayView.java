@@ -86,6 +86,7 @@ final class BoopOverlayView extends View {
             frameLoop.reset();
         }
         updateFrameLoop();
+        invalidate();
     }
 
     void setHeadphoneLayout(HeadphoneGeometry.Layout layout) {
@@ -202,6 +203,10 @@ final class BoopOverlayView extends View {
         }
 
         if (puppetMode != DeezerPuppetPolicy.Mode.EYES) {
+            // Full-screen music-puppet mode: BOOP owns the picture while Deezer
+            // continues to own playback underneath. The overlay window remains
+            // NOT_FOCUSABLE + NOT_TOUCHABLE, so Shield/Deezer remote input passes through.
+            canvas.drawColor(Color.BLACK);
             headphoneRenderer.draw(canvas, headphoneLayout, sampleTimeMs);
             return;
         }
