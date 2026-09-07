@@ -58,6 +58,13 @@ class WallChatModePatchTests(unittest.TestCase):
         self.assertIn('super.onConfigurationChanged(newConfig);\n        cancelFaceHolds();', patched)
         self.assertIn('memberBerryConsumed = true;\n            cancelMemberBerryHold();', patched)
 
+    def test_background_terminal_results_release_recognizer_ownership(self):
+        handler = PATCH.patch_text(self.source()).split('    public void onResults(Bundle results) {', 1)[1]
+        guard = handler.split('        RecognitionMode completedMode', 1)[0]
+        self.assertIn('if (chatModeOpen || !activityInForeground)', guard)
+        self.assertIn('suppressNextRecognizerError = true;', guard)
+        self.assertIn('stopListening();', guard)
+
     def test_browser_visibility_does_not_add_permissions(self):
         root = ET.parse(ROOT / 'source/AndroidManifest.xml').getroot()
         name = '{http://schemas.android.com/apk/res/android}name'

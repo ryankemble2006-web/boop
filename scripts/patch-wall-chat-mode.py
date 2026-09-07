@@ -193,9 +193,11 @@ METHODS = '''    private void cancelFaceHolds() {
                 17f, false);
         explanation.setPadding(0, dp(14), 0, dp(8));
         choices.addView(explanation);
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(choices);
         chatModeDialog = new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
                 .setTitle("Chat mode")
-                .setView(choices)
+                .setView(scroll)
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .create();
         chatModeDialog.setOnDismissListener(dialog -> {
@@ -209,6 +211,7 @@ METHODS = '''    private void cancelFaceHolds() {
 
     private Button chatModeButton(BoopChatMode mode, String label) {
         Button button = new Button(this);
+        button.setAllCaps(false);
         boolean selected = chatModeStore.load() == mode;
         button.setText(selected ? label + "  \\u2713" : label);
         button.setTextSize(22f);
@@ -310,7 +313,9 @@ def patch_text(text):
                         '        if (!hasFocus) {\n            cancelFaceHolds();\n            faceTouchActive = false;\n        }\n')
     text = replace_once(text, '    public void onResults(Bundle results) {\n',
                         '    public void onResults(Bundle results) {\n'
-                        '        if (chatModeOpen || !activityInForeground) return;\n')
+                        '        if (chatModeOpen || !activityInForeground) {\n'
+                        '            suppressNextRecognizerError = true;\n'
+                        '            stopListening();\n            return;\n        }\n')
     text = replace_once(text, '    protected void onDestroy() {\n',
                         '    protected void onDestroy() {\n        activityInForeground = false;\n'
                         '        cancelFaceHolds();\n        if (chatModeDialog != null) chatModeDialog.dismiss();\n')
