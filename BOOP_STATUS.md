@@ -2,35 +2,33 @@
 
 ## Current
 
-Launcher Alpha 2 has a physically useful baseline and a new immersive follow-up build.
+Launcher Alpha 2 is on a physically useful baseline with a stronger fullscreen follow-up ready for Pixel verification.
 
-Ryan physically installed the earlier `0.2.0` / code `3` baseline and confirmed a black Home screen plus functioning app drawer. Physical evidence then showed Android status/navigation bars remained visible and the bottom app row could be clipped by navigation.
+Ryan physically confirmed the black Home screen and swipe-up app drawer. The `0.2.1` immersive build still showed Android's top status-bar clock on the Pixel, so `0.2.2` adds a window-level fullscreen flag in addition to the existing WindowInsets immersive path.
 
-Ryan approved immersive Home + drawer.
-
-Current application source: `92c34d47b19e6d2191891e9eb9ffe5a329394cf1`.
-GitHub Actions run: `34080350338` — success.
-Signed artifact ID: `10003492030`.
-APK SHA-256: `1dfcd87412b8308704325db9d1045f08294942e01ff53d62cddd20cf21d8435c`.
+Current application source: `324ef2e8246ca787a93e39cf29aeb3325d13d148`.
+Functional fullscreen commit: `14139c82a8dbba61ac14ff2aa30cfb4fbe152f7c`.
+GitHub Actions run: `34081679120` — success.
+Signed artifact ID: `10003901065`.
+APK SHA-256: `987d0e9d39af44599ef648a7f3075b1cb38415cf0d9f883e42464a6c16bb5e89`.
 
 ## CI / smoke green
 
-- Package `com.boop.launcher`, version `0.2.1` / code `4`.
+- Package `com.boop.launcher`, version `0.2.2` / code `5`.
 - Android API 29 minimum, target/compile 36.
-- Unit tests pass, including immersive-mode regression checks.
+- Unit tests pass, including explicit `FLAG_FULLSCREEN` regression coverage.
 - Android lint passes.
 - Release assemble and permanent BOOP signer pass.
 - Signed APK installs and survives launch on Android 16 smoke emulator.
-- Status and navigation bars are hidden with transient edge-swipe recovery.
-- System bars are re-hidden when launcher focus returns.
-- All Apps bottom padding now accounts for navigation-bar size and scrolls safely within padding.
-- Pure-black Home, no permanent clock/At a Glance/search pill/dock remains the intended visual baseline.
+- Window fullscreen flag is applied initially and again when launcher focus returns.
+- Existing transient system-bar edge-swipe behavior remains.
+- Drawer bottom-safe padding fix remains.
 
 ## Physical state
 
-Physically confirmed on the previous build: black Home screen and app drawer work.
+Physically confirmed: black Home screen and working app drawer.
 
-Not yet physically confirmed on `0.2.1`: immersive status/nav hiding, transient recovery gesture and corrected final drawer row. Do not mark this specific fix physically green until Ryan installs it.
+Not yet physically confirmed on `0.2.2`: whether Pixel HOME finally suppresses the persistent clock/Wi-Fi/battery status bar. The Pixel result is authoritative for this behavior.
 
 ## Still incomplete
 
@@ -41,7 +39,7 @@ Not yet physically confirmed on `0.2.1`: immersive status/nav hiding, transient 
 
 ## Next
 
-Install the signed `0.2.1` / code `4` APK and verify: uninterrupted black Home, no persistent clock/Wi-Fi/battery/nav buttons, edge-swipe temporary system-bar recovery, and no clipped bottom drawer row. Continue the physical feel/bug list from there.
+Install `0.2.2` / code `5`. Verify the top status bar is gone during normal HOME use, edge-swipe recovery still works, and the final app-drawer row remains clear. Continue the physical feel/bug list from there.
 
 ## Protect
 
