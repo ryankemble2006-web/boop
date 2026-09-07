@@ -1,45 +1,39 @@
-name: Export current Wall source for relay work
+name: Transfer reviewed Wall relay commits
 on:
   push:
     branches: [boop-relay-source-7aa871f]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  export:
+  transfer:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
-      - name: Download and verify pinned public JVM test libraries
+      - uses: actions/checkout@v4
+        with:
+          ref: 7aa871f70d620093e1e2e176df13820b1fd51964
+          fetch-depth: 0
+      - name: Reconstruct only the reviewed source patch and verify its exact Git identity
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p deps
-          python3 - <<'PY'
-          import hashlib, urllib.request
-          from pathlib import Path
-          jars = [
-              'com/squareup/okhttp3/okhttp/4.12.0/okhttp-4.12.0.jar',
-              'com/squareup/okio/okio-jvm/3.6.0/okio-jvm-3.6.0.jar',
-              'org/jetbrains/kotlin/kotlin-stdlib/1.9.10/kotlin-stdlib-1.9.10.jar',
-              'org/jetbrains/kotlin/kotlin-stdlib-common/1.9.10/kotlin-stdlib-common-1.9.10.jar',
-              'org/jetbrains/annotations/13.0/annotations-13.0.jar',
-              'org/json/json/20240303/json-20240303.jar',
-              'junit/junit/4.13.2/junit-4.13.2.jar',
-              'org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar',
-          ]
-          for jar in jars:
-              url = 'https://repo.maven.apache.org/maven2/' + jar
-              data = urllib.request.urlopen(url, timeout=30).read()
-              expected = urllib.request.urlopen(url + '.sha1', timeout=30).read().decode().split()[0]
-              if hashlib.sha1(data).hexdigest() != expected:
-                  raise SystemExit('Public library checksum mismatch')
-              dest = Path('deps') / jar.rsplit('/', 1)[1]
-              dest.write_bytes(data)
-              print(dest.name, hashlib.sha256(data).hexdigest())
-          PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: BOOP-relay-public-jvm-libraries
-          path: deps/*.jar
-          retention-days: 1
-          if-no-files-found: error
+          test "$(git rev-parse HEAD)" = 7aa871f70d620093e1e2e176df13820b1fd51964
+          FILE="${RUNNER_TEMP}/reviewed.patch.gz"
+          : > "$FILE"
+          for blob in 8e33a6416a991f3807390924fc1276d9c075f09c 37f80013979559210be3851896f1bc44e7df7857 f5ccd1261120fe85284ddfdca4bd9c237120e02a f498bc32b33b5d595910fccd72e3118f718a1aa4; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${blob}" --jq .content | base64 --decode >> "$FILE"
+          done
+          test "$(wc -c < "$FILE")" -eq 24394
+          printf '4c94b458bd4cdbf366436c0b36c7adface7a0355c747bfa06bbd75be7077d936  %s\n' "$FILE" | sha256sum --check
+          gzip -dc "$FILE" > "${RUNNER_TEMP}/reviewed.patch"
+          git config user.name 'BOOP development'
+          git config user.email 'boop@users.noreply.github.com'
+          git am --committer-date-is-author-date "${RUNNER_TEMP}/reviewed.patch"
+          test "$(git rev-parse HEAD)" = b3bc1768f9563a4a149b9a04c3a096c271f748ba
+          test "$(git rev-parse 'HEAD^{tree}')" = 446a50e22429c1169cfac42ecc63f7e2f3a48dae
+          git diff --check 7aa871f70d620093e1e2e176df13820b1fd51964 HEAD
+          git push origin HEAD:refs/heads/boop-relay-reviewed-v34
+          printf 'REVIEWED_HEAD=%s\n' "$(git rev-parse HEAD)"
+          printf 'REVIEWED_TREE=%s\n' "$(git rev-parse 'HEAD^{tree}')"
