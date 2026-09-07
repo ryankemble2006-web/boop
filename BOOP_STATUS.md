@@ -1,42 +1,30 @@
-# BOOP Wall v35: Native Chat + eye hue candidate
+# BOOP Wall v37: Native Chat + voice eye hue candidate
 
 Updated 2026-09-07. Owning branch `boop-wall-native-chat-eye-hue`.
 
 ## Current candidate
 
-- VersionCode 35 / `0.4.15-wall-native-chat-eye-hue`, package `com.boop.alpha1`.
-- Built from the user's installed v34 Native Chat lineage, not the older v31 hue experiment.
-- Native Chat / OpenAI relay, browser/free-chat mode, wake path, existing caller-owned Wall -> Launcher transition and current idle-blink materialization remain present.
-- Adds exactly one persisted hue-only `Eye colour` slider beside voice settings.
-- Default accepted cyan/blue is 190 degrees and uses no ColorFilter at all.
-- Reuses the exact existing `boop_eyes` bitmap/render Paint for both eyes; no artwork, crop, geometry, black background, mouth or extra visual setting was added.
-- Existing permanent BOOP signing identity unchanged.
+- VersionCode 37 / `0.4.17-wall-eye-hue-voice`, package `com.boop.alpha1`.
+- Built from the user's Native Chat lineage with permanent BOOP signer continuity.
+- Eye colour is not in Voice Settings.
+- Voice command `change eye colour` opens the single hue slider underneath the visible eyes; `color` is also accepted.
+- Tap outside the slider dismisses it.
+- Default cyan/blue remains 190 degrees with no ColorFilter; non-default hues tint the existing shared `boop_eyes` Paint.
+- Existing artwork, geometry, black background, animations, Native Chat/OpenAI relay, wake path, Chat-mode hold, Member Berry, thinking, shake and Launcher swipe remain preserved.
 
 ## Verification evidence
 
-GitHub Actions run `34090520672` completed SUCCESS for build commit `1256fb33f198659d7afd1310e5c8afbadd5d53d3`.
+GitHub Actions run `34093159649` completed successfully for build commit `07c6751afdbdb50ccf96a9b1809d29c68ffdf2f7`.
 
-Passed gates include focused source guards, hue math/default-path checks, representative orange/green/pink/purple/cyan hues, Chat mode harness, Member Berry guard, thinking guard, shake detector, shake-eye motion, Android unit tests, effective Native Chat/OpenAI relay markers, all 33 wake mappings, signed v35 build, exact package/version inspection, archive integrity and stable signer continuity.
+Passed gates include focused source guards, hue math/default-path checks, preserved Chat/Member Berry/thinking/shake harnesses, materialized Native Chat/OpenAI relay verification, removal of the failed two-eye hue trigger, Android unit tests, signed v37 build, exact package/version inspection, archive integrity and stable signer continuity.
 
-Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v35` / ID `10006695690`.
-Extracted APK SHA-256: `013c4db3b3fc9e21eb2b4bf0a255bfbaf84d9b2c94a06c7a996cc875ff917819`.
-
-## Concurrency reconciliation
-
-While this candidate was being built, `boop-wall-free-chat-wip` advanced from `e10df1cc27d5522fa33fe6722d0d70f817f16289` to `36e31998219c518e96730ff54e96b8e4fdf5b680` with a concurrent implementation of the same hue concept inside materialization. Preserve that work. The combined candidate records it in ancestry and selects the isolated/testable helper + patch implementation rather than blindly stacking duplicate hue code.
+Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v37` / ID `10007619095`.
+Extracted APK SHA-256: `31aba85aef107940eeac68d574d7a16b28ae959a79925cb68bc9bd53497ba248`.
 
 ## Physical status
 
-Physical Pixel acceptance is pending. Expected install path: in-place upgrade from the user's current v34 `0.4.14-wall-native-chat` to v35 using the same package and signer.
+v36 two-eye gesture: physically failed to summon the control and is superseded.
 
-Physical acceptance checklist:
-- v35 installs over v34 without uninstall/data loss;
-- default cyan/blue remains visually unchanged;
-- orange, pink and green preview live on both eyes;
-- selected hue survives force-stop/relaunch and device restart;
-- wake/sleep, thinking, shake, Member Berry, tap/hold and Launcher swipe still behave normally;
-- Native Chat/ChatGPT conversation still works.
+v37 physical acceptance pending. Test voice summon, live hue changes, outside-tap dismissal, persistence after restart, then wake/sleep, Chat mode, tap-to-speak, thinking, shake, Member Berry, Launcher swipe and Native Chat.
 
-## Accepted Wall baseline remains unchanged
-
-Physical accepted Wall checkpoint remains `595e1daa43393882a0e5de43967545ac526b8b66` / `checkpoint-boop-wall-595e1da`. Do not promote or overwrite it until physical acceptance.
+Accepted physical Wall checkpoint remains `595e1daa43393882a0e5de43967545ac526b8b66` / `checkpoint-boop-wall-595e1da`; do not overwrite it until physical acceptance.
