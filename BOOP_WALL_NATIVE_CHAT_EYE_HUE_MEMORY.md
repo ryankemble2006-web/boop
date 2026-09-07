@@ -2,31 +2,41 @@
 
 Updated 2026-09-07.
 
-This file exists to prevent future sessions from repeating the v31/v34 lineage mistake, the failed two-eye summon experiment, or the too-strict v37 voice matcher.
+The current Wall lineage is Native Chat on `boop-wall-native-chat-eye-hue`. Preserve package `com.boop.alpha1`, monotonically increasing versionCode and the permanent BOOP signer. The historical v31 hue branch is not an install candidate for this device.
 
-The user's current Wall lineage is Native Chat. Eye-colour builds for this device must continue from that lineage, preserve package `com.boop.alpha1`, use a monotonically higher versionCode, and keep the permanent BOOP signer. The old `boop-wall-eye-hue-wip` v31 build is historical only.
+## Eye-colour memory
 
-Current combined candidate branch: `boop-wall-native-chat-eye-hue`.
-Candidate version: versionCode 38 / `0.4.18-wall-eye-hue-local-intent`.
-Build commit: `3c29d4b28f5430710d7b189a9cf10a2929ca986d`.
-Green workflow run: `34093926250`.
-Artifact ID: `10007905660`.
-APK SHA-256: `4e82b828c3eafcc6f650b9e76bd5d27c34973845158bb174d70a4c68741ca28e`.
+- v36 two-eye one-second summon physically failed and is superseded/removed.
+- v37 exact phrase matcher physically failed because wake-word prefixes/recognizer wording could fall through to Free Chat/assistant handling.
+- v38 fixed this by routing eye colour like Voice Settings: tolerant local intent checked before HA/OpenCode/Native Chat/Free Chat fallback.
+- Ryan physically tested v38 and called the result **literally perfect**. Treat the v38 local eye-colour summon + slider UX as accepted behavior to preserve.
+- Keep the single hue-only slider beneath visible eyes, live preview, outside-tap dismissal, persistence in `boop_eyes` / `hue_degrees`, 0..359 hue range, and default 190-degree cyan/blue with no ColorFilter.
+- Both eyes continue to reuse the exact `boop_eyes` bitmap/shared Paint. No mouth, replacement artwork, RGB channels, brightness, saturation, opacity, themes or effects.
 
-Hue contract:
-- exactly one hue-only slider, not part of Voice Settings;
-- the v36 two-eye one-second gesture physically failed and is superseded/removed;
-- the first v37 voice matcher was too exact and physically failed: wake `BOOP change eye colour` could open Free Chat and tap-to-talk could fall through to assistant handling;
-- v38 must handle eye-colour requests exactly like Voice Settings routing: tolerant local intent checked before HA/OpenCode/Native Chat/Free Chat fallback;
-- accept UK/US `colour/color`, wake-word prefixes such as `BOOP, change eye colour`, plural eyes, eye hue, and narrow recognizer `I color/colour` homophones;
-- slider appears underneath the visible eyes for live preview and dismisses when the user taps outside it;
-- 0..359 full hue range;
-- default 190 degrees represents the accepted cyan/blue and deliberately applies no ColorFilter;
-- persistence uses SharedPreferences `boop_eyes` / `hue_degrees`;
-- both eyes reuse the exact existing `boop_eyes` bitmap and shared Paint;
-- do not change eye geometry/crops/layout/animations/hitboxes, black background, voice behavior outside this local intent, Native Chat, wake behavior, Member Berry, thinking, shake or Launcher swipe;
-- no mouth, replacement artwork, RGB channels, brightness, saturation, opacity, effects or themes.
+## Sleep animation memory
 
-Concurrency note: preserve the earlier concurrent hue implementation on `boop-wall-free-chat-wip@36e3199`; the combined branch already reconciles that history in ancestry. Do not blindly stack duplicate hue implementations.
+v39 / `0.4.19-wall-sleepy-close` is the current animation candidate.
 
-CI green is not physical green. The protected physical Wall checkpoint remains unchanged until v38 passes the physical local-intent/colour/persistence/regression checklist.
+Ryan asked to copy the gorgeous existing blink into the sleep sequence, then close the eyes slowly with sleepy charm. Implementation contract:
+- first 183 ms uses exact `BoopIdleBlink.openness(...)` geometry;
+- reopen fully after the blink;
+- brief open settle;
+- slow droop to ~52% half-lidded;
+- short half-lid pause;
+- slow eased final close to a 4% eyelid line;
+- keep alpha at 1 through 92% of the animation, then fade gently to black;
+- total duration ~1.24 seconds;
+- preserve the existing wake animation unchanged and allow wake to cancel an in-progress sleep close safely;
+- do not reintroduce the old 300 ms whole-view squash/fade sleep animation.
+
+Build commit: `240a12869d8871ed4245e7476bec279f36dd75d7`.
+Green workflow run: `34094925623`.
+Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v39`.
+Artifact ID: `10008263855`.
+APK SHA-256: `195e02f914436fcdadfe4cd9fd570499e6f4afa67c394d1020f5dfd89c48b0ce`.
+
+CI verified blink parity, slow-close timing, materialized sleep integration, existing hue/local-intent/Chat/Member Berry/thinking/shake paths, Native Chat/OpenAI relay markers, Android unit tests, package/version identity and signer continuity.
+
+CI green is not physical green for v39. Ryan still needs to judge the actual sleep pacing/charm and wake-from-sleep on the Pixel. Do not overwrite the protected physical Wall checkpoint merely for this animation experiment.
+
+Concurrency note: preserve the earlier concurrent hue implementation on `boop-wall-free-chat-wip@36e3199`; the combined branch already reconciles that history. Do not blindly stack duplicate hue implementations.
