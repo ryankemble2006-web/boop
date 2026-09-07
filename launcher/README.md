@@ -1,23 +1,45 @@
-# BOOP Launcher Alpha 1
+# BOOP Launcher Alpha 2
 
-Independent native Android Home app (`com.boop.launcher`), Android 10+, SDK 36, Java 17. No changes to BOOP. No Internet or microphone permission.
+Independent native Android Home app (`com.boop.launcher`), Android 10+ / API 29+, target/compile SDK 36, Java 17. No Internet or microphone permission. Alpha 2 is a clean launcher baseline inspired by modern Pixel Launcher interaction patterns without copying Google proprietary launcher code or assets.
 
 Build with Gradle 9.6.0 and Android SDK 36:
 
-```
+```text
 gradle -p launcher :app:testDebugUnitTest :app:lintDebug :app:assembleRelease
 ```
 
-Release signing requires `BOOP_KEYSTORE_PATH`, `BOOP_KEYSTORE_PASSWORD`, `BOOP_KEY_ALIAS`, `BOOP_KEY_PASSWORD`; the isolated CI workflow supplies the existing release identity. Never ship unsigned or substitute debug signing. APK: `app/build/outputs/apk/release/app-release.apk`.
+Release signing uses the existing permanent BOOP GitHub identity through `BOOP_KEYSTORE_PATH`, `BOOP_KEYSTORE_PASSWORD`, `BOOP_KEY_ALIAS`, and `BOOP_KEY_PASSWORD`. Do not substitute another signing key.
 
-## Use
+## Alpha 2 baseline
 
-Install APK, open BOOP Launcher, choose it under Android Home settings when ready. Start dismisses the introduction. Swipe up from empty home to search installed launcher apps; tap launches, long press adds to the current page and opens edit mode. Long press empty home enters editing. Drag items to empty space; overlapping drops revert. Tap an item in editing for size, page and remove controls. Hold an item to pick it up without a menu, then drag upward into the temporary remove area and release to remove it. A stationary hold enters editing; a separate short tap in editing opens size/page options. Touch cancellation leaves the item unchanged. Swipe downward on empty canvas to finish. Done also finishes. Swipe left on empty canvas for widgets, right to return; Back closes editing/drawer first and then follows visited pages. Home returns the main canvas. Bail out in editing opens Android Home settings. The optional second widget page can be enabled in the editor.
+The home surface is deliberately pure black and edge-to-edge. There is no permanent clock, At a Glance panel, Google search pill, dock/hotseat, plus button, return-strip overlay, or other launcher furniture.
 
-Choose Add widget in editing for real installed Android widget providers. Android handles binding consent and provider configuration. Canceled binding/configuration releases its host ID. An interrupted pending configuration can be discarded on the next Add widget. Widget state is managed by Android; launcher positions/sizes persist in private preferences. Normalized rectangles preserve bounds and no overlap on rotation. Widgets update their size options as the canvas changes. Widget providers may impose their own content constraints.
+Swipe upward on empty home to open All Apps. All Apps uses native installed-app icons and labels on black. Tap launches an app. Hold an app in All Apps to add it to Home. Search is contextual: tap the small search affordance to expose local app search; the search field is not permanently present.
 
-Open BOOP is in the introduction and editor. BOOP must already be installed as `com.boop.alpha1`. Optional right-edge return requests Android display-over-apps permission. After granting, return and tap Open BOOP again. A foreground service owns only a 20dp-wide, 180dp-tall strip at the right center. Swipe left from it to return. The service notification provides return/stop controls (allow notifications to expose them). It stops on launcher resume, screen off, or Stop. It stays active if BOOP opens other apps; it does not inspect foreground apps, use a microphone, or read HA configuration. Open without strip works without overlay permission. Android Home is always available.
+Placed app icons persist in the Alpha 2 workspace store. Tap launches. Hold to pick up, then drag to reposition. Releasing in the top removal band removes the item; overlapping drops revert. Alpha 1 workspace preferences are intentionally cleared once on first Alpha 2 start rather than forcing the old schema/interaction architecture into the rebuild.
 
-## Verification
+Home/Back state is explicit: Search backs out to All Apps, All Apps backs out to Home, and Android Home returns the launcher to Home. Android 13+ uses `OnBackInvokedDispatcher`; the legacy Back override remains only as the older-Android fallback.
 
-Unit tests cover overlap rejection, edge contact, clamping, deterministic free placement, full-page failure and navigation ordering. CI builds/tests/lints and separately exercises the installed APK in an emulator. Device checks still required: bind/configure a Home Assistant widget, cancel each consent screen, edit/move/resize, rotate and force-stop/reopen, tap widget controls; on Pixel 7 Pro and Pixel 10 Pro XL, validate the BOOP strip and notification controls, voice/touch, permission denial, screen-off removal and Home recovery. Alpha does not support folders, icon packs, work-profile catalogs or backup/restore.
+## Known baseline limits
+
+This signed build is the first physical-feel baseline, not the finished Launcher3-quality target.
+
+- Drawer open/close currently uses a restrained threshold/settle transition rather than full Launcher3 direct-finger spring physics. Pixel 10 Pro XL testing decides the next motion pass.
+- Widget selection/configuration plumbing allocates and cleans host IDs, but widget views are not yet rendered/movable/resizable on the Alpha 2 workspace. Do not call widget support complete in this build.
+- Multiple dynamic workspace pages, folders, notification dots, icon packs, work-profile customization, backup/restore, BOOP return-strip/voice controls and Home Assistant-specific launcher behavior are not part of this baseline.
+
+## Verified signed build
+
+CI run `34077665229` at source commit `844301bfe264a52b202787e8224fb43452dd3ff6` passed unit tests, Android lint, release compilation and permanent BOOP signing.
+
+Signed artifact: `BOOP-Launcher-Alpha2-signed`, artifact ID `10002643933`.
+
+APK: `BOOP-Launcher-Alpha2.apk`
+
+APK SHA-256: `89a5cd50f97dd87e513d86d79bfae71b5f962d86f760190c57527a92fd289b96`
+
+Package metadata: `com.boop.launcher`, versionCode `3`, versionName `0.2.0`, minSdk `29`, targetSdk `36`.
+
+The APK verifies with one signer using APK Signature Scheme v2. The signer certificate SHA-256 is `c0f4549b7d367f7823a76ef32468f5ef7695e3a3380b2145d5a94ff3b1aa9e61`.
+
+CI-green is not physical acceptance. The first Pixel 10 Pro XL pass should judge the empty black canvas, native icon scale/spacing, swipe-up drawer feel, contextual search, app pin/move/remove, Home/Back behavior and whether the system gesture area visually disappears into the black canvas.
