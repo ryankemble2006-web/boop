@@ -1,6 +1,6 @@
 # BOOP shared context
 
-Reconciled 2026-09-06; continuity refreshed against live `main` 2026-09-06.
+Reconciled 2026-09-07; Wall chat-mode ownership added against live main.
 Current user instructions and fresh device evidence win.
 This compact file is shared across active app branches; detailed product history
 remains in BOOP_MEMORY.txt where present. Use BOOP_START_HERE.md for branch routing.
@@ -24,6 +24,28 @@ while their execution semantics remain distinct. Voice routine creation requires
 an explicit creation request, a plain-English proposal and confirmation (including
 polite wording such as yes please). Timed voice routines were removed pending
 redesign. Routine-authoring capability evidence is not proof of a finished feature.
+
+## Wall chat fallback, approved 2026-09-07
+
+OpenCode credit exhaustion must not disable local house/media commands. Ryan
+approved holding the eyes for three seconds, past the existing playful hold,
+to open Chat mode: OpenCode / Free Chat / Cancel. OpenCode is the default;
+the selection persists and the same menu reverses it. No permanent settings
+button. Keep Wall-to-Launcher swipe and other existing interactions intact.
+
+Local processing always comes first. Only a genuine NO_MATCH may use the selected
+conversation route. Device/auth/offline failures must not become web questions.
+Free Chat is a visible browser-backed ChatGPT session, with its own login and
+limits; it is not an embedded consumer API or unlimited free service. The current
+candidate copies the question for manual paste/send and discloses this in its
+menu. Do not add hidden scraping, injection, credential extraction, or a direct
+OpenAI key. Native spoken answers behind the eyes are not claimed for this route.
+
+Implementation/test authority: boop-wall-free-chat-wip, SESSION_HANDOFF.md,
+BOOP_STATUS.md and BOOP_CHAT_MODE_MEMORY.txt. This isolated candidate does not
+replace the preserved Wall app branch or the accepted physical checkpoint.
+Wall v30's reviewed launcher swipe is in boop-wall-resurrection; its handoff
+records emulator evidence, not a new physical acceptance.
 
 ## Current evidence, not a blanket release claim
 
@@ -64,8 +86,10 @@ Record them separately. Never manufacture a physical checkpoint from a CI pass.
 
 ## Cross-device working agreement
 
-Ryan develops Shield on the laptop and Launcher through Android Work. GitHub is
-the code/context handoff. Before edits fetch/check the owning branch and read
-its handoff; before stopping record results and publish reviewed scoped work.
-No blind overwrites/force pushes. Shared context is not automatic chat-history
-replication, and an unattached/offline task must say what it cannot access.
+Ryan develops Shield on the laptop and Launcher/Wall through Android, including
+the Pixel 7 for easier screenshot testing. GitHub is the code/context handoff.
+Before edits fetch/check the owning branch and read its handoff; before stopping
+record results and publish reviewed scoped work. No blind overwrites/force pushes.
+Shared context is not automatic chat-history replication, and an unattached or
+offline task must say what it cannot access. "Update memory" means reconcile and
+publish documentation only, unless Ryan explicitly also requests implementation.
