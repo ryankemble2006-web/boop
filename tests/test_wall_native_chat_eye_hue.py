@@ -5,16 +5,18 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     materialize = Path("scripts/materialize-android.sh").read_text()
     build = Path("source/app-build.gradle").read_text()
     patch = Path("scripts/patch-wall-eye-hue.py").read_text()
+    sleep_patch = Path("scripts/patch-wall-sleep-charm.py").read_text()
     intent = Path("source/BoopEyeHueVoiceIntent.java").read_text()
 
     assert "patch-wall-chat-mode.py" in materialize
     assert "patch-wall-openai-relay.py" in materialize
     assert "patch-wall-idle-blink.py" in materialize
+    assert "patch-wall-sleep-charm.py" in materialize
     assert "patch-wall-eye-hue.py" in materialize
     assert "ActivityOptions.makeCustomAnimation" in materialize
 
-    assert "versionCode 38" in build
-    assert 'versionName "0.4.18-wall-eye-hue-local-intent"' in build
+    assert "versionCode 39" in build
+    assert 'versionName "0.4.19-wall-sleepy-close"' in build
     assert "BOOP_RELAY_URL" in build
     assert "BOOP_RELAY_TOKEN" in build
 
@@ -33,6 +35,13 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert 'value.contains("eye hue")' in intent
     assert 'value.contains("i color")' in intent
     assert "mouth" not in patch.lower()
+
+    assert "BOOP_SLEEP_CHARM_V1" in sleep_patch
+    assert "BoopSleepCharm.TOTAL_DURATION_MS" in sleep_patch
+    assert "BoopSleepCharm.openness(progress)" in sleep_patch
+    assert "BoopSleepCharm.alpha(progress)" in sleep_patch
+    assert "cancelSleepCharm();" in sleep_patch
+    assert ".scaleY(IDLE_SCALE_Y)" not in sleep_patch.split("new_sleep =", 1)[1].split("return replace_once", 1)[0]
 
 
 def test_hue_overlay_is_one_persisted_full_spectrum_control_under_the_eyes():
