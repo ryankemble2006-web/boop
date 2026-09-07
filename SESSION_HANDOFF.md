@@ -2,53 +2,22 @@
 
 Owner: isolated combined Wall candidate on `boop-wall-native-chat-eye-hue`.
 Package: `com.boop.alpha1`.
-Candidate version: versionCode 35 / `0.4.15-wall-native-chat-eye-hue`.
+Candidate version: versionCode 36 / `0.4.16-wall-native-chat-eye-hue`.
 
-## Why this branch exists
+## Current UX
 
-The user is physically running BOOP Wall `0.4.14-wall-native-chat` / versionCode 34. An earlier eye-hue APK was incorrectly built from the older v31 resurrection lineage and Android rejected it as an app downgrade. Do not reuse that v31 artifact for this device.
+Eye colour is no longer in Voice Settings. Hold both eyes simultaneously for 1 second to summon one hue-only slider underneath the eyes. The eyes remain visible and update live while the slider moves. Tap anywhere outside the slider area to dismiss it. The gesture consumes its release and is kept separate from the existing single-eye Chat-mode hold, tap-to-speak, Member Berry and Launcher swipe paths.
 
-This branch starts from the exact v34 Native Chat / Free Chat Wall head `e10df1cc27d5522fa33fe6722d0d70f817f16289`, then adds the eye hue control while preserving the current ChatGPT/Native Chat relay, browser/free-chat mode, idle blink work and caller-owned Wall -> Launcher transition. The protected physical Wall checkpoint remains unchanged.
+Hue remains 0..359 degrees. The accepted cyan/blue default is 190 degrees and deliberately applies no ColorFilter. Non-default values hue-rotate the existing shared `boop_eyes` Paint, so both eyes use the original artwork/geometry/render path. Hue persists in SharedPreferences `boop_eyes` / `hue_degrees`.
 
-A concurrent session added the same hue concept directly into `boop-wall-free-chat-wip` at `36e31998219c518e96730ff54e96b8e4fdf5b680`. That work was not discarded or blindly merged. The combined candidate reconciles it in branch ancestry; the selected tree keeps the hue implementation isolated into source helpers plus a materialization patch for clearer testing and later maintenance.
-
-## Eye hue implementation
-
-- Exactly one `Eye colour` SeekBar is inserted beside the existing voice settings.
-- Range is 0..359 hue degrees only.
-- Existing default cyan/blue is anchored at 190 degrees and deliberately returns a null ColorFilter, so the default render uses the exact existing bitmap/paint path.
-- Non-default values apply a hue-rotation ColorMatrix to the existing shared eye Paint.
-- Both eyes, portrait render and shake render already share that Paint, so they remain consistent without changing eye artwork, crop, geometry or animation code.
-- Hue persists in SharedPreferences `boop_eyes` / `hue_degrees` and is applied when the face view is materialized.
-- No mouth, replacement eye artwork, background change, brightness, saturation, opacity, theme or effects control was added.
+Native Chat/OpenAI relay, browser/free-chat mode, current wake path, idle blink, thinking, shake, Member Berry, caller-owned Wall -> Launcher transition, black background, package and permanent BOOP signer are preserved. No mouth or extra visual controls were added.
 
 ## Verification
 
-Signed build commit: `1256fb33f198659d7afd1310e5c8afbadd5d53d3`.
-GitHub Actions run: `34090520672` — SUCCESS.
-Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v35`.
-Artifact ID: `10006695690`.
-Extracted APK SHA-256: `013c4db3b3fc9e21eb2b4bf0a255bfbaf84d9b2c94a06c7a996cc875ff917819`.
+GitHub Actions run `34091824054` built the v36 candidate. Source guards, hue/Chat/shake Java harnesses, materialization and effective integration checks, Android unit tests, stable signing, package/version inspection and signer continuity passed. Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v36`, artifact ID `10007135614`.
 
-The successful gate covered:
-- Native Chat marker and OpenAI relay marker still present in effective MainActivity;
-- full 33 natural-wake mappings retained;
-- exact existing `boop_eyes` bitmap and black face background retained;
-- no mouth path introduced;
-- hue math for default/cyan/orange/green/pink/purple;
-- default 190-degree hue is an unfiltered path;
-- existing Chat mode harness;
-- Member Berry source guard;
-- thinking puppet source guard;
-- shake detector and shake-eye motion harnesses;
-- Android unit tests;
-- stable signed APK build with the current Native Chat relay configuration environment;
-- package `com.boop.alpha1`, versionCode 35, versionName `0.4.15-wall-native-chat-eye-hue`;
-- signer fingerprint continuity against the existing permanent BOOP signer;
-- APK archive integrity.
+Extracted APK SHA-256: `f40099957c0ca95ad428559312a91f487486de37338fb9c2422409b55ed63ee1`.
 
-## Physical status
+CI green is not physical green. Physical acceptance still needs: install over current Native Chat build; verify two-eye 1s summon; slider placement below visible eyes; live colour changes; outside-tap dismissal; persisted colour after restart; single-eye Chat-mode hold; tap-to-speak; wake/sleep; thinking; shake; Member Berry; Launcher swipe; Native Chat conversation.
 
-NOT yet physically accepted on the Wall Pixel. The expected installation path is an in-place upgrade from v34 to v35 with the same package and signer. After installation, physically verify default blue, live orange/pink/green changes, persistence after force-stop/relaunch or device restart, wake/sleep, thinking, shake, Member Berry, tap/hold and Launcher swipe, plus Native Chat conversation.
-
-Do not move or overwrite the protected physical Wall checkpoint merely because CI is green.
+The protected physical Wall checkpoint remains unchanged until Ryan physically accepts the candidate.
