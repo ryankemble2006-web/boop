@@ -230,7 +230,7 @@ public final class HomeDashboardController {
                 this::toggleCard));
     }
 
-    private static List<EntityCard> favouriteFirst(
+    private List<EntityCard> favouriteFirst(
             EntityCard favourite,
             List<EntityCard> source) {
         List<EntityCard> ordered = new ArrayList<>();
@@ -239,7 +239,7 @@ public final class HomeDashboardController {
         }
         if (source != null) {
             for (EntityCard card : source) {
-                if (card == null) {
+                if (!favouriteSelector.isCandidate(room.id(), card)) {
                     continue;
                 }
                 if (favourite != null && favourite.entityId().equals(card.entityId())) {
