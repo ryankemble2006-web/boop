@@ -49,6 +49,22 @@ class WallChatModeSourceTests(unittest.TestCase):
         self.assertLess(no_match_index, assistant_index)
         self.assertIn("processWithAssistant", router)
 
+    def test_native_chat_failures_use_short_non_house_speech(self):
+        reply = self.read("source/LocalReply.java")
+        expected = {
+            "ASSISTANT_SETUP_REQUIRED": "Chat mode needs setting up first.",
+            "ASSISTANT_AUTH_REQUIRED": "Chat mode needs reconnecting.",
+            "ASSISTANT_QUOTA": "Chat mode has no allowance left right now.",
+            "ASSISTANT_RATE_LIMIT": "Chat is busy. Try again in a moment.",
+            "ASSISTANT_TIMEOUT": "Chat took too long to answer.",
+            "ASSISTANT_SERVICE": "I can't reach chat right now.",
+        }
+        for status, speech in expected.items():
+            self.assertIn(f"case {status}:", reply)
+            self.assertIn(f'return "{speech}";', reply)
+        relay_section = reply[reply.index("case ASSISTANT_SETUP_REQUIRED:"):reply.index("case ASSISTANT_FAILED:")]
+        self.assertNotIn("house", relay_section.lower())
+
     def test_relay_sources_do_not_embed_provider_credentials(self):
         combined = "\n".join(
             self.read(path)
