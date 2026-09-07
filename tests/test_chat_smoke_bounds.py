@@ -78,5 +78,29 @@ class ImmersiveTutorialTest(unittest.TestCase):
                 adb.assert_not_called()
 
 
+class HierarchyReadinessTest(unittest.TestCase):
+    def test_missing_dump_after_restart_retries_a_fresh_dump(self):
+        import subprocess
+        missing = subprocess.CalledProcessError(1, ['adb', 'shell', 'cat', smoke.DUMP], stderr='No such file')
+        xml = '<?xml version="1.0"?><hierarchy><node text="ready" /></hierarchy>'
+        with patch.object(smoke, 'adb', side_effect=['', 'ERROR: could not get idle state', missing, '', 'dumped', xml]) as adb, patch.object(smoke.time, 'sleep'):
+            root = smoke.hierarchy('restart')
+            self.assertTrue(smoke.has_text(root, 'ready'))
+            self.assertEqual(2, sum(call.args == ('shell', 'rm', '-f', smoke.DUMP) for call in adb.call_args_list))
+
+    def test_dump_failure_is_bounded_and_never_a_pass(self):
+        import subprocess
+        failure = subprocess.CalledProcessError(1, ['adb', 'shell', 'cat', smoke.DUMP], stderr='No such file')
+        with patch.object(smoke, 'adb', side_effect=['', 'no idle', failure] * 4) as adb, patch.object(smoke.time, 'sleep'):
+            with self.assertRaises(subprocess.CalledProcessError):
+                smoke.hierarchy('failed')
+            self.assertEqual(12, adb.call_count)
+
+    def test_retries_malformed_dump_but_returns_only_valid_current_xml(self):
+        xml = '<?xml version="1.0"?><hierarchy><node text="current" /></hierarchy>'
+        with patch.object(smoke, 'adb', side_effect=['', 'dumped', '<invalid', '', 'dumped', xml]), patch.object(smoke.time, 'sleep'):
+            self.assertTrue(smoke.has_text(smoke.hierarchy('current'), 'current'))
+
+
 if __name__ == '__main__':
     unittest.main()

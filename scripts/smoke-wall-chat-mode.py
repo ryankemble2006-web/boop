@@ -15,13 +15,22 @@ def adb(*args):
 
 
 def hierarchy(label='screen'):
-    # A failed dump must not let the next assertion inspect a stale screen.
-    adb('shell', 'rm', '-f', DUMP)
-    adb('shell', 'uiautomator', 'dump', DUMP)
-    text = adb('shell', 'cat', DUMP)
-    root = ET.fromstring(text[text.index('<?xml'):])
-    print('BOOP_CHAT_UI_' + label + ': ' + ET.tostring(root, encoding='unicode'), flush=True)
-    return root
+    # UIAutomator can exit successfully without a file while a freshly restarted
+    # Activity is settling. Retry only capture failures, never UI assertions.
+    for attempt in range(4):
+        try:
+            adb('shell', 'rm', '-f', DUMP)
+            report = adb('shell', 'uiautomator', 'dump', DUMP)
+            text = adb('shell', 'cat', DUMP)
+            root = ET.fromstring(text[text.index('<?xml'):])
+            print('BOOP_CHAT_UI_' + label + ': ' + ET.tostring(root, encoding='unicode'), flush=True)
+            return root
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ET.ParseError, ValueError) as error:
+            print(f'BOOP_CHAT_CAPTURE_RETRY {attempt + 1}/4 {label}: {type(error).__name__}', flush=True)
+            if attempt == 3:
+                raise
+            time.sleep(0.75)
+    raise AssertionError('Unreachable capture state')
 
 
 def has_text(root, text):
