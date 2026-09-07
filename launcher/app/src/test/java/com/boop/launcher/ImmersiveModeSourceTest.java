@@ -22,6 +22,11 @@ public class ImmersiveModeSourceTest {
   assertTrue("edge swipe must temporarily reveal system bars",s.contains("BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE"));
  }
 
+ @Test public void launcherForcesFullscreenStatusBarWindow() throws Exception {
+  String s=source("EdgeToEdge.java");
+  assertTrue("Pixel HOME must force the status bar off at window level",s.contains("WindowManager.LayoutParams.FLAG_FULLSCREEN"));
+ }
+
  @Test public void drawerKeepsScrollableContentOutOfItsPadding() throws Exception {
   String s=source("AllAppsView.java");
   assertTrue("drawer must scroll behind its own safe bottom padding",s.contains("grid.setClipToPadding(false)"));
