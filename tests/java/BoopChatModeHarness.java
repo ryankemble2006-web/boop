@@ -1,5 +1,13 @@
 package com.boop.alpha1;
 
+final class HomeAssistantClient {
+    CommandOutcome process(String text) { return CommandOutcome.noMatch(); }
+}
+
+final class HomeAssistantGeneralAssistantClient {
+    CommandOutcome ask(String text) { return CommandOutcome.assistantFailed(); }
+}
+
 public final class BoopChatModeHarness {
     private static int checks;
     private static void check(boolean value, String message) {
