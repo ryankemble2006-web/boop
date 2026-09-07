@@ -10,7 +10,7 @@ The user is physically running BOOP Wall `0.4.14-wall-native-chat` / versionCode
 
 This branch starts from the exact v34 Native Chat / Free Chat Wall head `e10df1cc27d5522fa33fe6722d0d70f817f16289`, then adds the eye hue control while preserving the current ChatGPT/Native Chat relay, browser/free-chat mode, idle blink work and caller-owned Wall -> Launcher transition. The protected physical Wall checkpoint remains unchanged.
 
-A concurrent session added the same hue concept directly into `boop-wall-free-chat-wip` at `36e31998219c518e96730ff54e96b8e4fdf5b680`. That work was not discarded or blindly merged. This branch records it as a second parent via reconciliation commit `59aba586367b1e567698d22fde6282d93abb4708`; the selected tree keeps the hue implementation isolated into source helpers plus a materialization patch for clearer testing and later reconciliation.
+A concurrent session added the same hue concept directly into `boop-wall-free-chat-wip` at `36e31998219c518e96730ff54e96b8e4fdf5b680`. That work was not discarded or blindly merged. The combined candidate reconciles it in branch ancestry; the selected tree keeps the hue implementation isolated into source helpers plus a materialization patch for clearer testing and later maintenance.
 
 ## Eye hue implementation
 
