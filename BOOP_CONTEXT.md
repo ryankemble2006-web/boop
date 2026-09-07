@@ -72,6 +72,35 @@ v34 labels alone prove nothing. The isolated branch's SESSION_HANDOFF.md and
 BOOP_STATUS.md own its current CI/runtime evidence. Preserve accepted checkpoints;
 no physical or end-to-end deployment acceptance is implied by this shared map.
 
+## Unified BOOP direction and release discipline, approved 2026-09-07
+
+After the current puppet update is finished, Ryan wants Wall, Launcher and Shield
+merged from their absolute latest live GitHub heads into one canonical BOOP app/APK
+that selects the correct body/profile for the installed device. Do not start that
+merge from remembered APK filenames, stale local folders or older checkpoints.
+Fetch and reconcile the live heads at merge time.
+
+The target release model is intentionally boring and auditable:
+- one canonical BOOP APK/package lineage after unification;
+- one intentional functional change per update whenever practical;
+- every physically accepted build records the exact Git commit/tag, workflow run,
+  signed artifact and physical result;
+- if a new build breaks, rollback uses the last physically accepted Git
+  checkpoint/artifact, never a guessed filename or merely the last numerically
+  higher version;
+- GitHub history/artifacts are the archive. Local deployment folders are working
+  surfaces only;
+- after a replacement build is physically accepted, local deployment storage
+  should contain only the current signed APK and, if desired, one clearly named
+  last-good APK. Superseded random build files should be removed rather than kept
+  as an informal backup system;
+- prefer a stable deployment name such as `BOOP.apk`; provenance belongs in Git,
+  not in an accumulating sequence of ambiguous filenames.
+
+Until unification is complete, existing Wall/Launcher/Shield package identities
+and branch ownership remain in force. This direction does not authorize silently
+merging the apps early or discarding accepted checkpoints.
+
 ## Current evidence, not a blanket release claim
 
 - Shield Home and Routines: protected physically verified functional checkpoints
