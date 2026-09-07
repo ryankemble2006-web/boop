@@ -1,39 +1,29 @@
-name: Transfer reviewed Wall relay commits
+name: Read-only relay commit receipt
 on:
   push:
     branches: [boop-relay-source-7aa871f]
 permissions:
-  contents: write
+  contents: read
 jobs:
-  transfer:
+  receipt:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 7aa871f70d620093e1e2e176df13820b1fd51964
-          fetch-depth: 0
-      - name: Reconstruct only the reviewed source patch and verify its exact Git identity
-        env:
-          GH_TOKEN: ${{ github.token }}
+          ref: 59554c143c7237dda1534bb5f5d7fec3a4d19cdd
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Export public commit metadata only
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = 7aa871f70d620093e1e2e176df13820b1fd51964
-          FILE="${RUNNER_TEMP}/reviewed.patch.gz"
-          : > "$FILE"
-          for blob in 8e33a6416a991f3807390924fc1276d9c075f09c 37f80013979559210be3851896f1bc44e7df7857 f5ccd1261120fe85284ddfdca4bd9c237120e02a f498bc32b33b5d595910fccd72e3118f718a1aa4; do
-            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${blob}" --jq .content | base64 --decode >> "$FILE"
-          done
-          test "$(wc -c < "$FILE")" -eq 24394
-          printf '4c94b458bd4cdbf366436c0b36c7adface7a0355c747bfa06bbd75be7077d936  %s\n' "$FILE" | sha256sum --check
-          gzip -dc "$FILE" > "${RUNNER_TEMP}/reviewed.patch"
-          git config user.name 'BOOP development'
-          git config user.email 'boop@users.noreply.github.com'
-          git am --committer-date-is-author-date "${RUNNER_TEMP}/reviewed.patch"
-          test "$(git rev-parse HEAD)" = b3bc1768f9563a4a149b9a04c3a096c271f748ba
-          test "$(git rev-parse 'HEAD^{tree}')" = 446a50e22429c1169cfac42ecc63f7e2f3a48dae
-          git diff --check 7aa871f70d620093e1e2e176df13820b1fd51964 HEAD
-          git push origin HEAD:refs/heads/boop-relay-reviewed-v34
-          printf 'REVIEWED_HEAD=%s\n' "$(git rev-parse HEAD)"
-          printf 'REVIEWED_TREE=%s\n' "$(git rev-parse 'HEAD^{tree}')"
+          test "$(git rev-parse HEAD)" = 59554c143c7237dda1534bb5f5d7fec3a4d19cdd
+          git cat-file commit HEAD > "${RUNNER_TEMP}/relay-commit.raw"
+          test "$(git hash-object -t commit "${RUNNER_TEMP}/relay-commit.raw")" = 59554c143c7237dda1534bb5f5d7fec3a4d19cdd
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-relay-public-commit-receipt
+          path: ${{ runner.temp }}/relay-commit.raw
+          retention-days: 1
+          if-no-files-found: error
