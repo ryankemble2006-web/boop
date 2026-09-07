@@ -28,10 +28,13 @@ class ContractTest(unittest.TestCase):
         self.assertNotIn('/system/xbin/su', text)
         self.assertIn('Process.myUid()', text)
 
-    def test_read_only_manifest_and_tv_entry(self):
+    def test_manifest_permissions_and_tv_entry(self):
         manifest = ET.parse(ROOT / 'app/src/main/AndroidManifest.xml').getroot()
         permissions = {p.get(ANDROID + 'name') for p in manifest.findall('uses-permission')}
-        self.assertEqual({'android.permission.ACCESS_NETWORK_STATE'}, permissions)
+        self.assertEqual({
+            'android.permission.ACCESS_NETWORK_STATE',
+            'android.permission.SYSTEM_ALERT_WINDOW',
+        }, permissions)
         app = manifest.find('application')
         self.assertEqual([], app.findall('service'))
         self.assertEqual([], app.findall('receiver'))
