@@ -108,8 +108,11 @@ class WallResurrectionContractTest(unittest.TestCase):
 
     def test_resurrection_build_identity_is_monotonic(self):
         gradle = (ROOT / "source/app-build.gradle").read_text(encoding="utf-8")
-        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+30\s*$")
-        self.assertRegex(gradle, r'(?m)^\s*versionName\s+"0\.4\.10-wall-launcher-swipe"\s*$')
+        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+(?:30|31)\s*$")
+        self.assertRegex(
+            gradle,
+            r'(?m)^\s*versionName\s+"(?:0\.4\.10-wall-launcher-swipe|0\.4\.11-wall-eye-hue)"\s*$',
+        )
 
 
 if __name__ == "__main__":
