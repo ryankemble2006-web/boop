@@ -44,3 +44,19 @@ v0.1 is read-only diagnostics, not an optimisation release. ADB setup/helper and
 Physical NVIDIA Shield acceptance is pending. The next safe step is the real-device checklist in `MEMORY.md`: launcher visibility, remote scan/detail/navigation, genuine exposed CPU/thermal sources, leaving and reopening the app, and normal sleep/media/BOOP behaviour. Record Ryan's physical result against the exact APK and source receipt, not just the latest filename.
 
 The existing GitHub `BOOP_DEV_KEYSTORE_B64`, `BOOP_DEV_STORE_PASSWORD`, `BOOP_DEV_KEY_PASSWORD` secrets and alias `boop-dev` are used inside the runner. Private signing material is never published; temporary key material is removed after assembly. No relay or other BOOP credentials are used.
+
+## Direct APK publication, 2026-09-07
+
+Delivery is now available without unpacking the Actions bundle:
+
+- Direct APK: https://github.com/ryankemble2006-web/boop/releases/download/shield-turbo-v0.1.0/SHIELD-TURBO-v0.1.0.apk
+- Prerelease: https://github.com/ryankemble2006-web/boop/releases/tag/shield-turbo-v0.1.0
+- Release ID `384094141`; APK asset ID `548800195`; APK size `2142650` bytes.
+- Publication workflow `.github/workflows/shield-turbo-publish-v01.yml` added at `cbfd286427fa164f20d0ff0d97af19e69a20722a`.
+- Publication run `34125252347` completed successfully. It validated the successful source run, pinned source SHA, original artifact ID/digest and exact APK checksum before publishing the existing bytes. It did not rebuild, re-sign, access signing secrets or deploy to a physical device.
+- GitHub's uploaded APK asset digest was fetched after publication and equals the original APK SHA-256 `b203358f8babc094c274096ec9852dd4015769bafb168ecfd8486307d4dad24f`.
+- `SHA256SUMS.txt` and sanitized `BUILD-RECEIPT.txt` accompany the APK. No diagnostic dumps, signing material or unrelated assets were published by this step.
+
+The new tag targets the exact built source `7bb3bf8fce1910f20165b3a7649a70a634528dab`. Publication uses a separate prerelease with `--latest=false`; it neither repoints an old checkpoint nor replaces BOOP's latest stable release. The publisher refuses to overwrite an existing release/tag. Do not rerun it to modify this checkpoint.
+
+Current application source and build verification remain the receipt above. Only delivery workflow and documentation changed in this publication pass. Concurrent documentation commits were preserved. Physical acceptance is still pending.
