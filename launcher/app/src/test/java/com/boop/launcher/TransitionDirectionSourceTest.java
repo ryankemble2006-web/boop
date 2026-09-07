@@ -11,7 +11,7 @@ public class TransitionDirectionSourceTest {
   throw new AssertionError("Could not locate expected launcher file");
  }
 
- @Test public void crossAppHandoffUsesBlackWindowAndNoSystemSlide() throws Exception {
+ @Test public void crossAppHandoffUsesBlackSafeDissolveWithoutSystemSlide() throws Exception {
   String main=read(
    Paths.get("src/main/java/com/boop/launcher/MainActivity.java"),
    Paths.get("app/src/main/java/com/boop/launcher/MainActivity.java"),
@@ -28,15 +28,33 @@ public class TransitionDirectionSourceTest {
    Paths.get("src/main/res/values-v31/styles.xml"),
    Paths.get("app/src/main/res/values-v31/styles.xml"),
    Paths.get("launcher/app/src/main/res/values-v31/styles.xml"));
+  String wallFade=read(
+   Paths.get("src/main/res/anim/boop_wall_fade_in.xml"),
+   Paths.get("app/src/main/res/anim/boop_wall_fade_in.xml"),
+   Paths.get("launcher/app/src/main/res/anim/boop_wall_fade_in.xml"));
+  String blackHold=read(
+   Paths.get("src/main/res/anim/boop_hold_black.xml"),
+   Paths.get("app/src/main/res/anim/boop_hold_black.xml"),
+   Paths.get("launcher/app/src/main/res/anim/boop_hold_black.xml"));
 
   assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_OPEN,0,0)"));
   assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE,0,0)"));
-  assertTrue(main.contains("Intent.FLAG_ACTIVITY_NO_ANIMATION"));
-  assertTrue(main.contains("overridePendingTransition(0,0)"));
-  assertTrue(main.contains("root.animate().alpha(0f).setDuration(110)"));
-  assertTrue(main.contains("root.animate().alpha(1f).setDuration(140)"));
+  assertFalse(main.contains("Intent.FLAG_ACTIVITY_NO_ANIMATION"));
+  assertFalse(main.contains("overridePendingTransition(0,0)"));
+  assertTrue(main.contains("ActivityOptions.makeCustomAnimation(this,R.anim.boop_wall_fade_in,R.anim.boop_hold_black)"));
+  assertTrue(main.contains("root.animate().alpha(0f).setDuration(120)"));
+  assertTrue(main.contains("root.animate().alpha(1f).setDuration(180)"));
   assertFalse(main.contains("R.anim.boop_enter_from_"));
   assertFalse(main.contains("R.anim.boop_exit_to_"));
+
+  assertTrue(wallFade.contains("android:fromAlpha=\"0.0\""));
+  assertTrue(wallFade.contains("android:toAlpha=\"1.0\""));
+  assertTrue(wallFade.contains("android:duration=\"190\""));
+  assertFalse(wallFade.contains("translate"));
+  assertTrue(blackHold.contains("android:fromAlpha=\"1.0\""));
+  assertTrue(blackHold.contains("android:toAlpha=\"1.0\""));
+  assertTrue(blackHold.contains("android:duration=\"190\""));
+  assertFalse(blackHold.contains("translate"));
 
   assertTrue(manifest.contains("android:theme=\"@style/Theme.BoopLauncher\""));
   assertTrue(styles.contains("<item name=\"android:windowBackground\">@android:color/black</item>"));
