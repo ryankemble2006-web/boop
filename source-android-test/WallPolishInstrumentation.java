@@ -35,6 +35,8 @@ public final class WallPolishInstrumentation extends Instrumentation {
                     || android.os.Build.MODEL.contains("sdk"), "Disposable emulator required");
             evidence = new File(getTargetContext().getExternalFilesDir(null), "wall-polish-evidence");
             check(evidence.mkdirs() || evidence.isDirectory(), "Evidence folder unavailable");
+            // Initialize screenshot/accessibility transport before a short-lived notice.
+            getUiAutomation();
             activity = (MainActivity) startActivitySync(new Intent(getTargetContext(), MainActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             waitForIdleSync();
@@ -98,8 +100,14 @@ public final class WallPolishInstrumentation extends Instrumentation {
             message.show();
         });
         check(shown.await(6, TimeUnit.SECONDS), "System did not show " + name);
-        SystemClock.sleep(750);
-        save(getUiAutomation().takeScreenshot(), name);
+        long shownAt = SystemClock.uptimeMillis();
+        for (int capture = 0; capture < 3; capture++) {
+            if (capture > 0) SystemClock.sleep(200);
+            String suffix = capture == 0 ? name : name.replace(".png", "-" + capture + ".png");
+            save(getUiAutomation().takeScreenshot(), suffix);
+            System.out.println("NOTICE_CAPTURE " + suffix + " elapsed="
+                    + (SystemClock.uptimeMillis() - shownAt));
+        }
         check(hidden.await(6, TimeUnit.SECONDS), "System did not finish " + name);
     }
 
@@ -120,15 +128,7 @@ public final class WallPolishInstrumentation extends Instrumentation {
                 return null;
             });
         }
-        boolean closed = false;
-        long firstDeadline = wakeAt + 8500;
-        while (SystemClock.uptimeMillis() < firstDeadline) {
-            if (onMain(() -> (Float) get(face, "idleBlinkOpenness")) < 0.15f) {
-                saveFace(face, "eyes-blink-portrait.png"); closed = true; break;
-            }
-            SystemClock.sleep(12);
-        }
-        check(closed, "No actual idle blink within its bounded interval");
+        captureNaturalBlink(face, "eyes-blink-portrait.png");
         SystemClock.sleep(350);
         check(onMain(() -> (Float) get(face, "idleBlinkOpenness")) == 1f, "Eyes did not reopen");
         // Deliberately do not call any interaction method again. Blinks must not
@@ -150,21 +150,50 @@ public final class WallPolishInstrumentation extends Instrumentation {
         BoopFaceView face = (BoopFaceView) onMain(() -> get(activity, "face"));
         check(onMain(() -> face.getWidth() > face.getHeight()), "Landscape was not applied");
         saveFace(face, "eyes-open-landscape.png");
-        // Trigger only the private visual callback, never the microphone or network.
-        onMain(() -> { invoke(face, "runIdleBlink"); return null; });
-        boolean closed = false;
-        long deadline = SystemClock.uptimeMillis() + 500;
-        while (SystemClock.uptimeMillis() < deadline) {
-            if (onMain(() -> (Float) get(face, "idleBlinkOpenness")) < 0.15f) {
-                saveFace(face, "eyes-blink-landscape.png"); closed = true; break;
-            }
-            SystemClock.sleep(10);
-        }
-        check(closed, "Landscape blink did not render");
+        check(onMain(() -> (Boolean) invoke(face, "canIdleBlink")),
+                "Landscape face is not awake/foreground/settled: " + blinkDiagnostic(face));
+        captureNaturalBlink(face, "eyes-blink-landscape.png");
         getTargetContext().startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         SystemClock.sleep(500);
         check(onMain(() -> get(face, "idleBlinkAnimator")) == null, "Off-screen blink remains active");
         check(!onMain(() -> face.getHandler().hasCallbacks((Runnable) get(face, "idleBlinkRunnable"))), "Off-screen blink callback remains queued");
+    }
+
+    private String blinkDiagnostic(BoopFaceView face) throws Exception {
+        return onMain(() -> "awake=" + get(face, "awakeForBlink")
+                + ", focused=" + face.hasWindowFocus() + ", attached=" + face.isAttachedToWindow()
+                + ", alpha=" + face.getAlpha() + ", foreground=" + get(activity, "activityInForeground")
+                + ", thinking=" + get(activity, "thinking") + ", listening=" + get(activity, "listening"));
+    }
+
+    private void captureNaturalBlink(BoopFaceView face, String name) throws Exception {
+        int[] size = onMain(() -> new int[]{face.getWidth(), face.getHeight()});
+        Bitmap image = Bitmap.createBitmap(size[0], size[1], Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(image);
+        CountDownLatch captured = new CountDownLatch(1);
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        // Observe the actual drawing frame. Sampling a 220ms animation and then
+        // posting a second screenshot task can miss the entire closed frame.
+        android.view.ViewTreeObserver.OnPreDrawListener observer = () -> {
+            if (captured.getCount() == 0) return true;
+            try {
+                if ((Float) get(face, "idleBlinkOpenness") < 0.15f) {
+                    face.draw(canvas);
+                    captured.countDown();
+                }
+            } catch (Throwable error) { failure.set(error); captured.countDown(); }
+            return true;
+        };
+        onMain(() -> { face.getViewTreeObserver().addOnPreDrawListener(observer); return null; });
+        boolean observed;
+        try { observed = captured.await(8500, TimeUnit.MILLISECONDS); }
+        finally { onMain(() -> { face.getViewTreeObserver().removeOnPreDrawListener(observer); return null; }); }
+        if (failure.get() != null) { image.recycle(); throw new Exception(failure.get()); }
+        if (!observed) {
+            image.recycle();
+            throw new AssertionError("No actual natural blink frame: " + name + "; " + blinkDiagnostic(face));
+        }
+        save(image, name);
     }
 
     private void saveFace(BoopFaceView face, String name) throws Exception {
