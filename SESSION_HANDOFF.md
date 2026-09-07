@@ -5,45 +5,68 @@ Project: `launcher/`; package remains `com.boop.launcher`.
 
 ## Current state
 
-Ryan rejected the Alpha 1 visual/interaction direction as old-fashioned and approved a clean-sheet replacement inspired by the current Pixel Launcher experience without copying Google proprietary code or assets.
+Ryan rejected the Alpha 1 visual/interaction direction as old-fashioned and approved a clean-sheet replacement inspired by current Pixel Launcher interaction patterns without copying Google proprietary code or assets.
 
-The old Alpha 1 branch is preserved only as a historical escape hatch. Do not use its UI architecture as Alpha 2's foundation merely to save effort.
+Alpha 1 remains preserved on `boop-launcher-alpha1` only as a historical escape hatch. Do not reuse its monolithic UI architecture merely to save effort.
 
-A written Alpha 2 design is committed at:
-
+Approved design:
 `docs/superpowers/specs/2026-09-07-boop-launcher-alpha2-design.md`
 
-Design commit: `fc8b3b010f194640f0935b3cf57e125ba27a360e`.
+Implementation plan:
+`docs/superpowers/plans/2026-09-07-boop-launcher-alpha2.md`
 
-No Alpha 2 application code has been changed yet. The written-spec review gate is the next required step before implementation planning/code.
+## First signed Alpha 2 physical-feel baseline
 
-## Locked Alpha 2 direction
+Current tested application source: `844301bfe264a52b202787e8224fb43452dd3ff6`.
 
-- Pure black edge-to-edge home canvas.
-- No permanent clock, At a Glance, Google search pill, dock/hotseat, plus button or decorative page furniture.
-- Native installed-app icons; restrained Pixel-like spacing and motion.
-- Swipe-up app drawer with Pixel-like finger tracking and transitions.
-- Drawer stays minimal and black; search is on demand only, not a permanent field.
-- HOME role, local app enumeration/search, app placement/move/remove, widgets and persistence are first-build fundamentals.
-- BOOP-specific return-strip/voice flourishes are deferred until the basic launcher physically feels right.
-- Existing permanent BOOP GitHub signing identity must remain unchanged.
-- Package stays `com.boop.launcher`; target API 36.
-- No Internet or microphone permission for launcher fundamentals.
-- AOSP Launcher3 Android 16 is the preferred public technical reference/base under Apache 2.0. Lawnchair may be inspected but its GPL code is not to be imported without a later explicit decision.
-- Pixel Launcher proprietary APK/source/resources are reference-only and must not be published into BOOP.
+GitHub Actions run `34077665229` completed successfully. Unit tests, Android lint, release assemble and the permanent BOOP signing step all passed. Signed artifact `BOOP-Launcher-Alpha2-signed`, artifact ID `10002643933`, contains `BOOP-Launcher-Alpha2.apk` plus package/signature/hash receipts.
 
-## Verification philosophy
+APK SHA-256:
+`89a5cd50f97dd87e513d86d79bfae71b5f962d86f760190c57527a92fd289b96`
 
-Automated checks should protect correctness, not pretend to prove feel. CI should compile/sign, test placement/search/widget cancellation, exercise HOME/drawer/app launch/persistence, scan for AndroidRuntime crashes and guard drag-stream regressions.
+Package receipt:
+- package `com.boop.launcher`
+- versionCode `3`
+- versionName `0.2.0`
+- minSdk `29`
+- targetSdk / compileSdk `36`
 
-Ryan's Pixel 10 Pro XL is the authority for physical acceptance of motion, spacing and whether the launcher actually feels modern. Screenshots/emulators do not count as proof of animation quality.
+Signature receipt:
+- one signer
+- APK Signature Scheme v2 verifies
+- BOOP signer certificate SHA-256 `c0f4549b7d367f7823a76ef32468f5ef7695e3a3380b2145d5a94ff3b1aa9e61`
 
-## Historical Alpha 1 evidence
+This is CI-green only. It has not yet been installed or physically accepted on Ryan's Pixel 10 Pro XL. Do not promote Alpha 2 over Alpha 1 in the shared main app map until physical acceptance.
 
-Alpha 1.1 remains preserved on `boop-launcher-alpha1` at handoff commit `ca057eb8eb7f218cc3e67b19f3b98a5cc0b7e138`. Its last tested source was `41f250d4ca0c791df7a83dd1c083aba7840670b7`, with signed build/lint/unit/emulator verification in run 34062128943. This evidence is historical and must not be misrepresented as Alpha 2 verification.
+## What changed from Alpha 1
+
+Alpha 2 replaces the old single-Activity/editor-heavy interaction structure with smaller launcher units for state, edge-to-edge window setup, app enumeration, local search, workspace persistence, app placement/drag and widget-host plumbing.
+
+The baseline deliberately removes Alpha 1 furniture and permissions that are not needed for the clean Home experience: no permanent clock, At a Glance, Google search pill, dock/hotseat, introduction/editor mode, BOOP return-strip overlay, foreground service, Internet permission or microphone permission.
+
+Home is pure black and edge-to-edge. Swipe up on empty Home opens All Apps. Native installed icons/labels are shown. Tap launches; hold from All Apps pins to Home. Search appears only when intentionally opened. Placed apps persist, launch on tap, can be picked up after a hold, moved, or removed by releasing in the top band. Alpha 1 workspace preferences are intentionally discarded once on first Alpha 2 start rather than carrying its old schema forward.
+
+Back behavior is explicit: Search -> All Apps -> Home. Android 13+ uses predictive-back registration; older Android keeps the legacy fallback.
+
+## Known incomplete areas
+
+Do not overstate this baseline:
+
+1. Drawer motion is not yet Launcher3-quality direct-finger spring physics. The current threshold/settle transition exists so Ryan can install and judge the overall direction; Pixel 10 Pro XL feel is the authority for the next motion pass.
+2. Widget host selection/configuration plumbing exists and cleans cancelled IDs, but widget views are not yet rendered/movable/resizable on the Alpha 2 workspace. Widget support is therefore incomplete.
+3. Dynamic multi-page workspace behavior from the approved full Alpha 2 design is not complete in this baseline.
+4. No physical checks yet for icon scale, drawer motion, search discoverability, app move/remove, gesture-navigation visual blending, rotation/process death or real widget flows.
+
+## Next physical step
+
+Install `BOOP-Launcher-Alpha2.apk` over the existing `com.boop.launcher` package. Because the GitHub workflow uses the existing permanent BOOP signing identity, this should be an update rather than a side-load identity change.
+
+On Pixel 10 Pro XL, first judge only the fundamentals: empty pure-black Home, absence of permanent furniture, swipe-up to All Apps, native icon scale/spacing, contextual search, hold-to-pin, app move/remove, Home/Back and the bottom gesture area blending into black. Record anything that feels old-fashioned or awkward as a bug/feel list rather than tuning from emulator screenshots.
+
+After that physical baseline, prioritize true Launcher3-grade drawer/finger physics and fix any blocking interaction issues before finishing widgets/pages or reintroducing BOOP-specific flourishes.
 
 ## Cross-app boundaries
 
 Wall remains `com.boop.alpha1`; Launcher remains `com.boop.launcher`; Shield remains `com.boop.shieldoverlay`. Keep the apps independent. Main owns shared cross-project contracts; this branch owns Launcher implementation state.
 
-Before material Alpha 2 implementation/publishing, fetch/recheck live main and this branch, preserve concurrent work, use the existing release signing workflow, run appropriate checks, commit reviewed changes, push, and verify live GitHub HEAD.
+Before further edits, fetch/recheck live main and `boop-launcher-alpha2`, preserve concurrent work, use the existing release signing workflow, run appropriate checks, commit reviewed changes, push, and verify live GitHub HEAD. CI-green, signed, physically installed and physically accepted are separate states.
