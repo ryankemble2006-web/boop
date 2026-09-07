@@ -1,0 +1,101 @@
+name: Publish verified SHIELD TURBO v0.1
+
+# Delivery only: no rebuild, no signing secrets, no physical device access.
+on:
+  push:
+    branches: [ "shield-turbo-v01" ]
+    paths: [ ".github/workflows/shield-turbo-publish-v01.yml" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: shield-turbo-publish-v01
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/shield-turbo-v01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    env:
+      REPO: ryankemble2006-web/boop
+      SOURCE_RUN: '34124583278'
+      SOURCE_SHA: '7bb3bf8fce1910f20165b3a7649a70a634528dab'
+      APK_SHA256: 'b203358f8babc094c274096ec9852dd4015769bafb168ecfd8486307d4dad24f'
+      CERT_SHA256: 'f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde'
+      RELEASE_TAG: shield-turbo-v0.1.0
+    steps:
+      - name: Require the exact successful source run and artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$REPO/actions/runs/$SOURCE_RUN" --jq '.conclusion')" = success
+          test "$(gh api "repos/$REPO/actions/runs/$SOURCE_RUN" --jq '.head_sha')" = "$SOURCE_SHA"
+          test "$(gh api "repos/$REPO/actions/runs/$SOURCE_RUN" --jq '.path')" = .github/workflows/shield-turbo.yml
+          test "$(gh api "repos/$REPO/actions/artifacts/10019673866" --jq '.workflow_run.head_sha')" = "$SOURCE_SHA"
+          test "$(gh api "repos/$REPO/actions/artifacts/10019673866" --jq '.expired')" = false
+          test "$(gh api "repos/$REPO/actions/artifacts/10019673866" --jq '.digest')" = sha256:b963906192f9d12e907835f7496e24cfe8c6a2d717dc8489d011bcbf9c1501b2
+      - name: Download only the verified candidate artifact
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: '10019673866'
+          merge-multiple: true
+          path: candidate
+          repository: ryankemble2006-web/boop
+          run-id: '34124583278'
+          github-token: ${{ github.token }}
+      - name: Validate exact APK bytes and stage delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=candidate/shield-turbo/app/build/outputs/apk/release/app-release.apk
+          test -f "$APK"
+          test ! -L "$APK"
+          printf '%s  %s\n' "$APK_SHA256" "$APK" | sha256sum --check
+          test "$(tr -d '\r\n' < candidate/shield-turbo-built-commit.txt)" = "$SOURCE_SHA"
+          grep -q "package: name='com.boop.shieldturbo'" candidate/shield-turbo-badging.txt
+          grep -q "versionName='0.1.0'" candidate/shield-turbo-badging.txt
+          grep -q "Signer #1 certificate SHA-256 digest: $CERT_SHA256" candidate/shield-turbo-signer.txt
+          unzip -tq "$APK"
+          mkdir delivery
+          cp "$APK" delivery/SHIELD-TURBO-v0.1.0.apk
+          (cd delivery && sha256sum SHIELD-TURBO-v0.1.0.apk > SHA256SUMS.txt)
+          printf 'Source commit: %s\nSource run: %s\nArtifact ID: 10019673866\nAPK SHA-256: %s\nSigner certificate SHA-256: %s\n' "$SOURCE_SHA" "$SOURCE_RUN" "$APK_SHA256" "$CERT_SHA256" > delivery/BUILD-RECEIPT.txt
+          printf '%s\n' 'Verification: 15 Kotlin tests, 4 safety guards, lint (0 errors, 6 warnings), signed release assembly and API 30 emulator analysis/D-pad/relaunch checks passed.' 'Physical NVIDIA Shield acceptance: PENDING.' 'v0.1 is read-only diagnostics. ADB setup/helper and performance-changing actions are not implemented.' 'This is the exact previously tested APK, not a rebuilt or re-signed variant.' >> delivery/BUILD-RECEIPT.txt
+      - name: Publish independent prerelease without replacing BOOP latest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<'NOTES'
+          ## SHIELD TURBO v0.1.0: read-only diagnostic candidate
+
+          Download **SHIELD-TURBO-v0.1.0.apk** below. It installs as `com.boop.shieldturbo`, independently of BOOP.
+
+          This is the exact signed APK tested in Actions run 34124583278, built from 7bb3bf8fce1910f20165b3a7649a70a634528dab. It uses the existing BOOP development signer. No new signing key, rebuild or device installation is performed by this publication.
+
+          Verified: 15 Kotlin unit tests, four source safety guards, Android lint (zero errors, six warnings), release package/signature/archive checks, and installed-release analysis/D-pad/relaunch checks in an API 30 handheld-profile emulator.
+
+          **Physical NVIDIA Shield testing is still required.** This release reports telemetry; it does not yet implement one-time ADB setup, overclocking, cleaning, app stopping or other performance changes. It makes no measured power-saving or speed-up claim.
+
+          The checksum and sanitized build receipt are attached. This prerelease does not replace any BOOP release or the repository's latest stable release.
+          NOTES
+          if gh release view "$RELEASE_TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo 'Release already exists. Refusing to overwrite its tag or assets.'
+            exit 1
+          fi
+          if gh api "repos/$REPO/git/ref/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'Tag already exists. Refusing to repoint a checkpoint.'
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" delivery/SHIELD-TURBO-v0.1.0.apk delivery/SHA256SUMS.txt delivery/BUILD-RECEIPT.txt --repo "$REPO" --target "$SOURCE_SHA" --title 'SHIELD TURBO v0.1.0 diagnostic candidate' --notes-file release-notes.md --prerelease --latest=false
+          gh release view "$RELEASE_TAG" --repo "$REPO" --json url,tagName,isPrerelease,assets
