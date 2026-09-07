@@ -35,18 +35,29 @@ jobs:
           python-version: '3.12'
 
       - name: Verify pinned source heads and unified shell
-        shell: bash
         run: |
-          set -euo pipefail
-          grep -q 'a28364f98fba1b3a5dbab7e66075c0fb166e08e3' unified/SOURCE_HEADS.md
-          grep -q '953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2' unified/SOURCE_HEADS.md
-          grep -q '1a487a4aaecd098d6854905ee64d60253ad6b4b7' unified/SOURCE_HEADS.md
-          grep -q 'versionCode 41' unified/app-build.gradle
-          grep -q 'versionName "1.0.0-unified-alpha1"' unified/app-build.gradle
-          grep -q 'Pixel 7 Pro' unified/BoopDeviceProfile.java
-          grep -q 'Mode.SHIELD' unified/UnifiedEntryActivity.java
-          grep -q 'com.boop.launcher.MainActivity' unified/UnifiedEntryActivity.java
-          grep -q 'com.boop.shieldoverlay.MainActivity' unified/UnifiedEntryActivity.java
+          python - <<'PY'
+          from pathlib import Path
+          heads = Path('unified/SOURCE_HEADS.md').read_text()
+          build = Path('unified/app-build.gradle').read_text()
+          profile = Path('unified/BoopDeviceProfile.java').read_text()
+          entry = Path('unified/UnifiedEntryActivity.java').read_text()
+          required = [
+              ('Wall head', 'a28364f98fba1b3a5dbab7e66075c0fb166e08e3', heads),
+              ('Launcher head', '953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2', heads),
+              ('Shield head', '1a487a4aaecd098d6854905ee64d60253ad6b4b7', heads),
+              ('versionCode', 'versionCode 41', build),
+              ('versionName', '1.0.0-unified-alpha1', build),
+              ('wall device', 'Pixel 7 Pro', profile),
+              ('shield route', 'BoopDeviceProfile.Mode.SHIELD', entry),
+              ('launcher route', 'com.boop.launcher.MainActivity', entry),
+              ('shield activity', 'com.boop.shieldoverlay.MainActivity', entry),
+          ]
+          missing = [name for name, token, text in required if token not in text]
+          if missing:
+              raise SystemExit('Missing unified contract markers: ' + ', '.join(missing))
+          print('Unified source-head contract verified')
+          PY
 
       - name: Run preserved Wall source guards
         run: |
