@@ -1,0 +1,29 @@
+BOOP WALL CHAT MODE: CURRENT FEATURE MEMORY
+Updated 2026-09-07; supplements the preserved dated BOOP_MEMORY.txt history.
+
+Why: OpenCode credit exhaustion broke open-ended conversation while local media
+and house control remained useful. Ryan approved a reversible fallback rather
+than making the whole puppet depend on that credit pool.
+
+Approved UX: hold the eyes for three seconds, past the playful animation; menu
+Chat mode -> OpenCode / Free Chat / Cancel. Default OpenCode. Remember the choice
+across restarts; same gesture restores OpenCode. No permanent settings button.
+
+Boundary: local control always runs first, regardless of mode. Only a genuine
+local NO_MATCH can use the selected conversation route. Do not send house auth
+failures, offline targets or device-control errors to a web chatbot.
+
+Honesty: Free Chat is the browser ChatGPT session with its own login and limits,
+not unlimited free service, an embedded consumer-account API, or spoken answers
+behind the BOOP eyes. The question is copied for manual paste/send; the user was
+told this in chat and it is disclosed in the mode menu. No scraping or injection.
+
+Preservation: Wall and Launcher remain separate packages. Existing swipe and
+short playful hold coexist with the longer menu hold. Movement, multi-touch,
+release, loss of focus and backgrounding cancel pending menu activation.
+
+Build: use scripts/materialize-android.sh, including wake, toast and chat patches.
+Use existing permanent GitHub signer, never a replacement key. Candidate branch
+boop-wall-free-chat-wip starts from Wall 3a702f8; accepted physical checkpoint
+595e1da is untouched. Initial local JVM suite passes; full CI/physical status must
+be read from SESSION_HANDOFF.md rather than inferred from this memory file.
