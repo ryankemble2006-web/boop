@@ -10,7 +10,7 @@ and read the other branches when cross-project context is needed.
 | --- | --- | --- | --- |
 | Shield Home + Deezer puppet | [boop-shield-media-puppetry](https://github.com/ryankemble2006-web/boop/tree/boop-shield-media-puppetry) | shield-overlay/ | Laptop; H1 play/pause and lower placement user-tested |
 | BOOP Wall voice/eyes | [boop-wall-resurrection](https://github.com/ryankemble2006-web/boop/tree/boop-wall-resurrection) | source/ plus materialization scripts | Working voice/control baseline; preserve it |
-| Wall Native Chat + eye hue candidate | [boop-wall-native-chat-eye-hue](https://github.com/ryankemble2006-web/boop/tree/boop-wall-native-chat-eye-hue) | Native Chat lineage + isolated hue helpers/materialization patch | v38 local-intent eye-hue candidate; CI/signer green, physical Pixel acceptance pending; read SESSION_HANDOFF.md and BOOP_WALL_NATIVE_CHAT_EYE_HUE_MEMORY.md |
+| Wall Native Chat + eye hue + sleepy close candidate | [boop-wall-native-chat-eye-hue](https://github.com/ryankemble2006-web/boop/tree/boop-wall-native-chat-eye-hue) | Native Chat lineage + isolated hue/sleep helpers/materialization patches | v39 sleepy-close candidate; v38 eye-colour UX physically accepted, v39 sleep CI/signer green, physical sleep acceptance pending; read SESSION_HANDOFF.md and BOOP_WALL_NATIVE_CHAT_EYE_HUE_MEMORY.md |
 | Historical Wall eye-hue experiment | [boop-wall-eye-hue-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-eye-hue-wip) | source/, scripts/patch-wall-eye-hue.py, focused tests/workflow | v31 experiment layered on Wall v30. Do NOT install it over newer Native Chat builds |
 | Wall Free Chat / Native Chat line | [boop-wall-free-chat-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-free-chat-wip) | source/, chat/relay/materialization patches | Native Chat family. A concurrent hue implementation also landed here at `36e3199`; preserve and reconcile rather than duplicating it |
 | Isolated Native Chat relay candidate | [boop-relay-reviewed-v34](https://github.com/ryankemble2006-web/boop/tree/boop-relay-reviewed-v34) | source/, relay/cloudflare/, focused tests | Separate reviewed relay implementation; read its handoff/receipt; do not assume it is interchangeable with the Free Chat branch solely because both say v34 |
@@ -36,7 +36,7 @@ in Android. Configured bearer-token APKs require private build/distribution;
 public-repository CI rejects token-bearing builds. Deployment and private account
 configuration must be verified separately from a signed APK or mock tests.
 
-## Wall eye-hue ownership (2026-09-07)
+## Wall eye-hue and sleep ownership (2026-09-07)
 
 There are multiple hue histories and they must not be confused:
 
@@ -45,18 +45,23 @@ There are multiple hue histories and they must not be confused:
 2. `boop-wall-native-chat-eye-hue` is the current combined lineage. The v36
    two-eye one-second summon physically failed and is superseded. The first v37
    voice matcher was too strict, so `BOOP change eye colour` could fall through
-   to Free Chat/assistant routing. Current candidate v38 treats eye-colour requests
+   to Free Chat/assistant routing. v38 fixed this by treating eye-colour requests
    exactly like Voice Settings: a tolerant local intent checked before HA/OpenCode/
-   Native Chat/Free Chat fallback.
+   Native Chat/Free Chat fallback. Ryan physically tested that v38 UX and called it
+   **literally perfect**; preserve that routing and slider behavior.
 
-The v38 candidate uses versionCode 38 / `0.4.18-wall-eye-hue-local-intent` and the
-existing permanent BOOP signer. Green build commit: `3c29d4b2`; workflow run
-`34093926250`. It explicitly tests `change eye colour`, `change eye color`,
-`BOOP, change eye colour`, natural wording, plural eyes, `eye hue`, and the narrow
-speech-recognizer `I color/colour` homophone. Default cyan/blue at 190 degrees
-deliberately applies no colour filter; non-default hues tint the existing shared
-`boop_eyes` Paint. Do not add a mouth, replacement artwork,
-brightness/saturation/opacity controls, themes or effects.
+Current candidate v39 uses versionCode 39 / `0.4.19-wall-sleepy-close` and the
+existing permanent BOOP signer. Green build commit: `240a1286`; workflow run
+`34094925623`. v39 changes only sleep puppetry: it begins with the exact accepted
+183 ms idle-blink geometry, fully reopens, pauses, droops to a half-lidded rest,
+then closes slowly over a total ~1.24 seconds before a late fade to black. Wake
+animation remains unchanged and cancels an in-progress sleepy close safely. The
+old 300 ms whole-face squash/fade sleep path is superseded in the v39 materialized
+app. Do not change the accepted v38 eye-colour route while tweaking sleep.
+
+Default cyan/blue at 190 degrees deliberately applies no colour filter; non-default
+hues tint the existing shared `boop_eyes` Paint. Do not add a mouth, replacement
+artwork, brightness/saturation/opacity controls, themes or effects.
 
 A concurrent implementation of the hue concept landed on
 `boop-wall-free-chat-wip@36e3199`. Preserve that commit. The combined branch
@@ -69,16 +74,17 @@ Read AGENTS.md and that branch's SESSION_HANDOFF.md before making changes.
 Fetch and compare the live branch heads: a downloaded folder is not a live sync.
 Read the fetched main versions of this map, BOOP_CONTEXT.md and AGENTS.md.
 Main owns shared decisions/contracts; the app branch's SESSION_HANDOFF.md owns
-its current implementation and verification evidence. Branch-local shared files
+its current implementation and verification state. Branch-local shared files
 are fallback copies when offline, and must not hide newer main decisions.
 Root README files inherited from Alpha 1 do not override the current app map.
 
-For current eye-colour work on a device already running Native Chat, read
-`boop-wall-native-chat-eye-hue`, its `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, and
-`BOOP_WALL_NATIVE_CHAT_EYE_HUE_MEMORY.md`. Read `boop-wall-free-chat-wip` as
-concurrent lineage context. The historical `boop-wall-eye-hue-wip` is reference
-only for this install path. Never infer install compatibility from feature names
-or versionName text alone; compare package, signer and integer versionCode.
+For current Wall eye-colour or sleep-animation work on a device already running
+Native Chat, read `boop-wall-native-chat-eye-hue`, its `SESSION_HANDOFF.md`,
+`BOOP_STATUS.md`, and `BOOP_WALL_NATIVE_CHAT_EYE_HUE_MEMORY.md`. Read
+`boop-wall-free-chat-wip` as concurrent lineage context. The historical
+`boop-wall-eye-hue-wip` is reference only for this install path. Never infer
+install compatibility from feature names or versionName text alone; compare
+package, signer and integer versionCode.
 
 A Work request to "update memory" remains documentation-only: fetch current
 handoffs, reconcile, commit/push documentation, and verify the live branch. Do
@@ -99,23 +105,20 @@ prevent synchronization, state that immediately and do not claim up-to-date.
 ## End a session / hand over
 
 Update SESSION_HANDOFF.md, branch memory/status, and relevant decisions; run
-appropriate checks; commit reviewed files; push the owning branch; verify the
-live GitHub HEAD matches. Label unverified work as WIP and retain its failures.
-A task is not synced merely because a file was saved on one laptop.
-
-This is a task startup/handoff workflow, not a real-time folder mirror or a
-guarantee that a chat without repository access can read files. Already-open
-tasks must explicitly reread new instructions. Abrupt shutdowns/offline work
-can still leave unpushed changes, so record/publish at useful milestones.
+appropriate checks; commit reviewed files; push the owning branch; verify local
+HEAD equals the live GitHub branch HEAD. Ryan has requested this as the default
+publishing workflow.
 
 ## Cross-app contract
 
 - Wall: com.boop.alpha1. Launcher: com.boop.launcher. Shield: com.boop.shieldoverlay.
 - Wall and Launcher stay independently launchable. Do not merge packages.
 - Existing tap/hold/voice/HA/Native Chat behavior must survive eye or gesture work.
-- The current v38 Native Chat + eye-hue candidate is isolated on
-  `boop-wall-native-chat-eye-hue`; do not promote it to a physical checkpoint
-  until the recorded Pixel local-intent/colour/persistence/regression checklist passes.
+- The current v39 Native Chat + eye-hue + sleepy-close candidate is isolated on
+  `boop-wall-native-chat-eye-hue`; do not promote it to a protected physical
+  checkpoint until Ryan physically accepts the v39 sleep animation.
+- The v38 eye-colour local-intent/slider UX is physically accepted behavior and
+  should not be regressed while tuning v39 sleep.
 - The old v31 hue candidate is historical and is not an update for newer devices.
 - Launcher may open Wall by its package; permissions/return-strip behaviour
   require their own consent and device testing.
