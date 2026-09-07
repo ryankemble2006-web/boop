@@ -123,3 +123,25 @@ main; before stopping record results and publish reviewed scoped work. No blind
 overwrites or force pushes. Shared context is not automatic chat-history
 replication. When Ryan says `update memory`, reconcile and publish documentation
 only unless he explicitly also requests implementation.
+
+## Official yellow hands, locked across BOOP on 2026-09-07
+
+Ryan approved the exact side-by-side, hands-only yellow plush pair as BOOP's
+official hands everywhere: unified Wall, Launcher, Shield and all animation work.
+Read `BOOP_YELLOW_HANDS.md`. Preserve five digits per hand (four fingers plus a
+thumb), the approved material/proportions/rounded cuffs, floating hands without
+arms, and genuine PNG transparency. Posing is allowed; redesign is not. The
+established eyes/headphones remain unchanged. The Blah Blah Blah talking-hand
+idea uses fingers and thumb, not animal heads, extra eyes, tongues or mouths.
+
+Exact master: `boop-yellow-hands-approved.png`, 1774 x 887 RGBA, 1541931 bytes.
+SHA-256: `74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556`.
+App reference folder: `unified/assets/boop-yellow-hands/` on `boop-unified`.
+Animation reference folder: `animation-lab/shared-assets/boop-yellow-hands/` on
+`animation-freddie-mercury`, which remains a separate art lab, not an app lineage.
+
+Documentation and checksum records are published; PNG binary upload is still
+pending manual transfer from the supplied checked ZIP. No editable original
+layers were supplied. Do not confuse visual approval or a saved note with a PNG
+in GitHub, runtime integration, a new APK or physical-device acceptance. This
+request changes no app behavior, permissions, signing, workflow or deployment.
