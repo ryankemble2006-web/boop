@@ -2,61 +2,70 @@
 
 ## Current
 
-Launcher Alpha 2 now has a physically confirmed pure-black fullscreen HOME, swipe-up All Apps, and swipe-down-to-HOME navigation. Ryan confirmed the `0.2.2` fullscreen fix removed the persistent Pixel clock/status bar and confirmed the `0.2.3` swipe-down behavior works perfectly.
-
-`0.3.0` / code `7` completes the approved widget and dynamic-page fundamentals and is signed for Ryan's physical test.
-
-Application source: `11adc4cbe7df0c63cfb772c9986a0e6f45c0d054`.
-GitHub Actions run: `34083701591`.
-Signed artifact ID: `10004513657`.
-APK SHA-256: `0ed19b064c56cead4b47c735c59665eb741faab6b8e5b25c581a0d0802eca3a6`.
-
-## 0.3.0 implementation
-
-- Real Android `AppWidgetHostView` rendering on HOME.
-- Widget pick, bind, configure and cancellation cleanup.
-- Pending widget flow survives launcher recreation.
-- Stale/missing widget providers and orphaned host IDs are cleaned up.
-- Normal widget child controls stay usable until deliberate long-press editing.
-- Long-press + drag moves widgets.
-- Long-press bottom-right + drag resizes widgets with a temporary resize grip.
-- Widget move/size/page data persists in the existing workspace schema.
-- Top remove band deletes widgets and releases host IDs.
-- Persisted page field is active: horizontal swipes move between existing content pages.
-- New pages are created only when adding content cannot fit on the current page.
-- Empty page gaps compact away after removals; no permanent empty page carousel or page furniture.
-- App/widget overlap handling is page-aware.
-
-## Verification level
-
-The existing GitHub workflow's compile/lint gate completed successfully and the permanent BOOP signer produced the artifact. Ryan explicitly requested no emulator/UI testing for this pass, so `0.3.0` is signed and ready for physical verification, not physically accepted yet.
-
-## Physically confirmed from prior builds
-
+Physically confirmed baseline:
 - pure-black fullscreen HOME;
 - persistent Pixel status-bar clock removed;
 - swipe up opens All Apps;
 - swipe down from the top of All Apps returns HOME.
 
-## Physical checks for 0.3.0
+Ryan physically rejected `0.3.0` as incomplete because holding the empty HOME screen produced no menu, leaving the widget path unreachable.
 
-- add/configure a real widget and confirm it renders;
-- confirm ordinary widget controls work;
-- long-press move and bottom-right long-press resize;
-- remove widget and confirm no ghost remains;
-- overflow content to another page and swipe between pages;
-- relaunch and confirm widget/page placement persists;
-- confirm fullscreen and drawer gestures remain intact.
+`0.3.1` / code `8` fixes the HOME long-press menu and adds the approved page-0 swipe-right return to BOOP Wall.
+
+Application source: `9f49ccfdc23b8dddb8a0173e1f369c79dc051b96`.
+GitHub Actions run: `34084595483` — success.
+Signed artifact ID: `10004790724`.
+APK SHA-256: `294206b2ff3f50c7c0f880b952f454980582bb7970bda47430036bfb4fe86d88`.
+Existing permanent BOOP signing identity unchanged.
+
+## Red -> green evidence
+
+Red run `34084147192` reproduced the real complaint: launcher launched and survived, but a 900 ms hold on empty HOME did not expose `Add widget` in the Android UI hierarchy.
+
+Green run `34084595483` passes:
+- unit tests and Android lint;
+- permanent-signer release build;
+- signed APK install and launcher survival on Android 16;
+- 900 ms empty-HOME hold -> visible `Add widget` menu entry;
+- dismiss menu -> right swipe from HOME -> BOOP Wall handoff path fires;
+- BOOP launcher fatal-crash scan.
+
+## 0.3.1 behavior
+
+- HOME menu is positioned from a tiny temporary anchor at the actual hold point instead of anchoring a PopupMenu to the whole fullscreen workspace.
+- The widget/page functionality introduced in 0.3.0 remains intact underneath that now-reachable menu.
+- Right swipe from Launcher page 0 requests the launch intent for `com.boop.alpha1` and brings BOOP Wall forward.
+- If Wall is not installed, Launcher remains open with a plain-English message.
+- Right swipe from later content pages still navigates back toward page 0, preserving dynamic page navigation.
+
+## Widget/page fundamentals present
+
+- Real `AppWidgetHostView` rendering.
+- Widget pick/bind/configure/cancel cleanup.
+- Persisted pending widget flow and stale/orphan cleanup.
+- Widget move, resize, remove and persisted size/position/page.
+- Dynamic content pages with automatic creation/compaction.
+- No permanent page chrome.
+
+## Physical acceptance pending for 0.3.1
+
+Ryan should now verify:
+- hold empty HOME -> menu appears;
+- Add widget opens Android picker/config and a real widget renders;
+- widget move/resize/remove and persistence;
+- page spill/navigation;
+- Launcher page 0 swipe right -> BOOP Wall;
+- Wall swipe left -> Launcher;
+- existing fullscreen and drawer gestures still feel unchanged.
 
 ## Remaining polish
 
-- Drawer motion is still not full Launcher3 direct-finger/spring physics.
-- Third-party widget rotation/process-death quirks remain physical-test territory.
+Drawer motion is still not full Launcher3 direct-finger/spring physics. Third-party widget rotation/process-death quirks remain physical-test territory.
 
 ## Protect
 
 - Preserve `boop-launcher-alpha1` as historical fallback until Alpha 2 is fully accepted.
-- Keep package `com.boop.launcher` and the existing BOOP signing identity.
+- Keep package `com.boop.launcher` and existing BOOP signing identity.
 - Do not publish signing keys/private certificates.
 - Keep Wall and Shield app lineages independent.
-- Signed and physically accepted are separate states.
+- CI-green and physically accepted are separate states.
