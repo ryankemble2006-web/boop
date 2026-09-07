@@ -2,7 +2,7 @@ name: Build BOOP Wall Free Chat candidate
 
 on:
   push:
-    branches: [ "boop-wall-free-chat-wip" ]
+    branches: [ "boop-wall-free-chat-wip", "boop-relay-reviewed-v34" ]
   workflow_dispatch:
 
 permissions:
