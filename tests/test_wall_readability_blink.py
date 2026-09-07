@@ -109,5 +109,26 @@ class WallReadabilityBlinkTest(unittest.TestCase):
             blink.patch_main('not the BOOP activity')
 
 
+    def test_notice_keeps_the_existing_browser_handoff(self):
+        source = (ROOT / 'source/BoopFreeChat.java').read_text()
+        self.assertIn('BoopFreeChatNotice.show(activity, copied);', source)
+        self.assertLess(source.index('activity.startActivity(intent);'),
+                        source.index('BoopFreeChatNotice.show(activity, copied);'))
+        self.assertIn('setPrimaryClip(clip)', source)
+
+    def test_materializer_wires_blink_after_chat_and_keeps_test_code_separate(self):
+        script = (ROOT / 'scripts/materialize-android.sh').read_text()
+        self.assertLess(script.index('python3 scripts/patch-wall-chat-mode.py'),
+                        script.index('python3 scripts/patch-wall-idle-blink.py'))
+        self.assertIn('app/src/androidTest/java/com/boop/alpha1', script)
+
+    def test_partial_blink_patch_fails_closed(self):
+        blink = load_module(ROOT / 'scripts/patch-wall-idle-blink.py', 'blink_partial')
+        with self.assertRaises(ValueError):
+            blink.patch_face(blink.FACE_MARKER + (ROOT / 'source/BoopFaceView.java').read_text())
+        with self.assertRaises(ValueError):
+            blink.patch_main(blink.MAIN_MARKER + (ROOT / 'source/MainActivity.java').read_text())
+
+
 if __name__ == '__main__':
     unittest.main()

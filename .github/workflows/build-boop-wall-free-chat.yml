@@ -36,10 +36,13 @@ jobs:
             ':(exclude)source/BoopChatModeHold.java' \
             ':(exclude)source/BoopChatModeStore.java' \
             ':(exclude)source/BoopFreeChat.java' \
+            ':(exclude)source/BoopFreeChatNotice.java' \
+            ':(exclude)source/BoopIdleBlink.java' \
             ':(exclude)source/app-build.gradle' \
             ':(exclude)source/AndroidManifest.xml' \
             ':(exclude)scripts/materialize-android.sh' \
             ':(exclude)scripts/patch-wall-chat-mode.py' \
+            ':(exclude)scripts/patch-wall-idle-blink.py' \
             ':(exclude)scripts/smoke-wall-chat-mode.py'
           ! grep -R -n -E 'BoopTimedRoutineFlow|Once or recurring\?|Recurring routines need setup first' source/
           test "$(git hash-object source/MainActivity.java)" = bcfedf104d8aadb0f75aa26c66fd65e700862b50
@@ -123,11 +126,11 @@ jobs:
           keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
 
-      - name: Build the stable-signed Wall v31 candidate
+      - name: Build the stable-signed Wall v32 candidate
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
-        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+        run: gradle -p boop-build/BOOP-Alpha1 :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
 
       - name: Verify package, version, archive and signer continuity
         shell: bash
@@ -137,8 +140,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='31'" badging.txt
-          grep -q "versionName='0.4.11-wall-free-chat'" badging.txt
+          grep -q "versionCode='32'" badging.txt
+          grep -q "versionName='0.4.12-wall-blink-text'" badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
@@ -218,6 +221,34 @@ jobs:
 
       - name: Exercise the menu, persistence, revert and gesture cancellation
         run: python3 scripts/smoke-wall-chat-mode.py
+
+      - name: Verify readable notice, actual idle blink, sleep deadline and lifecycle
+        timeout-minutes: 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(adb get-serialno)" = emulator-5554
+          adb shell am force-stop com.boop.alpha1
+          adb install -r boop-build/BOOP-Alpha1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          adb shell am instrument -w com.boop.alpha1.test/com.boop.alpha1.WallPolishInstrumentation | tee wall-polish-instrumentation.txt
+          grep -q 'PASS: styled notice, visible background toast, awake blink' wall-polish-instrumentation.txt
+          grep -q 'INSTRUMENTATION_CODE: -1' wall-polish-instrumentation.txt
+
+      - name: Collect disposable-emulator polish evidence
+        if: always()
+        continue-on-error: true
+        run: adb pull /sdcard/Android/data/com.boop.alpha1/files/wall-polish-evidence wall-polish-evidence
+
+      - name: Publish disposable-emulator polish evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Wall-v32-polish-evidence
+          path: |
+            wall-polish-instrumentation.txt
+            wall-polish-evidence/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Verify the existing Shield pairing return route
         run: |

@@ -10,7 +10,6 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.PersistableBundle;
-import android.widget.Toast;
 
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsClient;
@@ -50,9 +49,7 @@ final class BoopFreeChat {
 
             boolean copied = copyQuestion(activity, question);
             activity.startActivity(intent);
-            Toast.makeText(activity, copied
-                    ? "Question copied. Paste it into Free Chat."
-                    : "Ask your question in Free Chat.", Toast.LENGTH_LONG).show();
+            BoopFreeChatNotice.show(activity, copied);
             return true;
         } catch (RuntimeException unavailable) {
             // Missing/disabled browsers and policy restrictions must not crash the puppet.

@@ -14,8 +14,9 @@ android {
         applicationId 'com.boop.alpha1'
         minSdk 29
         targetSdk 36
-        versionCode 31
-        versionName "0.4.11-wall-free-chat"
+        testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
+        versionCode 32
+        versionName "0.4.12-wall-blink-text"
     }
 
     signingConfigs {
