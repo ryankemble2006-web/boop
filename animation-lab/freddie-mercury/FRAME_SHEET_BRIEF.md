@@ -1,0 +1,3 @@
+# First frame-sheet brief
+
+Six consecutive full-body poses, left-to-right, on a pure black background. Freddie Mercury is recognisable through moustache, short dark hair, white vest, light trousers and handheld microphone. Keep anatomy and costume consistent across frames. The sequence moves from planted neutral, through a coiled weight shift, into a sharp microphone-led strike, a held heroic extension, recoil, then a slightly overshooting settle back toward neutral. Treat the sheet as animation blocking: crisp silhouettes, consistent scale, no text, no crowd, no copied concert frame composition.
