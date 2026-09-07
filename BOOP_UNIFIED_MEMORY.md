@@ -1,66 +1,21 @@
 # BOOP unified memory
 
-Updated 2026-09-07.
+Updated 2026-09-07 after build and wake-name recheck.
 
-## Canonical direction
+Canonical app lineage remains `boop-unified`, package `com.boop.alpha1`, with Wall core plus internal Launcher/Shield modules and permanent BOOP signer. TV/Leanback routes to Shield, Pixel 7 Pro to Wall, other handhelds to Launcher; preserve the recovery override. Historical app branches/checkpoints remain rollback/reference. The original full memory is retained verbatim at `docs/history/unified-v43/BOOP_UNIFIED_MEMORY.md`, including exact initial source/build receipts and all official yellow-hand/2.5D design contracts.
 
-Ryan chose to converge BOOP Wall, BOOP Launcher and BOOP Shield into one APK after the active puppet update. The reason is operational simplicity: one branch, one signed APK lineage, one intentional functional change per release, and deterministic rollback to the last physically accepted Git checkpoint/artifact.
+## New durable decision: call-name customization
 
-Do not infer rollback from filenames. Git commit/tag + artifact is authority. After physical acceptance, local deployment folders keep the current signed `BOOP.apk` and optionally one last-good APK; GitHub retains historical builds/source.
+BOOP forever. Only an additional user-chosen spoken wake/call name is configurable, under `BOOP's name` in Voice Settings. Default and permanent fallback are BOOP. One preference: `boop_voice/wake_name`. Natural typed names and local verbal rename/reset commands must use it without changing app/package/classes/branding/HA/pairing/signing/repository identity, normal controls/chat, wake sensitivity or microphone lifecycle. No name allowlist and no parallel wake architecture.
 
-## Initial unified source receipt
+## Current verification memory
 
-- Wall: `boop-wall-native-chat-eye-hue@a28364f98fba1b3a5dbab7e66075c0fb166e08e3`
-- Launcher: `boop-launcher-alpha2@953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2`
-- Shield: `boop-shield-fullscreen-deezer-wip@1a487a4aaecd098d6854905ee64d60253ad6b4b7`
+Ryan accepted unified `e746affbb82b577cef2f1cf6e731dff186c8f881` as the last physical rollback. He reported no visible Shield UI change on `950611d`; binary inspection found the newer class present, so the cause remains unknown. Future testing must identify the real package/activity, not assume the artifact excluded the source. Do not remove the standalone package or silently alter Android permissions/defaults.
 
-Keep those source branches/history intact for reference and rollback. Do not delete or repoint their prior checkpoints merely because a unified candidate exists.
+Latest available signed code is `6cd9c67a03c639a20acde892e2d57186652e13d5`, run `34125882296`, artifact `10020439707`, APK SHA-256 `603e72b6f3a83eca429e90a11559454ca2d9c140eee69bff9bcd537d9a276a4e`. It contains the new uppercase Shield settings, HOME ASSISTANT section, name field and custom-prefix routing repair. All current CI checks passed, but they missed the custom-name tokenizer defect; do not equate green CI with this request being completed.
 
-## Unified identity and routing
+The pinned file named bpe.model is actually a UNIGRAM model. Greedy BPE tokenization disagreed with native SentencePiece on 23/32 initial name phrases. A model-type-aware repair matched 5032 reference cases locally and exists in commit `1c63dac26e2fb0f84a1bf4ee1a445869aff31462`; its branch publication was blocked by the tool safety-status check. The repair is NOT integrated, NOT in the APK and NOT fully CI/physically tested. This docs-only update does not apply that blocked code.
 
-Canonical candidate branch: `boop-unified`.
-Final package: `com.boop.alpha1`.
-Initial unified version: versionCode 41 / `1.0.0-unified-alpha1`.
-Permanent BOOP signer preserved.
+Use exact commit/artifact hashes because version 43 metadata was reused. Keep BOOP fallback for testing this candidate, and require full repaired-build plus real acoustic/dock/persistence and Shield settings/focus/room tests before marking the feature complete.
 
-Automatic profile contract:
-- Android TV / Leanback / television UI mode -> Shield.
-- Pixel 7 Pro -> Wall.
-- Other handheld Android, including Pixel 10 Pro XL -> Launcher.
-- Internal persistent override exists for recovery/debug, but normal routing is automatic.
-
-The Wall application is the final app core. Latest Launcher and Shield sources are compiled as internal library modules. Wall-to-Launcher and Launcher-to-Wall are internal activity hops rather than separate-package transitions.
-
-## First green build
-
-Build source head: `bb4797de5005952d0d27a6647ea17c15781b76f7`.
-Workflow run: `34104002238`.
-Artifact: `BOOP-Unified`.
-Artifact ID: `10011710184`.
-APK SHA-256: `62ccac0b767fc7005bfeb0eae013f0bad42ad7db7eeeecf054ad42da949f9aba`.
-
-CI passed preserved Wall guards, latest Launcher tests/lint, latest Shield tests, unified app tests, signer setup, signed build, package/version/entry validation, manifest checks and archive integrity.
-
-## Physical/migration boundary
-
-CI green is not physical green. The unified APK still requires real-device checks.
-
-Because the final package is Wall's `com.boop.alpha1`, Wall has the cleanest in-place update path. Standalone Launcher (`com.boop.launcher`) and Shield (`com.boop.shieldoverlay`) are separate Android package identities, so their private data, launcher-default selection and special-access grants do not migrate automatically. Expect one-time device setup when unified BOOP is first installed on those bodies.
-
-Do not mark a unified checkpoint physically accepted until Ryan explicitly accepts the relevant real-device behavior.
-
-## Official yellow hands, locked 2026-09-07
-
-Ryan chose the approved mirrored, hands-only PNG as BOOP's official yellow hands everywhere. Preserve the exact yellow plush material, rounded shapes, proportions, short cuffs and five digits on each floating hand. No arms, sleeves, extra faces, animal transformations or replacement BOOP character. Articulation is allowed; redesign is not. In the Blah Blah Blah concept, the four fingers and thumb perform a talking-hand gesture and remain recognisably hands.
-
-Full contract and exact checksum: `BOOP_YELLOW_HANDS.md`. Canonical app reference folder: `unified/assets/boop-yellow-hands/`. Animation counterpart: `animation-lab/shared-assets/boop-yellow-hands/` on `animation-freddie-mercury`. The master is 1774 x 887 RGBA with SHA-256 `74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556`.
-
-This session saved documentation/manifest records only; PNG upload remains pending from the checked ZIP. No generator layers exist, and the master must not be replaced with rejected earlier creature images. This approval does not implement hands or Easter eggs in the APK and changes no physical acceptance state.
-
-## Shield GPU / 2.5D puppetry direction, 2026-09-07
-
-Save the promising hand-pose studies and investigate richer 2.5D animation using the Shield's graphics hardware. Preserve all five digits in every pose and transition: thumb, index, middle, ring and little finger. Hands may grip/adjust headphones, point or wave without changing the official yellow plush design. Keep eye-led motion, earcup lag/recoil and subtle depth; do not replace the character.
-
-Read `docs/animation/SHIELD_2_5D_HANDS.md` before this future animation pass. Profile first, compare the existing hardware-accelerated drawing path with a small GPU renderer if needed, target paced motion without harming media playback, and preserve idle/screen-off/reduced-motion safeguards. No measured spare-GPU percentage, beat synchronisation or working rig is claimed.
-
-A small corrected open-hand WebP preview is archived under `unified/assets/boop-yellow-hands/pose-studies/`. It is a lossy black-background display reference, not the transparent official master. Its manifest distinguishes that stored preview from the full-resolution PNGs still awaiting transfer and from other pose examples unavailable as files. This is documentation/reference art only; app behavior, builds, permissions, signing, deployment and acceptance checkpoints remain unchanged.
+No ongoing monitoring or laptop synchronization was verified in this recheck. See `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `docs/BOOP-UNIFIED-WAKE-NAME-RECHECK.md` for the current safe continuation.

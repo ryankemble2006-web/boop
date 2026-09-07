@@ -1,91 +1,44 @@
-# BOOP unified handoff — 2026-09-07
+# BOOP unified handoff
 
-Owner: `boop-unified`.
-Package: `com.boop.alpha1`.
-Current candidate: versionCode 43 / `1.1.0-unified-dock-mirror-shield-settings`.
-Built code commit: `950611df0235d3943bf9958153efa470a342036b`.
-Last physically accepted unified rollback point: `e746affbb82b577cef2f1cf6e731dff186c8f881`.
+Updated 2026-09-07 after Ryan requested a live build recheck.
+Owner: `boop-unified`. Package: `com.boop.alpha1`. Permanent BOOP signer unchanged.
+Main owns shared contracts; this handoff owns current implementation evidence.
 
-## Current v43 handoff
+## Current result: signed candidate, known wake-name defect
 
-Ryan physically tested the unified APK at `e746aff` and explicitly said it was fine to modify. The dock/mirror + Shield settings/room-scope pass was then implemented as direct descendants of that accepted commit. Concurrent work was preserved: when another BOOP worker advanced the same branch with the requested feature bundle, this session reviewed and repaired its integration rather than overwriting or duplicating it.
+Latest built code: `6cd9c67a03c639a20acde892e2d57186652e13d5`.
+GitHub Actions run `34125882296` completed successfully at 13:21 UTC.
+Artifact `BOOP-Unified`, ID `10020439707`.
+APK SHA-256: `603e72b6f3a83eca429e90a11559454ca2d9c140eee69bff9bcd537d9a276a4e`.
+Artifact ZIP SHA-256: `455cd406beb111ac6d5d1d974b20bd54735a65222aa702612476929efd4ad285`.
+APK size: 142032549 bytes. Version metadata remains code 43 / `1.1.0-unified-dock-mirror-shield-settings`; use exact build commit and checksum, not that reused version label.
 
-The final built-code commit is `950611df0235d3943bf9958153efa470a342036b`. GitHub Actions run `34117631109` is green. Artifact `BOOP-Unified`, ID `10017287954`, has APK SHA-256 `95ba6292c04edaa4db2f1028337f0b3009a7c5006ee9b423e1bc40a9addef4fb`.
+This is a signed Shield-settings test candidate, NOT completion of the requested wake-name feature. The custom-name tokenizer in the built code incorrectly applies BPE merging to the pinned UNIGRAM model. Some custom phrases therefore receive incorrect token sequences. Original BOOP keywords remain unchanged and available. Do not advertise custom acoustic waking as verified.
 
-Implemented behavior:
+A correction with real-model regression tests was created as commit `1c63dac26e2fb0f84a1bf4ee1a445869aff31462`, parent `6cd9c67a03c639a20acde892e2d57186652e13d5`, tree `58dd78003f34503850c79a91bce6af7677b4f5ab`. The connector blocked the requested branch update because it could not determine the request's safety status. That correction is NOT on the branch and NOT in the APK. Do not report it as pushed, built or fully CI-tested. This documentation-only update does not integrate that blocked application change.
 
-- Undocked Wall/handheld BOOP keeps continuous wake-word capture disarmed and remains tap-to-talk.
-- Wireless charging is the dock signal that permits foreground wake-word listening. Existing tap/TTS/settings/lifecycle coordinator rules still suspend/release the wake engine.
-- Docked eyes may sleep black. A proximity nudge can request a short front-camera presence peek; BOOP does not run continuous idle image recognition while charging.
-- Mirror mode accepts natural “BOOP mirror”, “Hey BOOP mirror”, polite/open variants and natural close/stop/exit/back-to-BOOP variants. Explicit mirror mode is the intentional continuous front-camera case.
-- Horizontal mirror mode reserves quiet `INSIDE` and `OUTSIDE` side rails. Home Assistant sensor entity mappings are deliberately deferred until the sensors exist; no entities were invented.
-- Shield settings were rebuilt as a TV-first BOOP screen: black/cyan visual language, large grouped cards, generous spacing, obvious cyan/white focus, D-pad Up/Down/Left handling and Enter/centre activation, with no decorative settings animation.
-- Shield displayed Home controls are fail-closed to the selected HA area. `HomeAssistantRepository` first uses HA `extract_from_target` with the selected `area_id`, so HA can resolve device-level area membership. BOOP then performs a local room-scope filter, rejects mismatched snapshots/cards and refuses unscoped control confirmation. It does not move, rename or edit HA area/device/entity configuration.
+## What the recheck repaired and verified
 
-Integration fixes during CI were limited to composition/build correctness: the dock materializer was adjusted to coexist with existing chat/eye patches, and `TvSettingsView` used Android's correct `setMinimumHeight` API. No signer replacement, launcher redesign, HA configuration write, or unrelated animation change was made.
+- Run `34122652048` at `33549400992ae844e2940a55d273b05cef3f4e62` failed Shield compilation: missing static imports for MATCH_PARENT and WRAP_CONTENT.
+- Commit `d1a91be4e4bf854e60e09adb350f3fe563266c4c` added only those imports. Its run passed compilation/tests and signed assembly but was cancelled during emulator smoke, before artifact publication.
+- Commit `6cd9c67a03c639a20acde892e2d57186652e13d5` fixes custom-call removal before command routing, reusing the generated natural phrases and preserving the original BOOP normalizer overload. Added mirror, rename, multiword, default/fallback and word-boundary tests.
+- Run `34125882296` passed preserved Wall source guards, materialization, Launcher tests/lint, Shield unit tests, unified unit tests, permanent signing, signed assembly, Shield-entry emulator smoke, package/signer checks and artifact upload.
+- Downloaded artifact ZIP and APK checksums and built-commit receipt matched. APK archive integrity passed. DEX contains `BOOP SETTINGS`, `HOME ASSISTANT`, `BOOP's name`, TvSettingsView and BoopWakeNameStore. Original BOOP keywords are byte-identical to the previously delivered v43 artifact. These checks do not prove actual settings navigation or acoustic behavior.
+- Local reference comparison of the unshipped tokenizer repair matched SentencePiece 0.2.1 on 5032 cases. The existing tokenizer disagreed on 23 of the initial 32 name/phrase cases. See `docs/BOOP-UNIFIED-WAKE-NAME-RECHECK.md`.
 
-Verification in run `34117631109` passed:
+## Physical evidence and next safe step
 
-- pinned unified source/feature contracts and preserved Wall source guards;
-- unified materialization with existing chat/eye patches;
-- latest Launcher unit tests and lint;
-- latest Shield unit tests, including `RoomScopedEntitiesTest`, expanded dashboard room-safety tests and existing `TvNavigationModelTest`;
-- unified unit tests for dock power, wake gating and mirror phrasing;
-- permanent BOOP signer setup and signed APK assembly;
-- emulator launch through `UnifiedEntryActivity` into the real Shield body route without BOOP fatal exception;
-- package/version/manifest/launchable-entry checks, signer continuity, APK archive integrity and artifact upload.
+Last physically accepted unified rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`.
+Ryan reported that the Shield UI appeared unchanged after installing candidate `950611d`; do not promote it or the newer candidate to physically accepted. Inspection of the exact old APK confirmed its newer settings class was present. The reason for the unchanged real screen has not been proven. Verify the actually launched package/activity: unified BOOP is `com.boop.alpha1`, distinct from historical standalone `com.boop.shieldoverlay`. Do not uninstall apps, transfer private data, change HOME defaults or grant special access automatically.
 
-Evidence boundary: v43 is CI/signer/emulator green, not physically green. The next safe step is Ryan's physical test. On handheld/tablet verify undocked mic release, wireless-dock re-arm, sleep/peek behavior, mirror orientation/rails and thermals. On Shield inspect actual remote focus/navigation and confirm real HA inventory shows only the assigned room. If v43 misbehaves physically, preserve the evidence and return to exact accepted `e746aff`; do not guess by APK filename.
+The new candidate's Settings page should visibly identify `BOOP SETTINGS`, `HOME ASSISTANT` and `BOOP's name`. Real Shield remote focus/scroll/activation and actual HA room inventory still need device tests. Existing CI checks launch the Shield body; they do not navigate and visually verify Settings.
 
-Durable memory for this pass: `docs/BOOP-UNIFIED-V43-MEMORY.md`. `BOOP_STATUS.md` is reconciled to the same candidate. No laptop checkout synchronization is claimed from this chat; connected GitHub is the published authority.
+After the publication block is resolved through an authorized path, inspect the correction commit, reconcile any new branch changes, run full unified CI and verify its exact artifact before claiming the complete wake-name request finished. Do not blindly repoint a branch or bypass a tool restriction. Physical tests must cover custom phrase accuracy, persistence, verbal rename/reset, BOOP fallback, microphone release/re-arm and thermal behavior. Undocked handheld wake remains disarmed; test voice wake while wirelessly docked.
 
-## Purpose
+## Durable scope and preserved history
 
-This is the first one-APK BOOP lineage. Ryan explicitly chose one canonical APK/branch after the current puppet work because separate Wall, Launcher and Shield branches/build filenames had become too confusing. Future release discipline is one intentional functional change per update, with rollback by the exact last physically accepted Git commit/tag + artifact, never by guessing filenames.
+BOOP forever: user-selected spoken call name only, one `boop_voice/wake_name` preference, BOOP permanent fallback. No package, branding, class, HA, pairing, signer or repository identity changes. No replacement wake engine, cloud dependency or microphone lifecycle change in this recheck.
 
-## Exact source inputs
+Dock/mirror, deferred sensor rails, local-first HA, protected artwork, separate animation studies and original unification/migration receipts remain as recorded in `docs/history/unified-v43/SESSION_HANDOFF.md`, `docs/history/unified-v43/BOOP_CONTEXT.md`, `BOOP_UNIFIED_MEMORY.md` and `unified/SOURCE_HEADS.md`. The original root documents are preserved verbatim in that history folder. Current user evidence and this handoff override their dated candidate-status wording.
 
-The unified candidate was originally built from live GitHub heads fetched immediately before integration:
-
-- Wall: `boop-wall-native-chat-eye-hue@a28364f98fba1b3a5dbab7e66075c0fb166e08e3` — v40 landscape eye-match lineage. Ryan physically reported the corrected landscape face was much better and that BOOP now reads as the same character turning around rather than changing character.
-- Launcher: `boop-launcher-alpha2@953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2` — 0.3.7 widget-picker candidate; latest physical report was that the picker was better, with later polish deferred.
-- Shield puppet: `boop-shield-fullscreen-deezer-wip@1a487a4aaecd098d6854905ee64d60253ad6b4b7` — v3 friendly Deezer-access/full-screen puppet lineage; its branch-level CI was green, physical acceptance still lineage-specific.
-
-Pinned source receipt: `unified/SOURCE_HEADS.md`.
-
-## Architecture
-
-One final application keeps package `com.boop.alpha1` and the existing permanent BOOP signer. Wall remains the application core. Latest Launcher and Shield sources are included as internal Android library modules so their existing package namespaces/resources can remain largely intact while producing one APK.
-
-`UnifiedEntryActivity` is the single exported launcher/HOME/Leanback entry and chooses a device profile automatically:
-
-- Android TV / Leanback / television UI mode -> Shield mode.
-- Pixel 7 Pro -> Wall mode.
-- Other handheld Android devices, including Pixel 10 Pro XL -> Launcher mode.
-- A persistent internal override exists for recovery/debugging, but normal operation is automatic.
-
-Wall-to-Launcher and Launcher-to-Wall are now internal activity hops inside the same APK rather than separate-package launches. The unified materializer also reproduces Shield's own CI behavior of supplying the approved BOOP eye bitmap before Shield build/tests.
-
-## Earlier unified verification reference
-
-The original unified integration green build was `bb4797de5005952d0d27a6647ea17c15781b76f7`, GitHub Actions run `34104002238`, artifact ID `10011710184`, APK SHA-256 `62ccac0b767fc7005bfeb0eae013f0bad42ad7db7eeeecf054ad42da949f9aba`. Keep this as lineage evidence, not the current v43 artifact.
-
-## Physical status and migration limits
-
-Because the unified package intentionally keeps `com.boop.alpha1`, a current Wall install has the cleanest in-place update path. Existing standalone Launcher (`com.boop.launcher`) and Shield (`com.boop.shieldoverlay`) installs are different Android packages, so their private app data/default-HOME/special-access grants cannot automatically become data or permissions of `com.boop.alpha1`. Expect one-time setup/reselection when the unified APK is first tested on those bodies. Do not delete the historical branches or accepted artifacts; they remain rollback/reference.
-
-## Release rule
-
-After a unified candidate is physically accepted, future work starts from its exact accepted commit/tag and artifact. Make intentional scoped behavior changes and roll back by exact checkpoint, not by local filename. GitHub remains the archive.
-
-## Official yellow hands design lock, 2026-09-07
-
-Ryan approved the side-by-side yellow hands as the official pair for BOOP everywhere. This applies to all three unified bodies and the separate animation lab. Read `BOOP_YELLOW_HANDS.md`; use `unified/assets/boop-yellow-hands/` for the canonical app reference. Preserve the exact plush yellow style, five digits per hand, short cuffs, independent floating hands and real transparency. New poses articulate the same hands, never transform them into creatures. The approved eyes/headphones stay unchanged.
-
-Exact master SHA-256: `74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556`; 1774 x 887 RGBA PNG, 1541931 bytes. PNG transfer status remains separate from this runtime pass. Animation/runtime hand integration was not part of v43.
-
-## Shield 2.5D direction and pose-study archive, 2026-09-07
-
-Ryan requested saving the hand-pose work and the idea of deliberately using the Shield GPU for 2.5D puppetry. Read `docs/animation/SHIELD_2_5D_HANDS.md`. Keep independent hand/finger acting, earcup grips/adjustments, gaze-led motion, headphone lag/recoil and restrained layered depth as future design work. Every hand must retain four fingers plus one thumb in every pose and transition. Preserve the official master and existing eyes/headphones; no four-digit shortcut.
-
-That animation direction remains deferred and was not changed by the v43 dock/mirror/settings work.
+No laptop checkout synchronization, user-device deployment or background monitoring was verified from this chat.
