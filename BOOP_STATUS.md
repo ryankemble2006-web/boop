@@ -8,35 +8,39 @@ Physically confirmed baseline:
 - swipe up opens All Apps;
 - swipe down from the top of All Apps returns HOME.
 
-Ryan physically rejected `0.3.0` as incomplete because holding the empty HOME screen produced no menu, leaving the widget path unreachable.
+`0.3.0` widget/page plumbing was not accepted because the HOME long-press menu was unreachable. `0.3.1` fixed the menu and added Launcher page-0 swipe right -> BOOP Wall; its CI interaction smoke passed.
 
-`0.3.1` / code `8` fixes the HOME long-press menu and adds the approved page-0 swipe-right return to BOOP Wall.
+Ryan physically reported that the cross-app transition direction in `0.3.1` was asymmetric: Launcher -> Wall looked correct, but Wall -> Launcher replayed the same left-to-right page motion instead of mirroring the left swipe.
 
-Application source: `9f49ccfdc23b8dddb8a0173e1f369c79dc051b96`.
-GitHub Actions run: `34084595483` — success.
-Signed artifact ID: `10004790724`.
-APK SHA-256: `294206b2ff3f50c7c0f880b952f454980582bb7970bda47430036bfb4fe86d88`.
+`0.3.2` / code `9` fixes that direction on the Launcher side only. Wall branches were not modified.
+
+Application source/version: `3d2066d8bafa2ba69be70984ce3f060c79ff3b78`.
+GitHub Actions run: `34085524812` — success.
+Signed artifact ID: `10005093325`.
+APK SHA-256: `83a1ead52fb1ccdce8fb59912101e80a6fd3c98d85c07fc12002c772af0667bb`.
 Existing permanent BOOP signing identity unchanged.
 
 ## Red -> green evidence
 
-Red run `34084147192` reproduced the real complaint: launcher launched and survived, but a 900 ms hold on empty HOME did not expose `Add widget` in the Android UI hierarchy.
+Red run `34085403670` failed the new transition-direction source regression before the production transition/resources were added.
 
-Green run `34084595483` passes:
+Green run `34085524812` passes:
+- transition-direction regression;
 - unit tests and Android lint;
 - permanent-signer release build;
 - signed APK install and launcher survival on Android 16;
-- 900 ms empty-HOME hold -> visible `Add widget` menu entry;
-- dismiss menu -> right swipe from HOME -> BOOP Wall handoff path fires;
+- empty-HOME long press -> visible `Add widget`;
+- dismiss menu -> Launcher page-0 right swipe -> BOOP Wall handoff path;
 - BOOP launcher fatal-crash scan.
 
-## 0.3.1 behavior
+CI validates that Launcher OPEN uses a right-to-left mirrored transition (`enter from right`, prior activity `exit left`). The visual feel remains Ryan's physical acceptance check.
 
-- HOME menu is positioned from a tiny temporary anchor at the actual hold point instead of anchoring a PopupMenu to the whole fullscreen workspace.
-- The widget/page functionality introduced in 0.3.0 remains intact underneath that now-reachable menu.
-- Right swipe from Launcher page 0 requests the launch intent for `com.boop.alpha1` and brings BOOP Wall forward.
-- If Wall is not installed, Launcher remains open with a plain-English message.
-- Right swipe from later content pages still navigates back toward page 0, preserving dynamic page navigation.
+## 0.3.2 behavior
+
+- Wall swipe left -> Launcher should now visually travel right-to-left.
+- Launcher page-0 swipe right -> Wall keeps the already-good opposite transition behavior.
+- No Wall source/branch changes were made.
+- Existing fullscreen, drawer, long-press, widget and dynamic-page code remains intact.
 
 ## Widget/page fundamentals present
 
@@ -47,16 +51,13 @@ Green run `34084595483` passes:
 - Dynamic content pages with automatic creation/compaction.
 - No permanent page chrome.
 
-## Physical acceptance pending for 0.3.1
+## Physical acceptance pending
 
-Ryan should now verify:
-- hold empty HOME -> menu appears;
-- Add widget opens Android picker/config and a real widget renders;
-- widget move/resize/remove and persistence;
-- page spill/navigation;
-- Launcher page 0 swipe right -> BOOP Wall;
-- Wall swipe left -> Launcher;
-- existing fullscreen and drawer gestures still feel unchanged.
+Primary 0.3.2 check:
+- Wall swipe left -> Launcher animation direction;
+- Launcher swipe right -> Wall remains the mirrored opposite.
+
+Widget move/resize/remove, real third-party widget behavior, and page spill/persistence still need Ryan's on-device acceptance.
 
 ## Remaining polish
 
