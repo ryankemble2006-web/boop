@@ -11,6 +11,7 @@ public final class BoopPreferences {
     private static final String KEY_FAVOURITE_ENTITY_ID = "favourite_entity_id_v1";
     private static final String KEY_FAVOURITE_NAME = "favourite_name_v1";
     private static final String KEY_FAVOURITE_STATE = "favourite_state_v1";
+    private static final String KEY_DEEZER_ACCESS_SETUP_OFFERED = "deezer_access_setup_offered_v1";
 
     public interface Store {
         String getString(String key);
@@ -60,6 +61,14 @@ public final class BoopPreferences {
     public void clearSelectedRoom() {
         store.remove(KEY_AREA_ID);
         store.remove(KEY_AREA_NAME);
+    }
+
+    public boolean deezerAccessSetupOffered() {
+        return "yes".equals(store.getString(KEY_DEEZER_ACCESS_SETUP_OFFERED));
+    }
+
+    public void markDeezerAccessSetupOffered() {
+        store.putString(KEY_DEEZER_ACCESS_SETUP_OFFERED, "yes");
     }
 
     public EntityCard cachedFavourite(AreaInfo room) {
