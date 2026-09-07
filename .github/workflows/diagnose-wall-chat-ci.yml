@@ -1,0 +1,40 @@
+name: Diagnose Wall Chat CI
+on:
+  push:
+    branches: [boop-wall-chat-ci-diagnostics]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read the completed disposable-emulator job
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/101587934157/logs" > "${RUNNER_TEMP}/wall-job.log"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          lines = (Path(os.environ['RUNNER_TEMP']) / 'wall-job.log').read_text().splitlines()
+          start = next((i for i, line in enumerate(lines) if '##[group]Run python3 scripts/smoke-wall-chat-mode.py' in line), None)
+          if start is None:
+              raise SystemExit('UI step marker not found')
+          end = next((i for i in range(start + 1, len(lines)) if '##[error]Process completed' in lines[i]), len(lines) - 1)
+          selected = lines[start:end + 1]
+          Path('wall-chat-ui-diagnostic.txt').write_text('\n'.join(selected) + '\n')
+          print('Extracted', len(selected), 'UI-step lines; full runner log is not published.')
+          for line in selected:
+              if 'AssertionError:' in line or 'BOOP_CHAT_PRESS:' in line or 'ACKNOWLEDGED=' in line:
+                  print(line[:1000])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wall-Chat-UI-diagnostic
+          path: wall-chat-ui-diagnostic.txt
+          if-no-files-found: error
+          retention-days: 7
