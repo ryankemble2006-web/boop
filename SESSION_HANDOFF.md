@@ -61,3 +61,13 @@ Because the unified package intentionally keeps `com.boop.alpha1`, a current Wal
 ## Release rule
 
 After unified BOOP is physically accepted, future work starts from its exact accepted commit/tag and artifact. Make one intentional behavior change per version. If a candidate breaks, return to the exact last accepted checkpoint instead of trying to identify an old local APK by filename. GitHub remains the archive; deployment folders should retain only the current signed `BOOP.apk` and optionally one last-good APK after acceptance.
+
+## Official yellow hands design lock, 2026-09-07
+
+Ryan approved the side-by-side yellow hands as the official pair for BOOP everywhere. This applies to all three unified bodies and the separate animation lab. Read `BOOP_YELLOW_HANDS.md`; use `unified/assets/boop-yellow-hands/` for the canonical app reference. Preserve the exact plush yellow style, five digits per hand, short cuffs, independent floating hands and real transparency. New poses articulate the same hands, never transform them into creatures. The approved eyes/headphones stay unchanged.
+
+Starting remote heads checked for this documentation task: `boop-unified@8cfb14e001b946f0bdb33011c8cbe3778ed59019`, `animation-freddie-mercury@3548e6aeb787556b1994cbafb3bffb4c6c017d05`, `main@4323bb747f1ddaced24a5372854377acccaa4228`.
+
+Exact master SHA-256: `74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556`; 1774 x 887 RGBA PNG, 1541931 bytes. Local inspection verified alpha transparency. PNG transfer is still pending: this commit publishes design notes and a checksum manifest, not the PNG binary. `boop-official-yellow-hands.zip` supplies the unchanged master in both branch destination layouts for manual upload. No editable generator layers were supplied.
+
+No app code, runtime resource usage, build configuration, version, signing, permissions or deployment changed; no new APK or physical acceptance is claimed. The laptop checkout/receipt is not mounted in this chat environment and the local Git transport could not resolve GitHub, so no laptop synchronization is claimed. Next safe step: upload the master to the documented folder on each branch, verify its checksum, then update the transfer record. Animation/runtime integration requires a separate request.

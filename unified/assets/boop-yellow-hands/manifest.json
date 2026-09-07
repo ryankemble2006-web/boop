@@ -1,0 +1,19 @@
+{
+  "asset_id": "boop-yellow-hands-approved",
+  "approval_date": "2026-09-07",
+  "approved_by": "Ryan",
+  "scope": "All BOOP app bodies and animations",
+  "filename": "boop-yellow-hands-approved.png",
+  "source_filename": "a_clean_isolated_png_style_image_on_a_transparent.png",
+  "width": 1774,
+  "height": 887,
+  "mode": "RGBA",
+  "bytes": 1541931,
+  "sha256": "74e3b162d8fa750491b9a1577d51d043e1f7fdcc3940cbdf22f742bc58c9f556",
+  "git_blob_sha1": "7cb914516a829a0b824febd16957a1a1dd9c6a62",
+  "alpha_verified": true,
+  "source_layers_available": false,
+  "png_uploaded_by_this_session": false,
+  "transfer_state": "pending_manual_png_upload",
+  "runtime_integrated": false
+}

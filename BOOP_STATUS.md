@@ -34,3 +34,7 @@ The unified package keeps Wall's `com.boop.alpha1` identity. Existing separate L
 ## Release discipline
 
 Once v41 or a successor is physically accepted, mark that exact Git commit/tag + artifact as the last-good checkpoint. Future versions make one intentional functional change at a time. Roll back by exact checkpoint, not by local filenames. GitHub is the archive; deployment folders keep current `BOOP.apk` plus optionally one last-good APK after acceptance.
+
+## Official yellow hands, 2026-09-07
+
+Design approved and locked across all BOOP bodies and animations. See `BOOP_YELLOW_HANDS.md` and `unified/assets/boop-yellow-hands/manifest.json`. The approved master is a hands-only transparent RGBA PNG, 1774 x 887, with five digits per hand and no arms. The master checksum is recorded; its binary transfer to GitHub is still pending manual upload from the supplied ZIP. No runtime integration, new build or deployment has been performed. Existing candidate and verification status above are unchanged.
