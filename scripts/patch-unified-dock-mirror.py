@@ -221,7 +221,7 @@ helpers = '''        super.onPause();
 replace_once(pause_anchor, helpers, 'dock helper methods')
 
 replace_once(
-    '    private void handleRecognizedSpeech(String transcript) {\n        if (BoopVoiceSettingsIntent.matches(transcript)) {\n',
+    '    private void handleRecognizedSpeech(String transcript) {\n',
     '''    private void handleRecognizedSpeech(String transcript) {
         BoopMirrorIntent.Action mirrorAction = BoopMirrorIntent.actionFor(transcript);
         if (mirrorAction == BoopMirrorIntent.Action.OPEN) {
@@ -232,7 +232,6 @@ replace_once(
             closeMirror();
             return;
         }
-        if (BoopVoiceSettingsIntent.matches(transcript)) {
 ''',
     'mirror voice routing')
 
