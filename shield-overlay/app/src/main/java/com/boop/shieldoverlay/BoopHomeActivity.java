@@ -1,6 +1,7 @@
 package com.boop.shieldoverlay;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.LinkAddress;
@@ -56,6 +57,7 @@ public final class BoopHomeActivity extends Activity {
     private View currentPageFirstFocusable;
     private boolean homeShellVisible;
     private TvSettingsView settingsView;
+    private AlertDialog deezerAccessSetupDialog;
 
     private HomeDashboardController dashboardController;
     private HomeDashboardController.ViewState dashboardState;
@@ -102,7 +104,7 @@ public final class BoopHomeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (settingsView != null) {
+        if (homeShellVisible) {
             DeezerPuppetAccess.get(this).refresh();
         }
     }
@@ -130,6 +132,10 @@ public final class BoopHomeActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (deezerAccessSetupDialog != null) {
+            deezerAccessSetupDialog.dismiss();
+            deezerAccessSetupDialog = null;
+        }
         closeSettingsPage();
         if (mainHandler != null) {
             if (expiryRunnable != null) {
@@ -530,6 +536,39 @@ public final class BoopHomeActivity extends Activity {
         setContentView(root);
         renderNavigationPage(TvNavigationModel.Page.HOME, true);
         startHomeDashboard();
+        maybeOfferDeezerAccessSetup();
+    }
+
+    private void maybeOfferDeezerAccessSetup() {
+        if (preferences == null
+                || preferences.deezerAccessSetupOffered()
+                || deezerAccessSetupDialog != null
+                || isFinishing()
+                || isDestroyed()) {
+            return;
+        }
+
+        DeezerPuppetAccess puppetAccess = DeezerPuppetAccess.get(this);
+        puppetAccess.refresh();
+        MediaPuppetState.Snapshot snapshot = puppetAccess.state().snapshot();
+        preferences.markDeezerAccessSetupOffered();
+
+        deezerAccessSetupDialog = new AlertDialog.Builder(this)
+                .setTitle("Let BOOP see Deezer playback?")
+                .setMessage("Android calls this Notification access. BOOP ignores notification contents "
+                        + "and only uses Deezer's playback state so the headphones and music puppet can react. "
+                        + "You can turn this off later in BOOP Settings.")
+                .setNegativeButton("Not now", null)
+                .setPositiveButton("Continue", (dialog, which) -> {
+                    puppetAccess.setEnabled(true);
+                    if (!snapshot.granted) {
+                        puppetAccess.openAccessSettings(BoopHomeActivity.this);
+                    }
+                })
+                .create();
+        deezerAccessSetupDialog.setOnDismissListener(dialog -> deezerAccessSetupDialog = null);
+        deezerAccessSetupDialog.show();
+        deezerAccessSetupDialog.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus();
     }
 
     private void startHomeDashboard() {
