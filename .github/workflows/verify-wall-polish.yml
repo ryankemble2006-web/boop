@@ -1,0 +1,36 @@
+name: Verify Wall readability and idle blink
+on:
+  push:
+    branches: [boop-wall-free-chat-wip]
+    paths:
+      - 'source/**'
+      - 'source-test/**'
+      - 'source-android-test/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - '.github/workflows/verify-wall-polish.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve the exact public source snapshot for cross-device review
+        run: |
+          git archive --format=tar HEAD > "${RUNNER_TEMP}/wall-source.tar"
+          git rev-parse HEAD > "${RUNNER_TEMP}/source-commit.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Wall-review-source
+          path: |
+            ${{ runner.temp }}/wall-source.tar
+            ${{ runner.temp }}/source-commit.txt
+          retention-days: 7
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Run focused behaviour and integration tests
+        run: python3 -m unittest discover -s tests -p 'test_wall_readability_blink.py' -v
