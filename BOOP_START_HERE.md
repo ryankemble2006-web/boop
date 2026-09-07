@@ -10,9 +10,9 @@ and read the other branches when cross-project context is needed.
 | --- | --- | --- | --- |
 | Shield Home + Deezer puppet | [boop-shield-media-puppetry](https://github.com/ryankemble2006-web/boop/tree/boop-shield-media-puppetry) | shield-overlay/ | Laptop; H1 play/pause and lower placement user-tested |
 | BOOP Wall voice/eyes | [boop-wall-resurrection](https://github.com/ryankemble2006-web/boop/tree/boop-wall-resurrection) | source/ plus materialization scripts | Working voice/control baseline; preserve it |
-| Wall Native Chat + eye hue candidate | [boop-wall-native-chat-eye-hue](https://github.com/ryankemble2006-web/boop/tree/boop-wall-native-chat-eye-hue) | v34 Native Chat lineage + isolated hue helpers/materialization patch | v35 install candidate for a device already running `0.4.14-wall-native-chat`; CI/signer green, physical Pixel acceptance pending; read SESSION_HANDOFF.md and BOOP_WALL_NATIVE_CHAT_EYE_HUE_MEMORY.md |
-| Historical Wall eye-hue experiment | [boop-wall-eye-hue-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-eye-hue-wip) | source/, scripts/patch-wall-eye-hue.py, focused tests/workflow | v31 experiment layered on Wall v30. Do NOT install it over v34 Native Chat; Android will reject the downgrade |
-| Wall Free Chat / Native Chat line | [boop-wall-free-chat-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-free-chat-wip) | source/, chat/relay/materialization patches | Current v34 Native Chat family. A concurrent hue implementation also landed here at `36e3199`; preserve and reconcile rather than duplicating it |
+| Wall Native Chat + eye hue candidate | [boop-wall-native-chat-eye-hue](https://github.com/ryankemble2006-web/boop/tree/boop-wall-native-chat-eye-hue) | Native Chat lineage + isolated hue helpers/materialization patch | v37 voice-summoned eye-hue candidate; CI/signer green, physical Pixel acceptance pending; read SESSION_HANDOFF.md and BOOP_WALL_NATIVE_CHAT_EYE_HUE_MEMORY.md |
+| Historical Wall eye-hue experiment | [boop-wall-eye-hue-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-eye-hue-wip) | source/, scripts/patch-wall-eye-hue.py, focused tests/workflow | v31 experiment layered on Wall v30. Do NOT install it over newer Native Chat builds |
+| Wall Free Chat / Native Chat line | [boop-wall-free-chat-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-free-chat-wip) | source/, chat/relay/materialization patches | Native Chat family. A concurrent hue implementation also landed here at `36e3199`; preserve and reconcile rather than duplicating it |
 | Isolated Native Chat relay candidate | [boop-relay-reviewed-v34](https://github.com/ryankemble2006-web/boop/tree/boop-relay-reviewed-v34) | source/, relay/cloudflare/, focused tests | Separate reviewed relay implementation; read its handoff/receipt; do not assume it is interchangeable with the Free Chat branch solely because both say v34 |
 | BOOP Launcher | [boop-launcher-alpha1](https://github.com/ryankemble2006-web/boop/tree/boop-launcher-alpha1) | launcher/ | Android-led development; read launcher/README.md |
 | Wall-to-Launcher swipe draft | [boop-wall-launcher-handoff-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-launcher-handoff-wip) | source/ and focused tests | Historical preserved draft; Wall v30+ owns the reviewed swipe, with physical acceptance still lineage-specific |
@@ -38,27 +38,25 @@ configuration must be verified separately from a signed APK or mock tests.
 
 ## Wall eye-hue ownership (2026-09-07)
 
-There are now two hue histories and they must not be confused:
+There are multiple hue histories and they must not be confused:
 
 1. `boop-wall-eye-hue-wip` is the older v31 experiment based on Wall v30. It
-   proved the hue-only rendering approach but is a downgrade relative to the
-   user's installed v34 Native Chat app.
-2. `boop-wall-native-chat-eye-hue` is the current combined v35 candidate built
-   specifically on the user's v34 `0.4.14-wall-native-chat` lineage. It retains
-   Native Chat/OpenAI relay and the newer Wall materialization path while adding
-   the same one-slider hue contract.
+   proved the hue-only rendering approach but is not an update for newer Native Chat installs.
+2. `boop-wall-native-chat-eye-hue` is the current combined lineage. The v36
+   two-eye one-second summon was physically reported as not working and is superseded.
+   Current candidate v37 uses voice command **“change eye colour”** (and US
+   `color`) to show the same slider underneath the visible eyes. Tap outside to dismiss.
 
-The v35 candidate uses versionCode 35 / `0.4.15-wall-native-chat-eye-hue` and the
-existing permanent BOOP signer. Its green build commit is `1256fb33` / workflow
-run `34090520672`. Default cyan/blue at 190 degrees deliberately applies no colour
+The v37 candidate uses versionCode 37 / `0.4.17-wall-eye-hue-voice` and the
+existing permanent BOOP signer. Green build commit: `07c6751a`; workflow run
+`34093159649`. Default cyan/blue at 190 degrees deliberately applies no colour
 filter; non-default hues tint the existing shared `boop_eyes` Paint. Do not add
 a mouth, replacement artwork, brightness/saturation/opacity controls, themes or
 effects.
 
-A concurrent implementation of the same hue concept landed on
-`boop-wall-free-chat-wip@36e3199` while the v35 branch was being prepared. Preserve
-that commit. The combined branch records/reconciles it rather than blindly
-stacking duplicate hue logic.
+A concurrent implementation of the hue concept landed on
+`boop-wall-free-chat-wip@36e3199`. Preserve that commit. The combined branch
+records/reconciles it rather than blindly stacking duplicate hue logic.
 
 ## Start a new Work task
 
@@ -111,10 +109,10 @@ can still leave unpushed changes, so record/publish at useful milestones.
 - Wall: com.boop.alpha1. Launcher: com.boop.launcher. Shield: com.boop.shieldoverlay.
 - Wall and Launcher stay independently launchable. Do not merge packages.
 - Existing tap/hold/voice/HA/Native Chat behavior must survive eye or gesture work.
-- The current v35 Native Chat + eye-hue candidate is isolated on
+- The current v37 Native Chat + eye-hue candidate is isolated on
   `boop-wall-native-chat-eye-hue`; do not promote it to a physical checkpoint
-  until the recorded Pixel install/colour/persistence/regression checklist passes.
-- The old v31 hue candidate is historical and is not an update for v34 devices.
+  until the recorded Pixel voice-summon/colour/persistence/regression checklist passes.
+- The old v31 hue candidate is historical and is not an update for newer devices.
 - Launcher may open Wall by its package; permissions/return-strip behaviour
   require their own consent and device testing.
 - Stable update signing remains in the existing GitHub workflows.
