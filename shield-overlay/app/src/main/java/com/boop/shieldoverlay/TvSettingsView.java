@@ -232,7 +232,7 @@ public final class TvSettingsView extends LinearLayout {
         row.setOrientation(HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(dp(30), dp(22), dp(30), dp(22));
-        row.setMinHeight(dp(86));
+        row.setMinimumHeight(dp(86));
         row.setBackground(rounded(PANEL, Color.rgb(52, 52, 56), 1));
         row.setFocusable(false);
 
@@ -315,7 +315,7 @@ public final class TvSettingsView extends LinearLayout {
             setOrientation(VERTICAL);
             setGravity(Gravity.CENTER_VERTICAL);
             setPadding(dp(30), dp(20), dp(30), dp(20));
-            setMinHeight(dp(108));
+            setMinimumHeight(dp(108));
             setFocusable(true);
             setClickable(true);
             setFocusableInTouchMode(false);
