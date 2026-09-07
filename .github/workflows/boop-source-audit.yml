@@ -1,0 +1,22 @@
+name: BOOP source audit
+on:
+  push:
+    branches: [boop-unified]
+    paths: [.github/workflows/boop-source-audit.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive tracked inputs only
+        run: git archive --format=zip --output=boop-source-audit.zip HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Source-Audit
+          path: boop-source-audit.zip
+          retention-days: 3
+          if-no-files-found: error
