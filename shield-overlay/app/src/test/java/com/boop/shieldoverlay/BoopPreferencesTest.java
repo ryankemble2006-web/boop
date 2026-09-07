@@ -31,6 +31,19 @@ public final class BoopPreferencesTest {
     }
 
     @Test
+    public void deezerAccessSetupOfferIsOneTimeAndPersistent() {
+        FakeStore store = new FakeStore();
+        BoopPreferences preferences = new BoopPreferences(store);
+
+        assertFalse(preferences.deezerAccessSetupOffered());
+
+        preferences.markDeezerAccessSetupOffered();
+
+        assertTrue(preferences.deezerAccessSetupOffered());
+        assertTrue(new BoopPreferences(store).deezerAccessSetupOffered());
+    }
+
+    @Test
     public void cachedFavouriteRoundTripsOnlyForTheMatchingRoom() {
         FakeStore store = new FakeStore();
         BoopPreferences preferences = new BoopPreferences(store);
