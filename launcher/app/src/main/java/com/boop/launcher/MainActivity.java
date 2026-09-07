@@ -1,5 +1,6 @@
 package com.boop.launcher;
 
+import android.annotation.SuppressLint;
 import android.app.*;
 import android.content.*;
 import android.graphics.Color;
@@ -15,6 +16,7 @@ public final class MainActivity extends Activity {
  @Override protected void onStart(){super.onStart();widgets.start();}
  @Override protected void onStop(){widgets.stop();super.onStop();}
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);state=LauncherState.HOME;showState(false);}
+ @SuppressLint("GestureBackNavigation")
  @Override public void onBackPressed(){handleBack();}
  private void handleBack(){if(state==LauncherState.SEARCH&&drawer!=null&&drawer.isSearching()){drawer.closeSearch();state=LauncherState.ALL_APPS;return;}if(state!=LauncherState.HOME){state=state.back();showState(true);}}
  private void build(){root=new FrameLayout(this);root.setBackgroundColor(Color.BLACK);setContentView(root);workspace=new WorkspaceView(this,items,new WorkspaceView.Listener(){public void launch(WorkspaceItem i){MainActivity.this.launch(i.componentName());}public void changed(){store.save(items);}public void emptyLongPress(float x,float y){showHomeMenu();}public void openDrawer(){state=LauncherState.ALL_APPS;showState(true);}});drawer=new AllAppsView(this,new AllAppsView.Listener(){public void launch(AppEntry a){MainActivity.this.launch(a.component);}public void pin(AppEntry a){workspace.addApp(a);state=LauncherState.HOME;showState(true);Toast.makeText(MainActivity.this,"Added to home",Toast.LENGTH_SHORT).show();}public void searchOpened(){state=LauncherState.SEARCH;}public void searchClosed(){state=LauncherState.ALL_APPS;}});drawer.submit(appRepository.loadLaunchableApps(getPackageManager()));root.addView(workspace,new FrameLayout.LayoutParams(-1,-1));root.addView(drawer,new FrameLayout.LayoutParams(-1,-1));workspace.refresh();showState(false);}
