@@ -8,36 +8,41 @@ Physically confirmed baseline:
 - swipe up opens All Apps;
 - swipe down from the top of All Apps returns HOME.
 
-`0.3.0` widget/page plumbing was not accepted because the HOME long-press menu was unreachable. `0.3.1` fixed the menu and added Launcher page-0 swipe right -> BOOP Wall; its CI interaction smoke passed.
+`0.3.0` widget/page plumbing was not accepted because the HOME long-press menu was unreachable. `0.3.1` fixed the menu and added Launcher page-0 swipe right -> BOOP Wall.
 
-Ryan then physically reported the Wall/Launcher cross-app page motion still looked the same in both directions. Launcher `0.3.2` used enter-from-right/exit-left; Wall v34 later tried caller-owned transition control, but the visible result remained unchanged.
+Ryan physically confirmed that reversing the cross-app slide geometry did not change the visible result. `0.3.3` still produced the same unwanted white swish on the Pixel.
 
-`0.3.3` / code `10` is the explicit opposite Launcher-only experiment. Wall v34 is unchanged.
+`0.3.4` / code `11` replaces that animation strategy rather than reversing it again. Wall v34 is unchanged.
 
-Launcher OPEN geometry now is:
-- enter Launcher from LEFT: `-100%p -> 0`;
-- previous activity exits RIGHT: `0 -> 100%p`.
+Launcher now uses a black-safe handoff:
+- Android 14+ activity OPEN/CLOSE transitions disabled;
+- pure-black Launcher window background;
+- pure-black Android 12+ splash background;
+- window preview disabled;
+- old directional transition XML removed;
+- Launcher -> Wall: 110 ms Launcher-content fade to black, then no-animation Wall launch and zero pending transition;
+- Launcher appearance: 140 ms content fade in from black.
 
-Application/source test head: `86a3971d173887c2b641f95d175e5fd30426b59f`.
-GitHub Actions run: `34088140401`.
-Signed artifact ID: `10005926195`.
-APK SHA-256: `359dd04b3268d16d88feac1ebfcb9030ed48057feed2c06d9df81f7334599310`.
+Application/source head before documentation: `61606736fea597e86c37c9c9a5259fdb54617abb`.
+GitHub Actions run: `34089318255`.
+Signed artifact ID: `10006292363`.
+APK SHA-256: `412cd7162e6c7562a93ce62534559ab255bf6f5b040145941c586c743b4474e9`.
 Existing permanent BOOP signing identity unchanged.
 
 ## Verification
 
-The first 0.3.3 run failed because the old regression test still asserted 0.3.2's direction. Production compilation succeeded. The test was updated to assert the newly requested reverse geometry.
-
-Run `34088140401` passed:
-- reversed transition-direction regression;
+Run `34089318255` build job passed:
+- black-safe transition source regression;
 - unit tests;
 - Android lint;
 - permanent-signer release build;
 - signed artifact upload.
 
-This verifies source geometry and build/sign integrity. It does NOT establish that Pixel visually renders the cross-app transition in the expected direction. Ryan's physical observation decides that.
+The first Android 16 smoke attempt installed and cold-launched the signed APK successfully, then failed because UIAutomator returned a null root node while dumping the HOME hierarchy. That prevented the menu/swipe assertions from running; the failure log did not show a Launcher fatal crash. The smoke was explicitly retried, so check its latest state before reporting full smoke-green status.
 
-## 0.3.3 behavior retained
+This build verifies the new source strategy and build/sign integrity. It does NOT establish that Pixel has stopped drawing the white swish. Ryan's physical observation decides that.
+
+## `0.3.4` behavior retained
 
 - Pure-black fullscreen HOME.
 - Swipe up HOME -> All Apps.
@@ -59,7 +64,7 @@ This verifies source geometry and build/sign integrity. It does NOT establish th
 
 ## Physical acceptance pending
 
-Primary 0.3.3 check: with the same Wall v34 installed, does Wall swipe-left -> Launcher now visually move opposite to Launcher swipe-right -> Wall?
+Primary `0.3.4` check: with the same Wall v34 installed, does the new black fade/cut handoff remove the white swish in both directions?
 
 Widget move/resize/remove, real third-party widget behavior, and page spill/persistence still need Ryan's on-device acceptance.
 
@@ -73,4 +78,4 @@ Drawer motion is still not full Launcher3 direct-finger/spring physics. Third-pa
 - Keep package `com.boop.launcher` and existing BOOP signing identity.
 - Do not publish signing keys/private certificates.
 - Keep Wall and Shield app lineages independent.
-- CI-green and physically accepted are separate states.
+- CI/build-green and physically accepted are separate states.
