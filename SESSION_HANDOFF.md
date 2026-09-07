@@ -5,74 +5,92 @@ Project: `launcher/`; package remains `com.boop.launcher`.
 
 ## Latest state
 
-Ryan physically confirmed the `0.2.2` fullscreen build removed the stubborn Pixel status-bar clock, and then physically confirmed the `0.2.3` inverse drawer gesture works perfectly: swipe up opens All Apps, swipe down from the top closes it back to HOME.
+Ryan physically confirmed the `0.2.2` fullscreen build removed the stubborn Pixel status-bar clock and physically confirmed `0.2.3` swipe-up / swipe-down drawer navigation works perfectly.
 
-Ryan then explicitly requested completion of the previously approved Alpha 2 widget/page scope, with no emulator/UI testing for this pass and immediate signing for his own physical test.
+`0.3.0` added the approved widget/page plumbing, but Ryan physically found the entry point was dead: holding the empty black HOME screen produced no menu, so the widget functionality was unreachable. Do not treat `0.3.0` as accepted.
 
-Application source commit: `11adc4cbe7df0c63cfb772c9986a0e6f45c0d054` (`feat: finish Alpha 2 widgets and dynamic pages`).
+The failure was reproduced in GitHub Actions run `34084147192`: the signed app launched and survived, CI performed a 900 ms HOME hold, then the UI hierarchy did not contain `Add widget`.
+
+`0.3.1` / code `8` fixes that interaction and adds the approved inverse Wall gesture.
+
+Application source commit: `9f49ccfdc23b8dddb8a0173e1f369c79dc051b96` (`fix: restore Home menu and add Wall return swipe`).
 
 Signed build:
 - package `com.boop.launcher`
-- versionName `0.3.0`
-- versionCode `7`
-- GitHub Actions run `34083701591`
+- versionName `0.3.1`
+- versionCode `8`
+- GitHub Actions run `34084595483`
 - signed artifact `BOOP-Launcher-Alpha2-signed`
-- artifact ID `10004513657`
-- APK SHA-256 `0ed19b064c56cead4b47c735c59665eb741faab6b8e5b25c581a0d0802eca3a6`
+- artifact ID `10004790724`
+- APK SHA-256 `294206b2ff3f50c7c0f880b952f454980582bb7970bda47430036bfb4fe86d88`
 - existing permanent BOOP signing identity unchanged
 
-The existing GitHub signing workflow's unavoidable compile/lint stage completed successfully before the signed artifact was taken. Per Ryan's explicit request, this pass was not held for emulator/UI validation. Treat `0.3.0` as signed and ready for Ryan's physical verification, not as a new physical checkpoint.
+## 0.3.1 interaction fix
 
-## What 0.3.0 completes
+The HOME long-press callback already existed, but its `PopupMenu` was anchored to the entire fullscreen workspace. `0.3.1` anchors the menu to a tiny temporary view at the actual hold point instead, then removes that anchor when the menu closes. This lets the contextual menu appear where Android can actually place it.
 
-### Widgets
+The green CI smoke now:
+1. installs and launches the signed APK on Android 16;
+2. confirms the launcher process survives;
+3. performs a 900 ms hold on empty HOME;
+4. dumps the UI hierarchy and requires visible `Add widget` text;
+5. dismisses the menu;
+6. swipes right on HOME;
+7. requires the `BOOP_WALL_SWIPE` handoff path to fire;
+8. scans for BOOP launcher fatal crashes.
 
-- Real `AppWidgetHostView` instances are rendered on HOME instead of placeholder records.
-- System widget picker flow allocates host IDs and supports provider binding, provider configuration, cancellation cleanup, and persisted pending state across launcher recreation.
-- Cancelled widget flows release their allocated host IDs rather than leaving ghosts.
-- Missing/uninstalled widget providers are pruned from the workspace and their IDs released.
-- Host IDs no longer referenced by the persisted workspace are cleaned up.
-- Normal widget child interaction remains available until the user deliberately long-presses the widget.
-- Long-press + drag moves a widget.
-- Long-press from the widget's bottom-right area + drag resizes it; a temporary resize grip appears during that interaction.
-- Moving or resizing persists normalized position and size.
-- Dragging a held widget into the existing top remove band deletes the widget and releases its host ID.
-- Widget size options are updated after placement/resize so providers can adapt their layout.
+Run `34084595483` passed all of those checks plus unit tests, lint, release build and permanent signing.
 
-### Dynamic HOME pages
+## Wall / Launcher gesture loop
 
-- Existing persisted `page` data is now active rather than dormant.
-- HOME renders only the current page.
-- Horizontal swipe on empty HOME changes between existing content pages without adding permanent page chrome/dots.
-- Adding an app/widget first tries the current page; if it does not fit, a new page is created automatically and becomes current.
-- Removing content compacts empty page gaps so there is no permanent empty carousel.
-- App and widget overlap checks now share the same page-aware placement model.
+Approved contract:
+- BOOP Wall (`com.boop.alpha1`) -> deliberate swipe left -> Launcher;
+- Launcher page 0 -> swipe right -> BOOP Wall.
+
+Launcher uses Android's launch intent for `com.boop.alpha1` and brings it forward without merging the apps. If Wall is absent, Launcher stays open and shows a plain-English message. Extra Launcher content pages keep normal page navigation: right swipe from a later page returns toward page 0; only right swipe from page 0 exits to Wall.
+
+## Widget/page implementation retained from 0.3.0
+
+- Real `AppWidgetHostView` rendering on HOME.
+- Widget pick, bind, configure and cancellation cleanup.
+- Pending widget flow persists across launcher recreation.
+- Stale/missing providers and orphaned host IDs are cleaned up.
+- Normal widget controls remain usable until deliberate long-press editing.
+- Long-press + drag moves widgets.
+- Long-press from bottom-right + drag resizes widgets with a temporary grip.
+- Widget move/size/page data persists.
+- Top remove band deletes widgets and releases host IDs.
+- Persisted page field is active; horizontal swipes move between existing content pages.
+- New pages appear only when content cannot fit on the current page.
+- Empty page gaps compact away after removals.
 
 ## Protected behavior retained
 
 - Pure-black fullscreen HOME.
-- Pixel status bar/clock suppression that Ryan physically accepted.
-- Swipe up from HOME opens All Apps.
-- Swipe down from the top of All Apps returns HOME and was physically accepted.
-- App-drawer local/on-demand search remains contextual only.
+- Pixel status bar/clock suppression physically accepted by Ryan.
+- Swipe up HOME -> All Apps.
+- Swipe down from top of All Apps -> HOME, physically accepted by Ryan.
+- Contextual/local app search only.
 - No launcher clock, At a Glance, Google search pill, dock/hotseat, Internet permission, microphone permission, or Google proprietary launcher code/assets.
-- `com.boop.launcher` and the permanent BOOP signing identity remain unchanged.
+- `com.boop.launcher` and permanent BOOP signing identity unchanged.
 
-## Physical checklist for 0.3.0
+## Physical checklist for 0.3.1
 
-Ryan is the acceptance test for this build. Check:
-- long-press empty HOME -> Add widget -> choose/configure a widget;
-- widget actually renders and remains interactive normally;
-- long-press widget and drag moves it;
-- long-press its bottom-right area and drag resizes it;
-- remove a widget through the top remove band;
-- add enough content to spill to another page, then swipe horizontally between content pages;
-- relaunch and confirm widget/page placement persists;
-- confirm fullscreen and up/down drawer gestures remain intact.
+Ryan is still the final acceptance test. Check:
+- hold empty black HOME -> menu visibly appears;
+- tap Add widget -> Android widget picker/config flow opens;
+- add a real widget and confirm it renders;
+- ordinary widget controls work;
+- long-press move and bottom-right resize work;
+- widget remove leaves no ghost;
+- page spill/navigation persists;
+- from launcher page 0 swipe right -> BOOP Wall;
+- from BOOP Wall swipe left -> Launcher;
+- fullscreen and drawer gestures remain intact.
 
-## Remaining polish, not blockers for this physical pass
+## Remaining polish
 
-The drawer transition is still not full Launcher3 direct-finger/spring physics. Rotation/process-death behavior for every third-party widget cannot be called physically accepted until Ryan exercises it. Do not manufacture a physical checkpoint from the signed build.
+Drawer transition is still not full Launcher3 direct-finger/spring physics. Third-party widget rotation/process-death quirks remain physical-test territory. CI-green and physically accepted remain separate states.
 
 ## Cross-app boundaries
 
