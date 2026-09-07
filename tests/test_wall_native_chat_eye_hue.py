@@ -12,22 +12,26 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert "patch-wall-eye-hue.py" in materialize
     assert "ActivityOptions.makeCustomAnimation" in materialize
 
-    assert "versionCode 35" in build
-    assert 'versionName "0.4.15-wall-native-chat-eye-hue"' in build
+    assert "versionCode 36" in build
+    assert 'versionName "0.4.16-wall-eye-hue-gesture"' in build
     assert "BOOP_RELAY_URL" in build
     assert "BOOP_RELAY_TOKEN" in build
 
-    assert "BoopEyeHueSettings.addSlider(this, voiceSettingsOverlay, face);" in patch
+    assert "BoopEyeHueSettings.addSlider" not in patch
+    assert "BoopEyeHueOverlay" in patch
+    assert "postDelayed(eyeHueHoldRunnable, 1_000L)" in patch
+    assert "touchesBothEyes(face, event)" in patch
+    assert "eyeHueOverlay.hide()" in patch
     assert "BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes)" in patch
     assert "paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));" in patch
     assert "setEyeHueDegrees(BoopEyeHue.loadHue(context));" in patch
     assert "mouth" not in patch.lower()
 
 
-def test_hue_is_one_persisted_full_spectrum_control_with_exact_default_path():
+def test_hue_overlay_is_one_persisted_full_spectrum_control_under_the_eyes():
     hue = Path("source/BoopEyeHue.java").read_text()
     math = Path("source/BoopEyeHueMath.java").read_text()
-    settings = Path("source/BoopEyeHueSettings.java").read_text()
+    overlay = Path("source/BoopEyeHueOverlay.java").read_text()
 
     assert 'PREFS_NAME = "boop_eyes"' in hue
     assert 'KEY_HUE_DEGREES = "hue_degrees"' in hue
@@ -39,13 +43,16 @@ def test_hue_is_one_persisted_full_spectrum_control_with_exact_default_path():
     assert "if (bounded == DEFAULT_HUE_DEGREES)" in math
     assert "return null;" in math
 
-    assert settings.count("new SeekBar(activity)") == 1
-    assert 'label.setText("Eye colour")' in settings
-    assert 'slider.setContentDescription("Eye colour hue")' in settings
-    assert "BoopEyeHue.saveHue(activity, progress)" in settings
-    assert "face.setEyeHueDegrees(progress)" in settings
+    assert overlay.count("new SeekBar(activity)") == 1
+    assert 'slider.setContentDescription("Eye colour hue")' in overlay
+    assert "BoopEyeHue.saveHue(activity, progress)" in overlay
+    assert "face.setEyeHueDegrees(progress)" in overlay
+    assert "eyeBottom" in overlay
+    assert "params.topMargin" in overlay
+    assert "touchesBothEyes" in overlay
+    assert "isSliderTouch" in overlay
 
     forbidden = ("brightness", "saturation", "opacity", "theme", "effect")
-    lowered = settings.lower()
+    lowered = overlay.lower()
     for token in forbidden:
         assert token not in lowered
