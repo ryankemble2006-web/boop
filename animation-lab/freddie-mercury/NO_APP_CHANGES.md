@@ -1,0 +1,1 @@
+This animation experiment must remain separate from BOOP app implementation unless explicitly promoted later. Do not alter app code as part of visual iteration.
