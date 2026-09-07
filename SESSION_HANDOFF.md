@@ -5,53 +5,75 @@ Project: `launcher/`; package remains `com.boop.launcher`.
 
 ## Latest state
 
-Ryan physically confirmed the stronger `0.2.2` fullscreen build works on the Pixel: the stubborn Android status-bar clock is gone. Pure-black HOME plus swipe-up All Apps are therefore physically useful.
+Ryan physically confirmed the `0.2.2` fullscreen build removed the stubborn Pixel status-bar clock, and then physically confirmed the `0.2.3` inverse drawer gesture works perfectly: swipe up opens All Apps, swipe down from the top closes it back to HOME.
 
-Ryan then requested one small navigation adjustment: while All Apps is open, a downward swipe from the top of the drawer should close it back to HOME. He explicitly wants to perform the physical gesture test himself rather than spend time on emulator validation.
+Ryan then explicitly requested completion of the previously approved Alpha 2 widget/page scope, with no emulator/UI testing for this pass and immediate signing for his own physical test.
 
-Current application source: `5b18bb983de284a7773f30cc1a5897a7cb002c35` (`build: bump launcher to 0.2.3`). Gesture implementation commits immediately before it are `24c002e93bf600338559fe867917eb3d6e117550` and `6048495237a0614acb95f266c0912ab9d8d42c14`.
+Application source commit: `11adc4cbe7df0c63cfb772c9986a0e6f45c0d054` (`feat: finish Alpha 2 widgets and dynamic pages`).
 
 Signed build:
 - package `com.boop.launcher`
-- versionName `0.2.3`
-- versionCode `6`
-- GitHub Actions run `34082550615`
+- versionName `0.3.0`
+- versionCode `7`
+- GitHub Actions run `34083701591`
 - signed artifact `BOOP-Launcher-Alpha2-signed`
-- artifact ID `10004259850`
-- APK SHA-256 `8fc6c4b212d3fca7cddd98ec420724b8f38c7bb0cf79afdf57fc325d3c6ec05e`
+- artifact ID `10004513657`
+- APK SHA-256 `0ed19b064c56cead4b47c735c59665eb741faab6b8e5b25c581a0d0802eca3a6`
 - existing permanent BOOP signing identity unchanged
 
-The normal signing workflow's compile/lint gate completed before artifact upload. Do not treat swipe-down as physically accepted until Ryan tries it on the Pixel. No emulator result is required for this tiny gesture pass; Ryan is the acceptance test.
+The existing GitHub signing workflow's unavoidable compile/lint stage completed successfully before the signed artifact was taken. Per Ryan's explicit request, this pass was not held for emulator/UI validation. Treat `0.3.0` as signed and ready for Ryan's physical verification, not as a new physical checkpoint.
 
-## Swipe-down behavior
+## What 0.3.0 completes
 
-`AllAppsView` records a downward gesture beginning while the drawer is at its top position. A downward travel over the small threshold calls `closeDrawer()`. `MainActivity` then returns state to HOME using the existing drawer-dismiss animation. Starting the gesture while the app list is already scrolled down continues to behave as list scrolling rather than unexpectedly closing the drawer.
+### Widgets
 
-## Current system-bar behavior
+- Real `AppWidgetHostView` instances are rendered on HOME instead of placeholder records.
+- System widget picker flow allocates host IDs and supports provider binding, provider configuration, cancellation cleanup, and persisted pending state across launcher recreation.
+- Cancelled widget flows release their allocated host IDs rather than leaving ghosts.
+- Missing/uninstalled widget providers are pruned from the workspace and their IDs released.
+- Host IDs no longer referenced by the persisted workspace are cleaned up.
+- Normal widget child interaction remains available until the user deliberately long-presses the widget.
+- Long-press + drag moves a widget.
+- Long-press from the widget's bottom-right area + drag resizes it; a temporary resize grip appears during that interaction.
+- Moving or resizing persists normalized position and size.
+- Dragging a held widget into the existing top remove band deletes the widget and releases its host ID.
+- Widget size options are updated after placement/resize so providers can adapt their layout.
 
-The physically accepted fullscreen implementation uses the window-level fullscreen flag plus the WindowInsets immersive path. System bars are reapplied hidden when launcher focus returns; Android retains transient recovery behavior. Drawer bottom-safe padding remains so the last app row is not guillotined.
+### Dynamic HOME pages
 
-## Core Alpha 2 direction
+- Existing persisted `page` data is now active rather than dormant.
+- HOME renders only the current page.
+- Horizontal swipe on empty HOME changes between existing content pages without adding permanent page chrome/dots.
+- Adding an app/widget first tries the current page; if it does not fit, a new page is created automatically and becomes current.
+- Removing content compacts empty page gaps so there is no permanent empty carousel.
+- App and widget overlap checks now share the same page-aware placement model.
 
-Ryan rejected Alpha 1's old-fashioned visual/interaction direction and approved a clean-sheet launcher inspired by current Pixel Launcher interaction patterns without copying Google proprietary code or assets. Alpha 1 remains preserved on `boop-launcher-alpha1` as historical fallback only.
+## Protected behavior retained
 
-Approved design: `docs/superpowers/specs/2026-09-07-boop-launcher-alpha2-design.md`.
-Implementation plan: `docs/superpowers/plans/2026-09-07-boop-launcher-alpha2.md`.
+- Pure-black fullscreen HOME.
+- Pixel status bar/clock suppression that Ryan physically accepted.
+- Swipe up from HOME opens All Apps.
+- Swipe down from the top of All Apps returns HOME and was physically accepted.
+- App-drawer local/on-demand search remains contextual only.
+- No launcher clock, At a Glance, Google search pill, dock/hotseat, Internet permission, microphone permission, or Google proprietary launcher code/assets.
+- `com.boop.launcher` and the permanent BOOP signing identity remain unchanged.
 
-Alpha 2 deliberately removes permanent launcher furniture: no launcher clock, At a Glance, Google search pill or dock/hotseat. Home is intended to be a black canvas; swipe up opens All Apps; native icons/labels are used; search is contextual; apps can be pinned, persisted, moved and removed; Back flows Search -> All Apps -> Home.
+## Physical checklist for 0.3.0
 
-## Still incomplete
+Ryan is the acceptance test for this build. Check:
+- long-press empty HOME -> Add widget -> choose/configure a widget;
+- widget actually renders and remains interactive normally;
+- long-press widget and drag moves it;
+- long-press its bottom-right area and drag resizes it;
+- remove a widget through the top remove band;
+- add enough content to spill to another page, then swipe horizontally between content pages;
+- relaunch and confirm widget/page placement persists;
+- confirm fullscreen and up/down drawer gestures remain intact.
 
-- Swipe-down drawer close is signed but awaiting Ryan's physical acceptance.
-- Drawer transition is not yet Launcher3-quality direct-finger/spring physics.
-- Widget picker/config plumbing exists but widget views are not yet fully rendered/movable/resizable on the workspace.
-- Dynamic multi-page workspace behavior is incomplete.
-- Rotation/process-death and real widget flows still need physical checks.
+## Remaining polish, not blockers for this physical pass
 
-## Next physical step
-
-Install signed `0.2.3` / code `6`. Open All Apps with swipe up, then swipe down from the top of the drawer and confirm it returns naturally to the black HOME canvas. Ryan's physical feel result is authoritative.
+The drawer transition is still not full Launcher3 direct-finger/spring physics. Rotation/process-death behavior for every third-party widget cannot be called physically accepted until Ryan exercises it. Do not manufacture a physical checkpoint from the signed build.
 
 ## Cross-app boundaries
 
-Wall remains `com.boop.alpha1`; Launcher remains `com.boop.launcher`; Shield remains `com.boop.shieldoverlay`. Keep apps independent. Main owns shared cross-project contracts; this branch owns Launcher implementation state. Preserve the existing signing identity and Alpha 1 fallback. Signed, CI-green and physically accepted are separate states.
+Wall remains `com.boop.alpha1`; Launcher remains `com.boop.launcher`; Shield remains `com.boop.shieldoverlay`. Keep apps independent. Main owns shared cross-project contracts; this branch owns Launcher implementation state. Preserve Alpha 1 as historical fallback until Alpha 2 is fully accepted.
