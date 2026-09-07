@@ -62,6 +62,27 @@ request first. These rules are for BOOP work, not permission to do unrelated wor
 - User stop/read-only instructions win. No scheduled blind commits, automatic
   app installation, permission grants, or deployment are implied by syncing.
 
+## Canonical deployment and rollback rule
+
+- BOOP's long-term production direction is one canonical APK lineage. Until the
+  planned Wall/Launcher/Shield unification is complete, treat each current app
+  branch as temporary lineage rather than inventing parallel release families.
+- Make one intentional functional change per update whenever practical. Do not
+  bundle unrelated tweaks merely because a build is already in progress.
+- A physically accepted build creates the rollback point. Record its exact Git
+  commit/tag, workflow run, signed artifact and physical result. CI-green alone
+  is not a replacement for device acceptance.
+- If the next update breaks, return to the last physically accepted Git
+  checkpoint/artifact. Do not guess from version labels, local filenames,
+  timestamps or remembered APK names.
+- Git history and retained build artifacts are the archive. A deployment folder
+  is not an archive. After a new build is physically accepted, keep only the
+  current signed APK and, if useful, one clearly identified last-good APK in the
+  deployment folder; remove superseded local copies instead of accumulating
+  random filenames.
+- Prefer one stable deployment filename such as `BOOP.apk`; use Git metadata for
+  provenance and rollback rather than encoding history into a pile of filenames.
+
 ## Publication safety
 
 This repository is public. Never publish tokens, passwords, signing keys,
