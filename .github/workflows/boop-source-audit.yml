@@ -19,6 +19,7 @@ jobs:
           cp .cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/bpe.model wake-audit/
           cp .cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/tokens.txt wake-audit/
           cp -R .cache/boop-wake/sherpa-onnx-kws-zipformer-gigaspeech-3.3M-2024-01-01/test_wavs wake-audit/
+          git archive --format=zip --output=wake-audit/source.zip HEAD
       - uses: actions/upload-artifact@v4
         with:
           name: BOOP-Wake-Audit
