@@ -8,12 +8,19 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
-public final class TvHomeView extends LinearLayout {
+import java.util.List;
+
+public final class TvHomeView extends ScrollView {
+    private final LinearLayout content;
+    private final LinearLayout favouritesContainer;
     private final FocusCardView firstCard;
     private final TextView favouriteStatus;
     private final Runnable onFavouriteClick;
+    private HomeDashboardController.ViewState currentState;
+    private EntityCard firstCardEntity;
     private boolean favouriteActionEnabled;
 
     public TvHomeView(
@@ -23,31 +30,50 @@ public final class TvHomeView extends LinearLayout {
             Runnable onFavouriteClick) {
         super(context);
         this.onFavouriteClick = onFavouriteClick;
-        setOrientation(VERTICAL);
-        setGravity(Gravity.TOP);
-        setPadding(dp(36), dp(34), dp(44), dp(34));
+        setFillViewport(true);
+        setSmoothScrollingEnabled(true);
         setBackgroundColor(Color.BLACK);
+        setFocusable(false);
 
-        addView(title("BOOP Home", 42f));
-        addView(detail(selectedRoom == null ? "Home" : selectedRoom.name()));
-        addView(section("Favourites"));
+        content = new LinearLayout(context);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.TOP);
+        content.setPadding(dp(36), dp(34), dp(44), dp(34));
+        addView(content, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        firstCard = card("Finding a useful control…", onContentLeft);
+        content.addView(title("BOOP Home", 42f));
+        content.addView(detail(selectedRoom == null ? "Home" : selectedRoom.name()));
+        content.addView(section("Favourites"));
+
+        favouritesContainer = new LinearLayout(context);
+        favouritesContainer.setOrientation(LinearLayout.VERTICAL);
+        content.addView(favouritesContainer, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        firstCard = card("Finding useful controls…", onContentLeft);
         firstCard.setOnClickListener(view -> {
-            if (favouriteActionEnabled && this.onFavouriteClick != null) {
-                this.onFavouriteClick.run();
+            if (!favouriteActionEnabled || firstCardEntity == null) {
+                return;
+            }
+            if (onFavouriteClick != null) {
+                onFavouriteClick.run();
+            } else if (currentState != null) {
+                currentState.toggle(firstCardEntity);
             }
         });
-        addView(firstCard, cardParams());
+        favouritesContainer.addView(firstCard, cardParams());
 
         favouriteStatus = detail("Connecting to the house…");
-        addView(favouriteStatus);
+        content.addView(favouriteStatus);
 
-        addView(section("Rooms"));
+        content.addView(section("Rooms"));
         FocusCardView roomCard = card(
                 selectedRoom == null ? "Choose a room" : selectedRoom.name(),
                 onContentLeft);
-        addView(roomCard, cardParams());
+        content.addView(roomCard, cardParams());
     }
 
     public View firstFocusable() {
@@ -55,19 +81,29 @@ public final class TvHomeView extends LinearLayout {
     }
 
     public void render(HomeDashboardController.ViewState state) {
+        currentState = state;
+        clearExtraCards();
+
         if (state == null) {
+            firstCardEntity = null;
             favouriteActionEnabled = false;
-            firstCard.label("Finding a useful control…");
+            firstCard.label("Finding useful controls…");
             firstCard.setAlpha(0.72f);
             favouriteStatus.setText("Connecting to the house…");
             return;
         }
 
+        List<EntityCard> cards = state.cards();
         EntityCard favourite = state.favourite();
-        favouriteActionEnabled = state.actionsEnabled() && favourite != null;
-        if (favourite == null) {
+        EntityCard primary = favourite != null
+                ? favourite
+                : (cards.isEmpty() ? null : cards.get(0));
+        firstCardEntity = primary;
+        favouriteActionEnabled = state.actionsEnabled() && primary != null;
+
+        if (primary == null) {
             firstCard.label(state.stale()
-                    ? "No last-known control for this room"
+                    ? "No last-known controls for this room"
                     : "No simple on/off controls found in this room");
             firstCard.setAlpha(0.72f);
             favouriteStatus.setText(state.message() == null
@@ -76,21 +112,51 @@ public final class TvHomeView extends LinearLayout {
             return;
         }
 
-        String stateLabel = "on".equals(favourite.state()) ? "On" : "Off";
-        String staleLabel = state.stale() ? " · Last known" : "";
-        firstCard.label(favourite.displayName() + "\n" + stateLabel + staleLabel);
+        firstCard.label(cardLabel(primary, state.stale()));
         firstCard.setAlpha(favouriteActionEnabled ? 1f : 0.72f);
+
+        for (EntityCard card : cards) {
+            if (card == null || card.entityId().equals(primary.entityId())) {
+                continue;
+            }
+            FocusCardView extra = card(cardLabel(card, state.stale()), this::returnFocusLeft);
+            extra.setAlpha(state.actionsEnabled() ? 1f : 0.72f);
+            extra.setOnClickListener(view -> {
+                HomeDashboardController.ViewState current = currentState;
+                if (current != null) {
+                    current.toggle(card);
+                }
+            });
+            favouritesContainer.addView(extra, cardParams());
+        }
 
         if (state.stale()) {
             favouriteStatus.setText(state.message() == null
                     ? "Last known state — house controls are unavailable."
                     : state.message() + " · Last known state");
         } else if (state.actionsEnabled()) {
-            favouriteStatus.setText("Select to switch it "
-                    + ("on".equals(favourite.state()) ? "off." : "on."));
+            favouriteStatus.setText(cards.size() <= 1
+                    ? "Select to switch it " + ("on".equals(primary.state()) ? "off." : "on.")
+                    : "Use Up/Down to see the room. Select a device to switch it on or off.");
         } else {
             favouriteStatus.setText("Waiting for Home Assistant to confirm…");
         }
+    }
+
+    private void clearExtraCards() {
+        while (favouritesContainer.getChildCount() > 1) {
+            favouritesContainer.removeViewAt(favouritesContainer.getChildCount() - 1);
+        }
+    }
+
+    private void returnFocusLeft() {
+        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT);
+        firstCard.dispatchKeyEvent(event);
+    }
+
+    private String cardLabel(EntityCard card, boolean stale) {
+        String stateLabel = "on".equals(card.state()) ? "On" : "Off";
+        return card.displayName() + "\n" + stateLabel + (stale ? " · Last known" : "");
     }
 
     private FocusCardView card(String label, Runnable onContentLeft) {
@@ -120,7 +186,7 @@ public final class TvHomeView extends LinearLayout {
     private TextView detail(String text) {
         TextView view = title(text, 22f);
         view.setTextColor(Color.LTGRAY);
-        LayoutParams params = new LayoutParams(
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         params.bottomMargin = dp(18);
@@ -130,7 +196,7 @@ public final class TvHomeView extends LinearLayout {
 
     private TextView section(String text) {
         TextView view = title(text, 25f);
-        LayoutParams params = new LayoutParams(
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         params.topMargin = dp(14);
@@ -139,8 +205,8 @@ public final class TvHomeView extends LinearLayout {
         return view;
     }
 
-    private LayoutParams cardParams() {
-        LayoutParams params = new LayoutParams(
+    private LinearLayout.LayoutParams cardParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         params.bottomMargin = dp(10);
