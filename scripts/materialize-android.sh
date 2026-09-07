@@ -14,6 +14,7 @@ python3 scripts/patch-toast-easter-egg.py
 python3 scripts/patch-wall-chat-mode.py
 python3 scripts/patch-wall-openai-relay.py
 python3 scripts/patch-wall-idle-blink.py
+python3 scripts/patch-wall-eye-hue.py
 python3 - <<'PY'
 from pathlib import Path
 
