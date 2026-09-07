@@ -5,6 +5,11 @@ plugins {
 def boopKeystorePath = System.getenv('BOOP_SIGNING_STORE_FILE')
 def boopKeystorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
 def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
+def relayUrl = System.getenv('BOOP_RELAY_URL') ?: ''
+def relayToken = System.getenv('BOOP_RELAY_TOKEN') ?: ''
+def buildConfigEscape = { value ->
+    value.replace('\\', '\\\\').replace('"', '\\"').replace('\r', '\\r').replace('\n', '\\n')
+}
 
 android {
     namespace 'com.boop.alpha1'
@@ -15,8 +20,14 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 33
-        versionName "0.4.13-wall-blink-speed"
+        versionCode 34
+        versionName "0.4.14-wall-native-chat"
+        buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
+        buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     signingConfigs {

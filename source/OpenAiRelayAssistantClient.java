@@ -55,18 +55,22 @@ final class OpenAiRelayAssistantClient {
         if (response == null) {
             return CommandOutcome.assistantFailed();
         }
-        if (response.httpStatus == 401 || response.httpStatus == 403) {
+        if (response.httpStatus == 401 || response.httpStatus == 403 || "auth".equals(response.error)) {
             return CommandOutcome.assistantAuthRequired();
         }
-        if (response.httpStatus == 408) {
+        if (response.httpStatus == 408 || "timeout".equals(response.error) || "offline".equals(response.error)) {
             return CommandOutcome.assistantTimeout();
         }
-        if (response.httpStatus == 429) {
-            return "quota".equals(response.error)
-                    ? CommandOutcome.assistantQuota()
-                    : CommandOutcome.assistantRateLimit();
+        if ("quota".equals(response.error)) {
+            return CommandOutcome.assistantQuota();
         }
-        if (response.httpStatus >= 500) {
+        if ("rate_limit".equals(response.error)) {
+            return CommandOutcome.assistantRateLimit();
+        }
+        if (response.httpStatus == 429) {
+            return CommandOutcome.assistantRateLimit();
+        }
+        if ("service".equals(response.error) || response.httpStatus >= 500) {
             return CommandOutcome.assistantService();
         }
         if (response.httpStatus != 200 || !response.ok || response.text.isEmpty()) {

@@ -25,10 +25,6 @@ final class BoopCommandRouter {
     private final AssistantProcessor assistant;
     private final AssistantActivity assistantActivity;
 
-    BoopCommandRouter(HomeAssistantClient local, HomeAssistantGeneralAssistantClient assistant) {
-        this(local::process, assistant::ask, NO_ASSISTANT_ACTIVITY);
-    }
-
     BoopCommandRouter(LocalProcessor local, AssistantProcessor assistant) {
         this(local, assistant, NO_ASSISTANT_ACTIVITY);
     }

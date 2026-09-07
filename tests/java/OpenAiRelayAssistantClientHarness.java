@@ -61,7 +61,9 @@ public final class OpenAiRelayAssistantClientHarness {
     private static void errorMappings() {
         assertStatus(401, "", CommandOutcome.Status.ASSISTANT_AUTH_REQUIRED);
         assertStatus(403, "", CommandOutcome.Status.ASSISTANT_AUTH_REQUIRED);
+        assertStatus(502, "auth", CommandOutcome.Status.ASSISTANT_AUTH_REQUIRED);
         assertStatus(408, "", CommandOutcome.Status.ASSISTANT_TIMEOUT);
+        assertStatus(503, "timeout", CommandOutcome.Status.ASSISTANT_TIMEOUT);
         assertStatus(429, "quota", CommandOutcome.Status.ASSISTANT_QUOTA);
         assertStatus(429, "rate_limit", CommandOutcome.Status.ASSISTANT_RATE_LIMIT);
         assertStatus(503, "service", CommandOutcome.Status.ASSISTANT_SERVICE);

@@ -1,5 +1,6 @@
 package com.boop.alpha1;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -24,10 +25,14 @@ final class OpenAiRelayOkHttpTransport implements OpenAiRelayAssistantClient.Tra
             OpenAiRelayConfig config,
             String text,
             String conversationId) throws IOException {
-        JSONObject requestJson = new JSONObject();
-        requestJson.put("text", text);
-        if (conversationId != null && !conversationId.isBlank()) {
-            requestJson.put("conversation_id", conversationId);
+        final JSONObject requestJson = new JSONObject();
+        try {
+            requestJson.put("text", text);
+            if (conversationId != null && !conversationId.isBlank()) {
+                requestJson.put("conversation_id", conversationId);
+            }
+        } catch (JSONException malformed) {
+            throw new IOException("Could not encode relay request", malformed);
         }
 
         Request request = new Request.Builder()
@@ -39,7 +44,13 @@ final class OpenAiRelayOkHttpTransport implements OpenAiRelayAssistantClient.Tra
 
         try (Response response = client.newCall(request).execute()) {
             String raw = response.body() == null ? "" : response.body().string();
-            JSONObject body = raw.isBlank() ? new JSONObject() : new JSONObject(raw);
+            final JSONObject body;
+            try {
+                body = raw.isBlank() ? new JSONObject() : new JSONObject(raw);
+            } catch (JSONException malformed) {
+                return new OpenAiRelayAssistantClient.RelayResponse(
+                        response.code(), false, "", "", "bad_response");
+            }
             return new OpenAiRelayAssistantClient.RelayResponse(
                     response.code(),
                     body.optBoolean("ok", false),
