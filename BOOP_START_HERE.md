@@ -10,6 +10,7 @@ and read the other branches when cross-project context is needed.
 | --- | --- | --- | --- |
 | Shield Home + Deezer puppet | [boop-shield-media-puppetry](https://github.com/ryankemble2006-web/boop/tree/boop-shield-media-puppetry) | shield-overlay/ | Laptop; H1 play/pause and lower placement user-tested |
 | BOOP Wall voice/eyes | [boop-wall-resurrection](https://github.com/ryankemble2006-web/boop/tree/boop-wall-resurrection) | source/ plus materialization scripts | Working voice/control baseline; preserve it |
+| Wall eye-hue candidate | [boop-wall-eye-hue-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-eye-hue-wip) | source/, scripts/patch-wall-eye-hue.py, focused tests/workflow | Isolated v31 hue-only experiment layered on reviewed Wall v30; CI/signer green, physical Pixel acceptance pending; read SESSION_HANDOFF.md and BOOP_WALL_EYE_HUE_MEMORY.md |
 | Wall Free Chat candidate | [boop-wall-free-chat-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-free-chat-wip) | source/, scripts/patch-wall-chat-mode.py, focused tests | Android-led; three-second mode menu. Read its SESSION_HANDOFF.md for exact signed-build and test state; not a physical checkpoint |
 | Isolated Native Chat relay candidate | [boop-relay-reviewed-v34](https://github.com/ryankemble2006-web/boop/tree/boop-relay-reviewed-v34) | source/, relay/cloudflare/, focused tests | Current phone-chat implementation of the approved relay plan; read its handoff/receipt for verification and setup limits; NOT merged into the concurrent Wall implementation |
 | BOOP Launcher | [boop-launcher-alpha1](https://github.com/ryankemble2006-web/boop/tree/boop-launcher-alpha1) | launcher/ | Android-led development; read launcher/README.md |
@@ -36,6 +37,16 @@ in Android. Configured bearer-token APKs require private build/distribution;
 public-repository CI rejects token-bearing builds. Deployment and private account
 configuration must be verified separately from a signed APK or mock tests.
 
+## Wall eye-hue ownership (2026-09-07)
+
+The hue experiment belongs to **boop-wall-eye-hue-wip**, forked from the reviewed
+Wall v30 resurrection head. It must not be reconstructed by merging Free Chat,
+Native Chat relay, launcher draft or other candidate lineages. It adds one
+hue-only slider beside voice settings and recolours the existing `boop_eyes`
+render path. Default cyan/blue deliberately installs no colour filter. The
+protected physically green v29 checkpoint remains authoritative until the v31
+candidate passes the recorded physical Pixel acceptance checklist.
+
 ## Start a new Work task
 
 Attach this repository and choose the branch for the app you are developing.
@@ -49,10 +60,13 @@ Root README files inherited from Alpha 1 do not override the current app map.
 
 For the approved Wall chat-mode work, read the Free Chat candidate branch, not
 only the preserved Wall branch. BOOP_CHAT_MODE_MEMORY.txt supplements its dated
-BOOP_MEMORY.txt. A Work request to "update memory" remains documentation-only:
-fetch current handoffs, reconcile, commit/push documentation, and verify the live
-branch. Do not change app code, permissions, installs or signing without a new
-explicit request. An already-open Work task must reread these GitHub records.
+BOOP_MEMORY.txt. For Wall eye-colour work, read `boop-wall-eye-hue-wip` plus its
+`SESSION_HANDOFF.md` and `BOOP_WALL_EYE_HUE_MEMORY.md`; do not infer it from a
+same-numbered APK or another Wall lineage. A Work request to "update memory"
+remains documentation-only: fetch current handoffs, reconcile, commit/push
+documentation, and verify the live branch. Do not change app code, permissions,
+installs or signing without a new explicit request. An already-open Work task
+must reread these GitHub records.
 
 Cross-project reference does not require merging the apps. For example, a
 Launcher task can read Wall's current manifest/source from the Wall branch and
@@ -83,6 +97,8 @@ can still leave unpushed changes, so record/publish at useful milestones.
 - Wall and Launcher stay independently launchable. Do not merge packages.
 - Wall v30 includes eyes -> deliberate left swipe -> Launcher. Its owning Wall
   handoff records emulator verification; physical acceptance remains pending.
+- Wall v31 eye-hue candidate is isolated on `boop-wall-eye-hue-wip`; do not
+  promote it to the physical checkpoint without the recorded Pixel acceptance.
 - Existing tap/hold/voice/HA behaviour must survive further gesture work.
 - Launcher may open Wall by its package; permissions/return-strip behaviour
   require their own consent and device testing.
