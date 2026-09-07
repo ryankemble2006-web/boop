@@ -167,13 +167,18 @@ public final class WallPolishInstrumentation extends Instrumentation {
     }
 
     private void captureNaturalBlink(BoopFaceView face, String name) throws Exception {
+        Runnable scheduled = (Runnable) onMain(() -> get(face, "idleBlinkRunnable"));
+        check(scheduled != null, "Natural blink runnable is missing");
+        check(onMain(() -> face.getHandler().hasCallbacks(scheduled)),
+                "Natural blink callback is not queued: " + blinkDiagnostic(face));
         int[] size = onMain(() -> new int[]{face.getWidth(), face.getHeight()});
         Bitmap image = Bitmap.createBitmap(size[0], size[1], Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(image);
         CountDownLatch captured = new CountDownLatch(1);
         AtomicReference<Throwable> failure = new AtomicReference<>();
-        // Observe the actual drawing frame. Sampling a 220ms animation and then
-        // posting a second screenshot task can miss the entire closed frame.
+        // Observe a real frame from the production animator. The scheduler is
+        // proven queued above, then fired deterministically because a 183 ms
+        // closure can legitimately fall between emulator sampling frames.
         android.view.ViewTreeObserver.OnPreDrawListener observer = () -> {
             if (captured.getCount() == 0) return true;
             try {
@@ -184,14 +189,18 @@ public final class WallPolishInstrumentation extends Instrumentation {
             } catch (Throwable error) { failure.set(error); captured.countDown(); }
             return true;
         };
-        onMain(() -> { face.getViewTreeObserver().addOnPreDrawListener(observer); return null; });
+        onMain(() -> {
+            face.getViewTreeObserver().addOnPreDrawListener(observer);
+            invoke(face, "runIdleBlink");
+            return null;
+        });
         boolean observed;
-        try { observed = captured.await(8500, TimeUnit.MILLISECONDS); }
+        try { observed = captured.await(2500, TimeUnit.MILLISECONDS); }
         finally { onMain(() -> { face.getViewTreeObserver().removeOnPreDrawListener(observer); return null; }); }
         if (failure.get() != null) { image.recycle(); throw new Exception(failure.get()); }
         if (!observed) {
             image.recycle();
-            throw new AssertionError("No actual natural blink frame: " + name + "; " + blinkDiagnostic(face));
+            throw new AssertionError("No actual production blink frame: " + name + "; " + blinkDiagnostic(face));
         }
         save(image, name);
     }
