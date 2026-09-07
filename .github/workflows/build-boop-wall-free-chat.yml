@@ -267,6 +267,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          trap 'rc=$?; if [ "$rc" -ne 0 ]; then bash tests/ci-wake-diagnostics.sh; fi; exit "$rc"' EXIT
           adb install -r boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           adb shell pm grant com.boop.alpha1 android.permission.RECORD_AUDIO
           adb logcat -c
@@ -279,6 +280,15 @@ jobs:
           done
           test "$WAKE_ARMED" -eq 1
           adb shell pidof com.boop.alpha1
+
+      - name: Preserve focused disposable-emulator wake diagnostics
+        if: ${{ failure() && !contains(github.event.head_commit.message, '[boop-build-only]') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-relay-v34-wake-diagnostics
+          path: wake-diagnostics/
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Exercise the menu, persistence, revert and gesture cancellation
         if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
