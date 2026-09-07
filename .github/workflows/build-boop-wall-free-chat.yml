@@ -232,6 +232,10 @@ jobs:
           echo 'BOOP_EMULATOR_BOOTED=1'
           adb shell input keyevent 82 || true
 
+      - name: Reduce disposable-emulator rendering load without changing layout or time
+        if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
+        run: python3 tests/ci_render_profile.py | tee render-profile.txt
+
       - name: Select and verify the emulator supplied-audio recognizer
         if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
         timeout-minutes: 2
@@ -348,6 +352,7 @@ jobs:
             badging.txt
             verification-level.txt
             relay-config-state.txt
+            render-profile.txt
           if-no-files-found: error
 
       - name: Remove temporary signing material
