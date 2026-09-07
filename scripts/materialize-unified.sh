@@ -26,6 +26,13 @@ if [ -d shield-overlay/app/src/main/assets ]; then
     cp -R shield-overlay/app/src/main/assets "$ROOT/shield-lib/src/main/assets"
 fi
 
+# Shield's own CI materializes the approved BOOP eye artwork from the Wall source.
+# Do the same here so the unified module uses the identical accepted bitmap.
+EYE_ASSET="$(find "$APP/src/main/res" -type f -name 'boop_eyes.png' -print -quit)"
+test -n "$EYE_ASSET"
+mkdir -p "$ROOT/shield-lib/src/main/res/drawable-nodpi"
+cp "$EYE_ASSET" "$ROOT/shield-lib/src/main/res/drawable-nodpi/boop_eyes.png"
+
 MAIN="$APP/src/main/java/com/boop/alpha1"
 TEST="$APP/src/test/java/com/boop/alpha1"
 cp unified/BoopDeviceProfile.java "$MAIN/BoopDeviceProfile.java"
