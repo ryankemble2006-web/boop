@@ -19,15 +19,42 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
       - uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
       - name: Install Android SDK
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '9.6.0' }
-      - name: Test and lint
-        run: gradle --no-daemon -p shield-turbo :app:testDebugUnitTest :app:lintDebug --stacktrace
+      - name: Unit tests
+        run: gradle --no-daemon -p shield-turbo :app:testDebugUnitTest --console=plain --stacktrace
+      - name: Source safety contracts
+        if: ${{ !cancelled() }}
+        run: python3 -m unittest discover -s shield-turbo/tests -p 'test_*.py' -v
+      - name: Android lint
+        run: gradle --no-daemon -p shield-turbo :app:lintDebug --console=plain --stacktrace
+      - name: Test and lint evidence
+        if: ${{ !cancelled() }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          totals = dict(tests=0, failures=0, errors=0, skipped=0)
+          for path in Path('shield-turbo/app/build/test-results').rglob('TEST-*.xml'):
+              root = ET.parse(path).getroot()
+              print(root.get('name'), {key: root.get(key, '0') for key in totals})
+              for key in totals:
+                  totals[key] += int(root.get(key, '0'))
+              for failure in root.findall('.//failure'):
+                  print((failure.get('message') or '')[:2000])
+          print('UNIT_TEST_TOTALS', totals)
+          for path in Path('shield-turbo/app/build').rglob('lint-results-debug.txt'):
+              print(path.read_text()[:16000])
+          PY
       - name: Prepare established BOOP signer
         shell: bash
         env:
@@ -37,15 +64,18 @@ jobs:
         run: |
           set -euo pipefail
           for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do test -n "${!name:-}"; done
+          umask 077
           printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
-          chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
-          keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
+          keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass:env BOOP_DEV_STORE_PASSWORD -alias boop-dev >/dev/null
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
       - name: Build signed APK
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
-        run: gradle --no-daemon -p shield-turbo :app:assembleRelease --stacktrace
+        run: gradle --no-daemon -p shield-turbo :app:assembleRelease --console=plain --stacktrace
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/boop-dev.jks"
       - name: Verify package signer and archive
         shell: bash
         run: |
@@ -57,12 +87,18 @@ jobs:
           grep -q "versionCode='1'" shield-turbo-badging.txt
           grep -q "versionName='0.1.0'" shield-turbo-badging.txt
           grep -q "launchable-activity: name='com.boop.shieldturbo.MainActivity'" shield-turbo-badging.txt
+          ! grep -q 'application-debuggable' shield-turbo-badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" | tee shield-turbo-signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' shield-turbo-signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           test "$ACTUAL" = "f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde"
           unzip -tq "$APK"
           sha256sum "$APK" | tee shield-turbo-sha256.txt
           git rev-parse HEAD | tee shield-turbo-built-commit.txt
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
       - name: Emulator smoke launch
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -76,9 +112,25 @@ jobs:
             adb shell am start -W -n com.boop.shieldturbo/.MainActivity
             sleep 3
             adb shell pidof com.boop.shieldturbo
+            adb shell input keyevent 23
+            sleep 2
+            adb shell uiautomator dump /sdcard/turbo-ui.xml
+            adb pull /sdcard/turbo-ui.xml shield-turbo-ui.xml
+            python3 shield-turbo/tests/check_emulator_ui.py shield-turbo-ui.xml
+            adb shell input keyevent 20
+            adb shell input keyevent 20
+            adb shell uiautomator dump /sdcard/turbo-focus.xml
+            adb pull /sdcard/turbo-focus.xml shield-turbo-focus.xml
+            python3 shield-turbo/tests/check_emulator_ui.py shield-turbo-focus.xml --focus
+            adb shell input keyevent 4
+            sleep 1
+            adb shell am start -W -n com.boop.shieldturbo/.MainActivity
+            sleep 2
+            adb shell pidof com.boop.shieldturbo
             adb logcat -d > shield-turbo-logcat.txt
             ! grep -A10 -B2 'FATAL EXCEPTION' shield-turbo-logcat.txt | grep -q 'com.boop.shieldturbo'
-      - uses: actions/upload-artifact@v4
+      - name: Upload signed candidate
+        uses: actions/upload-artifact@v4
         with:
           name: SHIELD-TURBO
           path: |
@@ -87,5 +139,15 @@ jobs:
             shield-turbo-built-commit.txt
             shield-turbo-badging.txt
             shield-turbo-signer.txt
-            shield-turbo-logcat.txt
+            shield-turbo-ui.xml
+            shield-turbo-focus.xml
           if-no-files-found: error
+      - name: Upload test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHIELD-TURBO-TESTS
+          path: |
+            shield-turbo/app/build/test-results/**/*.xml
+            shield-turbo/app/build/reports/lint-results-debug.*
+          if-no-files-found: warn
