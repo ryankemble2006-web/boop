@@ -104,12 +104,25 @@ public final class DeezerPuppetAccess {
         if (activity == null) {
             return false;
         }
-        try {
-            activity.startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-            return true;
-        } catch (ActivityNotFoundException | SecurityException unavailable) {
-            return false;
+        for (DeezerAccessSettingsPlan.Route route
+                : DeezerAccessSettingsPlan.routesForSdk(Build.VERSION.SDK_INT)) {
+            Intent intent;
+            if (route == DeezerAccessSettingsPlan.Route.DETAIL) {
+                intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                        .putExtra(
+                                Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                                listenerComponent.flattenToString());
+            } else {
+                intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+            }
+            try {
+                activity.startActivity(intent);
+                return true;
+            } catch (ActivityNotFoundException | SecurityException unavailable) {
+                // Some Android TV builds omit the app-detail screen. Try the safe fallback.
+            }
         }
+        return false;
     }
 
     void setListenerConnected(boolean connected) {
