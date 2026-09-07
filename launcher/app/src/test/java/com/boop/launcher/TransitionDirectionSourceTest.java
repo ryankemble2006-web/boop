@@ -11,25 +11,35 @@ public class TransitionDirectionSourceTest {
   throw new AssertionError("Could not locate expected launcher file");
  }
 
- @Test public void launcherOpenTransitionUsesRequestedReverseDirection() throws Exception {
+ @Test public void crossAppHandoffUsesBlackWindowAndNoSystemSlide() throws Exception {
   String main=read(
    Paths.get("src/main/java/com/boop/launcher/MainActivity.java"),
    Paths.get("app/src/main/java/com/boop/launcher/MainActivity.java"),
    Paths.get("launcher/app/src/main/java/com/boop/launcher/MainActivity.java"));
-  String enter=read(
-   Paths.get("src/main/res/anim/boop_enter_from_left.xml"),
-   Paths.get("app/src/main/res/anim/boop_enter_from_left.xml"),
-   Paths.get("launcher/app/src/main/res/anim/boop_enter_from_left.xml"));
-  String exit=read(
-   Paths.get("src/main/res/anim/boop_exit_to_right.xml"),
-   Paths.get("app/src/main/res/anim/boop_exit_to_right.xml"),
-   Paths.get("launcher/app/src/main/res/anim/boop_exit_to_right.xml"));
-  assertTrue(main.contains("overrideActivityTransition"));
-  assertTrue(main.contains("R.anim.boop_enter_from_left"));
-  assertTrue(main.contains("R.anim.boop_exit_to_right"));
-  assertTrue(enter.contains("fromXDelta=\"-100%p\""));
-  assertTrue(enter.contains("toXDelta=\"0\""));
-  assertTrue(exit.contains("fromXDelta=\"0\""));
-  assertTrue(exit.contains("toXDelta=\"100%p\""));
+  String manifest=read(
+   Paths.get("src/main/AndroidManifest.xml"),
+   Paths.get("app/src/main/AndroidManifest.xml"),
+   Paths.get("launcher/app/src/main/AndroidManifest.xml"));
+  String styles=read(
+   Paths.get("src/main/res/values/styles.xml"),
+   Paths.get("app/src/main/res/values/styles.xml"),
+   Paths.get("launcher/app/src/main/res/values/styles.xml"));
+
+  assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_OPEN,0,0)"));
+  assertTrue(main.contains("overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE,0,0)"));
+  assertTrue(main.contains("Intent.FLAG_ACTIVITY_NO_ANIMATION"));
+  assertTrue(main.contains("overridePendingTransition(0,0)"));
+  assertTrue(main.contains("root.animate().alpha(0f).setDuration(110)"));
+  assertTrue(main.contains("root.animate().alpha(1f).setDuration(140)"));
+  assertFalse(main.contains("R.anim.boop_enter_from_"));
+  assertFalse(main.contains("R.anim.boop_exit_to_"));
+
+  assertTrue(manifest.contains("android:theme=\"@style/Theme.BoopLauncher\""));
+  assertTrue(styles.contains("<item name=\"android:windowBackground\">@android:color/black</item>"));
+  assertTrue(styles.contains("<item name=\"android:windowSplashScreenBackground\">@android:color/black</item>"));
+  assertTrue(styles.contains("<item name=\"android:windowDisablePreview\">true</item>"));
+  assertTrue(styles.contains("<item name=\"android:windowAnimationStyle\">@style/BoopNoWindowAnimation</item>"));
+  assertTrue(styles.contains("<item name=\"android:activityOpenEnterAnimation\">@null</item>"));
+  assertTrue(styles.contains("<item name=\"android:activityCloseExitAnimation\">@null</item>"));
  }
 }
