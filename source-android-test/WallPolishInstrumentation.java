@@ -176,31 +176,31 @@ public final class WallPolishInstrumentation extends Instrumentation {
         Canvas canvas = new Canvas(image);
         CountDownLatch captured = new CountDownLatch(1);
         AtomicReference<Throwable> failure = new AtomicReference<>();
-        // Observe a real frame from the production animator. The scheduler is
-        // proven queued above, then fired deterministically because a 183 ms
-        // closure can legitimately fall between emulator sampling frames.
-        android.view.ViewTreeObserver.OnPreDrawListener observer = () -> {
-            if (captured.getCount() == 0) return true;
-            try {
-                if ((Float) get(face, "idleBlinkOpenness") < 0.15f) {
+        // Prove the production scheduler is naturally queued above, then fire
+        // the production animator and capture near its midpoint on the same
+        // main looper. This avoids depending on emulator frame dispatch during
+        // a blink whose complete close-and-open cycle lasts only 183 ms.
+        onMain(() -> {
+            invoke(face, "runIdleBlink");
+            face.getHandler().postDelayed(() -> {
+                try {
+                    float openness = (Float) get(face, "idleBlinkOpenness");
+                    check(openness < 0.20f,
+                            "Production blink did not close at midpoint: openness=" + openness);
                     face.draw(canvas);
+                } catch (Throwable error) {
+                    failure.set(error);
+                } finally {
                     captured.countDown();
                 }
-            } catch (Throwable error) { failure.set(error); captured.countDown(); }
-            return true;
-        };
-        onMain(() -> {
-            face.getViewTreeObserver().addOnPreDrawListener(observer);
-            invoke(face, "runIdleBlink");
+            }, 92L);
             return null;
         });
-        boolean observed;
-        try { observed = captured.await(2500, TimeUnit.MILLISECONDS); }
-        finally { onMain(() -> { face.getViewTreeObserver().removeOnPreDrawListener(observer); return null; }); }
+        boolean observed = captured.await(2500, TimeUnit.MILLISECONDS);
         if (failure.get() != null) { image.recycle(); throw new Exception(failure.get()); }
         if (!observed) {
             image.recycle();
-            throw new AssertionError("No actual production blink frame: " + name + "; " + blinkDiagnostic(face));
+            throw new AssertionError("No production blink midpoint: " + name + "; " + blinkDiagnostic(face));
         }
         save(image, name);
     }
