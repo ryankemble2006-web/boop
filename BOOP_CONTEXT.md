@@ -1,6 +1,6 @@
 # BOOP shared context
 
-Reconciled 2026-09-06; Wall candidate evidence updated 2026-09-07.
+Reconciled 2026-09-07 for the unified v43 dock/mirror + Shield settings pass.
 Current user instructions and fresh device evidence win.
 This compact file is shared across active app branches; detailed product history
 remains in BOOP_MEMORY.txt where present. Use BOOP_START_HERE.md for branch routing.
@@ -26,6 +26,52 @@ an explicit creation request, a plain-English proposal and confirmation (includi
 polite wording such as yes please). Timed voice routines were removed pending
 redesign. Routine-authoring capability evidence is not proof of a finished feature.
 
+## Unified v43 dock, mirror and Shield-room decisions — 2026-09-07
+
+Owning branch: `boop-unified`. Ryan physically tested unified commit
+`e746affbb82b577cef2f1cf6e731dff186c8f881` and said the APK was fine to modify;
+that remains the last physically accepted unified rollback point until v43 is
+physically tested.
+
+Current built candidate: versionCode 43 / `1.1.0-unified-dock-mirror-shield-settings`,
+code commit `950611df0235d3943bf9958153efa470a342036b`. GitHub Actions run
+`34117631109` is green; artifact `BOOP-Unified` ID `10017287954`; APK SHA-256
+`95ba6292c04edaa4db2f1028337f0b3009a7c5006ee9b423e1bc40a9addef4fb`.
+
+Durable behavior:
+
+- Undocked handheld Wall mode is tap-to-talk; continuous local wake capture stays
+  disarmed. Wireless charging is the physical dock signal that permits foreground
+  wake-word listening.
+- Docked eyes may sleep independently of wake listening. A cheap proximity nudge
+  may trigger a brief front-camera presence peek; continuous idle image recognition
+  is deliberately avoided because heat still matters while wirelessly charging.
+- “BOOP mirror” / “Hey BOOP mirror” and natural polite/open variants explicitly
+  open the front-camera mirror. Natural stop/close/exit/back-to-BOOP variants close
+  it. Mirror is the deliberate continuous-camera exception because the user asked
+  to see the live feed.
+- Horizontal mirror layout reserves `INSIDE` and `OUTSIDE` sensor rails. Actual
+  Home Assistant sensor entity selection is deferred until those sensors exist;
+  do not invent mappings.
+- Shield settings are television-first: large grouped cards, generous spacing,
+  BOOP black/cyan identity, obvious focus state and D-pad/Enter navigation. Do not
+  turn it into a stretched phone settings page or add decorative settings motion.
+- Shield controls shown in Home are fail-closed to the selected HA area. HA first
+  expands the selected area target so device-level area membership is respected;
+  BOOP then filters the resulting cards locally as defense in depth. BOOP may read
+  area/device/entity membership but must not move, rename or reassign HA objects.
+  If room membership cannot be confirmed, hide controls instead of exposing the
+  house. Legitimate controls remain actionable only after surviving this filter.
+
+The v43 CI run covers preserved Wall guards, Launcher tests/lint, Shield unit tests
+including room-scope and navigation-model coverage, unified dock/wake/mirror unit
+tests, permanent signer setup, signed APK build, real unified Shield-entry emulator
+smoke, package/version/manifest/signer verification and artifact upload. This is
+CI/signer/emulator green, not physical acceptance. Real handheld/tablet dock,
+camera/thermal/mirror behavior and real Shield remote/HA inventory still require
+Ryan's device test. See `docs/BOOP-UNIFIED-V43-MEMORY.md`, `BOOP_STATUS.md` and
+`SESSION_HANDOFF.md`.
+
 ## Current evidence, not a blanket release claim
 
 - Shield Home and Routines: protected physically verified functional checkpoints
@@ -49,8 +95,6 @@ redesign. Routine-authoring capability evidence is not proof of a finished featu
 - Foreground-aware minimise/return and minimal-button first-start setup remain
   separate, unimplemented follow-ups. Shell visibility does not prove normal
   app access. Do not silently grant Android access.
-- Next Shield UI question: revisit settings and the rest of the living-room
-  inventory, after reading current source/HA evidence; it has not been diagnosed.
 
 ## Wall Free Chat and faster blink, 2026-09-07
 
