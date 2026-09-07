@@ -1,0 +1,11 @@
+name = "boop-conversation-relay"
+main = "src/index.js"
+compatibility_date = "2026-09-07"
+
+[vars]
+OPENAI_MODEL = "gpt-4.1-mini"
+
+# OPENAI_API_KEY and BOOP_RELAY_TOKEN are encrypted Worker secrets, never vars.
+# Default observability is disabled: do not log utterances or Authorization headers.
+[observability]
+enabled = false
