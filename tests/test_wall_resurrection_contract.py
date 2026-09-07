@@ -108,8 +108,9 @@ class WallResurrectionContractTest(unittest.TestCase):
 
     def test_resurrection_build_identity_is_monotonic(self):
         gradle = (ROOT / "source/app-build.gradle").read_text(encoding="utf-8")
-        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+30\s*$")
-        self.assertRegex(gradle, r'(?m)^\s*versionName\s+"0\.4\.10-wall-launcher-swipe"\s*$')
+        # This candidate must update the signed v30 build without changing package.
+        self.assertRegex(gradle, r"(?m)^\s*versionCode\s+31\s*$")
+        self.assertRegex(gradle, r'(?m)^\s*versionName\s+"0\.4\.11-wall-free-chat"\s*$')
 
 
 if __name__ == "__main__":
