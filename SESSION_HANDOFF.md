@@ -1,71 +1,72 @@
-# Shield handoff — 2026-09-07
+# Shield full-screen Deezer puppet handoff — 2026-09-07
 
-## Home inventory + 80% app-screen scale — signed no-test candidate
+Owner: isolated Shield experiment on `boop-shield-fullscreen-deezer-wip`.
+Base lineage: live `boop-shield-media-puppetry@4f57a5b45adec5d4872dd83ec9301093f4c4d5d5`.
+Package: `com.boop.shieldoverlay`.
 
-Owner: Ryan's Shield task. Branch: `boop-shield-media-puppetry`.
-Application/build head: `794aacaa9f179721eb5a1eb4ddb2ec6e16a6d73d`.
-Signed GitHub Actions run: `34085857386`; job `101629645397`.
-Artifact: `BOOP-Shield-Overlay-POC-debug` / artifact `10005203826`.
-Delivered APK: `BOOP-Shield-Home-Inventory-80pct.apk`.
-APK SHA-256: `e738b171373ed854064dd6f71966d652b4e87c405bf58d7b1a85f8a1daf5f69a`.
-Package remains `com.boop.shieldoverlay`; existing permanent BOOP development signer verified by CI.
+## What this candidate does
 
-### User evidence and root cause
+Ryan asked to turn the Shield music puppet into effectively **Wall BOOP owning the whole TV** while Deezer remains the real player underneath.
 
-Ryan physically showed BOOP Home on the Shield: Living Room / Favourites displayed
-only `AI Sync Box strip`, while the next `Rooms` heading was clipped below the fold.
-D-pad Down did not reveal the other Living Room devices. Source inspection found the
-root cause: `HomeDashboardController.ViewState` exposed only one selected favourite,
-and `TvHomeView` only created one favourite card. This was not merely a broken
-ScrollView; the rest of the room inventory was never materialized into the Home UI.
+This first WIP deliberately preserves the existing Deezer observer/state/clock path and H1 headphones asset. When the existing Deezer policy enters either `HEADPHONES_REST` or `HEADPHONES_PLAYING`:
 
-### Scoped implementation
+- the application overlay expands to the complete Shield display;
+- the canvas becomes pure black;
+- the existing H1 headphones puppet is centred and enlarged to roughly Wall-BOOP scale;
+- the existing Deezer state continues to drive rest/play animation exactly as before;
+- the overlay window remains `TYPE_APPLICATION_OVERLAY` + `FLAG_NOT_FOCUSABLE` + `FLAG_NOT_TOUCHABLE`, so Shield/Deezer remote input continues through to the underlying player;
+- BOOP Home still uses its existing hide/show action, so opening BOOP Home hides the full-screen puppet and returning restores it.
 
-- `HomeDashboardController` now retains the complete list returned by the existing
-  Home Assistant room dashboard query while preserving the existing favourite-first
-  ordering and cached-favourite offline fallback.
-- `TvHomeView` is now a real vertical `ScrollView`; it materializes every simple
-  on/off room device under Favourites, keeps the existing favourite first, and D-pad
-  focus naturally moves/scrolls through the remaining cards.
-- Every materialized device card routes Select through the same existing
-  `HomeAssistantRepository.toggleBinary` path. No second HA socket or new entity
-  targeting logic was added.
-- App activity UI density is overridden to 80% in `BoopApplication`, reducing Home,
-  Routines, Settings, pairing and crash-report screens by 20%. The noninteractive
-  puppet overlay service is intentionally excluded so accepted Deezer eye placement
-  and overlay geometry are not silently rescaled.
-- The Shield workflow now recognizes `[boop-build-only]` for user-requested fast
-  signed builds: source regressions and Shield unit tests skip, while APK assembly,
-  package/permission inspection, permanent signer verification and artifact upload remain.
+When Deezer falls back to `EYES` (feature off, no grant/session, stopped/unsupported state), the overlay returns to the existing small ordinary-eye geometry. No new microphone, accessibility, usage-history, HA socket, network path or foreground-app permission was added.
 
-### Verification boundary
+## Important behaviour boundary
 
-Ryan explicitly requested: **do not test; sign**. Final delivery run `34085857386`
-shows both source regression and Shield unit-test steps as SKIPPED. APK assembly,
-package/permission checks, stable signer verification and artifact upload PASS.
-No emulator or physical runtime test is claimed. The next evidence must come from
-Ryan's Shield: confirm that Living Room devices are all visible/reachable, Select
-controls the intended device, and the 80% activity UI scale feels right.
+The existing Deezer design intentionally permits background playback and does **not** identify which third-party app is currently foreground. This WIP therefore uses the same signal: while Deezer has an eligible headphone state, BOOP owns the full screen even if Deezer has technically continued playing in the background.
+
+That is intentional for this first physical experiment. Do not add UsageStats/accessibility or other broad foreground-tracking access without a new explicit user decision. If physical testing proves exact Deezer-only foreground gating is required, investigate a narrow Shield-safe signal separately.
+
+## Implementation
+
+- New `FullscreenDeezerGeometry` centres H1 on the entire display and uses the measured H1 nod/sway envelope to prevent clipping at HD/UHD and smaller fixtures.
+- `BoopOverlayService` switches its existing overlay window between normal compact geometry and full-display geometry based only on the existing `DeezerPuppetPolicy.Mode`.
+- `BoopOverlayView` paints black only in non-`EYES` Deezer puppet modes; ordinary overlay eyes retain their transparent background.
+- Existing `MediaPuppetFrameLoop`, `DeezerSessionObserver`, play/pause policy, H1 renderer, animation-scale handling and Power Saver behaviour are unchanged.
+
+## Verification
+
+GitHub Actions workflow `Build BOOP Shield Fullscreen Deezer` run `34096866418` built commit `cd56e3bd0bf4ff6547e8cd2ea45631cde1418c36` successfully.
+
+Passed:
+- full Python source regression suite;
+- full Shield JVM/unit test suite;
+- new full-screen geometry/envelope tests;
+- stable-signed APK assembly;
+- package/permission inspection;
+- permanent BOOP signer continuity;
+- artifact upload.
+
+Artifact: `BOOP-Shield-Fullscreen-Deezer` / ID `10008967780`.
+Extracted APK SHA-256: `bb225e7c7f9fbfed13d758155b42208482921c4ef815d509e78dc5bb5edf5b4e`.
+
+CI green is not physical green. No Shield install or permission change was performed from this task.
 
 ## Preserve
 
-- checkpoint-shield-home-f8e8135
-- checkpoint-shield-routines-3fa18c6
-- H1 physically accepted lower placement from application commit `4fe28a4`
-- Existing Deezer observer/puppet behavior and Android access state
-- Existing HA socket/auth/signing/permissions
-- No Google Assistant fallback and no cancelled setup-heavy Deezer Cast bridge
+- `boop-shield-media-puppetry` and its physically accepted H1 placement remain untouched.
+- `checkpoint-shield-home-f8e8135` and `checkpoint-shield-routines-3fa18c6` remain protected.
+- Existing Deezer notification-listener access state is not changed.
+- Existing HA auth/socket, Home, Routines and signer are preserved.
 
-## Previous settings-scroll candidate
+## Physical test next
 
-The prior Settings-specific remote-scroll candidate remains recorded at application
-commit `7cd636086ea7991659550cf8d5b87da321eab5f3`, workflow commit
-`6b87b682e22bbeac09635d7f340b3c328a700507`, signed run `34083898275`.
-That change addressed Settings navigation only. Ryan's later Home screenshot proved
-the Home inventory issue had a different root cause, now addressed above.
+Install the candidate over the existing Shield BOOP without clearing data. With the existing Deezer puppet feature enabled:
 
-## Next safe step
+1. Start/resume Deezer: TV should become black with a large centred H1 BOOP; dance continues.
+2. Pause: H1 should remain visible and rest/freeze using the existing pause state.
+3. Skip/resume: no reset flash; existing metadata/session behaviour should continue.
+4. Verify Shield remote play/pause/skip still reaches Deezer through the full-screen overlay.
+5. Open BOOP Home: puppet should disappear; leaving Home should restore the latest Deezer puppet state.
+6. Stop/end Deezer session: ordinary small Shield eyes should return.
+7. Deliberately leave Deezer playing and navigate elsewhere. Decide whether full-screen BOOP following background music is desirable or whether a future Deezer-foreground gate is needed.
 
-Install `BOOP-Shield-Home-Inventory-80pct.apk` over the existing Shield app and test
-from the sofa. Record only Ryan's actual physical result before promoting or moving
-any checkpoint.
+Do not promote or move any physical checkpoint until Ryan reports the actual Shield result.
