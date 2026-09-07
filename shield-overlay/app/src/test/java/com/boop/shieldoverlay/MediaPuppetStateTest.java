@@ -95,6 +95,21 @@ public final class MediaPuppetStateTest {
     }
 
     @Test
+    public void explicitTrackChangeIsDeliveredWithinRestModeForPuppetAccent() {
+        MediaPuppetState state = new MediaPuppetState();
+        state.updateAccess(true, true, true);
+        state.updateSession(7L, 2);
+        List<MediaPuppetState.Snapshot> delivered = new ArrayList<>();
+        state.subscribe(delivered::add);
+
+        state.updateSession(7L, 10);
+
+        assertEquals(2, delivered.size());
+        assertEquals(HEADPHONES_REST, delivered.get(1).mode);
+        assertEquals(Integer.valueOf(10), delivered.get(1).playbackState);
+    }
+
+    @Test
     public void unsubscribeDuringDeliveryIsSafeAndUnsubscribeIsIdempotent() {
         MediaPuppetState state = new MediaPuppetState();
         int[] firstCalls = {0};
