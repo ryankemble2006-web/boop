@@ -44,6 +44,27 @@ def face_center(root):
     raise AssertionError('BOOP face is not the visible input surface; inspect BOOP_CHAT_UI output')
 
 
+def dismiss_immersive_tutorial(root):
+    """Dismiss only the observed first-run fullscreen tutorial, never permissions."""
+    system = 'com.android.systemui'
+    tutorial = any(n.get('package') == system
+                   and n.get('resource-id') == system + ':id/immersive_cling_title'
+                   and n.get('text') == 'Viewing full screen'
+                   for n in root.iter('node'))
+    if not tutorial:
+        return False
+    buttons = [n for n in root.iter('node')
+               if n.get('package') == system
+               and n.get('resource-id') == system + ':id/ok'
+               and n.get('text') == 'Got it'
+               and n.get('clickable') == 'true']
+    assert len(buttons) == 1, 'Fullscreen tutorial has no uniquely recognized acknowledgement'
+    x, y = center(buttons[0].get('bounds', ''))
+    adb('shell', 'input', 'tap', str(x), str(y))
+    print('BOOP_CHAT_IMMERSIVE_TUTORIAL_ACKNOWLEDGED=1', flush=True)
+    return True
+
+
 def tap_description(root, description):
     for node in root.iter('node'):
         if node.get('package') == PACKAGE and node.get('content-desc') == description:
@@ -86,6 +107,10 @@ def diagnose_failure():
 
 def exercise():
     print('BOOP_CHAT_PANEL: ' + adb('shell', 'wm', 'size'), flush=True)
+    root = hierarchy('startup')
+    if dismiss_immersive_tutorial(root):
+        root = hierarchy('after_fullscreen_tutorial')
+    face_center(root)  # Require the actual app, not a startup overlay.
     # The original playful hold must not become an early settings shortcut.
     hold(1600)
     assert not has_text(hierarchy('short_hold'), 'Chat mode'), 'Menu opened before three seconds'
