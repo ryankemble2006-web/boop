@@ -77,6 +77,17 @@ if text.count(old) != 1:
     raise SystemExit(f'Expected one launcher app-list anchor, found {text.count(old)}')
 repo.write_text(text.replace(old, new, 1), encoding='utf-8')
 
+# Unified Shield first boot: Nvidia firmware variants do not all expose the
+# package-specific overlay-permission screen. Preserve the latest Shield behavior
+# but fall back cleanly instead of allowing ActivityNotFoundException to kill BOOP.
+shield = root / 'shield-lib/src/main/java/com/boop/shieldoverlay/MainActivity.java'
+text = shield.read_text(encoding='utf-8')
+old = '''    private void launchOverlayPermission() {\n        permissionScreenLaunched = true;\n        Intent intent = new Intent(\n                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,\n                Uri.parse("package:" + getPackageName()));\n        startActivity(intent);\n    }\n'''
+new = '''    private void launchOverlayPermission() {\n        permissionScreenLaunched = true;\n        try {\n            startActivity(new Intent(\n                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,\n                    Uri.parse("package:" + getPackageName())));\n            return;\n        } catch (RuntimeException ignored) {\n            // Some Shield firmware does not expose the package-detail route.\n        }\n        try {\n            startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));\n            return;\n        } catch (RuntimeException ignored) {\n            // Last-resort route below.\n        }\n        try {\n            startActivity(new Intent(Settings.ACTION_SETTINGS));\n        } catch (RuntimeException ignored) {\n            permissionScreenLaunched = false;\n            finish();\n        }\n    }\n'''
+if text.count(old) != 1:
+    raise SystemExit(f'Expected one Shield overlay permission method, found {text.count(old)}')
+shield.write_text(text.replace(old, new, 1), encoding='utf-8')
+
 # One exported entry point owns launcher, HOME and Leanback routing.
 manifest = root / 'app/src/main/AndroidManifest.xml'
 text = manifest.read_text(encoding='utf-8')
