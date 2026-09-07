@@ -16,7 +16,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/101587934157/logs" > "${RUNNER_TEMP}/wall-job.log"
+          gh api --allow-escape-sequences "repos/${GITHUB_REPOSITORY}/actions/jobs/101587934157/logs" > "${RUNNER_TEMP}/wall-job.log"
           python3 - <<'PY'
           import os
           from pathlib import Path
