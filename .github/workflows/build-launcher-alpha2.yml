@@ -1,0 +1,54 @@
+name: BOOP Launcher Alpha 2 signed APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [boop-launcher-alpha2]
+    paths: ['launcher/app/**', 'launcher/*.gradle', 'launcher/scripts/**', '.github/workflows/build-launcher-alpha2.yml']
+permissions:
+  contents: read
+concurrency:
+  group: launcher-alpha2-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '9.6.0'}
+      - name: Unit tests and Android lint
+        run: gradle -p launcher :app:testDebugUnitTest :app:lintDebug --stacktrace
+      - name: Build with permanent BOOP signer
+        env:
+          BOOP_KEYSTORE_BASE64: ${{ secrets.BOOP_KEYSTORE_BASE64 }}
+          BOOP_KEYSTORE_PASSWORD: ${{ secrets.BOOP_KEYSTORE_PASSWORD }}
+          BOOP_KEY_ALIAS: ${{ secrets.BOOP_KEY_ALIAS }}
+          BOOP_KEY_PASSWORD: ${{ secrets.BOOP_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in BOOP_KEYSTORE_BASE64 BOOP_KEYSTORE_PASSWORD BOOP_KEY_ALIAS BOOP_KEY_PASSWORD; do test -n "${!name:-}" || { echo "::error::Missing signing secret: $name"; exit 1; }; done
+          export BOOP_KEYSTORE_PATH="$RUNNER_TEMP/boop-launcher-signing.jks"
+          trap 'rm -f "$BOOP_KEYSTORE_PATH"' EXIT
+          printf '%s' "$BOOP_KEYSTORE_BASE64" | base64 --decode > "$BOOP_KEYSTORE_PATH"
+          chmod 600 "$BOOP_KEYSTORE_PATH"
+          gradle -p launcher :app:assembleRelease --stacktrace
+          mkdir -p launcher-delivery
+          cp launcher/app/build/outputs/apk/release/app-release.apk launcher-delivery/BOOP-Launcher-Alpha2.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs launcher-delivery/BOOP-Launcher-Alpha2.apk > launcher-delivery/signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging launcher-delivery/BOOP-Launcher-Alpha2.apk > launcher-delivery/package.txt
+          sha256sum launcher-delivery/BOOP-Launcher-Alpha2.apk > launcher-delivery/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with: {name: BOOP-Launcher-Alpha2-signed, path: launcher-delivery/, if-no-files-found: error}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: BOOP-Launcher-Alpha2-test-reports
+          path: |
+            launcher/app/build/reports/
+            launcher/app/build/test-results/

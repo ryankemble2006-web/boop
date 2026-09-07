@@ -1,0 +1,24 @@
+package com.boop.launcher;
+
+import android.content.*;
+import android.graphics.Color;
+import android.os.*;
+import android.view.*;
+import android.widget.*;
+import java.util.*;
+
+public final class WorkspaceView extends FrameLayout {
+ public interface Listener{void launch(WorkspaceItem item);void changed();void emptyLongPress(float x,float y);}
+ private final ArrayList<WorkspaceItem> items; private final Listener listener; private final Handler handler=new Handler(Looper.getMainLooper());
+ private final int slop,removeBand;
+ public WorkspaceView(Context c,ArrayList<WorkspaceItem> items,Listener listener){super(c);this.items=items;this.listener=listener;setBackgroundColor(Color.BLACK);setContentDescription("Home canvas");setMotionEventSplittingEnabled(false);slop=ViewConfiguration.get(c).getScaledTouchSlop();removeBand=dp(112);setOnTouchListener(new EmptyTouch());}
+ private int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
+ public void refresh(){removeAllViews();post(this::drawItems);}
+ public void addApp(AppEntry app){WorkspaceItem i=new WorkspaceItem();i.component=app.component.flattenToString();i.label=app.label;float step=.04f;for(int n=0;n<80;n++){i.x=.06f+(n%4)*.235f;i.y=.08f+(n/4)*.14f;if(i.y+i.h<.92f&&!overlaps(i,null))break;}items.add(i);listener.changed();refresh();}
+ private boolean overlaps(WorkspaceItem candidate,WorkspaceItem except){for(WorkspaceItem i:items){if(i==except||i.widgetId>=0)continue;if(candidate.x<i.x+i.w&&candidate.x+candidate.w>i.x&&candidate.y<i.y+i.h&&candidate.y+candidate.h>i.y)return true;}return false;}
+ private void drawItems(){int W=getWidth(),H=getHeight();if(W<=0||H<=0)return;for(WorkspaceItem item:new ArrayList<>(items)){if(item.widgetId>=0)continue;LinearLayout tile=new LinearLayout(getContext());tile.setOrientation(LinearLayout.VERTICAL);tile.setGravity(Gravity.CENTER);tile.setBackgroundColor(Color.TRANSPARENT);ImageView icon=new ImageView(getContext());try{icon.setImageDrawable(getContext().getPackageManager().getActivityIcon(item.componentName()));}catch(Exception e){icon.setImageResource(android.R.drawable.sym_def_app_icon);}tile.addView(icon,new LinearLayout.LayoutParams(-1,0,1));TextView label=new TextView(getContext());label.setText(item.label);label.setTextColor(Color.WHITE);label.setTextSize(13);label.setGravity(Gravity.CENTER);label.setMaxLines(2);tile.addView(label,new LinearLayout.LayoutParams(-1,dp(38)));tile.setContentDescription(item.label);FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(Math.max(dp(64),(int)(item.w*W)),Math.max(dp(84),(int)(item.h*H)));p.leftMargin=(int)(item.x*W);p.topMargin=(int)(item.y*H);tile.setOnTouchListener(new ItemTouch(item,tile));addView(tile,p);}}
+ private final class ItemTouch implements OnTouchListener{final WorkspaceItem item;final View view;float downX,downY,startX,startY;boolean dragging,moved;Runnable hold;ItemTouch(WorkspaceItem i,View v){item=i;view=v;}
+  public boolean onTouch(View v,MotionEvent e){switch(e.getActionMasked()){case MotionEvent.ACTION_DOWN:downX=e.getRawX();downY=e.getRawY();startX=item.x;startY=item.y;moved=false;dragging=false;hold=()->{dragging=true;v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);};handler.postDelayed(hold,ViewConfiguration.getLongPressTimeout());return true;case MotionEvent.ACTION_MOVE:float dx=e.getRawX()-downX,dy=e.getRawY()-downY;if(Math.abs(dx)>slop||Math.abs(dy)>slop){moved=true;if(!dragging){handler.removeCallbacks(hold);return true;}v.setTranslationX(dx);v.setTranslationY(dy);}return true;case MotionEvent.ACTION_UP:handler.removeCallbacks(hold);if(dragging){float rawY=e.getRawY();if(rawY<removeBand){items.remove(item);listener.changed();refresh();return true;}float nx=startX+(e.getRawX()-downX)/Math.max(1f,getWidth());float ny=startY+(e.getRawY()-downY)/Math.max(1f,getHeight());item.x=Math.max(0,Math.min(1-item.w,nx));item.y=Math.max(0,Math.min(1-item.h,ny));if(overlaps(item,item)){item.x=startX;item.y=startY;}listener.changed();refresh();return true;}if(!moved)listener.launch(item);return true;case MotionEvent.ACTION_CANCEL:handler.removeCallbacks(hold);view.setTranslationX(0);view.setTranslationY(0);return true;default:return true;}}
+ }
+ private final class EmptyTouch implements OnTouchListener{float x,y;boolean moved;Runnable hold;public boolean onTouch(View v,MotionEvent e){switch(e.getActionMasked()){case MotionEvent.ACTION_DOWN:x=e.getX();y=e.getY();moved=false;hold=()->{if(!moved){v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);listener.emptyLongPress(x,y);}};handler.postDelayed(hold,ViewConfiguration.getLongPressTimeout());return true;case MotionEvent.ACTION_MOVE:if(Math.abs(e.getX()-x)>slop||Math.abs(e.getY()-y)>slop){moved=true;handler.removeCallbacks(hold);}return false;case MotionEvent.ACTION_UP:handler.removeCallbacks(hold);return false;case MotionEvent.ACTION_CANCEL:handler.removeCallbacks(hold);return false;default:return false;}}}
+}
