@@ -85,6 +85,15 @@ jobs:
       - name: Test latest Launcher source
         run: gradle --no-daemon -p launcher :app:testDebugUnitTest lintDebug --stacktrace
 
+      - name: Materialize approved eye artwork for latest Shield source
+        shell: bash
+        run: |
+          set -euo pipefail
+          ASSET="$(find boop-build/BOOP-Alpha1/app/src/main/res -type f -name 'boop_eyes.png' -print -quit)"
+          test -n "$ASSET"
+          mkdir -p shield-overlay/app/src/main/res/drawable-nodpi
+          cp "$ASSET" shield-overlay/app/src/main/res/drawable-nodpi/boop_eyes.png
+
       - name: Test latest Shield source
         run: gradle --no-daemon -p shield-overlay :app:testDebugUnitTest --stacktrace
 
