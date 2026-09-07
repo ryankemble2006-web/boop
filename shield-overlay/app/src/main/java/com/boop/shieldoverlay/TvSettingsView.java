@@ -2,6 +2,7 @@ package com.boop.shieldoverlay;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -9,378 +10,308 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.util.Collections;
+import java.util.List;
+
 public final class TvSettingsView extends LinearLayout {
     private static final int CYAN = Color.rgb(61, 220, 255);
     private static final int PANEL = Color.rgb(22, 22, 24);
+    private static final String VOICE_PREFS = "boop_voice";
+    private static final String WAKE_NAME_KEY = "wake_name";
 
-    private final SettingCard firstCard;
+    private final AreaInfo room;
     private final ScrollView scroll;
+    private final LinearLayout haItems;
+    private final SettingCard firstCard;
     private final MediaPuppetState puppetState;
     private final DeezerPuppetSettingsModel puppetModel;
+    private SettingCard wakeNameCard;
     private SettingCard puppetToggle;
     private SettingCard puppetAccess;
     private Runnable unsubscribePuppet;
+    private Runnable unsubscribeDashboard;
     private AlertDialog enableDialog;
+    private AlertDialog wakeNameDialog;
 
-    public TvSettingsView(
-            Context context,
-            AreaInfo selectedRoom,
-            Runnable onChangeRoom,
-            Runnable onContentLeft) {
-        this(context, selectedRoom, onChangeRoom, onContentLeft, null, null);
+    public TvSettingsView(Context c, AreaInfo room, Runnable changeRoom, Runnable left) {
+        this(c, room, changeRoom, left, null, null);
     }
 
-    public TvSettingsView(
-            Context context,
-            AreaInfo selectedRoom,
-            Runnable onChangeRoom,
-            Runnable onContentLeft,
-            MediaPuppetState puppetState,
-            DeezerPuppetSettingsModel.Actions puppetActions) {
-        super(context);
+    public TvSettingsView(Context c, AreaInfo room, Runnable changeRoom, Runnable left,
+            MediaPuppetState puppetState, DeezerPuppetSettingsModel.Actions puppetActions) {
+        super(c);
+        this.room = room;
         this.puppetState = puppetState;
-        puppetModel = puppetActions == null ? null : new DeezerPuppetSettingsModel(puppetActions);
+        this.puppetModel = puppetActions == null ? null : new DeezerPuppetSettingsModel(puppetActions);
         setOrientation(VERTICAL);
-        setGravity(Gravity.TOP);
         setBackgroundColor(Color.BLACK);
 
-        scroll = new ScrollView(context);
+        scroll = new ScrollView(c);
         scroll.setFillViewport(true);
         scroll.setFocusable(false);
-        scroll.setSmoothScrollingEnabled(true);
-
-        LinearLayout content = new LinearLayout(context);
+        LinearLayout content = new LinearLayout(c);
         content.setOrientation(VERTICAL);
-        content.setPadding(dp(42), dp(34), dp(54), dp(46));
-        scroll.addView(content, new ScrollView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        addView(scroll, new LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        content.setPadding(dp(42), dp(32), dp(54), dp(46));
+        scroll.addView(content, new ScrollView.LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+        addView(scroll, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
-        content.addView(title("BOOP Settings", 44f));
-        content.addView(detail(selectedRoom == null
-                ? "Choose where this BOOP lives"
-                : selectedRoom.name()));
+        content.addView(text("BOOP SETTINGS", 42, Color.WHITE, true));
+        TextView where = text(room == null ? "Choose where this BOOP lives" : room.name(), 22,
+                Color.rgb(176, 176, 184), false);
+        LayoutParams whereParams = new LayoutParams(MATCH_PARENT, WRAP_CONTENT);
+        whereParams.bottomMargin = dp(26);
+        content.addView(where, whereParams);
 
-        content.addView(section("HOUSE"));
-        content.addView(infoPanel("Home Assistant", "Connected"), cardParams());
+        content.addView(section("HOME ASSISTANT"));
+        content.addView(info("House", "Room-scoped"), spaced());
+        firstCard = card("Room", room == null ? "Not set" : room.name(),
+                room == null ? "Choose a room before controls are shown"
+                        : "Only " + room.name() + " items are shown", left);
+        firstCard.setOnClickListener(v -> { if (changeRoom != null) changeRoom.run(); });
+        content.addView(firstCard, spaced());
+        haItems = new LinearLayout(c);
+        haItems.setOrientation(VERTICAL);
+        content.addView(haItems, new LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+        renderDashboard(HomeDashboardStateBus.latest(room));
 
-        String roomName = selectedRoom == null ? "Not set" : selectedRoom.name();
-        firstCard = card(
-                "Room",
-                roomName,
-                selectedRoom == null
-                        ? "Choose a room before BOOP shows house controls"
-                        : "Only " + selectedRoom.name() + " controls are shown",
-                onContentLeft);
-        firstCard.setOnClickListener(view -> {
-            if (onChangeRoom != null) {
-                onChangeRoom.run();
-            }
-        });
-        content.addView(firstCard, cardParams());
+        content.addView(section("VOICE"));
+        wakeNameCard = card("BOOP's name", wakeName(),
+                "Spoken wake name only. BOOP always works too.", left);
+        wakeNameCard.setOnClickListener(v -> showWakeNameDialog());
+        content.addView(wakeNameCard, spaced());
 
         if (puppetState != null && puppetModel != null) {
             content.addView(section("PUPPET"));
-            puppetToggle = card(
-                    "Deezer headphones",
-                    "Off",
-                    "Let BOOP react to Deezer playback",
-                    onContentLeft);
-            puppetToggle.setOnClickListener(view -> {
-                if (enableDialog == null && puppetModel.toggle(puppetState.snapshot())) {
-                    showEnableConfirmation();
-                }
+            puppetToggle = card("Deezer headphones", "Off",
+                    "Let BOOP react to Deezer playback", left);
+            puppetToggle.setOnClickListener(v -> {
+                if (enableDialog == null && puppetModel.toggle(puppetState.snapshot())) showEnable();
             });
-            content.addView(puppetToggle, cardParams());
-
-            puppetAccess = card(
-                    "Deezer access",
-                    "Check access",
-                    "Android access is used only for Deezer playback state",
-                    onContentLeft);
-            puppetAccess.setOnClickListener(view -> {
+            content.addView(puppetToggle, spaced());
+            puppetAccess = card("Deezer access", "Check access",
+                    "Used only for Deezer playback state", left);
+            puppetAccess.setOnClickListener(v -> {
                 puppetModel.manageAccess();
                 renderPuppet(puppetState.snapshot());
             });
-            content.addView(puppetAccess, cardParams());
+            content.addView(puppetAccess, spaced());
             renderPuppet(puppetState.snapshot());
         }
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (puppetState != null && puppetModel != null && unsubscribePuppet == null) {
-            unsubscribePuppet = puppetState.subscribe(this::renderPuppet);
+    void renderDashboard(HomeDashboardController.ViewState state) {
+        haItems.removeAllViews();
+        if (state == null) {
+            haItems.addView(info("Room controls", "Loading"), spaced());
+            return;
+        }
+        List<EntityCard> cards = state.cards() == null ? Collections.emptyList() : state.cards();
+        if (cards.isEmpty()) {
+            haItems.addView(info("Room controls", state.message() == null ? "None confirmed" : "Hidden safely"), spaced());
+            return;
+        }
+        for (EntityCard card : cards) {
+            if (card != null) haItems.addView(info(card.displayName(), friendly(card.state())), spaced());
         }
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (puppetState != null && puppetModel != null && unsubscribePuppet == null)
+            unsubscribePuppet = puppetState.subscribe(this::renderPuppet);
+        if (room != null && unsubscribeDashboard == null)
+            unsubscribeDashboard = HomeDashboardStateBus.subscribe(room, state -> post(() -> renderDashboard(state)));
+    }
+
+    @Override protected void onDetachedFromWindow() {
         close();
         super.onDetachedFromWindow();
     }
 
     void close() {
-        if (unsubscribePuppet != null) {
-            unsubscribePuppet.run();
-            unsubscribePuppet = null;
-        }
-        if (puppetModel != null) {
-            puppetModel.cancelEnable();
-        }
-        if (enableDialog != null) {
-            enableDialog.dismiss();
-            enableDialog = null;
-        }
+        if (unsubscribePuppet != null) { unsubscribePuppet.run(); unsubscribePuppet = null; }
+        if (unsubscribeDashboard != null) { unsubscribeDashboard.run(); unsubscribeDashboard = null; }
+        if (puppetModel != null) puppetModel.cancelEnable();
+        if (enableDialog != null) { enableDialog.dismiss(); enableDialog = null; }
+        if (wakeNameDialog != null) { wakeNameDialog.dismiss(); wakeNameDialog = null; }
     }
 
-    private void renderPuppet(MediaPuppetState.Snapshot snapshot) {
-        if (snapshot == null || puppetToggle == null || puppetAccess == null) {
-            return;
-        }
-        puppetToggle.value(snapshot.status());
-        puppetToggle.detail(puppetModel.explanation(snapshot));
-        puppetAccess.value(snapshot.granted ? "Ready" : "Access needed");
+    public View firstFocusable() { return firstCard; }
+
+    private void renderPuppet(MediaPuppetState.Snapshot s) {
+        if (s == null || puppetToggle == null || puppetAccess == null) return;
+        puppetToggle.value(s.status());
+        puppetToggle.detail(puppetModel.explanation(s));
+        puppetAccess.value(s.granted ? "Ready" : "Access needed");
     }
 
-    private void showEnableConfirmation() {
+    private void showWakeNameDialog() {
+        if (wakeNameDialog != null) return;
+        EditText input = new EditText(getContext());
+        input.setSingleLine(true);
+        input.setText(wakeName());
+        input.setSelectAllOnFocus(true);
+        input.setTextSize(24);
+        input.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        input.setPadding(dp(24), dp(18), dp(24), dp(18));
+        wakeNameDialog = new AlertDialog.Builder(getContext())
+                .setTitle("BOOP's name")
+                .setMessage("This changes only the spoken wake name. BOOP always stays available.")
+                .setView(input)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Save", (d, w) -> saveWakeName(input.getText().toString()))
+                .create();
+        wakeNameDialog.setOnDismissListener(d -> wakeNameDialog = null);
+        wakeNameDialog.show();
+        input.requestFocus();
+    }
+
+    private String wakeName() {
+        SharedPreferences p = getContext().getSharedPreferences(VOICE_PREFS, Context.MODE_PRIVATE);
+        return normalizeName(p.getString(WAKE_NAME_KEY, "BOOP"));
+    }
+
+    private void saveWakeName(String raw) {
+        String value = normalizeName(raw);
+        getContext().getSharedPreferences(VOICE_PREFS, Context.MODE_PRIVATE).edit()
+                .putString(WAKE_NAME_KEY, value).apply();
+        wakeNameCard.value(value);
+    }
+
+    private static String normalizeName(String raw) {
+        if (raw == null) return "BOOP";
+        String v = raw.trim().replaceAll("\\s+", " ");
+        if (v.isEmpty()) return "BOOP";
+        if (v.length() > 48) v = v.substring(0, 48).trim();
+        return v.isEmpty() ? "BOOP" : v;
+    }
+
+    private void showEnable() {
         enableDialog = new AlertDialog.Builder(getContext())
                 .setTitle("Enable Deezer headphones?")
-                .setMessage("BOOP ignores notification contents and watches only Deezer playback. "
-                        + "Android access is granted separately in the next screen.")
-                .setNegativeButton("Cancel", (dialog, which) -> puppetModel.cancelEnable())
-                .setPositiveButton("Enable", (dialog, which) -> puppetModel.confirmEnable())
+                .setMessage("BOOP ignores notification contents and watches only Deezer playback. Android access is granted separately in the next screen.")
+                .setNegativeButton("Cancel", (d, w) -> puppetModel.cancelEnable())
+                .setPositiveButton("Enable", (d, w) -> puppetModel.confirmEnable())
                 .create();
-        enableDialog.setOnDismissListener(dialog -> {
-            puppetModel.cancelEnable();
-            enableDialog = null;
-        });
+        enableDialog.setOnDismissListener(d -> { puppetModel.cancelEnable(); enableDialog = null; });
         enableDialog.show();
         enableDialog.getButton(AlertDialog.BUTTON_NEGATIVE).requestFocus();
     }
 
-    public View firstFocusable() {
-        return firstCard;
-    }
-
-    private SettingCard card(
-            String title,
-            String value,
-            String detail,
-            Runnable onContentLeft) {
-        SettingCard card = new SettingCard(getContext())
-                .title(title)
-                .value(value)
-                .detail(detail);
-        card.setOnKeyListener((view, keyCode, event) -> {
-            if (event.getAction() != KeyEvent.ACTION_DOWN) {
-                return false;
-            }
-            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && onContentLeft != null) {
-                onContentLeft.run();
-                return true;
-            }
-            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                return moveFocusOrScroll(view, View.FOCUS_DOWN);
-            }
-            if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                return moveFocusOrScroll(view, View.FOCUS_UP);
-            }
+    private SettingCard card(String title, String value, String detail, Runnable left) {
+        SettingCard c = new SettingCard(getContext()).title(title).value(value).detail(detail);
+        c.setOnKeyListener((v, key, e) -> {
+            if (e.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (key == KeyEvent.KEYCODE_DPAD_LEFT && left != null) { left.run(); return true; }
+            if (key == KeyEvent.KEYCODE_DPAD_DOWN) return move(v, View.FOCUS_DOWN);
+            if (key == KeyEvent.KEYCODE_DPAD_UP) return move(v, View.FOCUS_UP);
             return false;
         });
-        return card;
+        return c;
     }
 
-    private boolean moveFocusOrScroll(View from, int direction) {
+    private boolean move(View from, int direction) {
         View next = from.focusSearch(direction);
-        if (next != null && next != from && isInsideScroll(next)) {
-            next.requestFocus();
-            return true;
-        }
+        if (next != null && next != from && inside(next)) { next.requestFocus(); return true; }
         int sign = direction == View.FOCUS_DOWN ? 1 : -1;
-        if (!scroll.canScrollVertically(sign)) {
-            return false;
-        }
+        if (!scroll.canScrollVertically(sign)) return false;
         scroll.smoothScrollBy(0, sign * Math.max(dp(110), scroll.getHeight() * 2 / 3));
         return true;
     }
 
-    private boolean isInsideScroll(View candidate) {
-        View current = candidate;
-        while (current != null) {
-            if (current == scroll) {
-                return true;
-            }
-            if (!(current.getParent() instanceof View)) {
-                return false;
-            }
-            current = (View) current.getParent();
+    private boolean inside(View v) {
+        View x = v;
+        while (x != null) {
+            if (x == scroll) return true;
+            if (!(x.getParent() instanceof View)) return false;
+            x = (View) x.getParent();
         }
         return false;
     }
 
-    private View infoPanel(String label, String value) {
+    private View info(String label, String value) {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(30), dp(22), dp(30), dp(22));
-        row.setMinimumHeight(dp(86));
-        row.setBackground(rounded(PANEL, Color.rgb(52, 52, 56), 1));
-        row.setFocusable(false);
-
-        TextView left = text(label, 24f, Color.WHITE, true);
-        TextView right = text(value, 22f, CYAN, true);
-        row.addView(left, new LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        row.addView(right, new LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
+        row.setPadding(dp(30), dp(20), dp(30), dp(20));
+        row.setMinimumHeight(dp(82));
+        row.setBackground(round(PANEL, Color.rgb(52, 52, 56), 1));
+        TextView l = text(label, 23, Color.WHITE, true);
+        TextView r = text(value, 21, CYAN, true);
+        row.addView(l, new LayoutParams(0, WRAP_CONTENT, 1));
+        row.addView(r, new LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
         return row;
     }
 
-    private TextView title(String text, float size) {
-        return text(text, size, Color.WHITE, true);
+    private TextView section(String s) {
+        TextView v = text(s, 18, CYAN, true);
+        v.setLetterSpacing(.1f);
+        LayoutParams p = new LayoutParams(MATCH_PARENT, WRAP_CONTENT);
+        p.topMargin = dp(14); p.bottomMargin = dp(12); v.setLayoutParams(p);
+        return v;
     }
 
-    private TextView detail(String text) {
-        TextView view = text(text, 22f, Color.rgb(176, 176, 184), false);
-        LayoutParams params = new LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.topMargin = dp(4);
-        params.bottomMargin = dp(28);
-        view.setLayoutParams(params);
-        return view;
+    private TextView text(String s, float size, int color, boolean bold) {
+        TextView v = new TextView(getContext());
+        v.setText(s); v.setTextSize(size); v.setTextColor(color); v.setGravity(Gravity.START);
+        if (bold) v.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        return v;
     }
 
-    private TextView section(String text) {
-        TextView view = text(text, 18f, CYAN, true);
-        view.setLetterSpacing(0.1f);
-        LayoutParams params = new LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.topMargin = dp(14);
-        params.bottomMargin = dp(12);
-        view.setLayoutParams(params);
-        return view;
+    private LayoutParams spaced() {
+        LayoutParams p = new LayoutParams(MATCH_PARENT, WRAP_CONTENT);
+        p.bottomMargin = dp(16); return p;
     }
 
-    private TextView text(String text, float size, int color, boolean bold) {
-        TextView view = new TextView(getContext());
-        view.setText(text);
-        view.setTextColor(color);
-        view.setTextSize(size);
-        view.setGravity(Gravity.START);
-        if (bold) {
-            view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        }
-        return view;
+    private GradientDrawable round(int fill, int stroke, int width) {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(fill); d.setCornerRadius(dp(22)); d.setStroke(dp(width), stroke); return d;
     }
 
-    private LayoutParams cardParams() {
-        LayoutParams params = new LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.bottomMargin = dp(16);
-        return params;
+    private static String friendly(String state) {
+        if (state == null || state.isBlank()) return "Unknown";
+        if ("on".equalsIgnoreCase(state)) return "On";
+        if ("off".equalsIgnoreCase(state)) return "Off";
+        String s = state.trim(); return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
-    private GradientDrawable rounded(int fill, int stroke, int strokeDp) {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(fill);
-        drawable.setCornerRadius(dp(22));
-        drawable.setStroke(dp(strokeDp), stroke);
-        return drawable;
-    }
-
-    private int dp(int value) {
-        float density = getResources().getDisplayMetrics().density;
-        return Math.max(1, Math.round(value * density));
-    }
+    private int dp(int n) { return Math.max(1, Math.round(n * getResources().getDisplayMetrics().density)); }
 
     private final class SettingCard extends LinearLayout {
-        private final TextView titleView;
-        private final TextView valueView;
-        private final TextView detailView;
-
-        SettingCard(Context context) {
-            super(context);
-            setOrientation(VERTICAL);
-            setGravity(Gravity.CENTER_VERTICAL);
-            setPadding(dp(30), dp(20), dp(30), dp(20));
-            setMinimumHeight(dp(108));
-            setFocusable(true);
-            setClickable(true);
-            setFocusableInTouchMode(false);
-            setStateListAnimator(null);
-
-            LinearLayout top = new LinearLayout(context);
-            top.setOrientation(HORIZONTAL);
-            top.setGravity(Gravity.CENTER_VERTICAL);
-            titleView = text("", 27f, Color.WHITE, true);
-            valueView = text("", 23f, CYAN, true);
-            top.addView(titleView, new LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-            top.addView(valueView, new LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-            addView(top, new LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
-
-            detailView = text("", 20f, Color.rgb(170, 170, 178), false);
-            LayoutParams detailParams = new LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT);
-            detailParams.topMargin = dp(8);
-            addView(detailView, detailParams);
-
-            applyFocus(false);
-            setOnFocusChangeListener((view, hasFocus) -> applyFocus(hasFocus));
+        private final TextView title;
+        private final TextView value;
+        private final TextView detail;
+        SettingCard(Context c) {
+            super(c); setOrientation(VERTICAL); setGravity(Gravity.CENTER_VERTICAL);
+            setPadding(dp(30), dp(20), dp(30), dp(20)); setMinimumHeight(dp(108));
+            setFocusable(true); setClickable(true); setFocusableInTouchMode(false); setStateListAnimator(null);
+            LinearLayout top = new LinearLayout(c); top.setOrientation(HORIZONTAL); top.setGravity(Gravity.CENTER_VERTICAL);
+            title = text("", 27, Color.WHITE, true); value = text("", 23, CYAN, true);
+            top.addView(title, new LayoutParams(0, WRAP_CONTENT, 1)); top.addView(value, new LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
+            addView(top, new LayoutParams(MATCH_PARENT, WRAP_CONTENT));
+            detail = text("", 20, Color.rgb(170,170,178), false);
+            LayoutParams p = new LayoutParams(MATCH_PARENT, WRAP_CONTENT); p.topMargin = dp(8); addView(detail, p);
+            focus(false); setOnFocusChangeListener((v, f) -> focus(f));
         }
-
-        SettingCard title(String value) {
-            titleView.setText(value == null ? "" : value);
-            return this;
+        SettingCard title(String s) { title.setText(s); return this; }
+        SettingCard value(String s) { value.setText(s); return this; }
+        SettingCard detail(String s) { detail.setText(s); return this; }
+        @Override public boolean onKeyDown(int key, KeyEvent e) {
+            if (key == KeyEvent.KEYCODE_DPAD_CENTER || key == KeyEvent.KEYCODE_ENTER || key == KeyEvent.KEYCODE_NUMPAD_ENTER) return performClick();
+            return super.onKeyDown(key, e);
         }
-
-        SettingCard value(String value) {
-            valueView.setText(value == null ? "" : value);
-            return this;
-        }
-
-        SettingCard detail(String value) {
-            detailView.setText(value == null ? "" : value);
-            return this;
-        }
-
-        @Override
-        public boolean onKeyDown(int keyCode, KeyEvent event) {
-            if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
-                    || keyCode == KeyEvent.KEYCODE_ENTER
-                    || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
-                return performClick();
-            }
-            return super.onKeyDown(keyCode, event);
-        }
-
-        private void applyFocus(boolean focused) {
-            setBackground(focused
-                    ? rounded(CYAN, Color.WHITE, 2)
-                    : rounded(PANEL, Color.rgb(58, 58, 64), 1));
-            int primary = focused ? Color.BLACK : Color.WHITE;
-            int secondary = focused ? Color.rgb(18, 40, 44) : Color.rgb(170, 170, 178);
-            int value = focused ? Color.BLACK : CYAN;
-            titleView.setTextColor(primary);
-            valueView.setTextColor(value);
-            detailView.setTextColor(secondary);
-            setTranslationZ(focused ? dp(6) : 0f);
+        private void focus(boolean f) {
+            setBackground(f ? round(CYAN, Color.WHITE, 2) : round(PANEL, Color.rgb(58,58,64), 1));
+            title.setTextColor(f ? Color.BLACK : Color.WHITE);
+            value.setTextColor(f ? Color.BLACK : CYAN);
+            detail.setTextColor(f ? Color.rgb(18,40,44) : Color.rgb(170,170,178));
+            setTranslationZ(f ? dp(6) : 0);
         }
     }
 }
