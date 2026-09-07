@@ -8,6 +8,7 @@ on:
       - "shield-overlay/**"
       - "scripts/**"
       - "tests/test_shield_overlay_source.py"
+      - "tests/test_shield_home_dashboard_source.py"
       - "tests/test_shield_pairing_source.py"
       - "tests/test_shield_pairing_gate_ui_source.py"
       - "tests/test_shield_auth_source.py"
