@@ -1,49 +1,54 @@
-# BOOP Wall v34: caller-owned Launcher swipe animation
+# BOOP Wall Native Chat + eye hue handoff — 2026-09-07
 
-Updated 2026-09-07. Owning branch: `boop-wall-free-chat-wip`.
-Package: `com.boop.alpha1`. VersionCode 34 / `0.4.14-wall-native-chat`.
+Owner: isolated combined Wall candidate on `boop-wall-native-chat-eye-hue`.
+Package: `com.boop.alpha1`.
+Candidate version: versionCode 35 / `0.4.15-wall-native-chat-eye-hue`.
 
-## Latest user evidence
+## Why this branch exists
 
-Ryan physically reported that the first Launcher-side attempt did not change the cross-app swipe animation at all. Treat that as a rejected approach. The reason is architectural: the activity that calls `startActivity()` owns the custom transition, so a receiving-Launcher OPEN override cannot reliably control the Wall -> Launcher launch.
+The user is physically running BOOP Wall `0.4.14-wall-native-chat` / versionCode 34. An earlier eye-hue APK was incorrectly built from the older v31 resurrection lineage and Android rejected it as an app downgrade. Do not reuse that v31 artifact for this device.
 
-The direction Ryan already likes remains Launcher -> Wall on a right swipe. The requested mirror is Wall -> Launcher on a left swipe: Launcher should enter from the right while Wall exits left.
+This branch starts from the exact v34 Native Chat / Free Chat Wall head `e10df1cc27d5522fa33fe6722d0d70f817f16289`, then adds the eye hue control while preserving the current ChatGPT/Native Chat relay, browser/free-chat mode, idle blink work and caller-owned Wall -> Launcher transition. The protected physical Wall checkpoint remains unchanged.
 
-## Current scoped fix
+A concurrent session added the same hue concept directly into `boop-wall-free-chat-wip` at `36e31998219c518e96730ff54e96b8e4fdf5b680`. That work was not discarded or blindly merged. This branch records it as a second parent via reconciliation commit `59aba586367b1e567698d22fde6282d93abb4708`; the selected tree keeps the hue implementation isolated into source helpers plus a materialization patch for clearer testing and later reconciliation.
 
-Transition implementation commit: `19731b3c223f9b94ba264f07fddd345f08b245bb`.
+## Eye hue implementation
 
-Protected `source/MainActivity.java` remains byte-for-byte untouched. `scripts/materialize-android.sh` patches only the materialized build output at the existing Wall `startActivity(launcherIntent)` call and supplies `ActivityOptions.makeCustomAnimation` with:
+- Exactly one `Eye colour` SeekBar is inserted beside the existing voice settings.
+- Range is 0..359 hue degrees only.
+- Existing default cyan/blue is anchored at 190 degrees and deliberately returns a null ColorFilter, so the default render uses the exact existing bitmap/paint path.
+- Non-default values apply a hue-rotation ColorMatrix to the existing shared eye Paint.
+- Both eyes, portrait render and shake render already share that Paint, so they remain consistent without changing eye artwork, crop, geometry or animation code.
+- Hue persists in SharedPreferences `boop_eyes` / `hue_degrees` and is applied when the face view is materialized.
+- No mouth, replacement eye artwork, background change, brightness, saturation, opacity, theme or effects control was added.
 
-- `boop_launcher_enter_from_right`: 100% -> 0% X, 220 ms;
-- `boop_wall_exit_to_left`: 0% -> -100% X, 220 ms.
+## Verification
 
-This keeps the Wall and Launcher packages independent and does not alter the already-liked Launcher -> Wall right-swipe path. Existing tap/hold/voice/HA/chat/wake behavior, permissions and signing setup are not intentionally changed by this transition patch.
+Signed build commit: `1256fb33f198659d7afd1310e5c8afbadd5d53d3`.
+GitHub Actions run: `34090520672` — SUCCESS.
+Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v35`.
+Artifact ID: `10006695690`.
+Extracted APK SHA-256: `013c4db3b3fc9e21eb2b4bf0a255bfbaf84d9b2c94a06c7a996cc875ff917819`.
 
-## Verification and signed artifact
+The successful gate covered:
+- Native Chat marker and OpenAI relay marker still present in effective MainActivity;
+- full 33 natural-wake mappings retained;
+- exact existing `boop_eyes` bitmap and black face background retained;
+- no mouth path introduced;
+- hue math for default/cyan/orange/green/pink/purple;
+- default 190-degree hue is an unfiltered path;
+- existing Chat mode harness;
+- Member Berry source guard;
+- thinking puppet source guard;
+- shake detector and shake-eye motion harnesses;
+- Android unit tests;
+- stable signed APK build with the current Native Chat relay configuration environment;
+- package `com.boop.alpha1`, versionCode 35, versionName `0.4.15-wall-native-chat-eye-hue`;
+- signer fingerprint continuity against the existing permanent BOOP signer;
+- APK archive integrity.
 
-Focused/full run `34086706588` verified the transition source assertion plus the normal Wall source/JVM/build/sign path, but later failed an unrelated idle-blink midpoint instrumentation assertion (`openness=0.57552963`). Do not modify blink behavior as part of this animation task and do not describe that full run as green.
+## Physical status
 
-A separate explicit build-only run was triggered by documentation commit `593abaf232727b62cd3d49f0e7fb53ea7f572214` using the repository's existing `[boop-build-only]` route:
+NOT yet physically accepted on the Wall Pixel. The expected installation path is an in-place upgrade from v34 to v35 with the same package and signer. After installation, physically verify default blue, live orange/pink/green changes, persistence after force-stop/relaunch or device restart, wake/sleep, thinking, shake, Member Berry, tap/hold and Launcher swipe, plus Native Chat conversation.
 
-- GitHub Actions run: `34087312865`
-- conclusion: success
-- stable-signed Wall v34 build: success
-- package/version/archive/signer continuity: success
-- emulator/instrumentation/tests deliberately skipped in this build-only run
-- artifact: `BOOP-Wall-Native-Chat-candidate`
-- artifact ID: `10005662085`
-- extracted APK SHA-256: `82e01c9a68cb104882b6401803584069ba9085f5a450fe354af6b210c470b5e6`
-- existing permanent BOOP signer unchanged
-
-Physical animation acceptance is still pending Ryan's Pixel test. Do not call this transition physically fixed until he confirms the visual direction changed.
-
-## Preservation
-
-The accepted Wall physical checkpoint remains `595e1daa43393882a0e5de43967545ac526b8b66` / `checkpoint-boop-wall-595e1da`. Do not move it. v33 faster-blink history remains in repository history/docs; Ryan previously reported v32 blinking worked physically. The independent blink work is not part of this transition change.
-
-Launcher remains a separate app (`com.boop.launcher`). Preserve its accepted fullscreen, drawer and reverse-swipe behavior. No automatic installation or permission change was performed.
-
-## Next safe step
-
-Install the signed Wall v34 candidate over the current Wall and physically check only the left-swipe Wall -> Launcher visual transition. Expected: Launcher enters from the right and Wall exits left. If it still uses Android's default same-direction animation, capture that as Pixel runtime evidence and investigate task/window transition policy rather than changing Launcher again.
+Do not move or overwrite the protected physical Wall checkpoint merely because CI is green.
