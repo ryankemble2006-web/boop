@@ -111,20 +111,30 @@ new_resume = '''    @Override
 '''
 replace_once(old_resume, new_resume, 'onResume dock policy')
 
-replace_once(
-    '        closeWakeAudioSession();\n        if (wakeCoordinator != null) {\n',
-    '        closeWakeAudioSession();\n'
-    '        if (presencePeekController != null) {\n'
-    '            presencePeekController.cancel();\n'
-    '        }\n'
-    '        if (mirrorController != null) {\n'
-    '            mirrorController.onPause();\n'
-    '        }\n'
-    '        if (dockModeController != null) {\n'
-    '            dockModeController.onPause();\n'
-    '        }\n'
-    '        if (wakeCoordinator != null) {\n',
-    'onPause dock teardown')
+old_pause_tail = '''        cancelAssistantFollowUpSilenceTimeout();
+        closeWakeAudioSession();
+        if (wakeCoordinator != null) {
+            wakeCoordinator.endForegroundSession();
+        }
+        super.onPause();
+'''
+new_pause_tail = '''        cancelAssistantFollowUpSilenceTimeout();
+        closeWakeAudioSession();
+        if (presencePeekController != null) {
+            presencePeekController.cancel();
+        }
+        if (mirrorController != null) {
+            mirrorController.onPause();
+        }
+        if (dockModeController != null) {
+            dockModeController.onPause();
+        }
+        if (wakeCoordinator != null) {
+            wakeCoordinator.endForegroundSession();
+        }
+        super.onPause();
+'''
+replace_once(old_pause_tail, new_pause_tail, 'onPause dock teardown')
 
 pause_anchor = '''        super.onPause();
     }
