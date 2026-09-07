@@ -3,71 +3,87 @@
 Owner: isolated Shield experiment on `boop-shield-fullscreen-deezer-wip`.
 Base lineage: live `boop-shield-media-puppetry@4f57a5b45adec5d4872dd83ec9301093f4c4d5d5`.
 Package: `com.boop.shieldoverlay`.
-Current candidate: versionCode 2 / `0.2-fullscreen-puppetry`.
+Current candidate: versionCode 3 / `0.3-friendly-deezer-access`.
 
-## Product state
+## Latest physical evidence
 
-Ryan physically confirmed the first full-screen candidate reached the Shield and exposed the large full-screen/debug presentation. He asked to preserve the useful diagnostics for later and move on to puppetry. The diagnostics code remains available and was not deleted or redesigned in this motion pass.
+Ryan installed the v2 full-screen puppetry build. BOOP showed ordinary compact eyes instead of entering full-screen Deezer mode. In BOOP Home -> Settings the Deezer status read `Access needed`, and the explanatory text confirmed Android notification-listener access was not granted.
 
-When the existing Deezer policy enters either `HEADPHONES_REST` or `HEADPHONES_PLAYING`, BOOP still owns the whole TV with a pure-black application-overlay canvas while Deezer remains the real player underneath. The overlay stays `TYPE_APPLICATION_OVERLAY` + `FLAG_NOT_FOCUSABLE` + `FLAG_NOT_TOUCHABLE`, so remote/media input remains pass-through.
+That is the current physical root cause for the ordinary-eye fallback: without Android's notification-listener grant, BOOP cannot observe Deezer's media session and therefore remains in `EYES`. Do not claim why Android lost/withheld the grant; only the missing grant itself is physically confirmed.
 
-## v2 puppetry pass
+The v1 large full-screen/debug presentation previously reached the Shield, so preserve its useful diagnostics. The accepted corner-H1 branch remains untouched.
 
-The existing Deezer session observer, controller selection, media clock and permission path remain unchanged. v2 changes only the acting/render seam:
+## v3 friendly Deezer access flow
 
-- `PLAYING`: H1 uses `FullscreenPuppetMotion.groove(...)`, a richer but still gentle 3.6-second periodic sway/nod with small secondary head lag/listening weight. It reuses the accumulated `MediaPuppetFrameLoop` time, so pause/resume does not mechanically restart the dance.
-- `PAUSED`: the current playing pose is captured and eases to neutral over 520 ms rather than snapping to rest.
-- Explicit Deezer skip states (`SKIPPING_TO_PREVIOUS`, `SKIPPING_TO_NEXT`, `SKIPPING_TO_QUEUE_ITEM`, playback-state integers 9/10/11): BOOP performs a short 700 ms acknowledgement, peaking around 180 ms with a small lift/tilt, then returns to neutral. This is driven by the already-observed playback state, not metadata polling or audio analysis.
-- Other `HEADPHONES_REST` states remain neutral and preserve the old quiet-equivalent-state contract.
-- Full-screen geometry tests now cover the richer groove, pause settle and skip accent across HD/UHD so the measured H1 alpha envelope remains on-screen.
-- The existing H1 asset, black canvas, ordinary-eye fallback, BOOP Home hide/show, animation-scale handling and Power Saver behaviour remain intact.
+Android notification-listener access is special settings access, not a normal runtime permission, so BOOP cannot silently grant it or show the standard runtime Allow/Deny sheet. v3 makes the required user action feel like normal first setup:
 
-## Important behaviour boundary
+- The first time BOOP reaches Home, it offers `Let BOOP see Deezer playback?` once.
+- The copy explains that Android calls this Notification access and that BOOP ignores notification contents, using only Deezer playback state for the headphone/music puppet.
+- `Continue` enables the Deezer puppet feature and, if access is not already granted, opens Android settings for BOOP's own notification-listener component.
+- On API 30+, BOOP first tries `ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS` with `EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME` set to the BOOP listener component string.
+- If the Shield does not expose that detail screen, BOOP falls back to `ACTION_NOTIFICATION_LISTENER_SETTINGS`.
+- Older Android goes directly to the generic notification-listener screen.
+- Returning to BOOP refreshes the access state immediately.
+- `Manage Deezer access` uses the same detail-first/fallback launcher.
+- The one-time offer is persisted. Choosing `Not now` does not nag on every launch; Settings remains the manual route later.
+- Existing `one-time computer setup` wording is now only the last fallback if Android exposes neither settings route.
 
-The existing Deezer design intentionally permits background playback and does **not** identify which third-party app is currently foreground. This WIP therefore continues to use the same signal: while Deezer has an eligible headphone state, BOOP can own the full screen even if Deezer has continued playing in the background.
+No permission is granted automatically. The user still has to toggle BOOP on in Android's system UI.
 
-Do not add UsageStats/accessibility or other broad foreground-tracking access without a new explicit user decision. If physical testing proves exact Deezer-only foreground gating is required, investigate a narrow Shield-safe signal separately.
+## Full-screen puppet behaviour retained
+
+When Deezer observation becomes eligible, the v2 puppetry remains intact:
+
+- eligible Deezer headphone states own the full TV with a pure-black noninteractive application-overlay canvas;
+- `PLAYING` uses the richer 3.6-second `FullscreenPuppetMotion.groove` and accumulated media clock;
+- `PAUSED` settles the current pose to neutral over 520 ms;
+- skip states 9/10/11 trigger the 700 ms perk/lift/tilt acknowledgement;
+- remote input remains pass-through via `FLAG_NOT_FOCUSABLE` + `FLAG_NOT_TOUCHABLE`;
+- BOOP Home hide/show, compact `EYES` fallback, H1 asset, debug machinery, HA auth/socket, Home, Routines and signing are preserved.
+
+The existing design still follows Deezer session state rather than third-party foreground-app identity. Do not add UsageStats/accessibility or broad foreground tracking without a new explicit user decision.
 
 ## TDD and verification
 
-TDD RED: workflow run `34097940701` failed at Shield unit-test compilation because the newly added `FullscreenPuppetMotionTest` referenced the intentionally missing `FullscreenPuppetMotion` class. Source regressions passed before the expected compile failure.
+Friendly-access TDD RED: workflow run `34100353543` failed at Shield unit-test compilation because the new tests intentionally referenced the not-yet-existing one-time setup preference API and `DeezerAccessSettingsPlan`.
 
-GREEN candidate: build commit `0d9f5e6f2cc3249541667976a41405efd686a52a`; GitHub Actions run `34098619403` completed successfully.
+GREEN build commit: `b5e9e33bf1b98bcb94176afeea3fb21ad99ab9fa`.
+GitHub Actions run: `34100989718` completed successfully.
 
-Passed on that exact candidate:
-- full Python source regression suite;
-- complete Shield JVM/unit suite, including `FullscreenPuppetMotionTest`, preserved `MediaPuppetStateTest`, explicit track-change delivery and full acting-envelope geometry tests;
+Passed on that exact build commit:
+- 46 Python source regression tests, including the friendly first-home access offer and detail-settings/fallback wiring;
+- complete Shield JVM/unit suite, including the new one-time preference and settings-route tests plus existing fullscreen puppetry/state/geometry tests;
 - stable-signed APK assembly;
-- package/permission inspection;
+- package/version/permission inspection;
 - permanent BOOP signer continuity;
 - artifact upload.
 
-Artifact: `BOOP-Shield-Fullscreen-Deezer` / ID `10009620031`.
-Extracted APK SHA-256: `ea9fa94f0868943cf559b5b8e1406dcf28e07264a415aed7d58e7cc61c292a18`.
+Candidate identity: versionCode 3 / `0.3-friendly-deezer-access`.
+Artifact: `BOOP-Shield-Fullscreen-Deezer` / ID `10010497159`.
+APK SHA-256: `06ef591b117720334f6a9c2c6b7f0c8f8e66dc448a375ad9fb9b35b68fc617c9`.
+Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Branch review against the first full-screen candidate `2aa4608a80dfdbc1193d9e4acf41aeeb1292c953` shows the app changes are confined to fullscreen puppet motion/state/rendering, version identity, and focused tests. HA, permissions, Deezer observer/session ownership, playback controls, pairing and signing were not changed.
-
-CI green is not physical green. No install, data clear or permission change is claimed from this task.
+CI green is not physical green. No install, data clear or Android permission grant is claimed.
 
 ## Preserve
 
 - `boop-shield-media-puppetry` and its physically accepted corner-H1 placement remain untouched.
 - `checkpoint-shield-home-f8e8135` and `checkpoint-shield-routines-3fa18c6` remain protected.
-- Existing Deezer notification-listener access state is not changed.
-- Existing HA auth/socket, Home, Routines and signer are preserved.
-- Keep the useful diagnostic/debug machinery available for later work; do not delete it merely to clean the puppet presentation.
+- Existing HA auth/socket, Home, Routines, pairing, overlay pass-through and signer are preserved.
+- Keep useful debug/diagnostic machinery available for later work.
+- Do not silently grant Android special access.
 
 ## Physical test next
 
-Install v2 over the current Shield BOOP without clearing data. With the existing Deezer puppet feature enabled:
+Install v3 over the current Shield BOOP without uninstalling or clearing data.
 
-1. Play Deezer: confirm the richer large-centred groove feels alive rather than mechanically rotated.
-2. Pause mid-motion: confirm BOOP settles naturally over roughly half a second instead of snapping.
-3. Resume: confirm the groove continues rather than visibly restarting at phase zero.
-4. Skip next/previous: confirm a brief perk/lift appears, then returns cleanly to the groove once PLAYING resumes.
-5. Verify remote play/pause/skip still reaches Deezer through the full-screen overlay.
-6. Open BOOP Home and return; verify hide/show and latest Deezer state recover correctly.
-7. Stop/end the Deezer session; ordinary compact Shield eyes should return.
-8. Deliberately leave Deezer playing and navigate elsewhere; decide later whether the background-music full-screen behaviour is desirable.
+Because the v3 one-time offer flag did not exist in v2 data, first entry to BOOP Home should show the new Deezer access prompt. Choose `Continue`.
+
+1. Confirm Android opens BOOP's own Notification access detail page if Shield supports it; otherwise confirm the generic Notification access list appears.
+2. Toggle BOOP on and press Back.
+3. Confirm BOOP Settings changes from `Access needed` through `Connecting` to `On`.
+4. Start Deezer playback and confirm full-screen black BOOP/H1 appears.
+5. Check play/pause/resume/skip puppetry and remote pass-through.
+6. If access reaches `On` but ordinary eyes remain, next debugging target is Deezer media-session discovery/package/state, not the renderer.
 
 Do not promote or move any physical checkpoint until Ryan reports the actual Shield result.
