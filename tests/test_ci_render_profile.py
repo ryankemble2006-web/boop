@@ -1,7 +1,7 @@
 """The render profile is confined to the disposable emulator, not a phone."""
 import importlib.util
 from pathlib import Path
-import subprocess
+import shlex
 import unittest
 from unittest.mock import patch
 
@@ -57,3 +57,14 @@ class RenderProfileTests(unittest.TestCase):
 
     def test_cannot_claim_unapplied_profile(self):
         with self.assertRaises(RuntimeError): self.run_profile(verify=False)
+
+    def test_instrumentation_requests_the_raw_completion_marker_it_checks(self):
+        workflow=(PATH.parents[1]/'.github/workflows/build-boop-wall-free-chat.yml').read_text()
+        command=next(line.strip() for line in workflow.splitlines() if line.strip().startswith('adb shell am instrument'))
+        self.assertIn('-r', shlex.split(command))
+        self.assertIn("grep -Fxq 'INSTRUMENTATION_CODE: -1'", workflow)
+
+    def test_render_profile_failure_is_not_hidden_by_a_tee_pipeline(self):
+        workflow=(PATH.parents[1]/'.github/workflows/build-boop-wall-free-chat.yml').read_text()
+        command=next(line.strip() for line in workflow.splitlines() if 'run: python3 tests/ci_render_profile.py' in line)
+        self.assertNotIn('|',command)

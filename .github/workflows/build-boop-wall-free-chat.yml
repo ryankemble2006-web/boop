@@ -234,7 +234,7 @@ jobs:
 
       - name: Reduce disposable-emulator rendering load without changing layout or time
         if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
-        run: python3 tests/ci_render_profile.py | tee render-profile.txt
+        run: python3 tests/ci_render_profile.py > render-profile.txt
 
       - name: Select and verify the emulator supplied-audio recognizer
         if: ${{ !contains(github.event.head_commit.message, '[boop-build-only]') }}
@@ -309,9 +309,9 @@ jobs:
           adb install -r boop-build/BOOP-Alpha1/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           adb logcat -c
           trap 'adb logcat -d -v threadtime -s NotificationService:V Toast:V ToastUI:V SystemUIToast:V AndroidRuntime:E "*:S" > wall-polish-system.log' EXIT
-          adb shell am instrument -w com.boop.alpha1.test/com.boop.alpha1.WallPolishInstrumentation | tee wall-polish-instrumentation.txt
+          adb shell am instrument -w -r com.boop.alpha1.test/com.boop.alpha1.WallPolishInstrumentation | tee wall-polish-instrumentation.txt
           grep -q 'PASS: styled notice, visible background toast, awake blink' wall-polish-instrumentation.txt
-          grep -q 'INSTRUMENTATION_CODE: -1' wall-polish-instrumentation.txt
+          grep -Fxq 'INSTRUMENTATION_CODE: -1' wall-polish-instrumentation.txt
 
       - name: Collect disposable-emulator polish evidence
         if: ${{ always() && !contains(github.event.head_commit.message, '[boop-build-only]') }}
