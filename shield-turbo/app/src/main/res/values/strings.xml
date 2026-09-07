@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tagline">Read-only diagnostics. No pretend boosts.</string>
+    <string name="analyse">ANALYSE SHIELD</string>
+    <string name="access_details">ACCESS DETAILS</string>
+    <string name="ready">Ready. Press the centre button to take a snapshot.</string>
+    <string name="scanning">Reading device…</string>
+    <string name="scan_complete">Scan complete • %1$d of %2$d readings available • No changes applied</string>
+    <string name="scan_paused">Scan stopped when the app left the screen. Press ANALYSE SHIELD to retry.</string>
+    <string name="scan_unavailable">The scan could not finish. No changes were made. Press ANALYSE SHIELD to retry.</string>
+    <string name="capability_tier">Capability tier</string>
+    <string name="standard_evidence">Normal app access. ADB setup is not enabled in v0.1.</string>
+    <string name="adb_evidence">Diagnostic DUMP permission is present. This does not grant tuning or arbitrary shell access.</string>
+    <string name="root_evidence">This process has UID 0. No root commands have been executed.</string>
+    <string name="reading_note">This is one snapshot, not a benchmark. A missing or restricted reading does not mean the device is faulty. The exposed thermal zone is not automatically the CPU or GPU temperature.</string>
+    <string name="no_changes">No files, apps or settings changed. CPU frequency is not CPU load. Temperature is the exposed zone, not a verified CPU/GPU sensor. Network validation is not a speed test.</string>
+    <string name="available">Available</string>
+    <string name="restricted">Restricted</string>
+    <string name="not_exposed">Not exposed</string>
+    <string name="unavailable">Unavailable</string>
+    <string name="close">CLOSE</string>
+    <string name="access_explanation">STANDARD\nWorks immediately without setup. Measurements stay on this device.\n\nADB TURBO\nThe tier is reserved for verified elevated diagnostic access. This first build does not install an ADB helper or grant permissions. A one-time Android permission is not permanent shell access.\n\nROOT\nOnly actual root process authority counts. This app does not run su or ask a root manager. A rooted device may still show STANDARD because the app itself is unprivileged.\n\nNo computer is required to use this read-only release.</string>
+</resources>
