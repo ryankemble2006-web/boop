@@ -1,34 +1,42 @@
-# BOOP Wall v34: caller-owned Launcher transition candidate
+# BOOP Wall v35: Native Chat + eye hue candidate
 
-Updated 2026-09-07. Branch `boop-wall-free-chat-wip`.
+Updated 2026-09-07. Owning branch `boop-wall-native-chat-eye-hue`.
 
 ## Current candidate
 
-- VersionCode 34 / `0.4.14-wall-native-chat`, package `com.boop.alpha1`.
-- Transition implementation commit `19731b3c223f9b94ba264f07fddd345f08b245bb`.
+- VersionCode 35 / `0.4.15-wall-native-chat-eye-hue`, package `com.boop.alpha1`.
+- Built from the user's installed v34 Native Chat lineage, not the older v31 hue experiment.
+- Native Chat / OpenAI relay, browser/free-chat mode, wake path, existing caller-owned Wall -> Launcher transition and current idle-blink materialization remain present.
+- Adds exactly one persisted hue-only `Eye colour` slider beside voice settings.
+- Default accepted cyan/blue is 190 degrees and uses no ColorFilter at all.
+- Reuses the exact existing `boop_eyes` bitmap/render Paint for both eyes; no artwork, crop, geometry, black background, mouth or extra visual setting was added.
 - Existing permanent BOOP signing identity unchanged.
-- Wall's deliberate left swipe still opens the separately installed `com.boop.launcher`.
-- The cross-app animation is now owned by Wall at the actual `startActivity()` call, using `ActivityOptions.makeCustomAnimation`.
-- Launcher enters from the right while Wall exits left, mirroring the already physically liked Launcher -> Wall direction.
-- Protected `source/MainActivity.java` remains unchanged; the transition is applied only to the materialized build output and generates two scoped animation resources.
-- Launcher app code is not changed by this Wall candidate.
 
 ## Verification evidence
 
-Full workflow run `34086706588` proved the transition patch and build path compile correctly: 169 source/Python tests passed including the focused caller-owned transition assertion; JVM harnesses passed; Android unit/build steps passed; v34 package/version/archive and permanent signer continuity passed; wake activation and chat-mode gesture/persistence smoke passed.
+GitHub Actions run `34090520672` completed SUCCESS for build commit `1256fb33f198659d7afd1310e5c8afbadd5d53d3`.
 
-That run later failed an unrelated Wall polish instrumentation assertion while sampling the concurrent idle blink (`Production blink did not close at midpoint: openness=0.57552963`). This is not evidence against the cross-app transition and must not be papered over by changing blink code in this task.
+Passed gates include focused source guards, hue math/default-path checks, representative orange/green/pink/purple/cyan hues, Chat mode harness, Member Berry guard, thinking guard, shake detector, shake-eye motion, Android unit tests, effective Native Chat/OpenAI relay markers, all 33 wake mappings, signed v35 build, exact package/version inspection, archive integrity and stable signer continuity.
 
-This documentation commit intentionally requests the repository's existing `[boop-build-only]` route so a signed v34 artifact can be produced without rerunning the unrelated blink instrumentation. Do not describe skipped tests as passed. Final animation direction still requires Ryan's physical Pixel test.
+Artifact: `BOOP-Wall-Native-Chat-Eye-Hue-v35` / ID `10006695690`.
+Extracted APK SHA-256: `013c4db3b3fc9e21eb2b4bf0a255bfbaf84d9b2c94a06c7a996cc875ff917819`.
 
-## Preserved behavior / boundaries
+## Concurrency reconciliation
 
-- Wall package remains `com.boop.alpha1`; Launcher remains `com.boop.launcher`.
-- Existing left-swipe detection, tap/hold/voice/HA behavior, chat mode, wake path, permissions and signing setup are unchanged by the transition patch.
-- Launcher -> Wall right-swipe behavior is intentionally untouched.
-- No checkpoint is promoted or repointed by this candidate.
-- No automatic install or permission changes.
+While this candidate was being built, `boop-wall-free-chat-wip` advanced from `e10df1cc27d5522fa33fe6722d0d70f817f16289` to `36e31998219c518e96730ff54e96b8e4fdf5b680` with a concurrent implementation of the same hue concept inside materialization. Preserve that work. The combined candidate records it in ancestry and selects the isolated/testable helper + patch implementation rather than blindly stacking duplicate hue code.
+
+## Physical status
+
+Physical Pixel acceptance is pending. Expected install path: in-place upgrade from the user's current v34 `0.4.14-wall-native-chat` to v35 using the same package and signer.
+
+Physical acceptance checklist:
+- v35 installs over v34 without uninstall/data loss;
+- default cyan/blue remains visually unchanged;
+- orange, pink and green preview live on both eyes;
+- selected hue survives force-stop/relaunch and device restart;
+- wake/sleep, thinking, shake, Member Berry, tap/hold and Launcher swipe still behave normally;
+- Native Chat/ChatGPT conversation still works.
 
 ## Accepted Wall baseline remains unchanged
 
-Physical accepted Wall checkpoint remains `595e1daa43393882a0e5de43967545ac526b8b66` / tag `checkpoint-boop-wall-595e1da`. Newer v34 chat/blink/transition work is candidate evidence only until Ryan physically accepts the relevant behavior.
+Physical accepted Wall checkpoint remains `595e1daa43393882a0e5de43967545ac526b8b66` / `checkpoint-boop-wall-595e1da`. Do not promote or overwrite it until physical acceptance.
