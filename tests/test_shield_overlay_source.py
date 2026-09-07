@@ -18,11 +18,29 @@ class ShieldOverlaySourceTest(unittest.TestCase):
         self.assertIn("FLAG_NOT_FOCUSABLE", source)
         self.assertIn("FLAG_NOT_TOUCHABLE", source)
 
-    def test_eye_view_is_transparent_and_never_paints_black(self):
+    def test_eye_view_stays_transparent_but_deezer_puppet_owns_black_canvas(self):
         source = self.read("java/com/boop/shieldoverlay/BoopOverlayView.java")
-        self.assertIn("Color.TRANSPARENT", source)
-        self.assertNotIn("Color.BLACK", source)
-        self.assertNotIn("drawColor", source)
+        self.assertIn("setBackgroundColor(Color.TRANSPARENT)", source)
+        self.assertIn("if (puppetMode != DeezerPuppetPolicy.Mode.EYES)", source)
+        self.assertIn("canvas.drawColor(Color.BLACK)", source)
+        black_index = source.index("canvas.drawColor(Color.BLACK)")
+        puppet_index = source.rfind("if (puppetMode != DeezerPuppetPolicy.Mode.EYES)", 0, black_index)
+        self.assertGreater(puppet_index, -1)
+        self.assertLess(puppet_index, black_index)
+
+    def test_fullscreen_deezer_mode_keeps_window_noninteractive_and_uses_full_display_geometry(self):
+        service = self.read("java/com/boop/shieldoverlay/BoopOverlayService.java")
+        geometry = self.read("java/com/boop/shieldoverlay/FullscreenDeezerGeometry.java")
+        window = self.read("java/com/boop/shieldoverlay/OverlayWindowSpec.java")
+        self.assertIn("FullscreenDeezerGeometry.calculate(width, height)", service)
+        self.assertIn("overlayParams.width = width", service)
+        self.assertIn("overlayParams.height = height", service)
+        self.assertIn("overlayParams.x = 0", service)
+        self.assertIn("overlayParams.y = 0", service)
+        self.assertIn("FLAG_NOT_FOCUSABLE", window)
+        self.assertIn("FLAG_NOT_TOUCHABLE", window)
+        self.assertNotIn("UsageStatsManager", geometry)
+        self.assertNotIn("Accessibility", geometry)
 
     def test_manifest_allows_local_network_but_still_blocks_voice_boot_and_accessibility(self):
         manifest = self.read("AndroidManifest.xml")
@@ -140,6 +158,7 @@ class ShieldOverlaySourceTest(unittest.TestCase):
             "java/com/boop/shieldoverlay/BoopOverlayView.java",
             "java/com/boop/shieldoverlay/OverlayGeometry.java",
             "java/com/boop/shieldoverlay/OverlayWindowSpec.java",
+            "java/com/boop/shieldoverlay/FullscreenDeezerGeometry.java",
         )
         combined = "\n".join(self.read(path) for path in protected_sources).lower()
         for forbidden in (
