@@ -18,6 +18,8 @@ cp source/app-build.gradle "$ROOT/app/build.gradle"
 if compgen -G 'source-test/*.java' > /dev/null; then
   cp source-test/*.java "$TEST"/
 fi
+# Real HTTP/JSON protocol harness is shared with the Android unit-test suite.
+cp tests/java/OpenAiRelayAssistantClientHarness.java "$TEST"/
 if compgen -G 'source-android-test/*.java' > /dev/null; then
   ANDROID_TEST="$ROOT/app/src/androidTest/java/com/boop/alpha1"
   mkdir -p "$ANDROID_TEST"

@@ -143,6 +143,7 @@ NEW_TOUCH = '''    private boolean onFaceTouch(View view, MotionEvent event) {
 '''
 
 FIELDS = MARKER + '''    private BoopChatModeStore chatModeStore;
+    private OpenAiRelayAssistantClient relayAssistant;
     private AlertDialog chatModeDialog;
     private boolean chatModeOpen;
     private boolean activityInForeground;
@@ -188,8 +189,9 @@ METHODS = '''    private void cancelFaceHolds() {
         choices.setPadding(dp(20), dp(8), dp(20), dp(8));
         choices.addView(chatModeButton(BoopChatMode.OPENCODE, "OpenCode"));
         choices.addView(chatModeButton(BoopChatMode.FREE_CHAT, "Free Chat"));
+        choices.addView(chatModeButton(BoopChatMode.NATIVE_CHAT, "Native Chat"));
         TextView explanation = voiceSettingLabel(
-                "Free Chat opens ChatGPT in your browser and copies your question for you to paste. Its own limits apply.",
+                "Free Chat opens ChatGPT in your browser and copies your question for you to paste. Its own limits apply. Native Chat speaks here and needs a separate conversation connection and API credit.",
                 17f, false);
         explanation.setPadding(0, dp(14), 0, dp(8));
         choices.addView(explanation);
@@ -273,6 +275,7 @@ def patch_text(text):
                         '    private boolean swipeHadMultiplePointers = false;\n' + FIELDS)
     text = replace_once(text, '        presenceHandler = new Handler(Looper.getMainLooper());\n',
                         '        chatModeStore = new BoopChatModeStore(this);\n'
+                        '        relayAssistant = new OpenAiRelayAssistantClient(OpenAiRelayConfig.fromBuildConfig());\n'
                         '        presenceHandler = new Handler(Looper.getMainLooper());\n')
     text = replace_once(text, '        super.onResume();\n',
                         '        super.onResume();\n        activityInForeground = true;\n'
@@ -299,7 +302,8 @@ def patch_text(text):
     text = replace_once(text,
                         '            CommandOutcome outcome = commandRouter.process(transcript);\n            runOnUiThread(() -> {\n',
                         '            CommandOutcome outcome = commandRouter.process(transcript, () ->\n'
-                        '                    requestChatRevision == chatModeRevision && chatModeStore.load() == BoopChatMode.OPENCODE);\n'
+                        '                    requestChatRevision == chatModeRevision && chatModeStore.load() != BoopChatMode.FREE_CHAT,\n'
+                        '                    requestChatMode == BoopChatMode.NATIVE_CHAT ? relayAssistant::ask : null);\n'
                         '            runOnUiThread(() -> {\n'
                         '                if (!activityInForeground || chatModeOpen || isFinishing() || isDestroyed()\n'
                         '                        || requestChatRevision != chatModeRevision) return;\n'
@@ -318,6 +322,7 @@ def patch_text(text):
                         '            stopListening();\n            return;\n        }\n')
     text = replace_once(text, '    protected void onDestroy() {\n',
                         '    protected void onDestroy() {\n        activityInForeground = false;\n'
+                        '        if (relayAssistant != null) relayAssistant.close();\n'
                         '        cancelFaceHolds();\n        if (chatModeDialog != null) chatModeDialog.dismiss();\n')
     return text
 

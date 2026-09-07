@@ -53,6 +53,11 @@ final class BoopCommandRouter {
     }
 
     CommandOutcome process(String text, BooleanSupplier useAssistant) {
+        return process(text, useAssistant, null);
+    }
+
+    /** Selects conversation only after the authoritative local result is NO_MATCH. */
+    CommandOutcome process(String text, BooleanSupplier useAssistant, AssistantProcessor selectedAssistant) {
         CommandOutcome localOutcome = local.process(text);
         if (localOutcome.status() != CommandOutcome.Status.NO_MATCH) {
             return localOutcome;
@@ -63,7 +68,7 @@ final class BoopCommandRouter {
 
         assistantActivity.onAssistantStarted();
         try {
-            return assistant.ask(text);
+            return (selectedAssistant == null ? assistant : selectedAssistant).ask(text);
         } finally {
             assistantActivity.onAssistantFinished();
         }

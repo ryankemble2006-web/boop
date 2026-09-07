@@ -50,5 +50,35 @@ public class ConfigHarness {
         self.assertTrue((ROOT/'source/OpenAiRelayAssistantClient.java').is_file(), 'native relay client missing')
         self.assertTrue((ROOT/'tests/java/OpenAiRelayAssistantClientHarness.java').is_file())
 
+class RelayRoutingTest(unittest.TestCase):
+    def test_all_local_outcomes_and_all_modes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root/'HomeAssistantClient.java').write_text('package com.boop.alpha1; class HomeAssistantClient { CommandOutcome process(String s){throw new AssertionError();}}')
+            (root/'HomeAssistantGeneralAssistantClient.java').write_text('package com.boop.alpha1; class HomeAssistantGeneralAssistantClient { CommandOutcome ask(String s){throw new AssertionError();}}')
+            args = ['javac','--release','17','-d',tmp]
+            args += [str(ROOT/'source'/n) for n in ('CommandOutcome.java','BoopCommandRouter.java','BoopChatMode.java')]
+            args += [str(root/'HomeAssistantClient.java'),str(root/'HomeAssistantGeneralAssistantClient.java'),str(ROOT/'tests/java/BoopNativeRoutingHarness.java')]
+            compiled = subprocess.run(args,capture_output=True,text=True)
+            self.assertEqual(0,compiled.returncode,compiled.stderr)
+            run = subprocess.run(['java','-cp',tmp,'com.boop.alpha1.BoopNativeRoutingHarness'],capture_output=True,text=True)
+            self.assertEqual(0,run.returncode,run.stderr)
+            self.assertIn('BOOP_NATIVE_ROUTING_PASS',run.stdout)
+
+    def test_materialized_native_route_keeps_existing_response_path(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('chat_patch', ROOT/'scripts/patch-wall-chat-mode.py')
+        patch = importlib.util.module_from_spec(spec); spec.loader.exec_module(patch)
+        materialized = patch.patch_text((ROOT/'source/MainActivity.java').read_text())
+        self.assertIn('OpenAiRelayConfig.fromBuildConfig()', materialized)
+        self.assertIn('relayAssistant::ask', materialized)
+        self.assertIn('BoopChatMode.NATIVE_CHAT', materialized)
+        self.assertIn('relayAssistant.close()', materialized)
+        self.assertIn('speakThenOpenAssistantFollowUp(LocalReply.forOutcome(outcome));', materialized)
+        self.assertIn('openFreeChat(transcript);', materialized)
+        self.assertEqual(materialized, patch.patch_text(materialized))
+        script = (ROOT/'scripts/materialize-android.sh').read_text()
+        self.assertIn('OpenAiRelayAssistantClientHarness.java', script)
+
 if __name__ == '__main__':
     unittest.main()
