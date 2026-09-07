@@ -3,6 +3,8 @@ set -euo pipefail
 
 bash scripts/materialize-android.sh
 python3 scripts/patch-unified-dock-mirror.py
+python3 scripts/patch-unified-wake-name.py
+python3 scripts/patch-unified-shield-dashboard.py
 ROOT=boop-build/BOOP-Alpha1
 APP="$ROOT/app"
 
@@ -27,12 +29,21 @@ if [ -d shield-overlay/app/src/main/assets ]; then
     cp -R shield-overlay/app/src/main/assets "$ROOT/shield-lib/src/main/assets"
 fi
 
+# Re-run the Shield dashboard patch against the copied library tree too.
+python3 scripts/patch-unified-shield-dashboard.py
+
 # Shield's own CI materializes the approved BOOP eye artwork from the Wall source.
 # Do the same here so the unified module uses the identical accepted bitmap.
 EYE_ASSET="$(find "$APP/src/main/res" -type f -name 'boop_eyes.png' -print -quit)"
 test -n "$EYE_ASSET"
 mkdir -p "$ROOT/shield-lib/src/main/res/drawable-nodpi"
 cp "$EYE_ASSET" "$ROOT/shield-lib/src/main/res/drawable-nodpi/boop_eyes.png"
+
+# Fail closed if this pass somehow materializes the old Shield settings body.
+grep -Fq 'BOOP SETTINGS' "$ROOT/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java"
+grep -Fq 'HOME ASSISTANT' "$ROOT/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java"
+grep -Fq "BOOP's name" "$ROOT/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java"
+test -s "$APP/src/main/assets/boop-kws/bpe.model"
 
 MAIN="$APP/src/main/java/com/boop/alpha1"
 TEST="$APP/src/test/java/com/boop/alpha1"
