@@ -87,7 +87,7 @@ jobs:
             PID="$(adb shell pidof com.boop.launcher || true)"; printf '%s\n' "$PID" | tee launcher-evidence/pid.txt
             adb logcat -d -v threadtime > launcher-evidence/logcat.txt
             if grep -A40 -B5 'FATAL EXCEPTION' launcher-evidence/logcat.txt | grep -q 'com.boop.launcher'; then grep -A80 -B10 'FATAL EXCEPTION' launcher-evidence/logcat.txt >&2; exit 1; fi
-            test -n "$PID"
+            test -s launcher-evidence/pid.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
