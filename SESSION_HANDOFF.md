@@ -1,72 +1,49 @@
-# BOOP Launcher handoff — 2026-09-06
+# BOOP Launcher Alpha 2 handoff — 2026-09-07
 
-Owner: Ryan's Android Work task. Authoritative branch: boop-launcher-alpha1.
-Project: launcher/; package com.boop.launcher. Current task checkout:
-/workspace/scratch/e630624baa67/boop-launcher-fix (local branch boop-launcher-drag-fix
-tracks the authoritative app branch). Root source is inherited historical BOOP,
-not the current Wall app.
+Owner: Ryan's Launcher work. Authoritative development branch: `boop-launcher-alpha2`.
+Project: `launcher/`; package remains `com.boop.launcher`.
 
-## Current delivery
+## Current state
 
-- Alpha 1.1: versionCode 2, versionName 0.1.1, same package and permanent BOOP key.
-- Exact tested source: 41f250d4ca0c791df7a83dd1c083aba7840670b7.
-- Build/verification run: 34062128943. Build, lint, 10 unit tests and all 15 emulator checks passed.
-- Existing installed layouts remain in the same private preferences on update.
-- Ryan confirmed Alpha 1 installed and app pinning worked on his phone. Alpha
-  1.1 physical acceptance remains pending; emulator evidence is a separate level.
+Ryan rejected the Alpha 1 visual/interaction direction as old-fashioned and approved a clean-sheet replacement inspired by the current Pixel Launcher experience without copying Google proprietary code or assets.
 
-## Reported bug and fix
+The old Alpha 1 branch is preserved only as a historical escape hatch. Do not use its UI architecture as Alpha 2's foundation merely to save effort.
 
-Ryan held a pinned icon to drag upward for removal. An instruction menu opened
-before release; he reported Android's Home selector on letting go. The old signed
-APK (run 34058128961) reproduced the premature menu in regression run 34060777148.
+A written Alpha 2 design is committed at:
 
-Icons now own one touch stream from DOWN through release. Long hold picks up the
-item and shows a temporary top removal area, without a dialog or mid-touch layout
-rebuild. Upward release removes it; ordinary drag moves it without overlap. A
-stationary hold enters editing, and a separate short edit tap opens size/page
-options. Widgets keep ordinary short touches; drag takeover explicitly cancels
-the widget child. Cancel, focus loss, Back and HOME preserve the chosen mode and
-do not turn release into a toolbar click. Multi-pointer input cancels pickup.
+`docs/superpowers/specs/2026-09-07-boop-launcher-alpha2-design.md`
 
-The first signed fix (8606a1d, run 34061237800) passed 8 gesture checks but exposed
-Back restoring editing. Android sends CANCEL before detaching the old root;
-render() now cancels active pickup without restoring stale mode before replacing
-views. The final test releases directly over the measured Bail out button.
+Design commit: `fc8b3b010f194640f0935b3cf57e125ba27a360e`.
 
-## Verification and next step
+No Alpha 2 application code has been changed yet. The written-spec review gate is the next required step before implementation planning/code.
 
-The CI pipeline first runs launcher/scripts/drag_smoke.py on the signed APK with
-the system Home default unchanged. It then clears only the emulator's launcher
-data and runs the general smoke.py checks. Tests cover continuous hold/removal,
-persistence, stationary release, size options, movement, release over Bail out,
-focus-loss cancellation, Back during a hold, startup, drawer, pages and rotation.
-Current verification: 9 gesture regressions and 6 general emulator checks passed.
-No AndroidRuntime errors were recorded. Signed artifact: 9997817013; emulator
-evidence: 9997900126. APK SHA256:
-6cbe27e26859f7b9f8e37c3a83088389f21fd3b4294d4d2cbd988708bebc6e02.
-Download filename: BOOP-Launcher-Alpha1.1.apk. Content is the exact signed APK
-from run 34062128943; only its filename changes for delivery.
+## Locked Alpha 2 direction
 
-Next: install the signed Alpha 1.1 update over the existing app and repeat Ryan's
-physical hold/upward-drag/release gesture. Real Home Assistant widget binding,
-configuration/cancellation and widget touch controls still need phone checks.
-BOOP Wall handoff/optional return strip also retain their own phone test gate.
+- Pure black edge-to-edge home canvas.
+- No permanent clock, At a Glance, Google search pill, dock/hotseat, plus button or decorative page furniture.
+- Native installed-app icons; restrained Pixel-like spacing and motion.
+- Swipe-up app drawer with Pixel-like finger tracking and transitions.
+- Drawer stays minimal and black; search is on demand only, not a permanent field.
+- HOME role, local app enumeration/search, app placement/move/remove, widgets and persistence are first-build fundamentals.
+- BOOP-specific return-strip/voice flourishes are deferred until the basic launcher physically feels right.
+- Existing permanent BOOP GitHub signing identity must remain unchanged.
+- Package stays `com.boop.launcher`; target API 36.
+- No Internet or microphone permission for launcher fundamentals.
+- AOSP Launcher3 Android 16 is the preferred public technical reference/base under Apache 2.0. Lawnchair may be inspected but its GPL code is not to be imported without a later explicit decision.
+- Pixel Launcher proprietary APK/source/resources are reference-only and must not be published into BOOP.
 
-## Download handoff
+## Verification philosophy
 
-The first Android download route flashed closed; a direct Library download URL
-then showed a cross-site refusal. After an APK reattachment with explicit Android
-package MIME type and a GitHub backup were supplied, Ryan proceeded to installed-
-app testing; he did not report which download route worked. Use the normal APK
-attachment with application/vnd.android.package-archive; avoid that failed direct
-URL route. The GitHub signed artifact is a ZIP backup containing the same APK.
+Automated checks should protect correctness, not pretend to prove feel. CI should compile/sign, test placement/search/widget cancellation, exercise HOME/drawer/app launch/persistence, scan for AndroidRuntime crashes and guard drag-stream regressions.
+
+Ryan's Pixel 10 Pro XL is the authority for physical acceptance of motion, spacing and whether the launcher actually feels modern. Screenshots/emulators do not count as proof of animation quality.
+
+## Historical Alpha 1 evidence
+
+Alpha 1.1 remains preserved on `boop-launcher-alpha1` at handoff commit `ca057eb8eb7f218cc3e67b19f3b98a5cc0b7e138`. Its last tested source was `41f250d4ca0c791df7a83dd1c083aba7840670b7`, with signed build/lint/unit/emulator verification in run 34062128943. This evidence is historical and must not be misrepresented as Alpha 2 verification.
 
 ## Cross-app boundaries
 
-Wall: boop-wall-resurrection, com.boop.alpha1; preserved voice/wake code595e1da.
-Wall eyes -> Launcher swipe has separate work on boop-wall-launcher-handoff-wip;
-consult its live handoff before inferring current build/device acceptance.
-Shield: boop-shield-media-puppetry; consult its own handoff. Neither Wall nor
-Shield source was changed for this Launcher fix. Main owns the shared map and
-contracts; app progress belongs here.
+Wall remains `com.boop.alpha1`; Launcher remains `com.boop.launcher`; Shield remains `com.boop.shieldoverlay`. Keep the apps independent. Main owns shared cross-project contracts; this branch owns Launcher implementation state.
+
+Before material Alpha 2 implementation/publishing, fetch/recheck live main and this branch, preserve concurrent work, use the existing release signing workflow, run appropriate checks, commit reviewed changes, push, and verify live GitHub HEAD.
