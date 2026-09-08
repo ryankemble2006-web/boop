@@ -1,59 +1,61 @@
 # SHIELD TURBO durable decisions
 
-Updated 2026-09-08. Read `SESSION_HANDOFF.md` for exact receipts/provenance and `STATUS.md` for the current candidate. This file records durable rules and physical evidence.
+Updated 2026-09-08. Read SESSION_HANDOFF.md for exact current/historical receipts and STATUS.md for verification status. Current user instructions and fresh hardware evidence supersede old dated implementation policies.
 
-## Physical evidence
+## Identity and workflow
 
-Ryan confirmed brightness on the bedroom NVIDIA Shield. Preserve the original checkpoint: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
+Independent utility `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`. Sharing BOOP's repository does not make this a unified BOOP body. Keep changes confined to the Turbo app and its existing workflow unless explicitly authorised otherwise.
 
-The first STANDARD build exposed unreachable TURBO maintenance controls and APPS OK displaying package-name dialogs. Corrected STANDARD: source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`. Ryan confirmed the controls became selectable and next identified DISPLAY + SOUND as the remaining bug he had found.
+Ryan wants development/signing through connected GitHub tools in chat. Do not insist on a Work-mode handoff. Fetch live branch/main, preserve concurrent work, publish reviewed scoped changes, update these app docs and verify live remote HEAD. Do not claim laptop sync or physical deployment from GitHub publication.
 
-Latest v0.2.0 feedback: DISPLAY + SOUND opens general Android Settings, which is the wrong destination. ADVANCED -> Developer Options opens correctly. The latter is real hardware acceptance of that shortcut only, not evidence that the ADB grant or animation actions work. Preserve this distinction.
+## Physical findings to preserve
 
-## Identity and ownership
+Bedroom brightness was confirmed on original source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
 
-Independent utility in `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`. The shared BOOP repository is hosting convenience; this is not a BOOP body or a replacement for unified `com.boop.alpha1`. Keep runtime work inside this app and its dedicated workflow.
+Corrected STANDARD source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`: maintenance controls became selectable. APPS should launch directly on OK, not show package-name dialogs.
 
-Ryan approved GitHub chat-mode development/signing. Do not insist on a Work-mode handoff when connected GitHub tools can perform the task. Do not claim that GitHub publication synchronized the laptop or installed anything on physical devices.
+v0.2.0 Developer Options was physically confirmed. Its general Android Settings fallback was explicitly rejected as Display & Sound. v0.2.1 AOSP DisplaySoundActivity also failed: first click Home, later clicks nothing. Accessibility reported no app installed. These are unresolved firmware results, not reasons to claim CI proves them fixed. Neither successful Developer Options nor a settings permission proves actual ADB power control.
 
-## Product rules
+## Brightness and ordinary controls
 
-Diagnostics are honest on-demand snapshots. No fake speed scores, blanket RAM cleaners, overclocking, arbitrary governor changes, process killing, other-app data clearing or pretend network tweaks. CPU frequency is not load, available memory is not a performance score, and a generic thermal zone is not automatically the CPU/GPU sensor.
+Preserve the 10-100% brightness overlay and private non-exported BrightnessService. 100% removes the overlay. Input is not intercepted. New power work must not silently change brightness behavior.
 
-Brightness remains 10-100%, with 100% removing the overlay. Below 100% uses display-over-other-apps permission and the private non-exported BrightnessService. Preserve its non-intercepting input behavior and existing operation.
+Normal APPS OK launches directly; hold may show App Info. A visible unreachable control is a functional failure. System settings routes must not silently substitute an unrelated screen. Launcher filters need not declare CATEGORY_DEFAULT; do not reintroduce that restrictive discovery filter.
 
-## STANDARD remote and settings behavior
+## Explicit new local ADB agreement
 
-Every useful control must be reachable with the Shield remote. A visible but unreachable button is a functional failure.
+Ryan requested one-button ADB enable and meaningful advanced controls on 2026-09-08. This supersedes the older manual-only/no-stored-ADB-key implementation rule **only for an explicit on-device self-ADB client**.
 
-APPS OK launches immediately using the Leanback launch intent first and ordinary Android launch as fallback. Hold OK may open App Info. No package-name dialog on normal launch. TURBO maintenance routes to storage, manage-apps and restarting this app; they are not cleaners or process killers.
+ENABLE ADB TURBO may create an app-private per-install RSA authentication identity in noBackupFilesDir, connect only to loopback port 5555, request Android's standard trust prompt, verify shell UID, and grant only this package's WRITE_SECURE_SETTINGS permission after the user presses setup. This authentication key is not the APK signing key and must never be published/backed up/exported. No off-device target field, LAN scan, app-owned listening server, persistent shell, startup receiver or automatic background job.
 
-A button labeled DISPLAY + SOUND must target the combined native TV page. Do NOT silently substitute general Android Settings, display-only settings or sound-only settings and call that a fix. The old v0.2.0 broader-fallback policy was rejected by physical feedback and is superseded.
+A normal app cannot turn on a disabled ADB daemon or approve its own trust prompt. Guide the user through the first Network Debugging switch and RSA Allow confirmation. No laptop command is required by this flow, but do not promise literally one click from a completely unconfigured stock device or permanent approval across reinstalls/revocations.
 
-v0.2.1 explicitly targets `com.android.tv.settings/com.android.tv.settings.device.displaysound.DisplaySoundActivity`. This component is evidenced in AOSP TV Settings. NVIDIA firmware support remains subject to Ryan's physical check. If firmware does not expose it, show an unavailable result rather than an unrelated screen, and obtain minimal private on-device evidence before adding more candidates. Never publish raw device dumps or third-party firmware APKs.
+Network Debugging itself is a device-managed network listener. State the trusted-LAN requirement and leave shutdown to Developer Options when no longer needed. Every shell operation must establish and verify its own transient connection. An actual secure-settings permission and a currently reachable authorised ADB shell are distinct capabilities.
 
-Developer Options is physically confirmed and keeps the existing `android.settings.APPLICATION_DEVELOPMENT_SETTINGS` route. The v0.2.1 change is isolated to Display & Sound routing; no advanced, brightness or UI layout work is bundled into it.
+The only new normal manifest permission is INTERNET for loopback socket access. ProtectedPermissions suppression remains narrowly on the intentional WRITE_SECURE_SETTINGS declaration; never hide security issues with a blanket lint baseline.
 
-## ADVANCED / ADB TURBO contract
+## Power actions and safety
 
-Ryan authorised advanced work after the corrected STANDARD retest. ADB TURBO uses the actual manual grant of `android.permission.WRITE_SECURE_SETTINGS`, not a permanent shell connection:
+User-confirmed sleep and reboot may interrupt playback/equipment through CEC. Report command receipts accurately; a reboot disconnect is not proof a reboot completed. Commands must be bounded/cancellable with checked exit markers. Cancellation cannot undo a command already sent.
 
-`adb shell pm grant com.boop.shieldturbo android.permission.WRITE_SECURE_SETTINGS`
+Selected user-app restart is the explicit scoped exception to the older no-force-stop rule: choose and confirm ONE non-system app, revalidate installed status/package/launch component, then stop and relaunch it. Exclude Android/system apps, NVIDIA services, BOOP and Google core services. Never interpolate an unvalidated shell string. Do not clear app data, disable/uninstall packages or kill background apps in bulk.
 
-Check the permission before enabling advanced actions. Enabled debugging, usage access, a su executable or a root-manager app does not prove authority. Do not auto-grant, store ADB addresses/passwords/private keys or retain an ADB session merely to keep this capability. Grant persistence/reinstallation behavior needs device evidence before promises are made.
+Animation controls affect only window_animation_scale, transition_animation_scale and animator_duration_scale. Save original values before the first edit, verify readback and retain an undo path. NORMAL 1x and UNDO saved values are distinct. No CPU/GPU clocks, overclocking, arbitrary governors, fake RAM boosts or speed scores.
 
-Animation presets write only `window_animation_scale`, `transition_animation_scale`, and `animator_duration_scale`: FAST 0.5x, ANIMATIONS OFF (0.0), and RESTORE 1x (1.0). The last button returns to normal speed; it does not restore previously backed-up custom scales. No CPU/GPU tuning, process killing, cache purge or private data clearing is included.
+Diagnostics are explicit snapshots on-device, not continuous monitoring. CPU frequency is not load; a thermal service/zone is not automatically CPU/GPU temperature. Missing services/readings must stay honestly unavailable.
 
-The protected-permission lint suppression is narrowly attached to the intentional WRITE_SECURE_SETTINGS manifest declaration. Do not globally disable ProtectedPermissions or introduce a blanket baseline to hide real problems.
+## Native settings discovery
 
-## Verification and delivery
+Do not guess another DisplaySoundActivity class or call general Settings a native-page fix. Discover installed, enabled, exported system activities through scoped package/action queries. Use their actual declared action where available. Show candidates/subpages and local route diagnostics. Save a destination only after Ryan confirms it is the page he wanted, and validate it remains installed before reuse.
 
-Ryan owns visual and real-Shield acceptance. GitHub must not use screenshots, UI hierarchy dumps, golden-image checks or source-string appearance certification. Keep functional routing/logic tests, safety checks, lint, compilation and signer/package/archive verification. Basic nonvisual process/install/launch smoke is permitted but does not prove firmware routing.
+The v0.3.0 finder is implemented; **exact NVIDIA Display & Sound and Accessibility destinations are still awaiting physical evidence**. If unsupported, say so and obtain minimal private firmware evidence. Never publish raw device dumps, third-party firmware APKs or personal screenshots. Human confirmation, not class-name resemblance, owns native-route acceptance.
 
-Upload the verified signed APK before slower nonvisual emulator work. Deliver the actual extracted APK, check its path and checksum, and distinguish artifact-release status from later smoke status. Never invent an APK link or infer hardware success from CI.
+## Verification, signing and delivery
 
-Current v0.2.1 source `0e00f7c44758aa4192e7664b61d477b11494942d`, run `34192942800`, artifact `10042893415`, APK SHA-256 `0572aa2e66481703a91490078f6291350824bd266cbd44a834bfc4015cfada27`. Required release gates passed; exact native Shield page is not yet physically accepted. The regression first failed on source `4619892e4167a2efff04914c66748e86ef32544e`, run `34192703028`.
+Ryan owns all visual/real-device acceptance. No GitHub screenshots, hierarchy dumps, golden-image checks, layout/appearance judging or source-string visual certification. Keep focused logic/protocol/routing tests, security contracts, lint, compilation, signer/package/archive verification and basic nonvisual process-launch smoke. Upload the signed APK before slower smoke work.
 
-Previous v0.2.0 source `81f448c417e3b0b122df55edc6ea6886d1bde5b2`, run `34191343078`, artifact `10042388530`, APK `7e5a769e68c88cf44749f7887c35e64d41369c3b76fe11a35a9473b350582636`. Its machine checks passed, but the Display & Sound destination was later rejected. Full historical receipts remain in the handoff; do not repoint the old pre-brightness prerelease.
+Deliver an actually extracted APK with its exact checksum/commit/version checked. Do not invent sandbox links, relabel a ZIP as APK or claim hardware success from machine checks.
 
-Use only the existing secret-backed boop-dev signer; verify public certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Never replace/expose the key, use BOOP relay credentials, or claim device deployment without performing it with explicit permission.
+Current candidate v0.3.0/code 4: source `ac5f79cd9138553a27df776e6b47e685f2cbf0ff`, successful run `34196792381`, artifact `10044276954`, APK `fff6b791235b05938dcb34a886c99a97d4563132cd46db79493dd422b0f25846`. 43 unit tests and nine source contracts passed, lint 0 errors/21 warnings, signer/package/archive and nonvisual launch passed. Physical acceptance pending.
+
+Only existing secret-backed boop-dev signing is allowed; public certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. No replacement signing key, relay credentials or checkpoint repointing. Historical receipts remain in the handoff. Documentation HEAD after the built source does not identify a different APK.
