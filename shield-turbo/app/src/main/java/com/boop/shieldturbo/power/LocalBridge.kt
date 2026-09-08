@@ -3,6 +3,8 @@ package com.boop.shieldturbo.power
 import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.Settings
+import com.boop.shieldturbo.startup.OriginalStartupState
+import com.boop.shieldturbo.startup.StartupPolicy
 import java.io.File
 import java.io.IOException
 
@@ -39,6 +41,60 @@ class LocalBridge(private val context: Context) {
         if (!hasSettingsAccess()) throw IOException("ADB connected, but the Shield did not grant settings access")
         "ADB TURBO connected and settings access verified. No laptop command is needed."
     }
+
+    fun readStartupState(adb: AdbWire, packageName: String): OriginalStartupState {
+        val run = readAppOp(adb, packageName, "RUN_IN_BACKGROUND")
+        val runAny = readAppOp(adb, packageName, "RUN_ANY_IN_BACKGROUND")
+        val enabled = StartupPolicy.parseEnabled(checked(adb, StartupPolicy.enabledQuery(packageName)))
+            ?: throw IOException("Could not capture the app's original enabled state; nothing changed")
+        return OriginalStartupState(packageName, run, runAny, enabled)
+    }
+
+    private fun readAppOp(adb: AdbWire, packageName: String, op: String): String {
+        val output = checked(adb, StartupPolicy.query(packageName, op))
+        StartupPolicy.parseMode(output)?.let { return it }
+        if (output.contains("No operations", ignoreCase = true) || output.isBlank()) return "default"
+        throw IOException("Could not capture the app's original $op mode; nothing changed")
+    }
+
+    fun blockStartup(adb: AdbWire, original: OriginalStartupState) {
+        try {
+            StartupPolicy.backgroundBlock(original.packageName).forEach { checked(adb, it) }
+            val run = readAppOp(adb, original.packageName, "RUN_IN_BACKGROUND")
+            val runAny = readAppOp(adb, original.packageName, "RUN_ANY_IN_BACKGROUND")
+            if (run != "ignore" || runAny != "ignore") throw IOException("Shield did not keep the background restriction")
+        } catch (failure: Exception) {
+            runCatching { restoreStartup(adb, original) }
+            throw failure
+        }
+    }
+
+    fun hardBlock(adb: AdbWire, original: OriginalStartupState) {
+        try {
+            checked(adb, StartupPolicy.hardBlock(original.packageName))
+            val state = StartupPolicy.parseEnabled(checked(adb, StartupPolicy.enabledQuery(original.packageName)))
+            if (state != "disabled-user" && state != "disabled") throw IOException("Shield did not keep the hard block")
+        } catch (failure: Exception) {
+            runCatching { restoreStartup(adb, original) }
+            throw failure
+        }
+    }
+
+    fun restoreStartup(adb: AdbWire, original: OriginalStartupState) {
+        StartupPolicy.backgroundRestore(
+            original.packageName,
+            original.runInBackground,
+            original.runAnyInBackground
+        ).forEach { checked(adb, it) }
+        checked(adb, StartupPolicy.restoreEnabled(original.packageName, original.enabledState))
+        val run = readAppOp(adb, original.packageName, "RUN_IN_BACKGROUND")
+        val runAny = readAppOp(adb, original.packageName, "RUN_ANY_IN_BACKGROUND")
+        val enabled = StartupPolicy.parseEnabled(checked(adb, StartupPolicy.enabledQuery(original.packageName)))
+        if (run != original.runInBackground || runAny != original.runAnyInBackground || enabled != original.enabledState) {
+            throw IOException("Undo read-back did not match the saved original state")
+        }
+    }
+
     fun animation(scale: String?): String {
         check(hasSettingsAccess()) { "Use ENABLE ADB TURBO first" }
         val keys = listOf("window_animation_scale", "transition_animation_scale", "animator_duration_scale")
