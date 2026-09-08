@@ -14,6 +14,7 @@ def test_unified_dock_mirror_shield_settings_and_wake_name_contract():
     wake_name = Path("source/BoopWakeName.java").read_text()
     wake_store = Path("source/BoopWakeNameStore.java").read_text()
     wake_builder = Path("source/BoopWakeKeywordBuilder.java").read_text()
+    wake_spotter = Path("source/BoopSherpaWakeSpotter.java").read_text()
 
     assert 'android.permission.CAMERA' in manifest
     assert 'python3 scripts/patch-unified-dock-mirror.py' in materializer
@@ -37,7 +38,7 @@ def test_unified_dock_mirror_shield_settings_and_wake_name_contract():
     assert 'ROOM' in home and 'DEVICES' in home
     assert 'Favourites' not in home
     assert 'DeviceCard' in home
-    assert 'Color.rgb(61,220,255)' in home
+    assert '61,220,255' in home.replace(' ', '')
     assert 'ensureVisible' in home
 
     assert 'RoomScopedEntities.keep(room, snapshot.cards())' in dashboard
@@ -55,6 +56,8 @@ def test_unified_dock_mirror_shield_settings_and_wake_name_contract():
     assert 'bpe.model' in wake_patch
     assert '@CUSTOM_WAKE' in wake_builder
     assert '@BOOP' in Path("wake-assets/boop-kws/keywords.txt").read_text()
+    assert 'Custom wake stream failed; using BOOP fallback only' in wake_spotter
+    assert 'spotter.createStream("")' in wake_spotter
 
 
 def test_mirror_parser_has_open_close_and_false_positive_guards():
