@@ -107,6 +107,28 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         self.assertIn("cleanStore.lastIndicatorDiagnostic()", startup)
         self.assertIn("STARTUP NOTICE DIAGNOSTIC:", startup)
 
+    def test_boot_cleanup_records_boundary_timings_without_changing_indicator(self):
+        store = (SOURCE / "cleanstart/CleanStartStore.kt").read_text()
+        job = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
+        startup = (SOURCE / "startup/StartupManagerActivity.kt").read_text()
+        self.assertIn("data class CleanStartTimingDiagnostic", store)
+        self.assertIn("fun recordTimingDiagnostic", store)
+        self.assertIn("fun lastTimingDiagnostic", store)
+        self.assertIn("SystemClock.elapsedRealtime()", job)
+        for field in (
+            "noticeMs",
+            "adbReadyMs",
+            "resumedQueryMs",
+            "stopsTotalMs",
+            "slowestPackage",
+            "slowestStopMs",
+            "totalJobMs",
+        ):
+            self.assertIn(field, job)
+        self.assertIn("store.recordTimingDiagnostic", job)
+        self.assertIn("cleanStore.lastTimingDiagnostic()", startup)
+        self.assertIn("CLEAN START TIMING:", startup)
+
     def test_failed_boot_clean_start_surfaces_the_actual_adb_reason(self):
         job = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
         startup = (SOURCE / "startup/StartupManagerActivity.kt").read_text()
