@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
-import android.content.ComponentName;
 import android.provider.Settings;
 import org.junit.Test;
 
@@ -35,18 +34,16 @@ public final class HomeReplacementUiContractTest {
 
     @Test public void accessibilityOverrideUsesInvisibleTvSettingsRouter() {
         assertTrue(Activity.class.isAssignableFrom(ShieldAccessibilityRouteActivity.class));
-
-        ComponentName preferred = ShieldAccessibilityRouteActivity.preferredTvAccessibilityComponent();
-        assertEquals("com.android.tv.settings", preferred.getPackageName());
-        assertEquals("com.android.tv.settings.system.AccessibilityActivity", preferred.getClassName());
-
-        ComponentName modern = ShieldAccessibilityRouteActivity.modernTvAccessibilityComponent();
-        assertEquals("com.android.tv.settings", modern.getPackageName());
-        assertEquals("com.android.tv.settings.oemlink.AccessibilitySettingsActivity", modern.getClassName());
-
-        ComponentName fallback = ShieldAccessibilityRouteActivity.tvSettingsFallbackComponent();
-        assertEquals("com.android.tv.settings", fallback.getPackageName());
-        assertEquals("com.android.tv.settings.MainSettings", fallback.getClassName());
+        assertEquals("com.android.tv.settings", ShieldAccessibilityRouteActivity.tvSettingsPackage());
+        assertEquals(
+                "com.android.tv.settings.system.AccessibilityActivity",
+                ShieldAccessibilityRouteActivity.preferredTvAccessibilityClassName());
+        assertEquals(
+                "com.android.tv.settings.oemlink.AccessibilitySettingsActivity",
+                ShieldAccessibilityRouteActivity.modernTvAccessibilityClassName());
+        assertEquals(
+                "com.android.tv.settings.MainSettings",
+                ShieldAccessibilityRouteActivity.tvSettingsFallbackClassName());
         assertTrue(AccessibilityService.class.isAssignableFrom(ShieldHomeOverrideService.class));
     }
 }
