@@ -3,6 +3,9 @@ name: Build BOOP Unified APK
 on:
   push:
     branches: [ "boop-unified" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
@@ -15,7 +18,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 35
     steps:
       - name: Check out unified branch
         uses: actions/checkout@v4
@@ -126,7 +129,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='43'" badging.txt
+          grep -q "versionCode='44'" badging.txt
+          grep -q "versionName='1.1.1-unified-eyes-wake-home'" badging.txt
           grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
           for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService; do
@@ -146,6 +150,7 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           lines = ['Visual acceptance: MANUAL, not performed by GitHub.',
+                   'Device/emulator launch: MANUAL, not performed by GitHub.',
                    'APK signature, package identity and ZIP integrity: verified.',
                    'Physical Shield / Pixel acceptance: pending.']
           for label, root in [('Shield', Path('shield-overlay/app/build/test-results')),
@@ -171,32 +176,11 @@ jobs:
             signer-sha256.txt
             source-heads.txt
             verification.txt
+            badging.txt
           if-no-files-found: error
 
-      # This detects process crashes and the wrong entry activity only. No screenshots,
-      # appearance/layout/animation checks, image comparisons or visual approval.
-      - name: Non-visual launch smoke after APK upload
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          arch: x86_64
-          profile: pixel_2
-          disable-animations: true
-          script: |
-            adb install -r boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
-            adb shell appops set com.boop.alpha1 SYSTEM_ALERT_WINDOW allow
-            adb shell run-as com.boop.alpha1 mkdir -p shared_prefs
-            printf '%s\n' '<?xml version="1.0" encoding="utf-8" standalone="yes" ?><map><string name="device_profile_override">SHIELD</string></map>' | adb shell run-as com.boop.alpha1 tee shared_prefs/boop_unified.xml >/dev/null
-            adb shell am force-stop com.boop.alpha1
-            adb logcat -c
-            adb shell am start -W -n com.boop.alpha1/com.boop.alpha1.UnifiedEntryActivity
-            sleep 4
-            adb shell pidof com.boop.alpha1
-            adb shell dumpsys activity activities > shield-activity.txt
-            grep -q 'com.boop.alpha1/com.boop.shieldoverlay.BoopHomeActivity' shield-activity.txt
-            adb logcat -d > shield-launch-logcat.txt
-            ! grep -A10 -B2 'FATAL EXCEPTION' shield-launch-logcat.txt | grep -q 'com.boop.alpha1'
-
+      # Ryan owns launch, appearance, animation and real-device acceptance.
+      # No automated emulator installation, screenshots or visual tests run here.
       - name: Remove temporary signer
         if: always()
         run: rm -f "${RUNNER_TEMP}/boop-dev.jks"

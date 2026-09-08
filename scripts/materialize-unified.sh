@@ -117,3 +117,6 @@ if text.count(main_anchor) != 1:
 text = text.replace(main_anchor, entry + main_anchor, 1)
 manifest.write_text(text, encoding='utf-8')
 PY
+
+# Share the locked phone eyes/blink and complete the approved Shield Home wiring.
+python3 scripts/patch-unified-shield-presentation.py
