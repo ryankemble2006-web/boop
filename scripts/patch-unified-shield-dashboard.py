@@ -34,3 +34,5 @@ if patched == 0:
 runpy.run_path('scripts/patch-unified-room-controls.py', run_name='__main__')
 print(f'Shield room-scoped dashboard integration patched in {patched} tree(s)')
 runpy.run_path('scripts/patch-unified-iris-cache.py', run_name='__main__')
+if Path('boop-build/BOOP-Alpha1/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java').exists():
+    runpy.run_path('scripts/patch-unified-assistant-button.py', run_name='__main__')
