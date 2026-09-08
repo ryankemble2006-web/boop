@@ -2,27 +2,28 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a reversible, stock-feeling Nvidia Shield HOME inside the canonical unified BOOP APK that defaults to favourite apps only, never implements adverts/Shop/Discover, and lets users opt into approved local Android TV content rows later.
+**Goal:** Build a reversible, stock-feeling Nvidia Shield HOME inside the canonical unified BOOP APK that defaults to favourite apps only, never implements adverts/Shop/Discover, and lets users opt into approved local Android TV content rows.
 
-**Architecture:** Keep the new launcher isolated under `unified/shield-home/` and materialise it only into the generated `shield-lib`. `UnifiedEntryActivity` distinguishes a Shield HOME invocation from a normal BOOP/Leanback launch, sending HOME to `com.boop.shieldhome.ShieldLauncherActivity` while preserving the existing Shield puppet route for ordinary launches. The favourite-only path owns only cached installed-app state and persisted favourites; optional TV-provider rows are created only when their saved toggle is enabled.
+**Architecture:** Keep the new launcher isolated under `unified/shield-home/` and materialise it only into the generated `shield-lib`. `UnifiedEntryActivity` distinguishes a Shield HOME invocation from an ordinary BOOP/Leanback launch, sending HOME to `com.boop.shieldhome.ShieldLauncherActivity` while preserving the existing Shield puppet path. The favourite-only path uses a cached app catalogue plus persisted favourite order. Optional `TvContract` providers are constructed only when their individual saved toggle is enabled.
 
-**Tech Stack:** Java 17, Android SDK 36 with minSdk 29 in the unified app, Android framework Views, `PackageManager`, `SharedPreferences`, `TvContract`, JUnit 4, existing Gradle 9.6 unified materialisation/signing workflow.
+**Tech Stack:** Java 17, Android SDK 36, unified app minSdk 29, Android framework Views, `PackageManager`, `SharedPreferences`, `TvContract`, JUnit 4, Gradle 9.6, existing GitHub Actions permanent-signing workflow.
 
 **Spec:** `docs/superpowers/specs/2026-09-08-shield-clean-launcher-design.md`
 
 ## Global Constraints
 
-- Canonical branch: `boop-unified`.
-- Canonical package remains `com.boop.alpha1`; permanent BOOP signer remains unchanged.
-- Stock Google/Android TV launcher stays installed and must remain selectable as recovery.
-- Installing BOOP must not silently select BOOP as HOME, disable Google components, change secure settings, or require privileged shell hacks.
-- Default Shield HOME contains favourite apps plus minimal Apps/Settings navigation only.
+- Canonical branch is `boop-unified`.
+- Package stays `com.boop.alpha1`; permanent BOOP signer stays unchanged.
+- Google/Android TV stock launcher stays installed and selectable as recovery.
+- Installing BOOP must not silently select BOOP as HOME, disable Google components, alter secure settings, or use privileged shell hacks.
+- Default HOME is favourite apps plus minimal Apps/Settings navigation only.
 - Advertising, sponsored placements, Shop, Discover, promotional autoplay and promotional/ad feed providers do not exist in this launcher.
-- `PLAY_NEXT` and `APP_CHANNELS` are optional local TV-provider rows and default OFF independently.
-- Disabled optional rows are not instantiated, queried, subscribed, polled or fetched.
-- Do not modify global animation scales. Local focus/scroll/page transitions remain enabled.
-- Preserve current phone Launcher, Wall, Shield puppet, HA naming/control, blink, eye, assistant, microphone, density and signing behavior unless the narrow HOME routing change requires otherwise.
-- Automated tests are behavioral only. No screenshots, golden images, aesthetic source-string tests, emulator appearance grading or GitHub visual acceptance.
+- Optional row keys are exactly `PLAY_NEXT` and `APP_CHANNELS`; both default OFF independently.
+- A disabled optional row is not instantiated, queried, subscribed, polled or fetched.
+- Do not modify Android global animation scales. Local focus, scroll and page transitions remain enabled.
+- Preserve the phone Launcher, Wall, Shield puppet, HA naming/control, blink, eye, assistant, microphone, density and signing behavior outside the narrow HOME routing change.
+- Preserve concurrent approved-eye CI work, including `tests/test_approved_eye_master_contract.py`.
+- Automated verification is behavioral/structural only. No screenshots, golden images, aesthetic source-string tests, emulator appearance grading or GitHub visual acceptance.
 - Ryan owns real Shield appearance, animation and physical HOME acceptance.
 
 ---
@@ -30,142 +31,119 @@
 ## File Map
 
 **Create:**
-- `unified/ShieldEntryRoute.java` - pure routing decision for Shield HOME versus existing bodies.
-- `unified/ShieldEntryRouteTest.java` - JVM routing contract.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppEntry.java` - immutable launchable-TV-app model.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppRepository.java` - one-shot LEANBACK/LAUNCHER catalogue scan and dedupe.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/FavouriteOrder.java` - pure add/remove/move/reconcile rules.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeStore.java` - favourite/order and optional-row preferences.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/HomeContentCard.java` - optional-row card model.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/HomeRow.java` - optional-row model.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/HomeRowProvider.java` - optional provider interface.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/OptionalRowRegistry.java` - OFF-by-default provider gate.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/TvProviderRows.java` - local `TvContract` Play Next/app-channel providers.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java` - remote-focusable app/content card with local scale animation.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java` - favourite-only HOME renderer plus optional rows when supplied.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldAppsView.java` - all-TV-app grid and favourite toggle callbacks.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeSettingsView.java` - optional-row toggles and supported HOME-settings route.
-- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldLauncherActivity.java` - lifecycle/cache/package receiver/navigation/launch orchestration.
-- `unified/shield-home/src/test/java/com/boop/shieldhome/TvAppRepositoryTest.java`.
-- `unified/shield-home/src/test/java/com/boop/shieldhome/FavouriteOrderTest.java`.
-- `unified/shield-home/src/test/java/com/boop/shieldhome/ShieldHomeStoreTest.java`.
-- `unified/shield-home/src/test/java/com/boop/shieldhome/OptionalRowRegistryTest.java`.
+- `unified/ShieldEntryRoute.java`
+- `unified/ShieldEntryRouteTest.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppEntry.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppRepository.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/FavouriteOrder.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeStore.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/HomeContentCard.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/HomeRow.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/HomeRowProvider.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/OptionalRowRegistry.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/TvProviderRows.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/PackageRefreshPolicy.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldAppsView.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeSettingsView.java`
+- `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldLauncherActivity.java`
+- `unified/shield-home/src/test/java/com/boop/shieldhome/TvAppRepositoryTest.java`
+- `unified/shield-home/src/test/java/com/boop/shieldhome/FavouriteOrderTest.java`
+- `unified/shield-home/src/test/java/com/boop/shieldhome/ShieldHomeStoreTest.java`
+- `unified/shield-home/src/test/java/com/boop/shieldhome/OptionalRowRegistryTest.java`
+- `unified/shield-home/src/test/java/com/boop/shieldhome/PackageRefreshPolicyTest.java`
 
 **Modify:**
-- `unified/UnifiedEntryActivity.java` - route only Shield HOME to new activity and keep existing Shield launch/setup path.
-- `unified/shield-manifest.xml` - declare the internal Shield launcher activity.
-- `unified/launcher-manifest.xml` - add package visibility for `LEANBACK_LAUNCHER` activities.
-- `scripts/materialize-unified.sh` - copy new source/tests and routing helper into generated modules.
-- `unified/app-build.gradle` - versionCode 46 / versionName `1.2.0-unified-shield-home`.
-- `.github/workflows/build-boop-unified.yml` - run new generated unit tests and verify new activity/version in signed APK.
-- `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` - record exact CI/signer state and physical acceptance boundary after implementation.
+- `unified/UnifiedEntryActivity.java`
+- `unified/shield-manifest.xml`
+- `unified/launcher-manifest.xml`
+- `scripts/materialize-unified.sh`
+- `unified/app-build.gradle`
+- `.github/workflows/build-boop-unified.yml`
+- `SESSION_HANDOFF.md`
+- `BOOP_STATUS.md`
+- `BOOP_UNIFIED_MEMORY.md`
 
 ---
 
 ### Task 1: Split Shield HOME routing from the existing Shield puppet launch
 
-**Files:**
-- Create: `unified/ShieldEntryRoute.java`
-- Create: `unified/ShieldEntryRouteTest.java`
-- Modify: `unified/UnifiedEntryActivity.java`
-- Modify: `scripts/materialize-unified.sh`
+**Files:** create `unified/ShieldEntryRoute.java`, `unified/ShieldEntryRouteTest.java`; modify `unified/UnifiedEntryActivity.java`, `scripts/materialize-unified.sh`.
 
 **Interfaces:**
-- Produces: `ShieldEntryRoute.Target resolve(BoopDeviceProfile.Mode mode, boolean homeIntent)`.
-- Produces: `String Target.className()` and `boolean Target.suppressEntryTransition()`.
-- `SHIELD_HOME` class name is exactly `com.boop.shieldhome.ShieldLauncherActivity` and does not suppress the Android entry transition.
-- `SHIELD_PUPPET` remains exactly `com.boop.shieldoverlay.MainActivity` and keeps current assistant first-run handling.
+- `ShieldEntryRoute.Target resolve(BoopDeviceProfile.Mode mode, boolean homeIntent)`.
+- `Target.className()` returns the exact component class.
+- `Target.suppressEntryTransition()` is `false` only for `SHIELD_HOME`.
+- `SHIELD_HOME` -> `com.boop.shieldhome.ShieldLauncherActivity`.
+- `SHIELD_PUPPET` -> `com.boop.shieldoverlay.MainActivity`.
 
 - [ ] **Step 1: Write the failing routing tests**
 
 ```java
-package com.boop.alpha1;
-
-import static org.junit.Assert.*;
-import org.junit.Test;
-
-public final class ShieldEntryRouteTest {
-    @Test public void shieldHomeUsesCleanLauncher() {
-        ShieldEntryRoute.Target target = ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.SHIELD, true);
-        assertEquals("com.boop.shieldhome.ShieldLauncherActivity", target.className());
-        assertFalse(target.suppressEntryTransition());
-    }
-
-    @Test public void ordinaryShieldLaunchStillUsesPuppet() {
-        ShieldEntryRoute.Target target = ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.SHIELD, false);
-        assertEquals("com.boop.shieldoverlay.MainActivity", target.className());
-        assertTrue(target.suppressEntryTransition());
-    }
-
-    @Test public void otherBodiesRemainUnchanged() {
-        assertEquals("com.boop.alpha1.MainActivity",
-                ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.WALL, true).className());
-        assertEquals("com.boop.launcher.MainActivity",
-                ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.LAUNCHER, true).className());
-    }
+@Test public void shieldHomeUsesCleanLauncher() {
+    ShieldEntryRoute.Target t = ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.SHIELD, true);
+    assertEquals("com.boop.shieldhome.ShieldLauncherActivity", t.className());
+    assertFalse(t.suppressEntryTransition());
+}
+@Test public void ordinaryShieldLaunchStillUsesPuppet() {
+    ShieldEntryRoute.Target t = ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.SHIELD, false);
+    assertEquals("com.boop.shieldoverlay.MainActivity", t.className());
+    assertTrue(t.suppressEntryTransition());
+}
+@Test public void otherBodiesRemainUnchanged() {
+    assertEquals("com.boop.alpha1.MainActivity",
+        ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.WALL, true).className());
+    assertEquals("com.boop.launcher.MainActivity",
+        ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.LAUNCHER, true).className());
 }
 ```
 
-- [ ] **Step 2: Materialise and verify the new test fails before implementation**
+- [ ] **Step 2: Materialise and prove the tests fail before implementation**
 
-Run:
 ```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --tests '*ShieldEntryRouteTest' --stacktrace
 ```
-Expected: compile/test failure because `ShieldEntryRoute` is not present yet.
+Expected: compile/test failure because `ShieldEntryRoute` is absent.
 
-- [ ] **Step 3: Add the pure routing helper**
+- [ ] **Step 3: Implement the routing helper**
 
 ```java
-package com.boop.alpha1;
-
 final class ShieldEntryRoute {
     enum Target {
         SHIELD_HOME("com.boop.shieldhome.ShieldLauncherActivity", false),
         SHIELD_PUPPET("com.boop.shieldoverlay.MainActivity", true),
         WALL("com.boop.alpha1.MainActivity", true),
         HANDHELD_LAUNCHER("com.boop.launcher.MainActivity", true);
-
         private final String className;
-        private final boolean suppressEntryTransition;
-        Target(String className, boolean suppress) {
-            this.className = className;
-            this.suppressEntryTransition = suppress;
-        }
+        private final boolean suppress;
+        Target(String className, boolean suppress) { this.className = className; this.suppress = suppress; }
         String className() { return className; }
-        boolean suppressEntryTransition() { return suppressEntryTransition; }
+        boolean suppressEntryTransition() { return suppress; }
     }
-
     static Target resolve(BoopDeviceProfile.Mode mode, boolean homeIntent) {
-        if (mode == BoopDeviceProfile.Mode.SHIELD) {
-            return homeIntent ? Target.SHIELD_HOME : Target.SHIELD_PUPPET;
-        }
+        if (mode == BoopDeviceProfile.Mode.SHIELD) return homeIntent ? Target.SHIELD_HOME : Target.SHIELD_PUPPET;
         return mode == BoopDeviceProfile.Mode.WALL ? Target.WALL : Target.HANDHELD_LAUNCHER;
     }
 }
 ```
 
-- [ ] **Step 4: Wire `UnifiedEntryActivity` without changing non-HOME Shield setup behavior**
+- [ ] **Step 4: Wire `UnifiedEntryActivity` narrowly**
 
-Use `getIntent() != null && getIntent().hasCategory(Intent.CATEGORY_HOME)` to calculate `homeIntent`. Resolve the target before the assistant-choice gate. Run the assistant-choice gate only when target is `SHIELD_PUPPET`. Start `target.className()`, and call `overridePendingTransition(0, 0)` only when `target.suppressEntryTransition()` is true.
+Calculate `homeIntent` with `getIntent() != null && getIntent().hasCategory(Intent.CATEGORY_HOME)`. Resolve target before the assistant-choice gate. Run assistant-choice setup only for `SHIELD_PUPPET`. Start `target.className()`. Call `overridePendingTransition(0, 0)` only when `target.suppressEntryTransition()` is true.
 
 - [ ] **Step 5: Copy helper/test during materialisation and rerun routing tests**
 
-Add:
 ```bash
 cp unified/ShieldEntryRoute.java "$MAIN/ShieldEntryRoute.java"
 cp unified/ShieldEntryRouteTest.java "$TEST/ShieldEntryRouteTest.java"
-```
-
-Run:
-```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --tests '*BoopDeviceProfileTest' --tests '*ShieldEntryRouteTest' --stacktrace
 ```
 Expected: PASS.
 
-- [ ] **Step 6: Commit this independently reviewable routing slice**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add unified/ShieldEntryRoute.java unified/ShieldEntryRouteTest.java unified/UnifiedEntryActivity.java scripts/materialize-unified.sh
@@ -174,80 +152,60 @@ git commit -m "feat(unified): route Shield HOME separately"
 
 ---
 
-### Task 2: Build the cached TV app catalogue and favourite-order model
+### Task 2: Build the cached TV app catalogue and favourite model
 
-**Files:**
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppEntry.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppRepository.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/FavouriteOrder.java`
-- Create: `unified/shield-home/src/test/java/com/boop/shieldhome/TvAppRepositoryTest.java`
-- Create: `unified/shield-home/src/test/java/com/boop/shieldhome/FavouriteOrderTest.java`
-- Modify: `unified/launcher-manifest.xml`
-- Modify: `scripts/materialize-unified.sh`
+**Files:** create `TvAppEntry.java`, `TvAppRepository.java`, `FavouriteOrder.java` plus their two tests; modify `unified/launcher-manifest.xml`, `scripts/materialize-unified.sh`.
 
 **Interfaces:**
-- `TvAppEntry(String component, String packageName, String label)`; component uses `ComponentName.flattenToString()`.
-- `TvAppRepository(Context context).load()` returns one alphabetically sorted list, querying `CATEGORY_LEANBACK_LAUNCHER` first and `CATEGORY_LAUNCHER` second, deduped by flattened component, excluding `context.getPackageName()`.
-- `TvAppRepository.merge(String ownPackage, List<TvAppEntry> leanback, List<TvAppEntry> launcher)` is pure and unit-testable.
-- `FavouriteOrder.reconcile`, `add`, `remove`, and `move` operate on component strings and never uninstall apps.
+- `TvAppEntry(String component, String packageName, String label)` with `component()`, `packageName()`, `label()` accessors.
+- `TvAppRepository(Context).load()` queries `CATEGORY_LEANBACK_LAUNCHER` then `CATEGORY_LAUNCHER`, dedupes by flattened component, excludes `context.getPackageName()`, sorts by label.
+- Pure `TvAppRepository.merge(String ownPackage, List<TvAppEntry> leanback, List<TvAppEntry> launcher)`.
+- Pure `FavouriteOrder.reconcile(List<String>, List<TvAppEntry>)`, `add(List<String>, String)`, `remove(List<String>, String)`, `move(List<String>, String, int delta)`.
 
-- [ ] **Step 1: Write catalogue merge and favourite model tests**
+- [ ] **Step 1: Write failing pure-model tests**
 
 ```java
-@Test public void leanbackAndLauncherAreDedupedAndBoopIsExcluded() {
+@Test public void catalogueMergesDedupesExcludesBoopAndSorts() {
     List<TvAppEntry> out = TvAppRepository.merge("com.boop.alpha1",
         List.of(new TvAppEntry("pkg/.Tv", "pkg", "Zulu"),
                 new TvAppEntry("com.boop.alpha1/.Entry", "com.boop.alpha1", "BOOP")),
         List.of(new TvAppEntry("pkg/.Tv", "pkg", "Zulu"),
                 new TvAppEntry("other/.Main", "other", "Alpha")));
-    assertEquals(List.of("other/.Main", "pkg/.Tv"),
-        out.stream().map(TvAppEntry::component).toList());
+    assertEquals(List.of("other/.Main", "pkg/.Tv"), out.stream().map(TvAppEntry::component).toList());
 }
-
-@Test public void reconcileDropsStaleButPreservesSavedOrder() {
-    List<String> saved = List.of("b/.B", "gone/.Gone", "a/.A");
-    List<TvAppEntry> installed = List.of(
-        new TvAppEntry("a/.A", "a", "A"), new TvAppEntry("b/.B", "b", "B"));
-    assertEquals(List.of("b/.B", "a/.A"), FavouriteOrder.reconcile(saved, installed));
+@Test public void reconcileDropsStaleAndPreservesOrder() {
+    List<TvAppEntry> installed = List.of(new TvAppEntry("a/.A", "a", "A"), new TvAppEntry("b/.B", "b", "B"));
+    assertEquals(List.of("b/.B", "a/.A"), FavouriteOrder.reconcile(List.of("b/.B", "gone/.Gone", "a/.A"), installed));
 }
-
-@Test public void moveAndRemoveAreStable() {
-    assertEquals(List.of("b", "a", "c"), FavouriteOrder.move(List.of("a", "b", "c"), "b", -1));
+@Test public void addRemoveAndMoveAreStable() {
+    assertEquals(List.of("a", "b", "c"), FavouriteOrder.add(List.of("a", "b"), "c"));
     assertEquals(List.of("a", "c"), FavouriteOrder.remove(List.of("a", "b", "c"), "b"));
+    assertEquals(List.of("b", "a", "c"), FavouriteOrder.move(List.of("a", "b", "c"), "b", -1));
 }
 ```
 
-- [ ] **Step 2: Extend materialisation for Shield-home main/test source and verify tests fail**
+- [ ] **Step 2: Extend materialisation and prove tests fail**
 
-Add before Shield tests are run:
 ```bash
 mkdir -p "$ROOT/shield-lib/src/test/java"
 cp -R unified/shield-home/src/main/java/* "$ROOT/shield-lib/src/main/java/"
 cp -R unified/shield-home/src/test/java/* "$ROOT/shield-lib/src/test/java/"
-```
-
-Run:
-```bash
 bash scripts/materialize-unified.sh
-gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
+gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.TvAppRepositoryTest' --tests 'com.boop.shieldhome.FavouriteOrderTest' --stacktrace
 ```
-Expected: failure until the models are implemented.
+Expected: failure until models exist.
 
-- [ ] **Step 3: Implement the catalogue and pure favourite operations**
+- [ ] **Step 3: Implement catalogue/favourite logic and TV package visibility**
 
-`load()` must perform exactly two package scans per refresh cycle:
+`load()` performs exactly these two scans per refresh:
 ```java
 List<TvAppEntry> leanback = query(Intent.CATEGORY_LEANBACK_LAUNCHER);
 List<TvAppEntry> launcher = query(Intent.CATEGORY_LAUNCHER);
 return merge(context.getPackageName(), leanback, launcher);
 ```
-Do not call `load()` from focus listeners or view rendering.
+Add a `MAIN` + `LEANBACK_LAUNCHER` query to `unified/launcher-manifest.xml`; retain its current ordinary `LAUNCHER` query.
 
-- [ ] **Step 4: Add TV package visibility**
-
-Add a second `<queries><intent>` entry in `unified/launcher-manifest.xml` for `MAIN` + `LEANBACK_LAUNCHER`. Keep the existing ordinary launcher query.
-
-- [ ] **Step 5: Run generated Shield-home unit tests**
+- [ ] **Step 4: Run tests**
 
 ```bash
 bash scripts/materialize-unified.sh
@@ -255,7 +213,7 @@ gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tes
 ```
 Expected: PASS.
 
-- [ ] **Step 6: Commit catalogue/model slice**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add unified/shield-home unified/launcher-manifest.xml scripts/materialize-unified.sh
@@ -264,55 +222,50 @@ git commit -m "feat(shield-home): add TV app and favourite model"
 
 ---
 
-### Task 3: Persist favourites and gate optional rows OFF by default
+### Task 3: Persist favourites and enforce optional rows OFF by default
 
-**Files:**
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeStore.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/HomeContentCard.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/HomeRow.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/HomeRowProvider.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/OptionalRowRegistry.java`
-- Create: `unified/shield-home/src/test/java/com/boop/shieldhome/ShieldHomeStoreTest.java`
-- Create: `unified/shield-home/src/test/java/com/boop/shieldhome/OptionalRowRegistryTest.java`
+**Files:** create `ShieldHomeStore.java`, `HomeContentCard.java`, `HomeRow.java`, `HomeRowProvider.java`, `OptionalRowRegistry.java`, `ShieldHomeStoreTest.java`, `OptionalRowRegistryTest.java`.
 
 **Interfaces:**
-- SharedPreferences file: `boop_shield_home_v1`.
-- Favourite keys: `favourites_initialised`, `favourites_json`.
-- Optional keys: `row_play_next`, `row_app_channels`, both default false.
-- `ShieldHomeStore.loadOrSeedFavourites(List<TvAppEntry> installed)` seeds installed TV components only once; after initialisation an intentionally empty favourite list remains empty.
-- `OptionalRowRegistry.Key` values are exactly `PLAY_NEXT` and `APP_CHANNELS`.
-- `OptionalRowRegistry.loadEnabled(EnabledLookup enabled, ProviderFactory factory)` creates a provider only after its key evaluates true.
+- Preferences file `boop_shield_home_v1`.
+- Keys `favourites_initialised`, `favourites_json`, `row_play_next`, `row_app_channels`.
+- `ShieldHomeStore.loadOrSeedFavourites(List<TvAppEntry>)`, `saveFavourites(List<String>)`, `rowEnabled(OptionalRowRegistry.Key)`, `setRowEnabled(OptionalRowRegistry.Key, boolean)`.
+- Static `encodeComponents(List<String>)`, `decodeComponents(String)` for deterministic tests.
+- `HomeContentCard(String title, String intentUri, String posterArtUri)` with accessors.
+- `HomeRow(String title, List<HomeContentCard> cards)` with accessors.
+- `HomeRowProvider.load()` returns `List<HomeRow>`.
+- `OptionalRowRegistry.Key` contains exactly `PLAY_NEXT`, `APP_CHANNELS`.
+- `loadEnabled(EnabledLookup, ProviderFactory)` constructs only enabled providers.
 
-- [ ] **Step 1: Write persistence codec/default and provider-creation tests**
+- [ ] **Step 1: Write failing tests**
 
 ```java
-@Test public void favouritesRoundTripAsJson() {
+@Test public void favouritesCodecRoundTripsAndMalformedDataFailsSafe() {
     String raw = ShieldHomeStore.encodeComponents(List.of("a/.A", "b/.B"));
     assertEquals(List.of("a/.A", "b/.B"), ShieldHomeStore.decodeComponents(raw));
-}
-
-@Test public void malformedFavouriteDataFailsSafeToEmpty() {
     assertEquals(List.of(), ShieldHomeStore.decodeComponents("not-json"));
 }
-
+@Test public void registryHasOnlyApprovedNonAdvertisingRows() {
+    assertArrayEquals(new OptionalRowRegistry.Key[] {
+        OptionalRowRegistry.Key.PLAY_NEXT, OptionalRowRegistry.Key.APP_CHANNELS
+    }, OptionalRowRegistry.Key.values());
+}
 @Test public void disabledRowsCreateNoProviders() {
     AtomicInteger created = new AtomicInteger();
-    List<HomeRowProvider> providers = OptionalRowRegistry.loadEnabled(
-        key -> false,
+    List<HomeRowProvider> rows = OptionalRowRegistry.loadEnabled(key -> false,
         key -> { created.incrementAndGet(); return List::of; });
-    assertTrue(providers.isEmpty());
+    assertTrue(rows.isEmpty());
     assertEquals(0, created.get());
 }
-
 @Test public void rowTogglesAreIndependent() {
-    List<HomeRowProvider> providers = OptionalRowRegistry.loadEnabled(
-        key -> key == OptionalRowRegistry.Key.PLAY_NEXT,
-        key -> List::of);
-    assertEquals(1, providers.size());
+    List<OptionalRowRegistry.Key> created = new ArrayList<>();
+    OptionalRowRegistry.loadEnabled(key -> key == OptionalRowRegistry.Key.PLAY_NEXT,
+        key -> { created.add(key); return List::of; });
+    assertEquals(List.of(OptionalRowRegistry.Key.PLAY_NEXT), created);
 }
 ```
 
-- [ ] **Step 2: Run tests and confirm failure**
+- [ ] **Step 2: Prove tests fail**
 
 ```bash
 bash scripts/materialize-unified.sh
@@ -322,13 +275,17 @@ Expected: failure until store/registry exist.
 
 - [ ] **Step 3: Implement fail-safe storage and lazy registry**
 
-`rowEnabled(Key key)` must use `preferences.getBoolean(key.preferenceKey(), false)`. `setRowEnabled` writes only the selected key. `loadOrSeedFavourites` stores all currently installed launchable TV components only when `favourites_initialised` is false, then marks it true. Later newly installed apps appear in Apps but are not auto-favourited.
+`rowEnabled` uses `preferences.getBoolean(key.preferenceKey(), false)`. `setRowEnabled` writes only the selected key. On first use only, `loadOrSeedFavourites` seeds the currently installed TV app components and sets `favourites_initialised=true`. Once initialised, an intentionally empty favourite list remains empty and newly installed apps are not auto-favourited.
 
 - [ ] **Step 4: Run tests**
 
-Use the command from Step 2. Expected: PASS.
+```bash
+bash scripts/materialize-unified.sh
+gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.ShieldHomeStoreTest' --tests 'com.boop.shieldhome.OptionalRowRegistryTest' --stacktrace
+```
+Expected: PASS.
 
-- [ ] **Step 5: Commit storage/registry slice**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add unified/shield-home
@@ -337,36 +294,47 @@ git commit -m "feat(shield-home): persist favourites and optional rows"
 
 ---
 
-### Task 4: Implement local Android TV Play Next and app-channel providers
+### Task 4: Add local Android TV optional providers and package-refresh policy
 
-**Files:**
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/TvProviderRows.java`
-- Modify: `unified/shield-home/src/test/java/com/boop/shieldhome/OptionalRowRegistryTest.java`
+**Files:** create `TvProviderRows.java`, `PackageRefreshPolicy.java`, `PackageRefreshPolicyTest.java`; extend `OptionalRowRegistryTest.java`.
 
 **Interfaces:**
-- `TvProviderRows.factory(Context context)` returns an `OptionalRowRegistry.ProviderFactory`.
-- `PLAY_NEXT` queries `TvContract.WatchNextPrograms.CONTENT_URI` only when created and loaded.
-- `APP_CHANNELS` queries `TvContract.Channels.CONTENT_URI`, keeps browsable `TYPE_PREVIEW` channels, then queries `TvContract.buildPreviewProgramsUriForChannel(id)`.
-- Provider errors return an empty list for that provider and never break favourites.
-- No provider performs HTTP/network requests.
+- `TvProviderRows.factory(Context)` returns `OptionalRowRegistry.ProviderFactory`.
+- `PLAY_NEXT` queries `TvContract.WatchNextPrograms.CONTENT_URI` only after provider creation/load.
+- `APP_CHANNELS` queries `TvContract.Channels.CONTENT_URI`, filters browsable `TYPE_PREVIEW`, then `TvContract.buildPreviewProgramsUriForChannel(id)`.
+- Provider failure returns an empty list; no provider performs HTTP/network I/O.
+- `PackageRefreshPolicy.shouldReload(String action)` is true only for `android.intent.action.PACKAGE_ADDED`, `PACKAGE_REMOVED`, `PACKAGE_CHANGED`.
 
-- [ ] **Step 1: Extend the registry test to prove provider factory creation remains lazy**
+- [ ] **Step 1: Write failing refresh/lazy-provider tests**
 
 ```java
+@Test public void packageRefreshPolicyIsNarrow() {
+    assertTrue(PackageRefreshPolicy.shouldReload("android.intent.action.PACKAGE_ADDED"));
+    assertTrue(PackageRefreshPolicy.shouldReload("android.intent.action.PACKAGE_REMOVED"));
+    assertTrue(PackageRefreshPolicy.shouldReload("android.intent.action.PACKAGE_CHANGED"));
+    assertFalse(PackageRefreshPolicy.shouldReload("android.intent.action.TIME_TICK"));
+}
 @Test public void onlyEnabledProviderIsConstructed() {
     List<OptionalRowRegistry.Key> created = new ArrayList<>();
-    OptionalRowRegistry.loadEnabled(
-        key -> key == OptionalRowRegistry.Key.APP_CHANNELS,
+    OptionalRowRegistry.loadEnabled(key -> key == OptionalRowRegistry.Key.APP_CHANNELS,
         key -> { created.add(key); return List::of; });
     assertEquals(List.of(OptionalRowRegistry.Key.APP_CHANNELS), created);
 }
 ```
 
-- [ ] **Step 2: Implement `TvProviderRows` with local `ContentResolver` queries**
+- [ ] **Step 2: Prove tests fail**
 
-Use platform `TvContract` constants available from API 26. Query only columns needed to build `HomeContentCard(title, intentUri, posterArtUri)`. Filter channel rows in Java rather than assuming provider SQL selection support. Wrap `query`/cursor processing in `RuntimeException` handling that returns an empty list.
+```bash
+bash scripts/materialize-unified.sh
+gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.PackageRefreshPolicyTest' --tests 'com.boop.shieldhome.OptionalRowRegistryTest' --stacktrace
+```
+Expected: failure until refresh policy/provider implementation exists.
 
-- [ ] **Step 3: Compile and run all Shield-home tests**
+- [ ] **Step 3: Implement local provider queries**
+
+Use platform `TvContract` API 26+ columns needed for `title`, `intentUri`, `posterArtUri`. Filter channel rows in Java. Catch provider `RuntimeException` and return an empty list so favourites stay functional. Do not add any networking library or promotional provider.
+
+- [ ] **Step 4: Run all Shield-home model/provider tests**
 
 ```bash
 bash scripts/materialize-unified.sh
@@ -374,32 +342,30 @@ gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tes
 ```
 Expected: PASS.
 
-- [ ] **Step 4: Commit provider slice**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add unified/shield-home
-git commit -m "feat(shield-home): add optional local TV rows"
+git commit -m "feat(shield-home): add local optional TV rows"
 ```
 
 ---
 
-### Task 5: Build remote-first HOME, Apps and Settings views with local animation
+### Task 5: Build remote-first HOME, Apps and Settings presentation
 
-**Files:**
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldAppsView.java`
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeSettingsView.java`
+**Files:** create `TvAppCardView.java`, `ShieldHomeView.java`, `ShieldAppsView.java`, `ShieldHomeSettingsView.java`.
 
 **Interfaces:**
-- `TvAppCardView` is focusable/clickable, renders an app/content label and optional icon, and animates local scale from `1f` to `1.08f` over 120 ms on focus, back to `1f` on blur.
-- `ShieldHomeView.render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks callbacks)` never performs discovery or storage I/O.
-- `ShieldAppsView.render(List<TvAppEntry> apps, Set<String> favourites, Callbacks callbacks)` owns no persistence.
-- `ShieldHomeSettingsView.render(boolean playNext, boolean appChannels, Callbacks callbacks)` exposes toggle callbacks plus `onChooseHomeApp()`.
+- `TvAppCardView` scales locally `1f -> 1.08f` on focus and `1.08f -> 1f` on blur over 120 ms.
+- `ShieldHomeView.Callbacks`: `onAppSelected(TvAppEntry)`, `onFavouriteLongPressed(TvAppEntry)`, `onOpenApps()`, `onOpenSettings()`, `onContentSelected(HomeContentCard)`.
+- `ShieldHomeView.render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks)`.
+- `ShieldAppsView.Callbacks`: `onAppSelected(TvAppEntry)`, `onToggleFavourite(TvAppEntry)`.
+- `ShieldAppsView.render(List<TvAppEntry> apps, Set<String> favouriteComponents, Callbacks)`.
+- `ShieldHomeSettingsView.Callbacks`: `onSetRowEnabled(OptionalRowRegistry.Key, boolean)`, `onChooseHomeApp()`, `onBackHome()`.
+- `ShieldHomeSettingsView.render(boolean playNext, boolean appChannels, Callbacks)`.
 
-- [ ] **Step 1: Implement the card focus behavior without global animation changes**
+- [ ] **Step 1: Implement local card focus animation**
 
-Core focus behavior:
 ```java
 setOnFocusChangeListener((v, focused) -> animate()
     .scaleX(focused ? 1.08f : 1f)
@@ -407,21 +373,21 @@ setOnFocusChangeListener((v, focused) -> animate()
     .setDuration(120)
     .start());
 ```
-Do not call `Settings.Global`, `ValueAnimator.setDurationScale`, shell settings, or system animation APIs.
+No system animation setting is read or written.
 
-- [ ] **Step 2: Implement favourite-only HOME rendering**
+- [ ] **Step 2: Implement favourite-only HOME**
 
-Use one vertical root and one `HorizontalScrollView` favourites row. With no favourites, render one remote-selectable `Add favourites` action that opens Apps. Add minimal `Apps` and `Settings` actions without creating an additional content feed row. Append only the `HomeRow` objects passed to `render`; empty optional rows consume zero layout space.
+Use one vertical root and a `HorizontalScrollView` favourite row. Empty favourites render one remote-selectable `Add favourites` action. `Apps` and `Settings` are minimal navigation affordances, not content feeds. Optional rows are rendered only from the `optionalRows` argument; an empty list consumes zero row space.
 
-- [ ] **Step 3: Implement Apps grid and remote long-press callbacks**
+- [ ] **Step 3: Implement Apps grid**
 
-Use framework `GridView`/`BaseAdapter`. Select launches the app. Long press invokes a callback to add/remove favourite membership. The view receives cached data only and never calls `PackageManager` itself.
+Use framework `GridView` + `BaseAdapter`. Select invokes `onAppSelected`; long press invokes `onToggleFavourite`. The view does not call `PackageManager` or preferences.
 
-- [ ] **Step 4: Implement Settings toggles and stock-launcher recovery route**
+- [ ] **Step 4: Implement Settings and reversible HOME selection**
 
-The two row toggles show explicit ON/OFF text and toggle on D-pad Select. `Choose Home app` opens `Settings.ACTION_HOME_SETTINGS`; if unavailable, fall back to `Settings.ACTION_SETTINGS`. Do not clear defaults programmatically or disable another launcher.
+Render `Play Next: ON/OFF` and `App content rows: ON/OFF` as D-pad-selectable rows. `Choose Home app` launches `Settings.ACTION_HOME_SETTINGS`; catch failure and fall back to `Settings.ACTION_SETTINGS`. Never clear another launcher default or disable a package.
 
-- [ ] **Step 5: Compile generated Shield library**
+- [ ] **Step 5: Compile**
 
 ```bash
 bash scripts/materialize-unified.sh
@@ -429,7 +395,7 @@ gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:compileDebugJavaWithJav
 ```
 Expected: PASS.
 
-- [ ] **Step 6: Commit view slice**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add unified/shield-home
@@ -438,21 +404,18 @@ git commit -m "feat(shield-home): add remote launcher views"
 
 ---
 
-### Task 6: Add launcher activity lifecycle, cache refresh and favourite editing
+### Task 6: Add Shield launcher activity lifecycle, cache and remote editing
 
-**Files:**
-- Create: `unified/shield-home/src/main/java/com/boop/shieldhome/ShieldLauncherActivity.java`
-- Modify: `unified/shield-manifest.xml`
+**Files:** create `ShieldLauncherActivity.java`; modify `unified/shield-manifest.xml`.
 
 **Interfaces:**
-- Activity owns one `TvAppRepository`, one `ShieldHomeStore`, one background `ExecutorService`, cached `List<TvAppEntry> installedApps`, cached favourite components and current page.
-- Package scans occur at initial load, explicit lifecycle reload and package add/remove/change broadcasts, never on focus or redraw.
-- `showHome()`, `showApps()`, and `showSettings()` swap presentation views with a local ~140 ms alpha/translation transition.
-- Long-press favourite edit actions are exactly `Move left`, `Move right`, `Remove from favourites` with invalid edge moves disabled/omitted.
+- One `TvAppRepository`, `ShieldHomeStore`, single-thread `ExecutorService`, cached installed apps, cached favourite components and current page.
+- Package reload only for `PackageRefreshPolicy.shouldReload(action)`.
+- `showHome()`, `showApps()`, `showSettings()` use a local 140 ms alpha/translation page transition.
+- Favourite long-press actions: `Move left`, `Move right`, `Remove from favourites`.
 
-- [ ] **Step 1: Implement activity startup and cached reload**
+- [ ] **Step 1: Implement startup and cached reload**
 
-Pseudo-structure to follow exactly:
 ```java
 @Override protected void onCreate(Bundle state) {
     super.onCreate(state);
@@ -462,33 +425,43 @@ Pseudo-structure to follow exactly:
     registerPackageReceiver();
     reloadApps();
 }
-
 private void reloadApps() {
     executor.execute(() -> {
         List<TvAppEntry> apps = repository.load();
         List<String> saved = store.loadOrSeedFavourites(apps);
         List<String> reconciled = FavouriteOrder.reconcile(saved, apps);
         if (!reconciled.equals(saved)) store.saveFavourites(reconciled);
-        runOnUiThread(() -> { installedApps = apps; favouriteComponents = reconciled; showCurrentPage(); });
+        runOnUiThread(() -> {
+            installedApps = apps;
+            favouriteComponents = reconciled;
+            showCurrentPage();
+        });
     });
 }
 ```
 
-- [ ] **Step 2: Register package-change refresh only**
+- [ ] **Step 2: Implement package receiver with tested policy**
 
-Listen for `ACTION_PACKAGE_ADDED`, `ACTION_PACKAGE_REMOVED`, and `ACTION_PACKAGE_CHANGED` with data scheme `package`. Use `Context.RECEIVER_NOT_EXPORTED` on API 33+ and the compatible overload below it. Unregister in `onDestroy`.
+Listen to `ACTION_PACKAGE_ADDED`, `ACTION_PACKAGE_REMOVED`, `ACTION_PACKAGE_CHANGED` with data scheme `package`. On API 33+ register with `Context.RECEIVER_NOT_EXPORTED`; below API 33 use the compatible overload. Call `reloadApps()` only when `PackageRefreshPolicy.shouldReload(intent.getAction())`. Unregister and shut down executor in `onDestroy`.
 
-- [ ] **Step 3: Implement launching and favourite edit actions**
+- [ ] **Step 3: Implement app launching and favourite editing**
 
-Parse `TvAppEntry.component()` with `ComponentName.unflattenFromString`, launch with an explicit `ACTION_MAIN` intent, and catch stale/unavailable activity failures by calling `reloadApps()` and returning HOME. Long-press edit updates `FavouriteOrder`, saves once, then rerenders cached HOME without rescanning packages.
+Use `ComponentName.unflattenFromString(entry.component())` in an explicit `ACTION_MAIN` intent. If launch fails because the activity became stale, call `reloadApps()` and return HOME. Favourite edits use `FavouriteOrder`, save once, and rerender cached HOME without package rescans.
 
-- [ ] **Step 4: Load optional providers only after settings say they are enabled**
+- [ ] **Step 4: Keep optional providers off the favourite-only fast path**
 
-`showHome()` calls `OptionalRowRegistry.loadEnabled(store::rowEnabled, TvProviderRows.factory(this))`. If the returned provider list is empty, render favourites immediately and do no TV-provider work. When non-empty, load those rows on the background executor and post the resulting optional rows without blocking basic favourites navigation.
+```java
+List<HomeRowProvider> providers = OptionalRowRegistry.loadEnabled(store::rowEnabled, TvProviderRows.factory(this));
+if (providers.isEmpty()) {
+    renderHome(List.of());
+    return;
+}
+executor.execute(() -> loadAndPostOptionalRows(providers));
+```
+Provider failure omits that optional row for the session and does not block favourites.
 
-- [ ] **Step 5: Declare activity in the generated Shield manifest**
+- [ ] **Step 5: Declare internal activity without a second HOME filter**
 
-Add to `unified/shield-manifest.xml`:
 ```xml
 <activity
     android:name="com.boop.shieldhome.ShieldLauncherActivity"
@@ -497,18 +470,19 @@ Add to `unified/shield-manifest.xml`:
     android:screenOrientation="landscape"
     android:theme="@style/Theme.BoopHome" />
 ```
-Do not add a second HOME intent filter. `UnifiedEntryActivity` remains the one exported HOME/LAUNCHER entry point.
+`UnifiedEntryActivity` remains the only exported HOME/LAUNCHER entry point.
 
-- [ ] **Step 6: Materialise, compile and run all new unit tests**
+- [ ] **Step 6: Test/compile**
 
 ```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --tests '*ShieldEntryRouteTest' --stacktrace
+gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:compileDebugJavaWithJavac --stacktrace
 ```
 Expected: PASS.
 
-- [ ] **Step 7: Commit activity/integration slice**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add unified/shield-home unified/shield-manifest.xml
@@ -517,16 +491,11 @@ git commit -m "feat(shield-home): wire clean HOME activity"
 
 ---
 
-### Task 7: Version, CI and signed-package contracts
+### Task 7: Version, CI and signed APK contracts
 
-**Files:**
-- Modify: `unified/app-build.gradle`
-- Modify: `.github/workflows/build-boop-unified.yml`
+**Files:** modify `unified/app-build.gradle`, `.github/workflows/build-boop-unified.yml`.
 
-**Interfaces:**
-- versionCode becomes `46`.
-- versionName becomes `1.2.0-unified-shield-home`.
-- Existing signer/package checks remain unchanged except version expectations and addition of `com.boop.shieldhome.ShieldLauncherActivity` to manifest-class verification.
+**Interfaces:** versionCode `46`; versionName `1.2.0-unified-shield-home`; existing package/signer identity unchanged.
 
 - [ ] **Step 1: Bump only the unified candidate version**
 
@@ -535,32 +504,35 @@ versionCode 46
 versionName "1.2.0-unified-shield-home"
 ```
 
-- [ ] **Step 2: Add non-visual generated Shield-home tests to CI**
+- [ ] **Step 2: Preserve current integration tests and add Shield-home tests**
 
-After materialisation, run:
+The workflow’s integration-contract command must still include both current tests:
 ```bash
-gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest \
-  --tests 'com.boop.shieldhome.*' --stacktrace
+python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py
 ```
-Add `--tests '*ShieldEntryRouteTest'` to the existing unified routing/lifecycle unit-test command.
+After materialisation add:
+```bash
+gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
+```
+Add `--tests '*ShieldEntryRouteTest'` to the generated app routing/lifecycle test command.
 
-- [ ] **Step 3: Extend APK structural verification**
+- [ ] **Step 3: Extend signed-APK structural verification**
 
-Change version greps to 46 / `1.2.0-unified-shield-home`, and add `com.boop.shieldhome.ShieldLauncherActivity` to the manifest class loop. Keep `com.boop.alpha1.UnifiedEntryActivity` as the launchable activity and keep permanent signer comparison intact.
+Change version greps to 46 / `1.2.0-unified-shield-home`. Add `com.boop.shieldhome.ShieldLauncherActivity` to the manifest class loop. Keep `com.boop.alpha1.UnifiedEntryActivity` as launchable activity, verify `android.intent.category.HOME` remains in the manifest tree, and keep permanent signer digest comparison unchanged.
 
 - [ ] **Step 4: Run the full non-visual local-equivalent verification**
 
 ```bash
-python -m pytest -q tests/test_unified_docked_shield_pass.py
+python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p launcher lintDebug --stacktrace
 gradle --no-daemon -p shield-overlay :app:testDebugUnitTest --tests '*Home*Test' --tests '*Room*Test' --tests '*TvNavigationModelTest' --stacktrace
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --tests '*BoopDeviceProfileTest' --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --stacktrace
 ```
-Expected: PASS. Do not add emulator, screenshot or appearance tests.
+Expected: PASS. No emulator, screenshot or appearance checks.
 
-- [ ] **Step 5: Commit release-contract slice**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add unified/app-build.gradle .github/workflows/build-boop-unified.yml
@@ -569,44 +541,39 @@ git commit -m "ci(unified): verify clean Shield HOME"
 
 ---
 
-### Task 8: Review, publish, verify live CI and record handoff
+### Task 8: Review, publish, verify CI and update handoff
 
-**Files:**
-- Modify after code/CI results are known: `SESSION_HANDOFF.md`
-- Modify after code/CI results are known: `BOOP_STATUS.md`
-- Modify after code/CI results are known: `BOOP_UNIFIED_MEMORY.md`
+**Files:** modify `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` after exact GitHub results are read.
 
-**Interfaces:**
-- Handoff records exact implementation commit, successful workflow run, artifact name/id, APK SHA-256, signer SHA-256, tests, and `physical acceptance pending`.
-- Do not alter `main` unless a shared product/ownership contract actually changes; this launcher implementation is branch-owned progress.
+**Interfaces:** record exact implementation commit, completed workflow run, artifact name/id, APK SHA-256, signer SHA-256, test totals and `physical acceptance pending`. Do not update `main` unless a shared ownership/product contract changes.
 
-- [ ] **Step 1: Fetch live `boop-unified` and `main` again before publication**
+- [ ] **Step 1: Fetch live heads before publication**
 
 ```bash
 git fetch origin boop-unified main
 ```
-If `boop-unified` advanced, reconcile without reset/force push and rerun affected tests.
+If the live branch advanced, preserve and reconcile the new commits without reset or force push, then rerun affected tests.
 
-- [ ] **Step 2: Review the implementation against the approved spec**
+- [ ] **Step 2: Review against every approved requirement**
 
-Confirm every spec item has a concrete code path: favourite-only default, no advert/Shop/Discover provider, optional rows OFF and lazy, stock HOME recovery, no global animation changes, cached package scans, remote edit controls, stale-app handling, and no unrelated BOOP behavior changes.
+Verify concrete code paths for favourite-only default, no advertising/Shop/Discover provider, independent optional rows OFF by default, lazy providers, stock HOME recovery, no global animation changes, cached package scans, remote add/remove/reorder, stale-app handling, and untouched unrelated BOOP behavior.
 
-- [ ] **Step 3: Publish reviewed code and let the existing workflow build/sign the APK**
+- [ ] **Step 3: Push reviewed code and inspect the completed GitHub workflow**
 
 ```bash
 git push origin boop-unified
 ```
-Wait only for the synchronous GitHub workflow result available during the session. Do not claim green before reading the completed run and artifact metadata.
+Read the completed workflow result and artifact metadata before claiming green.
 
-- [ ] **Step 4: Verify the workflow evidence**
+- [ ] **Step 4: Require signed candidate evidence**
 
-Require: build success, signed `BOOP-Unified` artifact, package `com.boop.alpha1`, version 46, expected permanent signer digest, APK ZIP integrity, new Shield-home tests PASS, existing focused Shield/unified tests PASS.
+Require build success, `BOOP-Unified` artifact, `com.boop.alpha1`, version 46, expected permanent signer digest, APK ZIP integrity, approved-eye contract PASS, new Shield-home tests PASS, and existing focused Shield/unified tests PASS.
 
-- [ ] **Step 5: Update branch handoff/status/memory with CI-green but physical-pending evidence**
+- [ ] **Step 5: Record CI-green, physical-pending state**
 
-Record the exact values returned by GitHub. Explicitly state that Ryan still must physically confirm HOME selection, favourite-only layout, no ads/Shop/Discover/blank ad space, smooth focus/scrolling, remote add/remove/reorder, optional-row persistence, stock-launcher restore and repeated-open scale stability.
+Update `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` with the exact GitHub values. Explicitly retain physical checks for HOME selection, favourite-only layout, absence of ads/Shop/Discover/blank ad space, smooth focus/scrolling, remote add/remove/reorder, optional-row persistence, stock-launcher restore and repeated-open scale stability.
 
-- [ ] **Step 6: Commit/push documentation and verify live remote HEAD one final time**
+- [ ] **Step 6: Commit docs, push and verify the live remote head**
 
 ```bash
 git add SESSION_HANDOFF.md BOOP_STATUS.md BOOP_UNIFIED_MEMORY.md
@@ -615,4 +582,4 @@ git push origin boop-unified
 git fetch origin boop-unified
 git rev-parse origin/boop-unified
 ```
-The final reported commit must equal live GitHub `boop-unified` HEAD. Do not promote the protected physical rollback until Ryan accepts the APK on real hardware.
+The reported commit must equal live GitHub `boop-unified` HEAD. Do not move the protected physical rollback until Ryan accepts the APK on real hardware.
