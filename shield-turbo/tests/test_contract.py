@@ -85,6 +85,29 @@ class ContractTest(unittest.TestCase):
         self.assertIn('confirmed_', route)
         self.assertNotIn('device.displaysound.DisplaySoundActivity', route)
 
+    def test_startup_manager_is_reversible_and_not_itself_a_boot_app(self):
+        manifest = ET.parse(ROOT / 'app/src/main/AndroidManifest.xml').getroot()
+        app = manifest.find('application')
+        activity_names = {a.get(ANDROID + 'name') for a in app.findall('activity')}
+        self.assertIn('.startup.StartupManagerActivity', activity_names)
+        self.assertEqual([], app.findall('receiver'))
+        manifest_text = (ROOT / 'app/src/main/AndroidManifest.xml').read_text()
+        self.assertNotIn('RECEIVE_BOOT_COMPLETED', manifest_text)
+        self.assertNotIn('QUERY_ALL_PACKAGES', manifest_text)
+
+        startup_dir = SOURCE / 'startup'
+        text = '\n'.join(p.read_text() for p in startup_dir.glob('*.*'))
+        self.assertIn('RUN_IN_BACKGROUND', text)
+        self.assertIn('RUN_ANY_IN_BACKGROUND', text)
+        self.assertIn('pm disable-user --user current', text)
+        self.assertIn('UNDO ALL', text)
+        self.assertNotIn('pm clear ', text)
+        self.assertNotIn('pm uninstall', text)
+        self.assertNotIn('rm -rf', text)
+
+        power = (SOURCE / 'power/PowerActivity.kt').read_text()
+        self.assertIn('STARTUP MANAGER', power)
+
     def test_ci_does_not_judge_visual_ui(self):
         workflow = WORKFLOW.read_text()
         self.assertNotIn('uiautomator dump', workflow)
