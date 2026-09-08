@@ -43,6 +43,7 @@ final class BoopWakeKeywordBuilder {
         Set<String> phrases = new LinkedHashSet<>();
         phrases.add(name);
         phrases.add("HEY " + name);
+        phrases.add("EY " + name);
         phrases.add("HI " + name);
         phrases.add("HELLO " + name);
         phrases.add("YO " + name);
@@ -52,6 +53,7 @@ final class BoopWakeKeywordBuilder {
         phrases.add("HEY THERE " + name);
         phrases.add("HELLO THERE " + name);
         phrases.add("HI THERE " + name);
+        phrases.add("YO THERE " + name);
         phrases.add("WAKE UP " + name);
         phrases.add(name + " WAKE UP");
         phrases.add("COME ON " + name);
@@ -60,6 +62,8 @@ final class BoopWakeKeywordBuilder {
         phrases.add(name + " YOU THERE");
         phrases.add(name + " ARE YOU THERE");
         phrases.add("HEY " + name + " WAKE UP");
+        phrases.add("OK " + name + " WAKE UP");
+        phrases.add("OKAY " + name + " WAKE UP");
         phrases.add("MORNING " + name);
         phrases.add("GOOD MORNING " + name);
         phrases.add("EVENING " + name);
