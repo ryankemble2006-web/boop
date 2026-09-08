@@ -22,6 +22,7 @@ final class BoopWakeNameIntent {
     }
 
     private static final String[] SET_PREFIXES = {
+            "change name to ",
             "your new name is ",
             "your name is ",
             "i'm calling you ",
