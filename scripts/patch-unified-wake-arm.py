@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
+import runpy
 from pathlib import Path
+
+# Wake-name materialization owns both name construction and the follow-on
+# settings flow. Keep this immediately before the physically proven arm gate.
+runpy.run_path('scripts/patch-unified-wake-enrolment-flow.py', run_name='__main__')
 
 path = Path('boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java')
 text = path.read_text(encoding='utf-8')
