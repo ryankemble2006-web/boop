@@ -2,66 +2,71 @@
 
 Updated 2026-09-08. Read `SESSION_HANDOFF.md` for exact build receipts and `STATUS.md` for the current candidate. This file records durable rules and physical evidence.
 
-## Physical evidence now established
+## Physical evidence and accepted behavior
 
-Ryan physically installed SHIELD TURBO on the bedroom NVIDIA Shield and confirmed the brightness control worked. Preserve the original working brightness checkpoint: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
+Ryan physically installed SHIELD TURBO on the bedroom NVIDIA Shield and confirmed brightness worked. Preserve the original working brightness checkpoint: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
 
-Ryan also physically installed the first STANDARD control-centre candidate, source `91b2e28178d14ba4f2098076b958726ce064a8e1`, run `34187498176`, artifact `10041082348`. Two Shield-only UX defects were observed: the TURBO maintenance row could not be reached with D-pad Down, and APPS OK showed the package name instead of directly launching the app. Those observations are authoritative physical feedback and must not be lost.
-
-The current machine-verified correction is source `d277ebe713cdbe5298f6205ef34fa4d493ea2114` with functional change at `8d48e3b30c51605bbc9d47bdad01e55bf651abb9`, run `34189880390`, artifact `10041897001`, APK SHA-256 `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`. It routes the last TURBO result down to `FREE SPACE`; the three maintenance controls navigate horizontally and back upward; APPS OK launches directly and hold-OK opens Android App Info. Hardware acceptance of these two corrections is pending Ryan's retest.
+The first STANDARD control-centre candidate exposed two real Shield UX defects: the TURBO maintenance row was unreachable by D-pad and APPS OK opened a package-name dialog instead of launching directly. The corrected STANDARD candidate was source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK SHA-256 `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`. Ryan's next physical report said the controls were now selectable and identified SHIELD -> DISPLAY + SOUND as the only remaining bug he had found in that pass. Preserve that corrected STANDARD build as the pre-ADVANCED fallback.
 
 ## Identity and ownership
 
-SHIELD TURBO is an independently installed app, package `com.boop.shieldturbo`, in `shield-turbo/` on branch `shield-turbo-v01`. The repository is shared with BOOP for convenience. It is not another BOOP body or a replacement for the unified `com.boop.alpha1` APK. Never merge the old BOOP runtime inherited from main into the concurrent `boop-unified` app branch.
+SHIELD TURBO is an independently installed app, package `com.boop.shieldturbo`, in `shield-turbo/` on branch `shield-turbo-v01`. The repository is shared with BOOP for convenience. It is not another BOOP body or a replacement for unified `com.boop.alpha1`.
 
 Ryan approved development/signing through GitHub using the existing BOOP development signer. Keep Shield Turbo work confined to its own app/workflow unless explicitly authorised otherwise.
 
 ## Product rules
 
-Diagnostics remain honest snapshots on demand. No speed-up scores, blanket RAM cleaning, overclocking, process killing, other-app data clearing or pretend network tweaks. CPU frequency is not load; available memory is not a performance score; a generic thermal zone is not automatically a CPU/GPU sensor.
+Diagnostics remain honest snapshots on demand. No speed-up scores, blanket RAM cleaning, overclocking, arbitrary governor changes, process killing, other-app data clearing or pretend network tweaks. CPU frequency is not load; available memory is not a performance score; a generic thermal zone is not automatically a CPU/GPU sensor.
 
-The picture-brightness control is an explicitly authorised exception to the original read-only diagnostic boundary. It must remain simple, remote-operable and reversible:
+Brightness remains a deliberately simple reversible picture control: 10–100%, with 100% removing the overlay and leaving the picture untouched. Below 100% uses Android display-over-other-apps permission through the private non-exported `BrightnessService`.
 
-- Range is 10–100%.
-- 100% means no dim overlay and an untouched picture.
-- Below 100% requires Android's display-over-other-apps permission.
-- The overlay is owned by the private, non-exported `BrightnessService` and must not intercept focus or touch input.
-- The chosen percentage is stored locally so the setting can persist while moving between apps.
-- Returning to 100% is the immediate undo path.
-- Do not silently broaden this into colour, gamma, HDR, clock/governor or other tuning controls without separate evidence and approval.
+## STANDARD remote behavior
 
-Current permissions are `ACCESS_NETWORK_STATE` for diagnostics and `SYSTEM_ALERT_WINDOW` for the authorised dim overlay. No microphone, camera or relay credentials are involved.
+All useful controls must be genuinely reachable with the Shield remote. A visible but unreachable button is a functional bug.
 
-## STANDARD control-centre behavior
+APPS is primarily a launcher: OK launches immediately using the Leanback launch intent first and Android's ordinary launch intent as fallback. Hold OK may open Android App Info. Do not interpose package-name dialogs on normal launch.
 
-STANDARD is designed around a Shield remote. All useful controls must be genuinely focusable from D-pad navigation. A visible control that cannot be reached is a functional failure, not cosmetic polish.
+TURBO maintenance controls are safe routes only: storage/free-space settings, Android manage-apps settings and restarting SHIELD TURBO itself. They are not process killers or cleaners.
 
-The APPS surface is primarily a launcher: pressing OK on an app launches it immediately using the Leanback launch intent when available, then the ordinary Android launch intent as fallback. Holding OK may open Android App Info. Do not interpose package-name dialogs on normal launch.
+SHIELD settings shortcuts are firmware-dependent. If a generic nested intent does nothing on NVIDIA Shield, prefer a known usable broader Shield/Android settings entry over a dead shortcut. v0.2.0 therefore makes DISPLAY + SOUND begin at Android main Settings, then fall back to generic display and sound settings. Real Shield behavior is authoritative.
 
-TURBO's maintenance controls are safe routes only: storage/free-space settings, Android manage-apps settings, and restarting SHIELD TURBO itself. They are not process killers or cleaners.
+## ADVANCED / ADB TURBO direction
 
-## Privilege direction
+Ryan explicitly authorised moving into advanced work after the corrected STANDARD retest. ADB TURBO is based on a one-time ADB grant, not a permanent ADB connection.
 
-STANDARD is the expected ordinary app state. ADB TURBO requires actual elevated diagnostic evidence; usage access or enabled debugging is not proof. The current app has no ADB helper/setup/grant action. A one-time grant is not a permanent shell connection, and reboot/disabling-debugging behavior must be physically verified before promises are made.
+Current ADB TURBO permission:
 
-Do not begin ADB TURBO expansion until the current STANDARD candidate is physically accepted unless Ryan explicitly changes that order.
+`android.permission.WRITE_SECURE_SETTINGS`
 
-ROOT is reported only for actual root process authority. The existence of a su executable or root-management app is not authority. Do not invoke su merely to fill in a badge.
+One-time setup command:
 
-Reuse the existing secret-backed `boop-dev` signer and verify public certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Never create a replacement key, expose secret values, copy private keys into Git, use BOOP relay credentials, or deploy to a physical device without explicit instruction.
+`adb shell pm grant com.boop.shieldturbo android.permission.WRITE_SECURE_SETTINGS`
 
-## Current Shield acceptance checklist
+The app must check that permission before enabling advanced actions. It must not invent authority from enabled debugging, usage access, a su binary or a root-management app. It must not store an ADB address, password or private key, and must not keep an ADB socket/session open merely to retain the capability.
 
-Use the current corrected STANDARD candidate recorded above.
+The first approved advanced action is Android UI animation speed. It is deliberately reversible and measurable:
+- FAST 0.5x writes 0.5 to all three Android animation scales.
+- ANIMATIONS OFF writes 0.0.
+- RESTORE 1x writes 1.0 and is the explicit rollback.
 
-1. Install/update SHIELD TURBO and confirm it opens normally.
-2. Open TURBO. After results render, D-pad to the final reading and press Down. Confirm focus lands on `FREE SPACE`.
-3. Confirm Left/Right traverses `FREE SPACE`, `MANAGE APPS`, and `RESTART TURBO`; Up returns to the diagnostic results.
-4. Activate `FREE SPACE` and `MANAGE APPS` and confirm Android opens the intended settings surfaces. Confirm `RESTART TURBO` restarts this app cleanly.
-5. Open APPS and press OK on several entries, including a system/media app if visible. Confirm the selected app launches directly and no `com.android...` package dialog appears.
-6. Hold OK on an app and confirm Android App Info opens if long-press is delivered by the Shield remote.
-7. Recheck the already-proven brightness control and confirm the STANDARD changes did not regress it.
-8. Exercise NETWORK and SHIELD shortcuts with the remote and record any firmware-specific routes that Android refuses to expose.
-9. Only after the above passes should STANDARD be treated as physically accepted and ADB TURBO become the next development phase.
+The only keys written are `window_animation_scale`, `transition_animation_scale`, and `animator_duration_scale`. Do not broaden this into CPU/GPU clocks, overclocking, process massacre, cache purges, blanket RAM cleaners or data clearing without separate evidence and approval.
 
-The CI emulator is API 30 on a handheld profile with simulated D-pad input. It proves install/launch/basic navigation and absence of an app fatal exception, but physical Shield feedback remains authoritative for TV focus behavior and NVIDIA firmware settings routes.
+`WRITE_SECURE_SETTINGS` is a protected permission normally unavailable to ordinary apps. Its manifest lint warning is intentionally suppressed only on that single declaration because the product explicitly relies on a manual ADB development grant. Do not create a global lint baseline or disable `ProtectedPermissions` project-wide.
+
+## CI and visual acceptance
+
+Ryan explicitly instructed that GitHub must not judge visuals. Physical NVIDIA Shield testing is the visual and remote-interaction authority.
+
+The SHIELD TURBO workflow must not use UI hierarchy dumps, screenshots, image comparisons, focus-label visual assertions or other appearance tests. CI may and should continue unit tests, source safety contracts, Android lint, signed release build, package/signature/archive checks and a basic install/launch/no-fatal smoke test.
+
+Do not infer visual correctness or Shield firmware navigation from emulator success.
+
+## Current v0.2.0 receipt
+
+Built source `81f448c417e3b0b122df55edc6ea6886d1bde5b2`, run `34191343078`, job `101949873574`, signed artifact `SHIELD-TURBO` ID `10042388530`, APK SHA-256 `7e5a769e68c88cf44749f7887c35e64d41369c3b76fe11a35a9473b350582636`, signer certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+Fresh machine verification: 33 Kotlin tests passed, seven source contracts passed, lint succeeded, signed build succeeded, package/signature/archive checks succeeded, and basic install/launch/no-fatal smoke succeeded. There were no visual assertions.
+
+This v0.2.0 candidate is not physically accepted yet. Ryan should verify DISPLAY + SOUND on the real Shield, confirm ADVANCED remains locked before the grant, apply the one-time ADB grant, test 0.5x/off/restore 1x, and recheck brightness/standard controls for regression.
+
+Reuse the existing secret-backed `boop-dev` signer and verify public certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Never create a replacement key, expose secret values, use BOOP relay credentials or claim physical acceptance from CI.
