@@ -3,6 +3,8 @@ package com.boop.shieldturbo.power
 import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.Settings
+import com.boop.shieldturbo.cleanstart.CleanStartPolicy
+import com.boop.shieldturbo.cleanstart.CleanStopResult
 import com.boop.shieldturbo.startup.OriginalStartupState
 import com.boop.shieldturbo.startup.StartupPolicy
 import java.io.File
@@ -52,6 +54,36 @@ class LocalBridge(private val context: Context) {
         }) throw IOException(result.output.take(1200).ifBlank { "Shield rejected the command (${result.exitCode})" })
         return result.output
     }
+
+    fun stopAndVerify(adb: AdbWire, packageName: String): CleanStopResult {
+        require(CleanStartPolicy.validPackage(packageName)) { "Invalid or protected package" }
+        val currentUser = CleanStartPolicy.parseCurrentUser(checked(adb, CleanStartPolicy.currentUserCommand()))
+            ?: throw IOException("Could not verify the current Shield user")
+        val beforeNames = CleanStartPolicy.parseProcessNames(checked(adb, CleanStartPolicy.processSnapshotCommand()))
+        val before = CleanStartPolicy.packageProcesses(packageName, beforeNames)
+        checked(adb, CleanStartPolicy.forceStopCommand(packageName))
+        val afterNames = CleanStartPolicy.parseProcessNames(checked(adb, CleanStartPolicy.processSnapshotCommand()))
+        val after = CleanStartPolicy.packageProcesses(packageName, afterNames)
+        val userState = checked(adb, CleanStartPolicy.userStateCommand(packageName, currentUser))
+        val stopped = CleanStartPolicy.parseStopped(userState)
+            ?: throw IOException("Could not verify the package stopped state")
+        val enabled = CleanStartPolicy.parseEnabled(userState)
+            ?: throw IOException("Could not verify the package enabled state")
+        return CleanStopResult(packageName, before, after, stopped, enabled).also {
+            if (!it.verified) {
+                val detail = when {
+                    it.afterProcesses.isNotEmpty() -> "processes remained: ${it.afterProcesses.joinToString()}"
+                    !it.stopped -> "Android did not retain stopped state"
+                    else -> "package became $enabled"
+                }
+                throw IOException("CLEAN START could not verify $packageName: $detail")
+            }
+        }
+    }
+
+    fun resumedPackage(adb: AdbWire): String? =
+        CleanStartPolicy.parseResumedPackage(checked(adb, CleanStartPolicy.resumedActivityCommand()))
+
     fun hasSettingsAccess() = context.checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
     fun enable(approval: () -> Unit): String = withAdb(approval) { adb ->
         checked(adb, "pm grant --user current com.boop.shieldturbo android.permission.WRITE_SECURE_SETTINGS")
