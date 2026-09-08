@@ -3,35 +3,37 @@
 Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
 
 - Standalone package: `com.boop.shieldhome`
-- Unified/AIO package: `com.boop.alpha1` (separate, untouched by this APK)
-- Version: 3 / `0.3.0-input-routing`
-- Green build head: `821369cd2e51f82922b8f7cfbc71aa3edb93fb0e`
-- Workflow: `34223973168` SUCCESS
-- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10054934429`
-- APK SHA-256: `5c38cdb2b56397cf55e7d2f889e5b5c66b5f2719f556cb7087c3eea5fe2ee3e8`
-- Artifact ZIP SHA-256: `e7ab325772bc1240eb7d38ba0cd86411d565267a8c315b773578272910355a8a`
+- Unified/AIO package: `com.boop.alpha1` (separate, untouched)
+- Version: 4 / `0.4.0-home-replacement`
+- Green build head: `2e5dcca8fd2a7c635b0c54faa4b10fb07880f6fd`
+- Workflow: `34226492186` SUCCESS
+- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10055945427`
+- APK SHA-256: `64c9c92603a481ffbc5d66df0a5826269823f6e9dbe94889a8294fdaa1d29b4f`
+- Artifact ZIP SHA-256: `303ad4f81c1e47558fcf052908a14c0c5392f661201a3097cbbe827e9f26c7ab`
 - Permanent BOOP signer reused and verified
+- 42 focused Shield HOME tests green
 
-This remains intentionally standalone for Shield testing before any later AIO merge.
+This remains a standalone Shield experiment pending later AIO merge only after explicit real-device acceptance.
 
 ## Physical evidence
 
-Ryan physically confirmed the 0.2 TV banners look good. Preserve them.
+- Android TV banner presentation physically liked; preserve.
+- 0.2 grab movement physically failed.
+- 0.3 parent-level input-routing repair physically succeeded: Ryan confirmed the grabbed favourite moved ("the booger moved :)").
+- 0.3 Back semantics are implemented but not yet explicitly recorded as physically accepted.
 
-0.2 grab movement physically failed: after long-press, pressing Right moved ordinary navigation/focus one position while the favourite/icon itself stayed put. The old card-level D-pad listener is therefore not accepted.
+## 0.4 HOME replacement
 
-Ryan locked new Back semantics: **single Back -> favourite item 1; long Back -> real Shield/Android Settings**.
+Normal-user setup now requires **no ADB**. On first launch, if BOOP is not already HOME, BOOP requests Android's own HOME role once. Manual recovery/setup controls live under `Home rows`:
 
-## 0.3 repair
+- `Make BOOP my Home` -> Android HOME-role/chooser flow.
+- `Retire Android TV Home` -> dynamically finds the competing system HOME package and opens its Android App Info so the user can press OS-provided **Disable** if available.
+- `Restore Shield Home` -> finds the stock HOME even when disabled; opens App Info for **Enable** when disabled, otherwise opens the HOME chooser.
 
-Grab input now intercepts at `ShieldHomeView.dispatchKeyEvent()` before Android focus navigation. While grabbed, Left/Right move the selected component through the row; Up/Down cannot escape; initiating centre-button repeat events are swallowed; later Select/Enter drops/persists.
+BOOP does not programmatically disable another system package and does not require root, Shizuku, hidden APIs or ADB for the consumer flow. The stock launcher stays installed as emergency recovery. Its package name is not hard-coded.
 
-Back is intercepted at `ShieldLauncherActivity.dispatchKeyEvent()`. Short release returns HOME/focus to favourite item 1 and cancels/restores an active grab. A timed long hold opens `Settings.ACTION_SETTINGS` and suppresses the short action on release.
+Default HOME remains favourites-first. Banners, working grab/reorder, Back handling, real top-right Settings, optional-row defaults and the no-ad/Shop/Discover contract are preserved.
 
-TDD evidence: `34223227200` RED on missing Back gesture controller; `34223430669` RED with 37 tests / exactly 3 expected missing input-routing methods. Implementation workflow `34223747577` passed. Final versioned workflow `34223973168` passed focused tests, signing, signed build, package/version, HOME/Leanback categories, APK integrity and artifact upload.
+LOCKED: **remove the crap, preserve Shield behavior.** Double-tap Home -> Recent Apps/task switcher, volume/CEC, system Settings, system shortcuts, app switching and animations remain physical acceptance requirements.
 
-Default HOME remains favourites-first. Favourite HOME cards preserve Android TV banners with icon fallback. Optional Play Next/app-content rows remain independently OFF by default. Ads, sponsored content, Shop and Discover have no provider. Disabled rows do not instantiate/fetch providers. Top-right Settings still opens real system Settings; launcher-only controls remain under `Home rows`.
-
-LOCKED: **remove the crap, preserve Shield behavior.** Physical acceptance must preserve double-tap Home -> Recent Apps/task switcher, single Back -> favourite item 1, long Back -> real Settings, volume/CEC, system shortcuts, app switching and system animations.
-
-0.3 is CI/signer green, **not yet physically accepted**. Ryan must confirm actual tile movement and Back behavior on the real Shield before any merge into unified.
+0.4 is CI/signer green, **physical HOME-role/retire/restore acceptance pending Ryan on a real Shield**.
