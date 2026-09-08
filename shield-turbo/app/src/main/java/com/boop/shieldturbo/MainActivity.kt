@@ -53,6 +53,9 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var analyseButton: Button
     private lateinit var accessButton: Button
+    private lateinit var freeSpaceButton: Button
+    private lateinit var manageAppsButton: Button
+    private lateinit var restartButton: Button
     private lateinit var brightness: SeekBar
     private lateinit var brightnessValue: TextView
     private lateinit var scroll: ScrollView
@@ -255,12 +258,24 @@ class MainActivity : Activity() {
         content.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
         val maintenance = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        val storage = actionButton("FREE SPACE") { safeStart(SystemRoutes.storage(this@MainActivity)) }
-        val apps = actionButton("MANAGE APPS") { safeStart(SystemRoutes.manageApps(this@MainActivity)) }
-        val restart = actionButton("RESTART TURBO") { recreate() }
-        maintenance.addView(storage, LinearLayout.LayoutParams(0, dp(54), 1f))
-        maintenance.addView(apps, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
-        maintenance.addView(restart, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
+        freeSpaceButton = actionButton("FREE SPACE") { safeStart(SystemRoutes.storage(this@MainActivity)) }.apply {
+            id = View.generateViewId()
+        }
+        manageAppsButton = actionButton("MANAGE APPS") { safeStart(SystemRoutes.manageApps(this@MainActivity)) }.apply {
+            id = View.generateViewId()
+        }
+        restartButton = actionButton("RESTART TURBO") { recreate() }.apply {
+            id = View.generateViewId()
+        }
+        freeSpaceButton.nextFocusLeftId = freeSpaceButton.id
+        freeSpaceButton.nextFocusRightId = manageAppsButton.id
+        manageAppsButton.nextFocusLeftId = freeSpaceButton.id
+        manageAppsButton.nextFocusRightId = restartButton.id
+        restartButton.nextFocusLeftId = manageAppsButton.id
+        restartButton.nextFocusRightId = restartButton.id
+        maintenance.addView(freeSpaceButton, LinearLayout.LayoutParams(0, dp(54), 1f))
+        maintenance.addView(manageAppsButton, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
+        maintenance.addView(restartButton, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
         content.addView(maintenance, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
 
         analyseButton.requestFocus()
@@ -288,20 +303,13 @@ class MainActivity : Activity() {
 
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val appButtons = apps.map { app ->
-            actionButton(app.label) {
-                details?.dismiss()
-                details = AlertDialog.Builder(this)
-                    .setTitle(app.label)
-                    .setMessage(app.packageName)
-                    .setItems(arrayOf("LAUNCH", "APP INFO")) { _, which ->
-                        if (which == 0) safeStart(AppRoutes.launch(this, app.packageName))
-                        else safeStart(AppRoutes.info(app.packageName))
-                    }
-                    .setNegativeButton(R.string.close, null)
-                    .show()
-            }.apply {
+            actionButton(app.label) { safeStart(AppRoutes.launch(this, app.packageName)) }.apply {
                 id = View.generateViewId()
-                contentDescription = "${app.label}. ${app.packageName}"
+                contentDescription = "${app.label}. Press to launch. Hold for App Info."
+                setOnLongClickListener {
+                    safeStart(AppRoutes.info(app.packageName))
+                    true
+                }
             }
         }
         appButtons.forEachIndexed { index, appButton ->
@@ -311,7 +319,7 @@ class MainActivity : Activity() {
         }
         val appScroll = ScrollView(this).apply { isFillViewport = true; addView(list) }
         content.addView(appScroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        content.addView(text("Launch or open Android's own App Info page. TURBO does not force-stop or clear other apps.", 14f, Color.LTGRAY))
+        content.addView(text("Press an app to launch it. Hold OK for Android App Info. TURBO does not force-stop or clear other apps.", 14f, Color.LTGRAY))
         appButtons.first().requestFocus()
     }
 
@@ -517,12 +525,22 @@ class MainActivity : Activity() {
         }
         cards.forEachIndexed { index, card ->
             card.nextFocusUpId = if (index == 0) analyseButton.id else cards[index - 1].id
-            card.nextFocusDownId = if (index == cards.lastIndex) card.id else cards[index + 1].id
+            card.nextFocusDownId = if (index == cards.lastIndex) freeSpaceButton.id else cards[index + 1].id
             results.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(4), 0, dp(4)) })
         }
         if (cards.isNotEmpty()) {
             analyseButton.nextFocusDownId = cards.first().id
             accessButton.nextFocusDownId = cards.first().id
+            val lastCardId = cards.last().id
+            freeSpaceButton.nextFocusUpId = lastCardId
+            manageAppsButton.nextFocusUpId = lastCardId
+            restartButton.nextFocusUpId = lastCardId
+        } else {
+            analyseButton.nextFocusDownId = freeSpaceButton.id
+            accessButton.nextFocusDownId = freeSpaceButton.id
+            freeSpaceButton.nextFocusUpId = analyseButton.id
+            manageAppsButton.nextFocusUpId = analyseButton.id
+            restartButton.nextFocusUpId = analyseButton.id
         }
         results.addView(text(getString(R.string.no_changes), 14f, Color.LTGRAY))
         val available = readings.count { it.status == ProbeStatus.AVAILABLE }
