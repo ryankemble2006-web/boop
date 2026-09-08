@@ -2,38 +2,24 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v58 natural BOOP wake
+## Current physically accepted wake candidate: v58 natural BOOP wake
 
-Physical v57 result on Ryan's powered Pixel:
+Ryan physically tested signed v58 on the powered Pixel and confirmed permanent fallback `BOOP` now works naturally without a deliberate pause. He reported that spoken slowly or quickly, BOOP accepts the wake + command and performs it.
 
-- learned custom wake names now work naturally without a deliberate pause before the command;
-- `Steve lights on` worked;
-- `Steve show diagnostics` worked;
-- voice rename to `Fred` invoked the five-sample local training flow; BOOP listened to five repeats and then `Fred lights on` worked with `Done`;
-- voice rename to `Jeff` repeated the same successful flow and `Jeff lights on` worked with `Done`;
-- permanent fallback `BOOP` still wakes, but continuous `BOOP lights on` required a pause after BOOP.
+The learned custom-name path was already physically accepted on v57:
 
-This physically accepts the v57 learned-name streaming and five-sample rename path while isolating the remaining pause to default Sherpa BOOP.
+- `Steve lights on` worked naturally.
+- `Steve show diagnostics` worked naturally.
+- spoken rename to `Fred` invoked five-sample local training; `Fred lights on` worked and BOOP said `Done`.
+- spoken rename to `Jeff` repeated the five-sample flow; `Jeff lights on` worked and BOOP said `Done`.
 
-## v58 root cause and change
+This physically accepts the natural one-breath wake boundary for both paths: custom learned names and permanent BOOP fallback.
 
-`BoopSherpaWakeSpotter` used `config.setNumTrailingBlanks(1);`, requiring one trailing blank before the default keyword trigger finalized. A pause supplied that blank; one-breath `BOOP lights on` did not.
+## v58 change
 
-v58 changes only that setting to `config.setNumTrailingBlanks(0);`. It does not change sensitivity, keyword threshold/phrases, the v57 custom matcher, five-sample training, the v56 exact 100 ms command bridge, microphone ownership, command window, power/recovery behavior, diagnostics, HA, TTS, visuals, Launcher, Shield, package or signer.
+Root cause of the remaining BOOP-only pause was Sherpa `config.setNumTrailingBlanks(1);`. v58 changes only this to `config.setNumTrailingBlanks(0);`.
 
-## TDD evidence
-
-Valid RED:
-
-- `177cb0adcf685101b6cbc77478bacb3f569d539f`
-- workflow `34252407406`
-- materialized wake-handoff suite: existing seam test PASS, new default-BOOP no-trailing-silence regression FAIL exactly because `setNumTrailingBlanks(0)` was absent.
-
-GREEN functional change:
-
-- `2f4b225998a40835d3db81595573b8af28009c06`
-- workflow `34252652849`
-- new contract, focused functional tests, signed build/package/signer/archive checks and artifact upload PASS.
+It does not alter sensitivity, keyword score/threshold/phrases, v57 custom-name matching, five-sample training, the v56 exact 100 ms command bridge, microphone ownership, command window, powered wake/recovery behavior, diagnostics, HA, TTS, visuals, Launcher, Shield, package or signer.
 
 ## v58 receipt
 
@@ -51,16 +37,26 @@ GREEN functional change:
 
 Detailed receipt: `docs/BOOP-V58-NATURAL-BOOP-WAKE-RECEIPT.md`.
 
-CI/signer green. Physical v58 acceptance pending.
+## Protected checkpoints
 
-## Required Pixel acceptance
+Current physically accepted natural-wake rollback:
 
-Install v58 over v57 and keep the Pixel powered. Without deliberate pauses test `BOOP lights on`, `BOOP lights off`, then `Jeff lights on` to confirm the learned-name path did not regress. Optionally test `BOOP show diagnostics` in one breath. Briefly leave BOOP listening around ordinary nearby speech to catch any obvious false-positive regression; wake sensitivity and threshold are unchanged.
+`checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
+
+Do not repoint it.
+
+Older wake-arm rollback remains:
+
+`checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`
+
+Do not repoint it either.
+
+## Remaining physical observation
+
+No blanket false-positive claim is recorded yet because Ryan did not explicitly report ordinary-room-chatter observation in the v58 acceptance message. If false positives later appear, investigate Sherpa confirmation timing before changing sensitivity, custom-name matching or the command bridge.
 
 ## Protected AIO state
 
-BOOP remains the permanent fallback wake name; custom names are additive. Any external power allows continuous wake; unplugged phone remains tap-to-talk. Preserve one 16 kHz microphone owner, local five-say profiles, streaming learned-name matching, the v56 exact 100 ms command bridge, silent wake handoff, silent no-match/timeout re-arm, pull-only `show diagnostics`, HA names/Home controls, locked eyes/hue/blink, headphones/puppetry, five-digit yellow hands, room isolation and Shield scaling.
-
-The exact physically proven v48 wake rollback remains `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`; do not repoint it.
+BOOP remains the permanent fallback wake name; custom names are additive. Any external power allows continuous wake; unplugged phone remains tap-to-talk. Preserve one 16 kHz microphone owner, local five-say profiles, streaming learned-name matching, default BOOP zero-trailing-blank behavior, the v56 exact 100 ms command bridge, silent wake handoff, silent no-match/timeout re-arm, pull-only `show diagnostics`, HA names/Home controls, locked eyes/hue/blink, headphones/puppetry, five-digit yellow hands, room isolation and Shield scaling.
 
 The clean Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a later merge. Ryan owns visual/device/acoustic acceptance. No automatic installs/grants or signer/package changes.
