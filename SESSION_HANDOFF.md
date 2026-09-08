@@ -1,42 +1,40 @@
 # BOOP unified handoff
 
-Updated 2026-09-08. Owner: `boop-unified`; package `com.boop.alpha1`; existing permanent signer only. Fresh main owns shared contracts. This handoff owns implementation and verification evidence.
+Updated 2026-09-08. Owner `boop-unified`, package `com.boop.alpha1`, existing permanent signer. Fresh main owns shared contracts; this handoff owns current implementation/evidence.
 
-## Current candidate
+## Current candidate: v44, build in progress
 
-This change continues from live `848a99725b6d64d4fb80d74fc466bdff807dd41e`, preserving its preceding Shield and wake-name repairs. Build and physical acceptance are PENDING at this source checkpoint. No new signed APK is claimed yet.
+Code commit `4044ee55b5a39e2a220ee897de0393b796c29a5f`, versionCode 44 / `1.1.1-unified-eyes-wake-home`. Workflow `34192698906`, job `101953848892`. At this update the non-visual integration contracts, unified materialization, SDK and Gradle setup passed; compilation/tests/signing/artifact verification are not yet claimed complete.
 
-The last delivered APK was `6cd9c67a03c639a20acde892e2d57186652e13d5`, successful run `34125882296`, artifact `10020439707`. APK SHA-256 `603e72b6f3a83eca429e90a11559454ca2d9c140eee69bff9bcd537d9a276a4e`; ZIP SHA-256 `455cd406beb111ac6d5d1d974b20bd54735a65222aa702612476929efd4ad285`. Version code 43 is reused by this lineage; distinguish candidates by exact built commit and checksum. The physically accepted rollback `e746affbb82b577cef2f1cf6e731dff186c8f881` remains protected.
+This commit is a non-forced descendant of concurrent room/iris repair `dcc7acf32acd2cf44d25e1f88fce7d388695e030`. Its 19-file improvements were preserved, not overwritten. Earlier base `848a99725b6d64d4fb80d74fc466bdff807dd41e` passed run `34190645576`, but is not the latest requested candidate. Shared main was read at `382d7b75d7db27d533ecf6079859f549397568e7`.
 
-## Latest physical evidence from Ryan
+## Included changes and implementation path
 
-- The newer cyan Shield Settings appearance is visible and liked. HA rows below Room were not selectable and belong on Home, not Settings. Home had legacy focus treatment and labels moved on focus.
-- Approved replacement is Room -> controllable devices on Home, configuration only in Settings, no Favourites, no helpers/diagnostic clutter. HA room membership must be read-only and fail-closed.
-- Pixel 7 survived Ryan's Android 17 upgrade; media control, blink and eye-colour controls still work. After choosing a spoken name, neither the custom name nor the BOOP fallback woke it. Exact dock state and acoustic cause have not been independently verified. Do not claim Android 17 compatibility or wake success from these partial observations.
-- Ryan explicitly requests iris-only colour correction in THIS build. He owns visual checks; GitHub must not run visual acceptance checks again. See BOOP_RULES.md.
+- Home owns the actionable Room picker and supported room devices. Settings is configuration-only. No Favourites or helper/diagnostic clutter. Keep stable per-device rows, fixed label padding, D-pad movement and focus retention while HA confirms actions.
+- `HaEntityCategory` handles HA's keyed compact category table, arrays and literal categories; unknown metadata fails closed. `RoomDeviceControls` admits available on/off lights, switches and fans. Local area filtering preserves HA target expansion/device-inherited membership. No area moves, entity renames or HA configuration writes.
+- `BoopIrisTint`/`BoopIrisTintMath` and `patch-unified-iris-cache.py` restrict the phone hue transform to the original iris ring, preserve unselected pixels/default original blue, and reuse a tinted bitmap/small tile. Existing animation methods stay intact. Physical whites/highlights remain Ryan's acceptance check.
+- Existing model-type-aware UNIGRAM tokenizer and custom stream creation fallback remain included. These were absent from the delivered v43 APK. Their tests/presence do not prove acoustic wake success or establish the exact cause of Ryan's reported failure.
+- NEW: Shield eyes use the same approved PNG and canonical `BoopEyeLayout`/`BoopIdleBlink` helpers as the accepted phone body. `patch-unified-shield-presentation.py` copies helpers into the generated Shield namespace and replaces its independent eye layout path. The TV corner slot frames the canonical pair uniformly; no independent eye stretching or new artwork. Existing headphones renderer and placement are untouched.
+- Shield idle blink uses the phone's 183 ms curve and 3-7 second scheduler. TV eligibility uses visibility, active display, eyes-only mode and power/animation policy, not window focus. Stop callbacks/animator on hide, display-off, mode switch or detach. Overlay stays non-focusable/non-touchable with no microphone or HA socket.
 
-## Included changes
+Run `bash scripts/materialize-unified.sh`, not an unpatched hand-copied library. The dashboard adapter invokes room-control and cached-iris integration; the final presentation adapter adds the canonical Shield eyes/blink. Python adapter syntax and exact-full-source patch anchors were checked locally. The source copy matched Git blob `039f5ac1cf3dedb4b4bd00465d0e52271546ab98`; duplicate/missing anchors fail closed. This is code wiring evidence, not visual acceptance or an Android runtime test.
 
-Existing source already contains the real UNIGRAM tokenizer repair and fallback stream creation around custom-name setup. Those were absent from the delivered APK. They remain pending acoustic verification and are not proof of the sole cause of the reported failure.
+## CI versus manual acceptance
 
-Home now has an actionable room picker and stable per-device rows. Updates do not recreate or disable the focused row while waiting for HA confirmation. Up/Down follows the actual control list; Left returns to the navigation rail. Shared cards and settings retain fixed padding and no focus scaling; visibility uses Android's descendant rectangle request. No decorative settings animation was added.
+Ryan expanded the manual-acceptance request to remove automated device tests he can perform himself. The unified workflow now has NO emulator install/launch, screenshot/golden-image test, appearance/geometry/animation judgement or aesthetic source-string guard. The older optional post-upload smoke is removed too. Do not re-enable without Ryan reversing this direction. Keep focused non-visual integration/control/wake tests, Launcher lint, compilation, package/signature/archive/security checks and immediate artifact upload. Documentation-only pushes do not rebuild or cancel this candidate.
 
-The actual HA compact category lookup is a keyed object, whereas old code attempted to read an array. `HaEntityCategory` accepts keyed objects, arrays and literal categories, and unknown category metadata fails closed. `RoomDeviceControls` admits supported on/off lights, switches and fans only, excluding helpers, sensors, hidden/config/diagnostic/unknown-category and unavailable items. Existing HA target expansion handles inherited room membership; local same-room filtering remains. No HA membership changes or rename/config writes are introduced.
+## Latest physical evidence
 
-`BoopIrisTint` and `BoopIrisTintMath` constrain tinting to the original blue/cyan iris ring and preserve original pixels elsewhere. The original atlas is retained, default blue returns the original bitmap, and a single reusable tinted bitmap plus a small pixel tile avoids full-bitmap allocation on every slider event. The existing materialized hue setter is replaced by `patch-unified-iris-cache.py`; all animation methods stay unchanged. Local checks are numeric fixtures, not visual acceptance.
+Ryan tested delivered `6cd9c67`: new cyan Shield Settings was visible and liked, but device rows belonged on Home and were unreachable; Home had old focus styling and shifted labels. His Pixel 7 survived Android 17 with media/blink/colour controls working, but neither custom nor BOOP wake worked after rename. Dock state and device logs were not provided. Do not claim full Android 17 compatibility, a proven stream exception or a physical fix.
 
-`patch-unified-shield-dashboard.py` invokes the small room-control adapters for both source and copied library trees, and the cached-iris adapter for Wall. These are materialization integration checks, not aesthetic tests.
+Required on v44: every Home/Settings row, room selection and device actions; stable focus/scroll; exact eyes and blink; iris-only colour; permission/access-screen flow; typed/verbal rename/reset and BOOP fallback while foreground and wirelessly docked. Undocked is deliberately tap-to-talk. Mic release/heat/dock, acoustic accuracy, appearance and installation remain manual. The previously reported Enable/access-window behaviour has not been physically resolved here.
 
-## Verification at this checkpoint
+## Rollback and provenance
 
-Python adapter syntax and workflow YAML parsing passed locally. Four synthetic colour/ring fixture methods passed with a plain-JDK assertion harness, not an Android runtime. The preceding run `34190471954` failed two functional dashboard tests after Favourites filtering was removed; `848a997` restored supported-control filtering. Do not omit real functional failures as 'visual tests'.
+Last delivered v43: `6cd9c67a03c639a20acde892e2d57186652e13d5`, run `34125882296`, artifact `10020439707`, APK SHA-256 `603e72b6f3a83eca429e90a11559454ca2d9c140eee69bff9bcd537d9a276a4e`, ZIP SHA-256 `455cd406beb111ac6d5d1d974b20bd54735a65222aa702612476929efd4ad285`. It is historical test evidence, not an accepted wake-name release.
 
-The unified workflow now runs focused non-visual integration/control/wake tests, Launcher lint, assembly, package/signature/archive checks, and uploads the signed APK immediately. Non-visual process/entry-activity smoke runs after upload. No screenshot, golden-image, artwork-appearance, geometry or animation-judging gate runs. Legacy visual tests remain historical source but are not selected by this workflow. Raw emulator logs are not included in the downloadable artifact.
+Last physically accepted unified rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. Preserve protected branches/tags. Original detailed history lives in `docs/history/unified-v43/`, `unified/SOURCE_HEADS.md` and `docs/BOOP-UNIFIED-WAKE-NAME-RECHECK.md`.
 
-Next: inspect this exact CI result, fix any functional build failure, verify artifact digest/built commit/signer, and deliver the APK. Then record exact result here and reconcile status/memory/context. Physical tests remain Ryan's: all Shield D-pad rows/room selection/actions, renamed and BOOP fallback wake while wirelessly docked, undocked tap mode, and iris-only colour appearance.
+No microphone policy, permissions, Android target, application/HA/pairing/signing identity or launcher behaviour was changed in v44. No user device was installed or granted access. The Windows checkout/receipt paths are not mounted here; connected GitHub publication does not imply Windows synchronization. No unattended background monitoring is established.
 
-## Preserved boundaries
-
-No app/package/HA/pairing/signing identity, microphone policy, Android target, permissions, installation, launcher behaviour or unrelated animation is changed. Undocked Wall is intentionally tap-to-talk; continuous wake is a foreground wireless-dock feature. Do not restore always-on handheld microphone capture as a workaround. Original detailed history remains in `docs/history/unified-v43/` and `docs/BOOP-UNIFIED-WAKE-NAME-RECHECK.md`.
-
-The Windows checkout was not mounted in this session. Connected GitHub was checked live; no laptop checkout synchronization or user-device deployment is claimed. No unattended background polling is established.
+Next safe step: inspect run `34192698906`, fix only evidenced build failures, verify downloaded artifact/built-commit/signature/checksum and deliver v44. Then record the exact final receipt here and in status/memory. Do not substitute an older APK.

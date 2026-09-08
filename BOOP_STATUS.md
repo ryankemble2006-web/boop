@@ -1,13 +1,15 @@
 # BOOP unified status
 
-Updated 2026-09-08. Canonical app branch `boop-unified`; package and permanent signer unchanged.
+Updated 2026-09-08. Canonical branch `boop-unified`; package/permanent signer unchanged.
 
-Current source candidate: based on `848a99725b6d64d4fb80d74fc466bdff807dd41e`, pending fresh CI and signed artifact. It includes the accumulated wake-name repair, modern Room -> Devices Home, configuration-only Settings, Favourites removal, robust HA category filtering, stable D-pad focus, and cached iris-only hue.
+Current code `4044ee55b5a39e2a220ee897de0393b796c29a5f`, v44 / `1.1.1-unified-eyes-wake-home`. Run `34192698906` is in progress. Initial non-visual contracts and materialization passed. No finished APK or physical acceptance is claimed yet.
 
-Last delivered artifact: `6cd9c67a03c639a20acde892e2d57186652e13d5`, run `34125882296`, artifact `10020439707`. It is not an accepted wake-name release. Ryan reports failed custom and fallback waking after rename, but continuing media/blink/colour functionality after his Android 17 upgrade. Shield layout/control defects from that candidate are the reason for this pass.
+Includes accumulated wake-model/fallback repairs, modern Room -> Devices Home, configuration-only Settings, Favourites removal, robust HA category filtering, stable D-pad focus, cached iris-only hue, and the NEW shared canonical phone eye geometry/blink on Shield. Concurrent `dcc7acf` room/iris work was preserved as parent.
 
-Local checkpoint: adapter Python syntax, workflow YAML parse and four synthetic colour fixture methods passed. Full Android/CI and physical-device acceptance remain pending for this candidate. Earlier dashboard functional test failures are not visual failures and must not be skipped to make a build green.
+The unified delivery workflow has no visual, aesthetic-source, emulator launch/install or real-device acceptance tests. Focused functional tests, compilation, Launcher lint, signer/package/archive checks remain. Documentation-only updates do not trigger another APK.
 
-CI policy: no automated visual acceptance. Focused functional tests and signer/package/archive verification remain. Upload signed test APK before the slower non-visual launch smoke. Ryan performs appearance/real-device acceptance. Rule is durable in BOOP_RULES.md.
+Local shared-eye adapter syntax and exact-source patch anchors passed; Android compilation/tests/signing require the current CI result. Visual eye/iris/blink, focus/room controls, permission screens and acoustic wake need Ryan's hardware tests.
 
-Protected rollback: `e746affbb82b577cef2f1cf6e731dff186c8f881`. No user-device install, grant, reset, signing change or Windows synchronization performed. See SESSION_HANDOFF.md for exact evidence and next step.
+Last delivered `6cd9c67`, run `34125882296`, artifact `10020439707`, is not an accepted wake-name release. Pixel 7's Android 17 media/blink/colour checks worked by Ryan's report; custom and BOOP wake failed after rename, dock state unknown. Test wake while foreground and wirelessly charging. Handheld is intentionally tap-to-talk.
+
+Protected physical rollback: `e746affbb82b577cef2f1cf6e731dff186c8f881`. No automatic install, grant, target/signing change or Windows sync. See `SESSION_HANDOFF.md` for precise provenance and next safe step.
