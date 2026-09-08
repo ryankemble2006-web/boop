@@ -36,6 +36,14 @@
     <string name="recapture_optimized">RECAPTURE OPTIMIZED</string>
     <string name="processor_trace_report_title">SHIELD TURBO • PROCESSOR TRACE</string>
     <string name="read_only_back_close">READ-ONLY • BACK TO CLOSE</string>
+    <string name="processor_actuator_proof">PROVE NVIDIA MAX SWITCH</string>
+    <string name="processor_actuator_title">NVIDIA MAX SWITCH PROOF</string>
+    <string name="processor_actuator_prompt">Set SHIELD Processor mode to Optimized first. This one-shot test briefly requests Max performance, verifies NVIDIA’s downstream CPU/GPU/FRT state, then restores Optimized. It writes only nv_power_mode and does not leave TURBO enabled.</string>
+    <string name="processor_actuator_run">RUN PROOF</string>
+    <string name="processor_actuator_busy">PROVING SWITCH…</string>
+    <string name="processor_actuator_failed">The actuator proof could not finish. Check SHIELD Processor mode manually and set it to Optimized before continuing.</string>
+    <string name="processor_actuator_report_title">SHIELD TURBO • NVIDIA ACTUATOR PROOF</string>
+    <string name="processor_actuator_report_subtitle">ONE-SHOT • RESTORE CHECKED • BACK TO CLOSE</string>
     <string name="brightness_title">PICTURE BRIGHTNESS</string>
     <string name="brightness_help">Remote left/right • 100% leaves the picture untouched</string>
     <string name="overlay_needed">To dim other Shield apps, allow SHIELD TURBO to display over other apps. 100% needs no overlay.</string>
