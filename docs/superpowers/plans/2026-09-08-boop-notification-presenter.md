@@ -4,42 +4,42 @@
 
 **Goal:** Build BOOP's opt-in phone-wide notification presenter so selected app/channel notifications can wake the display, interrupt with BOOP, group bursts, open the original target, and leave Android's real notification state intact except for normal successful-tap auto-cancel semantics.
 
-**Architecture:** Keep notification policy as pure Java domain logic in `source/`, with Android adapters for Notification Listener intake, permission/setup, overlays, lock-screen Activity, inbox, sound/vibration and settings. The listener learns notification channels from `NotificationListenerService.Ranking.getChannel()` rather than trying to enumerate or modify arbitrary third-party channels; message content is read only after the user's package+channel allowlist passes. Presentation uses the current reconciled BOOP face renderer plus the exact approved five-digit hand asset at runtime, never a baked/generated mascot.
+**Architecture:** Keep notification policy as pure Java domain logic in `source/`, with Android adapters for Notification Listener intake, onboarding/settings, lock-screen Activity, overlay, inbox, sound/vibration and the existing Wall. The listener learns third-party channels from `NotificationListenerService.Ranking.getChannel()` and reads rich notification content only after the user's master + package + channel allowlist passes. Presentation uses the current reconciled BOOP face renderer plus the exact approved notification-hand binary as separate runtime layers, never a newly generated or baked mascot.
 
-**Tech Stack:** Java 17, Android SDK 36, minSdk 29, Android framework Views, `NotificationListenerService`, `WindowManager.TYPE_APPLICATION_OVERLAY`, `Activity.setShowWhenLocked`, `Activity.setTurnScreenOn`, `PendingIntent`, `LauncherApps`, `SharedPreferences`, `AudioTrack`, `VibrationEffect`, JUnit 4, Python 3.12 structural tests, Gradle 9.6, existing permanent BOOP signing workflow.
+**Tech Stack:** Java 17, Android SDK 36, minSdk 29, framework Views, `NotificationListenerService`, `WindowManager.TYPE_APPLICATION_OVERLAY`, `Activity.setShowWhenLocked`, `Activity.setTurnScreenOn`, `PendingIntent`, `LauncherApps`, `SharedPreferences`, `AudioTrack`, `VibrationEffect`, JUnit 4, Python 3.12 structural/integrity tests, Gradle 9.6 and the existing permanent BOOP signing workflow.
 
 **Spec:** `docs/superpowers/specs/2026-09-08-boop-notification-presenter-design.md`
 
 ## Global Constraints
 
 - Canonical app branch is `boop-unified`; package remains `com.boop.alpha1`; permanent signer remains unchanged.
-- Do not start notification production-code commits until the current procedural-eye/sleep/hue work has been reconciled into canonical `boop-unified` and Ryan has physically accepted the resulting eye/sleep/hue state.
-- Phone modes only for this feature. `BoopDeviceProfile.Mode.SHIELD` must not initialize, onboard, listen for, configure, or present phone notifications.
-- Notification presentation is default-deny. `masterEnabled && appEnabled && channelEnabled` is required before BOOP may read rich notification content or present it.
-- Initial presentation timeout is 8,000 ms; user may set 3,000-30,000 ms.
-- Initial burst window is 4,000 ms. A notification absorbed by an already-visible presentation updates that presentation without replaying the cue.
-- Locked or screen-off presentation exposes app identity/icon and count only. No sender, title, message body, account detail, contact photo or preview appears while locked.
-- Swiping or timing out BOOP never cancels the Android notification.
-- Successful tap sends the original `PendingIntent`; if the source notification is `FLAG_AUTO_CANCEL`, request listener cancellation only after the send succeeds.
-- BOOP stores package/channel choices, timeout and minimal dedupe/channel metadata only. No durable title/body/sender/contact/message archive and no cloud upload.
-- BOOP must not call `NotificationListenerService.getNotificationChannels(pkg,user)` or `updateNotificationChannel(pkg,user,channel)` for arbitrary apps. Ordinary notification listeners do not own that authority.
-- Channel/category inventory is learned from `Ranking.getChannel()` on active/new notifications. An unseen channel is not BOOP-presented until the user later enables that observed channel.
-- User-silencing is explicit: BOOP opens Android's channel settings with `Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS`; it never silently changes third-party channel sound/vibration.
-- BOOP's replacement cue/vibration may play only when the selected channel is observed as having both native sound and native vibration disabled. Otherwise visual presentation may occur but BOOP suppresses its own cue to avoid double alerts.
-- First-run setup asks for Notification Access and Display over other apps. Declining either remains non-blocking and never disables normal BOOP.
-- Do not use root, device-admin, accessibility automation, secure-setting writes, alarm/call full-screen-intent abuse, keyguard bypass, `QUERY_ALL_PACKAGES`, or a new foreground service merely to make notification presentation work.
-- Preserve exact approved BOOP eyes, user iris hue, blink behavior, current reconciled procedural-eye/sleep renderer, headphones/puppetry, HA behavior, wake architecture, Launcher and Shield behavior.
-- Notification hands use the exact lock-screen reference binary from `animation-freddie-mercury:boop-yellow-hands-approved.png`, SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`, in a notification-specific asset path. Do not overwrite the older general hand-master record/hash.
-- Automated checks are functional/structural/integrity only. No screenshots, golden images, emulator appearance grading, aesthetic source-string tests or CI claims that BOOP looks/sounds good.
+- Do not begin notification production-code commits until the current procedural-eye/sleep/hue work is reconciled into canonical `boop-unified` and Ryan physically accepts that reconciled state.
+- Phone modes only. `BoopDeviceProfile.Mode.SHIELD` must not initialize, onboard, configure or present phone notifications.
+- Default deny is absolute: `masterEnabled && appEnabled && channelEnabled` is required before BOOP may read rich content or present a notification.
+- Timeout defaults to 8,000 ms and is user-settable from 3,000 to 30,000 ms.
+- Burst window is 4,000 ms. A second notification within that window turns the visible single notification into a bundle. Once a bundle exists, additional allowed notifications join it without replaying the cue until that presentation is dismissed/times out.
+- Locked or screen-off UI exposes app identity/icon and aggregate count only. No sender, title, body, account detail, contact photo or preview while locked.
+- Swipe or timeout never cancels the Android notification.
+- Successful tap sends the original `PendingIntent`; `FLAG_AUTO_CANCEL` is mirrored only after a successful send.
+- Persist package/channel choices, timeout, onboarding state and minimal channel/dedupe metadata only. Never persist notification title/body/sender/contact/message history and never upload notification content.
+- Do not call `NotificationListenerService.getNotificationChannels(pkg,user)` or `updateNotificationChannel(pkg,user,channel)` for arbitrary third-party apps. BOOP is an ordinary notification listener, not Notification Assistant/device-association authority.
+- Learn channel/category inventory from `Ranking.getChannel()` on active/new notifications. An unseen channel remains ineligible until BOOP observes it and the user explicitly enables it.
+- Open Android channel settings with `Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS`. BOOP never silently changes another app's channel sound/vibration.
+- Play BOOP's own cue/vibration only when the selected observed channel is known to have native sound and vibration both disabled. If not, visual BOOP presentation may occur but his replacement cue is suppressed to avoid double alerts.
+- First-run setup asks for Notification Access and Display over other apps. Declining either remains non-blocking. It never silently enables the master switch or an app/channel.
+- Do not add root, device admin, accessibility automation, secure-setting writes, alarm/call full-screen-intent abuse, keyguard bypass, `QUERY_ALL_PACKAGES`, or a new foreground service for this feature.
+- Preserve the approved eyes, saved iris hue, blink, current reconciled procedural-eye/sleep renderer, wake architecture, HA behavior, Launcher and Shield behavior.
+- Notification hands must be exact bytes from `animation-freddie-mercury:boop-yellow-hands-approved.png`, SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`, stored under a notification-specific asset path. Do not overwrite the older general hand-master history/hash.
+- Automated checks are functional, structural and asset-identity only. No screenshot/golden-image/emulator appearance/audio-quality acceptance in CI.
 - Ryan owns real-device visual, lock-screen, interruption and acoustic acceptance.
 
 ---
 
-## Hard Gate 0: Reconcile the current eye/sleep work before notification code
+## Hard Gate 0: Reconcile eye/sleep work before notification implementation
 
-This is a preflight gate, not a notification implementation task.
+This is a preflight gate, not a production-code task.
 
-- [ ] **Step 1: Fetch live heads without touching another task's checkout**
+- [ ] **Step 1: Fetch live heads without disturbing another task**
 
 ```bash
 git fetch origin main boop-unified boop-unified-v63-fast-eyes animation-freddie-mercury --tags
@@ -48,52 +48,51 @@ git rev-parse origin/boop-unified
 git rev-parse origin/boop-unified-v63-fast-eyes
 ```
 
-Expected before notification implementation: `origin/boop-unified` is the live canonical AIO branch and contains the user-approved reconciled procedural-eye/sleep/hue work, not merely the older v62 canonical state.
-
-- [ ] **Step 2: Read the canonical handoff/status and verify physical acceptance is explicit**
+- [ ] **Step 2: Confirm canonical docs explicitly record Ryan's accepted reconciled eye/sleep/hue state**
 
 ```bash
 sed -n '1,240p' SESSION_HANDOFF.md
 sed -n '1,240p' BOOP_STATUS.md
-sed -n '1,260p' BOOP_UNIFIED_MEMORY.md
+sed -n '1,280p' BOOP_UNIFIED_MEMORY.md
 ```
 
-If those files still describe sleep/hue as pending, experimental, WIP or physically unaccepted, stop. Finish and physically accept that track first, update canonical documentation, then resume this plan from the new live canonical head.
+If sleep/hue remains described as experimental, WIP, pending or physically unaccepted, stop here. Finish that track, promote only the accepted result to canonical, update its handoff/status/memory, then resume this plan from the new live `boop-unified` head.
 
-- [ ] **Step 3: Verify exact visual assets**
+- [ ] **Step 3: Verify exact visual sources**
 
 ```bash
 sha256sum unified/assets/boop-eyes/boopApprovedEyes.png
 git show origin/animation-freddie-mercury:boop-yellow-hands-approved.png | sha256sum
 ```
 
-Expected hashes:
+Expected:
 
 ```text
 ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22  unified/assets/boop-eyes/boopApprovedEyes.png
 26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1  -
 ```
 
-- [ ] **Step 4: Create/use an isolated execution worktree from the newly reconciled canonical head**
+- [ ] **Step 4: Use `superpowers:using-git-worktrees` to create an isolated execution worktree from the accepted live canonical head**
 
-Use `superpowers:using-git-worktrees` at execution time. Do not switch/reset a checkout owned by another running BOOP task.
+Never reset, switch or reuse another running task's checkout.
 
 ---
 
 ## File Map
 
-**Create, notification domain/config:**
-- `source/BoopNotificationChannelInfo.java` - observed channel identity/effect metadata and stable encoding.
-- `source/BoopNotificationSettingsState.java` - immutable master/app/channel/timeout state.
-- `source/BoopNotificationSettingsCodec.java` - separator-safe package/channel keys and metadata encoding.
-- `source/BoopNotificationSettingsStore.java` - `SharedPreferences` adapter for config and observed-channel metadata only.
-- `source/BoopNotificationPolicy.java` - default-deny allow decision.
-- `source/BoopNotificationIntakePolicy.java` - decides whether listener may read rich notification content.
-- `source/BoopNotificationEnvelope.java` - transient rich notification domain object; no `PendingIntent`.
-- `source/BoopNotificationPresentation.java` - locked/unlocked presentation model and redaction.
-- `source/BoopNotificationCoordinator.java` - dedupe, active bundle, burst and rebuild state machine.
+**Create, domain/config:**
+- `source/BoopNotificationChannelInfo.java`
+- `source/BoopNotificationSettingsState.java`
+- `source/BoopNotificationSettingsCodec.java`
+- `source/BoopNotificationSettingsStore.java`
+- `source/BoopNotificationPolicy.java`
+- `source/BoopNotificationIntakePolicy.java`
+- `source/BoopNotificationSurface.java`
+- `source/BoopNotificationEnvelope.java`
+- `source/BoopNotificationPresentation.java`
+- `source/BoopNotificationCoordinator.java`
 
-**Create, Android runtime/platform:**
+**Create, Android runtime/UI:**
 - `source/BoopNotificationRuntime.java`
 - `source/BoopNotificationListenerService.java`
 - `source/BoopNotificationPermissionState.java`
@@ -104,7 +103,6 @@ Use `superpowers:using-git-worktrees` at execution time. Do not switch/reset a c
 - `source/BoopNotificationAppCatalogModel.java`
 - `source/BoopNotificationAppCatalog.java`
 - `source/BoopNotificationSettingsActivity.java`
-- `source/BoopNotificationSurface.java`
 - `source/BoopNotificationSurfaceSelector.java`
 - `source/BoopNotificationHost.java`
 - `source/BoopNotificationInPlaceController.java`
@@ -119,15 +117,13 @@ Use `superpowers:using-git-worktrees` at execution time. Do not switch/reset a c
 - `source/BoopNotificationCueRenderer.java`
 - `source/BoopNotificationCue.java`
 
-**Create, assets/materialization/contracts:**
+**Create, assets/materialization/tests:**
 - `unified/assets/boop-notifications/README.md`
 - `unified/assets/boop-notifications/boop-yellow-hands-approved.png`
 - `scripts/materialize-boop-notification-assets.py`
 - `scripts/patch-unified-notifications.py`
 - `tests/test_unified_notification_manifest_contract.py`
 - `tests/test_unified_notification_asset_integrity.py`
-
-**Create, JUnit tests:**
 - `source-test/BoopNotificationSettingsCodecTest.java`
 - `source-test/BoopNotificationPolicyTest.java`
 - `source-test/BoopNotificationIntakePolicyTest.java`
@@ -147,12 +143,12 @@ Use `superpowers:using-git-worktrees` at execution time. Do not switch/reset a c
 - `unified/UnifiedEntryActivity.java`
 - `scripts/materialize-unified.sh`
 - `.github/workflows/build-boop-unified.yml`
-- `unified/app-build.gradle` only for the final version bump after implementation passes.
-- `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` after a signed candidate exists.
+- `unified/app-build.gradle` only at release-candidate version bump.
+- `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` after an exact signed candidate exists.
 
 ---
 
-### Task 1: Build default-deny notification settings and observed-channel metadata
+### Task 1: Default-deny settings, channel metadata and privacy intake gate
 
 **Files:**
 - Create: `source/BoopNotificationChannelInfo.java`
@@ -166,17 +162,17 @@ Use `superpowers:using-git-worktrees` at execution time. Do not switch/reset a c
 - Test: `source-test/BoopNotificationIntakePolicyTest.java`
 
 **Interfaces:**
+- `BoopNotificationChannelInfo(String packageName, String channelId, String channelName, boolean effectsKnown, boolean nativeSoundEnabled, boolean nativeVibrationEnabled, long lastSeenMs)`.
+- `boolean nativeEffectsSilent()` returns `effectsKnown && !nativeSoundEnabled && !nativeVibrationEnabled`.
+- `String encode()` / `static BoopNotificationChannelInfo decode(String encoded)` use URL-safe Base64 without padding for arbitrary package/channel/name text.
 - `BoopNotificationSettingsState(boolean masterEnabled, long timeoutMs, Set<String> enabledApps, Set<String> enabledChannelKeys)`.
-- `boolean BoopNotificationSettingsState.isAppEnabled(String packageName)`.
-- `boolean BoopNotificationSettingsState.isChannelEnabled(String packageName, String channelId)`.
-- `long BoopNotificationSettingsState.timeoutMs()` clamped to 3,000-30,000; default store value 8,000.
+- `static BoopNotificationSettingsState defaults()` is master OFF, timeout 8,000 ms, empty sets.
+- `boolean isAppEnabled(String packageName)` / `boolean isChannelEnabled(String packageName, String channelId)`.
 - `String BoopNotificationSettingsCodec.channelKey(String packageName, String channelId)`.
-- `String BoopNotificationChannelInfo.encode()` and `static BoopNotificationChannelInfo decode(String encoded)` use URL-safe Base64 without padding for arbitrary Unicode names/IDs.
-- `boolean BoopNotificationChannelInfo.nativeEffectsSilent()` is true only when effect state is known and both sound and vibration are off.
-- `boolean BoopNotificationPolicy.allows(state, packageName, channelId)` requires master+app+channel.
-- `BoopNotificationIntakePolicy.Mode decide(state, packageName, channelId)` returns `OBSERVE_CHANNEL_ONLY` or `READ_RICH_CONTENT`.
+- `boolean BoopNotificationPolicy.allows(BoopNotificationSettingsState state, String packageName, String channelId)`.
+- `BoopNotificationIntakePolicy.Mode decide(BoopNotificationSettingsState state, String packageName, String channelId)` returns `OBSERVE_CHANNEL_ONLY` or `READ_RICH_CONTENT`.
 
-- [ ] **Step 1: Write failing codec/policy/privacy tests**
+- [ ] **Step 1: Write failing tests**
 
 ```java
 @Test public void defaultStateDeniesEverything() {
@@ -185,20 +181,19 @@ Use `superpowers:using-git-worktrees` at execution time. Do not switch/reset a c
     assertEquals(8000L, state.timeoutMs());
 }
 
-@Test public void requiresMasterAppAndChannel() {
+@Test public void masterAppAndChannelAreAllRequired() {
     Set<String> apps = Set.of("com.chat.app");
     Set<String> channels = Set.of(BoopNotificationSettingsCodec.channelKey("com.chat.app", "messages"));
-    BoopNotificationSettingsState off = new BoopNotificationSettingsState(false, 8000L, apps, channels);
-    BoopNotificationSettingsState on = new BoopNotificationSettingsState(true, 8000L, apps, channels);
-    assertFalse(BoopNotificationPolicy.allows(off, "com.chat.app", "messages"));
-    assertTrue(BoopNotificationPolicy.allows(on, "com.chat.app", "messages"));
-    assertFalse(BoopNotificationPolicy.allows(on, "com.chat.app", "promotions"));
+    assertFalse(BoopNotificationPolicy.allows(
+        new BoopNotificationSettingsState(false, 8000L, apps, channels), "com.chat.app", "messages"));
+    assertTrue(BoopNotificationPolicy.allows(
+        new BoopNotificationSettingsState(true, 8000L, apps, channels), "com.chat.app", "messages"));
 }
 
-@Test public void deniedChannelDoesNotPermitRichContentRead() {
-    BoopNotificationSettingsState state = BoopNotificationSettingsState.defaults();
+@Test public void deniedChannelCannotReadRichContent() {
     assertEquals(BoopNotificationIntakePolicy.Mode.OBSERVE_CHANNEL_ONLY,
-        BoopNotificationIntakePolicy.decide(state, "com.chat.app", "messages"));
+        BoopNotificationIntakePolicy.decide(BoopNotificationSettingsState.defaults(),
+            "com.chat.app", "messages"));
 }
 
 @Test public void channelMetadataRoundTripsUnicodeAndSeparators() {
@@ -208,7 +203,7 @@ Use `superpowers:using-git-worktrees` at execution time. Do not switch/reset a c
 }
 ```
 
-- [ ] **Step 2: Run the focused tests and verify RED**
+- [ ] **Step 2: Run RED**
 
 ```bash
 bash scripts/materialize-unified.sh
@@ -218,11 +213,11 @@ gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
   --tests '*BoopNotificationIntakePolicyTest' --stacktrace
 ```
 
-Expected: compilation/test failure because the new notification settings types do not exist yet.
+Expected: compile/test failure because the types do not exist.
 
-- [ ] **Step 3: Implement the minimal settings model and policy**
+- [ ] **Step 3: Implement the minimal settings model/store**
 
-Use these constants and decisions exactly:
+Use constants:
 
 ```java
 static final long DEFAULT_TIMEOUT_MS = 8_000L;
@@ -230,33 +225,38 @@ static final long MIN_TIMEOUT_MS = 3_000L;
 static final long MAX_TIMEOUT_MS = 30_000L;
 ```
 
+Policy is exactly:
+
 ```java
-static boolean allows(BoopNotificationSettingsState state, String packageName, String channelId) {
-    return state != null
-            && state.masterEnabled()
-            && state.isAppEnabled(packageName)
-            && state.isChannelEnabled(packageName, channelId);
-}
+return state != null
+        && state.masterEnabled()
+        && state.isAppEnabled(packageName)
+        && state.isChannelEnabled(packageName, channelId);
 ```
 
-`BoopNotificationSettingsStore` uses one preferences file named `boop_notifications` with keys `master_enabled`, `timeout_ms`, `enabled_apps`, `enabled_channels`, and `observed_channels`. `observed_channels` contains only encoded `BoopNotificationChannelInfo` metadata. It must never contain title/body/sender/contact fields.
+`BoopNotificationSettingsStore` uses preferences file `boop_notifications` and only these data keys: `master_enabled`, `timeout_ms`, `enabled_apps`, `enabled_channels`, `observed_channels`. `observed_channels` contains encoded `BoopNotificationChannelInfo` only.
 
-- [ ] **Step 4: Re-run focused tests**
+- [ ] **Step 4: Run GREEN**
 
-Run the Step 2 command again. Expected: PASS.
+Repeat Step 2. Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add source/BoopNotification*.java source-test/BoopNotification*Test.java
+git add source/BoopNotificationChannelInfo.java source/BoopNotificationSettingsState.java \
+  source/BoopNotificationSettingsCodec.java source/BoopNotificationSettingsStore.java \
+  source/BoopNotificationPolicy.java source/BoopNotificationIntakePolicy.java \
+  source-test/BoopNotificationSettingsCodecTest.java source-test/BoopNotificationPolicyTest.java \
+  source-test/BoopNotificationIntakePolicyTest.java
 git commit -m "feat(unified): add notification opt-in policy"
 ```
 
 ---
 
-### Task 2: Build transient presentation, redaction, dedupe and bundle state
+### Task 2: Transient presentation, lock redaction, dedupe and burst bundling
 
 **Files:**
+- Create: `source/BoopNotificationSurface.java`
 - Create: `source/BoopNotificationEnvelope.java`
 - Create: `source/BoopNotificationPresentation.java`
 - Create: `source/BoopNotificationCoordinator.java`
@@ -264,18 +264,18 @@ git commit -m "feat(unified): add notification opt-in policy"
 - Test: `source-test/BoopNotificationCoordinatorTest.java`
 
 **Interfaces:**
+- `enum BoopNotificationSurface { LOCKED, IN_PLACE, OVERLAY }`.
 - `BoopNotificationEnvelope` fields: `key`, `packageName`, `appLabel`, `channelId`, `channelName`, `title`, `text`, `postTimeMs`, `autoCancel`.
 - `BoopNotificationPresentation.from(List<BoopNotificationEnvelope> bundle, BoopNotificationSurface surface, boolean locked)`.
-- Locked `Card` objects retain key/package/appLabel but force `title == null` and `text == null`.
-- `BoopNotificationCoordinator(long burstWindowMs)` with production value 4,000 ms.
+- Locked cards retain `key`, `packageName`, `appLabel`, but set title/text to `null`.
+- `BoopNotificationCoordinator(long burstWindowMs)` production value 4,000 ms.
 - `Decision onPosted(BoopNotificationEnvelope envelope, long nowMs, BoopNotificationSettingsState settings)`.
-- `void rebuild(Collection<BoopNotificationEnvelope> active, BoopNotificationSettingsState settings)` seeds active inbox state but never creates a visible presentation or cue.
-- `void onRemoved(String key)`.
-- `void onPresentationDismissed()` clears the visible bundle but not Android-active inbox entries.
-- `List<BoopNotificationEnvelope> activeNotifications()` and `visibleBundle()` return immutable snapshots.
-- `Decision.playCue()` is true only for a brand-new visible presentation, false for duplicate/update/absorbed bundle members.
+- `void rebuild(Collection<BoopNotificationEnvelope> active, BoopNotificationSettingsState settings)` populates active inbox only, never visible presentation/cue.
+- `void onRemoved(String key)`; `void onPresentationDismissed()`.
+- `List<BoopNotificationEnvelope> activeNotifications()` / `visibleBundle()` immutable snapshots.
+- `Decision.kind()` is `IGNORE`, `PRESENT`, or `UPDATE`; `Decision.playCue()` is true only for a newly started single presentation.
 
-- [ ] **Step 1: Write failing redaction/grouping tests**
+- [ ] **Step 1: Write failing tests**
 
 ```java
 @Test public void lockedPresentationRemovesRichText() {
@@ -284,22 +284,31 @@ git commit -m "feat(unified): add notification opt-in policy"
         List.of(n), BoopNotificationSurface.LOCKED, true);
     assertNull(p.cards().get(0).title());
     assertNull(p.cards().get(0).text());
-    assertEquals("com.chat", p.cards().get(0).packageName());
 }
 
-@Test public void secondNotificationJoinsVisibleBundleWithoutSecondCue() {
+@Test public void secondWithinFourSecondsCreatesBundleWithoutSecondCue() {
     BoopNotificationCoordinator c = new BoopNotificationCoordinator(4000L);
     BoopNotificationSettingsState s = allowed("com.chat", "messages");
-    BoopNotificationCoordinator.Decision first = c.onPosted(fixture("k1", "com.chat", "messages", "A", "1"), 1000L, s);
-    BoopNotificationCoordinator.Decision second = c.onPosted(fixture("k2", "com.chat", "messages", "B", "2"), 2200L, s);
-    assertEquals(BoopNotificationCoordinator.Kind.PRESENT, first.kind());
-    assertTrue(first.playCue());
+    assertTrue(c.onPosted(fixture("k1", "com.chat", "messages", "A", "1"), 1000L, s).playCue());
+    BoopNotificationCoordinator.Decision second =
+        c.onPosted(fixture("k2", "com.chat", "messages", "B", "2"), 2200L, s);
     assertEquals(BoopNotificationCoordinator.Kind.UPDATE, second.kind());
     assertFalse(second.playCue());
     assertEquals(2, second.bundle().size());
 }
 
-@Test public void rebuildNeverInterruptsOrPlaysCue() {
+@Test public void separateLateSecondNotificationStartsFreshSingle() {
+    BoopNotificationCoordinator c = new BoopNotificationCoordinator(4000L);
+    BoopNotificationSettingsState s = allowed("com.chat", "messages");
+    c.onPosted(fixture("k1", "com.chat", "messages", "A", "1"), 1000L, s);
+    BoopNotificationCoordinator.Decision second =
+        c.onPosted(fixture("k2", "com.chat", "messages", "B", "2"), 6500L, s);
+    assertEquals(BoopNotificationCoordinator.Kind.PRESENT, second.kind());
+    assertTrue(second.playCue());
+    assertEquals(1, second.bundle().size());
+}
+
+@Test public void rebuildNeverInterrupts() {
     BoopNotificationCoordinator c = new BoopNotificationCoordinator(4000L);
     BoopNotificationSettingsState s = allowed("com.chat", "messages");
     c.rebuild(List.of(fixture("k1", "com.chat", "messages", "A", "1")), s);
@@ -308,59 +317,65 @@ git commit -m "feat(unified): add notification opt-in policy"
 }
 ```
 
-Also cover mixed-app bundling, same-key updates, removal, dismissal and denied-channel rejection.
+Also test mixed-app bundling inside the window, same-key updates without cue, removal, dismissal and denied-channel rejection.
 
-- [ ] **Step 2: Run focused tests and verify RED**
+- [ ] **Step 2: Run RED**
 
 ```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-  --tests '*BoopNotificationPresentationTest' \
-  --tests '*BoopNotificationCoordinatorTest' --stacktrace
+  --tests '*BoopNotificationPresentationTest' --tests '*BoopNotificationCoordinatorTest' --stacktrace
 ```
-
-Expected: FAIL because presentation/coordinator types are absent.
 
 - [ ] **Step 3: Implement the state machine**
 
-Use a `LinkedHashMap<String, BoopNotificationEnvelope>` for Android-active entries and a `LinkedHashSet<String>` for current visible bundle keys. A new allowed key when no presentation is visible returns `PRESENT/playCue=true`; any allowed key while a presentation is visible returns `UPDATE/playCue=false`; reposting an existing visible key updates its envelope in place without cue; `rebuild` populates only active entries.
+Use `LinkedHashMap<String,BoopNotificationEnvelope>` for Android-active entries, `LinkedHashSet<String>` for visible keys, and `visibleStartedAtMs`.
 
-- [ ] **Step 4: Re-run focused tests**
+Rules:
+1. denied -> `IGNORE`;
+2. repost existing visible key -> update card, `UPDATE`, no cue;
+3. no visible keys -> new single, `PRESENT`, cue;
+4. visible size 1 and `nowMs-visibleStartedAtMs <= burstWindowMs` -> add second, `UPDATE`, no cue;
+5. visible size 1 outside burst window -> replace visible single with the new key, `PRESENT`, cue; old notification remains only in active inbox;
+6. visible size >=2 -> add/update any allowed notification, `UPDATE`, no cue until presentation dismissal/timeout;
+7. `rebuild` never sets visible keys.
 
-Run Step 2 again. Expected: PASS.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 4: Run GREEN and commit**
 
 ```bash
-git add source/BoopNotificationEnvelope.java source/BoopNotificationPresentation.java \
-  source/BoopNotificationCoordinator.java source-test/BoopNotificationPresentationTest.java \
-  source-test/BoopNotificationCoordinatorTest.java
+gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
+  --tests '*BoopNotificationPresentationTest' --tests '*BoopNotificationCoordinatorTest' --stacktrace
+git add source/BoopNotificationSurface.java source/BoopNotificationEnvelope.java \
+  source/BoopNotificationPresentation.java source/BoopNotificationCoordinator.java \
+  source-test/BoopNotificationPresentationTest.java source-test/BoopNotificationCoordinatorTest.java
 git commit -m "feat(unified): add notification bundle coordinator"
 ```
 
 ---
 
-### Task 3: Add Notification Listener intake and app-owned runtime without reading denied content
+### Task 3: Notification Listener intake and app-owned runtime
 
 **Files:**
 - Create: `source/BoopNotificationRuntime.java`
 - Create: `source/BoopNotificationListenerService.java`
 - Modify: `unified/UnifiedApplication.java`
+- Test: extend `source-test/BoopNotificationIntakePolicyTest.java`
 
 **Interfaces:**
-- `static BoopNotificationRuntime initialize(Application application)`; calling twice returns the existing runtime.
-- `static BoopNotificationRuntime get(Context context)`.
-- `void attachListener(BoopNotificationListenerService listener)` / `detachListener(listener)`.
+- Nested `BoopNotificationRuntime.RuntimeRecord(BoopNotificationEnvelope envelope, PendingIntent contentIntent, BoopNotificationChannelInfo channelInfo)`.
+- `static BoopNotificationRuntime initialize(Application app)` / `static BoopNotificationRuntime get(Context context)`.
+- `BoopNotificationSettingsState settings()` reads the current store state; `void refreshSettings()` refreshes coordinator decisions after settings edits.
+- `void attachListener(BoopNotificationListenerService listener)` / `detachListener(BoopNotificationListenerService listener)`.
 - `void observeChannel(BoopNotificationChannelInfo info)`.
 - `void post(BoopNotificationEnvelope envelope, PendingIntent contentIntent, BoopNotificationChannelInfo channelInfo)`.
-- `void rebuild(List<RuntimeRecord> records)` seeds coordinator/inbox and PendingIntent map without presenting/cueing.
+- `void rebuild(List<BoopNotificationRuntime.RuntimeRecord> records)` seeds active state/PendingIntents without presenting/cueing.
 - `void remove(String key)`.
-- `void cancelAfterSuccessfulAutoCancelTap(String key)` delegates to the currently attached listener only.
+- `void cancelAfterSuccessfulAutoCancelTap(String key)` calls attached listener `cancelNotification(key)` only when listener is connected.
 
-- [ ] **Step 1: Add a failing privacy-order assertion to `BoopNotificationIntakePolicyTest`**
+- [ ] **Step 1: Lock the rich-content privacy gate with one more test**
 
 ```java
-@Test public void allowedChannelPermitsRichContentReadOnlyAfterFullOptIn() {
+@Test public void fullyAllowedChannelCanReadRichContentButSiblingCannot() {
     BoopNotificationSettingsState state = fullyAllowed("com.chat", "messages");
     assertEquals(BoopNotificationIntakePolicy.Mode.READ_RICH_CONTENT,
         BoopNotificationIntakePolicy.decide(state, "com.chat", "messages"));
@@ -369,13 +384,9 @@ git commit -m "feat(unified): add notification bundle coordinator"
 }
 ```
 
-- [ ] **Step 2: Run the focused test**
+- [ ] **Step 2: Implement listener ordering**
 
-Expected: PASS only if Task 1 privacy logic already enforces this boundary. If it fails, repair Task 1 before wiring Android APIs.
-
-- [ ] **Step 3: Implement listener channel observation before rich-content extraction**
-
-`onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap)` must follow this order:
+`onNotificationPosted` must execute in this order:
 
 ```java
 String key = sbn.getKey();
@@ -385,8 +396,7 @@ NotificationChannel channel = rankingMap != null && rankingMap.getRanking(key, r
         ? ranking.getChannel() : null;
 BoopNotificationChannelInfo info = channelInfo(packageName, sbn.getNotification(), channel);
 runtime.observeChannel(info);
-BoopNotificationSettingsState settings = runtime.settings();
-if (BoopNotificationIntakePolicy.decide(settings, packageName, info.channelId())
+if (BoopNotificationIntakePolicy.decide(runtime.settings(), packageName, info.channelId())
         != BoopNotificationIntakePolicy.Mode.READ_RICH_CONTENT) {
     return;
 }
@@ -394,27 +404,24 @@ BoopNotificationEnvelope envelope = richEnvelope(sbn, info);
 runtime.post(envelope, sbn.getNotification().contentIntent, info);
 ```
 
-`richEnvelope(...)` is the only listener method allowed to read `Notification.EXTRA_TITLE`, `Notification.EXTRA_TEXT` or equivalent rich extras.
+`richEnvelope(StatusBarNotification, BoopNotificationChannelInfo)` is the only listener method that reads `Notification.EXTRA_TITLE`, `EXTRA_TEXT` or equivalent rich extras.
 
-`onListenerConnected()` iterates `getActiveNotifications()`, learns channel metadata for every active notification, and creates rebuild records only for entries that pass `READ_RICH_CONTENT`. It then calls one `runtime.rebuild(records)` after the scan. No rebuilt item may interrupt or play the BOOP cue.
+If `Ranking.getChannel()` is unavailable, channel metadata uses `Notification.getChannelId()`, `effectsKnown=false`, sound/vibration booleans false, and a display label equal to the channel ID. Unknown effects always suppress BOOP's own cue later.
 
-- [ ] **Step 4: Initialize runtime only on phone modes**
+`onListenerConnected()` scans `getActiveNotifications()`, observes channel metadata for every active item, reads rich content only for currently allowed package+channel pairs, then calls one `runtime.rebuild(records)`. No rebuild presentation/cue.
 
-At the top of `UnifiedApplication.onCreate()` resolve `BoopDeviceProfile.Mode` once. For `WALL` and `LAUNCHER`, call `BoopNotificationRuntime.initialize(this)` and return from the existing Shield-only density block. For `SHIELD`, preserve the current density/crash-handler path and do not initialize notification runtime.
+`onNotificationRemoved()` calls `runtime.remove(key)`. `onListenerDisconnected()` detaches the listener and leaves Android authoritative.
 
-- [ ] **Step 5: Materialize and compile**
+- [ ] **Step 3: Initialize runtime only for WALL/LAUNCHER**
+
+In `UnifiedApplication.onCreate()`, resolve mode once. For WALL/LAUNCHER initialize notification runtime before returning from the existing non-Shield path. SHIELD keeps its density/crash-handler code and never initializes the phone notification runtime.
+
+- [ ] **Step 4: Materialize, test, compile and commit**
 
 ```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:compileDebugJavaWithJavac :app:testDebugUnitTest \
-  --tests '*BoopNotification*' --stacktrace
-```
-
-Expected: PASS. No manifest service declaration is required for Java compilation yet; Task 10 adds and structurally verifies it before release.
-
-- [ ] **Step 6: Commit**
-
-```bash
+  --tests '*BoopNotification*' --tests '*BoopDeviceProfileTest' --stacktrace
 git add source/BoopNotificationRuntime.java source/BoopNotificationListenerService.java \
   unified/UnifiedApplication.java source-test/BoopNotificationIntakePolicyTest.java
 git commit -m "feat(unified): add notification listener runtime"
@@ -422,28 +429,28 @@ git commit -m "feat(unified): add notification listener runtime"
 
 ---
 
-### Task 4: Add first-run Notification Access + overlay onboarding without blocking BOOP
+### Task 4: First-run Notification Access + overlay onboarding
 
 **Files:**
 - Create: `source/BoopNotificationPermissionState.java`
 - Create: `source/BoopNotificationOnboardingState.java`
 - Create: `source/BoopNotificationStartupGate.java`
 - Create: `source/BoopNotificationOnboardingActivity.java`
-- Create: `source-test/BoopNotificationStartupGateTest.java`
+- Test: `source-test/BoopNotificationStartupGateTest.java`
 - Modify: `unified/UnifiedEntryActivity.java`
 
 **Interfaces:**
-- `boolean BoopNotificationPermissionState.hasListenerAccess(Context)` uses `NotificationManager.isNotificationListenerAccessGranted(ComponentName)`.
-- `boolean BoopNotificationPermissionState.hasOverlayAccess(Context)` uses `Settings.canDrawOverlays(context)`.
-- `Intent notificationListenerSettingsIntent()` returns `Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS`.
-- `Intent overlaySettingsIntent(Context)` returns `Settings.ACTION_MANAGE_OVERLAY_PERMISSION` with `package:<packageName>`.
+- `boolean hasListenerAccess(Context)` uses `NotificationManager.isNotificationListenerAccessGranted(ComponentName)`.
+- `boolean hasOverlayAccess(Context)` uses `Settings.canDrawOverlays(context)`.
+- `Intent notificationListenerSettingsIntent()` -> `Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS`.
+- `Intent overlaySettingsIntent(Context)` -> `Settings.ACTION_MANAGE_OVERLAY_PERMISSION` with `package:<packageName>`.
 - `BoopNotificationOnboardingState.isSeen(Context)` / `markSeen(Context)` uses `boop_notifications:onboarding_seen_v1`.
-- `BoopNotificationStartupGate.Target resolve(BoopDeviceProfile.Mode mode, boolean onboardingSeen)` returns `NOTIFICATION_ONBOARDING` only for non-SHIELD + unseen.
+- `BoopNotificationStartupGate.Target resolve(BoopDeviceProfile.Mode mode, boolean seen)` returns `NOTIFICATION_ONBOARDING` only for unseen WALL/LAUNCHER.
 
-- [ ] **Step 1: Write failing startup-gate tests**
+- [ ] **Step 1: Write RED startup tests**
 
 ```java
-@Test public void unseenPhoneGetsNotificationOnboarding() {
+@Test public void unseenPhonesGetNotificationOnboarding() {
     assertEquals(BoopNotificationStartupGate.Target.NOTIFICATION_ONBOARDING,
         BoopNotificationStartupGate.resolve(BoopDeviceProfile.Mode.WALL, false));
     assertEquals(BoopNotificationStartupGate.Target.NOTIFICATION_ONBOARDING,
@@ -456,45 +463,30 @@ git commit -m "feat(unified): add notification listener runtime"
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [ ] **Step 2: Implement onboarding phases exactly**
+
+Use `INTRO`, `WAITING_LISTENER_SETTINGS`, `WAITING_OVERLAY_SETTINGS`, `DONE`.
+
+- `INTRO`: `Set up` and `Not now`.
+- `Not now`: mark seen, finish, normal BOOP continues.
+- `Set up`: record `WAITING_LISTENER_SETTINGS`, launch Notification Access settings.
+- Return from listener settings: record actual grant result, transition once to overlay step and open overlay settings.
+- Return from overlay settings: record actual grant result, mark seen, finish regardless of grant state.
+- Do not enable master/app/channel.
+
+Persist only `onboarding_seen_v1`; transient phase survives recreation through `savedInstanceState`, not preferences.
+
+- [ ] **Step 3: Gate phone routing without touching Shield assistant setup**
+
+Before normal WALL/LAUNCHER routing in `UnifiedEntryActivity`, resolve startup gate. Start onboarding once and resume normal route after it returns. Existing Shield assistant first-run flow remains unchanged.
+
+- [ ] **Step 4: Test and commit**
 
 ```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-  --tests '*BoopNotificationStartupGateTest' --stacktrace
-```
-
-Expected: FAIL because the startup gate is absent.
-
-- [ ] **Step 3: Implement the gate and non-blocking onboarding Activity**
-
-The Activity has exactly these phases: `INTRO`, `WAITING_LISTENER_SETTINGS`, `WAITING_OVERLAY_SETTINGS`, `DONE`.
-
-- `INTRO` shows plain-English setup with `Set up` and `Not now`.
-- `Not now` marks onboarding seen and finishes immediately.
-- `Set up` opens Notification Access settings and records `WAITING_LISTENER_SETTINGS`.
-- On resume from listener settings, show/open the overlay step regardless of whether listener permission was granted; BOOP records actual grant state rather than assuming success.
-- On resume from overlay settings, mark onboarding seen and finish. Core BOOP continues even if either permission remains denied.
-
-Do not enable the notification master toggle or any app/channel during onboarding.
-
-- [ ] **Step 4: Gate `UnifiedEntryActivity` before normal phone routing**
-
-Before ordinary WALL/LAUNCHER routing, resolve `BoopNotificationStartupGate`. If onboarding is required, start `BoopNotificationOnboardingActivity` for result once and resume normal routing when it returns. Keep the existing Shield assistant first-run path unchanged.
-
-- [ ] **Step 5: Run notification tests and compile**
-
-```bash
-bash scripts/materialize-unified.sh
-gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-  --tests '*BoopNotification*' --tests '*ShieldEntryRouteTest' --tests '*BoopDeviceProfileTest' --stacktrace
-```
-
-Expected: PASS.
-
-- [ ] **Step 6: Commit**
-
-```bash
+  --tests '*BoopNotificationStartupGateTest' --tests '*ShieldEntryRouteTest' \
+  --tests '*BoopDeviceProfileTest' --stacktrace
 git add source/BoopNotificationPermissionState.java source/BoopNotificationOnboardingState.java \
   source/BoopNotificationStartupGate.java source/BoopNotificationOnboardingActivity.java \
   source-test/BoopNotificationStartupGateTest.java unified/UnifiedEntryActivity.java
@@ -503,25 +495,24 @@ git commit -m "feat(unified): add notification first-run setup"
 
 ---
 
-### Task 5: Build Voice Settings -> Notifications app/channel controls
+### Task 5: Voice Settings -> Notifications app/channel selector
 
 **Files:**
 - Create: `source/BoopNotificationAppEntry.java`
 - Create: `source/BoopNotificationAppCatalogModel.java`
 - Create: `source/BoopNotificationAppCatalog.java`
 - Create: `source/BoopNotificationSettingsActivity.java`
-- Create: `source-test/BoopNotificationAppCatalogModelTest.java`
+- Test: `source-test/BoopNotificationAppCatalogModelTest.java`
 - Create: `scripts/patch-unified-notifications.py`
 - Modify: `scripts/materialize-unified.sh`
 
 **Interfaces:**
-- `List<BoopNotificationAppEntry> BoopNotificationAppCatalogModel.merge(launchable, observed)` dedupes by package and sorts by label, then package.
-- `BoopNotificationAppCatalog.load(Context, Collection<BoopNotificationChannelInfo>)` unions `LauncherApps.getActivityList(null, Process.myUserHandle())` with packages seen by the listener.
-- `BoopNotificationSettingsActivity` reads/writes `BoopNotificationSettingsStore` only.
-- Channel rows come only from observed `BoopNotificationChannelInfo`; do not call listener channel-enumeration/update APIs.
-- Android channel settings route uses `Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS`, `Settings.EXTRA_APP_PACKAGE`, `Settings.EXTRA_CHANNEL_ID`.
+- `List<BoopNotificationAppEntry> BoopNotificationAppCatalogModel.merge(Collection<BoopNotificationAppEntry> launchable, Collection<BoopNotificationAppEntry> observed)` dedupes package and sorts by label then package.
+- `BoopNotificationAppCatalog.load(Context, Collection<BoopNotificationChannelInfo>)` unions `LauncherApps.getActivityList(null, Process.myUserHandle())` with observed packages; no `QUERY_ALL_PACKAGES`.
+- Settings Activity reads/writes `BoopNotificationSettingsStore`, then calls `BoopNotificationRuntime.get(this).refreshSettings()` after each change.
+- Channel settings route uses `Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS`, `Settings.EXTRA_APP_PACKAGE`, `Settings.EXTRA_CHANNEL_ID`.
 
-- [ ] **Step 1: Write failing app-catalog merge tests**
+- [ ] **Step 1: Write RED catalog test**
 
 ```java
 @Test public void mergesLaunchableAndObservedPackagesWithoutDuplicates() {
@@ -529,51 +520,41 @@ git commit -m "feat(unified): add notification first-run setup"
         List.of(new BoopNotificationAppEntry("com.chat", "Chat")),
         List.of(new BoopNotificationAppEntry("com.chat", "Chat"),
                 new BoopNotificationAppEntry("com.sync", "Sync Service")));
-    assertEquals(2, result.size());
-    assertEquals("com.chat", result.get(0).packageName());
-    assertEquals("com.sync", result.get(1).packageName());
+    assertEquals(List.of("com.chat", "com.sync"),
+        result.stream().map(BoopNotificationAppEntry::packageName).collect(Collectors.toList()));
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [ ] **Step 2: Implement settings UI in this order**
 
-Use the notification-focused Gradle command from Task 4. Expected: FAIL because catalog types are absent.
-
-- [ ] **Step 3: Implement settings UI behavior**
-
-The Activity must show, in this order:
-
-1. readiness text: `Ready`, `Needs Notification Access`, `Needs Display Permission`, or both missing;
+1. readiness: `Ready`, `Needs Notification Access`, `Needs Display Permission`, or both missing;
 2. master BOOP Notifications switch, default OFF;
-3. user-set timeout control, 3-30 seconds, default 8;
-4. installed/observed app list with per-app toggle;
-5. under an enabled app, only channels BOOP has actually observed;
-6. for each observed channel, its Android channel name, BOOP allow toggle, native alert state, and `Open Android channel settings` button.
+3. timeout control 3-30 seconds, default 8;
+4. app list with app toggle;
+5. under an enabled app, only observed channel/category rows;
+6. each channel row: Android channel name, BOOP allow toggle, native-alert status, `Open Android channel settings`.
 
-If an enabled app has no observed channel yet, show exactly: `No notification categories seen yet. When this app sends one, BOOP will learn the category here. It will not interrupt until you enable that category.`
+When no category has been observed, show exactly:
 
-If an enabled channel still has native sound or vibration, show: `Android is still alerting for this category. Make it silent there before BOOP uses his own sound.`
+`No notification categories seen yet. When this app sends one, BOOP will learn the category here. It will not interrupt until you enable that category.`
 
-- [ ] **Step 4: Patch the final materialized Wall Voice Settings, not the historical base renderer**
+If the chosen channel still has sound/vibration, show exactly:
 
-`scripts/patch-unified-notifications.py` inserts one `Notifications` button before the existing Voice `Done` button. Its click handler starts `BoopNotificationSettingsActivity`. The patch must be idempotent by checking a marker comment `// BOOP_NOTIFICATION_SETTINGS_ENTRY_V1` and failing if its structural anchor is missing rather than silently editing the wrong code.
+`Android is still alerting for this category. Make it silent there before BOOP uses his own sound.`
 
-Add this late in `scripts/materialize-unified.sh`, after all current eye/sleep/hue patches, so notification UI does not own those patches.
+- [ ] **Step 3: Add one late, idempotent materialization patch for Voice Settings**
 
-- [ ] **Step 5: Materialize, inspect only the non-visual integration, then compile**
+`scripts/patch-unified-notifications.py` inserts one `Notifications` button before Voice `Done`, marked `// BOOP_NOTIFICATION_SETTINGS_ENTRY_V1`, launching `BoopNotificationSettingsActivity`. It must fail if the structural anchor is missing and must do nothing if the marker already exists.
+
+Run this patch late in `scripts/materialize-unified.sh`, after current eye/sleep/hue patches.
+
+- [ ] **Step 4: Materialize, test integration and commit**
 
 ```bash
 bash scripts/materialize-unified.sh
-grep -n "BOOP_NOTIFICATION_SETTINGS_ENTRY_V1" boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java
+test "$(grep -c 'BOOP_NOTIFICATION_SETTINGS_ENTRY_V1' boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java)" -eq 1
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
   --tests '*BoopNotification*' --stacktrace
-```
-
-Expected: exactly one integration marker and all tests PASS. This grep checks patch application only, not appearance.
-
-- [ ] **Step 6: Commit**
-
-```bash
 git add source/BoopNotificationAppEntry.java source/BoopNotificationAppCatalogModel.java \
   source/BoopNotificationAppCatalog.java source/BoopNotificationSettingsActivity.java \
   source-test/BoopNotificationAppCatalogModelTest.java scripts/patch-unified-notifications.py \
@@ -581,12 +562,13 @@ git add source/BoopNotificationAppEntry.java source/BoopNotificationAppCatalogMo
 git commit -m "feat(unified): add notification controls under Voice"
 ```
 
+The marker check verifies patch application only, never appearance.
+
 ---
 
-### Task 6: Select locked/in-place/overlay surfaces and wire interruption lifecycle
+### Task 6: Surface selection, full interruption and lock-screen lifecycle
 
 **Files:**
-- Create: `source/BoopNotificationSurface.java`
 - Create: `source/BoopNotificationSurfaceSelector.java`
 - Create: `source/BoopNotificationHost.java`
 - Create: `source/BoopNotificationInPlaceController.java`
@@ -598,14 +580,16 @@ git commit -m "feat(unified): add notification controls under Voice"
 
 **Interfaces:**
 - `BoopNotificationSurface choose(boolean interactive, boolean keyguardLocked, boolean wallHostVisible)`.
-- `!interactive || keyguardLocked -> LOCKED`; else visible Wall host -> `IN_PLACE`; otherwise -> `OVERLAY`.
-- `BoopNotificationHost.show(BoopNotificationPresentation presentation, long timeoutMs)`, `update(...)`, `hide()`.
-- `BoopNotificationRuntime.registerWallHost(BoopNotificationHost host)` / `unregisterWallHost(host)`.
+- `BoopNotificationHost.show(BoopNotificationPresentation presentation, long timeoutMs)`.
+- `BoopNotificationHost.update(BoopNotificationPresentation presentation, long timeoutMs)`.
+- `BoopNotificationHost.hide()`.
+- `BoopNotificationRuntime.registerWallHost(BoopNotificationHost host)` / `unregisterWallHost(BoopNotificationHost host)`.
+- `void transitionAfterUnlock()` re-renders the same visible bundle unlocked with `playCue=false`.
 
-- [ ] **Step 1: Write failing surface-selection tests**
+- [ ] **Step 1: Write RED surface tests**
 
 ```java
-@Test public void screenOffAlwaysUsesPrivacySafeLockedSurface() {
+@Test public void screenOffIsAlwaysPrivacySafeLockedSurface() {
     assertEquals(BoopNotificationSurface.LOCKED,
         BoopNotificationSurfaceSelector.choose(false, false, false));
 }
@@ -621,47 +605,37 @@ git commit -m "feat(unified): add notification controls under Voice"
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [ ] **Step 2: Implement selector and controllers**
 
-Run notification-focused Gradle tests. Expected: FAIL because surface types are absent.
+Selector rule: `!interactive || keyguardLocked -> LOCKED`; else visible Wall host -> `IN_PLACE`; otherwise -> `OVERLAY`.
 
-- [ ] **Step 3: Implement platform selection and controllers**
+`BoopNotificationOverlayController` uses a full-screen, focusable `TYPE_APPLICATION_OVERLAY` only when `Settings.canDrawOverlays(context)` is true. Catch `SecurityException`/window-add failure, remove partial state, and report presentation failure to runtime without cancelling source notification.
 
-Runtime reads `PowerManager.isInteractive()` and `KeyguardManager.isKeyguardLocked()` only when it needs to present. `BoopNotificationOverlayController` creates a full-screen, focusable `TYPE_APPLICATION_OVERLAY` only when `Settings.canDrawOverlays(context)` is true. If overlay access is missing, it reports failure to runtime and leaves the Android notification untouched.
+`BoopNotificationLockActivity` calls `setShowWhenLocked(true)` and `setTurnScreenOn(true)`, adds `FLAG_KEEP_SCREEN_ON` only while presentation is active, and finishes on swipe/timeout. It never dismisses keyguard automatically.
 
-`BoopNotificationLockActivity` calls `setShowWhenLocked(true)` and `setTurnScreenOn(true)` in `onCreate`, uses `FLAG_KEEP_SCREEN_ON` only while the BOOP presentation is active, and finishes on BOOP timeout/swipe. It never calls keyguard-bypass APIs.
+Register `ACTION_USER_PRESENT` dynamically while lock Activity is alive. On API 33+ use `Context.RECEIVER_NOT_EXPORTED`; on older supported APIs use the legacy overload. On unlock call `runtime.transitionAfterUnlock()` then finish lock Activity. Do not replay cue.
 
-Register an `ACTION_USER_PRESENT` receiver while the lock Activity is alive. On unlock, call `runtime.transitionAfterUnlock()` so the same active bundle is re-rendered as rich unlocked content without replaying the cue, then finish the lock Activity.
+- [ ] **Step 3: Extend the late Wall patch with in-place host wiring**
 
-- [ ] **Step 4: Extend the late MainActivity patch with the in-place host**
+Patch materialized `MainActivity` to construct `BoopNotificationInPlaceController(interactionSurface)`, register in `onResume`, unregister in `onPause`, marker `// BOOP_NOTIFICATION_IN_PLACE_HOST_V1`. Do not alter eye geometry, sleep, blink, microphone or wake logic.
 
-Patch the materialized Wall Activity to create `BoopNotificationInPlaceController(interactionSurface)`, register it with runtime in `onResume`, and unregister it in `onPause`. Add marker `// BOOP_NOTIFICATION_IN_PLACE_HOST_V1`. Do not alter face geometry, blink, wake microphone ownership or sleep code in this patch.
-
-- [ ] **Step 5: Materialize and test**
+- [ ] **Step 4: Test and commit**
 
 ```bash
 bash scripts/materialize-unified.sh
-grep -n "BOOP_NOTIFICATION_IN_PLACE_HOST_V1" boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java
+test "$(grep -c 'BOOP_NOTIFICATION_IN_PLACE_HOST_V1' boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java)" -eq 1
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
   --tests '*BoopNotification*' --tests '*BoopPresenceStateTest' --stacktrace
-```
-
-Expected: one host marker and PASS.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add source/BoopNotificationSurface.java source/BoopNotificationSurfaceSelector.java \
-  source/BoopNotificationHost.java source/BoopNotificationInPlaceController.java \
-  source/BoopNotificationOverlayController.java source/BoopNotificationLockActivity.java \
-  source/BoopNotificationRuntime.java source-test/BoopNotificationSurfaceSelectorTest.java \
-  scripts/patch-unified-notifications.py
+git add source/BoopNotificationSurfaceSelector.java source/BoopNotificationHost.java \
+  source/BoopNotificationInPlaceController.java source/BoopNotificationOverlayController.java \
+  source/BoopNotificationLockActivity.java source/BoopNotificationRuntime.java \
+  source-test/BoopNotificationSurfaceSelectorTest.java scripts/patch-unified-notifications.py
 git commit -m "feat(unified): add notification presentation surfaces"
 ```
 
 ---
 
-### Task 7: Preserve original notification tap semantics and add BOOP inbox
+### Task 7: Original PendingIntent semantics, keyguard-authenticated opening and BOOP inbox
 
 **Files:**
 - Create: `source/BoopNotificationTapPolicy.java`
@@ -669,70 +643,69 @@ git commit -m "feat(unified): add notification presentation surfaces"
 - Create: `source/BoopNotificationInboxActivity.java`
 - Test: `source-test/BoopNotificationTapPolicyTest.java`
 - Modify: `source/BoopNotificationRuntime.java`
+- Modify: `source/BoopNotificationLockActivity.java`
 
 **Interfaces:**
-- `boolean BoopNotificationTapPolicy.shouldCancelAfterSuccessfulSend(boolean autoCancel, boolean sendSucceeded)`.
-- `int BoopNotificationTapPolicy.backgroundStartModeForSdk(int sdk)` returns API-appropriate PendingIntent BAL opt-in: API 36+ `MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE`; API 34-35 `MODE_BACKGROUND_ACTIVITY_START_ALLOWED`; older versions no ActivityOptions override.
+- `static final int NO_BACKGROUND_START_OVERRIDE = -1`.
+- `boolean shouldCancelAfterSuccessfulSend(boolean autoCancel, boolean sendSucceeded)`.
+- `int backgroundStartModeForSdk(int sdk)` returns API 36+ `MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE`, API 34-35 `MODE_BACKGROUND_ACTIVITY_START_ALLOWED`, API <=33 `NO_BACKGROUND_START_OVERRIDE`.
 - `BoopNotificationTapLauncher.Result send(Context context, PendingIntent intent, int sdk)` returns `OPENED` or `CANCELLED`.
-- Inbox reads current runtime active notifications; no titles/bodies are serialized into Intent extras or persisted.
+- Inbox obtains active data from runtime at render time; no rich content is serialized into Intent extras or persisted.
 
-- [ ] **Step 1: Write failing tap-policy tests**
+- [ ] **Step 1: Write RED tap tests**
 
 ```java
-@Test public void autoCancelHappensOnlyAfterSuccessfulOpen() {
+@Test public void autoCancelOnlyAfterSuccessfulSend() {
     assertTrue(BoopNotificationTapPolicy.shouldCancelAfterSuccessfulSend(true, true));
     assertFalse(BoopNotificationTapPolicy.shouldCancelAfterSuccessfulSend(true, false));
     assertFalse(BoopNotificationTapPolicy.shouldCancelAfterSuccessfulSend(false, true));
 }
 
-@Test public void android36UsesVisibleOnlyBackgroundStartMode() {
+@Test public void backgroundStartModesAreVersionSpecific() {
     assertEquals(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE,
         BoopNotificationTapPolicy.backgroundStartModeForSdk(36));
+    assertEquals(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED,
+        BoopNotificationTapPolicy.backgroundStartModeForSdk(34));
+    assertEquals(BoopNotificationTapPolicy.NO_BACKGROUND_START_OVERRIDE,
+        BoopNotificationTapPolicy.backgroundStartModeForSdk(33));
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [ ] **Step 2: Implement PendingIntent sending**
 
-Expected: FAIL because tap types are absent.
+API 36+: set `MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE` on `ActivityOptions`. API 34-35: set `MODE_BACKGROUND_ACTIVITY_START_ALLOWED`. API <=33: send without an options override. Catch `PendingIntent.CanceledException` and return `CANCELLED`.
 
-- [ ] **Step 3: Implement PendingIntent sending**
+On `OPENED && autoCancel`, runtime asks attached listener to `cancelNotification(key)`. On `CANCELLED`, keep Android notification and BOOP card, show `Can't open that right now.` Swipe/timeout never call cancellation.
 
-For API 36+, build `ActivityOptions` and call `setPendingIntentBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE)`. For API 34-35 use `MODE_BACKGROUND_ACTIVITY_START_ALLOWED`. Send with the options `Bundle`. Catch `PendingIntent.CanceledException` and return `CANCELLED`.
+- [ ] **Step 3: Require real keyguard authentication before opening from locked UI**
 
-On `OPENED`, if envelope `autoCancel` is true, runtime asks the attached listener to `cancelNotification(key)`. On `CANCELLED`, leave the Android notification and BOOP card untouched and show `Can't open that right now.`
+For single-card tap while keyguard is locked, `BoopNotificationLockActivity` calls `KeyguardManager.requestDismissKeyguard(this, callback)`. Only `onDismissSucceeded()` may call runtime open. `onDismissCancelled()`/`onDismissError()` leave card and source notification in place.
 
-Swipe/timeout paths must never call listener cancellation.
+For locked bundle tap, use the same keyguard request, then launch `BoopNotificationInboxActivity` only after successful dismissal. BOOP never supplies credentials and never bypasses keyguard.
 
-- [ ] **Step 4: Implement BOOP inbox**
+- [ ] **Step 4: Build BOOP inbox**
 
-If the visible presentation contains more than one item, tapping the bundle opens `BoopNotificationInboxActivity`. The Activity reads `runtime.activeNotifications()` at render time, groups cards by app, and sends an individual card through the same `BoopNotificationTapLauncher`. If runtime is empty, finish cleanly.
+Bundle tap while unlocked opens `BoopNotificationInboxActivity`. It queries `runtime.activeNotifications()` at render time, groups current allowed cards by app, and sends an individual item through the same tap launcher. If runtime has no active items, finish cleanly.
 
-- [ ] **Step 5: Run tests and compile**
+- [ ] **Step 5: Test and commit**
 
 ```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
   --tests '*BoopNotification*' --stacktrace
-```
-
-Expected: PASS.
-
-- [ ] **Step 6: Commit**
-
-```bash
 git add source/BoopNotificationTapPolicy.java source/BoopNotificationTapLauncher.java \
   source/BoopNotificationInboxActivity.java source/BoopNotificationRuntime.java \
-  source-test/BoopNotificationTapPolicyTest.java
+  source/BoopNotificationLockActivity.java source-test/BoopNotificationTapPolicyTest.java
 git commit -m "feat(unified): preserve notification open semantics"
 ```
 
 ---
 
-### Task 8: Materialize the exact BOOP hands and build one reusable runtime puppet view
+### Task 8: Exact hands + reusable runtime BOOP notification view
 
 **Files:**
 - Create: `unified/assets/boop-notifications/README.md`
-- Create binary by exact transfer: `unified/assets/boop-notifications/boop-yellow-hands-approved.png`
+- Create exact binary: `unified/assets/boop-notifications/boop-yellow-hands-approved.png`
 - Create: `scripts/materialize-boop-notification-assets.py`
 - Create: `tests/test_unified_notification_asset_integrity.py`
 - Create: `source/BoopNotificationSwipeGesture.java`
@@ -746,10 +719,9 @@ git commit -m "feat(unified): preserve notification open semantics"
 
 **Interfaces:**
 - `BoopNotificationPuppetView.Callback.onOpen(String key)`, `onOpenBundle()`, `onDismiss()`.
-- `BoopNotificationSwipeGesture.isDismiss(float downX, float downY, float upX, float upY, float density)` requires at least 72dp travel and dominant-axis travel greater than 1.25x the perpendicular axis.
-- Runtime layers are current `BoopFaceView`, exact paired-hand PNG, app/icon/card layer and count badge.
+- `boolean BoopNotificationSwipeGesture.isDismiss(float downX, float downY, float upX, float upY, float density)` requires >=72dp dominant travel and dominant travel >1.25x perpendicular travel.
 
-- [ ] **Step 1: Transfer and hash the exact notification-hand binary**
+- [ ] **Step 1: Transfer exact bytes and verify hash**
 
 ```bash
 mkdir -p unified/assets/boop-notifications
@@ -758,17 +730,11 @@ git show origin/animation-freddie-mercury:boop-yellow-hands-approved.png \
 sha256sum unified/assets/boop-notifications/boop-yellow-hands-approved.png
 ```
 
-Expected SHA-256 exactly:
+Expected `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`.
 
-```text
-26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1
-```
+`README.md` records that this notification-specific exact binary does not replace the older general hand-master historical record.
 
-`README.md` records that this is the lock-screen notification hand source and explicitly says it does not replace the older general hand-master history.
-
-- [ ] **Step 2: Write asset-integrity and swipe tests before view wiring**
-
-Python integrity test:
+- [ ] **Step 2: Write integrity + RED swipe tests**
 
 ```python
 from hashlib import sha256
@@ -779,8 +745,6 @@ def test_notification_hands_are_exact_locked_binary():
     assert sha256(p.read_bytes()).hexdigest() == '26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1'
 ```
 
-JUnit swipe test:
-
 ```java
 @Test public void deliberateSwipeDismissesButTapDoesNot() {
     assertTrue(BoopNotificationSwipeGesture.isDismiss(10f, 10f, 190f, 20f, 2f));
@@ -788,56 +752,35 @@ JUnit swipe test:
 }
 ```
 
-- [ ] **Step 3: Verify RED for the missing swipe helper and PASS for the exact binary**
+- [ ] **Step 3: Materialize assets byte-for-byte**
 
-```bash
-python -m pytest -q tests/test_unified_notification_asset_integrity.py
-bash scripts/materialize-unified.sh
-gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-  --tests '*BoopNotificationSwipeGestureTest' --stacktrace
-```
+`scripts/materialize-boop-notification-assets.py` verifies the exact SHA above and byte-copies it to `boop-build/BOOP-Alpha1/app/src/main/res/drawable-nodpi/boop_notification_hands.png`. It must not crop, threshold, recolor, recompress or regenerate the file.
 
-Expected: asset test PASS; JUnit FAIL until the helper exists.
+Run this script late in `scripts/materialize-unified.sh` after resources exist.
 
-- [ ] **Step 4: Implement asset materialization without modifying pixels**
+- [ ] **Step 4: Implement one reusable puppet view**
 
-`scripts/materialize-boop-notification-assets.py` verifies the hash above and byte-copies the PNG to:
+Use a black `FrameLayout` containing:
+- current materialized `BoopFaceView`, so current approved eye renderer and saved hue stay authoritative;
+- exact paired-hand PNG in one `ImageView`;
+- centered notification prop/card with app icon and count;
+- title/text views only when `presentation.locked() == false`.
 
-`boop-build/BOOP-Alpha1/app/src/main/res/drawable-nodpi/boop_notification_hands.png`
+Entrance motion: card alpha 0->1 + `translationY(-16dp)->0`, `OvershootInterpolator(0.7f)`, 260ms; hands scale 0.96->1, 220ms. Reuse existing face wake/blink behavior. Do not alter face bitmap or generate eye/hand poses.
 
-It must not crop, threshold, recolor, recompress or regenerate the file. Run this script late in `materialize-unified.sh` after the app resource tree exists.
+Single tap -> `onOpen(key)`. Bundle tap -> `onOpenBundle()`. Deliberate swipe -> `onDismiss()`.
 
-- [ ] **Step 5: Implement `BoopNotificationPuppetView`**
+- [ ] **Step 5: Use the same view in in-place, overlay and lock surfaces**
 
-Use a black `FrameLayout` with:
+Only wrappers differ in lifecycle/window ownership. Presentation UI/gesture code must not be copied three times.
 
-- current materialized `BoopFaceView` as the eye layer so saved iris hue and current accepted renderer apply automatically;
-- one `ImageView` for the exact paired hands;
-- one centered notification card containing app icon and count; add title/text only when `presentation.locked() == false`;
-- card entrance: alpha 0->1 and `translationY(-16dp)->0` with `OvershootInterpolator(0.7f)` over 260ms;
-- hands entrance: scale 0.96->1 over 220ms;
-- existing BOOP face wake/blink language only; do not generate a new eye pose or alter the face bitmap.
-
-Tap on a single card calls `onOpen(key)`, bundle tap calls `onOpenBundle()`, qualifying swipe calls `onDismiss()`.
-
-- [ ] **Step 6: Wire the same view into all three presentation surfaces**
-
-The in-place controller, overlay controller and lock Activity must all construct the same `BoopNotificationPuppetView`; surface wrappers own only window/activity lifecycle and timeout.
-
-- [ ] **Step 7: Run focused tests and compile**
+- [ ] **Step 6: Test, compile and commit**
 
 ```bash
 python -m pytest -q tests/test_unified_notification_asset_integrity.py
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
   --tests '*BoopNotification*' --stacktrace
-```
-
-Expected: PASS. No automated visual claim.
-
-- [ ] **Step 8: Commit**
-
-```bash
 git add unified/assets/boop-notifications scripts/materialize-boop-notification-assets.py \
   tests/test_unified_notification_asset_integrity.py source/BoopNotificationSwipeGesture.java \
   source/BoopNotificationPuppetView.java source/BoopNotificationInPlaceController.java \
@@ -847,9 +790,11 @@ git add unified/assets/boop-notifications scripts/materialize-boop-notification-
 git commit -m "feat(unified): add exact notification puppet layers"
 ```
 
+No visual acceptance is inferred from these checks.
+
 ---
 
-### Task 9: Add BOOP's local replacement cue and vibration without double-alerting
+### Task 9: Local BOOP replacement sound + vibration, one cue per presentation
 
 **Files:**
 - Create: `source/BoopNotificationCuePolicy.java`
@@ -860,12 +805,11 @@ git commit -m "feat(unified): add exact notification puppet layers"
 - Modify: `source/BoopNotificationRuntime.java`
 
 **Interfaces:**
-- `boolean BoopNotificationCuePolicy.shouldPlay(boolean coordinatorRequestsCue, BoopNotificationChannelInfo channel)`.
-- True only when coordinator requests a new cue and `channel.nativeEffectsSilent()` is true.
-- `short[] BoopNotificationCueRenderer.render(int sampleRate)` returns deterministic 320ms mono PCM16.
-- `void BoopNotificationCue.play()` uses `AudioAttributes.USAGE_NOTIFICATION` and one short vibration waveform.
+- `boolean shouldPlay(boolean coordinatorRequestsCue, BoopNotificationChannelInfo channel)` true only for requested cue + known silent native channel.
+- `short[] BoopNotificationCueRenderer.render(int sampleRate)` deterministic 320ms PCM16 mono.
+- `void BoopNotificationCue.play()` uses `AudioAttributes.USAGE_NOTIFICATION`; vibration waveform is one `long[]{0,35,55,28}` sequence.
 
-- [ ] **Step 1: Write failing cue-policy/renderer tests**
+- [ ] **Step 1: Write RED sound-policy tests**
 
 ```java
 @Test public void neverDoubleAlertsWithNativeEffectsStillOn() {
@@ -878,30 +822,27 @@ git commit -m "feat(unified): add exact notification puppet layers"
     assertFalse(BoopNotificationCuePolicy.shouldPlay(false, silent));
 }
 
-@Test public void goofyCueIsShortDeterministicAndBounded() {
+@Test public void cueIsShortDeterministicAndBounded() {
     short[] a = BoopNotificationCueRenderer.render(44100);
     short[] b = BoopNotificationCueRenderer.render(44100);
     assertEquals(14112, a.length);
     assertArrayEquals(a, b);
     int peak = 0;
     for (short sample : a) peak = Math.max(peak, Math.abs((int) sample));
-    assertTrue(peak > 2000);
-    assertTrue(peak <= 32767);
+    assertTrue(peak > 2000 && peak <= 32767);
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [ ] **Step 2: Implement the deliberately daft local cue**
 
-Run notification-focused Gradle tests. Expected: FAIL because cue classes are absent.
-
-- [ ] **Step 3: Implement the deterministic local sound**
-
-Render 320ms at the requested sample rate as three envelope-controlled components, summed and clamped to +/-0.72 full scale:
+For each sample time `t`, sum these three components and clamp to +/-0.72 full scale:
 
 ```java
-double knock1 = t < 0.050 ? Math.sin(2.0 * Math.PI * 190.0 * t) * Math.exp(-55.0 * t) * 0.42 : 0.0;
+double knock1 = t < 0.050
+        ? Math.sin(2.0 * Math.PI * 190.0 * t) * Math.exp(-55.0 * t) * 0.42 : 0.0;
 double u2 = t - 0.078;
-double knock2 = u2 >= 0.0 && u2 < 0.050 ? Math.sin(2.0 * Math.PI * 285.0 * u2) * Math.exp(-52.0 * u2) * 0.34 : 0.0;
+double knock2 = u2 >= 0.0 && u2 < 0.050
+        ? Math.sin(2.0 * Math.PI * 285.0 * u2) * Math.exp(-52.0 * u2) * 0.34 : 0.0;
 double uc = t - 0.138;
 double chirp = 0.0;
 if (uc >= 0.0 && uc < 0.170) {
@@ -911,27 +852,18 @@ if (uc >= 0.0 && uc < 0.170) {
 }
 ```
 
-This keeps the daft cue generated locally in code, tiny and network-independent.
+Use mono PCM16 `AudioTrack`, `AudioAttributes.USAGE_NOTIFICATION`, no loop and no network/downloaded sound asset. Use `VibrationEffect.createWaveform(new long[]{0,35,55,28}, -1)`.
 
-`BoopNotificationCue.play()` uses mono PCM16 `AudioTrack` with `AudioAttributes.USAGE_NOTIFICATION` and vibrates `new long[]{0, 35, 55, 28}` once. Do not loop.
+- [ ] **Step 3: Wire cue policy**
 
-- [ ] **Step 4: Wire cue policy into runtime**
+Only coordinator `playCue=true` may request cue playback. Bundle updates and unlock transitions never replay it. Unknown/noisy native channel effects suppress BOOP's own sound/vibration while visual presentation remains allowed.
 
-Runtime evaluates cue policy only on coordinator decisions with `playCue=true`. Updates absorbed into the visible bundle never replay sound/vibration. Unlock transition never replays it.
-
-- [ ] **Step 5: Run tests and compile**
+- [ ] **Step 4: Test and commit**
 
 ```bash
 bash scripts/materialize-unified.sh
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
   --tests '*BoopNotification*' --stacktrace
-```
-
-Expected: PASS.
-
-- [ ] **Step 6: Commit**
-
-```bash
 git add source/BoopNotificationCuePolicy.java source/BoopNotificationCueRenderer.java \
   source/BoopNotificationCue.java source/BoopNotificationRuntime.java \
   source-test/BoopNotificationCuePolicyTest.java source-test/BoopNotificationCueRendererTest.java
@@ -940,23 +872,22 @@ git commit -m "feat(unified): add BOOP notification cue"
 
 ---
 
-### Task 10: Declare supported Android capabilities and add structural/security CI contracts
+### Task 10: Manifest, platform security contracts and canonical CI
 
 **Files:**
 - Modify: `source/AndroidManifest.xml`
 - Create: `tests/test_unified_notification_manifest_contract.py`
 - Modify: `.github/workflows/build-boop-unified.yml`
 
-**Interfaces/manifest contract:**
-- Uses permissions: `android.permission.SYSTEM_ALERT_WINDOW`, `android.permission.VIBRATE`.
-- Listener service: `.BoopNotificationListenerService`, `android:exported="false"`, `android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"`, action `android.service.notification.NotificationListenerService`.
-- Activities `.BoopNotificationOnboardingActivity`, `.BoopNotificationSettingsActivity`, `.BoopNotificationLockActivity`, `.BoopNotificationInboxActivity` are `android:exported="false"`.
-- No `USE_FULL_SCREEN_INTENT`, device-admin receiver, accessibility service declaration or `QUERY_ALL_PACKAGES`.
+**Manifest contract:**
+- permissions: `android.permission.SYSTEM_ALERT_WINDOW`, `android.permission.VIBRATE`;
+- `.BoopNotificationListenerService`: exported `false`, requires `android.permission.BIND_NOTIFICATION_LISTENER_SERVICE`, intent action `android.service.notification.NotificationListenerService`;
+- `.BoopNotificationOnboardingActivity`, `.BoopNotificationSettingsActivity`, `.BoopNotificationLockActivity`, `.BoopNotificationInboxActivity`: exported `false`;
+- absent: `USE_FULL_SCREEN_INTENT`, device-admin declaration, accessibility-service declaration, `QUERY_ALL_PACKAGES`.
 
-- [ ] **Step 1: Write the failing manifest contract first**
+- [ ] **Step 1: Write RED materialized-manifest test**
 
 ```python
-from pathlib import Path
 import xml.etree.ElementTree as ET
 
 ANDROID = '{http://schemas.android.com/apk/res/android}'
@@ -973,9 +904,14 @@ def test_notification_components_and_permissions_are_exact():
                     if n.get(ANDROID + 'name') == '.BoopNotificationListenerService')
     assert listener.get(ANDROID + 'permission') == 'android.permission.BIND_NOTIFICATION_LISTENER_SERVICE'
     assert listener.get(ANDROID + 'exported') == 'false'
+    activity_names = {n.get(ANDROID + 'name'): n.get(ANDROID + 'exported')
+                      for n in app.findall('activity')}
+    for name in ('.BoopNotificationOnboardingActivity', '.BoopNotificationSettingsActivity',
+                 '.BoopNotificationLockActivity', '.BoopNotificationInboxActivity'):
+        assert activity_names[name] == 'false'
 ```
 
-Extend the same test to assert all four Activities are non-exported and no service/receiver declares `android.accessibilityservice.AccessibilityService` or device-admin metadata.
+Add assertions that no service action is `android.accessibilityservice.AccessibilityService` and no receiver carries device-admin metadata.
 
 - [ ] **Step 2: Materialize and verify RED**
 
@@ -984,29 +920,17 @@ bash scripts/materialize-unified.sh
 python -m pytest -q tests/test_unified_notification_manifest_contract.py
 ```
 
-Expected: FAIL because manifest declarations are not present yet.
+- [ ] **Step 3: Add exact manifest declarations, no extra authority**
 
-- [ ] **Step 3: Add exact manifest declarations**
+Keep existing launcher/auth/assistant/unified declarations intact.
 
-Add the two uses-permissions and the listener/Activities above. Keep the existing package, launcher, auth callback, assistant and unified manifest behavior intact.
+- [ ] **Step 4: Extend CI with notification non-visual checks**
 
-- [ ] **Step 4: Add notification-focused tests to canonical CI**
+Before materialization add `tests/test_unified_notification_asset_integrity.py`. After materialization add `tests/test_unified_notification_manifest_contract.py`. Add `--tests '*BoopNotification*'` to focused unified JUnit selection.
 
-In the existing non-visual test phase add:
+Also remove the workflow's hardcoded `versionCode='62'` / v62 `versionName` assumptions. Derive expected code/name from `unified/app-build.gradle` with a small Python regex step and compare `aapt dump badging` against those values. Preserve explicit package, launch activity, signer and ZIP-integrity verification. This prevents the notification release bump from requiring a second brittle workflow edit.
 
-```bash
-python -m pytest -q tests/test_unified_notification_asset_integrity.py
-```
-
-After materialization add:
-
-```bash
-python -m pytest -q tests/test_unified_notification_manifest_contract.py
-```
-
-Add `--tests '*BoopNotification*'` to the existing focused unified Gradle test step. Do not add emulator install, screenshots, visual comparison or audio-quality assertions.
-
-- [ ] **Step 5: Run all local non-visual contracts**
+- [ ] **Step 5: Run all non-visual contracts and commit**
 
 ```bash
 python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py \
@@ -1016,13 +940,6 @@ python -m pytest -q tests/test_unified_wake_handoff_contract.py tests/test_unifi
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
   --tests '*BoopNotification*' --tests '*BoopWake*' --tests '*BoopDeviceProfileTest' \
   --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --stacktrace
-```
-
-Expected: PASS.
-
-- [ ] **Step 6: Commit**
-
-```bash
 git add source/AndroidManifest.xml tests/test_unified_notification_manifest_contract.py \
   .github/workflows/build-boop-unified.yml
 git commit -m "test(unified): lock notification platform contracts"
@@ -1030,38 +947,33 @@ git commit -m "test(unified): lock notification platform contracts"
 
 ---
 
-### Task 11: Version, sign, document and hand the candidate to Ryan for physical acceptance
+### Task 11: Version, sign, document and hand to Ryan for physical acceptance
 
 **Files:**
 - Modify: `unified/app-build.gradle`
-- Modify after successful workflow: `SESSION_HANDOFF.md`
-- Modify after successful workflow: `BOOP_STATUS.md`
-- Modify after successful workflow: `BOOP_UNIFIED_MEMORY.md`
+- Modify after successful signed workflow: `SESSION_HANDOFF.md`
+- Modify after successful signed workflow: `BOOP_STATUS.md`
+- Modify after successful signed workflow: `BOOP_UNIFIED_MEMORY.md`
 
-**Interfaces/release rule:**
-- Read the current canonical `versionCode` at execution time and increment by exactly 1. Do not assume v63 because the eye/sleep reconciliation may have consumed intervening versions.
-- Preserve application ID `com.boop.alpha1` and permanent signer.
+**Release rule:** Read the canonical version at execution time and increment `versionCode` by exactly 1. Do not assume v63 because the eye/sleep reconciliation may consume versions first. Preserve `com.boop.alpha1` and permanent signer.
 
-- [ ] **Step 1: Re-fetch before final version/release commit**
+- [ ] **Step 1: Re-fetch immediately before release commit**
 
 ```bash
 git fetch origin main boop-unified
 git rev-parse HEAD
 git rev-parse origin/boop-unified
 git rev-parse origin/main
-```
-
-If `origin/boop-unified` advanced beyond this task's reviewed history, reconcile normally. Never overwrite/force.
-
-- [ ] **Step 2: Read and bump the live version exactly once**
-
-```bash
 grep -n "versionCode\|versionName" unified/app-build.gradle
 ```
 
-Increment `versionCode` by 1 from the value shown. Set a descriptive `versionName` ending in `-unified-notification-presenter` while preserving the established numeric lineage prefix.
+If remote canonical advanced beyond reviewed history, reconcile without force.
 
-- [ ] **Step 3: Run the complete canonical non-visual verification locally**
+- [ ] **Step 2: Bump version exactly once**
+
+Increment the shown code by 1. Keep the established numeric version-name prefix and end the name with `-unified-notification-presenter`.
+
+- [ ] **Step 3: Run complete canonical non-visual verification**
 
 ```bash
 python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py \
@@ -1074,9 +986,9 @@ gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
 gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
 ```
 
-Expected: zero test failures; compile/build success. This is still not visual/device/acoustic acceptance.
+Expected: zero test failures and successful build. This is not device/visual/acoustic acceptance.
 
-- [ ] **Step 4: Commit the reviewed release source**
+- [ ] **Step 4: Commit and push reviewed release source**
 
 ```bash
 git add unified/app-build.gradle
@@ -1084,23 +996,30 @@ git commit -m "release(unified): notification presenter candidate"
 git push origin HEAD:boop-unified
 ```
 
-- [ ] **Step 5: Verify GitHub Actions and permanent signing**
+- [ ] **Step 5: Verify exact GitHub Actions run**
 
-Wait for canonical `Build BOOP Unified APK` on the exact pushed source commit. Record workflow run ID, artifact ID, APK SHA-256 and permanent signer SHA-256 from the run. Require SUCCESS before offering the APK.
+Require canonical `Build BOOP Unified APK` SUCCESS for the exact pushed source commit. Record workflow run ID, artifact ID, APK SHA-256, signer SHA-256 and focused test counts. Do not offer an older artifact.
 
-- [ ] **Step 6: Update handoff/status/memory with exact evidence only**
+- [ ] **Step 6: Update handoff/status/memory with exact evidence**
 
-Record:
+Record exact built commit/version/run/artifact/APK hash/signer hash, plus explicit `CI/signer green; physical visual/lock-screen/acoustic acceptance pending`.
 
-- exact built commit;
-- version code/name;
-- workflow run + artifact ID;
-- APK SHA-256 and signer SHA-256;
-- notification functional test counts;
-- explicit `CI/signer green; physical visual/lock-screen/acoustic acceptance pending`;
-- this physical checklist: first-run permission flow, decline paths, first allowed app/channel, Android channel-silencing guide, screen-off wake, locked redaction, unlock transition, full-screen interruption over another app, in-place Wall presentation, single tap/open, auto-cancel where applicable, swipe preserving shade notification, same-app bomb bundle, mixed-app bundle/inbox, 8s/default and custom timeout, process/reboot rebuild, permission-revocation repair, replacement cue/vibration.
+Physical checklist for Ryan:
+1. first-run permission flow and both decline paths;
+2. app selection, observed category appearance, category enablement and Android-silence guide;
+3. screen-off wake and locked app/icon/count-only privacy;
+4. locked single/bundle tap requires real unlock before opening;
+5. unlock transition reveals rich content without second cue;
+6. full interruption over another app and in-place Wall presentation;
+7. original single tap target and normal auto-cancel semantics;
+8. swipe/timeout leaves shade notification intact;
+9. same-app and mixed-app message-bomb bundling + BOOP inbox;
+10. default/custom timeout;
+11. process/reboot rebuild from active Android notifications;
+12. revoked access/overlay repair state;
+13. BOOP's replacement sound/vibration quality.
 
-- [ ] **Step 7: Commit documentation-only evidence and verify live head**
+- [ ] **Step 7: Commit evidence docs and verify live head**
 
 ```bash
 git add SESSION_HANDOFF.md BOOP_STATUS.md BOOP_UNIFIED_MEMORY.md
@@ -1111,26 +1030,13 @@ git rev-parse HEAD
 git rev-parse origin/boop-unified
 ```
 
-Expected: local and remote heads match. Do not create a physical rollback checkpoint until Ryan explicitly says this exact signed candidate works on the real Pixel.
+Expected: local and remote heads match. Do not create a physical rollback checkpoint until Ryan explicitly accepts that exact signed APK on the real Pixel.
 
 ---
 
-## Self-review checklist for the executor
+## Plan self-review result
 
-Before implementation is called complete, confirm every item below against the approved spec:
-
-- default deny requires master + app + observed channel;
-- denied notification rich content is not read/persisted by BOOP;
-- listener learns channels through `Ranking.getChannel()` and never tries privileged third-party channel enumeration/update;
-- first-run permission setup is non-blocking and Shield-excluded;
-- all controls live under Voice Settings -> Notifications;
-- locked content is redacted; screen-off selects privacy-safe locked surface;
-- overlay interruption is full-screen/focusable only with explicit overlay grant;
-- swipe/timeout cannot cancel Android notifications;
-- tap uses original `PendingIntent`; auto-cancel only follows successful send;
-- active burst absorbs later notifications without repeated cue;
-- BOOP inbox is reconstructed from Android-active transient state, not a message database;
-- exact notification hands and existing face renderer are runtime layers;
-- replacement cue is one local short cue and only plays when native channel sound+vibration are both off;
-- no root/device-admin/accessibility/full-screen-intent abuse/QUERY_ALL_PACKAGES/new foreground service;
-- CI remains non-visual; real-device appearance and sound remain Ryan's acceptance gate.
+- Spec coverage: app/channel opt-in, first-run permissions, wake/lock privacy, full unlocked interruption, grouping, inbox, swipe semantics, original PendingIntent, timeout, local-only storage, channel-silence handoff, replacement cue, failure behavior, exact runtime art, non-visual CI and physical acceptance all map to tasks above.
+- Type consistency: `BoopNotificationSurface` is created before presentation tests; `RuntimeRecord`, host methods and API <=33 tap sentinel are defined before use.
+- Platform safety: locked taps explicitly authenticate through Android keyguard; ordinary listener channel authority is not overstated; unknown channel effect state suppresses BOOP's cue.
+- Placeholder scan: no deferred implementation markers or unspecified error-handling steps remain.
