@@ -1,4 +1,4 @@
-"""Persistent TURBO storage/runtime contracts before any resident component is added."""
+"""Persistent TURBO storage/runtime core contracts."""
 from pathlib import Path
 import unittest
 
@@ -50,7 +50,7 @@ class TurboRuntimeContractTest(unittest.TestCase):
         self.assertNotIn('isSustainedPerformanceModeSupported', text)
         self.assertNotIn('setSustainedPerformanceMode', text)
 
-    def test_runtime_layer_adds_no_service_receiver_or_boot_reapply_yet(self):
+    def test_runtime_core_does_not_embed_service_or_boot_receiver_behavior(self):
         combined = '\n'.join(
             path.read_text() for path in (
                 PERF / 'TurboStateCodec.kt',
