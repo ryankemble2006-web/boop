@@ -1,67 +1,114 @@
 # SHIELD TURBO durable decisions
 
-Updated 2026-09-08. `SESSION_HANDOFF.md` owns exact receipts; `STATUS.md` is the concise view. Fresh physical evidence overrides stale pending-test notes.
+Updated 2026-09-08. `SESSION_HANDOFF.md` owns exact receipts; `STATUS.md` is the concise view. Fresh physical Shield evidence wins over stale pending-test notes.
 
 ## Identity and continuity
 
-Independent utility `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`; not unified BOOP. Check live Turbo and `main` before publication, preserve concurrent work, never force-push, and verify remote HEAD afterward.
+Independent utility `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`; not unified BOOP.
 
-Use only established secret-backed signer `boop-dev`. Certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Use only the established secret-backed signer `boop-dev`. Permanent certificate SHA-256:
+`f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+Before Turbo edits, read BOOP startup docs plus this branch handoff/status/memory, fetch/check live Turbo and `main`, preserve concurrent work and never force-push.
 
 ## CLEAN START physical decision
 
-The real force-stop/read-back CLEAN START core is physically positive. Stale Recents/task-manager cards are history and may remain while target apps are stopped; apps reload only when deliberately focused/launched. Do not change the accepted stop/read-back core merely to solve presentation.
+The real current-user force-stop + read-back verification core is physically positive and must not be changed casually.
+
+Stale Recents/task-manager cards may remain even though target apps are actually stopped and reload only when deliberately focused/launched. Normal manual launch remains allowed.
+
+v0.5.8 physical timing established that CLEAN START itself is **sub-second** on Ryan's Shield:
+
+`notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`
+
+This disproves the hypothesis that Turbo's cleanup job caused the earlier subjectively felt ~10-second reboot disturbance. Do not parallelize, remove verification, weaken safety checks or otherwise optimize the 573ms path without new evidence. If the longer overall reboot/launcher settle matters later, instrument outside the job boundary.
 
 ## Static notice lock
 
-Required text remains `SHIELD TURBO · CLEAN START` / `Tidying startup apps`. Notice must be static, non-focusable and non-touchable. No spinner, pulse, fade, slide, countdown, moving dots, animation, repeated layout animation or focus effect. Presentation failure must fail open into cleanup.
+Exact notice text remains:
+- `SHIELD TURBO · CLEAN START`
+- `Tidying startup apps`
 
-Physical history:
+It must remain top-centre, static, non-focusable and non-touchable. No spinner, pulse, fade, slide, countdown, moving dots, progress animation, repeated layout animation, focus effect, artificial dwell or movement.
+
+Presentation failure must fail open into cleanup.
+
+### Physically accepted host architecture
+
+v0.5.7 finally made the notice visible on Ryan's real Shield. He saw the blue/cyan notice for roughly one second; diagnostic reported permission YES, `DISPLAY_WINDOW_CONTEXT`, add `ADDED`, `FRAME_COMMITTED`, about 236ms.
+
+Freeze the brightness-style host:
+- transparent `FrameLayout`;
+- `MATCH_PARENT x MATCH_PARENT` window;
+- `TYPE_APPLICATION_OVERLAY`;
+- `FLAG_NOT_FOCUSABLE`;
+- `FLAG_NOT_TOUCHABLE`;
+- `FLAG_LAYOUT_IN_SCREEN`;
+- `FLAG_LAYOUT_NO_LIMITS`;
+- `FLAG_HARDWARE_ACCELERATED`;
+- static card as top-centre child;
+- attach-gated Android 10+ frame-commit diagnostics;
+- maximum 500ms presentation wait/fail-open.
+
+Do not return to the old small `WRAP_CONTENT` overlay and do not add sleep/preroll timing hacks.
+
+Presentation history:
 - v0.5.1 flashed only at the end;
 - v0.5.2 invisible;
-- v0.5.3 invisible and slow, almost eight seconds;
+- v0.5.3 invisible and nearly eight seconds;
 - v0.5.4 invisible but fast navigation restored;
-- v0.5.5 invisible, `DRAWN` ~54ms exposed false-positive draw signal;
-- v0.5.6 invisible despite `FRAME_COMMITTED` ~103ms; navigation quick; Home micro-refresh;
-- v0.5.7 uses a brightness-style transparent full-screen host; physical result pending.
+- v0.5.5 invisible, `DRAWN` ~54ms exposed false-positive draw evidence;
+- v0.5.6 invisible despite `FRAME_COMMITTED` ~103ms, small-window architecture rejected;
+- v0.5.7 full-screen host physically visible, `FRAME_COMMITTED` ~236ms;
+- v0.5.8 unchanged host plus timing diagnostics, whole Turbo job 573ms.
 
-`FRAME_COMMITTED` is not physical visual acceptance. Do not add another timing hack based on draw/commit callbacks.
+## CLEAN START safety retained
 
-## v0.5.7 architecture decision
+- AUTO CLEAN START remains opt-in and bounded.
+- Non-exported boot receiver plus one-shot JobService only when enabled and targets exist.
+- Attempts remain roughly 30s, 60s and 120s after boot, maximum three.
+- No periodic/resident cleaner, foreground service or indefinite retry.
+- Boot cleanup uses only already-trusted loopback ADB and never requests a fresh RSA approval.
+- ADB key stays private in `noBackupFilesDir`.
+- Only eligible non-system user apps are targets.
+- Preserve BOOP/Android/NVIDIA/Google-core/system and updated-system exclusions.
+- Current resumed app is skipped.
+- Background-only playback is not independently detected.
+- HARD BLOCK stays separate and explicit.
+- Preserve old StartupLedger undo records.
+- No `pm clear`, uninstall, cache/login/data deletion, broad kill-all, rooting, device-owner/bootloader work, third-party re-signing, overclocking or fake RAM score.
 
-The next evidence-driven variable was surface geometry because `BrightnessService` is physically visible on Ryan's Shield with a full-screen application-overlay surface.
+Keep the physically proven brightness behavior, APPS direct launch, labels, Cancel/Back and remote-first behavior unchanged. Display & Sound and Accessibility remain parked.
 
-v0.5.7 therefore uses:
-- transparent `FrameLayout` host;
-- `MATCH_PARENT x MATCH_PARENT` overlay window;
-- `TYPE_APPLICATION_OVERLAY`;
-- `FLAG_NOT_FOCUSABLE`, `FLAG_NOT_TOUCHABLE`, `FLAG_LAYOUT_IN_SCREEN`, `FLAG_LAYOUT_NO_LIMITS`, `FLAG_HARDWARE_ACCELERATED`;
-- unchanged small static card as a top-centre child;
-- host-level attach-gated frame-commit diagnostics;
-- unchanged 500ms maximum fail-open.
+## Latest candidate and verification
 
-This change is presentation geometry only. CLEAN START targets, force-stop/read-back, current-app skip, trusted loopback ADB and 30/60/120-second max-three scheduler remain unchanged.
+Latest candidate: **v0.5.8 / code 15**, exact source `ea2c290b5ca66c6a88f1967db91b741e278007b7`.
 
-## Safety retained
+Release run `34242340853`, job `102115431784`, success:
+- 69 JVM tests, 0 failures/errors/skips;
+- 29 source/API/security contracts passed;
+- lint 0 errors / 24 warnings;
+- package/version/signer/archive checks passed;
+- nonvisual cold/warm launch/no-fatal smoke passed;
+- no visual tests ran.
 
-AUTO CLEAN START remains opt-in and bounded. Boot cleanup uses only already-trusted loopback ADB, never a new RSA approval. No periodic/resident cleaner. Only eligible non-system user apps are targets; preserve BOOP/Android/NVIDIA/Google-core/system exclusions. HARD BLOCK remains separate. Preserve old StartupLedger undo records.
+Artifact `SHIELD-TURBO` ID `10062615402`, ZIP SHA-256 `de9d9788992c65de8e665e23d850c97d59d6a9206b9046c8ba05f65bf975c468`.
+Test artifact `SHIELD-TURBO-TESTS` ID `10062679313`, SHA-256 `1d36483400561023311e9f9823ae631ce699063117c8c26ca91063f345fd78f3`.
+APK `Shield-Turbo-v0.5.8.apk`, `2337506` bytes, SHA-256 `e8d61d98fc5b4603c810246babbdb1c1937ae0942b2ea5aad0a8ce44e5fdcb66`.
 
-No `pm clear`, uninstall, cache/login/data deletion, broad kill-all, rooting, device-owner/bootloader work, third-party re-signing, overclocking or fake RAM score. Keep ADB key private in `noBackupFilesDir`.
+v0.5.8 TDD lineage:
+- RED timing contract `a35660fb2d52aacecf402d3b062cf065b943019c`;
+- store round-trip test `d9b3798c90c6bc78655f5b7b6d914be7a748f470`;
+- corrected RED test setup `1dba6db8990936812f0be1da2cc51cf0b0e2e658`;
+- GREEN instrumentation `89a6d4bc6e3a9878c7f8c20f2b7902740684fe12`;
+- atomic v0.5.8 stamp `ea2c290b5ca66c6a88f1967db91b741e278007b7`.
 
-Keep physically proven brightness behavior, APPS direct launch, labels, Cancel/Back and accepted controls unchanged. Display & Sound and Accessibility remain parked.
+## Testing boundary
 
-## Testing boundary and latest receipt
+Ryan owns all real-device visuals, remote behavior and physical timing. Never add GitHub screenshots, UI hierarchy dumps, golden/image/layout/focus/appearance/motion judgment. Allowed gates remain functional/API/protocol/security tests, compilation, lint, signer/package/archive integrity and basic nonvisual crash smoke.
 
-Ryan owns all real-device visuals and remote acceptance. Never add GitHub screenshots, UI hierarchy dumps, golden/image/layout/focus/appearance/motion judgment. Allowed gates are functional/API/protocol/security tests, compilation, lint, signer/package/archive integrity and basic nonvisual crash smoke.
+## Next safe decision
 
-Latest candidate: **v0.5.7/code 14**, source `5f3b18fca5921e2a47f132c1a149d03d59d7f091`, release run `34236299335`, job `102094767133`, success. 68 JVM tests passed; source/API/security contracts passed; lint 0 errors/24 warnings. Signed artifact `10060096819`, ZIP SHA-256 `6c2098ff9ac4135ad105020567c098dd66deb4223c73da2ee6db51135fa6779e`; tests artifact `10060152208`, SHA-256 `902228e7d291dd16efdba06a6936efe8db674e67bc92567a98690361ee7437f2`. APK `Shield-Turbo-v0.5.7.apk`, 2330782 bytes, SHA-256 `289db308bd387d5cf2249e44dd99a92a00cfae5e73b0e3ee54dca07e154321c0`. Permanent signer as above. Nonvisual install/cold/warm launch/no-fatal smoke passed. No visual tests ran.
+Treat the CLEAN START presentation and cleanup path as accepted/frozen. No performance fix is indicated by current evidence. Continue with other Turbo work unless Ryan explicitly reopens the overall Shield boot/launcher-settle investigation.
 
-v0.5.7 TDD: RED `87a7fd89fc58f83e8cee7072701dba66cbd81cdc` (run `34234888441`, job `102089929246`); production host `a3b3589700741b08358261a0aab352da29016307`; corrected structural guard/full GREEN `607ac8f1177bfdfd98a1ba2309d34ccf63b66447` (run `34235514995`, job `102092069734`); final atomic release source `5f3b18fca5921e2a47f132c1a149d03d59d7f091`.
-
-An accidental empty root scratch file created during release prep was immediately deleted in normal history; the tree returned exactly to the green tree before the atomic version stamp. It is not a checkpoint and no app content survived it.
-
-Historical v0.5.6 and earlier receipts remain in Git; never repoint historical checkpoints. Temporary branch `shield-turbo-v01-stamp-temp` is noncanonical and may be safely deleted later if normal branch deletion tooling becomes available.
-
-## Next physical evidence required
-
-Install v0.5.7 and reboot. Record sign visibility, navigation responsiveness, exact startup diagnostic, and target stopped state if convenient. If the sign is visibly correct and motionless, freeze the notice architecture and record physical acceptance.
+A temporary one-word placeholder file was accidentally created during documentation preparation and immediately deleted in normal history. Commit `c777ea2f14b7b7cd26a9f397e25d29fcba07a052` restores the exact v0.5.8 release tree SHA `1c3320acc6921fb1140a8c5997f284f06444f24f`. No app code/private data was involved and no history was rewritten.
