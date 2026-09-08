@@ -15,51 +15,49 @@ The exact built v48 code is permanently pinned at:
 - APK SHA-256 `0264c3e289aab06a7be45067ce44bd72124355b11f9cc0a8ffa73afb7f4c5f02`
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Do not repoint that checkpoint. It proves upstream sleeping-mic/listening plus one established BOOP wake phrase.
+Do not repoint that checkpoint.
 
-## Current signed diagnostic candidate: v53 persistent wake error
+## Current signed candidate: v54 wake-command audio boundary
 
-Ryan physically tested v52 on the Pixel. Saying `Hey BOOP` caused an error diagnostic to flash, but it disappeared too quickly to read or capture while the phone stayed on its charger. Do not infer the Android recognizer code from that observation. The useful new fact is that the v52 post-wake diagnostic path surfaced a fast terminal failure, but its toast presentation made the evidence unusable.
+v53 finally produced usable physical evidence. On the charged Pixel Ryan said `Hey BOOP` once and captured:
 
-v53 changes only diagnostic presentation/evidence capture. Pending traces remain temporary. Terminal Android `SpeechRecognizer` results/errors and synchronous recognizer-start exceptions are shown in a `BOOP wake diagnostic` dialog that stays visible until Ryan presses `Close`. The wake controller, single 16 kHz microphone ownership, Sherpa/template matching, recognizer behavior, transcript normalizer, rename parser, five-say training, charging policy, HA, eyes/blink, Shield, Launcher and assistant routing are otherwise unchanged.
+`WAKE ASR RESULT +583ms ready=18 begin=153 end=544 partial="hey pooop" final="hey pooop"`
 
-Primary RED: commit `7a27ffd60d01b385b096f8396bf0e18f7c251329`, workflow `34230769806`. The focused unified build failed because the new terminal-diagnostic acknowledgement contract did not yet exist.
+That is a successful Android recognizer result, not an error. It proves the post-wake command recognizer was being fed the wake phrase itself and was completing before Ryan could speak a separate command.
 
-The v53 version bump briefly dropped existing Gradle dependencies during a concurrent edit. Commit `3b85e5ae8babe151c3f95c6aa4637d91fc5b2cb9` restored those dependencies on top of the persistent diagnostic work before the accepted build.
+Source tracing found the exact production-path cause in `BoopWakeWordController`: the controller kept one second of wake-detection PCM (`PRE_ROLL_SAMPLES = 16000`) and wrote that entire historical buffer into the command recognizer pipe immediately after wake detection. Android therefore began command recognition with the already-complete wake utterance.
 
-Final v53 receipt:
+v54 establishes a strict boundary: wake-detection history is not command audio. The recognizer prelude is now empty and the existing pipe continues with live post-detection PCM only. The single controller-owned 16 kHz `AudioRecord`, three-second command window, Sherpa/template detector, wake sensitivity, transcript normalizer, rename parser, five-say enrolment, charging policy, HA, eyes/blink, Launcher, Shield and assistant routing are unchanged.
 
-- built code: `3b85e5ae8babe151c3f95c6aa4637d91fc5b2cb9`
-- version: 53 / `1.2.7-unified-wake-diagnostic-hold`
-- workflow: `34231784857` SUCCESS
-- artifact: `BOOP-Unified`, ID `10058183437`
-- artifact ZIP SHA-256: `16a574baa521ca54824527090f6b3e9ae216a0805814b4edec4051a30a1d8624`
-- APK SHA-256: `d1d21ff117bf21b761d7f9fb4f78d0499c3ba662c14408c3c17373428b92dbda`
-- permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
+TDD trail:
 
-Final workflow evidence: non-visual integration/materialization passed; Launcher lint passed; Shield focused tests 58/58 and unified focused tests 84/84 passed with zero failures/errors/skips; signed assembly, package/version, manifest, permanent signer and APK archive integrity passed; artifact upload passed. No emulator/device launch, screenshot, visual or acoustic acceptance ran.
+- RED `d68fca32f25b9de360404170ff46576baabb33d5`, workflow `34233607842`: the selected unified wake stage failed because the new `BoopWakeCommandAudioPolicy` did not yet exist.
+- Policy `edb2750e1140e5f8d4e39ec2e65b9097d71cef01`.
+- Controller GREEN `f90031830dfcf7f46c5a3644502a5bdf278acc06`, workflow `34233966994` SUCCESS.
 
-Detailed receipt: `docs/BOOP-V53-PERSISTENT-WAKE-DIAGNOSTIC-RECEIPT.md`.
+Final v54 receipt:
 
-## Previous signed candidate: v51 wake-command normalization
+- built code `fe26f29cb330b450e5e9894a4588b19ae9d7152a`
+- version 54 / `1.2.8-unified-wake-command-boundary`
+- workflow `34234618256` SUCCESS
+- artifact `BOOP-Unified`, ID `10059395955`
+- APK SHA-256 `ee6a5ade5538cf3b0b4aa1346cdeb5b957c9ed56ff214279c2d7c46e428fd287`
+- artifact ZIP SHA-256 `0f7bb5168a961aa1e44bf455c070a3db8e112c8a55f9360db2236fc1dc4d6908`
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Ryan physically tested v50 and confirmed the wake itself still worked: `Hey BOOP` woke BOOP. Spoken rename still failed. No tested rename wording entered the five-say flow, including the natural `change name to steve`, fuller sentences, and `Hey BOOP` followed by a pause for the listening cue and then the rename command. v50 spoken rename is therefore a physical FAIL downstream of wake detection.
+Fresh final evidence: non-visual integration/materialization passed; Launcher lint passed; Shield focused tests 58/58 and unified focused tests 85/85 passed with zero failures/errors/skips; signed assembly, package/version, manifest, permanent signer and APK archive integrity passed; artifact upload passed. No emulator/device launch, screenshots, visual acceptance or acoustic acceptance ran.
 
-The v50 parser repair was real but incomplete. Source tracing found the next upstream defect in the actual WAKE result path: `MainActivity` calls the one-argument `BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best)` before `handleRecognizedSpeech()`. The wake-recognition audio pipe includes pre-roll, but that normalizer removed only a leading bare `BOOP`. It did not remove the established natural calls such as `HEY BOOP`, `OI BOOP`, `GOOD MORNING BOOP`, `BOOP WAKE UP`, and the rest of the 33-form BOOP grammar. A recognition result containing the natural wake call before the command could therefore reach the local rename parser still prefixed by the wake call and fall through to ordinary command handling.
+Detailed receipt: `docs/BOOP-V54-WAKE-COMMAND-BOUNDARY-RECEIPT.md`.
 
-Do not overstate this as proof of the exact string Android returned on Ryan's Pixel. It is a concrete production-path defect that matches the physical symptom and is covered by regression tests.
+## Previous diagnostic candidate: v53
 
-### v51 TDD trail
+v52 introduced local-only post-wake ASR callback tracing. v53 made terminal results/errors persistent in a `BOOP wake diagnostic` dialog until Ryan pressed `Close`, which allowed the physical trace above to be captured. v53 built code `3b85e5ae8babe151c3f95c6aa4637d91fc5b2cb9`, workflow `34231784857`, APK SHA-256 `d1d21ff117bf21b761d7f9fb4f78d0499c3ba662c14408c3c17373428b92dbda`. Detailed receipt: `docs/BOOP-V53-PERSISTENT-WAKE-DIAGNOSTIC-RECEIPT.md`.
 
-RED: commit `5794ed194cf90a744fc41c0b789718ceac97605c`, workflow `34224636115`. The new test feeds every established BOOP wake form before `change name to Steve`. The unified suite ran 79 focused tests and failed exactly one: `BoopWakeTranscriptNormalizerTest.stripsAllEstablishedBoopWakeCallsBeforeCommand`.
+## Earlier wake-command normalization
 
-Minimal GREEN: commit `de2e1d825f4074f9b39ee9c409492e3edf46bff6` changes only `BoopWakeTranscriptNormalizer`. BOOP's complete natural wake grammar is stripped longest-first before command routing; custom-name normalization retains BOOP as fallback.
-
-v51 built commit `4274ed008014d1ed5810af29b64b164bf8477072`, workflow `34225351709`, APK SHA-256 `e768248f27c671d5c4377d68905405d8c5890d7125390e13bb6c5177aad23e5c`. Detailed receipt: `docs/BOOP-V51-WAKE-COMMAND-NORMALIZE-RECEIPT.md`.
+v50 physically preserved `Hey BOOP` wake but spoken rename still failed. v51 repaired natural wake-prefix stripping before local command routing. Built v51 commit `4274ed008014d1ed5810af29b64b164bf8477072`, workflow `34225351709`, APK SHA-256 `e768248f27c671d5c4377d68905405d8c5890d7125390e13bb6c5177aad23e5c`. Detailed receipt: `docs/BOOP-V51-WAKE-COMMAND-NORMALIZE-RECEIPT.md`.
 
 ## Five-say custom-name contract
-
-The existing local enrolment implementation remains intact:
 
 - `BOOP` is permanently valid and never requires training;
 - a custom name is additive, never a replacement;
@@ -69,19 +67,19 @@ The existing local enrolment implementation remains intact:
 - the learned matcher is additive to Sherpa and must fail safely without disabling BOOP;
 - custom names receive all 33 established natural wake forms;
 - changing to a new custom name clears the old matching profile;
-- unchanged names do not nag; a matching profile is reused;
-- manual Train remains available for deliberate retraining;
-- no second mic listener and no cloud wake training.
+- unchanged names reuse their matching profile;
+- manual Train remains available;
+- no second microphone listener and no cloud wake training.
 
 ## Required next Pixel test
 
-1. Install v53 over the existing BOOP install. Do not uninstall first.
+1. Install v54 over the existing BOOP install. Do not uninstall first.
 2. Keep the Pixel on its charger and let BOOP settle into the established sleeping-wake state.
 3. Confirm the Android green microphone indicator is present.
 4. Say `Hey BOOP` once.
-5. The terminal `BOOP wake diagnostic` message should remain on screen until `Close` is pressed.
-6. Photograph/screenshot the complete message or copy it exactly and report it back.
-7. Stop there. Do not add rename synonyms or continue five-say testing until the exact recognizer result/error is known.
+5. Wait for the listening cue, then say exactly `change name to Steve`.
+6. If `Say Steve five times.` appears, continue with five natural `Steve` examples, then test `Steve` wake and confirm `Hey BOOP` still works as the permanent fallback.
+7. If the persistent diagnostic reports an error, no speech or an unexpected transcript, capture it and stop before further grammar changes.
 
 ## Architecture boundary: clean Shield HOME remains standalone
 
