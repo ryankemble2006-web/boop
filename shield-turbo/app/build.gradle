@@ -22,8 +22,8 @@ android {
         applicationId 'com.boop.shieldturbo'
         minSdk 28
         targetSdk 36
-        versionCode 18
-        versionName '0.5.11'
+        versionCode 19
+        versionName '0.5.12'
     }
     buildTypes {
         debug { if (boopStore != null) signingConfig signingConfigs.boopDev }
