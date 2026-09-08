@@ -53,4 +53,15 @@ public final class BoopWakeDiagnosticTraceTest {
 
         assertTrue(trace.requiresAcknowledgement());
     }
+
+    @Test public void startFailureIsTerminalAndNamesTheException() {
+        BoopWakeDiagnosticTrace trace = new BoopWakeDiagnosticTrace(5_000L);
+        trace.startFailure("IllegalStateException", 5_120L);
+
+        assertTrue(trace.terminal());
+        assertTrue(trace.requiresAcknowledgement());
+        assertEquals(
+                "WAKE ASR START FAILED IllegalStateException +120ms ready=- begin=- end=- partial=- final=-",
+                trace.summary(5_120L));
+    }
 }
