@@ -1,12 +1,10 @@
 """One-shot NVIDIA Processor Mode actuator proof contracts."""
 from pathlib import Path
 import unittest
-import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'app/src/main/java/com/boop/shieldturbo'
 PERF = SOURCE / 'performance'
-ANDROID = '{http://schemas.android.com/apk/res/android}'
 
 
 class ProcessorModeActuatorContractTest(unittest.TestCase):
@@ -48,24 +46,18 @@ class ProcessorModeActuatorContractTest(unittest.TestCase):
         self.assertIn('writeMode(1)', proof)
         self.assertIn('restoreVerified', proof)
 
-    def test_turbo_page_exposes_one_shot_proof_not_persistent_turbo(self):
+    def test_turbo_page_preserves_the_one_shot_physical_proof_flow(self):
         main = (SOURCE / 'MainActivity.kt').read_text()
         self.assertIn('R.string.processor_actuator_proof', main)
         self.assertIn('showProcessorActuatorPrompt()', main)
         self.assertIn('runProcessorActuatorProof()', main)
         self.assertIn('ProcessorModeActuatorProbe(applicationContext).runProof()', main)
-        self.assertNotIn('ThermalWatchdogService', main)
-        self.assertNotIn('PerformanceBootReceiver', main)
 
-    def test_actuator_adds_no_resident_component_or_foreground_permission(self):
-        manifest = ET.parse(ROOT / 'app/src/main/AndroidManifest.xml').getroot()
-        app = manifest.find('application')
-        services = {s.get(ANDROID + 'name') for s in app.findall('service')}
-        receivers = {r.get(ANDROID + 'name') for r in app.findall('receiver')}
-        permissions = {p.get(ANDROID + 'name') for p in manifest.findall('uses-permission')}
-        self.assertFalse(any(name and '.performance.' in name for name in services))
-        self.assertFalse(any(name and '.performance.' in name for name in receivers))
-        self.assertNotIn('android.permission.FOREGROUND_SERVICE', permissions)
+    def test_one_shot_actuator_logic_remains_independent_of_persistent_runtime(self):
+        actuator = '\n'.join(path.read_text() for path in PERF.glob('ProcessorModeActuator*.kt'))
+        self.assertNotIn('TurboThermalWatchdogService', actuator)
+        self.assertNotIn('TurboBootReceiver', actuator)
+        self.assertNotIn('TurboRuntime', actuator)
 
     def test_clean_start_and_brightness_remain_untouched(self):
         clean = (SOURCE / 'cleanstart/CleanStartJobService.kt').read_text()
