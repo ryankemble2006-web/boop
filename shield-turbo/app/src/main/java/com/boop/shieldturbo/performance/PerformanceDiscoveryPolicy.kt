@@ -3,6 +3,14 @@ package com.boop.shieldturbo.performance
 object PerformanceDiscoveryPolicy {
     private val clueTokens = listOf("nvidia", "processor", "performance", "fan", "power")
 
+    val clueCommands = listOf(
+        "(settings list global | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+        "(settings list secure | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+        "(settings list system | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+        "(getprop | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+        "cmd power help"
+    )
+
     val paths = listOf(
         "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq",
         "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq",
