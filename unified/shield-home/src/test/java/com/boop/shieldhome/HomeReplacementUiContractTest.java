@@ -46,4 +46,8 @@ public final class HomeReplacementUiContractTest {
                 ShieldAccessibilityRouteActivity.tvSettingsFallbackClassName());
         assertTrue(AccessibilityService.class.isAssignableFrom(ShieldHomeOverrideService.class));
     }
+
+    @Test public void accessibilityOverrideRearmsWhenAndroidReconnectsService() throws Exception {
+        assertNotNull(ShieldHomeOverrideService.class.getDeclaredMethod("onServiceConnected"));
+    }
 }
