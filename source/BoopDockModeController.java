@@ -13,7 +13,7 @@ import android.os.Build;
 
 final class BoopDockModeController implements SensorEventListener {
     interface Listener {
-        void onWirelessDockChanged(boolean docked);
+        void onWakePowerChanged(boolean powered);
         void onPresenceNudge();
     }
 
@@ -25,6 +25,7 @@ final class BoopDockModeController implements SensorEventListener {
 
     private boolean resumed;
     private boolean receiverRegistered;
+    private boolean wakePowered;
     private boolean wirelessDocked;
     private boolean wasNear;
 
@@ -39,6 +40,10 @@ final class BoopDockModeController implements SensorEventListener {
                 applyBattery(intent);
             }
         };
+    }
+
+    boolean isWakePowered() {
+        return wakePowered;
     }
 
     boolean isWirelessDocked() {
@@ -64,6 +69,7 @@ final class BoopDockModeController implements SensorEventListener {
         if (sticky != null) {
             applyBattery(sticky);
         } else {
+            updateWakePowered(false);
             updateWirelessDocked(false);
         }
         syncProximity();
@@ -92,7 +98,18 @@ final class BoopDockModeController implements SensorEventListener {
         int plugged = intent == null
                 ? 0
                 : intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
+        updateWakePowered(BoopDockPower.isExternallyPowered(plugged));
         updateWirelessDocked(BoopDockPower.isWireless(plugged));
+    }
+
+    private void updateWakePowered(boolean powered) {
+        if (wakePowered == powered) {
+            return;
+        }
+        wakePowered = powered;
+        if (listener != null) {
+            listener.onWakePowerChanged(powered);
+        }
     }
 
     private void updateWirelessDocked(boolean docked) {
@@ -102,9 +119,6 @@ final class BoopDockModeController implements SensorEventListener {
         wirelessDocked = docked;
         wasNear = false;
         syncProximity();
-        if (listener != null) {
-            listener.onWirelessDockChanged(docked);
-        }
     }
 
     private void syncProximity() {
