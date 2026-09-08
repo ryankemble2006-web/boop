@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.provider.Settings;
 import org.junit.Test;
@@ -32,12 +33,18 @@ public final class HomeReplacementUiContractTest {
         assertEquals(Settings.ACTION_HOME_SETTINGS, ShieldLauncherActivity.preferredHomeChooserAction());
     }
 
-    @Test public void accessibilityOverrideTargetsTvSettingsDirectlyOnShield() {
-        ComponentName preferred = ShieldLauncherActivity.preferredTvAccessibilityComponent();
+    @Test public void accessibilityOverrideUsesInvisibleTvSettingsRouter() {
+        assertTrue(Activity.class.isAssignableFrom(ShieldAccessibilityRouteActivity.class));
+
+        ComponentName preferred = ShieldAccessibilityRouteActivity.preferredTvAccessibilityComponent();
         assertEquals("com.android.tv.settings", preferred.getPackageName());
         assertEquals("com.android.tv.settings.system.AccessibilityActivity", preferred.getClassName());
 
-        ComponentName fallback = ShieldLauncherActivity.tvSettingsFallbackComponent();
+        ComponentName modern = ShieldAccessibilityRouteActivity.modernTvAccessibilityComponent();
+        assertEquals("com.android.tv.settings", modern.getPackageName());
+        assertEquals("com.android.tv.settings.oemlink.AccessibilitySettingsActivity", modern.getClassName());
+
+        ComponentName fallback = ShieldAccessibilityRouteActivity.tvSettingsFallbackComponent();
         assertEquals("com.android.tv.settings", fallback.getPackageName());
         assertEquals("com.android.tv.settings.MainSettings", fallback.getClassName());
         assertTrue(AccessibilityService.class.isAssignableFrom(ShieldHomeOverrideService.class));
