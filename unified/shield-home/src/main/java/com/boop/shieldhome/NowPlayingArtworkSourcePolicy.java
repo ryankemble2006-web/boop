@@ -1,7 +1,8 @@
 package com.boop.shieldhome;
 
 import android.app.Notification;
-import android.net.Uri;
+
+import java.net.URI;
 
 /** Pure policy for safe Now Playing artwork sources. */
 final class NowPlayingArtworkSourcePolicy {
@@ -13,13 +14,12 @@ final class NowPlayingArtworkSourcePolicy {
         if (rawUri == null || rawUri.trim().isEmpty()) {
             return Kind.UNSUPPORTED;
         }
-        Uri uri;
+        String scheme;
         try {
-            uri = Uri.parse(rawUri.trim());
-        } catch (RuntimeException malformed) {
+            scheme = URI.create(rawUri.trim()).getScheme();
+        } catch (IllegalArgumentException malformed) {
             return Kind.UNSUPPORTED;
         }
-        String scheme = uri.getScheme();
         if (scheme == null) {
             return Kind.UNSUPPORTED;
         }
