@@ -7,8 +7,11 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- Sockets connect only to this device's loopback ADB daemon, never an Internet endpoint. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Allows the explicitly enabled, bounded CLEAN START job to be scheduled after a real boot. -->
+    <!-- Allows the explicitly enabled, bounded CLEAN START job and persistent TURBO state to resume after a real boot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Required only while verified TURBO is active so Android thermal status remains watched. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Granted only by the user's explicit local ADB setup after Android RSA approval. -->
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
@@ -51,10 +54,23 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".performance.TurboBootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <service android:name=".BrightnessService" android:exported="false" />
         <service
             android:name=".cleanstart.CleanStartJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="false" />
+        <service
+            android:name=".performance.TurboThermalWatchdogService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps Android thermal-status protection active while SHIELD TURBO stock performance mode is enabled." />
+        </service>
     </application>
 </manifest>
