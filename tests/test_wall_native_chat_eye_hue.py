@@ -28,7 +28,10 @@ def test_native_chat_lineage_is_preserved_while_adding_eye_hue():
     assert "touchesBothEyes(face, event)" not in patch
     assert "eyeHueOverlay.hide()" in patch
     assert "BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes)" in patch
-    assert "paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));" in patch
+    assert "originalFaceBitmap" in patch
+    assert "boolean irisPixel = hsv[1] >= 0.30f" in patch
+    assert "paint.setColorFilter(null);" in patch
+    assert "BoopEyeHue.colorFilterForHue(hueDegrees)" not in patch
     assert "setEyeHueDegrees(BoopEyeHue.loadHue(context));" in patch
     assert 'value.contains("eye colour")' in intent
     assert 'value.contains("eye color")' in intent
