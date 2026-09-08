@@ -76,9 +76,31 @@ Presentation history:
 - Background-only playback is not independently detected.
 - HARD BLOCK stays separate and explicit.
 - Preserve old StartupLedger undo records.
-- No `pm clear`, uninstall, cache/login/data deletion, broad kill-all, rooting, device-owner/bootloader work, third-party re-signing, overclocking or fake RAM score.
+- No `pm clear`, uninstall, cache/login/data deletion, broad kill-all, rooting, device-owner/bootloader work, third-party re-signing or fake RAM score.
 
 Keep the physically proven brightness behavior, APPS direct launch, labels, Cancel/Back and remote-first behavior unchanged. Display & Sound and Accessibility remain parked.
+
+## Persistent stock TURBO mode decision
+
+Ryan explicitly approved a persistent no-root performance mode for demanding workloads such as Dolphin.
+
+Canonical design:
+`docs/superpowers/specs/2026-09-08-shield-turbo-stock-performance-mode-design.md`
+
+Durable rules:
+- stock-envelope performance tuning is allowed;
+- NVIDIA Max Performance is the preferred first lever when the target firmware exposes a verifiable read/write interface;
+- additional CPU/GPU/governor controls are allowed only when stock-exposed, reviewed/allowlisted, within firmware-reported supported limits, and have complete save/write/read-back/restore/read-back semantics;
+- Android fixed-performance mode is not automatically enabled in v1 because it is not guaranteed to be maximum dynamic performance;
+- TURBO persists across reboot;
+- the exact pre-Turbo NORMAL snapshot is saved before any write, survives reboot reapply unchanged, and is preserved until restore verification succeeds;
+- a foreground thermal watchdog runs only while TURBO is active;
+- boot reapply must verify current thermal state before any performance write;
+- SEVERE or higher thermal status causes immediate transactional restore to NORMAL, persists NORMAL and never auto-reenables TURBO;
+- ambiguous or failed state prefers NORMAL or explicit recovery and must not blindly reapply TURBO;
+- no frequency above firmware-exposed limits, voltage modification, thermal/throttling bypass, root, custom kernel, boot image or bootloader modification.
+
+The design is approved in chat and self-reviewed in the committed spec. Implementation is still pending Ryan's written-spec review. After approval, implementation begins with a read-only capability build and adds writes only from physical evidence one control at a time.
 
 ## Latest candidate and verification
 
@@ -109,6 +131,6 @@ Ryan owns all real-device visuals, remote behavior and physical timing. Never ad
 
 ## Next safe decision
 
-Treat the CLEAN START presentation and cleanup path as accepted/frozen. No performance fix is indicated by current evidence. Continue with other Turbo work unless Ryan explicitly reopens the overall Shield boot/launcher-settle investigation.
+Ryan reviews the written persistent stock-TURBO spec. If approved, create the implementation plan and begin TDD with Stage 1 read-only capability discovery. No performance write is justified before capability evidence.
 
-A temporary one-word placeholder file was accidentally created during documentation preparation and immediately deleted in normal history. Commit `c777ea2f14b7b7cd26a9f397e25d29fcba07a052` restores the exact v0.5.8 release tree SHA `1c3320acc6921fb1140a8c5997f284f06444f24f`. No app code/private data was involved and no history was rewritten.
+A temporary one-word placeholder file was accidentally created during earlier documentation preparation and immediately deleted in normal history. Commit `c777ea2f14b7b7cd26a9f397e25d29fcba07a052` restores the exact v0.5.8 release tree SHA `1c3320acc6921fb1140a8c5997f284f06444f24f`. No app code/private data was involved and no history was rewritten.

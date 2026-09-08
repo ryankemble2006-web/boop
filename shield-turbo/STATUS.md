@@ -38,6 +38,24 @@ Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe17
 
 No visual tests ran. Ryan's physical evidence is authoritative.
 
+## Approved next design: persistent stock TURBO mode
+
+Written spec:
+`docs/superpowers/specs/2026-09-08-shield-turbo-stock-performance-mode-design.md`
+
+Approved in-chat behavior:
+- persistent across reboot;
+- NVIDIA Max Performance when genuinely exposed/writable;
+- additional stock CPU/GPU controls only when allowlisted, within firmware limits, reversible and read-back verified;
+- foreground thermal watchdog only while active;
+- boot-time thermal check before reapply;
+- auto-restore NORMAL at SEVERE or higher and stay NORMAL;
+- exact original NORMAL snapshot preserved across reboot and failed restore;
+- no root, custom kernel, bootloader unlock, voltage changes, above-stock clocks or thermal bypass;
+- Android fixed-performance mode remains diagnostic-only in v1.
+
+The written spec has completed self-review. **No implementation code has been written yet.** User review of the committed spec is the current gate.
+
 ## Locked decisions
 
 Freeze:
@@ -51,8 +69,10 @@ Freeze:
 - brightness 10-100% behavior;
 - APPS direct launch and remote navigation behavior.
 
+Stock-envelope performance tuning is newly allowed only under the approved TURBO spec. Above-stock clocks, voltage changes, thermal/throttling bypass, root and bootloader/kernel modification remain excluded.
+
 Display & Sound and Accessibility remain parked.
 
 ## Next step
 
-No CLEAN START performance change is justified. Move on to other Turbo work unless Ryan explicitly wants the longer overall Shield reboot/launcher settle time investigated. If so, collect evidence outside `CleanStartJobService` first.
+Ryan reviews the committed TURBO design spec. On approval, create the implementation plan and begin TDD with the Stage 1 read-only capability probe. No performance writes before that sequence.

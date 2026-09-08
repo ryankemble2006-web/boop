@@ -14,6 +14,25 @@ Conclusion: the CLEAN START job itself is sub-second on Ryan's Shield. The earli
 
 The full-screen notice architecture is now frozen unless fresh physical evidence shows a regression. Do not return to the old small `WRAP_CONTENT` overlay and do not add timing sleeps/prerolls/artificial dwell.
 
+## Approved next feature: persistent stock TURBO mode
+
+Ryan approved the architecture for a no-root, persistent performance mode aimed at workloads such as Dolphin emulation. The canonical written design is:
+
+`docs/superpowers/specs/2026-09-08-shield-turbo-stock-performance-mode-design.md`
+
+Approved behavior:
+- TURBO persists across reboot until manually disabled or thermally auto-disabled;
+- NVIDIA Max Performance is included when a real read/write interface is proven on the target firmware;
+- additional CPU/GPU/governor controls are allowed only when stock-exposed, allowlisted, within firmware-reported limits, and fully reversible with read-back;
+- Android fixed-performance mode is diagnostic-only in v1 because it is not guaranteed to represent maximum dynamic performance;
+- a foreground thermal watchdog runs only while TURBO is active;
+- Android thermal status is checked before boot-time reapply;
+- SEVERE or higher immediately restores NORMAL, persists NORMAL, and never auto-reenables TURBO;
+- the original NORMAL snapshot is captured once before the first Turbo write, survives reboot reapply unchanged, and is preserved through failed restore attempts;
+- no root, custom kernel, bootloader unlock, voltage changes, above-stock clocks, or thermal/throttling bypass.
+
+The design has passed an initial self-review for placeholders, contradictory state rules and thermal-ordering ambiguity. **Implementation has not started.** The written spec is awaiting Ryan's review/approval before the implementation-plan/TDD phase.
+
 ## Current candidate: v0.5.8 timing evidence build
 
 Latest signed machine-verified source: **v0.5.8 / versionCode 15** at exact commit `ea2c290b5ca66c6a88f1967db91b741e278007b7`.
@@ -58,7 +77,8 @@ Preserve these unless Ryan explicitly changes the feature:
 - Manual launch releases stopped state.
 - HARD BLOCK stays separate and explicit.
 - Old StartupLedger undo records remain preserved.
-- No root, device owner, bootloader changes, third-party re-signing, uninstall, `pm clear`, cache/login/data deletion, broad kill-all, overclocking or fake RAM scores.
+- No root, device owner, bootloader changes, third-party re-signing, uninstall, `pm clear`, cache/login/data deletion, broad kill-all or fake RAM scores.
+- Stock-envelope performance tuning is now explicitly allowed only under the approved TURBO design; above-stock clocks, voltage changes and thermal/throttling bypass remain forbidden.
 
 Keep the physically proven 10-100% brightness behavior unchanged. Keep APPS direct launch, labels, Cancel/Back and remote-first UI. Display & Sound and Accessibility remain parked.
 
@@ -98,8 +118,8 @@ Accepted host geometry from v0.5.7:
 
 ## Next safe step
 
-No CLEAN START speed fix is justified by current evidence. Freeze the accepted presentation and cleanup mechanism. Continue with other Turbo features, or if Ryan specifically wants to investigate the longer perceived reboot disturbance, gather timing evidence outside `CleanStartJobService` before changing code.
+Ryan reviews the written persistent stock-TURBO spec. If approved, move to the implementation-plan/TDD phase starting with the read-only capability build. Do not implement performance writes before that gate.
 
-The branch briefly received an accidental one-word placeholder file while preparing this documentation. It was immediately deleted in normal history; commit `c777ea2f14b7b7cd26a9f397e25d29fcba07a052` restores the exact v0.5.8 release tree SHA `1c3320acc6921fb1140a8c5997f284f06444f24f`. No app code or private data was involved and no history was force-rewritten.
+The branch briefly received an accidental one-word placeholder file while preparing earlier documentation. It was immediately deleted in normal history; commit `c777ea2f14b7b7cd26a9f397e25d29fcba07a052` restores the exact v0.5.8 release tree SHA `1c3320acc6921fb1140a8c5997f284f06444f24f`. No app code or private data was involved and no history was force-rewritten.
 
 `main` remains separate and unchanged by Turbo work.
