@@ -5,11 +5,11 @@ import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
 
 public final class NowPlayingAccessSettingsPlanTest {
-    @Test public void modernAndroidTriesDetailThenGenericNotificationListenerSettings() {
+    @Test public void modernAndroidTriesGenericNotificationListenerSettingsBeforeDetail() {
         assertArrayEquals(
                 new NowPlayingAccessSettingsPlan.Route[] {
-                        NowPlayingAccessSettingsPlan.Route.DETAIL,
-                        NowPlayingAccessSettingsPlan.Route.GENERIC
+                        NowPlayingAccessSettingsPlan.Route.GENERIC,
+                        NowPlayingAccessSettingsPlan.Route.DETAIL
                 },
                 NowPlayingAccessSettingsPlan.routesForSdk(30));
     }
