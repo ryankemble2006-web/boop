@@ -52,6 +52,7 @@ class ContractTest(unittest.TestCase):
             'android.permission.ACCESS_NETWORK_STATE',
             'android.permission.SYSTEM_ALERT_WINDOW',
             'android.permission.WRITE_SECURE_SETTINGS',
+            'android.permission.INTERNET',
         }, permissions)
         app = manifest.find('application')
         services = app.findall('service')
@@ -61,6 +62,28 @@ class ContractTest(unittest.TestCase):
         self.assertEqual([], app.findall('receiver'))
         categories = {c.get(ANDROID + 'name') for c in app.findall('.//category')}
         self.assertIn('android.intent.category.LEANBACK_LAUNCHER', categories)
+        power = next(a for a in app.findall('activity') if a.get(ANDROID + 'name') == '.power.PowerActivity')
+        self.assertEqual('false', power.get(ANDROID + 'exported'))
+
+    def test_local_adb_has_no_remote_address_or_listening_server(self):
+        wire = (SOURCE / 'power/AdbWire.java').read_text()
+        bridge = (SOURCE / 'power/LocalBridge.kt').read_text()
+        self.assertIn('new byte[]{127,0,0,1}', wire)
+        self.assertNotIn('ServerSocket', wire)
+        self.assertIn('noBackupFilesDir', bridge)
+        self.assertIn('AdbWire().use', bridge)
+        self.assertIn('id -u', bridge)
+        self.assertIn('MAX_OUTPUT', wire)
+        self.assertIn('MAX_PACKET', wire)
+
+    def test_settings_routes_come_from_installed_system_activities(self):
+        source = (SOURCE / 'power/FirmwarePages.kt').read_text()
+        route = (SOURCE / 'system/SystemRoutes.kt').read_text()
+        self.assertIn('PackageManager.GET_ACTIVITIES', source)
+        self.assertIn('activity.exported', source)
+        self.assertIn('ApplicationInfo.FLAG_SYSTEM', source)
+        self.assertIn('confirmed_', route)
+        self.assertNotIn('device.displaysound.DisplaySoundActivity', route)
 
     def test_ci_does_not_judge_visual_ui(self):
         workflow = WORKFLOW.read_text()
@@ -69,6 +92,8 @@ class ContractTest(unittest.TestCase):
         self.assertNotIn('shield-turbo-home.xml', workflow)
         self.assertNotIn('shield-turbo-ui.xml', workflow)
         self.assertNotIn('shield-turbo-focus.xml', workflow)
+        self.assertNotIn('screencap', workflow)
+        self.assertLess(workflow.index('name: Upload signed candidate'), workflow.index('name: Emulator install'))
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

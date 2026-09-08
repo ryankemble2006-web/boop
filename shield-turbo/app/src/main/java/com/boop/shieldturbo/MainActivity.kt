@@ -386,85 +386,13 @@ class MainActivity : Activity() {
         }
         val shortcutScroll = ScrollView(this).apply { isFillViewport = true; addView(grid) }
         content.addView(shortcutScroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(8) })
-        content.addView(text("Sleep and reboot stay out of STANDARD mode until a safe, proven route exists.", 14f, Color.LTGRAY))
+        content.addView(text("Sleep and reboot are available in ADVANCED with local ADB access.", 14f, Color.LTGRAY))
         shortcutButtons.first().requestFocus()
     }
 
     private fun renderAdvanced() {
-        sectionHeader(R.string.section_advanced, R.string.section_advanced_help)
-        val granted = hasAdbTurbo()
-        content.addView(
-            text(if (granted) "ADB TURBO READY" else "SETUP REQUIRED", 23f, Color.CYAN).apply {
-                setTypeface(typeface, Typeface.BOLD)
-            }
-        )
-
-        if (!granted) {
-            content.addView(text("One-time ADB setup command:", 17f), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
-            content.addView(text("adb shell pm grant com.boop.shieldturbo android.permission.WRITE_SECURE_SETTINGS", 16f, Color.WHITE))
-            content.addView(text("After that grant, SHIELD TURBO does not keep an ADB connection open. Reinstalling or clearing app data may require the grant again.", 14f, Color.LTGRAY))
-
-            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            val developer = actionButton("DEVELOPER OPTIONS") { safeStart(SystemRoutes.resolve(this, SystemShortcut.DEVELOPER)) }
-            val recheck = actionButton("RECHECK ACCESS") { renderAdvancedFresh() }
-            row.addView(developer, LinearLayout.LayoutParams(0, dp(56), 1f))
-            row.addView(recheck, LinearLayout.LayoutParams(0, dp(56), 1f).apply { marginStart = dp(10) })
-            content.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
-            developer.requestFocus()
-            return
-        }
-
-        content.addView(text("First advanced control: Android UI animation speed. This changes animation timing only, not CPU/GPU clocks or app data.", 16f, Color.LTGRAY))
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        val fast = actionButton("FAST 0.5x") { applyAnimationSpeed(AnimationSpeed.HALF) }
-        val off = actionButton("ANIMATIONS OFF") { applyAnimationSpeed(AnimationSpeed.OFF) }
-        val normal = actionButton("RESTORE 1x") { applyAnimationSpeed(AnimationSpeed.NORMAL) }
-        row.addView(fast, LinearLayout.LayoutParams(0, dp(56), 1f))
-        row.addView(off, LinearLayout.LayoutParams(0, dp(56), 1f).apply { marginStart = dp(10) })
-        row.addView(normal, LinearLayout.LayoutParams(0, dp(56), 1f).apply { marginStart = dp(10) })
-        content.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
-        content.addView(text("RESTORE 1x is the rollback. No process killing, cache purging or overclocking is performed.", 14f, Color.LTGRAY))
-        fast.requestFocus()
-    }
-
-    private fun renderAdvancedFresh() {
-        if (currentSection != TurboSection.ADVANCED) return
-        content.removeAllViews()
-        renderAdvanced()
-    }
-
-    private fun hasAdbTurbo(): Boolean =
-        checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
-
-    private fun applyAnimationSpeed(speed: AnimationSpeed) {
-        if (!hasAdbTurbo()) {
-            renderAdvancedFresh()
-            return
-        }
-        val applied = try {
-            AnimationController { key, value ->
-                Settings.Global.putFloat(contentResolver, key, value)
-            }.apply(speed)
-        } catch (_: SecurityException) {
-            false
-        } catch (_: IllegalArgumentException) {
-            false
-        }
-
-        val label = when (speed) {
-            AnimationSpeed.OFF -> "Animations off"
-            AnimationSpeed.HALF -> "Animations 0.5x"
-            AnimationSpeed.NORMAL -> "Animations restored to 1x"
-        }
-        details?.dismiss()
-        details = AlertDialog.Builder(this)
-            .setTitle(if (applied) "APPLIED" else "NOT APPLIED")
-            .setMessage(
-                if (applied) "$label. Only Android animation scales were changed."
-                else "The Shield rejected the secure-settings write or ADB TURBO access is missing. No other tuning was changed."
-            )
-            .setPositiveButton(R.string.close, null)
-            .show()
+        showHome()
+        safeStart(Intent(this, com.boop.shieldturbo.power.PowerActivity::class.java))
     }
 
     private fun renderPicture() {

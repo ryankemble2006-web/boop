@@ -17,8 +17,9 @@ object AppCatalog {
             Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
         )
         intents.forEach { intent ->
+            // Launcher intent filters do not have to declare CATEGORY_DEFAULT.
             @Suppress("DEPRECATION")
-            pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY).forEach { info ->
+            pm.queryIntentActivities(intent, 0).forEach { info ->
                 val pkg = info.activityInfo?.packageName ?: return@forEach
                 if (pkg != context.packageName) {
                     found += LaunchableApp(pkg, info.loadLabel(pm).toString().ifBlank { pkg })

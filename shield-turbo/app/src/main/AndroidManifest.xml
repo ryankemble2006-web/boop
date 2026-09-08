@@ -5,12 +5,26 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- Intentional ADB-TURBO development grant; never assumed or auto-granted. -->
+    <!-- Sockets connect only to this device's loopback ADB daemon, never an Internet endpoint. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Granted only by the user's explicit local ADB setup after Android RSA approval. -->
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
 
     <queries>
+        <package android:name="com.android.tv.settings" />
+        <package android:name="com.android.settings" />
+        <intent><action android:name="android.settings.DISPLAY_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.SOUND_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.ACCESSIBILITY_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.APPLICATION_DEVELOPMENT_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.APPLICATION_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.INTERNAL_STORAGE_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.STORAGE_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.WIFI_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.NETWORK_OPERATOR_SETTINGS" /></intent>
+        <intent><action android:name="android.settings.DEVICE_INFO_SETTINGS" /></intent>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
@@ -28,6 +42,7 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".power.PowerActivity" android:screenOrientation="landscape" android:exported="false" />
         <service android:name=".BrightnessService" android:exported="false" />
     </application>
 </manifest>

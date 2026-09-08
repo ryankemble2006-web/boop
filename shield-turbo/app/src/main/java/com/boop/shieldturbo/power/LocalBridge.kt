@@ -1,0 +1,70 @@
+package com.boop.shieldturbo.power
+
+import android.content.Context
+import android.content.pm.PackageManager
+import android.provider.Settings
+import java.io.File
+import java.io.IOException
+
+class LocalBridge(private val context: Context) {
+    @Volatile private var active: AdbWire? = null
+    @Volatile private var cancelled = false
+
+    fun resetCancellation() { cancelled = false }
+    fun cancel() { cancelled = true; runCatching { active?.close() } }
+    fun <T> withAdb(approval: () -> Unit = {}, operation: (AdbWire) -> T): T {
+        if (cancelled || Thread.currentThread().isInterrupted) throw IOException("Cancelled")
+        val identity = AdbWire.identity(File(context.noBackupFilesDir, "turbo-local-adb.key"))
+        AdbWire().use { adb ->
+            active = adb
+            try {
+                if (cancelled || Thread.currentThread().isInterrupted) throw IOException("Cancelled")
+                adb.connect(5555, identity, 45000, Runnable { approval() })
+                val uid = checked(adb, "id -u").trim()
+                if (uid != "2000" && uid != "0") throw IOException("The local connection is not an ADB shell")
+                return operation(adb)
+            } finally { active = null }
+        }
+    }
+    fun checked(adb: AdbWire, command: String): String {
+        val result = adb.execute(command, 20000)
+        if (result.exitCode != 0 || result.output.lineSequence().any {
+            it.startsWith("Error:") || it.contains("SecurityException") || it.contains("Permission Denial")
+        }) throw IOException(result.output.take(1200).ifBlank { "Shield rejected the command (${result.exitCode})" })
+        return result.output
+    }
+    fun hasSettingsAccess() = context.checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
+    fun enable(approval: () -> Unit): String = withAdb(approval) { adb ->
+        checked(adb, "pm grant --user current com.boop.shieldturbo android.permission.WRITE_SECURE_SETTINGS")
+        if (!hasSettingsAccess()) throw IOException("ADB connected, but the Shield did not grant settings access")
+        "ADB TURBO connected and settings access verified. No laptop command is needed."
+    }
+    fun animation(scale: String?): String {
+        check(hasSettingsAccess()) { "Use ENABLE ADB TURBO first" }
+        val keys = listOf("window_animation_scale", "transition_animation_scale", "animator_duration_scale")
+        val prefs = context.getSharedPreferences("turbo_animation_undo", Context.MODE_PRIVATE)
+        val before = keys.associateWith { Settings.Global.getString(context.contentResolver, it) }
+        if (scale != null && !prefs.getBoolean("saved", false)) {
+            val edit = prefs.edit().putBoolean("saved", true)
+            before.forEach { (key, value) -> if (value == null) edit.remove(key) else edit.putString(key, value) }
+            check(edit.commit()) { "Could not save your original animation settings; nothing changed" }
+        }
+        if (scale == null) check(prefs.getBoolean("saved", false)) { "No animation changes to undo yet" }
+        else require(scale in listOf("0", "0.5", "1"))
+        val desired = keys.associateWith { if (scale == null) prefs.getString(it, null) else scale }
+        try {
+            desired.forEach { (key, value) ->
+                check(Settings.Global.putString(context.contentResolver, key, value)) { "The Shield rejected $key" }
+                val actual = Settings.Global.getString(context.contentResolver, key)
+                check(if (value == null) actual == null else actual?.toFloatOrNull() == value.toFloatOrNull()) { "Animation read-back did not match" }
+            }
+        } catch (failure: Exception) {
+            val restored = before.map { (key, value) -> runCatching {
+                Settings.Global.putString(context.contentResolver, key, value) && Settings.Global.getString(context.contentResolver, key) == value
+            }.getOrDefault(false) }.all { it }
+            throw IOException(if (restored) "Change rejected; previous values restored" else "Change was incomplete. Check animation settings before continuing", failure)
+        }
+        if (scale == null) prefs.edit().clear().commit()
+        return if (scale == null) "Your saved animation values were restored and checked." else "All three animation scales read back as ${scale}x. UNDO restores your previous values."
+    }
+}

@@ -1,44 +1,29 @@
 package com.boop.shieldturbo.system
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 
 class SystemShortcutTest {
-    @Test fun ordinaryShortcutsKeepTheirPublicRouteCandidates() {
-        SystemShortcut.values().filter { it != SystemShortcut.DISPLAY_SOUND }.forEach { shortcut ->
-            assertFalse(shortcut.actions().isEmpty())
+    @Test fun everyShortcutHasAnExplicitRoutingPolicy() {
+        SystemShortcut.values().forEach { shortcut ->
+            assertTrue(shortcut.actions().isNotEmpty() || shortcut.firmwarePage() != null)
         }
     }
-
     @Test fun displaySoundMustNotSilentlyOpenUnrelatedSettings() {
-        // Ryan's Shield opened general Settings instead of the combined native page.
-        // A broad Settings, display-only or sound-only fallback is not that destination.
         assertTrue(SystemShortcut.DISPLAY_SOUND.actions().isEmpty())
+        assertEquals("display", SystemShortcut.DISPLAY_SOUND.firmwarePage())
     }
-
-    @Test fun physicallyConfirmedDeveloperRouteIsUnchanged() {
-        assertEquals(
-            listOf("android.settings.APPLICATION_DEVELOPMENT_SETTINGS"),
-            SystemShortcut.DEVELOPER.actions()
-        )
+    @Test fun developerOptionsKeepsItsPhysicallyConfirmedRoute() {
+        assertEquals(listOf("android.settings.APPLICATION_DEVELOPMENT_SETTINGS"), SystemShortcut.DEVELOPER.actions())
+        assertNull(SystemShortcut.DEVELOPER.firmwarePage())
     }
-
-    @Test fun displaySoundTargetsTheCombinedTvActivityExplicitly() {
-        assertEquals(
-            SettingsComponent(
-                "com.android.tv.settings",
-                "com.android.tv.settings.device.displaysound.DisplaySoundActivity"
-            ),
-            SystemShortcut.DISPLAY_SOUND.component()
-        )
+    @Test fun accessibilityUsesFirmwareDiscoveryNotAnEmptyServicePicker() {
+        assertTrue(SystemShortcut.ACCESSIBILITY.actions().isEmpty())
+        assertEquals("accessibility", SystemShortcut.ACCESSIBILITY.firmwarePage())
     }
-
-    @Test fun nativeDisplayOverrideCannotRedirectTheOtherShortcuts() {
-        SystemShortcut.values().filter { it != SystemShortcut.DISPLAY_SOUND }.forEach { shortcut ->
-            assertNull(shortcut.component())
+    @Test fun firmwareOverridesAreScopedToTheTwoReportedFaults() {
+        SystemShortcut.values().filter { it !in listOf(SystemShortcut.DISPLAY_SOUND, SystemShortcut.ACCESSIBILITY) }.forEach {
+            assertNull(it.firmwarePage())
         }
     }
 }
