@@ -133,7 +133,8 @@ class CleanStartIndicator(context: Context) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
@@ -158,12 +159,36 @@ class CleanStartIndicator(context: Context) {
     }
 
     private fun armPresentationSignal(card: View) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (card.isAttachedToWindow) {
+                armAttachedPresentationSignal(card)
+                return
+            }
+            card.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+                override fun onViewAttachedToWindow(v: View) {
+                    v.removeOnAttachStateChangeListener(this)
+                    armAttachedPresentationSignal(v)
+                }
+
+                override fun onViewDetachedFromWindow(v: View) = Unit
+            })
+            return
+        }
+        armAttachedPresentationSignal(card)
+    }
+
+    private fun armAttachedPresentationSignal(card: View) {
         val observer = card.viewTreeObserver
         if (!observer.isAlive) {
             noteDetail("ViewTreeObserver not alive")
             return
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && card.isHardwareAccelerated) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (!card.isHardwareAccelerated) {
+                noteDetail("Attached overlay not hardware accelerated")
+                return
+            }
             runCatching {
                 observer.registerFrameCommitCallback {
                     presentationStatus = CleanStartIndicatorPresentationStatus.FRAME_COMMITTED
