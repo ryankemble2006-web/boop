@@ -21,7 +21,7 @@ import android.widget.TextView;
 public final class TvAppCardView extends FrameLayout {
     public static final float FOCUSED_SCALE = 1.08f;
     public static final float GRABBED_SCALE = 1.14f;
-    private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.03f;
+    private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.05f;
     private static final float HOME_ARTWORK_GRABBED_SCALE = 1.03f;
     public static final long FOCUS_DURATION_MS = 120L;
 
