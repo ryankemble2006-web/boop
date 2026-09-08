@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
@@ -38,7 +39,7 @@ public final class TvAppCardView extends FrameLayout {
         setClipChildren(false);
         setClipToPadding(false);
         setPadding(dp(14), dp(14), dp(14), dp(12));
-        setBackground(cardBackground());
+        setBackground(new ColorDrawable(Color.TRANSPARENT));
 
         LinearLayout content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -71,7 +72,7 @@ public final class TvAppCardView extends FrameLayout {
         LayoutParams badgeParams = new LayoutParams(dp(30), dp(30), Gravity.TOP | Gravity.END);
         addView(favouriteBadge, badgeParams);
 
-        setOnFocusChangeListener((view, focused) -> animateScale(focused || isSelected()));
+        setOnFocusChangeListener((view, focused) -> refreshEmphasis());
     }
 
     public void bind(TvAppEntry entry) {
@@ -95,6 +96,7 @@ public final class TvAppCardView extends FrameLayout {
             favouriteBadge.setVisibility(View.GONE);
             setContentDescription("");
             configureArtworkSize(false);
+            refreshEmphasis();
             return;
         }
 
@@ -137,19 +139,19 @@ public final class TvAppCardView extends FrameLayout {
         configureArtworkSize(banner);
         iconView.setScaleType(banner ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
         iconView.setImageDrawable(artwork);
-        animateScale(hasFocus() || isSelected());
+        refreshEmphasis();
     }
 
     public void setGrabbed(boolean grabbed) {
         this.grabbed = grabbed;
         favouriteBadge.setText(grabbed ? "↔" : "★");
         favouriteBadge.setVisibility(grabbed ? View.VISIBLE : favouriteBadge.getVisibility());
-        animateScale(hasFocus() || isSelected());
+        refreshEmphasis();
     }
 
     @Override public void setSelected(boolean selected) {
         super.setSelected(selected);
-        animateScale(selected || hasFocus());
+        refreshEmphasis();
     }
 
     private void configureArtworkSize(boolean banner) {
@@ -158,6 +160,14 @@ public final class TvAppCardView extends FrameLayout {
                 : new LinearLayout.LayoutParams(dp(76), dp(76));
         params.bottomMargin = banner ? dp(6) : dp(10);
         iconView.setLayoutParams(params);
+    }
+
+    private void refreshEmphasis() {
+        boolean focused = hasFocus();
+        boolean selected = isSelected();
+        boolean showPlate = AppCardChromePolicy.showPlate(focused, selected, grabbed);
+        setBackground(showPlate ? cardBackground() : new ColorDrawable(Color.TRANSPARENT));
+        animateScale(focused || selected);
     }
 
     private void animateScale(boolean emphasized) {
