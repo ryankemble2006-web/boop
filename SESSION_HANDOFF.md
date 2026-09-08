@@ -57,42 +57,57 @@ Build head `99900d761a8dc11c7c17d6989898aee7e9582796`, version 12 / `0.9.3-focus
 
 Ryan physically tested 0.9.3 and supplied another real Shield/TV photo. Verdict: **"nope. need spacing.. remove the black box behind icons, then when scrolled on make the icon slightly bigger without breaking the adjacent icons boundaries"**.
 
-This supersedes the earlier Home chrome direction. The black Home focus plate is now rejected. Home focus must not scale the whole card or move/cover neighbours.
+This superseded the earlier Home chrome direction. The black Home focus plate is rejected. Home focus must not scale the whole card or move/cover neighbours.
 
-### Current visual candidate: 0.9.4 Home artwork focus
+### 0.9.4 Home artwork focus: physical result GOOD, pop slightly too subtle
 
-0.9.4 implements the newly approved Home-only contract while leaving the physically accepted Apps drawer unchanged.
+Build head `a8a207c97ddddc9b8b36ef99fa7b8718d91588c0`, version 13 / `0.9.4-home-artwork-focus`, workflow `34253939244` SUCCESS, artifact `10067129563`, APK SHA-256 `8840c68a834e7c65b8473631dca5c0e05929a3f931621c4bc232a96155e17909`.
 
-- Build head: `a8a207c97ddddc9b8b36ef99fa7b8718d91588c0`
-- Version: 13 / `0.9.4-home-artwork-focus`
-- Workflow: `34253939244` SUCCESS
-- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10067129563`
-- APK SHA-256: `8840c68a834e7c65b8473631dca5c0e05929a3f931621c4bc232a96155e17909`
-- Artifact ZIP SHA-256: `8534bd664588ae27227b9719766475026cede17885a5b1804f5f3ee47db070cd`
+0.9.4 changed HOME only:
+
+- HOME never shows the dark focus/selection/grab plate;
+- normal HOME favourite stars are removed;
+- grab still shows `↔`;
+- card and label stay fixed at 1.0 scale;
+- only installed banner artwork grows on focus/grab;
+- HOME uses a fixed 240 dp lane around the 230 dp banner with a 6 dp inter-card margin;
+- Apps drawer remains the physically accepted 0.9 presentation;
+- protected Home override/reboot/Recent Apps code unchanged.
+
+Ryan physically tested 0.9.4 and reported: **"awesome.. make them pop out a few more pixels when highlighted. almost perfect"**.
+
+Treat 0.9.4's spacing, no-overlap geometry, no-black-box rule, no-star rule and fixed labels as physically successful. The only requested follow-up is a slightly stronger **focused banner artwork** pop. This is not yet the final visual checkpoint because Ryan explicitly requested that refinement.
+
+### Current visual candidate: 0.9.5 stronger Home focus pop
+
+0.9.5 changes exactly one runtime value from 0.9.4: HOME focused banner artwork grows from `1.03` to `1.05`. HOME grab artwork remains `1.03`.
+
+- Build head: `66a15f89969c547224ed22d962f609243effae6e`
+- Feature source head before version bump: `bec0cb94c8127e8ce54fb22d73445cd0d9c42097`
+- Version: 14 / `0.9.5-home-focus-pop`
+- Workflow: `34255507581` SUCCESS
+- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10067748314`
+- APK SHA-256: `e42d2f9c85244a52ec3124dd9d68d6cac6bcf56878d122c7743f7e9ea942d00e`
+- Artifact ZIP SHA-256: `556f9aedb15ef4ad3b7a4effc8ce5ecbc4465b36588eeaf1de1b08d2272bc36b`
 - Permanent BOOP signer reused and verified.
-- Existing focused Shield HOME functional suite passed.
+- Existing Shield HOME functional suite passed.
 - Signed assembly, exact package/version, HOME/Leanback, Accessibility service/router, signer, APK integrity and artifact upload all passed.
 
-0.9.4 Home contract:
+0.9.5 scope is deliberately frozen around the accepted 0.9.4 geometry:
 
-- HOME never shows the dark focus/selection/grab plate.
-- Normal HOME favourite star badges are removed.
-- Grab still shows the `↔` indicator so reorder state remains explicit.
-- HOME focus/grab leaves the card and label at fixed 1.0 scale and enlarges only the banner artwork slightly (`1.03`).
-- HOME banner artwork remains the installed Android TV banner, untinted and unrecoloured.
-- HOME reserves a fixed 240 dp card lane around the 230 dp banner with a 6 dp inter-card margin so the artwork can grow without intentionally crossing a neighbour boundary.
-- Apps drawer presentation and its existing square-icon focus/plate behavior are unchanged from the physically accepted 0.9 result.
-- Grab/reorder logic, Accessibility override, reboot re-arm, Back handling and native double-Home Recent Apps are unchanged.
+- same 240 dp Home card lane;
+- same 230 dp installed banner artwork base size;
+- same 6 dp inter-card margin;
+- same labels and positions;
+- still no Home black plate;
+- still no normal Home favourite star;
+- grab remains `↔` and keeps its 1.03 artwork emphasis;
+- Apps drawer unchanged from physically accepted 0.9;
+- grab/reorder, Accessibility override, reboot re-arm, Back handling and native double-Home Recent Apps unchanged.
 
-TDD receipt for this change:
+Per `BOOP_RULES.md`, there is no GitHub visual/golden/layout acceptance test. Ryan owns the visual call on the real Shield. No fake automated assertion was added to claim that 5% looks right.
 
-- Red contract commit `e3af797c60e6ce921f91008dba64198a4a865e21` failed at the unit-test gate with exactly the missing Home-only chrome/badge/artwork-emphasis policy APIs.
-- Green feature source passed the focused functional suite and signed/package checks before the version bump.
-- Final versioned 0.9.4 run `34253939244` is fully green.
-
-Per `BOOP_RULES.md`, there is no GitHub visual/golden/layout acceptance test. Ryan judges this manually on the real Shield.
-
-**0.9.4 is CI/signer green only; HOME visual acceptance is pending.**
+**0.9.5 is CI/signer green only; final HOME visual acceptance is pending Ryan's physical test.**
 
 ## Background / Ambient Mode boundary
 
@@ -116,6 +131,8 @@ Keep:
 - stock Android TV Home installed/enabled as recovery/trigger;
 - real wide Home banners and grab/reorder;
 - physically accepted floating square Apps drawer from 0.9;
+- Home has no black focus plate and no normal favourite stars;
+- Home focus enlarges artwork only, never the whole card/label;
 - single Back -> favourite item 1;
 - long Back/top-right Settings -> real Shield Settings;
 - volume/CEC/system shortcuts and animations;
@@ -123,15 +140,6 @@ Keep:
 
 ## Next physical test
 
-Install/update to 0.9.4 and judge HOME only first:
-
-- idle banners have a tidy gap;
-- focused HOME item has no black plate;
-- normal favourite stars are gone from HOME;
-- the banner itself grows only slightly on focus;
-- labels and adjacent banners stay fixed and do not overlap;
-- Apps drawer remains exactly as the physically accepted 0.9 drawer.
-
-If the Home visual is accepted, recheck grab once plus single Home, double Home and reboot before promoting the visual candidate.
+Install/update to 0.9.5 and judge the focused HOME banner pop only. Everything else should look exactly like the physically good 0.9.4 layout. Confirm the selected banner now pops enough without touching or covering adjacent banners. If accepted, recheck grab once plus single Home, double Home and reboot before promoting the final standalone visual checkpoint.
 
 Do not merge into unified until Ryan explicitly approves the standalone behavior.
