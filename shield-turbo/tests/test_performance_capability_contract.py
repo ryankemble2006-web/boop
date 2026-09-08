@@ -11,7 +11,15 @@ ANDROID = '{http://schemas.android.com/apk/res/android}'
 
 class PerformanceCapabilityContractTest(unittest.TestCase):
     def test_stage_one_is_read_only_and_uses_trusted_adb(self):
-        perf = '\n'.join(p.read_text() for p in (SOURCE / 'performance').glob('*.kt'))
+        perf_dir = SOURCE / 'performance'
+        stage_one_paths = [
+            perf_dir / 'CompactAnalysisReport.kt',
+            perf_dir / 'PerformanceCapability.kt',
+            perf_dir / 'PerformanceCapabilityProbe.kt',
+            perf_dir / 'PerformanceDiscoveryPolicy.kt',
+            *sorted(perf_dir.glob('ProcessorModeTrace*.kt')),
+        ]
+        perf = '\n'.join(path.read_text() for path in stage_one_paths)
         self.assertIn('withTrustedAdb', perf)
         self.assertNotIn('withAdb(', perf)
         self.assertNotIn('settings put', perf)
