@@ -4,42 +4,66 @@ Updated 2026-09-08. Owning branch: `shield-turbo-v01`. Independent package: `com
 
 ## Current candidate: v0.5.6 attach-gated committed-frame notice
 
-The latest signed machine-verified candidate is **v0.5.6 / versionCode 13**, built from exact source `5870742c83b193251b323a48e12b0ef6c5b8b5ad`.
+The latest signed machine-verified candidate remains **v0.5.6 / versionCode 13**, built from exact source `5870742c83b193251b323a48e12b0ef6c5b8b5ad`.
 
 CLEAN START's force-stop/read-back core remains physically accepted from earlier real-Shield testing. Selected Kodi forks can leave stale Recents/task-manager cards after force-stop, while the apps themselves are not loaded and reload only when focused. Deliberate manual launch still works. Do not modify the accepted stop/read-back mechanism to solve notice presentation.
 
-## Latest physical evidence: v0.5.5 diagnostic
+## Latest physical evidence: v0.5.6
 
-Ryan installed/rebooted the v0.5.5 diagnostic build and reported the startup notice still was not physically visible. The exact semantic diagnostic was:
+Ryan installed/rebooted v0.5.6 and reported:
+- Shield navigation was still quick;
+- Android Home appeared to refresh for a microsecond;
+- **no static CLEAN START message was visibly present at startup**;
+- the new diagnostic reported **`present=FRAME_COMMITTED` in about `103ms`**.
+
+Ryan did not restate the other diagnostic fields in this report and did not separately restate target-package stopped state for this reboot, so do not invent those details.
+
+This result closes the earlier app-side timing ambiguity but is **not proof that the card was physically visible**. Android's `registerFrameCommitCallback` contract says the content has been rendered into a frame and submitted to the swap chain, but the frame may not currently be visible on the display. Android also explicitly permits the system to change an application-overlay window's position, size or visibility.
+
+Therefore v0.5.6 is physically:
+- **positive** for fast fail-open/navigation responsiveness;
+- **positive** for app-side attachment/hardware-render/frame-submission evidence;
+- **negative** for the current small `WRAP_CONTENT` startup-card visibility.
+
+The microsecond Home refresh is useful supporting evidence that the overlay-window lifecycle affected the launcher surface stack, but it is not visual proof of the card itself.
+
+## Presentation architecture conclusion
+
+Do **not** add another sleep, preroll, longer timeout or draw/commit timing tweak. The small boot-time `WRAP_CONTENT` `TYPE_APPLICATION_OVERLAY` card has now failed physically despite successful permission, window creation/addView in v0.5.5 and successful Android-10+ frame submission in v0.5.6.
+
+The physically proven comparison inside the same app is `BrightnessService`:
+- `TYPE_APPLICATION_OVERLAY`;
+- `MATCH_PARENT x MATCH_PARENT` window surface;
+- `FLAG_NOT_FOCUSABLE` + `FLAG_NOT_TOUCHABLE` + `FLAG_LAYOUT_IN_SCREEN` + `FLAG_LAYOUT_NO_LIMITS`;
+- physically visible on Ryan's Shield.
+
+The next presentation experiment, if notice work continues, should therefore change **surface geometry only** rather than cleanup timing or ADB behavior:
+- create a transparent **full-screen host overlay** using the proven brightness-style `MATCH_PARENT x MATCH_PARENT` surface and layout flags;
+- keep the static CLEAN START card as a child pinned top-centre inside that host;
+- preserve the exact text `SHIELD TURBO · CLEAN START` / `Tidying startup apps`;
+- preserve non-focusable and non-touchable behavior;
+- preserve zero movement: no spinner, fade, pulse, slide, countdown, moving dots, animation or focus effect;
+- preserve the **500ms max fail-open** and do not add any artificial dwell delay;
+- keep CLEAN START force-stop/read-back, target selection, scheduler and trusted ADB untouched.
+
+This is an architecture/geometry experiment based on a physically proven Turbo surface, not another guess at how long Android needs to draw.
+
+## v0.5.5 -> v0.5.6 diagnostic chain
+
+v0.5.5 physically showed no card and reported:
 
 `permission=yes • window=DISPLAY_WINDOW_CONTEXT • add=ADDED • present=DRAWN • 54ms`
 
-This is decisive app-side evidence:
-- overlay permission was present at boot;
-- Android 11+ primary-display/window context creation succeeded;
-- `WindowManager.addView` succeeded;
-- the app-side view drew in about 54 ms;
-- **but Android did not report `FRAME_COMMITTED`**.
+That exposed a false-positive because `isHardwareAccelerated` had been checked before the view attached, allowing `OnDrawListener` to count as presentation.
 
-The v0.5.5 diagnostic therefore exposed a false-positive in our presentation signal. `CleanStartIndicator` checked `card.isHardwareAccelerated` too early, immediately after `addView` and before the overlay was attached to a window. At that point it could report false and fall back to `OnDrawListener`, allowing `DRAWN` to be recorded as if it proved presentation. A draw into a buffer is not proof that the frame was committed to the display compositor.
+v0.5.6 corrected that boundary:
+- requests `FLAG_HARDWARE_ACCELERATED`;
+- on Android 10/API 29+ waits for view attachment;
+- only after attachment checks hardware acceleration and registers `registerFrameCommitCallback`;
+- Android 10+ only counts `FRAME_COMMITTED`; `DRAWN` is pre-Android-10 fallback only;
+- presentation remains bounded to 500ms and fails open.
 
-Do not reinterpret v0.5.5 `DRAWN` as visual/compositor success.
-
-## v0.5.6 fix
-
-v0.5.6 corrects that presentation boundary without changing CLEAN START cleanup behavior:
-- the overlay requests `FLAG_HARDWARE_ACCELERATED`;
-- on Android 10/API 29+ the indicator waits until the view is attached to a window;
-- attachment is observed through `addOnAttachStateChangeListener` / `onViewAttachedToWindow`;
-- only after attachment does Turbo check `isHardwareAccelerated` and register `registerFrameCommitCallback`;
-- on Android 10+ **only `FRAME_COMMITTED` counts as presentation**;
-- `OnDrawListener`/`DRAWN` remains only as the pre-Android-10 fallback;
-- if an Android 10+ attached overlay is not hardware accelerated, Turbo records that diagnostic and does not falsely count a draw;
-- the presentation wait remains bounded at **500 ms max** and fails open into cleanup.
-
-The static card itself remains `SHIELD TURBO · CLEAN START` / `Tidying startup apps`, top-centre, non-focusable and non-touchable. No spinner, fade, pulse, slide, countdown, moving dots, progress animation, repeated layout animation or focus effects were added.
-
-v0.5.6 also preserves a concurrent evidence improvement: if trusted boot ADB fails, CLEAN START records the actual exception class/message in the bounded item detail and the CLEAN START screen exposes it as `LAST CLEAN START DETAIL:`. Retry scheduling and cleanup semantics are unchanged.
+The real Shield then reported `FRAME_COMMITTED` in ~103ms while the card remained invisible. That means further work belongs at overlay surface geometry/visibility, not app-side draw timing.
 
 ## CLEAN START mechanism unchanged
 
@@ -59,13 +83,11 @@ No root, device-owner/bootloader work, third-party re-signing, uninstall, `pm cl
 ## Presentation history
 
 - v0.5.1: static card flashed only at the end.
-- v0.5.2: fixed 500 ms guessed preroll; no visible card; cleanup physically positive.
+- v0.5.2: fixed 500ms guessed preroll; no visible card; cleanup physically positive.
 - v0.5.3: longer committed-frame wait; no visible card and almost eight seconds total Turbo completion time. Physically rejected for timing/presentation.
-- v0.5.4: display-bound window context + 500 ms fail-open; no visible card, but navigation returned within roughly one second.
-- v0.5.5: diagnostic release; physically invisible card; diagnostic `permission=yes`, `DISPLAY_WINDOW_CONTEXT`, `ADDED`, `DRAWN`, ~54 ms. This proved the old OnDraw presentation signal was a false-positive.
-- v0.5.6: attach-gated, hardware-accelerated Android 10+ frame-commit candidate. Physical result pending.
-
-Do not add arbitrary sleeps to solve presentation. Physical Shield evidence remains authoritative.
+- v0.5.4: display-bound window context + 500ms fail-open; no visible card, but navigation returned within roughly one second.
+- v0.5.5: diagnostic release; physically invisible card; `permission=yes`, `DISPLAY_WINDOW_CONTEXT`, `ADDED`, `DRAWN`, ~54ms. This proved the old OnDraw presentation signal was a false-positive.
+- v0.5.6: attach-gated hardware frame path; navigation remained quick; Home microscopically refreshed; no visible card; diagnostic `FRAME_COMMITTED`, ~103ms. Small-window presentation is physically rejected.
 
 ## TDD / implementation receipts
 
@@ -100,24 +122,18 @@ Workflow run `34230235524`, job `102074235862`, conclusion **success**:
 - built-source receipt matched exact release source `5870742...`;
 - APK v2 signing block was independently parsed after download and yielded `CN=BOOP Development,O=BOOP` with the permanent certificate SHA-256 above;
 - nonvisual install/cold launch/process/Back/warm launch/no-fatal smoke passed;
-- **no visual tests ran**. No screenshots, hierarchy dumps, image/golden/layout/focus/appearance/motion judgment.
+- **no visual tests ran**.
 
 ## Preserve working behavior and boundaries
 
-Keep the proven 10-100% brightness overlay and BrightnessService behavior unchanged. Keep APPS direct launch, app labels, Cancel/Back behavior, StartupLedger undo, loopback-only ADB key in `noBackupFilesDir`, trusted-only boot ADB and the established signer.
+Keep the proven 10-100% brightness overlay and `BrightnessService` behavior unchanged. Keep APPS direct launch, app labels, Cancel/Back behavior, StartupLedger undo, loopback-only ADB key in `noBackupFilesDir`, trusted-only boot ADB and the established signer.
 
 Display & Sound and Accessibility remain parked unless Ryan explicitly returns to them.
 
-A temporary preparation branch `shield-turbo-v01-stamp-temp` was created while preparing the atomic v0.5.6 stamp and points at the already-green implementation `d290042...`. It is not the live Turbo lineage or a release checkpoint. No safe branch-delete action was available in the connector during this session; delete it later only via a normal safe branch deletion, never by force-changing the live Turbo branch.
+A temporary preparation branch `shield-turbo-v01-stamp-temp` points at the already-green `d290042...` implementation. It is not the live Turbo lineage or a release checkpoint. Delete it later only via a normal safe branch deletion, never by force-changing the live Turbo branch.
 
-## Next physical test
+## Next safe step
 
-Install v0.5.6 over v0.5.5 and reboot normally. Report:
-1. whether the static sign is visible;
-2. whether Shield navigation remains quick;
-3. the exact `STARTUP NOTICE DIAGNOSTIC:` line;
-4. whether the selected Kodi forks are stopped after the reboot.
+Do not build another small-window/timing variant. If Ryan continues the startup notice work, use TDD first for the **brightness-style full-screen transparent host** architecture, changing only presentation geometry while preserving CLEAN START semantics and the 500ms fail-open. Physical Shield acceptance remains authoritative.
 
-Expected diagnostic success on Android 10+ is `present=FRAME_COMMITTED`. If the card is still physically invisible **and** diagnostics say `FRAME_COMMITTED`, investigate Shield/Tegra compositor/z-order or move to the physically proven brightness-style surface architecture. If diagnostics time out or report non-hardware acceleration, investigate that exact boundary. Do not add another arbitrary delay.
-
-This handoff update is documentation-only after exact built source `5870742c83b193251b323a48e12b0ef6c5b8b5ad`; it does not identify a different APK. `main` was not edited by Turbo. GitHub publication is not Windows sync or physical-device deployment.
+This handoff update is documentation-only after exact built source `5870742c83b193251b323a48e12b0ef6c5b8b5ad`; it does not identify a different APK. `main` remains outside ordinary Turbo progress and was not edited. GitHub publication is not Windows sync or physical-device deployment.
