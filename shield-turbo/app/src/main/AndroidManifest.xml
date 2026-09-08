@@ -43,6 +43,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".power.PowerActivity" android:screenOrientation="landscape" android:exported="false" />
+        <activity android:name=".startup.StartupManagerActivity" android:screenOrientation="landscape" android:exported="false" />
         <service android:name=".BrightnessService" android:exported="false" />
     </application>
 </manifest>
