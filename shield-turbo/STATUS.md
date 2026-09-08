@@ -2,21 +2,32 @@
 
 Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
+## Current candidate
+
+**v0.5.0 / code 7** is machine-verified and ready for physical Shield testing. Exact built source: `6f89c0d90fb08e7ef723226b10d33f45d6468f34`.
+
+CLEAN START now replaces the failed app-op-only startup claim with real selected-package `force-stop` plus process/stopped/enabled-state verification. A reviewed target group can be cleaned manually, and optional AUTO CLEAN START schedules a bounded one-shot post-boot job using only the already-trusted local ADB key. It makes at most 3 attempts (30s/60s/120s), has no periodic/resident killer, skips the currently resumed app, records explicit outcomes and leaves packages enabled for manual launch. It does not guarantee an app never starts briefly during boot, and background-only playback is not separately detected in this release.
+
+Old v0.4 Turbo startup changes remain undoable. HARD BLOCK remains separate/explicit. System/updated-system, Android/NVIDIA/Google-core and BOOP packages remain excluded from automatic cleanup.
+
 ## Physical acceptance
 
-- Confirmed: v0.4.1 Startup Manager action menu opens; Kodi forks still launch manually.
-- Failed outcome: after reboot, Ryan still sees the forks in the Shield task manager and reports noticeable improvement after swiping/force-closing them. The startup suppression requirement is not met. Do not repeat the already answered task-manager versus App Info question.
-- Prior confirmations retained: bedroom brightness, corrected STANDARD maintenance selectability, Developer Options opening.
-- Parked: native Display & Sound and Accessibility routes.
+Pending for v0.5.0. First test one Kodi fork with `STOP + VERIFY NOW`, add it to CLEAN START, enable AUTO, reboot, confirm it is no longer lingering in the Shield task manager, then manually launch it normally. Only expand to the other forks after that succeeds.
 
-The latest delivered candidate remains **v0.4.1 / code 6**, built from `0961153e5dea94c38027cdf31530f500c5b29573`. Run `34204102153`, job `101989443983`, artifact `10047107169`. APK SHA-256 `c7bc147a70378dfe62a14e542aeb5dcb1036fbe6818551e98ddcf6fe061793fa`, 2283246 bytes.
+Prior physical evidence retained:
+- Bedroom brightness works.
+- Corrected STANDARD maintenance items are selectable.
+- Developer Options opens.
+- v0.4.1 Startup Manager action menu works and Kodi forks launch manually.
+- v0.4 background restriction failed: Kodi forks remained in Shield task manager and Ryan reported noticeable improvement after manual swipe/force-close.
+- Display & Sound and Accessibility remain parked/unresolved.
 
-Historical verification for that APK: 58 JVM tests, 13 API/safety checks, lint 0 errors / 22 warnings, permanent-signer/package/archive and nonvisual launch checks passed. That does not establish effective boot blocking. Exact ZIP/test-artifact/signer receipts are in SESSION_HANDOFF.md.
+## Exact verification
 
-## Next direction, not shipped
+Run `34211569892`, job `102013555053`, success. **68 JVM tests passed; 18 source/API/security contracts passed; lint 0 errors / 22 warnings.** Package/version, permanent signer, archive integrity and nonvisual cold/warm launch smoke passed.
 
-CLEAN START proposal: actual selected-package force-stop with process/stopped-state verification first, then optional bounded post-boot cleanup of a reviewed app group with protected essentials and explicit KEEP RUNNING exceptions. Initial case remains the four user-selected Kodi forks. No blanket system disable, no permanent polling killer, no guessed package IDs, and no disruption to manually started foreground apps or playback.
+Signed artifact `10050102992`, ZIP `758585` bytes, SHA-256 `344e42969ec61c20dfda1da5748d3468024daeebadac3dd59b27067e8dddb59c`. Test artifact `10050154988`, ZIP `84726` bytes, SHA-256 `0c2916b5c435bcb0737b696f99c3b2ab4357854ba6135ce455b74e0cf6774624`.
 
-Post-boot cleanup must not be advertised as preventing every initial boot launch. Manual opening releases stopped state; ordinary ADB cannot enforce a universal permanent manual-only policy for every package while keeping normal launching unchanged. The desired clean-boot policy is recorded; effectiveness and exact firmware mechanisms are not yet proven.
+Delivered APK `Shield-Turbo-v0.5.0.apk`, `2314138` bytes, SHA-256 `a7b8e25ea73e69976244a706abe301ad2e92b585d420a061480b6a1c760c2145`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-This feedback/research update is documentation-only. No app code, boot receiver, service, permission, signing, workflow or device state changed; no new APK was produced. CI is skipped. GitHub visual tests remain prohibited. Handoff, status and memory are reconciled; main and other BOOP work are untouched.
+No GitHub visual confirmation ran. Ryan owns real-device appearance, D-pad feel and CLEAN START acceptance. Exact behavior/limits and historical receipts are in SESSION_HANDOFF.md.
