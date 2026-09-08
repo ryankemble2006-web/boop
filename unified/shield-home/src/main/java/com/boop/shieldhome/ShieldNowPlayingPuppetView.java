@@ -25,6 +25,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private long grooveStartedMs;
     private long acknowledgementStartedMs = -1L;
     private boolean frameScheduled;
+    private boolean homeVisible = true;
 
     private final Runnable frame = new Runnable() {
         @Override public void run() {
@@ -77,23 +78,40 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     public void setSnapshot(NowPlayingSnapshot next) {
         NowPlayingSnapshot previous = snapshot;
         snapshot = next;
-        NowPlayingPuppetPolicy.Mode nextMode = NowPlayingPuppetPolicy.mode(next);
+        mode = NowPlayingPuppetPolicy.mode(next);
         boolean changed = previous != null && next != null
                 && (previous.sessionId() != next.sessionId()
                     || !previous.trackKey().equals(next.trackKey()));
-        mode = nextMode;
+        if (changed) {
+            acknowledgementStartedMs = SystemClock.uptimeMillis();
+        }
+        applyCurrentState();
+    }
 
-        if (mode == NowPlayingPuppetPolicy.Mode.HIDDEN) {
-            acknowledgementStartedMs = -1L;
+    /** Page visibility is independent of media state so leaving HOME never forgets playback. */
+    public void setHomeVisible(boolean visible) {
+        if (homeVisible == visible) {
+            if (visible) applyCurrentState();
+            return;
+        }
+        homeVisible = visible;
+        applyCurrentState();
+    }
+
+    private void applyCurrentState() {
+        if (!homeVisible || mode == NowPlayingPuppetPolicy.Mode.HIDDEN) {
+            if (mode == NowPlayingPuppetPolicy.Mode.HIDDEN) {
+                acknowledgementStartedMs = -1L;
+                grooveStartedMs = 0L;
+                applyPose(NowPlayingPuppetMotion.rest());
+            }
             stopFrames();
-            applyPose(NowPlayingPuppetMotion.rest());
             setVisibility(GONE);
             return;
         }
 
         setVisibility(VISIBLE);
         long now = SystemClock.uptimeMillis();
-        if (changed) acknowledgementStartedMs = now;
         if (mode == NowPlayingPuppetPolicy.Mode.GROOVE && grooveStartedMs == 0L) {
             grooveStartedMs = now;
         } else if (mode != NowPlayingPuppetPolicy.Mode.GROOVE) {
@@ -107,9 +125,17 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             return;
         }
 
-        applyPose(mode == NowPlayingPuppetPolicy.Mode.GROOVE
+        NowPlayingPuppetMotion.Pose pose = mode == NowPlayingPuppetPolicy.Mode.GROOVE
                 ? NowPlayingPuppetMotion.groove(now - grooveStartedMs)
-                : NowPlayingPuppetMotion.rest());
+                : NowPlayingPuppetMotion.rest();
+        if (acknowledgementStartedMs >= 0L) {
+            long ackElapsed = now - acknowledgementStartedMs;
+            pose = NowPlayingPuppetMotion.acknowledge(pose, ackElapsed);
+            if (ackElapsed >= NowPlayingPuppetMotion.ACK_DURATION_MS) {
+                acknowledgementStartedMs = -1L;
+            }
+        }
+        applyPose(pose);
         if (mode == NowPlayingPuppetPolicy.Mode.GROOVE || acknowledgementStartedMs >= 0L) {
             scheduleFrame();
         } else {
@@ -141,7 +167,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private boolean shouldAnimateFrame() {
-        return getVisibility() == VISIBLE
+        return homeVisible
+                && getVisibility() == VISIBLE
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
                 && animationAllowed()
                 && (mode == NowPlayingPuppetPolicy.Mode.GROOVE || acknowledgementStartedMs >= 0L);
