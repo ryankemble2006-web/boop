@@ -6,7 +6,7 @@ Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha
 
 Ryan physically tested the signed v47 wake-training APK and reported a total listening failure: the Android green microphone privacy indicator that had appeared on earlier listening builds was absent, and `BOOP`, `Steve` and all tested variants did nothing. This is a physical v47 wake FAIL and is upstream of wake-word acoustics.
 
-Systematic source tracing found an integration hole rather than a model-tuning problem. The repository already had `scripts/patch-unified-wake-arm.py`, introduced by commit `82c637c03f2d26632e34a60d5ad8710cb9bf7aac` to bypass false-negative Android `SpeechRecognizer.checkRecognitionSupport()` results and let the real recognizer start/error path decide capability. But `scripts/materialize-unified.sh` never invoked that patch. The materialized v47 app therefore retained the advisory support callback. `BoopWakeSessionState` requires `recognitionSupported` before ARMED; a false result can keep the coordinator DISARMED so `BoopWakeWordController.arm()` never starts its 16 kHz `AudioRecord`, which exactly matches the missing green mic indicator. No device logs were collected, so v48 physical confirmation is still required.
+Systematic source tracing found an integration hole rather than a model-tuning problem. The repository already had `scripts/patch-unified-wake-arm.py`, introduced by commit `82c637c03f2d26632e34a60d5ad8710cb9bf7aac` to bypass false-negative Android `SpeechRecognizer.checkRecognitionSupport()` results and let the real recognizer start/error path decide capability. But `scripts/materialize-unified.sh` never invoked that patch. The materialized v47 app therefore retained the advisory support callback. `BoopWakeSessionState` requires `recognitionSupported` before ARMED; a false result can keep the coordinator DISARMED so `BoopWakeWordController.arm()` never starts its 16 kHz `AudioRecord`, matching the missing green mic indicator.
 
 TDD red proof: commit `2639188a7603be5fb61cdb2db8649aad571400a4`, workflow `34217732094`, failed exactly because the unified materializer lacked the wake-arm patch: 1 failed / 5 passed.
 
@@ -23,20 +23,33 @@ Concurrent Shield routing cleanup was preserved. Final signed v48 was built from
 - Artifact ZIP SHA-256: `6ebcb029673fc6e9785be04a6db8b1f93e64903e6eb6466e172cfc8edddba0d8`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Fresh final-run evidence: non-visual integration contracts passed, real-attempt materialization passed, Launcher lint passed, 58 Shield focused tests and 74 unified focused tests passed with zero failures/errors/skips, signed assembly passed, and package/version/manifest/permanent-signer/archive checks passed. The downloaded artifact ZIP digest matched GitHub metadata and the extracted APK matched the workflow APK hash. No emulator/device launch, screenshots, visual acceptance or acoustic acceptance ran.
+Fresh final-run evidence: non-visual integration contracts passed, real-attempt materialization passed, Launcher lint passed, 58 Shield focused tests and 74 unified focused tests passed with zero failures/errors/skips, signed assembly passed, and package/version/manifest/permanent-signer/archive checks passed. The downloaded artifact ZIP digest matched GitHub metadata and the extracted APK matched the workflow APK hash. No emulator/device launch, screenshots or visual acceptance ran.
 
 Detailed receipt: `docs/BOOP-V48-WAKE-ARM-RECEIPT.md`.
 
-## Required next physical test on Pixel
+## Physical v48 confirmation
 
-Test in the established continuous-wake condition: BOOP foreground, Voice Settings closed, microphone permission granted and Pixel wirelessly charging/docked.
+Ryan physically tested v48 on the Pixel in the established continuous-wake condition. He placed BOOP on the wireless charger and observed:
 
-1. First check whether the Android green microphone indicator returns.
-2. If green is present, try plain `BOOP` several times before touching custom training.
-3. If BOOP works, train `Steve` with five natural utterances and test the bare name plus established wrappers such as `Hey Steve`, `Oi Steve`, `Morning Steve`, `Steve wake up`, `Listen Steve` and `Excuse me Steve`.
+- Android green microphone privacy indicator turned on;
+- green microphone indicator remained on after BOOP went to sleep;
+- saying `Hey BOOP` woke BOOP from sleep.
+
+This is physical confirmation that the v48 upstream wake-arm/listening path is restored on real hardware and that at least one established BOOP wake phrase works while sleeping on the charger. This is enough to retire the v47 “not listening at all” defect.
+
+Do not overstate the result. Bare `BOOP`, custom `Steve`, five-sample enrolment, all other natural variants, miss rate and false-wake rate remain physically untested in v48. Those are downstream acoustic/product checks, not part of the now-proven mic-arm repair.
+
+## Next wake checks when Ryan wants to continue
+
+No urgent further testing is required from this checkpoint. Later:
+
+1. Try plain `BOOP` several times.
+2. Train `Steve` with five natural utterances.
+3. Try bare `Steve` plus several established wrappers such as `Hey Steve`, `Oi Steve`, `Morning Steve`, `Steve wake up`, `Listen Steve` and `Excuse me Steve`.
 4. Confirm plain `BOOP` still works after custom training.
+5. Record misses and false wakes separately before tuning thresholds.
 
-If green is still absent, stop there. Do not tune acoustic thresholds. The next gate to inspect is wireless-dock detection / `wakeAllowed` / microphone permission. If green returns but BOOP fails, the microphone arm is restored and the next investigation belongs downstream in Sherpa/template matching.
+If the green mic indicator disappears again, return upstream to dock/wakeAllowed/permission. If green remains present but a phrase misses, investigate Sherpa/template matching rather than the arm gate.
 
 ## Custom wake-name contract retained
 
