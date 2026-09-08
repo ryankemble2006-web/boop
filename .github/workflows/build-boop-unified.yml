@@ -39,7 +39,7 @@ jobs:
       - name: Check non-visual integration contracts
         run: |
           python -m pip install pytest
-          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py tests/test_unified_wake_handoff_contract.py
+          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py
           python - <<'PY'
           from pathlib import Path
           heads = Path('unified/SOURCE_HEADS.md').read_text()
@@ -52,6 +52,9 @@ jobs:
 
       - name: Materialize one APK
         run: bash scripts/materialize-unified.sh
+
+      - name: Check seamless wake-command handoff
+        run: python -m pytest -q tests/test_unified_wake_handoff_contract.py
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -130,8 +133,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='55'" badging.txt
-          grep -q "versionName='1.2.9-unified-powered-wake-resilience'" badging.txt
+          grep -q "versionCode='56'" badging.txt
+          grep -q "versionName='1.2.10-unified-seamless-wake-command'" badging.txt
           grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
           for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
