@@ -224,13 +224,13 @@ def apply() -> None:
                 runOnUiThread(() -> {
                     lastWakeDiagnosticSummary = "WAKE ENGINE FAILURE\n" + message;
                     if (wakeCoordinator != null) {
-                        wakeCoordinator.recoverWakeSession();
+                        wakeCoordinator.failWakeSession();
                         updateWakeRecoverySnapshot();
                     }
                 });
             }
 ''',
-        'wake engine failure recovery')
+        'wake engine failure diagnostic without retry loop')
 
     replace_once(
         '''    private void handleRecognizedSpeech(String transcript) {
