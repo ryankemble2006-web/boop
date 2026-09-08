@@ -37,15 +37,21 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         self.assertIn("finally", text)
         self.assertLess(text.index("indicator.hide()"), text.index("jobFinished"))
 
-    def test_boot_job_gives_static_indicator_one_frame_preroll_before_cleanup(self):
-        text = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
-        self.assertIn("INDICATOR_PREROLL_MS = 500L", text)
-        self.assertIn("Thread.sleep(INDICATOR_PREROLL_MS)", text)
-        show_at = text.index("indicator.show()")
-        sleep_at = text.index("Thread.sleep(INDICATOR_PREROLL_MS)")
-        bridge_at = text.index("LocalBridge(applicationContext)")
-        self.assertLess(show_at, sleep_at)
-        self.assertLess(sleep_at, bridge_at)
+    def test_boot_job_waits_for_committed_indicator_frame_before_cleanup(self):
+        indicator = (SOURCE / "cleanstart/CleanStartIndicator.kt").read_text()
+        job = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
+        self.assertIn("CountDownLatch", indicator)
+        self.assertIn("registerFrameCommitCallback", indicator)
+        self.assertIn("fun awaitPresented", indicator)
+        self.assertIn("TimeUnit.MILLISECONDS", indicator)
+        self.assertIn("INDICATOR_PRESENT_TIMEOUT_MS", job)
+        self.assertIn("indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)", job)
+        self.assertNotIn("Thread.sleep(INDICATOR_PREROLL_MS)", job)
+        show_at = job.index("indicator.show()")
+        await_at = job.index("indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)")
+        bridge_at = job.index("LocalBridge(applicationContext)")
+        self.assertLess(show_at, await_at)
+        self.assertLess(await_at, bridge_at)
 
     def test_indicator_does_not_change_clean_start_scheduler(self):
         text = (SOURCE / "cleanstart/CleanStartScheduler.kt").read_text()
