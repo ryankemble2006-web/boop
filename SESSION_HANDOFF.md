@@ -1,79 +1,49 @@
-# BOOP unified handoff
+# BOOP Shield clean launcher handoff
 
-Updated 2026-09-08. Canonical app branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Always re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
+Updated 2026-09-08. Authoritative branch for this standalone experiment: `boop-shield-clean-launcher`.
 
-## Current unified candidate
+## Product boundary
 
-The clean Nvidia Shield HOME replacement is implemented in the canonical unified lineage and has a fully green non-visual GitHub build.
+Ryan corrected the architecture before physical install: this clean Nvidia Shield HOME replacement is a **standalone APK for testing**, not an update to the in-progress unified/AIO BOOP app. It is intended to be merged into unified later only after standalone physical acceptance.
 
-Candidate code: `e2c938ed0a035913b6fb8499aad1c3b89eb3aaac`.
-Version: 46 / `1.2.0-unified-shield-home`.
-Successful workflow: `34215725283`.
-Artifact: `BOOP-Unified`, ID `10051749294`.
-APK SHA-256: `94f0046a93797606176fdd247c328aa189adb161cb6468346d26f69b8f71cb54`.
-Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `e3fb91691c0f828edba8469e15677814fb48ce1fc2955693eb793343356e5cd4`.
+Standalone Android package: `com.boop.shieldhome`.
+Unified/AIO package remains separately `com.boop.alpha1` and must not be overwritten by this launcher APK.
+Stock Nvidia/Android TV launcher remains installed as recovery.
 
-Fresh workflow evidence: 5 non-visual integration contracts passed; Launcher lint passed; 58 Shield focused tests, 26 Shield HOME focused tests and 74 unified focused tests all completed with zero failures/errors/skips; signed APK assembly passed; package `com.boop.alpha1`, version, internal `com.boop.shieldhome.ShieldLauncherActivity`, exported `UnifiedEntryActivity`, HOME category, permanent signer and ZIP integrity were verified. No emulator/device launch, screenshots, golden tests or visual acceptance were performed.
+## Current standalone build
 
-Physical acceptance of this candidate is still pending Ryan's real Shield test.
+Branch head used for the first green standalone build: `d6e775de68f0f19661736abff6c0432e25320196`.
+Version: 1 / `0.1.0-standalone`.
+Workflow: `34217924617` SUCCESS.
+Artifact: `BOOP-Shield-Clean-Launcher`, ID `10052578743`.
+APK SHA-256: `374d86419abbc3aca367f79d2a13e36667ab41e8f975dc3f9b1b12f89ca26c68`.
+Artifact ZIP SHA-256: `4530637c0574d394faafe1124eded3cf2febdc6ee9f1ac257a71d236f48f808a`.
+Permanent BOOP signer is reused and verified against the existing signer digest.
 
-## Shield clean HOME behavior
+CI verified the standalone package/version, `ShieldLauncherActivity`, HOME and Leanback intent categories, focused Shield HOME tests, APK integrity and signer. No emulator/device/visual acceptance was performed.
 
-Default Shield HOME is deliberately small and quiet:
+## Launcher behavior
 
-- favourite apps only by default;
-- Apps and launcher Settings remain available;
-- Play Next and app content rows are optional and independently OFF by default;
-- disabled optional rows do not create/fetch their provider;
-- advertising, sponsored surfaces, Shop and Discover have no provider/restore path;
-- favourites can be added, removed and reordered with the remote;
-- package catalogue is cached and refreshed only for relevant package changes;
-- focus/page animation is local to BOOP and does not alter Android global animation scales;
-- stock Android TV launcher remains installed and selectable as the recovery HOME.
+Default HOME is favourite apps only, with Apps and Settings available. Optional Play Next and app content rows are independently OFF by default and disabled providers are not instantiated. No advertising, sponsored, Shop or Discover provider exists.
 
-`UnifiedEntryActivity` remains the sole exported HOME/LAUNCHER doorway. On Shield, a HOME intent routes to `com.boop.shieldhome.ShieldLauncherActivity`; an ordinary BOOP app launch still routes to the existing Shield puppet.
+Remote-first controls support app launch, favourite add/remove/reorder, smooth local focus/page animation, package refresh on relevant package changes, and supported Android HOME selection. Do not alter Android global animation scales.
 
 ## LOCKED Shield muscle-memory contract
 
-Ryan's rule: **remove the crap, preserve Shield behavior**.
+**Remove the crap, preserve Shield behavior.** This launcher replaces the HOME surface, not Shield OS behavior.
 
-The replacement HOME must not intentionally take ownership of Nvidia/system behaviors that are useful outside the launcher. Preserve Shield muscle memory wherever Android/Nvidia owns it. Physical acceptance specifically includes:
+Physical acceptance must preserve at least: double-tap Home -> Recent Apps/task switcher; normal Back; volume/CEC; Nvidia/Android Settings; system remote shortcuts; app switching; and system animations. If a shortcut breaks, repair that narrow break rather than globally intercepting remote keys or reimplementing Shield OS.
 
-- single Home returns to BOOP HOME when BOOP is selected as launcher;
-- double-tap Home must continue to open Nvidia/Android Recent Apps / task switcher;
-- Back behavior remains normal;
-- CEC, volume and system remote shortcuts remain system-owned;
-- Nvidia/Android system Settings remain reachable;
-- app switching and normal system animations remain intact.
+## Physical test order
 
-If a system shortcut breaks on real hardware, fix that narrow break later rather than expanding BOOP into a global remote-key interceptor or reimplementing Shield OS behavior. Do not disable/replace the stock launcher package, intercept Home globally, change secure settings, or alter global animation scales merely to make BOOP HOME work.
+1. Install this standalone APK alongside `com.boop.alpha1` and the stock launcher.
+2. Confirm Android sees it as a separate app/package and does not update BOOP unified.
+3. Select `BOOP Shield Home` as HOME through Android's supported chooser.
+4. Verify single Home returns to the clean favourites screen.
+5. Verify double-tap Home still opens Recent Apps/task switcher.
+6. Verify Back, volume/CEC, Settings, system shortcuts and app switching.
+7. Verify favourites launch/add/remove/reorder and optional rows remember state.
+8. Repeatedly return HOME and check no cumulative shrinking.
+9. Confirm the stock launcher can be selected again.
 
-## Other current BOOP state to preserve
-
-The approved paired black-lidded eye master is now materialized into the unified phone/Wall and Shield build path. Preserve the approved eye geometry/alpha, iris-only user hue behavior, existing blink curve/timing/lifecycle gates, headphones/puppetry and five-digit yellow hands. Ryan owns visual acceptance.
-
-HA naming and Home control buttons were physically accepted earlier; preserve that path. Room changes must tear down previous-room state before rebuilding and Shield density scaling must remain idempotent, never cumulative or system-wide.
-
-Custom wake naming now includes the local five-utterance enrolment materialization that landed concurrently before the successful candidate run. Do not infer physical wake acceptance from CI alone.
-
-Assistant selection/remote microphone remains a separate physical boundary. Use supported Android assistant routes only, with no overlay microphone, competing recorder, Google-disable/default hacks, Button Mapper, privileged/ADB ownership or OpenAI API requirement. Success still requires actual remote-button invocation plus audio from THAT remote and clean return behavior.
-
-## Physical test order for the Shield HOME candidate
-
-1. Install the normal signed unified APK without removing the stock launcher.
-2. Explicitly select BOOP as HOME through Android's supported HOME selection flow.
-3. Verify single Home returns reliably to the clean favourites screen.
-4. Immediately verify **double-tap Home still opens Recent Apps/task switcher**.
-5. Verify Back, volume/CEC, system Settings and ordinary app switching remain normal.
-6. Verify default HOME has favourites only, no ad/Shop/Discover space, and smooth local focus/scroll behavior.
-7. Verify favourite launch/add/remove/reorder with the Shield remote.
-8. Toggle optional rows on/off and confirm state survives restart.
-9. Repeatedly return to HOME and confirm no cumulative UI shrinking.
-10. Confirm stock launcher can still be selected again.
-
-CI-green and signed does not equal physical acceptance. Record real-device failures individually and repair only what breaks.
-
-## Protected contracts
-
-Keep package `com.boop.alpha1` and the permanent signer. Keep private photos, credentials, device IPs and raw diagnostics out of this public repository. No automatic installs/grants or claims of Windows synchronization. Protected historical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881` unless Ryan explicitly promotes a newer physically accepted checkpoint.
+CI-green is not physical acceptance. Do not merge this into unified until Ryan explicitly approves the standalone behavior on real Shield hardware.
