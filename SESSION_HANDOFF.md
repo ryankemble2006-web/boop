@@ -25,52 +25,69 @@ Notification Listener access is the proven Shield media-session authority. Ryan 
 - v0.10.5 lifted the transport row by 4dp and added HTTPS MediaMetadata artwork support plus broader artwork-only notification fallback.
 - Ryan physically confirmed **album art now works** on v0.10.5. It appeared without even skipping the current Deezer track.
 
-Album-art plumbing is therefore physically green and should not be changed casually.
+Album-art plumbing is physically green and should not be changed casually.
 
-## Current candidate: v0.10.6 focus outline
+## v0.10.6 focus outline
 
-Version code 21 / `0.10.6-focus-outline`.
+Version code 21 / `0.10.6-focus-outline`, source `7ff4e64a0cdb1ca02dd4b4af5391ba1095b2569d`, workflow `34287673372` SUCCESS, artifact `10080137191`, APK SHA-256 `048ca7fa179c21b4f307774f07eb7eabb6eb706444b228fa4b32391a9c746ea1`.
 
-User-requested visual change only:
+It adds the shared cyan/blue focus treatment requested for HOME, Apps drawer and Launcher Settings while preserving existing scale/pop behavior. This visual treatment remains physical-pending unless Ryan explicitly accepts it.
 
-- keep every existing focus scale/pop animation;
-- add a **3dp cyan/blue focus border** to navigable items on HOME, Apps drawer and Launcher Settings;
-- HOME favourite banners keep the accepted no-black-plate behavior: their outline is attached to the artwork itself;
-- Apps drawer cards keep their existing selection plate and gain the outline around the card;
-- HOME action buttons, Now Playing controls, Now Playing artwork and Launcher Settings rows use the same outline;
-- one shared `FocusChrome` resolves Android `colorControlActivated` and supplies both the focus outline and the Now Playing progress fill, so they use the same runtime colour;
-- no accepted layout dimensions or focus scale values were intentionally changed.
+## Current candidate: v0.10.7 card-owned BOOP stage
 
-No automated appearance/focus test was added because Ryan explicitly owns real-device visual acceptance and BOOP_RULES forbids GitHub visual judging.
+Version code 22 / `0.10.7-puppet-bay`.
 
-## Verification / release receipt
+Ryan approved putting headphones BOOP into the open right-hand Now Playing space, while deliberately deferring a full Shield/Tegra 2.5D animation engine until placement is physically settled.
 
-A pre-release compile/functional pass on source through `44214b1dba68f9e5e609c5f6a89f48e9246c4014` passed the fast functional lane before version stamping.
+Implementation boundary:
 
-Final v0.10.6 release:
+- existing approved `ShieldNowPlayingPuppetView` and `boop_headphones` artwork are reused unchanged;
+- existing groove / acknowledgement motion policy and power-saver / animator-disable behavior are preserved;
+- `ShieldNowPlayingView` now owns the puppet directly inside the existing **230dp reserved right-hand bay**;
+- the former Activity-root puppet overlay and its manual page-position lifecycle were removed;
+- the puppet remains non-focusable, non-clickable and excluded from accessibility navigation;
+- its stage is clipped by the puppet view, so motion stays inside the reserved bay;
+- Now Playing snapshot binding drives the puppet directly; when media is hidden the puppet hides with the card;
+- no new GPU/OpenGL/skeletal animation engine is introduced in this candidate.
 
-- APK source: `7ff4e64a0cdb1ca02dd4b4af5391ba1095b2569d`
-- workflow: `34287673372` SUCCESS
-- artifact: `BOOP-Shield-Clean-Launcher`, ID `10080137191`
-- version: code 21 / `0.10.6-focus-outline`
-- APK SHA-256: `048ca7fa179c21b4f307774f07eb7eabb6eb706444b228fa4b32391a9c746ea1`
-- artifact ZIP SHA-256: `cedef689f8658a3d646579246c31fd6531246580e68c813610bfb4ab90d885cf`
+This creates the intended clean future seam: later richer Tegra/GPU puppetry can replace the internals of the card-owned puppet stage without moving the launcher layout again.
+
+## TDD / verification
+
+Ownership contract RED:
+
+- test commit `980b2d698032124b81a477e54c538171dbee1142`;
+- workflow `34288555747`;
+- **73 tests, exactly 1 failure**, `NowPlayingPuppetHostContractTest.nowPlayingCardOwnsPuppetInsteadOfActivityOverlay`, because `ShieldNowPlayingView` did not yet own `puppetView`.
+
+Production transplant:
+
+- card ownership commit `ff8efc77efb36ca31d17de7bcb00fcad6d634af3`;
+- Activity overlay removal `17dcc253a25344ab424a01110666fe0b67529e51`;
+- workflow `34288770043` then passed the full fast functional/build/sign/package lane.
+
+Final v0.10.7 release:
+
+- APK source: `8d6486ba51e747286847b7453189981266f13243`
+- workflow: `34288943710` SUCCESS
+- artifact: `BOOP-Shield-Clean-Launcher`, ID `10080598609`
+- version: code 22 / `0.10.7-puppet-bay`
+- APK SHA-256: `5bb188d520fcf0ed73a871c6ef60007a58d782226349113377fcf58f406c2ae9`
+- artifact ZIP SHA-256: `a7b453e6922aa35fd227337318e9a371379bd2f03c7e5fbcd8d5b6f40b97332c`
 - permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Final CI passed functional tests, signed assembly, exact package/code21/version, protected manifest/service/resource checks, permanent signer verification, APK integrity and artifact upload. `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` remained active.
+Final CI passed functional tests, signed assembly, exact package/code22/version, protected manifest/service/resource checks, permanent signer verification, APK integrity and artifact upload. `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` remained active; no visual acceptance was run.
 
-The downloaded artifact was independently unpacked. Its APK SHA matched CI exactly; package `com.boop.shieldhome`, code 21 / `0.10.6-focus-outline` and the permanent signer were independently confirmed.
+The downloaded artifact was independently unpacked. Its APK SHA matched CI exactly; package `com.boop.shieldhome`, code 22 / `0.10.7-puppet-bay` and the permanent signer were independently confirmed.
 
 ## Next physical gate
 
-Install/update v0.10.6 and inspect focus while navigating:
+Install/update v0.10.7 and inspect the Now Playing card on the real Shield:
 
-1. HOME top buttons and optional action tiles;
-2. HOME favourite banners;
-3. Now Playing artwork / Open player / enabled transport controls;
-4. Apps drawer cards;
-5. Launcher Settings rows.
+1. BOOP should appear inside the right-hand reserved bay rather than as a separate Activity overlay.
+2. He must not overlap title, progress, Open player, transport controls or favourite apps.
+3. Remote navigation must remain unchanged because the puppet is non-focusable/non-clickable.
+4. Existing groove / track-change acknowledgement motion should still run within the bay.
+5. Judge size and exact vertical/horizontal placement manually; minor position/scale tweaks can follow after use.
 
-Border should read as the same cyan/blue as the Now Playing progress bar and should add clarity without changing the accepted geometry or scale animation.
-
-Real Shield behavior is authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
+Do not begin the full Tegra/GPU puppetry pass until Ryan decides the card placement is worth locking. Real Shield behavior is authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
