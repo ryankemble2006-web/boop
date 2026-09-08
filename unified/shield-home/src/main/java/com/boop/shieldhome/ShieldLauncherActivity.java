@@ -1,13 +1,19 @@
 package com.boop.shieldhome;
 
 import android.app.Activity;
+import android.app.role.RoleManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,6 +37,8 @@ import java.util.concurrent.Executors;
 /** Standalone Shield launcher surface. */
 public final class ShieldLauncherActivity extends Activity {
     public static final long PAGE_TRANSITION_MS = 140L;
+    private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
+    private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown";
 
     public enum FavouriteEdit {
         MOVE_LEFT,
@@ -90,6 +98,7 @@ public final class ShieldLauncherActivity extends Activity {
         registerPackageReceiver();
         showHome();
         reloadApps();
+        root.post(this::maybePromptForHomeRole);
     }
 
     private void reloadApps() {
@@ -270,6 +279,18 @@ public final class ShieldLauncherActivity extends Activity {
                 openHomeSettings();
             }
 
+            @Override public void onMakeBoopHome() {
+                requestHomeRole();
+            }
+
+            @Override public void onRetireStockHome() {
+                openStockHomeAppInfo();
+            }
+
+            @Override public void onRestoreStockHome() {
+                restoreStockHome();
+            }
+
             @Override public void onBackHome() {
                 showHome();
             }
@@ -380,6 +401,126 @@ public final class ShieldLauncherActivity extends Activity {
             startActivity(new Intent(systemSettingsAction()));
         } catch (ActivityNotFoundException | SecurityException ignored) {
             // System Settings is OS-owned. HOME remains usable if firmware omits the route.
+        }
+    }
+
+    private void maybePromptForHomeRole() {
+        SharedPreferences prefs = getSharedPreferences(SETUP_PREFS, MODE_PRIVATE);
+        boolean alreadyShown = prefs.getBoolean(KEY_HOME_PROMPT_SHOWN, false);
+        if (!HomeReplacementPolicy.shouldAutoPrompt(isBoopDefaultHome(), alreadyShown)) {
+            return;
+        }
+        prefs.edit().putBoolean(KEY_HOME_PROMPT_SHOWN, true).apply();
+        requestHomeRole();
+    }
+
+    private void requestHomeRole() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roles = getSystemService(RoleManager.class);
+            if (roles != null && roles.isRoleAvailable(RoleManager.ROLE_HOME)) {
+                if (roles.isRoleHeld(RoleManager.ROLE_HOME)) {
+                    return;
+                }
+                try {
+                    startActivity(roles.createRequestRoleIntent(RoleManager.ROLE_HOME));
+                    return;
+                } catch (ActivityNotFoundException | SecurityException ignored) {
+                    // Fall through to the system HOME chooser.
+                }
+            }
+        }
+        openHomeSettings();
+    }
+
+    private boolean isBoopDefaultHome() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roles = getSystemService(RoleManager.class);
+            if (roles != null && roles.isRoleAvailable(RoleManager.ROLE_HOME)) {
+                return roles.isRoleHeld(RoleManager.ROLE_HOME);
+            }
+        }
+
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo resolved = getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
+        return resolved != null
+                && resolved.activityInfo != null
+                && getPackageName().equals(resolved.activityInfo.packageName);
+    }
+
+    private String findStockHomePackage() {
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        List<ResolveInfo> resolved;
+        try {
+            resolved = getPackageManager().queryIntentActivities(
+                    home, PackageManager.MATCH_DISABLED_COMPONENTS);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+
+        ArrayList<HomeReplacementPolicy.Candidate> candidates = new ArrayList<>();
+        for (ResolveInfo info : resolved) {
+            if (info == null || info.activityInfo == null || info.activityInfo.applicationInfo == null) {
+                continue;
+            }
+            ApplicationInfo app = info.activityInfo.applicationInfo;
+            boolean system = (app.flags
+                    & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+            boolean enabled = app.enabled && info.activityInfo.enabled;
+            candidates.add(new HomeReplacementPolicy.Candidate(
+                    info.activityInfo.packageName, system, enabled));
+        }
+        return HomeReplacementPolicy.selectStockHome(candidates, getPackageName());
+    }
+
+    private void openStockHomeAppInfo() {
+        String stockPackage = findStockHomePackage();
+        if (stockPackage == null) {
+            openHomeSettings();
+            return;
+        }
+        openPackageDetails(stockPackage);
+    }
+
+    private void restoreStockHome() {
+        String stockPackage = findStockHomePackage();
+        if (stockPackage == null) {
+            openHomeSettings();
+            return;
+        }
+        if (isPackageDisabled(stockPackage)) {
+            openPackageDetails(stockPackage);
+            return;
+        }
+        openHomeSettings();
+    }
+
+    private boolean isPackageDisabled(String packageName) {
+        PackageManager pm = getPackageManager();
+        try {
+            int state = pm.getApplicationEnabledSetting(packageName);
+            if (state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                    || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
+                    || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
+                return true;
+            }
+            if (state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+                return false;
+            }
+            ApplicationInfo app = pm.getApplicationInfo(
+                    packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
+            return !app.enabled;
+        } catch (PackageManager.NameNotFoundException | IllegalArgumentException ignored) {
+            return false;
+        }
+    }
+
+    private void openPackageDetails(String packageName) {
+        try {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", packageName, null));
+            startActivity(intent);
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            openSystemSettings();
         }
     }
 
