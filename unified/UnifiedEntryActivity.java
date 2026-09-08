@@ -32,7 +32,11 @@ public final class UnifiedEntryActivity extends Activity {
 
     private void route() {
         BoopDeviceProfile.Mode mode = BoopDeviceProfile.resolve(this);
-        if (mode == BoopDeviceProfile.Mode.SHIELD
+        boolean homeIntent = getIntent() != null
+                && getIntent().hasCategory(Intent.CATEGORY_HOME);
+        ShieldEntryRoute.Target destination = ShieldEntryRoute.resolve(mode, homeIntent);
+
+        if (destination == ShieldEntryRoute.Target.SHIELD_PUPPET
                 && BoopAssistantPreference.load(this) == null) {
             if (!waitingForAssistantChoice) {
                 waitingForAssistantChoice = true;
@@ -44,20 +48,13 @@ public final class UnifiedEntryActivity extends Activity {
             return;
         }
 
-        String className;
-        if (mode == BoopDeviceProfile.Mode.SHIELD) {
-            className = "com.boop.shieldoverlay.MainActivity";
-        } else if (mode == BoopDeviceProfile.Mode.WALL) {
-            className = "com.boop.alpha1.MainActivity";
-        } else {
-            className = "com.boop.launcher.MainActivity";
-        }
-
-        Intent target = new Intent(Intent.ACTION_MAIN)
-                .setClassName(getPackageName(), className)
+        Intent targetIntent = new Intent(Intent.ACTION_MAIN)
+                .setClassName(getPackageName(), destination.className())
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(target);
-        overridePendingTransition(0, 0);
+        startActivity(targetIntent);
+        if (destination.suppressEntryTransition()) {
+            overridePendingTransition(0, 0);
+        }
         finish();
     }
 }
