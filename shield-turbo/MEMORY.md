@@ -12,19 +12,19 @@ Use only the established secret-backed `boop-dev` signer. Certificate SHA-256: `
 
 Ryan has four Kodi forks he does not want lingering after boot. The old v0.4 app-op mechanism failed and manual swipe/force-close noticeably improved Shield performance. v0.5.0 replaced that with real force-stop/read-back CLEAN START.
 
-The CLEAN START core is now physically positive: after reboot Ryan checked Shield Apps and confirmed the selected apps had been force-closed. Preserve that result. The remaining issue is presentation during the noticeable roughly three-second Home-screen freeze, not whether the stop actually occurred.
+The CLEAN START core is physically positive. Most recently on v0.5.2, Ryan rebooted, saw no CLEAN START notice, then confirmed the target apps were stopped. Task-manager cards persisted from the previous session, but the apps were not loaded and reloaded only when focused. Preserve the interpretation: recents/task cards can survive force-stop; normal deliberate launch releases stopped state. The remaining issue is presentation during the noticeable roughly three-second Home-screen freeze, not whether the stop occurred.
 
 ## Static startup indicator lock
 
-Ryan requires visible feedback during CLEAN START and **no movement whatsoever**. The static overlay text remains `SHIELD TURBO · CLEAN START` and `Tidying startup apps`.
+Ryan requires visible feedback during CLEAN START and **no movement whatsoever**. Static text remains `SHIELD TURBO · CLEAN START` and `Tidying startup apps`.
 
-It must remain non-focusable and non-touchable. No spinner, pulse, fade, slide, countdown, moving dots, animation, repeated layout updates or focus effects. It appears, remains fixed, then disappears. If overlay permission is unavailable, cleanup continues normally without it.
+It must remain non-focusable and non-touchable. No spinner, pulse, fade, slide, countdown, moving dots, animation, repeated layout animation or focus effects. It appears, remains fixed, then disappears. If overlay permission is unavailable, cleanup continues normally without it.
 
-v0.5.1 physically failed only the notice timing: the Shield froze while startup/cleanup occurred and the card was visible only for a microsecond at the end. Root cause is ordering/render opportunity: `indicator.show()` was immediately followed by submitting the background cleanup worker.
+v0.5.1 physically failed notice timing by flashing only at the end. v0.5.2/code 9 added a 500 ms worker-thread preroll but physically produced no visible notice. That proves a fixed delay after `WindowManager.addView` is not a reliable proxy for actual frame presentation on Shield boot.
 
-v0.5.2/code 9 adds exactly a **500 ms worker-thread preroll** after `indicator.show()` and before constructing `LocalBridge` / starting ADB force-stop work. This deliberately gives Android time to present the static overlay. Do not move the delay to the main/UI thread. Do not add animation. Do not alter the existing bounded boot scheduler to solve this UI timing issue.
+v0.5.3/code 10 therefore waits on a **bounded first-frame presentation signal**, not a guessed sleep. `CleanStartIndicator` uses a `CountDownLatch`; API 29+ hardware-accelerated rendering releases it from `registerFrameCommitCallback`, with an OnDraw fallback. Overlay-unavailable/addView-failure paths release immediately. The CLEAN START worker waits up to 3000 ms before constructing `LocalBridge`. Keep that wait on the worker, never the main/UI thread. Do not change the 30/60/120 boot scheduler to solve presentation.
 
-Physical acceptance still belongs to Ryan: expected order is notice first -> cleanup/freeze underneath -> notice disappears. Machine tests verify code ordering and no known movement APIs, not what the TV physically shows.
+Physical acceptance still belongs to Ryan: expected order is notice actually presented first -> cleanup/freeze underneath -> notice disappears. Machine checks verify code ordering, API safety and absence of known animation behavior, not what the TV physically shows.
 
 ## CLEAN START mechanism and safety retained
 
@@ -42,8 +42,8 @@ Keep physically proven brightness behavior, APPS direct launch, labels, Cancel/B
 
 Ryan owns all real-device visuals and remote acceptance. Never add GitHub screenshots, UI hierarchy dumps, golden/image/layout/focus/appearance/motion judgment or source-string visual certification. Allowed gates are functional/API/protocol/security tests, compilation, lint, signer/package/archive integrity and basic nonvisual crash smoke.
 
-Latest candidate: v0.5.2/code 9, source `6df33fa4e62688e09d1a5ee33c0ca7128afd6ed4`, run `34218659116`, job `102036355692`, success; **68 JVM tests, 22 source/security contracts, lint 0 errors/24 warnings**. Signed artifact `10052914776`, ZIP SHA-256 `0f59a1d4412b6b9671977d4fe18a874d02a1ed75c334b54d611ddf703f82c875`; tests artifact `10052958031`, SHA-256 `601f53247802e45c8099827c855c31587598832fbf6677065c2adff3e75a7fd8`. APK `Shield-Turbo-v0.5.2.apk`, 2317430 bytes, SHA-256 `e2920b1d6c0a5ea36a5f93829729a7391ca7a038f0c9241d891d3bd75b71fd51`. Permanent signer as above. Nonvisual install/cold/warm launch/no-fatal smoke passed. No visual tests ran.
+Latest candidate: v0.5.3/code 10, source `a65c800c459d292a37a092f430d08ddfd2be3742`, run `34221284613`, job `102044740488`, success; **68 JVM tests, 22 source/security contracts, lint 0 errors/24 warnings**. Signed artifact `10053936105`, ZIP SHA-256 `083fe26f122d10f0bc27ef4569ba9731799b3b0c4e24bcc6c15be874f0f81b1f`; tests artifact `10053981252`, SHA-256 `e6277ca06695eae76ddc16c23bf6eb897b89e050b00742ede23fddf2426fc869`. APK `Shield-Turbo-v0.5.3.apk`, 2319002 bytes, SHA-256 `fa50dafa7f01f6c6d2e8c9e840449f0a4fd2d57674ec172fe16e02040da133b1`. Permanent signer as above. Nonvisual install/cold/warm launch/no-fatal smoke passed. No visual tests ran.
 
-v0.5.2 TDD: RED `8e1c022bc14bb4165e7b00e2e0d3bebb828a6f7e` left all 68 JVM tests green and failed only the new preroll ordering contract. GREEN implementation `4a2e15b42be5f336f0e68bea3271ca52241b08c4` passed 68 JVM tests, all 22 contracts and lint before release stamping. Final release source is `6df33fa4e62688e09d1a5ee33c0ca7128afd6ed4`.
+v0.5.3 TDD: RED `a3cf5618ecac10e422d25c09246b919e22514dbd` left all 68 JVM tests green and failed the new presentation ordering contract before build/signing. GREEN implementation `92ebc39494610bb5fef8f95eb5fc3489351db3db` passed unit/source/lint/build/signer and nonvisual launch gates. Final stamped release source is `a65c800c459d292a37a092f430d08ddfd2be3742`.
 
-Historical v0.5.1 indicator receipt and older startup work remain in Git history; do not repoint old checkpoints.
+Historical v0.5.2/v0.5.1 indicator receipts and older startup work remain in Git history; do not repoint old checkpoints.
