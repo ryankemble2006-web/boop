@@ -4,75 +4,75 @@ Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
 ## Physical state
 
-CLEAN START's real force-stop/read-back core remains physically accepted from earlier Shield testing.
+CLEAN START remains physically accepted on Ryan's real Shield:
+- v0.5.7 full-screen transparent notice host visible for roughly one second;
+- v0.5.8 real job timing `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
 
-The startup notice architecture is now physically proven too:
-- v0.5.7 used the brightness-style transparent full-screen overlay host;
-- Ryan saw the blue/cyan static notice for about one second;
-- diagnostic: permission YES, `DISPLAY_WINDOW_CONTEXT`, add `ADDED`, present `FRAME_COMMITTED`, about 236ms.
-
-v0.5.8 added timing evidence only and kept that notice architecture unchanged. Real-Shield timing:
-
-`notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`
-
-Therefore Turbo's CLEAN START job itself is sub-second. The earlier subjective ~10-second reboot disturbance is outside the timed job boundary. Do not alter the accepted stop/verify or overlay path to chase it without fresh evidence outside the job.
+v0.5.10 compact ANALYSE presentation is now physically accepted too. Ryan supplied a real-Shield screenshot showing the entire report in one frame with the 9sp monospace sheet still readable. Do not revert the screenshot report to the old large-card presentation.
 
 ## Current candidate
 
-**v0.5.8 / code 15**, exact built source `ea2c290b5ca66c6a88f1967db91b741e278007b7`.
+**v0.5.10 / code 17**, exact built source `d7ed55d5437b2fb534b57a0015b3f79341d1eeee`.
 
-Release run `34242340853`, job `102115431784`, conclusion **success**:
-- **69 JVM tests passed**;
-- **29 source/API/security contracts passed**;
-- lint **0 errors / 24 warnings**;
+Release run `34256065457`, job `102162210965`, conclusion **success**:
+- **75 JVM tests passed**;
+- **34 source/API/security contracts passed**;
+- lint **0 errors / 26 warnings**;
 - permanent signer/package/version/archive checks passed;
-- nonvisual cold/warm launch/no-fatal smoke passed.
-
-Artifacts:
-- `SHIELD-TURBO` ID `10062615402`, ZIP `768599` bytes, SHA-256 `de9d9788992c65de8e665e23d850c97d59d6a9206b9046c8ba05f65bf975c468`;
-- `SHIELD-TURBO-TESTS` ID `10062679313`, ZIP `94845` bytes, SHA-256 `1d36483400561023311e9f9823ae631ce699063117c8c26ca91063f345fd78f3`.
-
-Delivered APK `Shield-Turbo-v0.5.8.apk`, `2337506` bytes, SHA-256 `e8d61d98fc5b4603c810246babbdb1c1937ae0942b2ea5aad0a8ce44e5fdcb66`.
+- nonvisual emulator install/cold/warm launch/no-fatal smoke passed;
+- APK SHA-256 `e4cadc57006d344c2ef7cad557a4a2535b8e1d493b3a80f239cb991c15480b88`;
+- APK size `2364850` bytes;
+- `SHIELD-TURBO` artifact ID `10068029156`, ZIP SHA-256 `30ce88f727272dd78c9bfdea41d1427041450b48232be78f7040215dbc88ad04`;
+- `SHIELD-TURBO-TESTS` artifact ID `10068084283`, ZIP SHA-256 `1d8e76038a2d5cc5887d5ef9186df7a6f22cd3d9e1184244446db30cff437512`.
 
 Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, DN `CN=BOOP Development,O=BOOP`.
 
-No visual tests ran. Ryan's physical evidence is authoritative.
+## Stage-1 performance evidence from the real Shield
 
-## Approved next design: persistent stock TURBO mode
+The physical v0.5.10 report established:
+- capability tier `ADB TURBO` and trusted local ADB read works;
+- Android thermal status is exposed and was `None` / status 0 during the test;
+- reviewed allowlisted CPU stock sysfs controls: not exposed;
+- reviewed allowlisted GPU stock sysfs controls: not exposed;
+- performance write access: no allowlisted control path exposed;
+- Android fixed-performance command: not exposed;
+- processor-mode clue output currently contains generic `low_power`/power keys and is not evidence of NVIDIA Max Performance control.
+
+Stage 1 remains read-only. No performance write, watchdog service or boot reapply component has been added yet.
+
+## Approved persistent stock TURBO design
 
 Written spec:
 `docs/superpowers/specs/2026-09-08-shield-turbo-stock-performance-mode-design.md`
 
-Approved in-chat behavior:
-- persistent across reboot;
-- NVIDIA Max Performance when genuinely exposed/writable;
+Locked behavior:
+- persistent across reboot once real Turbo writes exist;
+- NVIDIA Max Performance when genuinely exposed/writable/read-back verified;
 - additional stock CPU/GPU controls only when allowlisted, within firmware limits, reversible and read-back verified;
 - foreground thermal watchdog only while active;
 - boot-time thermal check before reapply;
 - auto-restore NORMAL at SEVERE or higher and stay NORMAL;
 - exact original NORMAL snapshot preserved across reboot and failed restore;
 - no root, custom kernel, bootloader unlock, voltage changes, above-stock clocks or thermal bypass;
-- Android fixed-performance mode remains diagnostic-only in v1.
+- Android fixed-performance remains diagnostic-only unless later evidence changes that decision.
 
-The written spec has completed self-review. **No implementation code has been written yet.** User review of the committed spec is the current gate.
-
-## Locked decisions
+## Locked existing behavior
 
 Freeze:
-- the v0.5.7 full-screen transparent notice host;
-- static top-centre notice text and no-motion rules;
+- v0.5.7 full-screen static CLEAN START host;
 - 500ms presentation fail-open;
 - trusted loopback ADB;
 - force-stop + verification core;
 - target safety exclusions;
-- opt-in bounded 30/60/120s max-three scheduler;
+- opt-in bounded 30/60/120s max-three CLEAN START scheduler;
 - brightness 10-100% behavior;
-- APPS direct launch and remote navigation behavior.
+- APPS direct launch and remote navigation behavior;
+- v0.5.10 compact ANALYSE report for screenshot evidence.
 
-Stock-envelope performance tuning is newly allowed only under the approved TURBO spec. Above-stock clocks, voltage changes, thermal/throttling bypass, root and bootloader/kernel modification remain excluded.
+Stock-envelope performance tuning is allowed only under the approved TURBO design. Above-stock clocks, voltage changes, thermal/throttling bypass, root and bootloader/kernel modification remain excluded.
 
 Display & Sound and Accessibility remain parked.
 
 ## Next step
 
-Ryan reviews the committed TURBO design spec. On approval, create the implementation plan and begin TDD with the Stage 1 read-only capability probe. No performance writes before that sequence.
+Deeper **read-only** NVIDIA Processor Mode discovery. Identify the exact SHIELD Settings/service/property state that changes between Optimized and Max Performance. Ignore generic power-key name matches. No write until a candidate interface has unambiguous meaning and read-back semantics.
