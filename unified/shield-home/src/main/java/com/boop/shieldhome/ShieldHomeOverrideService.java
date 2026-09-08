@@ -14,6 +14,16 @@ public final class ShieldHomeOverrideService extends AccessibilityService {
     private static final long RELAUNCH_GUARD_MS = 350L;
     private long lastLaunchElapsed;
 
+    @Override protected void onServiceConnected() {
+        super.onServiceConnected();
+
+        // Shield can present stock Home before Accessibility finishes binding after reboot.
+        // Re-arm BOOP as soon as Android reconnects this already-enabled service, then let
+        // the normal foreground-window path handle future Home presses.
+        lastLaunchElapsed = SystemClock.elapsedRealtime();
+        bringBoopToFront();
+    }
+
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null || event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             return;
@@ -30,7 +40,10 @@ public final class ShieldHomeOverrideService extends AccessibilityService {
             return;
         }
         lastLaunchElapsed = now;
+        bringBoopToFront();
+    }
 
+    private void bringBoopToFront() {
         Intent intent = new Intent(this, ShieldLauncherActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TOP
