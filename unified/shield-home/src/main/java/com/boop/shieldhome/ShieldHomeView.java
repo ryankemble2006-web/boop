@@ -7,21 +7,32 @@ import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Presentation-only Shield HOME surface. Data discovery and persistence live elsewhere. */
 public final class ShieldHomeView extends LinearLayout {
     public interface Callbacks {
         void onAppSelected(TvAppEntry entry);
-        void onFavouriteLongPressed(TvAppEntry entry);
+        void onFavouriteOrderCommitted(List<String> components);
         void onOpenApps();
-        void onOpenSettings();
+        void onOpenHomeRows();
+        void onOpenSystemSettings();
         void onContentSelected(HomeContentCard card);
     }
+
+    private FavouriteGrabSession grabSession;
+    private HorizontalScrollView favouriteScroller;
+    private LinearLayout favouriteRow;
+    private TvAppCardView grabbedCard;
 
     public ShieldHomeView(Context context) {
         this(context, null);
@@ -32,7 +43,7 @@ public final class ShieldHomeView extends LinearLayout {
         setOrientation(VERTICAL);
         setGravity(Gravity.CENTER_VERTICAL);
         setBackgroundColor(Color.BLACK);
-        setPadding(dp(42), dp(34), dp(42), dp(30));
+        setPadding(dp(42), dp(28), dp(42), dp(30));
         setClipChildren(false);
         setClipToPadding(false);
     }
@@ -42,10 +53,18 @@ public final class ShieldHomeView extends LinearLayout {
         List<TvAppEntry> safeFavourites = favourites == null ? List.of() : favourites;
         List<HomeRow> safeOptionalRows = optionalRows == null ? List.of() : optionalRows;
 
-        addView(navRow(callbacks), wrap());
-        addSpacer(dp(24));
+        if (grabSession != null) {
+            safeFavourites = orderEntries(safeFavourites, grabSession.current());
+            if (grabSession.index() < 0) {
+                grabSession = null;
+                grabbedCard = null;
+            }
+        }
+
+        addView(navRow(callbacks), new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        addSpacer(dp(20));
         addView(sectionTitle("Favourite apps"), wrap());
-        addSpacer(dp(12));
+        addSpacer(dp(10));
 
         if (safeFavourites.isEmpty()) {
             TextView add = actionButton("Add favourites");
@@ -53,14 +72,14 @@ public final class ShieldHomeView extends LinearLayout {
             addView(add, new LayoutParams(dp(260), dp(72)));
         } else {
             addView(appRow(safeFavourites, callbacks), new LayoutParams(
-                    LayoutParams.MATCH_PARENT, dp(170)));
+                    LayoutParams.MATCH_PARENT, dp(215)));
         }
 
         for (HomeRow row : safeOptionalRows) {
             if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
-            addSpacer(dp(26));
+            addSpacer(dp(22));
             addView(sectionTitle(row.title()), wrap());
-            addSpacer(dp(10));
+            addSpacer(dp(8));
             addView(contentRow(row.cards(), callbacks), new LayoutParams(
                     LayoutParams.MATCH_PARENT, dp(150)));
         }
@@ -75,42 +94,183 @@ public final class ShieldHomeView extends LinearLayout {
         apps.setOnClickListener(v -> callbacks.onOpenApps());
         row.addView(apps, new LayoutParams(dp(150), dp(60)));
 
+        TextView homeRows = actionButton("Home rows");
+        homeRows.setOnClickListener(v -> callbacks.onOpenHomeRows());
+        LayoutParams homeRowsParams = new LayoutParams(dp(190), dp(60));
+        homeRowsParams.leftMargin = dp(12);
+        row.addView(homeRows, homeRowsParams);
+
+        View spacer = new View(getContext());
+        row.addView(spacer, new LayoutParams(0, 1, 1f));
+
         TextView settings = actionButton("Settings");
-        settings.setOnClickListener(v -> callbacks.onOpenSettings());
-        LayoutParams settingsParams = new LayoutParams(dp(170), dp(60));
-        settingsParams.leftMargin = dp(12);
-        row.addView(settings, settingsParams);
+        settings.setContentDescription("Shield settings");
+        settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
+        row.addView(settings, new LayoutParams(dp(170), dp(60)));
         return row;
     }
 
     private View appRow(List<TvAppEntry> favourites, Callbacks callbacks) {
-        HorizontalScrollView scroller = new HorizontalScrollView(getContext());
-        scroller.setHorizontalScrollBarEnabled(false);
-        scroller.setFillViewport(false);
-        scroller.setClipChildren(false);
-        scroller.setClipToPadding(false);
+        favouriteScroller = new HorizontalScrollView(getContext());
+        favouriteScroller.setHorizontalScrollBarEnabled(false);
+        favouriteScroller.setFillViewport(false);
+        favouriteScroller.setClipChildren(false);
+        favouriteScroller.setClipToPadding(false);
 
-        LinearLayout row = new LinearLayout(getContext());
-        row.setOrientation(HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setClipChildren(false);
-        row.setClipToPadding(false);
+        favouriteRow = new LinearLayout(getContext());
+        favouriteRow.setOrientation(HORIZONTAL);
+        favouriteRow.setGravity(Gravity.CENTER_VERTICAL);
+        favouriteRow.setClipChildren(false);
+        favouriteRow.setClipToPadding(false);
 
+        String grabbedComponent = grabSession == null ? null : grabSession.grabbedComponent();
         for (TvAppEntry entry : favourites) {
             TvAppCardView card = new TvAppCardView(getContext());
-            card.bind(entry, true);
-            card.setOnClickListener(v -> callbacks.onAppSelected(entry));
+            card.bindFavourite(entry);
+            card.setTag(entry.component());
+            card.setOnClickListener(v -> {
+                if (grabSession != null && v == grabbedCard) {
+                    commitGrab(callbacks);
+                } else {
+                    callbacks.onAppSelected(entry);
+                }
+            });
             card.setOnLongClickListener(v -> {
-                callbacks.onFavouriteLongPressed(entry);
+                beginGrab(entry, card);
                 return true;
             });
-            LayoutParams params = new LayoutParams(dp(190), dp(145));
-            params.rightMargin = dp(18);
-            row.addView(card, params);
+            card.setOnKeyListener((v, keyCode, event) -> handleGrabKey(v, keyCode, event, callbacks));
+            LayoutParams params = new LayoutParams(dp(270), dp(185));
+            params.rightMargin = dp(20);
+            favouriteRow.addView(card, params);
+
+            if (grabbedComponent != null && grabbedComponent.equals(entry.component())) {
+                grabbedCard = card;
+                card.setGrabbed(true);
+                card.post(card::requestFocus);
+            }
         }
-        scroller.addView(row, new HorizontalScrollView.LayoutParams(
+        favouriteScroller.addView(favouriteRow, new HorizontalScrollView.LayoutParams(
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
-        return scroller;
+        return favouriteScroller;
+    }
+
+    private void beginGrab(TvAppEntry entry, TvAppCardView card) {
+        if (entry == null || card == null || favouriteRow == null) {
+            return;
+        }
+        ArrayList<String> current = new ArrayList<>();
+        for (int i = 0; i < favouriteRow.getChildCount(); i++) {
+            Object tag = favouriteRow.getChildAt(i).getTag();
+            if (tag instanceof String) current.add((String) tag);
+        }
+        grabSession = FavouriteGrabSession.begin(current, entry.component());
+        if (grabbedCard != null && grabbedCard != card) {
+            grabbedCard.setGrabbed(false);
+        }
+        grabbedCard = card;
+        card.setGrabbed(true);
+        card.requestFocus();
+        scrollGrabbedIntoView();
+    }
+
+    private boolean handleGrabKey(View view, int keyCode, KeyEvent event, Callbacks callbacks) {
+        if (grabSession == null || view != grabbedCard) {
+            return false;
+        }
+        if (event.getAction() != KeyEvent.ACTION_DOWN) {
+            return keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+                    || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+                    || keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+                    || keyCode == KeyEvent.KEYCODE_ENTER
+                    || keyCode == KeyEvent.KEYCODE_BACK
+                    || keyCode == KeyEvent.KEYCODE_DPAD_UP
+                    || keyCode == KeyEvent.KEYCODE_DPAD_DOWN;
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+            if (grabSession.move(-1)) {
+                reorderFavouriteChildren(grabSession.current());
+            }
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            if (grabSession.move(1)) {
+                reorderFavouriteChildren(grabSession.current());
+            }
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+            commitGrab(callbacks);
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            List<String> original = grabSession.cancel();
+            reorderFavouriteChildren(original);
+            clearGrabState();
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            return true;
+        }
+        return false;
+    }
+
+    private void commitGrab(Callbacks callbacks) {
+        if (grabSession == null) return;
+        List<String> committed = grabSession.commit();
+        clearGrabState();
+        callbacks.onFavouriteOrderCommitted(committed);
+    }
+
+    private void clearGrabState() {
+        if (grabbedCard != null) {
+            grabbedCard.setGrabbed(false);
+            grabbedCard.requestFocus();
+        }
+        grabSession = null;
+        grabbedCard = null;
+    }
+
+    private void reorderFavouriteChildren(List<String> order) {
+        if (favouriteRow == null || order == null) return;
+        Map<String, View> byComponent = new HashMap<>();
+        for (int i = 0; i < favouriteRow.getChildCount(); i++) {
+            View child = favouriteRow.getChildAt(i);
+            Object tag = child.getTag();
+            if (tag instanceof String) byComponent.put((String) tag, child);
+        }
+        favouriteRow.removeAllViews();
+        for (String component : order) {
+            View child = byComponent.get(component);
+            if (child != null) {
+                favouriteRow.addView(child);
+            }
+        }
+        if (grabbedCard != null) {
+            grabbedCard.requestFocus();
+            scrollGrabbedIntoView();
+        }
+    }
+
+    private void scrollGrabbedIntoView() {
+        if (favouriteScroller == null || grabbedCard == null) return;
+        grabbedCard.post(() -> favouriteScroller.smoothScrollTo(
+                Math.max(0, grabbedCard.getLeft() - dp(70)), 0));
+    }
+
+    private List<TvAppEntry> orderEntries(List<TvAppEntry> entries, List<String> order) {
+        Map<String, TvAppEntry> byComponent = new HashMap<>();
+        for (TvAppEntry entry : entries) {
+            if (entry != null) byComponent.put(entry.component(), entry);
+        }
+        ArrayList<TvAppEntry> out = new ArrayList<>();
+        for (String component : order) {
+            TvAppEntry entry = byComponent.remove(component);
+            if (entry != null) out.add(entry);
+        }
+        out.addAll(byComponent.values());
+        return out;
     }
 
     private View contentRow(List<HomeContentCard> cards, Callbacks callbacks) {
