@@ -12,6 +12,8 @@
     <!-- Required only while verified TURBO is active so Android thermal status remains watched. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Android 13+ may hide TURBO/fallback notifications unless the user grants this normal runtime permission. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Granted only by the user's explicit local ADB setup after Android RSA approval. -->
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
