@@ -90,6 +90,7 @@ public final class TvAppCardView extends FrameLayout {
 
     private void bindInternal(TvAppEntry entry, boolean favourite, boolean preferBanner) {
         grabbed = false;
+        configureCardPadding(preferBanner);
         if (entry == null) {
             labelView.setText("");
             iconView.setImageDrawable(null);
@@ -152,6 +153,11 @@ public final class TvAppCardView extends FrameLayout {
     @Override public void setSelected(boolean selected) {
         super.setSelected(selected);
         refreshEmphasis();
+    }
+
+    private void configureCardPadding(boolean homeFavourite) {
+        int horizontal = homeFavourite ? dp(8) : dp(14);
+        setPadding(horizontal, dp(14), horizontal, dp(12));
     }
 
     private void configureArtworkSize(boolean banner) {
