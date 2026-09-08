@@ -2,106 +2,110 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Always re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v57 streaming custom wake
+## Current signed candidate: v58 natural BOOP wake
 
-Ryan physically tested signed v56 on the powered Pixel and confirmed the remaining natural-speech failure was not Home Assistant, tap ASR, wake-name training or recovery:
+Ryan physically tested signed v57 on the powered Pixel and proved the learned custom-name path is now genuinely natural and reusable, not Steve-specific:
 
-- `Steve` wakes BOOP and `BOOP` wakes BOOP;
-- tap-to-talk works;
-- `Steve`, pause, `lights off` works and says `Done`;
-- `BOOP`, pause, `lights off` works and says `Done`;
-- natural one-breath wake + command still requires a pause.
+- `Steve lights on` worked with no deliberate pause.
+- `Steve show diagnostics` worked with no deliberate pause.
+- voice rename to `Fred` triggered the five-sample local enrolment; BOOP asked for five repeats, listened, then `Fred lights on` worked and BOOP said `Done`.
+- voice rename to `Jeff` repeated the same successful five-sample flow; `Jeff lights on` worked and BOOP said `Done`.
+- permanent fallback `BOOP` still woke BOOP, but `BOOP lights on` in one breath required a pause after `BOOP`.
 
-After a failed one-breath `Steve lights on`, Ryan used tap-to-talk to request the retained pull-only diagnostic. Sanitized trace:
+This physically confirms the v57 learned-name streaming fix and five-sample enrolment architecture. It also isolates the remaining no-pause failure to the permanent/default BOOP Sherpa path. Do not disturb the learned-name matcher, enrolment, HA routing, TTS, command parser, power policy or recovery in response to this issue.
 
-`WAKE ASR ERROR 7 +1502ms ready=28 begin=290 end=1405 partial=- final=-`
+### Root cause of the remaining BOOP-only pause
 
-Sanitized state: wake name `Steve`; external power true; microphone permission true; last recovery `ARMED`.
+`BoopSherpaWakeSpotter` configured Sherpa with `config.setNumTrailingBlanks(1);`. The default BOOP path therefore required one trailing blank after the keyword before finalizing the wake. A deliberate pause supplied that blank; continuous `BOOP lights on` delayed the wake decision.
 
-This proves downstream Android command ASR observed speech boundaries but decoded no transcript, while the silent failure path genuinely recovered to armed wake state.
+v57 learned names no longer depend on trailing silence, which explains the clean A/B result: Steve/Fred/Jeff worked naturally while BOOP still wanted the pause.
 
-### Root cause
+### v58 change
 
-The learned custom-name matcher was not truly streaming. `BoopWakeTemplateMatcher` delegated to `BoopWakeUtteranceSegmenter`, which only emitted a candidate after two quiet 100 ms chunks. A learned name therefore effectively required about 200 ms trailing silence before it could be evaluated.
+One functional production change only:
 
-With natural speech such as `Steve lights on`, the matcher kept consuming the command as part of the same utterance. Detection of the learned name arrived too late, so most/all of the command was already past before Android command ASR got useful audio.
+- default Sherpa BOOP changes `setNumTrailingBlanks(1)` to `setNumTrailingBlanks(0)`.
 
-This is separate from the v53/v54 full-pre-roll defect and from v56's speaker-cue/100 ms bridge fix. Do not restore the old one-second pre-roll and do not widen the v56 bridge blindly.
+Preserved unchanged:
 
-### v57 change
+- BOOP keyword score/threshold and phrase assets;
+- v57 streaming learned-name matcher and its quiet-room RMS gate;
+- five-sample local training and no raw PCM persistence;
+- one controller-owned 16 kHz microphone stream;
+- v56 exact 1,600-sample / 100 ms command bridge and no old one-second pre-roll;
+- silent wake handoff and no artificial speaker bing;
+- three-second command window;
+- external-power continuous wake, unplugged tap-to-talk;
+- post-wake no-match/timeout silent real re-arm and hard-start fail-safe latch;
+- pull-only `show diagnostics`;
+- HA, TTS, visuals, Launcher and Shield behavior;
+- package and permanent signer.
 
-v57 changes only the learned custom-name path:
+### TDD trail
 
-- a trained custom name can be evaluated while speech is still active, without waiting for trailing silence;
-- the original silence-ended matcher remains a fallback;
-- expensive pronunciation feature extraction is gated behind cheap RMS/speech activity so an always-listening powered Pixel does not continuously run the heavy matcher while the room is quiet;
-- the same controller-owned 16 kHz PCM stream remains the only microphone owner;
-- an unrelated-continuous-speech negative regression is included;
-- default Sherpa `BOOP`, v56's exact 100 ms command bridge, silent wake handoff, three-second command window, powered wake, silent re-arm, pull-only diagnostics, five-say training, HA, visuals, Launcher and Shield behavior are otherwise unchanged.
+Valid RED:
 
-### TDD and review trail
+- commit `177cb0adcf685101b6cbc77478bacb3f569d539f`
+- workflow `34252407406`
+- materialized wake-handoff suite ran 2 tests; the existing silent-seam test passed and exactly the new `test_default_boop_does_not_require_trailing_silence_before_trigger` test failed because `setNumTrailingBlanks(0)` was absent.
 
-RED:
+GREEN functional change:
 
-- commit `032ba991f4f70880bd2c108473c34b7701db7917`
-- workflow `34248072092`
-- focused unified suite: 92 tests, exactly 1 failure, the new no-trailing-silence custom-wake regression.
+- commit `2f4b225998a40835d3db81595573b8af28009c06`
+- workflow `34252652849`
+- materialized natural-BOOP contract, focused tests, signed build/package/signer/archive checks and artifact upload passed.
 
-Initial GREEN:
+Final v58 build code:
 
-- commit `964142749a2560b90a8be608b5c5deaa0f893066`
-- workflow `34248439829` SUCCESS
-- not shipped because review found its sliding-window feature extraction too eager for an always-listening device.
-
-Reviewed/performance-gated final code:
-
-- built code `6c8131200ee0ff8a91464569a982312cb5512cb2`
-- version 57 / `1.2.11-unified-streaming-custom-wake`
-- workflow `34249050741`, attempt 2 SUCCESS
-- artifact `BOOP-Unified`, ID `10065473551`
-- artifact digest `sha256:496786d407a39d8034ec4dfd335e903c4ae8e3531a1128bf1f3e4a82440d1912`
-- APK SHA-256 `3ce0593f61fbf6b35e6fbb664bc5bc7984b053844c7f6be83afe2955ab713459`
+- built commit `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
+- version 58 / `1.2.12-unified-natural-boop-wake`
+- workflow `34252950640` SUCCESS
+- artifact `BOOP-Unified`, ID `10066828560`
+- artifact digest `sha256:feb800dd99d6da15876892fbae4027def903bd43f3887b4b771c0e384a2ab372`
+- APK SHA-256 `5a5b4846a55bc58d3444a8c8f178441af576e86695025c17c8d4483ad9fd01aa`
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 - Shield focused tests 58/58, zero failures/errors/skips
 - unified focused tests 92/92, zero failures/errors/skips
-- seamless wake-command handoff contract PASS
-- Launcher lint, signed assembly, package/version, manifest, permanent signer and APK archive integrity PASS
-- artifact upload PASS on attempt 2.
+- materialized wake-handoff tests 2/2 PASS
+- Launcher lint, signed assembly, package/version, manifest, signer, APK ZIP integrity and artifact upload PASS
 
-Attempt 1 built and verified the same APK/hash but artifact finalization returned a transient GitHub 403 after all bytes uploaded. No code changed between attempts.
+Detailed receipt: `docs/BOOP-V58-NATURAL-BOOP-WAKE-RECEIPT.md`.
 
-Detailed receipt: `docs/BOOP-V57-STREAMING-CUSTOM-WAKE-RECEIPT.md`.
+CI/signer green only. Physical v58 acceptance is pending.
 
 ## Required next Pixel test
 
-Install v57 over v56 without uninstalling. Keep the Pixel on external power. Use natural speech with **no deliberate pause**:
+Install v58 over v57 without uninstalling. Keep the Pixel on external power and speak naturally, with no deliberate pause:
 
-1. `Steve lights on`
-2. `Steve show diagnostics`
-3. `BOOP lights off`
+1. `BOOP lights on`
+2. `BOOP lights off`
+3. `Jeff lights on` to confirm the learned-name path remains intact
+4. optionally `BOOP show diagnostics`
 
-The first two specifically test v57's learned custom-name streaming change. The third deliberately tests the default Sherpa BOOP path separately. If Steve works but BOOP still requires a pause, treat that as a separate remaining default-wake seam and do not bundle it into the custom-name fix.
+Also leave BOOP listening around ordinary nearby speech briefly to catch any obvious false-positive regression. Sensitivity and keyword thresholds were not changed.
 
-Also wake once and give no command, then confirm it silently re-arms and accepts another wake afterward.
-
-Physical v57 acceptance is pending Ryan's device test. CI/signer green is not physical green.
+If default BOOP still needs a pause, capture diagnostics before changing sensitivity or the 100 ms bridge. If BOOP works but false positives become obvious, investigate Sherpa confirmation semantics rather than altering the custom-name matcher.
 
 ## Durable wake/name contracts
 
-- `BOOP` permanently remains an accepted wake name; custom names are additive, never replacements.
-- custom-name training is five local examples on the existing single 16 kHz PCM stream; raw enrolment PCM is not persisted.
-- no second microphone listener.
-- v54 rule remains: never feed the old full one-second wake-history ring into Android command ASR.
-- v56's permitted command bridge remains exactly the final 1,600 samples / 100 ms detector block unless new physical evidence justifies a different design.
-- wake-to-command handoff remains acoustically silent; do not restore the artificial wake speaker cue.
+- `BOOP` permanently remains an accepted fallback wake name; custom names are additive, never replacements.
+- five custom-name samples are local and use the existing single controller-owned 16 kHz PCM stream; raw enrolment PCM is not persisted.
+- learned custom names must be matchable while speech is active, without requiring trailing silence.
+- default BOOP is intended to finalize without requiring a trailing blank so one-breath `BOOP + command` is possible.
+- never add a competing microphone listener.
+- never restore the old full one-second wake-history pre-roll.
+- keep the exact final 1,600 detector samples / 100 ms command bridge unless new physical evidence justifies redesign.
+- wake-to-command handoff remains acoustically silent.
 - any external power permits continuous phone wake; unpowered phone remains tap-to-talk.
-- after TTS, wake re-arms only after BOOP finishes speaking.
-- post-wake no-match/timeout failures are silent and genuinely re-arm; hard wake-engine startup failures remain fail-safe latched.
+- after TTS, re-arm only after BOOP finishes speaking.
+- no-match/timeout failures are silent and genuinely re-arm; hard wake-engine startup failures remain fail-safe latched.
 - `show diagnostics` remains pull-only; normal failures do not pop a modal or speak an error.
 
 ## Physically proven rollback checkpoint
 
-The exact built v48 wake-arm code remains permanently pinned at branch `checkpoint-boop-unified-v48-wake-arm`, commit `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. On Ryan's Pixel: charger -> Android green mic ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP. Do not repoint it.
+The exact built v48 wake-arm code remains permanently pinned at `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. On Ryan's Pixel: charger -> Android green mic ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP. Do not repoint it.
+
+v57 has physical acceptance for the learned custom-name path and five-sample voice rename flow, but v58 default-BOOP no-pause behavior is not physically accepted until Ryan tests the signed APK.
 
 ## Architecture boundary and protected state
 
