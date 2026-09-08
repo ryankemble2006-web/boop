@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
-OLD = '''    private void emit() {
-        listener.onViewState(new ViewState(
-                status,
-                favourite,
-                cards,
-                status == Status.LIVE && !cards.isEmpty() && !toggleInFlight,
-                message,
-                this::toggleCard));
-    }
+OLD = '''    private void emit() { listener.onViewState(new ViewState(status, cards, status == Status.LIVE && !cards.isEmpty() && !toggleInFlight, message, this::toggleCard)); }
 '''
 NEW = '''    private void emit() {
         ViewState state = new ViewState(
                 status,
-                favourite,
                 cards,
                 status == Status.LIVE && !cards.isEmpty() && !toggleInFlight,
                 message,
@@ -38,7 +29,7 @@ for controller in paths:
         continue
     count = text.count(OLD)
     if count != 1:
-        raise SystemExit(f'{controller}: expected one dashboard emit method, found {count}')
+        raise SystemExit(f'{controller}: expected one current dashboard emit method, found {count}')
     controller.write_text(text.replace(OLD, NEW, 1), encoding='utf-8')
     patched += 1
 if patched == 0:
