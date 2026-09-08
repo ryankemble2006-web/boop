@@ -45,3 +45,11 @@ This later save publishes one small corrected open-hand WebP preview in `animati
 Starting live heads checked for this save: animation `193b7b7c798cdf5dfec44cc32a152e1461b52f1c`, unified `0eedc515edda55ec9a8c6c5584f27b985e0b66e2`, main `4a7036a6a4066d19a3a7c5c5af3862c242c8a426`. The laptop checkout/receipt is not mounted here; no laptop synchronization is claimed. Main's existing shared five-digit hand contract is unchanged.
 
 Verification is limited to available image bytes/dimensions/hashes, preview blob identity and reviewed documentation. No app code, live resources, build/workflow, version, signer, permission, deployment or accepted checkpoint changed. No 2.5D animation, GPU benchmark, target frame rate or physical Shield acceptance is claimed. Next safe step is exact-PNG transfer/checksum verification; a separate request is needed for rigging/runtime integration, with actual-device profiling and media/lifecycle/reduced-motion safeguards.
+
+## Portable notification / lock-screen reference saved, 2026-09-08
+
+Ryan approved the visual direction of BOOP on a phone lock-screen-style surface using only the permanent paired eyes and the floating yellow hands, with BOOP holding an anonymous app-notification icon/card. No sender, message text, preview, photo or account detail belongs on the locked display.
+
+The future animation direction is layer-based puppetry of approved assets: idle float, eye darts/blink, small hand grip adjustment, icon pop/bounce, gaze toward the held icon and calmer motion when settled. Do not regenerate BOOP per pose and do not add a body.
+
+Reference folder: `animation-lab/lockscreen-notifications/`. The exact latest AIO eye master is copied there by Git blob identity from `boop-unified` as `boopApprovedEyes.png`. The current chat-supplied hands PNG and the approved generated lock-screen concept image are recorded there with exact dimensions/hashes but remain pending binary transfer because the connected GitHub actions in ChatGPT expose no local-file binary upload parameter. Do not substitute regenerated binaries. No app code, notification permission, lock-screen integration, package, signer, build or deployment changed.
