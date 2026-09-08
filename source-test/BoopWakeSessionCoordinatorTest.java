@@ -112,6 +112,20 @@ public final class BoopWakeSessionCoordinatorTest {
         assertEquals(before + 1, engine.suspendCalls);
     }
 
+    @Test public void commandFailureRecoveryClearsPhantomArmAndReallyRearms() {
+        FakeEngine engine = new FakeEngine();
+        BoopWakeSessionCoordinator coordinator = ready(engine);
+        assertEquals(1, engine.armCalls);
+        assertTrue(coordinator.onWakeDetected(1_000L));
+
+        coordinator.recoverWakeSession();
+
+        assertEquals(1, engine.suspendCalls);
+        assertEquals(2, engine.armCalls);
+        assertEquals(BoopWakeSessionState.State.ARMED, coordinator.state());
+        assertFalse(coordinator.wakeFailed());
+    }
+
     @Test public void reloadWhileArmedRearmsInsteadOfLeavingPhantomArmedState() {
         FakeEngine engine = new FakeEngine();
         BoopWakeSessionCoordinator coordinator = ready(engine);
