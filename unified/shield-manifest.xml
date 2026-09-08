@@ -20,6 +20,12 @@
             android:screenOrientation="landscape"
             android:theme="@style/Theme.BoopHome" />
         <activity
+            android:name="com.boop.shieldhome.ShieldLauncherActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.BoopHome" />
+        <activity
             android:name="com.boop.shieldoverlay.MainActivity"
             android:exported="false" />
         <service
