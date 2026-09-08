@@ -4,6 +4,7 @@ final class BoopWakeSessionCoordinator {
     interface Engine {
         boolean arm();
         void suspendAll();
+        void reload();
         void shutdown();
     }
 
@@ -113,6 +114,13 @@ final class BoopWakeSessionCoordinator {
     void failWakeSession() {
         if (shutdown) return;
         state.failWakeSession();
+        syncEngine();
+    }
+
+    void reloadEngine() {
+        if (shutdown) return;
+        engineArmed = false;
+        engine.reload();
         syncEngine();
     }
 
