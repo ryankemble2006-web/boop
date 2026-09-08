@@ -111,6 +111,16 @@ final class BoopWakeSessionCoordinator {
         syncEngine();
     }
 
+    void recoverWakeSession() {
+        if (shutdown) return;
+        if (engineArmed) {
+            engine.suspendAll();
+        }
+        engineArmed = false;
+        state.recoverWakeSession();
+        syncEngine();
+    }
+
     void failWakeSession() {
         if (shutdown) return;
         state.failWakeSession();
