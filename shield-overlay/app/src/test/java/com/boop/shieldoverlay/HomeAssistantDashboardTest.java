@@ -47,22 +47,34 @@ public final class HomeAssistantDashboardTest {
                 null);
 
         assertEquals(2, port.commands.size());
-        assertEquals("config/entity_registry/list_for_display", port.commands.get(1).type);
+        assertEquals("config/device_registry/list", port.commands.get(1).type);
+        port.commands.get(1).callback.onResult(
+                true,
+                new JSONArray()
+                        .put(device("device_sofa", "living_room", "Sofa lamp"))
+                        .put(device("device_tv", "living_room", "TV plug"))
+                        .put(device("device_hidden", "living_room", "Hidden light"))
+                        .put(device("device_config", "living_room", "Config switch"))
+                        .put(device("device_diagnostic", "living_room", "Diagnostic fan")),
+                null);
+
+        assertEquals(3, port.commands.size());
+        assertEquals("config/entity_registry/list_for_display", port.commands.get(2).type);
 
         JSONObject registry = new JSONObject()
                 .put("entity_categories", new JSONArray().put("config").put("diagnostic"))
                 .put("entities", new JSONArray()
-                        .put(registry("light.sofa", "living_room", "Sofa lamp", false, null))
-                        .put(registry("switch.tv_plug", null, "TV plug", false, null))
-                        .put(registry("sensor.temperature", "living_room", "Temperature", false, null))
-                        .put(registry("light.hidden", "living_room", "Hidden light", true, null))
-                        .put(registry("switch.config", "living_room", "Config switch", false, 0))
-                        .put(registry("fan.diagnostic", "living_room", "Diagnostic fan", false, 1))
-                        .put(registry("light.bedroom", "bedroom", "Bedroom lamp", false, null)));
-        port.commands.get(1).callback.onResult(true, registry, null);
+                        .put(registry("light.sofa", "living_room", "Sofa lamp", false, null, "device_sofa"))
+                        .put(registry("switch.tv_plug", null, "TV plug", false, null, "device_tv"))
+                        .put(registry("sensor.temperature", "living_room", "Temperature", false, null, null))
+                        .put(registry("light.hidden", "living_room", "Hidden light", true, null, "device_hidden"))
+                        .put(registry("switch.config", "living_room", "Config switch", false, 0, "device_config"))
+                        .put(registry("fan.diagnostic", "living_room", "Diagnostic fan", false, 1, "device_diagnostic"))
+                        .put(registry("light.bedroom", "bedroom", "Bedroom lamp", false, null, "device_bedroom")));
+        port.commands.get(2).callback.onResult(true, registry, null);
 
-        assertEquals(3, port.commands.size());
-        assertEquals("get_states", port.commands.get(2).type);
+        assertEquals(4, port.commands.size());
+        assertEquals("get_states", port.commands.get(3).type);
 
         JSONArray states = new JSONArray()
                 .put(state("light.sofa", "off", "Sofa lamp"))
@@ -72,7 +84,7 @@ public final class HomeAssistantDashboardTest {
                 .put(state("switch.config", "off", "Config switch"))
                 .put(state("fan.diagnostic", "off", "Diagnostic fan"))
                 .put(state("light.bedroom", "off", "Bedroom lamp"));
-        port.commands.get(2).callback.onResult(true, states, null);
+        port.commands.get(3).callback.onResult(true, states, null);
 
         assertNull(error.get());
         assertNotNull(snapshot.get());
@@ -81,6 +93,7 @@ public final class HomeAssistantDashboardTest {
         assertEquals("light.sofa", snapshot.get().cards().get(0).entityId());
         assertEquals("switch.tv_plug", snapshot.get().cards().get(1).entityId());
         assertEquals("living_room", snapshot.get().cards().get(1).areaId());
+        assertEquals("device_tv", snapshot.get().cards().get(1).deviceId());
     }
 
     @Test
@@ -104,12 +117,19 @@ public final class HomeAssistantDashboardTest {
         assertEquals(1, port.commands.size());
     }
 
+    private static JSONObject device(String id, String areaId, String name) throws Exception {
+        JSONObject object = new JSONObject().put("id", id).put("name", name);
+        if (areaId != null) object.put("area_id", areaId);
+        return object;
+    }
+
     private static JSONObject registry(
             String entityId,
             String areaId,
             String name,
             boolean hidden,
-            Integer categoryIndex) throws Exception {
+            Integer categoryIndex,
+            String deviceId) throws Exception {
         JSONObject object = new JSONObject()
                 .put("ei", entityId)
                 .put("en", name)
@@ -119,6 +139,9 @@ public final class HomeAssistantDashboardTest {
         }
         if (categoryIndex != null) {
             object.put("ec", categoryIndex);
+        }
+        if (deviceId != null) {
+            object.put("di", deviceId);
         }
         return object;
     }
