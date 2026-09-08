@@ -145,6 +145,16 @@ class StartupManagerActivity : Activity() {
         cleanStore.lastSummary()?.let { summary ->
             list.addView(text(lastSummaryLine(summary), 14f, Color.LTGRAY))
         }
+        cleanStore.lastIndicatorDiagnostic()?.let { diagnostic ->
+            val detail = diagnostic.detail.takeIf { it.isNotBlank() }?.let { " • $it" }.orEmpty()
+            list.addView(
+                text(
+                    "STARTUP NOTICE DIAGNOSTIC: permission=${if (diagnostic.overlayAllowed) "YES" else "NO"} • window=${diagnostic.windowMode.name} • add=${diagnostic.addStatus.name} • present=${diagnostic.presentationStatus.name} • ${diagnostic.elapsedMs}ms$detail",
+                    14f,
+                    Color.LTGRAY
+                )
+            )
+        }
 
         val oldRecords = ledger.records()
         if (oldRecords.isNotEmpty()) {
