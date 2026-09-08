@@ -19,6 +19,10 @@ public final class FavouriteGrabSession {
         return new FavouriteGrabSession(values, component);
     }
 
+    public String grabbedComponent() {
+        return component;
+    }
+
     public int index() {
         return current.indexOf(component);
     }
