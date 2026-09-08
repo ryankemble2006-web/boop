@@ -156,7 +156,7 @@ public final class TvAppCardView extends FrameLayout {
     }
 
     private void configureCardPadding(boolean homeFavourite) {
-        int horizontal = homeFavourite ? dp(8) : dp(14);
+        int horizontal = homeFavourite ? dp(2) : dp(14);
         setPadding(horizontal, dp(14), horizontal, dp(12));
     }
 
