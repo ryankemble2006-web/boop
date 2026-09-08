@@ -24,8 +24,14 @@ class ContractTest(unittest.TestCase):
 
     def test_turbo_results_do_not_trap_dpad_focus(self):
         text = (SOURCE / 'MainActivity.kt').read_text()
-        self.assertIn('freeSpaceButton.id', text)
-        self.assertNotIn('if (index == cards.lastIndex) card.id else cards[index + 1].id', text)
+        self.assertIn(
+            'card.nextFocusDownId = if (index == cards.lastIndex) freeSpaceButton.id else cards[index + 1].id',
+            text,
+        )
+        self.assertNotIn(
+            'card.nextFocusDownId = if (index == cards.lastIndex) card.id else cards[index + 1].id',
+            text,
+        )
 
     def test_app_click_launches_directly_without_package_dialog(self):
         text = (SOURCE / 'MainActivity.kt').read_text()
