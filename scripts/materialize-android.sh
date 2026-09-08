@@ -3,12 +3,21 @@ set -euo pipefail
 rm -rf boop-build
 unzip -q BOOP-Alpha1-project.zip -d boop-build
 ROOT=boop-build/BOOP-Alpha1
+
+# Ryan's permanent approved face. Copy the exact repository bytes directly into
+# the Android resource tree. No transparency reconstruction or image conversion.
+APPROVED_EYES="unified/assets/boop-eyes/boopApprovedEyes.png"
+test -s "$APPROVED_EYES"
+mkdir -p "$ROOT/app/src/main/res/drawable-nodpi"
+cp "$APPROVED_EYES" "$ROOT/app/src/main/res/drawable-nodpi/boop_eyes.png"
+
 cp gradle.properties "$ROOT/gradle.properties"
 MAIN="$ROOT/app/src/main/java/com/boop/alpha1"
 TEST="$ROOT/app/src/test/java/com/boop/alpha1"
 mkdir -p "$MAIN" "$TEST"
 cp source/*.java "$MAIN"/
 cp source/companion/*.java "$MAIN"/
+python3 scripts/patch-approved-eye-geometry.py
 python3 scripts/patch-wake-partial-fallback.py
 python3 scripts/patch-toast-easter-egg.py
 python3 scripts/patch-wall-chat-mode.py
@@ -16,6 +25,7 @@ python3 scripts/patch-wall-openai-relay.py
 python3 scripts/patch-wall-idle-blink.py
 python3 scripts/patch-wall-sleep-charm.py
 python3 scripts/patch-wall-eye-hue.py
+python3 scripts/patch-unified-iris-cache.py
 python3 - <<'PY'
 from pathlib import Path
 

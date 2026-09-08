@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Reuse the canonical Wall eye bitmap, geometry and blink in the TV overlay.
+"""Reuse the permanent approved BOOP eye master, geometry and blink on Shield.
 
 Only generated unified sources are patched. No image generation or visual tests.
-The phone PNG is drawn directly from its original source rectangles so Shield does
-not run the old flood-fill eye isolation that could eat dark eyelid pixels.
+The supplied PNG alpha is drawn directly; the old flood-fill isolation path is not
+used for the approved master.
 """
 from pathlib import Path
 
 ROOT = Path('boop-build/BOOP-Alpha1')
+APP_SHARED = ROOT / 'app/src/main/java/com/boop/alpha1'
 SHIELD = ROOT / 'shield-lib/src/main/java/com/boop/shieldoverlay'
 MARKER = '// BOOP_SHARED_SHIELD_EYES_V2'
 
@@ -92,7 +93,7 @@ BLINK_METHODS = '''    private boolean eyeBlinkAllowed() {
     }
 
     private void drawLockedEyes(Canvas canvas) {
-        // Use exactly the phone landscape layout, uniformly framed inside the TV slot.
+        // Use the same approved geometry as Wall, uniformly framed inside the TV slot.
         BoopEyeLayout.Layout layout = BoopEyeLayout.calculate(
                 Math.max(getWidth(), getHeight() + 1), getHeight());
         if (!layout.landscape() || faceBitmap == null) return;
@@ -130,14 +131,21 @@ BLINK_METHODS = '''    private boolean eyeBlinkAllowed() {
 def patch_overlay(text):
     if '// BOOP_SHARED_SHIELD_EYES_V1' in text or MARKER in text:
         raise ValueError('Shield presentation already patched; materialize a fresh tree')
+    text = once(
+        text,
+        '    private static final Rect LEFT_SOURCE = new Rect(90, 600, 419, 993);\n'
+        '    private static final Rect RIGHT_SOURCE = new Rect(525, 600, 854, 993);\n',
+        '    private static final Rect LEFT_SOURCE = new Rect(BoopApprovedEyeGeometry.LEFT_SOURCE);\n'
+        '    private static final Rect RIGHT_SOURCE = new Rect(BoopApprovedEyeGeometry.RIGHT_SOURCE);\n',
+        'approved master source rectangles')
     text = once(text, '    private final Bitmap leftEye;\n    private final Bitmap rightEye;\n',
-                '    private final Bitmap faceBitmap;\n', 'canonical eye bitmap field')
+                '    private final Bitmap faceBitmap;\n', 'approved eye bitmap field')
     text = once(text,
                 '        Bitmap source = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);\n'
                 '        leftEye = isolateEye(source, LEFT_SOURCE);\n'
                 '        rightEye = isolateEye(source, RIGHT_SOURCE);\n',
                 '        faceBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);\n',
-                'canonical eye bitmap load')
+                'approved eye bitmap load')
     text = once(text, '    private final HeadphoneRenderer headphoneRenderer;\n',
                 BLINK_FIELDS + '    private final HeadphoneRenderer headphoneRenderer;\n', 'blink fields')
     start = text.index('        float scale = Math.min(getWidth() / (float) PAIR_WIDTH,')
@@ -157,10 +165,10 @@ def patch_overlay(text):
 
 def main():
     updates = {}
-    # Same canonical helpers as Wall; only the namespace is adapted to avoid
-    # a circular dependency between the Android app and its Shield library.
-    for name in ('BoopEyeLayout.java', 'BoopIdleBlink.java'):
-        shared = (Path('source') / name).read_text(encoding='utf-8')
+    # Copy the already materialized Wall helpers so Shield receives the exact
+    # same approved geometry and blink without a circular module dependency.
+    for name in ('BoopApprovedEyeGeometry.java', 'BoopEyeLayout.java', 'BoopIdleBlink.java'):
+        shared = (APP_SHARED / name).read_text(encoding='utf-8')
         updates[SHIELD / name] = once(shared, 'package com.boop.alpha1;',
                                      'package com.boop.shieldoverlay;', 'shared helper namespace')
     path = SHIELD / 'BoopOverlayView.java'
@@ -168,7 +176,7 @@ def main():
     # Validate every anchor before touching the generated tree.
     for path, content in updates.items():
         path.write_text(content, encoding='utf-8')
-    print('Canonical phone bitmap/geometry/blink materialized on Shield; no visual checks run')
+    print('Approved BOOP bitmap/geometry/blink materialized on Shield; no visual checks run')
 
 
 if __name__ == '__main__':

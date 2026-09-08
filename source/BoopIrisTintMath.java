@@ -1,23 +1,23 @@
 package com.boop.alpha1;
 
-/** Colour arithmetic for the approved eye atlas. This never changes the atlas itself. */
+/** Colour arithmetic for the approved permanent eye master. The PNG itself is never changed. */
 final class BoopIrisTintMath {
     private BoopIrisTintMath() { }
 
     static boolean inIris(int x, int y, int width, int height) {
         if (width <= 0 || height <= 0) return false;
-        double ax = (x + 0.5) * 941.0 / width;
-        double ay = (y + 0.5) * 1672.0 / height;
-        return inRing(ax, ay, 291.0) || inRing(ax, ay, 657.0);
+        double ax = (x + 0.5) * 1774.0 / width;
+        double ay = (y + 0.5) * 887.0 / height;
+        return inRing(ax, ay, 522.0) || inRing(ax, ay, 1204.0);
     }
 
     private static boolean inRing(double x, double y, double centreX) {
         double dx = x - centreX;
-        double outerY = y - 843.0;
-        double innerY = y - 842.0;
-        // Keep the sclera and pupil outside the tint, even when they contain blue reflections.
-        return dx * dx / (89.0 * 89.0) + outerY * outerY / (101.0 * 101.0) < 1.0
-                && dx * dx / (71.0 * 71.0) + innerY * innerY / (80.0 * 80.0) > 1.0;
+        double dy = y - 529.0;
+        // Restrict colour changes to the blue/cyan iris annulus. The pupil,
+        // highlights, white sclera, eyelids and supplied alpha stay untouched.
+        return dx * dx / (205.0 * 205.0) + dy * dy / (205.0 * 205.0) < 1.0
+                && dx * dx / (148.0 * 148.0) + dy * dy / (153.0 * 153.0) > 1.0;
     }
 
     static int tint(int argb, int requestedHue) {

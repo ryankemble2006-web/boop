@@ -3,7 +3,7 @@ package com.boop.alpha1;
 import android.graphics.Bitmap;
 import java.util.Arrays;
 
-/** Reuses one bitmap and one small pixel tile while the hue slider moves. */
+/** Reuses one bitmap and one bounded pixel tile while the hue slider moves. */
 final class BoopIrisTint {
     private final Bitmap original;
     private final int left, top, width, height;
@@ -15,10 +15,10 @@ final class BoopIrisTint {
 
     BoopIrisTint(Bitmap original) {
         this.original = original;
-        left = original == null ? 0 : (int) Math.floor(original.getWidth() * 200.0 / 941.0);
-        top = original == null ? 0 : (int) Math.floor(original.getHeight() * 741.0 / 1672.0);
-        int right = original == null ? 0 : (int) Math.ceil(original.getWidth() * 748.0 / 941.0);
-        int bottom = original == null ? 0 : (int) Math.ceil(original.getHeight() * 945.0 / 1672.0);
+        left = original == null ? 0 : (int) Math.floor(original.getWidth() * 300.0 / 1774.0);
+        top = original == null ? 0 : (int) Math.floor(original.getHeight() * 315.0 / 887.0);
+        int right = original == null ? 0 : (int) Math.ceil(original.getWidth() * 1425.0 / 1774.0);
+        int bottom = original == null ? 0 : (int) Math.ceil(original.getHeight() * 755.0 / 887.0);
         width = right - left;
         height = bottom - top;
     }
