@@ -68,9 +68,6 @@ jobs:
           gradle-version: '9.6.0'
           cache-read-only: false
 
-      - name: Test clean Shield HOME
-        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
-
       - name: Check preserved Launcher source
         run: gradle --no-daemon -p launcher lintDebug --stacktrace
 
@@ -137,7 +134,7 @@ jobs:
           grep -q "versionName='1.2.2-unified-wake-arm'" badging.txt
           grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
-          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldhome.ShieldLauncherActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
+          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
             grep -q "$cls" manifest-tree.txt
           done
           grep -q "android.intent.category.HOME" manifest-tree.txt
@@ -160,7 +157,6 @@ jobs:
                    'Physical Shield / Pixel acceptance: pending.',
                    'Shield remote mic activation and remote-microphone audio: MANUAL, pending.']
           for label, root in [('Shield', Path('shield-overlay/app/build/test-results')),
-                              ('Shield Home', Path('boop-build/BOOP-Alpha1/shield-lib/build/test-results')),
                               ('Unified', Path('boop-build/BOOP-Alpha1/app/build/test-results'))]:
               totals = dict(tests=0, failures=0, errors=0, skipped=0)
               for path in root.rglob('TEST-*.xml'):
