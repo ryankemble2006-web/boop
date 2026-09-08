@@ -1,0 +1,57 @@
+name: Test Shield HOME models
+
+on:
+  push:
+    branches: [ "boop-unified" ]
+    paths:
+      - 'unified/shield-home/**'
+      - '.github/workflows/test-shield-home-models.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boop-shield-home-models-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Materialize unified app
+        run: bash scripts/materialize-unified.sh
+
+      - name: Install Shield HOME source and tests into generated library
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p boop-build/BOOP-Alpha1/shield-lib/src/test/java
+          cp -R unified/shield-home/src/test/java/. boop-build/BOOP-Alpha1/shield-lib/src/test/java/
+          if [ -d unified/shield-home/src/main/java ]; then
+            cp -R unified/shield-home/src/main/java/. boop-build/BOOP-Alpha1/shield-lib/src/main/java/
+          fi
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: false
+
+      - name: Run Shield HOME model contracts
+        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
