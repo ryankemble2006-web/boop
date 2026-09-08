@@ -19,6 +19,7 @@ import android.widget.TextView
 import com.boop.shieldturbo.R
 import com.boop.shieldturbo.apps.AppCatalog
 import com.boop.shieldturbo.apps.AppRoutes
+import com.boop.shieldturbo.startup.StartupManagerActivity
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.concurrent.Executors
@@ -100,6 +101,7 @@ class PowerActivity : Activity() {
         }
         if (page.isNotEmpty()) { settingsPage(); return }
         action("ENABLE ADB TURBO") { enable() }
+        action("STARTUP MANAGER") { startActivity(Intent(this, StartupManagerActivity::class.java)) }
         action("READ SHIELD DIAGNOSTICS") {
             runTask("Reading CPU, memory, thermal and storage facts", true) {
                 bridge.withAdb(::approval) { adb -> bridge.checked(adb,
@@ -241,7 +243,6 @@ class PowerActivity : Activity() {
         val component = route.component.flattenToString()
         prefs.edit().putString("pending_component", component).putString("pending_page", page).commit()
         try {
-            // Use the firmware's own intent action where it declares one. No ACTION_MAIN guess.
             startActivity(Intent(route.action).setComponent(route.component))
         } catch (failure: Exception) {
             prefs.edit().remove("pending_component").remove("pending_page").apply()
