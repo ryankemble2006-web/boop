@@ -77,16 +77,19 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.shieldhome'" badging.txt
-          grep -q "versionCode='14'" badging.txt
-          grep -q "versionName='0.9.5-home-focus-pop'" badging.txt
+          grep -q "versionCode='15'" badging.txt
+          grep -q "versionName='0.10.0-now-playing'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
           grep -q "com.boop.shieldhome.ShieldLauncherActivity" manifest-tree.txt
           grep -q "com.boop.shieldhome.ShieldHomeOverrideService" manifest-tree.txt
           grep -q "com.boop.shieldhome.ShieldAccessibilityRouteActivity" manifest-tree.txt
+          grep -q "com.boop.shieldhome.ShieldNowPlayingListenerService" manifest-tree.txt
           grep -q "android.intent.category.HOME" manifest-tree.txt
           grep -q "android.intent.category.LEANBACK_LAUNCHER" manifest-tree.txt
           grep -q "android.accessibilityservice.AccessibilityService" manifest-tree.txt
           grep -q "android.settings.ACCESSIBILITY_SETTINGS" manifest-tree.txt
+          "$TOOLS/aapt" dump resources "$APK" > resources.txt
+          grep -q "boop_headphones" resources.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
@@ -105,6 +108,7 @@ jobs:
             apk-sha256.txt
             built-commit.txt
             badging.txt
+            signer.txt
           if-no-files-found: error
 
       - name: Remove temporary signer
