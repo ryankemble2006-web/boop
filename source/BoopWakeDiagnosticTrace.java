@@ -52,6 +52,10 @@ final class BoopWakeDiagnosticTrace {
         return resultReceived || errorReceived;
     }
 
+    boolean requiresAcknowledgement() {
+        return terminal();
+    }
+
     String summary(long nowMs) {
         long elapsedMs = Math.max(0L, (terminal() ? terminalAtMs : nowMs) - startedAtMs);
         String state;
