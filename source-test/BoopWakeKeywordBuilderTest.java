@@ -6,12 +6,18 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public final class BoopWakeKeywordBuilderTest {
-    @Test public void customNameGetsNaturalWakePhrases() {
+    @Test public void customNameGetsAllThirtyThreeNaturalWakePhrases() {
         List<String> p = BoopWakeKeywordBuilder.naturalPhrases("Steve");
-        for (String phrase : new String[]{"STEVE", "HEY STEVE", "HI STEVE", "HELLO STEVE",
-                "GOOD MORNING STEVE", "WAKE UP STEVE", "STEVE WAKE UP", "COME ON STEVE",
-                "YOU THERE STEVE", "ARE YOU THERE STEVE", "STEVE YOU THERE", "LISTEN STEVE",
-                "EXCUSE ME STEVE"}) assertTrue(phrase, p.contains(phrase));
+        assertEquals(33, p.size());
+        for (String phrase : new String[]{"STEVE", "HEY STEVE", "EY STEVE", "HI STEVE", "HELLO STEVE",
+                "YO STEVE", "OI STEVE", "OK STEVE", "OKAY STEVE", "HEY THERE STEVE",
+                "HELLO THERE STEVE", "HI THERE STEVE", "YO THERE STEVE", "GOOD MORNING STEVE",
+                "WAKE UP STEVE", "STEVE WAKE UP", "COME ON STEVE", "YOU THERE STEVE",
+                "ARE YOU THERE STEVE", "STEVE YOU THERE", "STEVE ARE YOU THERE",
+                "HEY STEVE WAKE UP", "OK STEVE WAKE UP", "OKAY STEVE WAKE UP",
+                "MORNING STEVE", "EVENING STEVE", "GOOD EVENING STEVE", "STEVE HELLO",
+                "STEVE HI", "LISTEN STEVE", "STEVE LISTEN", "EXCUSE ME STEVE",
+                "HEY STEVE YOU THERE"}) assertTrue(phrase, p.contains(phrase));
     }
 
     @Test public void customNameKeepsBoopFallbackKeywords() {
