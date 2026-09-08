@@ -91,7 +91,8 @@ Returning to NORMAL, whether manual or thermal:
 2. Restore every changed control to its exact saved value.
 3. Verify every restoration.
 4. Persist NORMAL only after restoration succeeds or record an explicit recovery-needed state if verification is incomplete.
-5. Stop the thermal watchdog once NORMAL is verified.
+5. Keep the saved NORMAL baseline intact until every required restoration has been verified. A failed restore must not discard the only known-good original values.
+6. Stop the thermal watchdog once NORMAL is verified.
 
 The controller never substitutes guessed "default" values for a saved original value.
 
@@ -128,6 +129,8 @@ On boot:
 
 - if stored state is not `TURBO_VERIFIED`, do not apply performance changes;
 - if TURBO was verified before reboot, start the thermal watchdog and re-probe capabilities;
+- obtain and verify the **current thermal status before any performance write**;
+- if current status is SEVERE or higher, do not reapply TURBO; restore/verify NORMAL from the saved baseline where needed, persist NORMAL, record thermal fallback, and notify the user;
 - verify that the saved control identifiers are still supported on the current firmware;
 - reapply only the previously approved stock controls;
 - never overwrite the stored NORMAL baseline;
@@ -234,7 +237,7 @@ Examples:
 
 Any failed enable operation rolls back already-applied changes before returning control to the user.
 
-A failed restore never claims NORMAL is verified. It records `RECOVERY_REQUIRED`, keeps the user informed, and must not automatically reapply TURBO on reboot.
+A failed restore never claims NORMAL is verified. It records `RECOVERY_REQUIRED`, preserves the saved NORMAL baseline, keeps the user informed, and must not automatically reapply TURBO on reboot.
 
 ## Interaction with existing SHIELD TURBO features
 
@@ -264,6 +267,8 @@ Cover:
 - partial apply failure restores earlier changes;
 - read-back mismatch is treated as failure;
 - NORMAL restores exact saved values;
+- failed restore preserves the saved NORMAL baseline;
+- boot checks current thermal state before any reapply write;
 - SEVERE or higher triggers one-way fallback to NORMAL;
 - lower thermal states do not trigger fallback;
 - thermal fallback persists NORMAL and prevents reboot re-enable;
@@ -321,8 +326,9 @@ The feature is complete only when:
 - the exact pre-Turbo NORMAL state is restored on manual disable;
 - TURBO persists across reboot without overwriting the original baseline;
 - watchdog runs only while TURBO is active;
+- boot reapply checks thermal status before any performance write;
 - SEVERE or higher thermal status restores NORMAL and prevents automatic re-enable;
-- failed/ambiguous state prefers NORMAL or explicit recovery;
+- failed/ambiguous state prefers NORMAL or explicit recovery while preserving known-good baseline data;
 - no root, kernel, bootloader, voltage, over-limit clock, or thermal-bypass path exists;
 - existing CLEAN START and brightness behavior remain intact;
 - permanent BOOP signing identity remains unchanged;
