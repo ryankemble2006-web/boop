@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Reuse the canonical Wall eye geometry/blink in the non-interactive TV overlay.
+"""Reuse the canonical Wall eye bitmap, geometry and blink in the TV overlay.
 
 Only generated unified sources are patched. No image generation or visual tests.
-The original PNG and music/headphones renderer remain unchanged.
+The phone PNG is drawn directly from its original source rectangles so Shield does
+not run the old flood-fill eye isolation that could eat dark eyelid pixels.
 """
 from pathlib import Path
 
 ROOT = Path('boop-build/BOOP-Alpha1')
 SHIELD = ROOT / 'shield-lib/src/main/java/com/boop/shieldoverlay'
-MARKER = '// BOOP_SHARED_SHIELD_EYES_V1'
+MARKER = '// BOOP_SHARED_SHIELD_EYES_V2'
 
 
 def once(text, old, new, label):
@@ -17,7 +18,7 @@ def once(text, old, new, label):
     return text.replace(old, new, 1)
 
 
-BLINK_FIELDS = '''    // BOOP_SHARED_SHIELD_EYES_V1
+BLINK_FIELDS = '''    // BOOP_SHARED_SHIELD_EYES_V2
     private final java.util.Random eyeBlinkRandom = new java.util.Random();
     private final Runnable eyeBlinkRunnable = this::runEyeBlink;
     private android.animation.ValueAnimator eyeBlinkAnimator;
@@ -26,12 +27,13 @@ BLINK_FIELDS = '''    // BOOP_SHARED_SHIELD_EYES_V1
 '''
 
 BLINK_METHODS = '''    private boolean eyeBlinkAllowed() {
-        // The overlay never takes focus. Use visibility/display/power gates.
+        // The overlay never takes focus. Visibility/display are the lifecycle gates.
+        android.os.PowerManager manager = getContext().getSystemService(android.os.PowerManager.class);
+        boolean powerSave = manager != null && manager.isPowerSaveMode();
         return attached && displayActive && isShown()
                 && getWindowVisibility() == VISIBLE && getAlpha() > 0f
                 && puppetMode == DeezerPuppetPolicy.Mode.EYES
-                && animationObservationAvailable && powerObservationAvailable
-                && !powerSaveActiveOrUnknown()
+                && !powerSave
                 && android.animation.ValueAnimator.areAnimatorsEnabled()
                 && Settings.Global.getFloat(getContext().getContentResolver(),
                         Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f;
@@ -49,7 +51,10 @@ BLINK_METHODS = '''    private boolean eyeBlinkAllowed() {
 
     private void runEyeBlink() {
         eyeBlinkQueued = false;
-        if (!eyeBlinkAllowed()) return;
+        if (!eyeBlinkAllowed()) {
+            syncEyeBlink();
+            return;
+        }
         android.animation.ValueAnimator animator = android.animation.ValueAnimator.ofFloat(0f, 1f);
         eyeBlinkAnimator = animator;
         animator.setDuration(BoopIdleBlink.DURATION_MS);
@@ -87,10 +92,10 @@ BLINK_METHODS = '''    private boolean eyeBlinkAllowed() {
     }
 
     private void drawLockedEyes(Canvas canvas) {
-        // Use the phone landscape layout, uniformly framed inside the TV slot.
+        // Use exactly the phone landscape layout, uniformly framed inside the TV slot.
         BoopEyeLayout.Layout layout = BoopEyeLayout.calculate(
                 Math.max(getWidth(), getHeight() + 1), getHeight());
-        if (!layout.landscape()) return;
+        if (!layout.landscape() || faceBitmap == null) return;
         BoopEyeLayout.Eye left = layout.left();
         BoopEyeLayout.Eye right = layout.right();
         float pairLeft = left.centerX() - left.width() / 2f;
@@ -105,16 +110,16 @@ BLINK_METHODS = '''    private boolean eyeBlinkAllowed() {
         canvas.translate(getWidth() / 2f, getHeight() / 2f);
         canvas.scale(fit, fit);
         canvas.translate(-centreX, -centreY);
-        drawLockedEye(canvas, leftEye, left);
-        drawLockedEye(canvas, rightEye, right);
+        drawLockedEye(canvas, LEFT_SOURCE, left);
+        drawLockedEye(canvas, RIGHT_SOURCE, right);
         canvas.restoreToCount(save);
     }
 
-    private void drawLockedEye(Canvas canvas, Bitmap bitmap, BoopEyeLayout.Eye eye) {
-        if (bitmap == null) return;
+    private void drawLockedEye(Canvas canvas, Rect source, BoopEyeLayout.Eye eye) {
+        if (faceBitmap == null) return;
         float halfWidth = eye.width() / 2f;
         float halfHeight = eye.height() * eyeBlinkOpenness / 2f;
-        canvas.drawBitmap(bitmap, null, new RectF(
+        canvas.drawBitmap(faceBitmap, source, new RectF(
                 eye.centerX() - halfWidth, eye.centerY() - halfHeight,
                 eye.centerX() + halfWidth, eye.centerY() + halfHeight), paint);
     }
@@ -123,8 +128,16 @@ BLINK_METHODS = '''    private boolean eyeBlinkAllowed() {
 
 
 def patch_overlay(text):
-    if MARKER in text:
+    if '// BOOP_SHARED_SHIELD_EYES_V1' in text or MARKER in text:
         raise ValueError('Shield presentation already patched; materialize a fresh tree')
+    text = once(text, '    private final Bitmap leftEye;\n    private final Bitmap rightEye;\n',
+                '    private final Bitmap faceBitmap;\n', 'canonical eye bitmap field')
+    text = once(text,
+                '        Bitmap source = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);\n'
+                '        leftEye = isolateEye(source, LEFT_SOURCE);\n'
+                '        rightEye = isolateEye(source, RIGHT_SOURCE);\n',
+                '        faceBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);\n',
+                'canonical eye bitmap load')
     text = once(text, '    private final HeadphoneRenderer headphoneRenderer;\n',
                 BLINK_FIELDS + '    private final HeadphoneRenderer headphoneRenderer;\n', 'blink fields')
     start = text.index('        float scale = Math.min(getWidth() / (float) PAIR_WIDTH,')
@@ -155,7 +168,7 @@ def main():
     # Validate every anchor before touching the generated tree.
     for path, content in updates.items():
         path.write_text(content, encoding='utf-8')
-    print('Shared phone eyes/blink materialized; no visual checks run')
+    print('Canonical phone bitmap/geometry/blink materialized on Shield; no visual checks run')
 
 
 if __name__ == '__main__':
