@@ -2,54 +2,46 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Always re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v60 listening eyes
+## Current signed candidate: v62 single-layer reading eyes
 
-Ryan asked for a tiny visual behavior that shows when BOOP is actively listening. A generated replacement-eye concept was explicitly rejected. The v60 implementation therefore uses the **exact existing approved BOOP eye artwork** and changes only runtime pose/state.
+Ryan physically tested v61 and liked the reading-style listening motion, but could visibly see the stationary original pupil/iris behind the moving gaze. Source tracing confirmed v61 drew the normal approved eye first and then painted a shifted iris/pupil patch on top. Treat v61 as physically rejected for compositing and do **not** create a v61 checkpoint.
 
-Listening behavior:
+v62 keeps the exact approved black-lidded eye master, v61's stronger listening zoom/read sweep and widened iris hue coverage, but changes the compositing boundary only. While active listening, the face is drawn into a temporary layer, the stationary iris aperture is cleared, and one shifted iris/pupil patch from the same runtime bitmap is drawn into that aperture. The intended result is one visible moving gaze rather than PNG-on-PNG ghosting.
 
-- active only while tap-to-talk ASR or post-wake command ASR is actually listening;
-- uses the existing approved black-lidded eye renderer, no new or regenerated eye art;
-- gentle vertical attentive/breathing pulse, `520 ms` half-cycle, scale `1.025` to `1.060`;
-- if system animations are disabled, use the static maximum attentive pose;
-- stop on result/error/cancel, idle/sleep, thinking, Activity pause or destroy;
-- ordinary powered/wake-armed waiting does **not** pulse;
-- the prior static alpha-dim listening cue is removed from active recognizer start/stop paths.
+No wake detector, learned-name matcher, five-sample enrolment, microphone ownership, exact 100 ms bridge, command window, powered wake/recovery, diagnostics, HA routing, TTS, blink, Launcher, Shield behavior, package or signer is intentionally changed.
 
-Preserved unchanged: approved eye bitmap bytes, iris-only hue, blink timing/gates, wake detectors, learned-name matching, five-sample enrolment, one controller-owned 16 kHz microphone stream, exact 100 ms command bridge, three-second command window, silent wake handoff, powered wake/recovery, pull-only diagnostics, HA routing, TTS, Launcher, Shield behavior, package and signer.
-
-Detailed receipt: `docs/BOOP-V60-LISTENING-EYES-RECEIPT.md`.
-
-### v60 TDD / build receipt
+### v62 TDD / build receipt
 
 RED:
 
-- test `source-test/BoopWakeListeningCueStateTest.java`
-- commit `5e2e0160994d44804f33a06faef3bd668d8a57d4`
-- workflow `34258998143`
-- failed exactly because the new `BoopListeningCueState` lifecycle helper did not yet exist.
+- anti-ghost regression commit `7b19f2c81f0fa2a6cb7a3512186298b3bdf4b5e4`
+- workflow `34265189069`
+- 97 focused unified tests ran; exactly the new single-layer compositing test failed while established tests passed.
 
-GREEN/review:
+Repair/release:
 
-- code-green commit `921e221e608e900537bb6d6c5797fc1cab7ee5ad`
-- workflow `34259741946` passed materialization, lint, functional tests, signing, assembly, verification and upload
-- review made the materializer idempotent at `490eb26b286c33e29e4d4a2e1ca497379bec4c61` without changing runtime behavior.
-
-Final signed v60:
-
-- built commit `47e2edb1cd4415d8716a108cfc0f0cf7fb82de8a`
-- version 60 / `1.2.14-unified-listening-eyes`
-- workflow `34260135850` SUCCESS
-- artifact `BOOP-Unified`, ID `10069626604`
-- artifact digest `sha256:533672bee255644d6db50a60d0bc1dfe8d46b1184f46d9a2e6504b25197ac3a0`
-- APK SHA-256 `4478be2d4b684ff2688fea5ae662a205bcce0ce5da1e25f162b4ef7ed411d1c6`
+- policy commit `b54e6fad8dc30e4f90ff13a126038053d8d73881`
+- renderer commit `d7e4632ab014b026459fd63d8d9d17a8fd9dc16f`
+- version bump `55753ff70428a35b7b3f6d9da668b01e358fcb62`
+- built/verifier commit `6877bf3d97d069eda950938060e355da039d53cf`
+- version 62 / `1.2.16-unified-single-layer-reading-eyes`
+- workflow `34265615662` SUCCESS
+- artifact `BOOP-Unified`, ID `10071797863`
+- artifact digest `sha256:adb58b5eb0373fa1b581dccd625638a6bcaf151477215b57c930197ed52142ef`
+- APK SHA-256 `5def47113929e6b0aa59b868e5880056607473fb3ba1ff4e54ac3f771bb7bc3b`
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- materialized wake-handoff contracts 3/3 PASS
+- wake-handoff contracts 3/3 PASS
 - Shield focused tests 58/58, zero failures/errors/skips
-- unified focused tests 93/93, zero failures/errors/skips
-- Launcher lint, signed assembly, package/version, manifest, signer, APK ZIP integrity and artifact upload PASS.
+- unified focused tests 97/97, zero failures/errors/skips
+- Launcher lint, signed assembly, package/version, manifest, permanent signer, APK ZIP integrity and artifact upload PASS.
+
+Detailed receipt: `docs/BOOP-V62-SINGLE-LAYER-READING-EYES-RECEIPT.md`.
 
 CI/signer green. Physical visual acceptance is pending and belongs to Ryan.
+
+## Required next Pixel test
+
+Install v62 over v61 without uninstalling. Trigger listening both from a natural wake-name command and tap-to-talk. Confirm there is only one visible moving pupil/iris per eye with no stationary ghost underneath, the reading sweep still looks good, the previously missed blue iris regions follow the selected hue, and natural BOOP/custom wake commands still work. Do not create a v62 checkpoint until Ryan physically accepts this exact signed build.
 
 ## v59 uncensored speech is physically accepted
 
@@ -73,17 +65,6 @@ v58 natural-wake rollback remains:
 
 Never repoint it either. The older v48 wake-arm rollback also remains permanently pinned at `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`.
 
-## Required next Pixel test
-
-Install v60 over v59 without uninstalling.
-
-1. While powered, say a natural current-wake-name + HA command. The approved eyes should show the listening pulse only while command ASR is active, then return to normal before/when the spoken reply begins.
-2. Tap-to-talk should show the same cue while listening and stop afterward.
-3. Confirm ordinary powered wake-armed waiting does not pulse.
-4. Confirm the current custom wake name and permanent `BOOP` still execute natural no-pause commands.
-
-If the visual pulse needs tuning, change only the listening pose parameters after Ryan's real-device observation. Do not regenerate eye artwork or disturb the accepted wake/audio boundary. Do not create a v60 checkpoint until Ryan visually accepts this exact signed build.
-
 ## Durable wake/name contracts
 
 - `BOOP` permanently remains an accepted fallback wake name; custom names are additive, never replacements.
@@ -99,6 +80,7 @@ If the visual pulse needs tuning, change only the listening pose parameters afte
 - `show diagnostics` remains pull-only.
 - BOOP does not intentionally censor recognized adult/profane speech; both recognition intents request unmasked offensive words.
 - listening feedback must reuse the exact approved eye master and be driven by active recognizer state, not by a replacement pose image.
+- moving listening gaze must replace the stationary iris/pupil aperture rather than stack a second eye layer over it.
 
 ## Architecture boundary and protected state
 
