@@ -36,7 +36,7 @@ Source tracing found the learned matcher waited for two quiet 100 ms chunks befo
 
 v57 changed learned custom names to streaming matching during active speech, kept the older silence-ended matcher as fallback and gated expensive acoustic feature extraction behind cheap speech/RMS activity.
 
-Physical v57 evidence now confirms this architecture generally:
+Physical v57 evidence confirms this architecture generally:
 
 - `Steve lights on` worked naturally with no deliberate pause;
 - `Steve show diagnostics` worked naturally;
@@ -47,34 +47,28 @@ Durable rule: learned custom wake names must be eligible for matching while spee
 
 ## Durable default BOOP rule from v58
 
-The same v57 physical test isolated a separate problem: permanent fallback `BOOP` still woke, but `BOOP lights on` spoken continuously required a pause after BOOP while Steve/Fred/Jeff did not.
+The v57 physical test isolated a separate problem: permanent fallback `BOOP` still woke, but continuous `BOOP lights on` required a pause while Steve/Fred/Jeff did not.
 
 Root cause was the Sherpa default keyword configuration:
 
 `config.setNumTrailingBlanks(1);`
 
-That required one trailing blank after the keyword before finalizing the wake. A deliberate pause supplied the blank and continuous speech did not. This is distinct from the v57 learned-name matcher and from the v56 100 ms command bridge.
+That intentionally waited for one trailing blank after the keyword before finalizing the wake. v58 changes only this to:
+
+`config.setNumTrailingBlanks(0);`
+
+Physical v58 acceptance now confirms the intended behavior on Ryan's powered Pixel: default `BOOP` accepts natural wake + command speech without a deliberate pause, and Ryan reports it works whether spoken slowly or quickly.
 
 Durable v58 rule:
 
-- default/permanent BOOP uses `config.setNumTrailingBlanks(0)` so the detector is not intentionally waiting for trailing silence before wake finalization;
-- do not change wake score, threshold, BOOP keyword phrases, sensitivity or command bridge as part of this fix;
+- default/permanent BOOP uses zero intentional trailing blanks;
+- do not change wake score, threshold, BOOP keyword phrases, sensitivity or command bridge as part of this behavior;
 - custom learned-name streaming remains separate and unchanged;
-- retain physical false-positive observation as part of acceptance because removing a confirmation blank may alter timing even though sensitivity/threshold are unchanged.
+- preserve the natural one-breath behavior for both default BOOP and learned names.
 
-## Current signed candidate: v58 natural BOOP wake
+No blanket false-positive acceptance is recorded yet because ordinary-room-chatter observation was not explicitly reported in the v58 acceptance turn. If false positives later appear, investigate Sherpa confirmation timing before altering sensitivity or the custom matcher.
 
-TDD valid RED:
-
-- commit `177cb0adcf685101b6cbc77478bacb3f569d539f`
-- workflow `34252407406`
-- materialized wake-handoff suite ran 2 tests; existing silent-seam test passed and exactly the new default-BOOP no-trailing-silence regression failed because `setNumTrailingBlanks(0)` was absent.
-
-GREEN functional change:
-
-- commit `2f4b225998a40835d3db81595573b8af28009c06`
-- workflow `34252652849`
-- new contract, focused tests, signed build/package/signer/archive checks and artifact upload passed.
+## Current physically accepted wake checkpoint: v58
 
 Final v58 build:
 
@@ -89,15 +83,27 @@ Final v58 build:
 - materialized wake-handoff contracts 2/2 PASS
 - Launcher lint, signed assembly, package/version, manifest, signer, APK integrity and artifact upload PASS.
 
-CI/signer green. Physical v58 acceptance is pending. Required powered-Pixel test: `BOOP lights on`, `BOOP lights off`, `Jeff lights on`, optionally `BOOP show diagnostics`, all without deliberate pauses, plus brief ordinary-speech false-positive observation.
+Physically accepted rollback branch:
+
+`checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
+
+Never repoint it.
 
 Detailed receipt: `docs/BOOP-V58-NATURAL-BOOP-WAKE-RECEIPT.md`.
 
-## Physically proven rollback and historical wake landmarks
+## Physically proven rollback and wake landmarks
 
-The exact built v48 wake-arm code remains the protected rollback at `checkpoint-boop-unified-v48-wake-arm`, commit `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint it. On Ryan's Pixel: charger -> Android green mic ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP.
+The older exact v48 wake-arm code remains protected at `checkpoint-boop-unified-v48-wake-arm`, commit `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint it.
 
-v51 repaired natural wake-prefix stripping. v53 introduced persistent physical ASR evidence. v54 repaired full wake-history contamination and physically enabled the separate post-wake rename command. v55 added any-external-power wake, silent failure re-arm and pull-only diagnostics. v56 removed the artificial wake cue and kept exactly the final detector block as a 100 ms command bridge. v57 made learned custom names stream-matchable and now has physical acceptance for natural Steve/Fred/Jeff commands and five-sample spoken rename. v58 changes only the default Sherpa trailing-blank requirement and awaits physical acceptance.
+Wake progression retained for diagnosis:
+
+- v51 repaired natural wake-prefix stripping.
+- v53 introduced persistent physical ASR evidence.
+- v54 repaired full wake-history contamination and physically enabled separate post-wake rename.
+- v55 added any-external-power wake, silent failure re-arm and pull-only diagnostics.
+- v56 removed the artificial wake cue and kept exactly the final detector block as a 100 ms command bridge.
+- v57 made learned custom names stream-matchable and is physically accepted for natural Steve/Fred/Jeff commands plus five-sample spoken rename.
+- v58 removed the default Sherpa trailing-blank wait and is physically accepted for natural slow/fast `BOOP + command` speech.
 
 ## Clean Shield HOME boundary
 
