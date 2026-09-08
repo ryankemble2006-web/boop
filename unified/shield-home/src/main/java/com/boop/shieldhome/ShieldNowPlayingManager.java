@@ -31,7 +31,8 @@ import java.util.Map;
  * Android media-session boundary for the standalone Shield launcher.
  *
  * Notification Listener access is Android's authority for querying active media sessions.
- * Notification posted/removed payloads are intentionally ignored by BOOP.
+ * Player notification text is ignored; notification artwork may be used only when MediaMetadata
+ * supplies no usable artwork.
  */
 public final class ShieldNowPlayingManager {
     private static final String ENABLED_LISTENERS = "enabled_notification_listeners";
@@ -45,6 +46,7 @@ public final class ShieldNowPlayingManager {
     private final ShieldHomeStore store;
     private final NowPlayingState state = new NowPlayingState();
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
+    private final LinkedHashMap<String, Bitmap> notificationArtwork = new LinkedHashMap<>();
 
     private final MediaSessionManager.OnActiveSessionsChangedListener activeSessionsChanged =
             this::reconcileControllers;
@@ -192,6 +194,30 @@ public final class ShieldNowPlayingManager {
         }
     }
 
+    /** Stores only artwork extracted from a media notification. No text enters this manager. */
+    void onNotificationArtwork(String packageName, Bitmap artwork) {
+        if (packageName == null || packageName.trim().isEmpty() || artwork == null) {
+            return;
+        }
+        String key = packageName.trim();
+        runOnMain(() -> {
+            notificationArtwork.put(key, artwork);
+            publishSelection();
+        });
+    }
+
+    void onNotificationArtworkRemoved(String packageName) {
+        if (packageName == null || packageName.trim().isEmpty()) {
+            return;
+        }
+        String key = packageName.trim();
+        runOnMain(() -> {
+            if (notificationArtwork.remove(key) != null) {
+                publishSelection();
+            }
+        });
+    }
+
     void onListenerConnected() {
         runOnMain(() -> {
             listenerConnected = true;
@@ -279,6 +305,7 @@ public final class ShieldNowPlayingManager {
         for (Binding binding : detached) {
             binding.unregister();
         }
+        notificationArtwork.clear();
         selectedId = 0L;
         selectedController = null;
         state.update(null);
@@ -424,10 +451,15 @@ public final class ShieldNowPlayingManager {
             subtitle = metadataText(metadata, MediaMetadata.METADATA_KEY_ALBUM_ARTIST);
         }
         long duration = metadata == null ? 0L : metadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
+        String packageName = controller.getPackageName();
+        Bitmap resolvedArtwork = artwork(metadata);
+        if (resolvedArtwork == null) {
+            resolvedArtwork = notificationArtwork.get(packageName);
+        }
 
         return new NowPlayingSnapshot(
                 binding.id,
-                controller.getPackageName(),
+                packageName,
                 title,
                 subtitle,
                 playbackState,
@@ -436,7 +468,7 @@ public final class ShieldNowPlayingManager {
                 duration,
                 speed,
                 updateTime,
-                artwork(metadata));
+                resolvedArtwork);
     }
 
     private static String metadataText(MediaMetadata metadata, String key) {
