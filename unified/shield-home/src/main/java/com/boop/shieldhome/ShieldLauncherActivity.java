@@ -145,7 +145,8 @@ public final class ShieldLauncherActivity extends Activity {
         if (nowPlayingPuppetView == null || destroyed) {
             return;
         }
-        nowPlayingPuppetView.setSnapshot(currentPage == Page.HOME ? nowPlayingSnapshot : null);
+        nowPlayingPuppetView.setSnapshot(nowPlayingSnapshot);
+        nowPlayingPuppetView.setHomeVisible(currentPage == Page.HOME);
         if (root != null && nowPlayingPuppetView.getParent() == root) {
             root.bringChildToFront(nowPlayingPuppetView);
         }
@@ -344,8 +345,17 @@ public final class ShieldLauncherActivity extends Activity {
         boolean playNext = store.rowEnabled(OptionalRowRegistry.Key.PLAY_NEXT);
         boolean appChannels = store.rowEnabled(OptionalRowRegistry.Key.APP_CHANNELS);
         boolean homeOverrideEnabled = isHomeOverrideEnabled();
+        boolean nowPlayingAccess = nowPlayingManager != null && nowPlayingManager.hasAccess();
+        String preferredPlayer = store.nowPlayingPlayerPackage();
+        String playerLabel = nowPlayingPlayerLabel(preferredPlayer);
         ShieldHomeSettingsView view = new ShieldHomeSettingsView(this);
-        view.render(playNext, appChannels, homeOverrideEnabled, new ShieldHomeSettingsView.Callbacks() {
+        view.render(
+                playNext,
+                appChannels,
+                homeOverrideEnabled,
+                nowPlayingAccess,
+                playerLabel,
+                new ShieldHomeSettingsView.Callbacks() {
             @Override public void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
                 store.setRowEnabled(key, enabled);
                 showSettings();
@@ -371,11 +381,80 @@ public final class ShieldLauncherActivity extends Activity {
                 openAccessibilitySettings();
             }
 
+            @Override public void onOpenNowPlayingAccess() {
+                if (nowPlayingManager == null
+                        || !nowPlayingManager.openAccessSettings(ShieldLauncherActivity.this)) {
+                    openSystemSettings();
+                }
+            }
+
+            @Override public void onChooseNowPlayingPlayer() {
+                showNowPlayingPlayerChooser();
+            }
+
             @Override public void onBackHome() {
                 showHome();
             }
         });
         transitionTo(view);
+    }
+
+    private String nowPlayingPlayerLabel(String packageName) {
+        String cleaned = packageName == null ? "" : packageName.trim();
+        if (cleaned.isEmpty()) {
+            return "Automatic";
+        }
+        for (TvAppEntry entry : installedApps) {
+            if (entry == null || !cleaned.equals(entry.packageName())) {
+                continue;
+            }
+            String label = entry.label() == null ? "" : entry.label().trim();
+            return label.isEmpty() ? cleaned : label;
+        }
+        return cleaned;
+    }
+
+    private void showNowPlayingPlayerChooser() {
+        ArrayList<String> packages = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>();
+        HashSet<String> seenPackages = new HashSet<>();
+
+        packages.add("");
+        labels.add("Automatic");
+        for (TvAppEntry entry : installedApps) {
+            if (entry == null) {
+                continue;
+            }
+            String packageName = entry.packageName() == null ? "" : entry.packageName().trim();
+            if (packageName.isEmpty() || !seenPackages.add(packageName)) {
+                continue;
+            }
+            String label = entry.label() == null ? "" : entry.label().trim();
+            packages.add(packageName);
+            labels.add(label.isEmpty() ? packageName : label);
+        }
+
+        String current = store.nowPlayingPlayerPackage();
+        int checked = packages.indexOf(current);
+        if (checked < 0) checked = 0;
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Now Playing player")
+                .setSingleChoiceItems(labels.toArray(new String[0]), checked, null)
+                .setNegativeButton("Cancel", null)
+                .create();
+        dialog.setOnShowListener(ignored -> dialog.getListView().setOnItemClickListener(
+                (parent, view, position, id) -> {
+                    String selectedPackage = packages.get(position);
+                    if (nowPlayingManager != null) {
+                        nowPlayingManager.setPreferredPackage(selectedPackage);
+                    } else {
+                        store.setNowPlayingPlayerPackage(selectedPackage);
+                    }
+                    dialog.dismiss();
+                    showSettings();
+                }));
+        dialog.show();
     }
 
     private void toggleFavourite(TvAppEntry entry) {
