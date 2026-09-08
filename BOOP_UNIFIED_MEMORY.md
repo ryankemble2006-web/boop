@@ -2,95 +2,95 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer. Fresh `main` owns shared contracts. Always re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Durable wake architecture and rollback
+## Durable wake architecture
 
-BOOP permanently remains an accepted wake name. A custom name is additive, never a replacement. Foreground wireless charging/docking permits continuous phone wake; undocked phone remains tap-to-talk. Preserve coordinator -> `BoopWakeWordController` -> Sherpa/template -> single 16 kHz `AudioRecord` ownership and coordinated reload/re-arm. Never add a competing microphone listener.
+BOOP permanently remains an accepted wake name. A custom name such as `Steve` is additive, never a replacement. Custom-name training uses five local spoken examples from the existing single controller-owned 16 kHz PCM stream and stores only a compact pronunciation profile; raw enrolment PCM is not persisted. Never add a competing microphone listener.
 
-The physically proven wake rollback is exact built v48 code `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`, pinned at branch `checkpoint-boop-unified-v48-wake-arm`. Never repoint it. On Ryan's Pixel: charger -> Android green mic ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP.
+Continuous phone wake is allowed while the phone is on **any external power** (wireless/magnetic dock, USB or AC). Unpowered/undocked handheld behavior remains tap-to-talk. The wake engine is the resting state while powered, except while tap recognition, settings, command processing or TTS legitimately owns the microphone/state.
+
+After normal TTS, wake re-arms only after BOOP finishes speaking so BOOP does not hear its own reply. A post-wake Android command-ASR no-match or speech timeout is silent and performs a genuine controller/coordinator re-arm; no spoken error and no automatic modal. A hard wake-engine/microphone startup failure remains fail-safe latched instead of tight-loop retrying.
+
+`show diagnostics` is the hidden pull-only diagnostic command. Normal wake/ASR failures retain useful trace state but do not display it automatically and do not save raw audio or cloud-log diagnostics.
+
+## Durable wake-to-command audio rule
+
+v53 physically proved that feeding the full wake-detection history into Android command ASR is wrong: Android heard the already-spoken wake phrase and completed before a separate command. v54 therefore removed the old full one-second pre-roll.
+
+v55 physical testing exposed the opposite edge of that boundary for natural one-breath commands. The wake controller reads `READ_SAMPLES = 1600` samples at 16 kHz, i.e. 100 ms blocks, and writes the current block to the ring before wake detection decides it fired. Discarding **all** wake history therefore also discards the detector's terminal 100 ms block, which can contain the beginning of an immediately-following command such as `Steve lights on`.
+
+The durable v56 rule is therefore:
+
+- never restore the old one-second wake-history pre-roll;
+- preserve exactly the **final 1,600 samples / 100 ms detector block** as the command-ASR bridge;
+- continue the same live PCM stream immediately afterward;
+- keep natural wake-prefix transcript stripping as a defensive parser layer;
+- keep the wake-to-command handoff acoustically silent: do not play the artificial wake-accepted speaker cue while command audio is being captured.
+
+This is a bounded seam bridge, not permission to expand command pre-roll without new physical evidence.
+
+## Current physical evidence: v55
+
+On Ryan's charged Pixel with v55:
+
+- `Steve` wakes BOOP.
+- `BOOP` wakes BOOP.
+- tap-to-talk works.
+- `Steve`, pause, `lights off` works and BOOP says `Done`.
+- `BOOP`, pause, `lights off` works and BOOP says `Done`.
+- one-breath `Steve lights on`, `Steve show diagnostics`, and one-breath BOOP/Steve `lights off` do not route the command.
+- each wake plays the artificial wake-accepted bing.
+
+This physically narrows the problem to the wake-to-command seam. Do not respond to this evidence by changing wake sensitivity, Home Assistant routing, the Steve profile, the three-second command window or microphone ownership.
+
+v55 otherwise introduced and retains the any-external-power wake policy, silent no-match/timeout recovery and pull-only diagnostics.
+
+## Current signed candidate: v56
+
+v56 makes only the seam repair described above.
+
+TDD evidence:
+
+- RED workflow `34245905089` at `4a92e4cf1bf84e50f2b37cc8fae6bf590d1375bb` failed specifically because the old materialized wake callback still called `playWakeAcceptedCue();`; six other selected Python contracts passed.
+- final 100 ms bridge policy commit `cf70174e86576276b8e2f2d172c7864368ed4d79`.
+- silent materialized wake seam commit `87160ac64e61cb6a7d3837ff0e0cc8c627eeaa00`.
+- final built code `68bdbb4aabfbefd383a48aa4764568c5cb2222dc`.
+
+v56 receipt:
+
+- version 56 / `1.2.10-unified-seamless-wake-command`
+- workflow `34246347404` SUCCESS
+- artifact `BOOP-Unified`, ID `10064218458`
+- artifact digest `sha256:079864cd1ecfa82f8f9618b60738523d84e0f5b1e18ecda43bf7638cc3c230f6`
+- APK SHA-256 `5212b2faf4286db17b3afa44d8174d5773d555d9a8779c5d7fb1e7e6aba6a13c`
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
+- Shield focused tests 58/58; unified focused tests 90/90; zero failures/errors/skips
+- materialized seamless-handoff contract PASS
+- Launcher lint, signed assembly, package/version, manifest, signer and APK integrity PASS
+
+CI/signer green; physical v56 acceptance pending. Detailed receipt: `docs/BOOP-V56-SEAMLESS-WAKE-COMMAND-RECEIPT.md`.
+
+Required physical test: install v56 over v55, keep the Pixel powered, and say `Steve lights on`, `BOOP lights off`, and `Steve show diagnostics` naturally with no deliberate pause. There should be no artificial wake bing. Then deliberately wake without a command once and confirm silent re-arm by issuing another wake + command. If one-breath speech still fails, use `Steve`, pause, `show diagnostics` if necessary and inspect the trace before changing the bridge.
+
+## Physically proven rollback
+
+The exact built v48 wake-arm code remains the protected wake rollback at branch `checkpoint-boop-unified-v48-wake-arm`, commit `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint it. On Ryan's Pixel: charger -> Android green mic ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP.
 
 v48 receipt: version 48 / `1.2.2-unified-wake-arm`, workflow `34218173825`, APK SHA-256 `0264c3e289aab06a7be45067ce44bd72124355b11f9cc0a8ffa73afb7f4c5f02`, permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-## Current physical boundary: v53 evidence -> v54 repair
+## Historical wake landmarks retained
 
-v53's persistent diagnostic turned the downstream wake-command problem into concrete physical evidence. On the charged Pixel, after one `Hey BOOP`, Ryan captured:
+v51 repaired natural wake-prefix stripping before local command routing. v53 introduced persistent physical ASR evidence. v54 repaired the full-pre-roll defect and physically allowed a separate post-wake rename command; Ryan then trained/used `Steve`. Those historical receipts remain in `docs/` and Git history. They are context, not permission to reintroduce their superseded diagnostic UI or audio behavior.
 
-`WAKE ASR RESULT +583ms ready=18 begin=153 end=544 partial="hey pooop" final="hey pooop"`
+## Clean Shield HOME boundary
 
-That is a successful Android recognizer result, not a recognizer error. It proves command ASR was hearing the wake phrase itself and ending before a separate command could be spoken.
+The clean Nvidia Shield HOME replacement remains standalone for testing on branch `boop-shield-clean-launcher`, package `com.boop.shieldhome`. Current unified Shield routing stays on the existing AIO Shield body. Do not merge the standalone launcher into unified until Ryan explicitly approves later.
 
-Source tracing found the cause in `BoopWakeWordController`. The wake detector maintained one second of historical PCM (`PRE_ROLL_SAMPLES = 16000`) and wrote that whole history into the post-wake command recognizer pipe before live post-detection samples. Android therefore started command recognition with a complete wake utterance already buffered.
+## Permanent visual, Home and assistant contracts
 
-Durable command-audio rule introduced in v54: **wake-detection history is not command audio**. `BoopWakeCommandAudioPolicy.recognizerPrelude(...)` returns no pre-wake samples; the same existing pipe then receives live post-detection PCM. Preserve the single controller-owned 16 kHz `AudioRecord` and the existing three-second command window. Do not reintroduce wake pre-roll into Android command ASR merely to improve transcript context; natural wake-prefix stripping remains a defensive parser layer, not a reason to feed the wake utterance again.
+Preserve the approved paired black-lidded eye master, approved geometry/alpha, iris-only hue, headphones/puppetry and five-digit yellow hands. Blink is user-confirmed working; preserve its current timing/curve/delay and motion/power/lifecycle gates.
 
-TDD trail:
+HA device names and Home controls are physically accepted and must not regress. Home remains room-scoped and fail-closed; room changes tear down previous-room ownership/state before rebuilding. Shield density scaling remains idempotent and never system-wide.
 
-- RED `d68fca32f25b9de360404170ff46576baabb33d5`, workflow `34233607842`: selected unified wake stage failed because `BoopWakeCommandAudioPolicy` did not yet exist.
-- Policy `edb2750e1140e5f8d4e39ec2e65b9097d71cef01`.
-- Controller GREEN `f90031830dfcf7f46c5a3644502a5bdf278acc06`, workflow `34233966994` SUCCESS.
+Assistant ownership remains explicit/reversible through supported Android routes. Shield remote assistant activation/audio remains separately unresolved. No overlay mic, competing recorder, Google-disable/default hacks, Button Mapper, privileged ADB ownership or direct OpenAI API dependency.
 
-v54 final receipt:
-
-- Built code `fe26f29cb330b450e5e9894a4588b19ae9d7152a`
-- Version 54 / `1.2.8-unified-wake-command-boundary`
-- Workflow `34234618256` SUCCESS
-- Artifact `BOOP-Unified`, ID `10059395955`
-- APK SHA-256 `ee6a5ade5538cf3b0b4aa1346cdeb5b957c9ed56ff214279c2d7c46e428fd287`
-- Artifact ZIP SHA-256 `0f7bb5168a961aa1e44bf455c070a3db8e112c8a55f9360db2236fc1dc4d6908`
-- Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-
-Final v54 evidence: non-visual integration/materialization passed; Launcher lint passed; 58 Shield focused tests and 85 unified focused tests passed with zero failures/errors/skips; signed assembly, package/version, manifest, permanent signer and APK archive integrity passed; artifact upload passed. No device/emulator launch or acoustic/visual acceptance ran.
-
-Required next physical boundary: install v54 over the existing app, keep the Pixel charged, confirm green mic, say `Hey BOOP`, wait for the listening cue, then say exactly `change name to Steve`. If `Say Steve five times.` appears, complete the five-say flow and then confirm `Steve` plus permanent `Hey BOOP` fallback. If the persistent diagnostic instead shows an error, no speech or an unexpected transcript, capture it and stop before grammar/sensitivity changes.
-
-Detailed receipt: `docs/BOOP-V54-WAKE-COMMAND-BOUNDARY-RECEIPT.md`.
-
-## Diagnostic history: v52-v53
-
-v52 added local-only post-wake Android `SpeechRecognizer` callback tracing. v53 made terminal recognizer results/errors and recognizer-start exceptions persist in a `BOOP wake diagnostic` dialog until `Close`, which made the physical trace above capturable. v53 built code `3b85e5ae8babe151c3f95c6aa4637d91fc5b2cb9`, workflow `34231784857`, APK SHA-256 `d1d21ff117bf21b761d7f9fb4f78d0499c3ba662c14408c3c17373428b92dbda`.
-
-## Custom-name five-say contract
-
-Custom-name training uses five local spoken examples from the same controller-owned PCM stream. It stores only a compact amplitude-normalised pronunciation profile; raw training PCM is not persisted. The learned matcher is additive to Sherpa and must fail safely without disabling BOOP. Custom names receive all 33 established natural wake forms.
-
-Durable product flow:
-
-- a genuinely new custom name queues/starts local five-say enrolment;
-- BOOP prompts `Say <name> five times.`;
-- the same microphone owner captures five natural examples and completion returns to normal wake;
-- unchanged names do not nag;
-- BOOP never requires user training;
-- a matching profile is reused unless the user deliberately retrains;
-- changing to another name invalidates the old profile;
-- no cloud wake training and no second microphone listener.
-
-## Spoken rename history: v49-v51
-
-v49 added automatic five-say enrolment after a changed custom name. Ryan physically confirmed `Hey BOOP` still woke BOOP but `change name to steve` fell through to ordinary handling.
-
-v50 added the missing local rename prefix `change name to `. Ryan physically tested v50 and spoken rename still failed while wake remained healthy. Treat that as a failure downstream of wake detection, not evidence to change Sherpa sensitivity.
-
-Systematic tracing then found a real WAKE routing defect: `MainActivity` normalized the recognizer result before local routing, but the one-argument normalizer stripped only bare `BOOP` despite BOOP supporting 33 natural wake calls. v51 repaired complete natural wake-prefix stripping longest-first while preserving BOOP fallback for custom names. Keep that normalization as a defensive layer even though v54 now stops deliberately feeding wake history into command ASR.
-
-v51 built code `4274ed008014d1ed5810af29b64b164bf8477072`, workflow `34225351709`, APK SHA-256 `e768248f27c671d5c4377d68905405d8c5890d7125390e13bb6c5177aad23e5c`. Detailed receipt: `docs/BOOP-V51-WAKE-COMMAND-NORMALIZE-RECEIPT.md`.
-
-## Clean Shield HOME architecture boundary
-
-The clean Nvidia Shield HOME replacement remains **standalone for testing and is not part of AIO yet**. Standalone branch `boop-shield-clean-launcher`, package `com.boop.shieldhome`. Current unified Shield routing stays on existing AIO `com.boop.shieldoverlay.MainActivity`. Do not reintroduce the standalone launcher into unified until Ryan explicitly approves the later merge.
-
-Standalone launcher rule remains locked: **remove the crap, preserve Shield behavior**. Preserve double-tap Home -> Recent Apps/task switcher, Back, volume/CEC, Nvidia/Android Settings, system remote shortcuts, app switching and normal system animations.
-
-## Permanent visual and Home contracts
-
-The approved paired black-lidded eye master is locked in the unified phone/Wall and Shield path. Preserve approved geometry, supplied alpha and proportions. User hue affects only the iris; do not tint sclera, pupil, highlights or eyelids. Preserve headphones/puppetry and five-digit yellow hands.
-
-Blink is user-confirmed working. Preserve its existing 183 ms curve, 3-7 second delay and motion/power/lifecycle gates. No global animation-setting changes.
-
-HA device names and Home control buttons are physically accepted and must not regress. Home remains room-scoped to confirmed physical controllable devices, fail-closed, with no helpers/diagnostics/config plumbing or whole-house fallback on uncertainty. Room changes tear down previous-room navigation/dashboard/socket/controller state before rebuilding. Shield density scaling remains idempotent and never system-wide.
-
-## Assistant boundary and release discipline
-
-Assistant ownership remains explicit/reversible through supported Android routes. Remote-button/default selection and actual audio from THAT Shield remote are still physically unresolved. No overlay microphone, competing recorder, Google-disable/default/permission hacks, Button Mapper, privileged ADB ownership or direct OpenAI API dependency.
-
-GitHub performs focused non-visual tests, compilation/lint, package/signature/integrity/security checks and artifact upload. Ryan owns screenshots, appearance, animation, device and acoustic acceptance. No golden screenshots, aesthetic source-string acceptance or emulator install/launch acceptance.
-
-Keep package `com.boop.alpha1` and permanent signer. Keep private photographs, credentials, device addresses and raw diagnostics out of the public repository. No automatic installs/grants or false Windows-sync claims.
+GitHub performs focused non-visual tests, compilation/lint, package/signature/integrity checks and artifact upload. Ryan owns screenshots, appearance, animation, device and acoustic acceptance. Keep package `com.boop.alpha1`, permanent signer, credentials and private device data protected. No automatic installs/grants.
