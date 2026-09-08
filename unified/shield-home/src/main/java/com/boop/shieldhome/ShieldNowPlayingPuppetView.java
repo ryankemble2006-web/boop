@@ -162,7 +162,9 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         if (w <= 0 || h <= 0) return;
-        LayoutParams params = new LayoutParams(w, h, Gravity.CENTER);
+        int width = Math.max(1, Math.round(w * 1.10f));
+        int height = Math.max(1, Math.round(h * 1.10f));
+        LayoutParams params = new LayoutParams(width, height, Gravity.CENTER);
         puppet.setLayoutParams(params);
     }
 
