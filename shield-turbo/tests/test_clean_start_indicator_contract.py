@@ -28,6 +28,18 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
+    def test_indicator_uses_display_bound_window_context_on_android_11_plus(self):
+        text = (SOURCE / "cleanstart/CleanStartIndicator.kt").read_text()
+        self.assertIn("DisplayManager", text)
+        self.assertIn("Display.DEFAULT_DISPLAY", text)
+        self.assertIn("createDisplayContext", text)
+        self.assertIn(
+            "createWindowContext(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null)",
+            text,
+        )
+        self.assertIn("LinearLayout(windowContext)", text)
+        self.assertIn("windowContext.getSystemService", text)
+
     def test_boot_job_shows_then_always_hides_indicator(self):
         text = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
         self.assertIn("CleanStartIndicator(applicationContext)", text)
@@ -52,6 +64,12 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         bridge_at = job.index("LocalBridge(applicationContext)")
         self.assertLess(show_at, await_at)
         self.assertLess(await_at, bridge_at)
+
+    def test_failed_indicator_presentation_fails_open_within_half_second(self):
+        text = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
+        self.assertIn("INDICATOR_PRESENT_TIMEOUT_MS = 500L", text)
+        self.assertIn("val presented = indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)", text)
+        self.assertIn("if (!presented) indicator.hide()", text)
 
     def test_indicator_does_not_change_clean_start_scheduler(self):
         text = (SOURCE / "cleanstart/CleanStartScheduler.kt").read_text()
