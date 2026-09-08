@@ -1,0 +1,461 @@
+package com.boop.shieldhome;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.view.View;
+import android.widget.FrameLayout;
+
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/** Internal Shield launcher surface. UnifiedEntryActivity remains the exported HOME entry. */
+public final class ShieldLauncherActivity extends Activity {
+    public static final long PAGE_TRANSITION_MS = 140L;
+
+    public enum FavouriteEdit {
+        MOVE_LEFT,
+        MOVE_RIGHT,
+        REMOVE
+    }
+
+    private enum Page {
+        HOME,
+        APPS,
+        SETTINGS
+    }
+
+    private TvAppRepository repository;
+    private ShieldHomeStore store;
+    private ExecutorService executor;
+    private FrameLayout root;
+    private View currentView;
+
+    private List<TvAppEntry> installedApps = List.of();
+    private List<String> favouriteComponents = List.of();
+    private Page currentPage = Page.HOME;
+
+    private BroadcastReceiver packageReceiver;
+    private boolean receiverRegistered;
+    private boolean destroyed;
+    private int optionalGeneration;
+
+    @Override protected void onCreate(Bundle state) {
+        super.onCreate(state);
+
+        root = new FrameLayout(this);
+        root.setBackgroundColor(Color.BLACK);
+        setContentView(root, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+
+        repository = new TvAppRepository(this);
+        store = new ShieldHomeStore(this);
+        executor = Executors.newSingleThreadExecutor();
+
+        registerPackageReceiver();
+        showHome();
+        reloadApps();
+    }
+
+    private void reloadApps() {
+        if (destroyed || executor == null || executor.isShutdown()) {
+            return;
+        }
+        executor.execute(() -> {
+            List<TvAppEntry> apps;
+            List<String> favourites;
+            try {
+                apps = repository.load();
+                List<String> saved = store.loadOrSeedFavourites(apps);
+                favourites = FavouriteOrder.reconcile(saved, apps);
+                if (!favourites.equals(saved)) {
+                    store.saveFavourites(favourites);
+                }
+            } catch (RuntimeException ignored) {
+                return;
+            }
+
+            List<TvAppEntry> loadedApps = List.copyOf(apps);
+            List<String> loadedFavourites = List.copyOf(favourites);
+            runOnUiThread(() -> {
+                if (destroyed) {
+                    return;
+                }
+                installedApps = loadedApps;
+                favouriteComponents = loadedFavourites;
+                showCurrentPage();
+            });
+        });
+    }
+
+    private void showCurrentPage() {
+        switch (currentPage) {
+            case APPS:
+                showApps();
+                break;
+            case SETTINGS:
+                showSettings();
+                break;
+            case HOME:
+            default:
+                showHome();
+                break;
+        }
+    }
+
+    private void showHome() {
+        currentPage = Page.HOME;
+        int generation = ++optionalGeneration;
+        List<TvAppEntry> favourites = favouriteEntries();
+
+        ShieldHomeView view = new ShieldHomeView(this);
+        ShieldHomeView.Callbacks callbacks = homeCallbacks();
+        view.render(favourites, List.of(), callbacks);
+        transitionTo(view);
+
+        List<HomeRowProvider> providers;
+        try {
+            providers = OptionalRowRegistry.loadEnabled(
+                    store::rowEnabled,
+                    TvProviderRows.factory(this));
+        } catch (RuntimeException ignored) {
+            return;
+        }
+        if (providers.isEmpty() || executor == null || executor.isShutdown()) {
+            return;
+        }
+
+        executor.execute(() -> {
+            ArrayList<HomeRow> rows = new ArrayList<>();
+            for (HomeRowProvider provider : providers) {
+                if (provider == null) {
+                    continue;
+                }
+                try {
+                    List<HomeRow> loaded = provider.load();
+                    if (loaded == null) {
+                        continue;
+                    }
+                    for (HomeRow row : loaded) {
+                        if (row != null && row.cards() != null && !row.cards().isEmpty()) {
+                            rows.add(row);
+                        }
+                    }
+                } catch (RuntimeException ignored) {
+                    // Optional content is fail-closed. Favourite apps remain usable.
+                }
+            }
+
+            List<HomeRow> readyRows = List.copyOf(rows);
+            runOnUiThread(() -> {
+                if (destroyed
+                        || currentPage != Page.HOME
+                        || generation != optionalGeneration
+                        || currentView != view) {
+                    return;
+                }
+                view.render(favouriteEntries(), readyRows, homeCallbacks());
+            });
+        });
+    }
+
+    private ShieldHomeView.Callbacks homeCallbacks() {
+        return new ShieldHomeView.Callbacks() {
+            @Override public void onAppSelected(TvAppEntry entry) {
+                launchApp(entry);
+            }
+
+            @Override public void onFavouriteLongPressed(TvAppEntry entry) {
+                showFavouriteActions(entry);
+            }
+
+            @Override public void onOpenApps() {
+                showApps();
+            }
+
+            @Override public void onOpenSettings() {
+                showSettings();
+            }
+
+            @Override public void onContentSelected(HomeContentCard card) {
+                launchContent(card);
+            }
+        };
+    }
+
+    private void showApps() {
+        currentPage = Page.APPS;
+        ++optionalGeneration;
+
+        ShieldAppsView view = new ShieldAppsView(this);
+        view.render(installedApps, new HashSet<>(favouriteComponents), new ShieldAppsView.Callbacks() {
+            @Override public void onAppSelected(TvAppEntry entry) {
+                launchApp(entry);
+            }
+
+            @Override public void onToggleFavourite(TvAppEntry entry) {
+                toggleFavourite(entry);
+            }
+        });
+        transitionTo(view);
+    }
+
+    private void showSettings() {
+        currentPage = Page.SETTINGS;
+        ++optionalGeneration;
+
+        boolean playNext = store.rowEnabled(OptionalRowRegistry.Key.PLAY_NEXT);
+        boolean appChannels = store.rowEnabled(OptionalRowRegistry.Key.APP_CHANNELS);
+        ShieldHomeSettingsView view = new ShieldHomeSettingsView(this);
+        view.render(playNext, appChannels, new ShieldHomeSettingsView.Callbacks() {
+            @Override public void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
+                store.setRowEnabled(key, enabled);
+                showSettings();
+            }
+
+            @Override public void onChooseHomeApp() {
+                openHomeSettings();
+            }
+
+            @Override public void onBackHome() {
+                showHome();
+            }
+        });
+        transitionTo(view);
+    }
+
+    private void toggleFavourite(TvAppEntry entry) {
+        if (entry == null || entry.component().isEmpty()) {
+            return;
+        }
+        List<String> next = favouriteComponents.contains(entry.component())
+                ? FavouriteOrder.remove(favouriteComponents, entry.component())
+                : FavouriteOrder.add(favouriteComponents, entry.component());
+        saveFavouriteEdit(next);
+        showApps();
+    }
+
+    private void showFavouriteActions(TvAppEntry entry) {
+        if (entry == null || entry.component().isEmpty()) {
+            return;
+        }
+        String[] actions = {"Move left", "Move right", "Remove from favourites"};
+        new AlertDialog.Builder(this)
+                .setTitle(entry.label())
+                .setItems(actions, (dialog, which) -> {
+                    FavouriteEdit edit;
+                    if (which == 0) {
+                        edit = FavouriteEdit.MOVE_LEFT;
+                    } else if (which == 1) {
+                        edit = FavouriteEdit.MOVE_RIGHT;
+                    } else {
+                        edit = FavouriteEdit.REMOVE;
+                    }
+                    List<String> next = applyFavouriteEdit(
+                            favouriteComponents, entry.component(), edit);
+                    if (next.equals(favouriteComponents)) {
+                        return;
+                    }
+                    saveFavouriteEdit(next);
+                    showHome();
+                })
+                .show();
+    }
+
+    static List<String> applyFavouriteEdit(
+            List<String> current,
+            String component,
+            FavouriteEdit edit) {
+        if (edit == null) {
+            return current == null ? List.of() : new ArrayList<>(current);
+        }
+        switch (edit) {
+            case MOVE_LEFT:
+                return FavouriteOrder.move(current, component, -1);
+            case MOVE_RIGHT:
+                return FavouriteOrder.move(current, component, 1);
+            case REMOVE:
+            default:
+                return FavouriteOrder.remove(current, component);
+        }
+    }
+
+    private void saveFavouriteEdit(List<String> next) {
+        List<String> stable = next == null ? List.of() : List.copyOf(next);
+        if (stable.equals(favouriteComponents)) {
+            return;
+        }
+        favouriteComponents = stable;
+        store.saveFavourites(stable);
+    }
+
+    private List<TvAppEntry> favouriteEntries() {
+        if (favouriteComponents.isEmpty() || installedApps.isEmpty()) {
+            return List.of();
+        }
+        Map<String, TvAppEntry> byComponent = new HashMap<>();
+        for (TvAppEntry entry : installedApps) {
+            if (entry != null) {
+                byComponent.put(entry.component(), entry);
+            }
+        }
+        ArrayList<TvAppEntry> out = new ArrayList<>();
+        for (String component : favouriteComponents) {
+            TvAppEntry entry = byComponent.get(component);
+            if (entry != null) {
+                out.add(entry);
+            }
+        }
+        return out;
+    }
+
+    private void launchApp(TvAppEntry entry) {
+        if (entry == null) {
+            return;
+        }
+        ComponentName component = ComponentName.unflattenFromString(entry.component());
+        if (component == null) {
+            staleAppRecovery();
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_MAIN)
+                .setComponent(component);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            staleAppRecovery();
+        }
+    }
+
+    private void staleAppRecovery() {
+        currentPage = Page.HOME;
+        showHome();
+        reloadApps();
+    }
+
+    private void launchContent(HomeContentCard card) {
+        if (card == null || card.intentUri() == null || card.intentUri().isEmpty()) {
+            return;
+        }
+        try {
+            Intent intent = Intent.parseUri(card.intentUri(), 0);
+            startActivity(intent);
+        } catch (URISyntaxException | ActivityNotFoundException | SecurityException ignored) {
+            // Optional content can disappear independently. HOME stays usable.
+        }
+    }
+
+    private void openHomeSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));
+            return;
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            // Fall through to general settings on firmware without a HOME chooser surface.
+        }
+        try {
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            // Settings remains non-destructive and optional.
+        }
+    }
+
+    private void registerPackageReceiver() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        filter.addDataScheme("package");
+
+        packageReceiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context context, Intent intent) {
+                String action = intent == null ? null : intent.getAction();
+                if (PackageRefreshPolicy.shouldReload(action)) {
+                    reloadApps();
+                }
+            }
+        };
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(packageReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(packageReceiver, filter);
+        }
+        receiverRegistered = true;
+    }
+
+    private void transitionTo(View next) {
+        if (root == null || next == null) {
+            return;
+        }
+        View previous = currentView;
+        currentView = next;
+
+        next.setAlpha(0f);
+        next.setTranslationX(dp(24));
+        root.addView(next, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+        next.animate()
+                .alpha(1f)
+                .translationX(0f)
+                .setDuration(PAGE_TRANSITION_MS)
+                .start();
+
+        if (previous != null && previous != next) {
+            previous.animate()
+                    .alpha(0f)
+                    .translationX(-dp(24))
+                    .setDuration(PAGE_TRANSITION_MS)
+                    .withEndAction(() -> {
+                        if (previous.getParent() == root) {
+                            root.removeView(previous);
+                        }
+                    })
+                    .start();
+        }
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    @Override public void onBackPressed() {
+        if (currentPage != Page.HOME) {
+            showHome();
+        }
+    }
+
+    @Override protected void onDestroy() {
+        destroyed = true;
+        ++optionalGeneration;
+        if (receiverRegistered && packageReceiver != null) {
+            try {
+                unregisterReceiver(packageReceiver);
+            } catch (IllegalArgumentException ignored) {
+                // Receiver may already have been detached by framework teardown.
+            }
+            receiverRegistered = false;
+        }
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+        super.onDestroy();
+    }
+}
