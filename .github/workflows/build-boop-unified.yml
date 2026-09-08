@@ -130,8 +130,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='53'" badging.txt
-          grep -q "versionName='1.2.7-unified-wake-diagnostic-hold'" badging.txt
+          grep -q "versionCode='54'" badging.txt
+          grep -q "versionName='1.2.8-unified-wake-command-boundary'" badging.txt
           grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
           for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
