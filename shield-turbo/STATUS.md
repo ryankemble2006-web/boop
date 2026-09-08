@@ -35,19 +35,20 @@ Release run `34261526060`, job `102180473668`, conclusion **success**:
 
 Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, DN `CN=BOOP Development,O=BOOP`.
 
-v0.5.11 is machine green. **Processor Mode Trace physical acceptance is pending.**
+v0.5.11 is machine green and the **Processor Mode Trace is now physically accepted** on Ryan's Shield.
 
-## Processor Mode Trace
+## Processor Mode Trace physical result
 
-New `PROCESSOR MODE TRACE` flow on TURBO:
-1. SHIELD Processor mode = Optimized.
-2. `CAPTURE OPTIMIZED` saves a private local baseline.
-3. Ryan manually changes SHIELD Processor mode = Max performance.
-4. `CAPTURE MAX` reads current state and shows the compact before/after diff.
+Ryan captured Optimized first, manually changed NVIDIA Processor Mode to Max performance, then captured Max. The physical before/after diff showed exactly:
+- `system:nv_power_mode`: `1 -> 0`;
+- `property:persist.vendor.sys.phs.cpufreq.boost`: `0 -> 5`;
+- `property:persist.vendor.sys.phs.gpufreq.boost`: `0 -> 5`;
+- `property:persist.vendor.sys.phs.frt.boost`: `0 -> 5`;
+- `property:persist.vendor.sys.phs.frt.min`: `15 -> 20`.
 
-Read sources only: `settings list global`, `settings list secure`, `settings list system`, `getprop`.
+This is authoritative physical evidence that NVIDIA Processor Mode has a real stock state transition on this firmware. The leading actuator candidate is `system:nv_power_mode`, where the observed manual GUI mapping is `1 = Optimized` and `0 = Max performance`. The four `persist.vendor.sys.phs.*` values are treated as NVIDIA downstream effects, not direct write targets.
 
-No Shield setting/property/performance value is written. The only mutation is SHIELD TURBO's own private baseline storage. No service, receiver, foreground permission, watchdog or boot component was added. CLEAN START and brightness are untouched.
+The trace remains read-only. No performance write has been implemented yet.
 
 ## Approved persistent stock TURBO design
 
@@ -64,12 +65,10 @@ Locked future behavior after a genuine writable stock lever is proven:
 - exact original NORMAL snapshot preserved through reboot and failed restore;
 - no root, custom kernel, bootloader unlock, voltage modification, above-stock clocks or thermal bypass.
 
-**No performance write is implemented yet.**
-
 ## Locked existing behavior
 
 Freeze the physically proven CLEAN START overlay/core/timing path, trusted loopback ADB, target exclusions, bounded 30/60/120s max-three scheduler, brightness 10–100%, APPS direct launch/remote navigation, and v0.5.10 compact ANALYSE layout. Display & Sound and Accessibility remain parked.
 
 ## Next step
 
-Physical v0.5.11 test: capture Optimized, manually switch NVIDIA Processor mode to Max performance, capture Max, and return the compact diff screenshot. No performance write until that evidence identifies a real interface with unambiguous read-back and restore semantics.
+Build a bounded reversible actuator proof that writes **only** `system:nv_power_mode` through trusted local ADB. Starting from the physically observed Optimized state, verify `1 -> 0` and that NVIDIA itself moves the four downstream properties to `5 / 5 / 5 / 20`; then restore `nv_power_mode` to `1` and verify the downstream properties return to `0 / 0 / 0 / 15`. Do not write the vendor properties directly. If any read-back or restore check fails, prefer NORMAL/recovery and report the exact mismatch.
