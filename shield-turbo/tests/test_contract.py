@@ -53,13 +53,17 @@ class ContractTest(unittest.TestCase):
             'android.permission.SYSTEM_ALERT_WINDOW',
             'android.permission.WRITE_SECURE_SETTINGS',
             'android.permission.INTERNET',
+            'android.permission.RECEIVE_BOOT_COMPLETED',
         }, permissions)
         app = manifest.find('application')
-        services = app.findall('service')
-        self.assertEqual(1, len(services))
-        self.assertEqual('.BrightnessService', services[0].get(ANDROID + 'name'))
-        self.assertEqual('false', services[0].get(ANDROID + 'exported'))
-        self.assertEqual([], app.findall('receiver'))
+        services = {s.get(ANDROID + 'name'): s for s in app.findall('service')}
+        self.assertEqual({'.BrightnessService', '.cleanstart.CleanStartJobService'}, set(services))
+        self.assertEqual('false', services['.BrightnessService'].get(ANDROID + 'exported'))
+        self.assertEqual('false', services['.cleanstart.CleanStartJobService'].get(ANDROID + 'exported'))
+        self.assertEqual('android.permission.BIND_JOB_SERVICE', services['.cleanstart.CleanStartJobService'].get(ANDROID + 'permission'))
+        receivers = {r.get(ANDROID + 'name'): r for r in app.findall('receiver')}
+        self.assertEqual({'.cleanstart.CleanStartBootReceiver'}, set(receivers))
+        self.assertEqual('false', receivers['.cleanstart.CleanStartBootReceiver'].get(ANDROID + 'exported'))
         categories = {c.get(ANDROID + 'name') for c in app.findall('.//category')}
         self.assertIn('android.intent.category.LEANBACK_LAUNCHER', categories)
         power = next(a for a in app.findall('activity') if a.get(ANDROID + 'name') == '.power.PowerActivity')
@@ -85,25 +89,32 @@ class ContractTest(unittest.TestCase):
         self.assertIn('confirmed_', route)
         self.assertNotIn('device.displaysound.DisplaySoundActivity', route)
 
-    def test_startup_manager_is_reversible_and_not_itself_a_boot_app(self):
+    def test_startup_manager_remains_reversible_with_bounded_clean_start(self):
         manifest = ET.parse(ROOT / 'app/src/main/AndroidManifest.xml').getroot()
         app = manifest.find('application')
         activity_names = {a.get(ANDROID + 'name') for a in app.findall('activity')}
         self.assertIn('.startup.StartupManagerActivity', activity_names)
-        self.assertEqual([], app.findall('receiver'))
         manifest_text = (ROOT / 'app/src/main/AndroidManifest.xml').read_text()
-        self.assertNotIn('RECEIVE_BOOT_COMPLETED', manifest_text)
+        self.assertIn('RECEIVE_BOOT_COMPLETED', manifest_text)
         self.assertNotIn('QUERY_ALL_PACKAGES', manifest_text)
+        self.assertNotIn('FOREGROUND_SERVICE', manifest_text)
 
         startup_dir = SOURCE / 'startup'
-        text = '\n'.join(p.read_text() for p in startup_dir.glob('*.*'))
-        self.assertIn('RUN_IN_BACKGROUND', text)
-        self.assertIn('RUN_ANY_IN_BACKGROUND', text)
-        self.assertIn('pm disable-user --user current', text)
-        self.assertIn('UNDO ALL', text)
-        self.assertNotIn('pm clear ', text)
-        self.assertNotIn('pm uninstall', text)
-        self.assertNotIn('rm -rf', text)
+        startup_text = '\n'.join(p.read_text() for p in startup_dir.glob('*.*'))
+        self.assertIn('RUN_IN_BACKGROUND', startup_text)
+        self.assertIn('RUN_ANY_IN_BACKGROUND', startup_text)
+        self.assertIn('pm disable-user --user current', startup_text)
+        self.assertIn('UNDO ALL', startup_text)
+        self.assertNotIn('pm clear ', startup_text)
+        self.assertNotIn('pm uninstall', startup_text)
+        self.assertNotIn('rm -rf', startup_text)
+
+        clean_dir = SOURCE / 'cleanstart'
+        clean_text = '\n'.join(p.read_text() for p in clean_dir.glob('*.*'))
+        self.assertIn('withTrustedAdb', clean_text)
+        self.assertIn('MAX_ATTEMPTS = 3', clean_text)
+        self.assertNotIn('setPeriodic', clean_text)
+        self.assertNotIn('startForeground', clean_text)
 
         power = (SOURCE / 'power/PowerActivity.kt').read_text()
         self.assertIn('STARTUP MANAGER', power)
