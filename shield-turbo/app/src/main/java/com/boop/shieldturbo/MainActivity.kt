@@ -6,9 +6,13 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.os.StatFs
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
@@ -18,11 +22,17 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import com.boop.shieldturbo.analysis.ShieldAnalyzer
+import com.boop.shieldturbo.apps.AppCatalog
+import com.boop.shieldturbo.apps.AppRoutes
 import com.boop.shieldturbo.model.ProbeResult
 import com.boop.shieldturbo.model.ProbeStatus
+import com.boop.shieldturbo.picture.DisplayFacts
 import com.boop.shieldturbo.privilege.PrivilegeDetector
 import com.boop.shieldturbo.privilege.PrivilegeTier
 import com.boop.shieldturbo.probe.*
+import com.boop.shieldturbo.system.QuickCheck
+import com.boop.shieldturbo.system.SystemRoutes
+import com.boop.shieldturbo.system.SystemShortcut
 import com.boop.shieldturbo.ui.TurboSection
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -46,6 +56,7 @@ class MainActivity : Activity() {
     private lateinit var brightness: SeekBar
     private lateinit var brightnessValue: TextView
     private lateinit var scroll: ScrollView
+    private lateinit var quickCheckText: TextView
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
@@ -115,6 +126,18 @@ class MainActivity : Activity() {
         background = getDrawable(R.drawable.focus_panel)
     }
 
+    private fun actionButton(title: String, action: () -> Unit) = Button(this).apply {
+        text = title
+        textSize = 17f
+        setTextColor(Color.WHITE)
+        isAllCaps = false
+        isFocusable = true
+        isFocusableInTouchMode = true
+        minHeight = dp(54)
+        background = getDrawable(R.drawable.focus_panel)
+        setOnClickListener { action() }
+    }
+
     private fun buildUi(): View {
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -133,8 +156,10 @@ class MainActivity : Activity() {
     private fun showHome() {
         currentSection = null
         content.removeAllViews()
-        val intro = text(getString(R.string.control_centre_intro), 18f, Color.LTGRAY)
-        content.addView(intro, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+        content.addView(
+            text(getString(R.string.control_centre_intro), 18f, Color.LTGRAY),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) }
+        )
 
         val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val sections = listOf(
@@ -146,6 +171,7 @@ class MainActivity : Activity() {
         )
         val cards = sections.map { (section, title, help) ->
             Button(this).apply {
+                id = View.generateViewId()
                 setText(title)
                 contentDescription = "${getString(title)}. ${getString(help)}"
                 textSize = 20f
@@ -159,14 +185,17 @@ class MainActivity : Activity() {
             }
         }
         cards.forEachIndexed { index, card ->
-            if (index > 0) card.nextFocusLeftId = cards[index - 1].id
-            if (index < cards.lastIndex) card.nextFocusRightId = cards[index + 1].id
+            card.nextFocusLeftId = if (index == 0) card.id else cards[index - 1].id
+            card.nextFocusRightId = if (index == cards.lastIndex) card.id else cards[index + 1].id
             row.addView(card, LinearLayout.LayoutParams(0, dp(112), 1f).apply {
                 if (index > 0) marginStart = dp(10)
             })
         }
         content.addView(row, LinearLayout.LayoutParams(-1, -2))
-        content.addView(text(getString(R.string.control_centre_footer), 15f, Color.LTGRAY), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
+        content.addView(
+            text(getString(R.string.control_centre_footer), 15f, Color.LTGRAY),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) }
+        )
         cards.first().requestFocus()
     }
 
@@ -176,21 +205,18 @@ class MainActivity : Activity() {
         when (section) {
             TurboSection.TURBO -> renderTurbo()
             TurboSection.PICTURE -> renderPicture()
-            TurboSection.APPS -> renderPlaceholder(R.string.section_apps, R.string.apps_standard_note)
-            TurboSection.NETWORK -> renderPlaceholder(R.string.section_network, R.string.network_standard_note)
-            TurboSection.SHIELD -> renderPlaceholder(R.string.section_shield, R.string.shield_standard_note)
+            TurboSection.APPS -> renderApps()
+            TurboSection.NETWORK -> renderNetwork()
+            TurboSection.SHIELD -> renderShield()
         }
     }
 
     private fun sectionHeader(title: Int, help: Int) {
         content.addView(text(getString(title), 25f, Color.CYAN).apply { setTypeface(typeface, Typeface.BOLD) })
-        content.addView(text(getString(help), 15f, Color.LTGRAY), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
-    }
-
-    private fun renderPlaceholder(title: Int, message: Int) {
-        sectionHeader(title, message)
-        content.addView(text(getString(R.string.standard_tools_in_progress), 20f))
-        content.addView(text(getString(R.string.back_to_home_hint), 15f, Color.LTGRAY))
+        content.addView(
+            text(getString(help), 15f, Color.LTGRAY),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) }
+        )
     }
 
     private fun renderTurbo() {
@@ -213,6 +239,9 @@ class MainActivity : Activity() {
             accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
         }
         content.addView(status)
+        quickCheckText = text(storageQuickCheck(), 15f, Color.LTGRAY)
+        content.addView(quickCheckText)
+
         results = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             id = R.id.analysis_results
@@ -224,8 +253,128 @@ class MainActivity : Activity() {
             addView(results)
         }
         content.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        val maintenance = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val storage = actionButton("FREE SPACE") { safeStart(SystemRoutes.storage(this@MainActivity)) }
+        val apps = actionButton("MANAGE APPS") { safeStart(SystemRoutes.manageApps(this@MainActivity)) }
+        val restart = actionButton("RESTART TURBO") { recreate() }
+        maintenance.addView(storage, LinearLayout.LayoutParams(0, dp(54), 1f))
+        maintenance.addView(apps, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
+        maintenance.addView(restart, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
+        content.addView(maintenance, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
+
         analyseButton.requestFocus()
         analyse()
+    }
+
+    private fun storageQuickCheck(): String = try {
+        val stat = StatFs(Environment.getDataDirectory().absolutePath)
+        val finding = QuickCheck.storage(stat.availableBytes, stat.totalBytes)
+        "Quick check: ${finding.message}. No automatic cleanup was run."
+    } catch (_: Exception) {
+        "Quick check: storage capacity not exposed. No automatic cleanup was run."
+    }
+
+    private fun renderApps() {
+        sectionHeader(R.string.section_apps, R.string.section_apps_help)
+        val apps = AppCatalog.query(this)
+        if (apps.isEmpty()) {
+            content.addView(text("No launchable TV apps are visible to SHIELD TURBO.", 18f))
+            val manage = actionButton("OPEN ANDROID APP SETTINGS") { safeStart(SystemRoutes.manageApps(this)) }
+            content.addView(manage, LinearLayout.LayoutParams(-1, dp(56)).apply { topMargin = dp(10) })
+            manage.requestFocus()
+            return
+        }
+
+        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val appButtons = apps.map { app ->
+            actionButton(app.label) {
+                details?.dismiss()
+                details = AlertDialog.Builder(this)
+                    .setTitle(app.label)
+                    .setMessage(app.packageName)
+                    .setItems(arrayOf("LAUNCH", "APP INFO")) { _, which ->
+                        if (which == 0) safeStart(AppRoutes.launch(this, app.packageName))
+                        else safeStart(AppRoutes.info(app.packageName))
+                    }
+                    .setNegativeButton(R.string.close, null)
+                    .show()
+            }.apply {
+                id = View.generateViewId()
+                contentDescription = "${app.label}. ${app.packageName}"
+            }
+        }
+        appButtons.forEachIndexed { index, appButton ->
+            appButton.nextFocusUpId = if (index == 0) appButton.id else appButtons[index - 1].id
+            appButton.nextFocusDownId = if (index == appButtons.lastIndex) appButton.id else appButtons[index + 1].id
+            list.addView(appButton, LinearLayout.LayoutParams(-1, dp(56)).apply { bottomMargin = dp(6) })
+        }
+        val appScroll = ScrollView(this).apply { isFillViewport = true; addView(list) }
+        content.addView(appScroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        content.addView(text("Launch or open Android's own App Info page. TURBO does not force-stop or clear other apps.", 14f, Color.LTGRAY))
+        appButtons.first().requestFocus()
+    }
+
+    private fun renderNetwork() {
+        sectionHeader(R.string.section_network, R.string.section_network_help)
+        val reading = NetworkProbe(this).read()
+        content.addView(text("${reading.label}: ${reading.value}", 22f, Color.CYAN))
+        content.addView(text(reading.evidence, 16f, Color.LTGRAY))
+        val state = when (ConnectivityCheck.current(this)) {
+            Reachability.INTERNET_REACHABLE -> "Internet reachable: Android has validated this connection."
+            Reachability.LOCAL_ONLY -> "Local network connected; internet access is not validated."
+            Reachability.OFFLINE -> "No active network connection."
+            Reachability.UNKNOWN -> "Connection reachability is not exposed right now."
+        }
+        content.addView(text(state, 20f), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
+        content.addView(text("This is a connectivity check, not a speed score.", 14f, Color.LTGRAY))
+
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val check = actionButton("CHECK AGAIN") { renderNetworkFresh() }
+        val settings = actionButton("NETWORK SETTINGS") { safeStart(SystemRoutes.resolve(this, SystemShortcut.NETWORK)) }
+        row.addView(check, LinearLayout.LayoutParams(0, dp(56), 1f))
+        row.addView(settings, LinearLayout.LayoutParams(0, dp(56), 1f).apply { marginStart = dp(10) })
+        content.addView(row, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
+        check.requestFocus()
+    }
+
+    private fun renderNetworkFresh() {
+        if (currentSection != TurboSection.NETWORK) return
+        content.removeAllViews()
+        renderNetwork()
+    }
+
+    private fun renderShield() {
+        sectionHeader(R.string.section_shield, R.string.section_shield_help)
+        val uptimeMinutes = SystemClock.elapsedRealtime() / 60000L
+        content.addView(text("${Build.MANUFACTURER} ${Build.MODEL}", 22f, Color.CYAN))
+        content.addView(text("${Build.DEVICE} • Android ${Build.VERSION.RELEASE} • API ${Build.VERSION.SDK_INT}", 16f))
+        content.addView(text("Build: ${Build.DISPLAY}", 14f, Color.LTGRAY))
+        content.addView(text("Uptime: ${uptimeMinutes / 60}h ${uptimeMinutes % 60}m", 14f, Color.LTGRAY))
+        content.addView(text("Useful Shield settings", 18f, Color.CYAN), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+
+        val shortcuts = listOf(
+            "DISPLAY + SOUND" to SystemShortcut.DISPLAY_SOUND,
+            "APPS" to SystemShortcut.APPS,
+            "STORAGE" to SystemShortcut.STORAGE,
+            "NETWORK" to SystemShortcut.NETWORK,
+            "ACCESSIBILITY" to SystemShortcut.ACCESSIBILITY,
+            "DEVELOPER OPTIONS" to SystemShortcut.DEVELOPER,
+            "ABOUT" to SystemShortcut.ABOUT
+        )
+        val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val shortcutButtons = shortcuts.map { (label, shortcut) ->
+            actionButton(label) { safeStart(SystemRoutes.resolve(this, shortcut)) }.apply { id = View.generateViewId() }
+        }
+        shortcutButtons.forEachIndexed { index, shortcutButton ->
+            shortcutButton.nextFocusUpId = if (index == 0) shortcutButton.id else shortcutButtons[index - 1].id
+            shortcutButton.nextFocusDownId = if (index == shortcutButtons.lastIndex) shortcutButton.id else shortcutButtons[index + 1].id
+            grid.addView(shortcutButton, LinearLayout.LayoutParams(-1, dp(54)).apply { bottomMargin = dp(5) })
+        }
+        val shortcutScroll = ScrollView(this).apply { isFillViewport = true; addView(grid) }
+        content.addView(shortcutScroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(8) })
+        content.addView(text("Sleep and reboot stay out of STANDARD mode until a safe, proven route exists.", 14f, Color.LTGRAY))
+        shortcutButtons.first().requestFocus()
     }
 
     private fun renderPicture() {
@@ -254,7 +403,12 @@ class MainActivity : Activity() {
         }
         content.addView(brightness, LinearLayout.LayoutParams(-1, dp(48)))
         content.addView(text(getString(R.string.brightness_help), 14f, Color.LTGRAY))
-        content.addView(text(getString(R.string.picture_more_coming), 16f, Color.LTGRAY), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
+
+        val facts = DisplayFacts.current(this)
+        content.addView(text("ACTIVE DISPLAY", 18f, Color.CYAN), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
+        content.addView(text(facts.modeText(), 22f))
+        content.addView(text("HDR exposed by Android: ${facts.hdrText()}", 16f, Color.LTGRAY))
+        content.addView(text("Read-only. STANDARD mode does not change HDR, refresh rate or HDMI modes.", 14f, Color.LTGRAY))
         syncBrightness()
         brightness.requestFocus()
     }
@@ -294,6 +448,7 @@ class MainActivity : Activity() {
         val token = ++generation
         status.setText(R.string.scanning)
         analyseButton.setText(R.string.scanning)
+        quickCheckText.text = storageQuickCheck()
         scan = worker.submit {
             try {
                 val context = applicationContext
@@ -383,6 +538,27 @@ class MainActivity : Activity() {
             ProbeStatus.ERROR -> R.string.unavailable
         }
     )
+
+    private fun safeStart(intent: Intent?) {
+        if (intent == null) {
+            showUnavailable()
+            return
+        }
+        try {
+            startActivity(intent)
+        } catch (_: Exception) {
+            showUnavailable()
+        }
+    }
+
+    private fun showUnavailable() {
+        details?.dismiss()
+        details = AlertDialog.Builder(this)
+            .setTitle("NOT AVAILABLE")
+            .setMessage("This Shield firmware does not expose that shortcut to a normal app.")
+            .setPositiveButton(R.string.close, null)
+            .show()
+    }
 
     private fun showAccess() {
         details?.dismiss()
