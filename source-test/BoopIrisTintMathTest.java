@@ -23,13 +23,22 @@ public final class BoopIrisTintMathTest {
         assertEquals(0xffffdd00, BoopIrisTintMath.tint(0xffffdd00, 300));
     }
 
+    @Test public void darkApprovedIrisBlueAlsoChangesButNeutralScleraDoesNot() {
+        int darkUpperIris = 0xff07111e;
+        assertNotEquals(darkUpperIris, BoopIrisTintMath.tint(darkUpperIris, 120));
+        assertEquals(0xffc0d8e9, BoopIrisTintMath.tint(0xffc0d8e9, 120));
+    }
+
     @Test public void onlyApprovedIrisRingsCanBeSelected() {
-        assertTrue(BoopIrisTintMath.inIris(522, 709, 1774, 887));
-        assertTrue(BoopIrisTintMath.inIris(1204, 709, 1774, 887));
-        assertFalse(BoopIrisTintMath.inIris(522, 529, 1774, 887));
-        assertFalse(BoopIrisTintMath.inIris(1204, 529, 1774, 887));
-        assertFalse(BoopIrisTintMath.inIris(100, 529, 1774, 887));
-        assertFalse(BoopIrisTintMath.inIris(522, 100, 1774, 887));
-        assertFalse(BoopIrisTintMath.inIris(522, 529, 0, 0));
+        // Exact approved-master iris centres are slightly right/down of the old mask.
+        assertTrue(BoopIrisTintMath.inIris(535, 340, 1774, 887));
+        assertTrue(BoopIrisTintMath.inIris(733, 543, 1774, 887));
+        assertTrue(BoopIrisTintMath.inIris(1233, 340, 1774, 887));
+        assertTrue(BoopIrisTintMath.inIris(1431, 543, 1774, 887));
+        assertFalse(BoopIrisTintMath.inIris(535, 543, 1774, 887));
+        assertFalse(BoopIrisTintMath.inIris(1233, 543, 1774, 887));
+        assertFalse(BoopIrisTintMath.inIris(100, 543, 1774, 887));
+        assertFalse(BoopIrisTintMath.inIris(535, 100, 1774, 887));
+        assertFalse(BoopIrisTintMath.inIris(535, 543, 0, 0));
     }
 }
