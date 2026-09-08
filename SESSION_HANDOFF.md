@@ -14,65 +14,63 @@ Ryan owns visual acceptance. GitHub must not run screenshot/golden/layout/animat
 
 ## Physically proven Now Playing authority
 
-Notification Listener access is the proven Shield media-session authority. Ryan manually enabled **Shield Settings -> Apps -> Special app access -> Notification access -> BOOP Now Playing**, and Deezer Now Playing appeared immediately. The Accessibility media experiment failed and Accessibility is HOME-only again.
+Notification Listener access is the proven Shield media-session authority. Ryan manually enabled **Shield Settings -> Apps -> Special app access -> Notification access -> BOOP Now Playing**, and Deezer Now Playing appeared immediately. Accessibility is HOME-only again.
 
 `Media access` reflects the Notification Listener grant and tries Android TV's exact Notification Access activity first, with generic/detail listener fallbacks.
 
-## Physical layout progress
+## Physical progress through v0.10.5
 
-v0.10.3 removed the large headphones-BOOP collisions and Ryan reported it **much better**.
+- v0.10.3 removed the large headphones-BOOP collisions; Ryan reported it **much better**.
+- v0.10.4 reduced transport controls and moved the top navigation row down; Ryan reported **awesome spacing**.
+- v0.10.5 lifted the transport row by 4dp and added HTTPS MediaMetadata artwork support plus broader artwork-only notification fallback.
+- Ryan physically confirmed **album art now works** on v0.10.5. It appeared without even skipping the current Deezer track.
 
-v0.10.4 / code 19 (`184974d97126d4adbf9f4c573bac04d109065c59`, workflow `34285227706`) reduced transport controls, moved the top navigation row down 8dp and added a notification-artwork fallback. Ryan physically reported **awesome spacing**. Remaining requests/results:
+Album-art plumbing is therefore physically green and should not be changed casually.
 
-- lift the transport row upward by 4dp;
-- album art still absent / grey.
+## Current candidate: v0.10.6 focus outline
 
-## v0.10.5 remote-artwork candidate
+Version code 21 / `0.10.6-focus-outline`.
 
-Version code 20 / `0.10.5-remote-artwork`.
+User-requested visual change only:
 
-Visual change, manually judged only:
-- transport controls row top margin is 4dp instead of 8dp, lifting Prev / Rew / Play-Pause / Fwd / Next by exactly 4dp;
-- no other accepted layout geometry is intentionally changed.
+- keep every existing focus scale/pop animation;
+- add a **3dp cyan/blue focus border** to navigable items on HOME, Apps drawer and Launcher Settings;
+- HOME favourite banners keep the accepted no-black-plate behavior: their outline is attached to the artwork itself;
+- Apps drawer cards keep their existing selection plate and gain the outline around the card;
+- HOME action buttons, Now Playing controls, Now Playing artwork and Launcher Settings rows use the same outline;
+- one shared `FocusChrome` resolves Android `colorControlActivated` and supplies both the focus outline and the Now Playing progress fill, so they use the same runtime colour;
+- no accepted layout dimensions or focus scale values were intentionally changed.
 
-Artwork investigation/fix:
-- prior manager accepted MediaMetadata bitmap artwork and only local `content`, `file`, or `android.resource` artwork URIs;
-- HTTPS MediaMetadata artwork URIs were therefore discarded;
-- v0.10.5 adds a background `NowPlayingArtworkResolver` that accepts HTTPS ART_URI / ALBUM_ART_URI / DISPLAY_ICON_URI, caches results and republishes the selected snapshot when the image arrives;
-- network artwork is HTTPS-only, off the UI thread, with 4s connect / 6s read timeout, image MIME checking and a bounded cache;
-- manifest adds ordinary `android.permission.INTERNET` solely for optional remote cover artwork;
-- notification artwork fallback now accepts either a media-session token or Android `CATEGORY_TRANSPORT`, plus legacy/current large-icon and picture artwork forms;
-- MediaSession bitmap art remains first choice, then local/remote MediaMetadata URI art, with notification art as fallback;
-- notification title, body, messages and actions remain ignored.
+No automated appearance/focus test was added because Ryan explicitly owns real-device visual acceptance and BOOP_RULES forbids GitHub visual judging.
 
-## TDD / CI evidence
+## Verification / release receipt
 
-Remote-artwork policy RED:
-- test commit `1536be0b51a7f6e0db9d0cb71ae1aaf5e5fffc59` required local/HTTPS/unsupported URI classification and transport-notification classification;
-- production policy began at `337c43f86fb51c3dc731b9e9492ac7f18b6d87a5`;
-- async resolver `90afc531af2080f400f8adca2267d3b465ca059d`;
-- manager integration `c34472f96824aef258b22549d75087f981218874`;
-- 4dp transport lift `7d5503f1d94e66fb68d760044a89990fd958a6c7`;
-- transport notification artwork `99d973147685fc8331221d536109503af90e9fd6`;
-- INTERNET permission `00debabab01091031b511badad52996a116315f0`;
-- JVM Android-URI stub exposed one test-only mismatch; URI policy was made pure Java in `771682ce05eb5f7353a1560f8751465f8fa5a611`.
+A pre-release compile/functional pass on source through `44214b1dba68f9e5e609c5f6a89f48e9246c4014` passed the fast functional lane before version stamping.
 
-The corrected functional suite then passed. Final release source:
-- `102ea618935bb5a8c7b0fef14657ff3e75756262`
-- workflow `34286575434` SUCCESS
-- artifact `BOOP-Shield-Clean-Launcher`, ID `10079722116`
-- APK SHA-256 `01e4e81538f2c8048aeff930b7ef8b5838d85f7ea0d6e701b6d1e193b3b98363`
-- artifact ZIP SHA-256 `df875000340b08e936f8f867d9f59c6ed88224e808695283c3c6753796758458`
-- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
+Final v0.10.6 release:
 
-Final CI passed functional tests, signed assembly, exact package/code20/version, INTERNET manifest presence, protected HOME/Accessibility/Now Playing manifest checks, permanent signer verification, APK integrity and artifact upload. `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` remained active; no visual acceptance was run.
+- APK source: `7ff4e64a0cdb1ca02dd4b4af5391ba1095b2569d`
+- workflow: `34287673372` SUCCESS
+- artifact: `BOOP-Shield-Clean-Launcher`, ID `10080137191`
+- version: code 21 / `0.10.6-focus-outline`
+- APK SHA-256: `048ca7fa179c21b4f307774f07eb7eabb6eb706444b228fa4b32391a9c746ea1`
+- artifact ZIP SHA-256: `cedef689f8658a3d646579246c31fd6531246580e68c813610bfb4ab90d885cf`
+- permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-The downloaded artifact was independently unpacked: APK SHA matched CI exactly; `badging.txt` confirmed `com.boop.shieldhome`, code 20 / `0.10.5-remote-artwork`; signer matched the permanent BOOP certificate.
+Final CI passed functional tests, signed assembly, exact package/code21/version, protected manifest/service/resource checks, permanent signer verification, APK integrity and artifact upload. `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` remained active.
+
+The downloaded artifact was independently unpacked. Its APK SHA matched CI exactly; package `com.boop.shieldhome`, code 21 / `0.10.6-focus-outline` and the permanent signer were independently confirmed.
 
 ## Next physical gate
 
-Install/update v0.10.5 over the current launcher. No new special-access grant is needed for INTERNET. Skip to a fresh Deezer track and return HOME. The album-art square may populate shortly after HOME because HTTPS artwork is asynchronous. Check the exact 4dp-higher transport row.
+Install/update v0.10.6 and inspect focus while navigating:
 
-If album art is still grey, do not add more blind artwork fallbacks. Add only sanitized diagnostic evidence for MediaMetadata artwork fields and URI scheme/host, without logging notification text or personal content.
+1. HOME top buttons and optional action tiles;
+2. HOME favourite banners;
+3. Now Playing artwork / Open player / enabled transport controls;
+4. Apps drawer cards;
+5. Launcher Settings rows.
+
+Border should read as the same cyan/blue as the Now Playing progress bar and should add clarity without changing the accepted geometry or scale animation.
 
 Real Shield behavior is authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
