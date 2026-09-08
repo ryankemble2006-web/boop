@@ -42,4 +42,15 @@ public final class BoopWakeDiagnosticTraceTest {
                 "WAKE ASR PENDING +4500ms ready=100 begin=300 end=- partial=\"change name\" final=-",
                 trace.summary(7_500L));
     }
+
+    @Test public void terminalTraceRequiresAcknowledgementButPendingTraceDoesNot() {
+        BoopWakeDiagnosticTrace trace = new BoopWakeDiagnosticTrace(4_000L);
+        trace.ready(4_100L);
+
+        assertFalse(trace.requiresAcknowledgement());
+
+        trace.error(7, 4_600L);
+
+        assertTrue(trace.requiresAcknowledgement());
+    }
 }
