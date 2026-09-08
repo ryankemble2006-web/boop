@@ -21,13 +21,17 @@ class CleanStartBootContractTest(unittest.TestCase):
         manifest = ET.parse(MANIFEST).getroot()
         permissions = {p.get(ANDROID + "name") for p in manifest.findall("uses-permission")}
         self.assertIn("android.permission.RECEIVE_BOOT_COMPLETED", permissions)
-        self.assertNotIn("android.permission.FOREGROUND_SERVICE", permissions)
         app = manifest.find("application")
         receiver = next(r for r in app.findall("receiver") if r.get(ANDROID + "name") == ".cleanstart.CleanStartBootReceiver")
         self.assertEqual("false", receiver.get(ANDROID + "exported"))
         service = next(s for s in app.findall("service") if s.get(ANDROID + "name") == ".cleanstart.CleanStartJobService")
         self.assertEqual("false", service.get(ANDROID + "exported"))
         self.assertEqual("android.permission.BIND_JOB_SERVICE", service.get(ANDROID + "permission"))
+
+        clean_text = "\n".join(path.read_text() for path in SOURCE.glob("*.kt"))
+        self.assertNotIn("startForeground", clean_text)
+        self.assertNotIn("TurboThermalWatchdogService", clean_text)
+        self.assertNotIn("TurboBootReceiver", clean_text)
 
     def test_boot_job_is_bounded_and_never_requests_new_adb_approval(self):
         scheduler = (SOURCE / "CleanStartScheduler.kt").read_text()
