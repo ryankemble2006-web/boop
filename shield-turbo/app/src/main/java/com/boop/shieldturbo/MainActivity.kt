@@ -32,6 +32,8 @@ import com.boop.shieldturbo.model.ProbeResult
 import com.boop.shieldturbo.model.ProbeStatus
 import com.boop.shieldturbo.performance.CompactAnalysisReport
 import com.boop.shieldturbo.performance.PerformanceCapabilityProbe
+import com.boop.shieldturbo.performance.ProcessorModeActuatorProbe
+import com.boop.shieldturbo.performance.ProcessorModeActuatorReport
 import com.boop.shieldturbo.performance.ProcessorModeTrace
 import com.boop.shieldturbo.performance.ProcessorModeTraceProbe
 import com.boop.shieldturbo.performance.ProcessorModeTraceReport
@@ -52,6 +54,7 @@ class MainActivity : Activity() {
     private val ui = Handler(Looper.getMainLooper())
     private var scan: Future<*>? = null
     private var trace: Future<*>? = null
+    private var actuatorProof: Future<*>? = null
     private var generation = 0
     private var visible = false
     private var scanning = false
@@ -66,6 +69,7 @@ class MainActivity : Activity() {
     private lateinit var analyseButton: Button
     private lateinit var accessButton: Button
     private lateinit var processorTraceButton: Button
+    private lateinit var processorActuatorButton: Button
     private lateinit var freeSpaceButton: Button
     private lateinit var manageAppsButton: Button
     private lateinit var restartButton: Button
@@ -271,6 +275,15 @@ class MainActivity : Activity() {
             LinearLayout.LayoutParams(-1, dp(52)).apply { bottomMargin = dp(4) }
         )
 
+        processorActuatorButton = button(R.string.processor_actuator_proof).apply {
+            id = View.generateViewId()
+            setOnClickListener { showProcessorActuatorPrompt() }
+        }
+        content.addView(
+            processorActuatorButton,
+            LinearLayout.LayoutParams(-1, dp(52)).apply { bottomMargin = dp(4) }
+        )
+
         status = text(getString(R.string.ready), 15f, Color.LTGRAY).apply {
             id = R.id.analysis_status
             accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
@@ -315,10 +328,12 @@ class MainActivity : Activity() {
         analyseButton.nextFocusDownId = processorTraceButton.id
         accessButton.nextFocusDownId = processorTraceButton.id
         processorTraceButton.nextFocusUpId = analyseButton.id
-        processorTraceButton.nextFocusDownId = freeSpaceButton.id
-        freeSpaceButton.nextFocusUpId = processorTraceButton.id
-        manageAppsButton.nextFocusUpId = processorTraceButton.id
-        restartButton.nextFocusUpId = processorTraceButton.id
+        processorTraceButton.nextFocusDownId = processorActuatorButton.id
+        processorActuatorButton.nextFocusUpId = processorTraceButton.id
+        processorActuatorButton.nextFocusDownId = freeSpaceButton.id
+        freeSpaceButton.nextFocusUpId = processorActuatorButton.id
+        manageAppsButton.nextFocusUpId = processorActuatorButton.id
+        restartButton.nextFocusUpId = processorActuatorButton.id
 
         analyseButton.requestFocus()
         analyse()
@@ -495,6 +510,103 @@ class MainActivity : Activity() {
                 .setAction(BrightnessService.ACTION_APPLY)
                 .putExtra(BrightnessService.EXTRA_PERCENT, safe)
         )
+    }
+
+    private fun showProcessorActuatorPrompt() {
+        if (actuatorProof?.isDone == false || !visible || currentSection != TurboSection.TURBO) return
+        details?.dismiss()
+        details = AlertDialog.Builder(this)
+            .setTitle(R.string.processor_actuator_title)
+            .setMessage(R.string.processor_actuator_prompt)
+            .setNegativeButton(R.string.close, null)
+            .setPositiveButton(R.string.processor_actuator_run) { _, _ -> runProcessorActuatorProof() }
+            .show()
+    }
+
+    private fun runProcessorActuatorProof() {
+        if (actuatorProof?.isDone == false || !visible || currentSection != TurboSection.TURBO) return
+        processorActuatorButton.setText(R.string.processor_actuator_busy)
+        actuatorProof = worker.submit {
+            try {
+                val result = ProcessorModeActuatorProbe(applicationContext).runProof()
+                val report = ProcessorModeActuatorReport.format(result)
+                ui.post {
+                    actuatorProof = null
+                    if (::processorActuatorButton.isInitialized) {
+                        processorActuatorButton.setText(R.string.processor_actuator_proof)
+                    }
+                    if (visible && !isDestroyed && currentSection == TurboSection.TURBO) {
+                        showProcessorActuatorReport(report)
+                    }
+                }
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                ui.post { showProcessorActuatorFailure() }
+            } catch (_: Exception) {
+                ui.post { showProcessorActuatorFailure() }
+            }
+        }
+    }
+
+    private fun showProcessorActuatorFailure() {
+        actuatorProof = null
+        if (::processorActuatorButton.isInitialized) processorActuatorButton.setText(R.string.processor_actuator_proof)
+        if (!visible || isDestroyed || currentSection != TurboSection.TURBO) return
+        details?.dismiss()
+        details = AlertDialog.Builder(this)
+            .setTitle(R.string.processor_actuator_title)
+            .setMessage(R.string.processor_actuator_failed)
+            .setPositiveButton(R.string.close, null)
+            .show()
+    }
+
+    private fun showProcessorActuatorReport(report: String) {
+        analysisReport?.dismiss()
+        val reportBody = TextView(this).apply {
+            text = report
+            textSize = 9f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.MONOSPACE
+            includeFontPadding = false
+            setLineSpacing(0f, 0.95f)
+            setPadding(0, dp(2), 0, dp(4))
+        }
+        val reportScroll = ScrollView(this).apply {
+            isFillViewport = true
+            isFocusable = true
+            isFocusableInTouchMode = true
+            addView(reportBody, ViewGroup.LayoutParams(-1, -2))
+        }
+        val reportRoot = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.BLACK)
+            setPadding(dp(14), dp(7), dp(14), dp(7))
+            addView(TextView(this@MainActivity).apply {
+                setText(R.string.processor_actuator_report_title)
+                textSize = 13f
+                setTextColor(Color.CYAN)
+                setTypeface(typeface, Typeface.BOLD)
+                includeFontPadding = false
+            })
+            addView(TextView(this@MainActivity).apply {
+                setText(R.string.processor_actuator_report_subtitle)
+                textSize = 8f
+                setTextColor(Color.LTGRAY)
+                includeFontPadding = false
+            })
+            addView(reportScroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(3) })
+        }
+        val dialog = Dialog(this, android.R.style.Theme_Material_NoActionBar_Fullscreen)
+        dialog.setContentView(reportRoot)
+        dialog.setCancelable(true)
+        dialog.setOnDismissListener {
+            if (analysisReport === dialog) analysisReport = null
+        }
+        dialog.show()
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.black)
+        analysisReport = dialog
+        reportScroll.requestFocus()
     }
 
     private fun showProcessorTracePrompt() {
@@ -763,24 +875,26 @@ class MainActivity : Activity() {
             }
         }
         cards.forEachIndexed { index, card ->
-            card.nextFocusUpId = if (index == 0) processorTraceButton.id else cards[index - 1].id
+            card.nextFocusUpId = if (index == 0) processorActuatorButton.id else cards[index - 1].id
             card.nextFocusDownId = if (index == cards.lastIndex) freeSpaceButton.id else cards[index + 1].id
             results.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(4), 0, dp(4)) })
         }
         analyseButton.nextFocusDownId = processorTraceButton.id
         accessButton.nextFocusDownId = processorTraceButton.id
         processorTraceButton.nextFocusUpId = analyseButton.id
+        processorTraceButton.nextFocusDownId = processorActuatorButton.id
+        processorActuatorButton.nextFocusUpId = processorTraceButton.id
         if (cards.isNotEmpty()) {
-            processorTraceButton.nextFocusDownId = cards.first().id
+            processorActuatorButton.nextFocusDownId = cards.first().id
             val lastCardId = cards.last().id
             freeSpaceButton.nextFocusUpId = lastCardId
             manageAppsButton.nextFocusUpId = lastCardId
             restartButton.nextFocusUpId = lastCardId
         } else {
-            processorTraceButton.nextFocusDownId = freeSpaceButton.id
-            freeSpaceButton.nextFocusUpId = processorTraceButton.id
-            manageAppsButton.nextFocusUpId = processorTraceButton.id
-            restartButton.nextFocusUpId = processorTraceButton.id
+            processorActuatorButton.nextFocusDownId = freeSpaceButton.id
+            freeSpaceButton.nextFocusUpId = processorActuatorButton.id
+            manageAppsButton.nextFocusUpId = processorActuatorButton.id
+            restartButton.nextFocusUpId = processorActuatorButton.id
         }
         results.addView(text(getString(R.string.no_changes), 14f, Color.LTGRAY))
         val available = readings.count { it.status == ProbeStatus.AVAILABLE }
