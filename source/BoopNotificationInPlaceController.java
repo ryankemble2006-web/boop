@@ -16,20 +16,20 @@ import java.util.Set;
 final class BoopNotificationInPlaceController implements BoopNotificationHost {
     private final FrameLayout parent;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable timeoutRunnable;
     private View currentView;
-
-    private final Runnable timeoutRunnable = () -> {
-        hide();
-        try {
-            BoopNotificationRuntime.get(parent.getContext()).onPresentationDismissed();
-        } catch (RuntimeException ignored) {
-            // Android's source notification remains authoritative.
-        }
-    };
 
     BoopNotificationInPlaceController(FrameLayout parent) {
         if (parent == null) throw new IllegalArgumentException("parent required");
         this.parent = parent;
+        this.timeoutRunnable = () -> {
+            hide();
+            try {
+                BoopNotificationRuntime.get(this.parent.getContext()).onPresentationDismissed();
+            } catch (RuntimeException ignored) {
+                // Android's source notification remains authoritative.
+            }
+        };
     }
 
     @Override
