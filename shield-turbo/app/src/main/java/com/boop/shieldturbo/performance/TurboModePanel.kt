@@ -22,6 +22,7 @@ class TurboModePanel(private val activity: Activity) {
     private val worker: ExecutorService = Executors.newSingleThreadExecutor()
     private val ui = Handler(Looper.getMainLooper())
     private var operation: Future<*>? = null
+    @Volatile private var closed = false
     private val prefs = activity.getSharedPreferences("turbo_mode_ui", Activity.MODE_PRIVATE)
 
     val root = LinearLayout(activity).apply {
@@ -57,6 +58,7 @@ class TurboModePanel(private val activity: Activity) {
     }
 
     fun close() {
+        closed = true
         operation?.cancel(true)
         operation = null
         worker.shutdownNow()
@@ -64,7 +66,7 @@ class TurboModePanel(private val activity: Activity) {
     }
 
     private fun toggle() {
-        if (operation?.isDone == false) return
+        if (closed || operation?.isDone == false) return
         val snapshot = runtime.snapshot()
         if (snapshot.phase == TurboPhase.TURBO_VERIFIED && snapshot.desiredTurbo) {
             runDisable()
@@ -87,6 +89,7 @@ class TurboModePanel(private val activity: Activity) {
     }
 
     private fun runEnable() {
+        if (closed) return
         setBusy(true)
         operation = worker.submit {
             var outcome = runtime.enable()
@@ -102,6 +105,7 @@ class TurboModePanel(private val activity: Activity) {
     }
 
     private fun runDisable() {
+        if (closed) return
         setBusy(true)
         operation = worker.submit {
             val outcome = runtime.disable("Manual NORMAL")
@@ -113,7 +117,9 @@ class TurboModePanel(private val activity: Activity) {
     }
 
     private fun postOutcome(outcome: TurboOutcome) {
+        if (closed) return
         ui.post {
+            if (closed || activity.isFinishing || activity.isDestroyed) return@post
             operation = null
             render(outcome.snapshot)
             modeButton.isEnabled = true
