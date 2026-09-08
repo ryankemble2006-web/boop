@@ -2,6 +2,20 @@
 
 Updated 2026-09-08. Owner `boop-unified`, package `com.boop.alpha1`, permanent signer unchanged. Fresh main owns shared contracts; this handoff owns implementation/evidence.
 
+## New Shield blocker: UI progressively shrinks on reopening (2026-09-08)
+
+Ryan reports that each opening of BOOP on Shield makes its UI smaller, now unreadable. The installed APK/version has not been confirmed in this report, and whether other apps are affected has not yet been answered. Do not infer physical acceptance of v44 from this report.
+
+Read-only code investigation used live `boop-unified@acdbd8da221ba529718bba35948f83965a2882fc` and main `dd38cfc72eb5d00bc42121f88c633cb237805009`. Strong source-level causal match: `unified/UnifiedApplication.java` registers `onActivityPreCreated` for the Shield profile, reads the activity's CURRENT `resources.getConfiguration().densityDpi`, multiplies it by `SHIELD_UI_SCALE = 0.80f`, and calls `resources.updateConfiguration(...)`. When resources reuse that already-modified configuration, every subsequent activity creation reduces it again instead of applying a fixed target. `scripts/materialize-unified.sh` copies this application source into the built app. An ordinary Shield launch passes through multiple activities, so do not describe the rate as exactly one reduction per user opening.
+
+Arithmetic-only reproduction of the existing formula with a hypothetical initial density of 320: `320 -> 256 -> 205 -> 164 -> 131 -> 105 -> 84 -> 67 -> 54 -> 43 -> 34`. This confirms the compounding calculation, NOT an Android runtime or physical-device reproduction. The original APK on Ryan's Shield was not inspected via ADB.
+
+Next safe implementation: make Shield sizing idempotent, deriving its target from an unmodified baseline rather than repeatedly multiplying current resources. Preserve the intended one-time scale unless Ryan changes that requirement. Consider resource sharing and real display-configuration changes; do not change system-wide Shield density/resolution or unrelated phone/wake behaviour. Keep validation non-visual and focused on repeatability/state; Ryan remains the appearance/D-pad/device acceptance authority.
+
+Suggested temporary diagnostic only: manually force-stop BOOP from Android Settings, then reopen once. A fresh process may clear the accumulated in-memory resource changes, but the present code can reintroduce them. No force-stop, restart, installation, data clearing, permission grant or physical test was performed here. Do not clear BOOP's data or HA pairing to investigate this.
+
+This session changed documentation only to preserve the finding for concurrent work. No app-code fix, new build, signing change, wake-word change, automated visual check or Windows synchronization is claimed. Existing v44 code/artifact references below are unchanged; the shrinking regression is unresolved.
+
 ## Current result: signed v44 test candidate
 
 Built code `4044ee55b5a39e2a220ee897de0393b796c29a5f`, versionCode 44 / `1.1.1-unified-eyes-wake-home`. Workflow `34192698906`, job `101953848892`, completed successfully. Artifact `BOOP-Unified` / `10042812867` was downloaded and its ZIP digest, built commit and extracted APK checksum verified.
