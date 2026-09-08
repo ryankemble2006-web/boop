@@ -1,28 +1,33 @@
 # BOOP — start here
 
-Updated 2026-09-07. Repository: [ryankemble2006-web/boop](https://github.com/ryankemble2006-web/boop).
+Updated 2026-09-08. Repository: [ryankemble2006-web/boop](https://github.com/ryankemble2006-web/boop).
 
-## Canonical app branch
+## Canonical app branch and explicit standalone exception
 
-**Normal BOOP app development now starts on `boop-unified`.**
+**Normal BOOP app development starts on `boop-unified`.**
 
-Ryan chose one APK/one branch after separate Wall, Launcher and Shield lineages became operationally confusing. The first unified candidate was built from the exact latest live GitHub heads at merge time and keeps the permanent BOOP signer.
+Ryan chose one APK/one branch after separate Wall, Launcher and Shield lineages became operationally confusing. The unified AIO keeps package `com.boop.alpha1` and the permanent BOOP signer.
+
+**Explicit current exception:** the clean Nvidia Shield HOME replacement is deliberately being developed and physically tested as a standalone app first. It belongs to `boop-shield-clean-launcher`, package `com.boop.shieldhome`, and must not be merged into or used to update `com.boop.alpha1` until Ryan explicitly approves the later merge after Shield hardware testing.
 
 | Work | Branch | State |
 | --- | --- | --- |
-| Unified BOOP — Wall + Launcher + Shield | [boop-unified](https://github.com/ryankemble2006-web/boop/tree/boop-unified) | Canonical candidate, versionCode 41 / `1.0.0-unified-alpha1`; CI/signer green, physical unified acceptance pending. Read `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md`, `unified/SOURCE_HEADS.md`. |
+| Unified BOOP AIO: Wall + phone Launcher + existing Shield body | [boop-unified](https://github.com/ryankemble2006-web/boop/tree/boop-unified) | Canonical AIO lineage, package `com.boop.alpha1`. Read `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md`, `unified/SOURCE_HEADS.md`. |
+| Shield clean HOME standalone experiment | [boop-shield-clean-launcher](https://github.com/ryankemble2006-web/boop/tree/boop-shield-clean-launcher) | Standalone package `com.boop.shieldhome`; green signed v1 `0.1.0-standalone`; physical Shield acceptance required before later merge into AIO. Read that branch's `SESSION_HANDOFF.md` and `BOOP_STATUS.md`. |
 | Cross-project rules/context | main | Read `AGENTS.md`, `BOOP_CONTEXT.md`, this file. Main is the context hub, not the built app. |
 
 ## Unified routing contract
 
-One package, `com.boop.alpha1`, contains all three bodies:
+One AIO package, `com.boop.alpha1`, contains the established unified bodies:
 
-- Android TV / Leanback / television mode -> Shield body.
+- Android TV / Leanback / television mode -> existing Shield BOOP body.
 - Pixel 7 Pro -> Wall body.
 - Other handheld Android devices, including Pixel 10 Pro XL -> Launcher body.
 - An internal persistent override exists for recovery/debugging; normal use is automatic.
 
-Wall remains the final app core so the unified APK keeps Wall's package/signing lineage. Launcher and Shield are compiled as internal modules. Wall-to-Launcher and Launcher-to-Wall are internal activity transitions rather than separate-package launches.
+The standalone clean Shield HOME is **not** an internal AIO route at this stage. Current unified `ShieldEntryRoute` keeps Shield HOME and ordinary Shield launches on `com.boop.shieldoverlay.MainActivity`. The standalone package becomes a HOME candidate only when separately installed and explicitly selected through Android's supported HOME chooser.
+
+Wall remains the AIO app core so the unified APK keeps Wall's package/signing lineage. Launcher and existing Shield body are compiled as internal modules. Wall-to-Launcher and Launcher-to-Wall are internal activity transitions rather than separate-package launches.
 
 Initial unified build receipt:
 - build head `bb4797de5005952d0d27a6647ea17c15781b76f7`;
@@ -30,11 +35,23 @@ Initial unified build receipt:
 - artifact `BOOP-Unified`, ID `10011710184`;
 - APK SHA-256 `62ccac0b767fc7005bfeb0eae013f0bad42ad7db7eeeecf054ad42da949f9aba`.
 
-CI/signer green is not physical green. Do not mark unified BOOP accepted until Ryan tests the relevant real devices.
+CI/signer green is not physical green. Do not mark unified BOOP or the standalone Shield launcher physically accepted until Ryan tests the relevant real device.
+
+## Current standalone Shield clean launcher receipt
+
+- Branch: `boop-shield-clean-launcher`
+- Package: `com.boop.shieldhome`
+- Green build head: `d6e775de68f0f19661736abff6c0432e25320196`
+- Version: 1 / `0.1.0-standalone`
+- Workflow: `34217924617` SUCCESS
+- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10052578743`
+- APK SHA-256: `374d86419abbc3aca367f79d2a13e36667ab41e8f975dc3f9b1b12f89ca26c68`
+
+The locked product rule is: **remove the crap, preserve Shield behavior**. Physical acceptance must preserve double-tap Home -> Recent Apps/task switcher, Back, volume/CEC, Nvidia/Android Settings, system remote shortcuts, app switching and system animations. Stock launcher remains installed as recovery.
 
 ## Exact source heads used for first unification
 
-Fetched live immediately before integration:
+Fetched live immediately before initial integration:
 
 - Wall: `boop-wall-native-chat-eye-hue@a28364f98fba1b3a5dbab7e66075c0fb166e08e3`.
 - Launcher: `boop-launcher-alpha2@953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2`.
@@ -44,7 +61,7 @@ The exact receipt also lives in `boop-unified/unified/SOURCE_HEADS.md`.
 
 ## Historical/reference branches
 
-The old branches are deliberately retained for rollback, provenance and comparison. They are **not** the normal starting point for new features after unification unless Ryan explicitly asks to work on a historical lineage.
+Old branches are deliberately retained for rollback, provenance and comparison. They are not the normal starting point for new features after unification unless Ryan explicitly asks to work on a historical lineage.
 
 | Historical work | Branch | Important retained evidence |
 | --- | --- | --- |
@@ -64,22 +81,26 @@ Do not delete, force-update or repoint old checkpoints merely because unified BO
 
 ## Migration boundary
 
-The unified APK keeps package `com.boop.alpha1`, so current Wall installs have the cleanest in-place update path. Existing standalone Launcher (`com.boop.launcher`) and Shield (`com.boop.shieldoverlay`) are different Android packages. Their private app data, HOME/default-launcher selection and Shield special-access grants do not automatically transfer to `com.boop.alpha1`; expect one-time setup/reselection when unified BOOP is first physically tested on those devices.
+The AIO APK keeps package `com.boop.alpha1`. The standalone clean Shield launcher uses `com.boop.shieldhome`, so it installs separately and does not overwrite AIO. Its private state and HOME selection are also separate. A later merge is an intentional source/product merge after physical acceptance, not an Android in-place update from the standalone package.
+
+Existing historical standalone Launcher (`com.boop.launcher`) and Shield (`com.boop.shieldoverlay`) packages remain different from AIO as well; their private app data and special-access grants do not automatically transfer to `com.boop.alpha1`.
 
 ## Release discipline
 
-- One canonical APK lineage on `boop-unified`.
+- AIO remains the canonical BOOP product lineage on `boop-unified`.
+- The user-approved `boop-shield-clean-launcher` branch is a temporary standalone validation lane, not a second AIO lineage.
 - One intentional functional change per version whenever practical.
 - Physical acceptance creates the rollback checkpoint: exact Git commit/tag + workflow run + signed artifact + physical result.
 - If a candidate breaks, return to the exact last accepted checkpoint/artifact. Never guess from a filename or merely choose the previous version number.
-- GitHub is the archive. After a replacement build is accepted, deployment folders keep current signed `BOOP.apk` and optionally one last-good APK; remove superseded local clutter.
+- GitHub is the archive. After a replacement build is accepted, deployment folders keep current signed APKs and optionally one last-good APK; remove superseded local clutter.
 
 ## Starting any BOOP task
 
 1. Read `main/AGENTS.md`, `main/BOOP_CONTEXT.md`, and this map.
-2. For normal app work fetch the live `boop-unified` head and read its `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` and `unified/SOURCE_HEADS.md`.
-3. Preserve concurrent/dirty work and fetch again before pushing. No force pushes or silent overwrites.
-4. Current user instructions and fresh physical-device evidence override stale dated notes.
-5. CI-green, signed and physically accepted are separate verification levels.
+2. For normal AIO work fetch the live `boop-unified` head and read its `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` and `unified/SOURCE_HEADS.md`.
+3. For the clean Shield HOME experiment use live `boop-shield-clean-launcher`, read its handoff/status, and keep package `com.boop.shieldhome` separate until Ryan explicitly approves merge.
+4. Preserve concurrent/dirty work and fetch again before pushing. No force pushes or silent overwrites.
+5. Current user instructions and fresh physical-device evidence override stale dated notes.
+6. CI-green, signed and physically accepted are separate verification levels.
 
 When Ryan says `update memory`, treat it as documentation synchronization only unless he separately asks for code changes.
