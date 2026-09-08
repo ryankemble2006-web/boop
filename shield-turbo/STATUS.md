@@ -4,36 +4,30 @@ Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
 ## Physical state
 
-CLEAN START's force-stop/read-back core is physically accepted from earlier Shield tests. Stale Recents/task-manager cards can remain after force-stop, while the apps themselves are not loaded and reload only when focused. Normal deliberate launch still works.
+CLEAN START's force-stop/read-back core remains physically accepted from earlier Shield tests. Stale Recents/task-manager cards can remain after force-stop while the apps themselves are unloaded and reload only when focused. Normal deliberate launch still works.
 
-Latest v0.5.4 physical result: **no static startup sign**, but the v0.5.3 slowdown was removed. Ryan had Shield navigation control again within roughly **one second**. Treat v0.5.4 as physically positive for fast fail-open/navigation responsiveness and negative for notice visibility. The latest v0.5.4 report did not separately re-check target stopped state, so do not invent v0.5.4-specific cleanup acceptance.
+Latest real-device notice evidence came from v0.5.5: the sign remained invisible, while CLEAN START reported `permission=yes`, `window=DISPLAY_WINDOW_CONTEXT`, `add=ADDED`, `present=DRAWN`, about `54ms`. This proved the old draw callback was a false-positive presentation signal, not proof of compositor delivery.
 
-Presentation history: v0.5.1 flashed only at the end; v0.5.2 showed nothing; v0.5.3 showed nothing and stretched Turbo to almost eight seconds; v0.5.4 still showed nothing but restored fast control. No arbitrary timing tweak should be attempted again without diagnostic evidence.
-
-Earlier physical evidence retained: bedroom brightness works; corrected STANDARD maintenance items are selectable; Developer Options opens; v0.4.1 Startup Manager menu and normal manual Kodi launch work. The old v0.4 app-op startup restriction failed. Display & Sound and Accessibility remain parked.
+Presentation history: v0.5.1 flashed only at the end; v0.5.2 showed nothing; v0.5.3 showed nothing and stretched Turbo to almost eight seconds; v0.5.4 showed nothing but restored fast navigation within roughly one second; v0.5.5 showed nothing and exposed the `DRAWN` false-positive.
 
 ## Current candidate
 
-**v0.5.5 / code 12** is signed and machine-verified. Exact built source `e22beecbaa9d95aeab036ae403684a32a7a33979`.
+**v0.5.6 / code 13** is signed and machine-verified. Exact built source `5870742c83b193251b323a48e12b0ef6c5b8b5ad`.
 
-v0.5.5 keeps v0.5.4's Android 11+ display-bound overlay window context and **500 ms max fail-open**. It does not add another delay or rendering trick. Instead it persists the boot notice lifecycle result locally and displays it in CLEAN START as:
+v0.5.6 requests a hardware-accelerated overlay and, on Android 10+, waits until the view is attached before registering `registerFrameCommitCallback`. `DRAWN` no longer counts as presentation on Android 10+; only `FRAME_COMMITTED` does. Pre-Android-10 keeps the OnDraw fallback. The 500 ms fail-open remains unchanged, so a failed notice cannot recreate v0.5.3's long slowdown.
 
-`STARTUP NOTICE DIAGNOSTIC: permission=... • window=... • add=... • present=... • ...ms [detail]`
+A concurrent evidence improvement is also preserved: failed trusted boot ADB now records the actual exception class/message and CLEAN START can show `LAST CLEAN START DETAIL:`. Cleanup targets, force-stop/read-back semantics, trusted ADB, current-app skip and 30/60/120-second max-three scheduler are unchanged.
 
-The diagnostic records overlay permission, window-context mode, addView result, draw/frame-commit/timeout state, elapsed time and a short failure detail. It is saved before ADB cleanup begins. CLEAN START targets, force-stop/read-back semantics, trusted ADB, current-app skip and 30/60/120-second max-three scheduler remain unchanged.
+## Exact v0.5.6 verification
 
-The next real-Shield reboot must determine the cause. Machine checks must not be described as visual acceptance.
+Run `34230235524`, job `102074235862`, conclusion **success**. **68 JVM tests passed**, source/API/security contracts passed, lint **0 errors / 24 warnings**, permanent signer/package/version/archive checks passed, and nonvisual cold/warm launch/no-fatal smoke passed.
 
-## Exact v0.5.5 verification
+Signed artifact `10057548249`, ZIP `765636` bytes, SHA-256 `1c601a47fd94d002f8a4e5d5722444dc81f256057fe444cd86e16223d560a4c3`. Test artifact `10057598695`, ZIP `106686` bytes, SHA-256 `ed2d1f902e577a538c5fe8d041c79fc4c30f75930eb7780fcc0c2902a03e9c4a`.
 
-Run `34226811605`, job `102062828791`, conclusion **success**. 68 JVM tests passed with zero failures/errors/skips; source/API/security contracts passed; lint **0 errors / 24 warnings**; permanent signer/package/version/archive checks passed; nonvisual cold/warm launch/no-fatal smoke passed.
+Delivered APK `Shield-Turbo-v0.5.6.apk`, `2330594` bytes, SHA-256 `e462db094cf3f09fa4815949b492ed85f0fa12a57a53635951ce875c8c48cd78`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Signed artifact `10056167964`, ZIP `764873` bytes, SHA-256 `85cb44b357b5c7979e3e719ac4b55088a6e8c860774c51047c40dcb0d9391340`. Test artifact `10056218423`, ZIP `96072` bytes, SHA-256 `f6fd08f62ccacd0f22baee16cae71357e29319f4b6d7603808e019a834537e25`.
-
-Delivered APK `Shield-Turbo-v0.5.5.apk`, `2328962` bytes, SHA-256 `40323820eda72df3592fc756a2b30ee15816cc8633a3e577ade65b5475d7b77f`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-
-Downloaded artifact ZIP digest matched GitHub; APK digest and built-source receipt matched; the APK v2 signing block was independently parsed and matched the permanent BOOP certificate. **No GitHub visual confirmation ran.** Ryan owns real-device appearance/timing/motionlessness acceptance.
+Downloaded artifact digests, APK digest, built-source receipt and package/version receipt all matched. The APK v2 signing block was independently parsed and matched `CN=BOOP Development,O=BOOP` and the permanent certificate. **No GitHub visual confirmation ran.** Ryan owns real-device appearance/timing/motionlessness acceptance.
 
 ## Next test
 
-Install v0.5.5, reboot, open CLEAN START and report the exact diagnostic line plus sign visibility, navigation responsiveness and whether selected Kodi forks are stopped.
+Install v0.5.6, reboot, then report sign visibility, navigation responsiveness, exact `STARTUP NOTICE DIAGNOSTIC:` line, and whether the selected Kodi forks are stopped. Android 10+ success should say `present=FRAME_COMMITTED`; do not add arbitrary timing delays if it does not.
