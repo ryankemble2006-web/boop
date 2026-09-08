@@ -7,6 +7,7 @@ import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -20,6 +21,7 @@ import android.widget.TextView;
 /** Remote-first Now Playing card. It owns only media UI and never rerenders launcher rows. */
 public final class ShieldNowPlayingView extends FrameLayout {
     private static final long PROGRESS_TICK_MS = 500L;
+    static final int MASCOT_BAY_DP = 230;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ImageView artwork;
@@ -99,12 +101,16 @@ public final class ShieldNowPlayingView extends FrameLayout {
         titleRow.addView(textStack, new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
 
         title = text(24, Color.WHITE);
-        title.setMaxLines(1);
-        textStack.addView(title, wrap());
+        title.setSingleLine(true);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        textStack.addView(title, new LinearLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         subtitle = text(18, Color.LTGRAY);
-        subtitle.setMaxLines(1);
-        LinearLayout.LayoutParams subtitleParams = wrap();
+        subtitle.setSingleLine(true);
+        subtitle.setEllipsize(TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         subtitleParams.topMargin = dp(2);
         textStack.addView(subtitle, subtitleParams);
 
@@ -112,8 +118,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
         sourceButton.setOnClickListener(v -> {
             if (callbacks != null) callbacks.onOpenNowPlayingSource();
         });
-        LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(142), dp(46));
-        sourceParams.leftMargin = dp(16);
+        LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(130), dp(44));
+        sourceParams.leftMargin = dp(12);
         titleRow.addView(sourceButton, sourceParams);
 
         stateLabel = text(14, Color.LTGRAY);
@@ -157,6 +163,15 @@ public final class ShieldNowPlayingView extends FrameLayout {
         addControl(controls, playPauseButton);
         addControl(controls, fastForwardButton);
         addControl(controls, nextButton);
+
+        // The launcher-owned headphones puppet is a separate non-focusable view layered by the
+        // activity. Reserve identical physical space here so controls/text never draw beneath it.
+        View mascotBay = new View(context);
+        mascotBay.setFocusable(false);
+        mascotBay.setClickable(false);
+        mascotBay.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        row.addView(mascotBay, new LinearLayout.LayoutParams(
+                dp(MASCOT_BAY_DP), LayoutParams.MATCH_PARENT));
 
         setVisibility(GONE);
     }
@@ -221,8 +236,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
     }
 
     private void addControl(LinearLayout row, TextView button) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(92), dp(48));
-        params.rightMargin = dp(10);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(78), dp(48));
+        params.rightMargin = dp(8);
         row.addView(button, params);
     }
 
@@ -240,7 +255,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         view.setGravity(Gravity.CENTER);
         view.setFocusable(true);
         view.setClickable(true);
-        view.setPadding(dp(10), dp(5), dp(10), dp(5));
+        view.setPadding(dp(8), dp(5), dp(8), dp(5));
         view.setBackground(buttonBackground());
         installFocusPop(view);
         return view;
