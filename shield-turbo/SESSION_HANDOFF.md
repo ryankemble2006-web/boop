@@ -19,7 +19,7 @@ The four `persist.vendor.sys.phs.*` values remain read-only NVIDIA evidence and 
 
 v0.5.12 first exposed an `Unexpected ADB stream` transport failure. That was reproduced in `AdbWireStreamLifecycleTest` and fixed narrowly in commit `1b632e09706652d2f2802c6ca4bb28963d9e7685`: only stale `OKAY`, `WRTE`, or `CLSE` packets for older positive stream IDs are ignored. Current, future, and invalid stream IDs still fail closed.
 
-Ryan then physically ran the v0.5.13 one-shot actuator proof on the real Shield. It **PASSED**:
+Ryan then physically ran the v0.5.13 one-shot actuator proof on the real Shield. It PASSED:
 
 - baseline Optimized: `mode=1 cpu=0 gpu=0 frt=0 min=15`;
 - request Max using only `settings put system nv_power_mode 0`;
@@ -28,7 +28,7 @@ Ryan then physically ran the v0.5.13 one-shot actuator proof on the real Shield.
 - final Optimized verified: `mode=1 cpu=0 gpu=0 frt=0 min=15`;
 - `DIRECT VENDOR WRITES • NONE`.
 
-Durable result: `system:nv_power_mode` is now a physically accepted stock performance actuator for persistent TURBO v1. Mapping is `1=Optimized`, `0=Max performance`. Vendor boost properties remain evidence only.
+Durable result: `system:nv_power_mode` is a physically accepted stock performance actuator. Mapping is `1=Optimized`, `0=Max performance`. Vendor boost properties remain evidence only.
 
 ## Persistent TURBO v1 implementation
 
@@ -65,18 +65,18 @@ TDD receipt:
 
 Durable rule: UI lifecycle must never interrupt an in-flight performance transaction.
 
-## Current machine-verified physical-test candidate
+## Physically accepted v0.6.0 checkpoint
 
 **v0.6.0 / versionCode 21**
 
 Exact release source:
 `87feccaeba1c2c5fa2044aeeb572fad947aa985c`
 
-Final workflow:
+Machine verification:
 
-- run `34280026842`, job `102242293277`, conclusion **success**;
-- JVM tests: **101 passed**, 0 failures/errors/skips;
-- source/API/security contracts: **62 passed**;
+- run `34280026842`, job `102242293277`, conclusion success;
+- JVM tests: 101 passed, 0 failures/errors/skips;
+- source/API/security contracts: 62 passed;
 - Android lint completed successfully with warnings only;
 - package `com.boop.shieldturbo`, versionCode 21, versionName 0.6.0, Leanback launchable;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, DN `CN=BOOP Development, O=BOOP`;
@@ -89,9 +89,18 @@ Final workflow:
 - no package `FATAL EXCEPTION` was found;
 - no screenshot, golden-image, UI hierarchy, or visual acceptance automation ran.
 
-The downloaded artifact was independently extracted in-chat and its APK SHA-256, ZIP integrity, built commit, package/version, and signer sidecars match CI.
+Physical acceptance on the real Shield:
 
-**v0.6.0 is machine verified. Persistent TURBO itself is not physically accepted yet.**
+1. Ryan started with NVIDIA Processor Mode Optimized and enabled TURBO from the app. Shield settings switched to Max performance.
+2. The app physically displayed `TURBO MODE: ON`, `Processor mode: Max performance verified`, `Thermal state: NONE`, and `Watchdog: ON`.
+3. Ryan rebooted the Shield with TURBO armed. Without pressing the TURBO button again, the app returned showing TURBO ON and `Last change: TURBO retained after reboot`. This proves the persisted desired state, boot receiver, foreground watchdog service, thermal pre-check, trusted local ADB path, and retain/reapply flow executed successfully on hardware.
+4. Ryan then turned TURBO OFF and confirmed NVIDIA Processor Mode returned to Optimized.
+
+**Persistent TURBO v0.6.0 is physically accepted for its normal enable, reboot persistence/watchdog startup, and manual NORMAL restore path.**
+
+## Thermal fallback boundary
+
+The SEVERE-or-higher watchdog fallback remains machine-tested, not physically heat-tested. Do not intentionally overheat the Shield to validate it. If further evidence is needed, add a safe injected/test path that exercises the same controller transition without thermal stress.
 
 ## Existing locks
 
@@ -99,18 +108,8 @@ Preserve the physically accepted CLEAN START current-user force-stop plus verifi
 
 Never direct-write `persist.vendor.sys.phs.cpufreq.boost`, `gpufreq.boost`, `frt.boost`, or `frt.min`. Never add root, voltage, thermal-disable, above-stock clocks, arbitrary sysfs performance writes, or bootloader/kernel changes without an entirely new approved design and physical evidence boundary.
 
-## Next physical acceptance step
+## Next safe step
 
-On the real Shield:
-
-1. Start from NVIDIA Processor Mode **Optimized** so the expected original state is known.
-2. Install v0.6.0.
-3. Open TURBO and select `TURBO MODE: OFF`; accept the first-enable explanation.
-4. Verify the panel becomes `TURBO MODE: ON`, Processor mode reports Max performance verified, and Watchdog reports ON.
-5. Reboot the Shield and verify TURBO returns ON without a fresh enable prompt and the watchdog is active.
-6. Turn TURBO OFF and verify the exact original Optimized state is restored.
-7. Do not intentionally overheat hardware to test SEVERE fallback. Exercise that later through a safe injected/test path.
-
-Return photos/screenshots for enable, post-reboot persistence, and final NORMAL restore. Only then mark persistent TURBO physically accepted.
+Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the persistent TURBO rollback checkpoint. Any next performance expansion must preserve this exact accepted path and add one independently proven stock control at a time.
 
 `main` remains separate at `4b0ab90abbad9c48dabd25b6a9ea002cdad18375`.
