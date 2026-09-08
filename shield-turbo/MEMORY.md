@@ -1,51 +1,47 @@
 # SHIELD TURBO durable decisions
 
-Updated 2026-09-08. SESSION_HANDOFF.md owns current evidence and exact receipts; STATUS.md is the concise verification view. New user evidence overrides dated pending-test notes.
+Updated 2026-09-08. SESSION_HANDOFF.md owns exact current evidence/receipts; STATUS.md is the concise view. Fresh physical evidence overrides old pending-test notes.
 
 ## Identity and continuity
 
-Independent utility `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`; not the unified BOOP body. Keep changes scoped to Turbo and its workflow. Use connected GitHub tools in chat when available. Check live main and Turbo heads before publication, preserve concurrent work, never force-push, and verify live remote HEAD afterward. GitHub publication is not Windows synchronization or device deployment.
+Independent utility `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`; not unified BOOP. Keep work scoped to Turbo and its workflow. Check live Turbo and main heads before publication, preserve concurrent work, never force-push, and verify remote HEAD afterward. GitHub publication is not Windows synchronization or Shield deployment.
 
-Use only the established secret-backed `boop-dev` signer. Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Never replace/expose it or publish private ADB/device material.
+Use only the established secret-backed `boop-dev` signer. Certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-## User goal and physical evidence
+## Physical CLEAN START decision
 
-Ryan has four Kodi forks he does not want lingering after Shield boot. He wants only required Shield/Android functionality active by default, with optional apps available for deliberate manual use. He specifically confirmed the forks remain in the Shield task manager under the old v0.4 restriction and that swiping/force-closing them noticeably speeds the Shield. Do not ask again whether this was merely an App Info Force Stop button.
+Ryan has four Kodi forks he does not want lingering after boot. The old v0.4 app-op mechanism failed and manual swipe/force-close noticeably improved Shield performance. v0.5.0 replaced that with real force-stop/read-back CLEAN START.
 
-Physically confirmed behavior: bedroom brightness, corrected STANDARD maintenance selectability, Developer Options, v0.4.1 Startup Manager menu, normal manual Kodi launch. v0.4 app-op startup suppression failed acceptance. Display & Sound and Accessibility remain parked.
+Ryan physically reported v0.5.0 appears to have beaten the startup problem. Treat that as current positive functional evidence, while avoiding broader claims about untested system-app cleanup or universal startup interception. The observed cost is a noticeable roughly three-second Home-screen freeze while CLEAN START executes.
 
-## CLEAN START is the current mechanism
+## Static startup indicator lock
 
-v0.5.0/code 7 introduces CLEAN START. Exact built source is `6f89c0d90fb08e7ef723226b10d33f45d6468f34`; physical acceptance is pending.
+Ryan explicitly requires user feedback during that pause and **no movement whatsoever**. v0.5.1/code 8 implements one static top-centre application overlay during the automatic CLEAN START job. Text is `SHIELD TURBO · CLEAN START` and `Tidying startup apps`.
 
-`STOP + VERIFY NOW` uses current-user ADB `am force-stop` on one validated selected package and verifies package processes are absent, Android's stopped state is true, and the package remains enabled. Do not treat command exit, a saved preference or a task card as equivalent verification.
+The indicator must remain non-focusable and non-touchable. No spinner, pulse, fade, slide, countdown, moving dots, animation, repeated layout updates or focus effects. It appears, remains fixed, then disappears. If overlay permission is unavailable, the cleanup must continue normally without it.
 
-CLEAN START membership is a private reviewed target list. Manual group cleanup and optional AUTO CLEAN START use that list. Only eligible non-system user apps can be targets; existing PowerPolicy exclusions protect BOOP, Android, NVIDIA, Google core and system/updated-system packages. Never broaden to blanket system killing merely to maximize free RAM.
+The indicator is presentation-only. Do not alter the working CLEAN START scheduler or targeting to accommodate it. Current attempts remain ~30/60/120 seconds after boot, max 3; no periodic/resident cleaner. The static card is shown only while an actual automatic job attempt is executing, not during the waiting delay before the job.
 
-AUTO CLEAN START is opt-in. The app now intentionally has RECEIVE_BOOT_COMPLETED plus a non-exported receiver and non-exported JobService. It is a bounded one-shot cleanup, not a contradiction of the no-resident-cleaner rule: attempts occur at about 30s, 60s and 120s, maximum 3, then stop. No periodic job, foreground service, boot-time polling daemon or indefinite retry.
+v0.5.1 visual placement/appearance and actual real-device motionlessness are not physically accepted until Ryan tests the real Shield. GitHub must never certify those visuals.
 
-Boot cleanup may use only the already-trusted loopback ADB key through `withTrustedAdb`. It must never trigger a fresh RSA approval prompt. ADB unavailable/untrusted means NOT_APPLIED and bounded retry/final failure, never a false success.
+## CLEAN START mechanism and safety retained
 
-The currently resumed app is skipped. **Background-only media playback is not separately detected in v0.5.0**, so do not claim all active playback is protected. If Ryan needs that after physical CLEAN START testing, add explicit media-session/playback protection in a later reviewed pass.
+`STOP + VERIFY NOW` uses current-user ADB `am force-stop` for one validated selected package, then verifies no matching processes remain, Android stopped state is true, and the package remains enabled. CLEAN START targets are a private reviewed list.
 
-Post-boot cleanup is not startup interception. Optional apps may execute briefly before cleanup. Deliberate manual launch releases force-stopped state. Do not promise universal manual-launch-only enforcement on stock Shield, and do not silently escalate to root, device-owner provisioning, modified third-party APKs or automatic HARD BLOCK.
+AUTO CLEAN START is opt-in and bounded. Boot cleanup uses only the already-trusted loopback ADB key through `withTrustedAdb`, never a fresh RSA approval. Current resumed app is skipped. Background-only playback is not separately detected. CLEAN START is post-boot cleanup, not guaranteed pre-execution interception; deliberate manual launch releases stopped state.
 
-Each automatic run records bounded per-app outcomes: STOPPED, SKIPPED_IN_USE, FAILED or NOT_APPLIED. Use these results to distinguish ADB unavailability from an app that is successfully stopped and later relaunched.
+Only eligible non-system user apps are targets. Preserve BOOP/Android/NVIDIA/Google-core/system exclusions. Do not broaden to blanket system killing just to maximize free RAM. HARD BLOCK remains separate and explicit. Preserve old StartupLedger undo records.
 
-## Rollback and safety
+No `pm clear`, uninstall, cache/login/data deletion, broad kill-all, rooting, device-owner/bootloader work, third-party re-signing, overclocking or fake RAM score. Keep local ADB loopback-only and its private key in `noBackupFilesDir`.
 
-The old v0.4 StartupLedger and original-state records are preserved so prior app-op/hard-block changes remain undoable. First original state wins; verify restore before deleting records; retain failed entries. CLEAN START target removal itself does not mutate package state. HARD BLOCK remains a separately confirmed package disable and must never be the default/hidden fallback.
+Keep physically proven brightness behavior, APPS direct launch, labels, Cancel/Back and other accepted controls. Display & Sound and Accessibility remain parked.
 
-No `pm clear`, uninstall, cache/file/login removal, broad kill-all, rooting, bootloader work, overclocking or fake RAM/performance score. Force-stop cannot restore interrupted playback or unsaved work.
+## Testing and latest receipt
 
-Local ADB remains loopback port 5555 only with the per-install key in `noBackupFilesDir`; it is separate from the APK signer. Initial Network Debugging and RSA approval belong to the user. No LAN scanning, listening server or persistent shell.
+Ryan owns all real-device visuals and remote acceptance. Never add GitHub screenshots, UI hierarchy dumps, golden/image/layout/focus/appearance/motion judgment or source-string visual certification. Allowed gates are functional/API/protocol/security tests, compilation, lint, signer/package/archive integrity and basic nonvisual crash smoke.
 
-Keep the proven 10-100% brightness overlay and non-exported BrightnessService unchanged; 100% removes the overlay. Keep normal APPS direct launch, real app labels, Cancel/Back behavior and other physically accepted controls.
+Latest candidate: v0.5.1/code 8, source `99c90a63a17f4a3a72b561e2c7ed3792deb41649`, run `34215598324`, job `102026489736`, success; **68 JVM tests, 21 source/security contracts, lint 0 errors/24 warnings**. Signed artifact `10051719431`, ZIP SHA-256 `2d3b9a3bd5bd04d338c5c553b3ddea9f7734af651e53477dedac14952fa688a1`; tests artifact `10051766008`, SHA-256 `8ea98b5550ab000878fb0cfbe7fce005461925b46ab33f076fda3dd643ca39b5`. APK `Shield-Turbo-v0.5.1.apk`, 2316998 bytes, SHA-256 `0b92436b50ac8cb94d3d17855a13d203c4c48bda3a7727c55f5c1167dc74de3c`. Permanent signer as above. Nonvisual install/cold/warm launch/no-fatal smoke passed. No visual tests ran.
 
-## Testing and delivery
+TDD indicator receipt: RED `b9556bc1409fd11f53fd786198acb46efdfa7d73`; GREEN implementation `8e28cde4fea25a64e3c32cb5972dbb1b65af5941`; release `99c90a63a17f4a3a72b561e2c7ed3792deb41649`.
 
-Ryan owns all real-device visuals and remote acceptance. Never add GitHub screenshots, UI hierarchy dumps, golden/image/layout/focus/animation judgment or source-string appearance certification. Allowed gates are focused logic/API/protocol/security tests, compilation, lint, package/signer/archive integrity and basic nonvisual crash smoke. Machine green never equals real-Shield CLEAN START acceptance.
-
-Latest candidate receipt: v0.5.0/code 7, source `6f89c0d90fb08e7ef723226b10d33f45d6468f34`, run `34211569892`, job `102013555053`, success; 68 JVM tests, 18 source/security contracts, lint 0 errors/22 warnings. Signed artifact `10050102992`, ZIP SHA-256 `344e42969ec61c20dfda1da5748d3468024daeebadac3dd59b27067e8dddb59c`; tests artifact `10050154988`, SHA-256 `0c2916b5c435bcb0737b696f99c3b2ab4357854ba6135ce455b74e0cf6774624`. APK `Shield-Turbo-v0.5.0.apk`, 2314138 bytes, SHA-256 `a7b8e25ea73e69976244a706abe301ad2e92b585d420a061480b6a1c760c2145`. Permanent signer SHA-256 as above. Nonvisual install/cold/warm launch/no-fatal smoke passed. No visual checks ran.
-
-Historical v0.4.1 physical failure and exact prior receipts remain in Git history at `d64d51db1fd6b7201429ce484be3e93973ff622c:shield-turbo/SESSION_HANDOFF.md`; older TDD receipts remain at `776560b2a7060e612d6ddfa2cd22d29ab2cdee89`. Do not repoint checkpoints.
+Historical evidence remains in Git history; do not repoint old checkpoints.
