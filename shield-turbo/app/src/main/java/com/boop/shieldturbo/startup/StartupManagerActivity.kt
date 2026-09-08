@@ -299,8 +299,14 @@ class StartupManagerActivity : Activity() {
         return "CLEAN START finished: $stopped stopped + verified, $skipped skipped because in use, $failed failed/not applied."
     }
 
-    private fun lastSummaryLine(summary: CleanStartSummary): String =
-        "LAST CLEAN START: ${summaryMessage(summary).removePrefix("CLEAN START finished: ")}"
+    private fun lastSummaryLine(summary: CleanStartSummary): String {
+        val base = "LAST CLEAN START: ${summaryMessage(summary).removePrefix("CLEAN START finished: ")}"
+        val detail = summary.items.firstOrNull { item ->
+            (item.status == CleanStartStatus.FAILED || item.status == CleanStartStatus.NOT_APPLIED) &&
+                item.detail.isNotBlank()
+        }?.detail?.take(160)
+        return if (detail.isNullOrBlank()) base else "$base\nLAST CLEAN START DETAIL: $detail"
+    }
 
     private fun confirmHardBlock(app: Target) {
         dialog?.dismiss()

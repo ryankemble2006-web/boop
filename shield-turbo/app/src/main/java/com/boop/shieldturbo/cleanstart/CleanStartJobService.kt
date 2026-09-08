@@ -83,11 +83,15 @@ class CleanStartJobService : JobService() {
                     val retryScheduled = nextAttempt < CleanStartScheduler.MAX_ATTEMPTS &&
                         store.autoEnabled() && store.targets().isNotEmpty() &&
                         CleanStartScheduler.schedule(applicationContext, nextAttempt)
-                    val detail = if (retryScheduled) {
-                        "ADB unavailable; bounded retry scheduled"
-                    } else {
-                        "ADB unavailable; cleanup not applied"
-                    }
+                    val detail = buildString {
+                        append("ADB unavailable: ")
+                        append(failure.javaClass.simpleName)
+                        failure.message?.trim()?.takeIf { it.isNotBlank() }?.let { message ->
+                            append(" - ")
+                            append(message.take(100))
+                        }
+                        append(if (retryScheduled) "; bounded retry scheduled" else "; cleanup not applied")
+                    }.take(160)
                     CleanStartSummary(
                         System.currentTimeMillis(),
                         targets.map { CleanStartItem(it, CleanStartStatus.NOT_APPLIED, detail) }
