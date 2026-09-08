@@ -28,9 +28,7 @@ class PrivilegeDetector(
     companion object {
         fun android(context: Context) = PrivilegeDetector(
             adbEvidence = {
-                // DUMP is diagnostic evidence only, not proof of arbitrary shell or tuning access.
-                // v0.1 does not request or grant it. A normal installation remains STANDARD.
-                context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED
+                context.checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
             },
             rootEvidence = { Process.myUid() == 0 }
         )
