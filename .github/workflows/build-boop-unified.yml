@@ -68,6 +68,9 @@ jobs:
           gradle-version: '9.6.0'
           cache-read-only: false
 
+      - name: Test clean Shield HOME
+        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
+
       - name: Check preserved Launcher source
         run: gradle --no-daemon -p launcher lintDebug --stacktrace
 
@@ -96,7 +99,7 @@ jobs:
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
             --tests '*BoopVoice*' --tests '*BoopCommandRouterTest' \
             --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' \
-            --tests '*BoopAssistant*' --stacktrace
+            --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --stacktrace
 
       - name: Prepare permanent BOOP signer
         shell: bash
@@ -131,12 +134,13 @@ jobs:
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
           grep -q "versionCode='46'" badging.txt
-          grep -q "versionName='1.1.3-unified-approved-eyes'" badging.txt
+          grep -q "versionName='1.2.0-unified-shield-home'" badging.txt
           grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
-          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
+          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldhome.ShieldLauncherActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
             grep -q "$cls" manifest-tree.txt
           done
+          grep -q "android.intent.category.HOME" manifest-tree.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
@@ -156,6 +160,7 @@ jobs:
                    'Physical Shield / Pixel acceptance: pending.',
                    'Shield remote mic activation and remote-microphone audio: MANUAL, pending.']
           for label, root in [('Shield', Path('shield-overlay/app/build/test-results')),
+                              ('Shield Home', Path('boop-build/BOOP-Alpha1/shield-lib/build/test-results')),
                               ('Unified', Path('boop-build/BOOP-Alpha1/app/build/test-results'))]:
               totals = dict(tests=0, failures=0, errors=0, skipped=0)
               for path in root.rglob('TEST-*.xml'):
