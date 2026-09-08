@@ -96,8 +96,6 @@ if "private void showEyeHueControl()" not in main_text:
         raise SystemExit("BOOP eye hue method marker not found")
     main_text = main_text.replace(methods_marker, methods_insert, 1)
 
-# Keep the face awake while the hue control is visible, just as other transient
-# Wall interaction surfaces do.
 idle_marker = "        if (listening || thinking || voiceSettingsOpen || chatModeOpen) {\n"
 idle_replacement = "        if (listening || thinking || voiceSettingsOpen || chatModeOpen\n                || (eyeHueOverlay != null && eyeHueOverlay.isVisible())) {\n"
 if idle_replacement not in main_text:
@@ -108,33 +106,78 @@ if idle_replacement not in main_text:
 MAIN.write_text(main_text)
 
 face_text = FACE.read_text()
+
+# Preserve the original eye artwork and recolour only the saturated cyan/blue
+# iris pixels. Whites, pupils, outlines and neutral shading are left byte-for-byte
+# untouched. This avoids the old whole-bitmap ColorFilter behaviour.
+field_marker = "    private final Bitmap faceBitmap;\n"
+field_replacement = "    private final Bitmap originalFaceBitmap;\n    private Bitmap faceBitmap;\n"
+if field_replacement not in face_text:
+    if face_text.count(field_marker) != 1:
+        raise SystemExit("BOOP eye hue bitmap field marker not found")
+    face_text = face_text.replace(field_marker, field_replacement, 1)
+
 constructor_marker = (
     "        faceBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);\n"
     "    }\n\n"
 )
 constructor_replacement = (
-    "        faceBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);\n"
+    "        originalFaceBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.boop_eyes);\n"
+    "        faceBitmap = originalFaceBitmap;\n"
     "        setEyeHueDegrees(BoopEyeHue.loadHue(context));\n"
     "    }\n\n"
 )
-method_insert = (
-    "    void setEyeHueDegrees(int hueDegrees) {\n"
-    "        paint.setColorFilter(BoopEyeHue.colorFilterForHue(hueDegrees));\n"
-    "        invalidate();\n"
-    "    }\n\n"
-)
-method_marker = "    void showIdleBlackImmediately() {\n"
-
-changed = False
-if "setEyeHueDegrees(BoopEyeHue.loadHue(context));" not in face_text:
-    if constructor_marker not in face_text:
+if "originalFaceBitmap = BitmapFactory.decodeResource" not in face_text:
+    if face_text.count(constructor_marker) != 1:
         raise SystemExit("BOOP eye hue face constructor marker not found")
     face_text = face_text.replace(constructor_marker, constructor_replacement, 1)
-    changed = True
-if method_insert not in face_text:
-    if method_marker not in face_text:
+
+method_marker = "    void showIdleBlackImmediately() {\n"
+method_insert = """    void setEyeHueDegrees(int hueDegrees) {
+        if (originalFaceBitmap == null) {
+            return;
+        }
+        int hue = BoopEyeHueMath.clampHue(hueDegrees);
+        if (hue == BoopEyeHueMath.DEFAULT_HUE_DEGREES) {
+            faceBitmap = originalFaceBitmap;
+            paint.setColorFilter(null);
+            invalidate();
+            return;
+        }
+
+        Bitmap recoloured = originalFaceBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        int width = recoloured.getWidth();
+        int height = recoloured.getHeight();
+        int[] pixels = new int[width * height];
+        recoloured.getPixels(pixels, 0, width, 0, 0, width, height);
+        float[] hsv = new float[3];
+        for (int i = 0; i < pixels.length; i++) {
+            int colour = pixels[i];
+            int alpha = Color.alpha(colour);
+            if (alpha == 0) {
+                continue;
+            }
+            Color.RGBToHSV(Color.red(colour), Color.green(colour), Color.blue(colour), hsv);
+            boolean irisPixel = hsv[1] >= 0.30f
+                    && hsv[2] >= 0.18f
+                    && hsv[0] >= 155f
+                    && hsv[0] <= 235f;
+            if (!irisPixel) {
+                continue;
+            }
+            hsv[0] = hue;
+            pixels[i] = Color.HSVToColor(alpha, hsv);
+        }
+        recoloured.setPixels(pixels, 0, width, 0, 0, width, height);
+        faceBitmap = recoloured;
+        paint.setColorFilter(null);
+        invalidate();
+    }
+
+"""
+if "boolean irisPixel = hsv[1] >= 0.30f" not in face_text:
+    if face_text.count(method_marker) != 1:
         raise SystemExit("BOOP eye hue face method marker not found")
     face_text = face_text.replace(method_marker, method_insert + method_marker, 1)
-    changed = True
-if changed:
-    FACE.write_text(face_text)
+
+FACE.write_text(face_text)
