@@ -86,8 +86,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" | tee shield-turbo-badging.txt
           grep -q "package: name='com.boop.shieldturbo'" shield-turbo-badging.txt
-          grep -q "versionCode='16'" shield-turbo-badging.txt
-          grep -q "versionName='0.5.9'" shield-turbo-badging.txt
+          grep -q "versionCode='17'" shield-turbo-badging.txt
+          grep -q "versionName='0.5.10'" shield-turbo-badging.txt
           grep -q "launchable-activity: name='com.boop.shieldturbo.MainActivity'" shield-turbo-badging.txt
           ! grep -q 'application-debuggable' shield-turbo-badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" | tee shield-turbo-signer.txt
