@@ -2,6 +2,7 @@ package com.boop.shieldturbo
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -29,6 +30,7 @@ import com.boop.shieldturbo.apps.AppCatalog
 import com.boop.shieldturbo.apps.AppRoutes
 import com.boop.shieldturbo.model.ProbeResult
 import com.boop.shieldturbo.model.ProbeStatus
+import com.boop.shieldturbo.performance.CompactAnalysisReport
 import com.boop.shieldturbo.performance.PerformanceCapabilityProbe
 import com.boop.shieldturbo.picture.DisplayFacts
 import com.boop.shieldturbo.privilege.PrivilegeDetector
@@ -50,6 +52,7 @@ class MainActivity : Activity() {
     private var scanning = false
     private var currentSection: TurboSection? = null
     private var details: AlertDialog? = null
+    private var analysisReport: Dialog? = null
 
     private lateinit var root: LinearLayout
     private lateinit var content: LinearLayout
@@ -83,6 +86,8 @@ class MainActivity : Activity() {
         ui.removeCallbacksAndMessages(null)
         details?.dismiss()
         details = null
+        analysisReport?.dismiss()
+        analysisReport = null
         super.onStop()
     }
 
@@ -438,6 +443,7 @@ class MainActivity : Activity() {
         brightness.progress = percent - Brightness.MIN_PERCENT
         brightnessValue.text = "$percent%"
     }
+
     private fun applyBrightness(percent: Int) {
         val safe = Brightness.clampPercent(percent)
         if (safe < 100 && !Settings.canDrawOverlays(this)) {
@@ -486,9 +492,11 @@ class MainActivity : Activity() {
                         PrivilegeTier.ROOT -> getString(R.string.root_evidence)
                     }
                 )
+                val allReadings = snapshot.results + performance + privilege
                 ui.post {
                     if (visible && generation == token && !isDestroyed && currentSection == TurboSection.TURBO) {
-                        render(snapshot.results + performance + privilege)
+                        render(allReadings)
+                        showAnalysisReport(allReadings)
                         scanning = false
                         scan = null
                         analyseButton.setText(R.string.analyse)
@@ -507,6 +515,57 @@ class MainActivity : Activity() {
                 }
             }
         }
+    }
+
+    private fun showAnalysisReport(readings: List<ProbeResult>) {
+        analysisReport?.dismiss()
+
+        val reportBody = TextView(this).apply {
+            text = CompactAnalysisReport.format(readings)
+            textSize = 9f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.MONOSPACE
+            includeFontPadding = false
+            setLineSpacing(0f, 0.95f)
+            setPadding(0, dp(2), 0, dp(4))
+        }
+        val reportScroll = ScrollView(this).apply {
+            isFillViewport = true
+            isFocusable = true
+            isFocusableInTouchMode = true
+            addView(reportBody, ScrollView.LayoutParams(-1, -2))
+        }
+        val reportRoot = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.BLACK)
+            setPadding(dp(14), dp(7), dp(14), dp(7))
+            addView(TextView(this@MainActivity).apply {
+                text = "SHIELD TURBO • ANALYSE REPORT"
+                textSize = 13f
+                setTextColor(Color.CYAN)
+                setTypeface(typeface, Typeface.BOLD)
+                includeFontPadding = false
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = "READ-ONLY • BACK TO CLOSE"
+                textSize = 8f
+                setTextColor(Color.LTGRAY)
+                includeFontPadding = false
+            })
+            addView(reportScroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(3) })
+        }
+
+        val dialog = Dialog(this, android.R.style.Theme_Material_NoActionBar_Fullscreen)
+        dialog.setContentView(reportRoot)
+        dialog.setCancelable(true)
+        dialog.setOnDismissListener {
+            if (analysisReport === dialog) analysisReport = null
+        }
+        dialog.show()
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.black)
+        analysisReport = dialog
+        reportScroll.requestFocus()
     }
 
     private fun render(readings: List<ProbeResult>) {
