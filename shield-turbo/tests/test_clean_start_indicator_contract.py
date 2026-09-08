@@ -44,7 +44,7 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         text = (SOURCE / "cleanstart/CleanStartIndicator.kt").read_text()
         self.assertIn("FrameLayout", text)
         self.assertIn("val host = FrameLayout(windowContext)", text)
-        self.assertIn("host.addView(card", text)
+        self.assertRegex(text, r"host\.addView\(\s*card,")
         self.assertGreaterEqual(text.count("WindowManager.LayoutParams.MATCH_PARENT"), 2)
         self.assertIn("FLAG_LAYOUT_NO_LIMITS", text)
         self.assertIn("armPresentationSignal(host)", text)
