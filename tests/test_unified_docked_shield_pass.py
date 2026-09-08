@@ -27,6 +27,16 @@ def test_unified_dock_mirror_wake_and_room_contracts():
     assert "@BOOP" in Path("wake-assets/boop-kws/keywords.txt").read_text()
 
 
+def test_unified_materialization_uses_real_attempt_wake_gate():
+    materializer = Path("scripts/materialize-unified.sh").read_text()
+    wake_arm = Path("scripts/patch-unified-wake-arm.py").read_text()
+    name_patch = "python3 scripts/patch-unified-wake-name.py"
+    arm_patch = "python3 scripts/patch-unified-wake-arm.py"
+    assert arm_patch in materializer
+    assert materializer.index(name_patch) < materializer.index(arm_patch)
+    assert "BoopWakeRecognitionCapability.canAttempt" in wake_arm
+
+
 def test_mirror_parser_retains_explicit_open_close_commands():
     parser = Path("source/BoopMirrorIntent.java").read_text()
     assert "enum Action { NONE, OPEN, CLOSE }" in parser
