@@ -2,11 +2,9 @@
 from pathlib import Path
 import re
 import unittest
-import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'app/src/main/java/com/boop/shieldturbo'
-ANDROID = '{http://schemas.android.com/apk/res/android}'
 
 
 class PerformanceCapabilityContractTest(unittest.TestCase):
@@ -27,15 +25,19 @@ class PerformanceCapabilityContractTest(unittest.TestCase):
         self.assertNotRegex(perf, r'(?<![A-Za-z0-9_])su(?![A-Za-z0-9_])')
         self.assertNotRegex(perf, r'echo\s+[^\n]+>')
 
-    def test_stage_one_adds_no_resident_performance_component(self):
-        manifest = ET.parse(ROOT / 'app/src/main/AndroidManifest.xml').getroot()
-        app = manifest.find('application')
-        services = {s.get(ANDROID + 'name') for s in app.findall('service')}
-        receivers = {r.get(ANDROID + 'name') for r in app.findall('receiver')}
-        permissions = {p.get(ANDROID + 'name') for p in manifest.findall('uses-permission')}
-        self.assertNotIn('.performance.ThermalWatchdogService', services)
-        self.assertNotIn('.performance.PerformanceBootReceiver', receivers)
-        self.assertNotIn('android.permission.FOREGROUND_SERVICE', permissions)
+    def test_stage_one_probe_remains_independent_of_resident_turbo_runtime(self):
+        perf_dir = SOURCE / 'performance'
+        stage_one_paths = [
+            perf_dir / 'CompactAnalysisReport.kt',
+            perf_dir / 'PerformanceCapability.kt',
+            perf_dir / 'PerformanceCapabilityProbe.kt',
+            perf_dir / 'PerformanceDiscoveryPolicy.kt',
+            *sorted(perf_dir.glob('ProcessorModeTrace*.kt')),
+        ]
+        combined = '\n'.join(path.read_text() for path in stage_one_paths)
+        self.assertNotIn('TurboThermalWatchdogService', combined)
+        self.assertNotIn('TurboBootReceiver', combined)
+        self.assertNotIn('TurboRuntime', combined)
 
     def test_turbo_scan_surfaces_performance_capability_results(self):
         main = (SOURCE / 'MainActivity.kt').read_text()
