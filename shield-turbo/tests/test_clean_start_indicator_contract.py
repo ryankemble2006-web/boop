@@ -40,6 +40,15 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         self.assertIn("LinearLayout(windowContext)", text)
         self.assertIn("windowContext.getSystemService", text)
 
+    def test_indicator_uses_brightness_style_full_screen_host_surface(self):
+        text = (SOURCE / "cleanstart/CleanStartIndicator.kt").read_text()
+        self.assertIn("FrameLayout", text)
+        self.assertIn("val host = FrameLayout(windowContext)", text)
+        self.assertIn("host.addView(card", text)
+        self.assertGreaterEqual(text.count("WindowManager.LayoutParams.MATCH_PARENT"), 2)
+        self.assertIn("FLAG_LAYOUT_NO_LIMITS", text)
+        self.assertIn("armPresentationSignal(host)", text)
+
     def test_boot_job_shows_then_always_hides_indicator(self):
         text = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
         self.assertIn("CleanStartIndicator(applicationContext)", text)
