@@ -42,10 +42,11 @@ def patch_face(text: str) -> str:
     text = replace_once(text, methods_anchor, methods + methods_anchor,
                         'listening cue methods')
 
+    # Sleep charm runs after idle blink and owns the immediate-idle lead-in.
     text = replace_once(
         text,
-        '    void showIdleBlackImmediately() {\n        stopIdleBlinking();\n',
-        '    void showIdleBlackImmediately() {\n        stopListeningCue();\n        stopIdleBlinking();\n',
+        '    void showIdleBlackImmediately() {\n        cancelSleepCharm();\n        stopIdleBlinking();\n',
+        '    void showIdleBlackImmediately() {\n        cancelSleepCharm();\n        stopListeningCue();\n        stopIdleBlinking();\n',
         'immediate idle stops listening cue')
     text = replace_once(
         text,
