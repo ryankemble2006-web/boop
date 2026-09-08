@@ -27,18 +27,18 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Materialize unified app
-        run: bash scripts/materialize-unified.sh
-
-      - name: Install Shield HOME source and tests into generated library
+      # Keep this lane independent from unrelated unified materialisation work.
+      # The temporary checkout receives the same Shield HOME Java sources/tests,
+      # compiled inside the existing Shield Android project. No repo files are rewritten.
+      - name: Install Shield HOME source and tests into Shield test project
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p boop-build/BOOP-Alpha1/shield-lib/src/test/java
-          cp -R unified/shield-home/src/test/java/. boop-build/BOOP-Alpha1/shield-lib/src/test/java/
-          if [ -d unified/shield-home/src/main/java ]; then
-            cp -R unified/shield-home/src/main/java/. boop-build/BOOP-Alpha1/shield-lib/src/main/java/
-          fi
+          MAIN=shield-overlay/app/src/main/java/com/boop/shieldhome
+          TEST=shield-overlay/app/src/test/java/com/boop/shieldhome
+          mkdir -p "$MAIN" "$TEST"
+          cp -R unified/shield-home/src/main/java/com/boop/shieldhome/. "$MAIN/"
+          cp -R unified/shield-home/src/test/java/com/boop/shieldhome/. "$TEST/"
 
       - uses: android-actions/setup-android@v3
         with:
@@ -54,4 +54,4 @@ jobs:
           cache-read-only: false
 
       - name: Run Shield HOME model contracts
-        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
+        run: gradle --no-daemon -p shield-overlay :app:testDebugUnitTest --tests 'com.boop.shieldhome.*' --stacktrace
