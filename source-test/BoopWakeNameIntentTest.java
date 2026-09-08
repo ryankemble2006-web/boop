@@ -9,6 +9,7 @@ public final class BoopWakeNameIntentTest {
         assertSet("your name is Jarvis", "Jarvis");
         assertSet("I'm calling you AI Dood", "AI Dood");
         assertSet("from now on you're Sir Boopington", "Sir Boopington");
+        assertSet("change name to Steve", "Steve");
     }
 
     @Test public void parsesRequiredResetPhrases() {
