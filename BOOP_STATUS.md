@@ -2,59 +2,62 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v56 seamless wake command
+## Current signed candidate: v57 streaming custom wake
 
-Physical v55 result on Ryan's charged Pixel:
+Physical v56 result on Ryan's powered Pixel:
 
-- `Steve` and `BOOP` both wake BOOP.
-- tap-to-talk works.
-- `Steve`, pause, `lights off` works and BOOP says `Done`.
-- `BOOP`, pause, `lights off` works and BOOP says `Done`.
-- one-breath wake + command (`Steve lights on`, `Steve show diagnostics`, BOOP/Steve `lights off`) does not route the command.
-- each wake plays the artificial wake-accepted speaker bing.
+- `Steve` and `BOOP` both wake BOOP;
+- tap-to-talk works;
+- a deliberate pause between wake name and command allows `lights off` to work and BOOP says `Done`;
+- natural one-breath wake + command still fails.
 
-This isolates the v55 failure to the wake-to-command seam. Wake detection, custom/default names, tap ASR, local HA and reply TTS are physically working.
+Pull-only diagnostic captured after failed one-breath `Steve lights on`:
 
-Root cause: the wake recorder reads 1,600 samples at 16 kHz (100 ms) per detector block and writes that block to the ring before detection. v54's zero-prelude policy removed the old one-second wake recording but also discarded this final detector block, so immediate command onset can be lost. The wake callback also played a 90 ms speaker cue into the live command-capture period.
+`WAKE ASR ERROR 7 +1502ms ready=28 begin=290 end=1405 partial=- final=-`
 
-v56 keeps only the final 1,600 samples as a 100 ms bridge and removes the cue from the materialized wake callback. It does not restore the old one-second pre-roll.
+Sanitized state showed external power true, microphone permission true and recovery `ARMED`. Android ASR therefore saw speech boundaries but produced no transcript, while wake recovery itself worked.
 
-Final v56 receipt:
+Root cause: the learned custom-name matcher waited for two quiet 100 ms chunks before evaluating a trained name. Continuous `Steve lights on` was therefore treated as one longer utterance and custom wake detection arrived too late for the command.
 
-- built code `68bdbb4aabfbefd383a48aa4764568c5cb2222dc`
-- version 56 / `1.2.10-unified-seamless-wake-command`
-- workflow `34246347404` SUCCESS
-- artifact `BOOP-Unified`, ID `10064218458`
-- APK SHA-256 `5212b2faf4286db17b3afa44d8174d5773d555d9a8779c5d7fb1e7e6aba6a13c`
+v57 makes learned custom-name matching streaming during active speech, retains the old silence-ended path as fallback, and gates expensive feature extraction behind cheap speech activity. It does not change Sherpa/default `BOOP`, the v56 100 ms command bridge, the three-second command window, the silent wake seam, HA routing, five-say training, powered wake or microphone ownership.
+
+## v57 receipt
+
+- built code `6c8131200ee0ff8a91464569a982312cb5512cb2`
+- version 57 / `1.2.11-unified-streaming-custom-wake`
+- workflow `34249050741`, attempt 2 SUCCESS
+- artifact `BOOP-Unified`, ID `10065473551`
+- artifact digest `sha256:496786d407a39d8034ec4dfd335e903c4ae8e3531a1128bf1f3e4a82440d1912`
+- APK SHA-256 `3ce0593f61fbf6b35e6fbb664bc5bc7984b053844c7f6be83afe2955ab713459`
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- Shield focused tests 58/58, unified focused tests 90/90, zero failures/errors/skips
-- seamless materialized handoff contract PASS
+- Shield focused tests 58/58, zero failures/errors/skips
+- unified focused tests 92/92, zero failures/errors/skips
+- no-trailing-silence custom-wake regression PASS
+- unrelated-continuous-speech rejection PASS
+- seamless wake-command handoff contract PASS
 - Launcher lint, signed assembly, package/version, manifest, signer and APK integrity PASS
+- artifact upload PASS.
 
-CI/signer green. Physical v56 acceptance pending. Detailed receipt: `docs/BOOP-V56-SEAMLESS-WAKE-COMMAND-RECEIPT.md`.
+TDD RED was `032ba991f4f70880bd2c108473c34b7701db7917`, workflow `34248072092`: 92 focused unified tests ran and exactly the new no-pause custom-wake regression failed. Initial GREEN `964142749a2560b90a8be608b5c5deaa0f893066` passed but was not shipped after review found its sliding-window matching too computationally eager. Final `6c813...` gates heavy work to active speech.
 
-## TDD evidence
+Detailed receipt: `docs/BOOP-V57-STREAMING-CUSTOM-WAKE-RECEIPT.md`.
 
-RED workflow `34245905089` at `4a92e4cf1bf84e50f2b37cc8fae6bf590d1375bb` failed specifically because the wake callback still contained `playWakeAcceptedCue();`. The final 100 ms policy and silent seam then passed the selected regression contracts and the full focused wake suite.
+## Required Pixel acceptance
 
-## Required Pixel test
-
-Install v56 over v55 and keep the Pixel powered. Test without deliberate pauses:
+Install v57 over v56 and keep the Pixel powered. Without deliberate pauses, test:
 
 1. `Steve lights on`
-2. `BOOP lights off`
-3. `Steve show diagnostics`
+2. `Steve show diagnostics`
+3. `BOOP lights off`
 
-There should be no artificial wake bing. Then deliberately wake without a command once and verify silent re-arm by issuing another wake + command immediately afterward.
+The first two are the v57 target. The third keeps default Sherpa BOOP separate. If Steve works but BOOP still needs a pause, debug the default wake seam separately and do not widen the command bridge blindly.
 
-If one-breath speech still fails, use `Steve`, pause, `show diagnostics` if needed. Do not restore the old one-second pre-roll or change sensitivity before reading the physical trace.
-
-## Physically proven rollback checkpoint
-
-The exact built v48 wake-arm code remains pinned at `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. On Ryan's Pixel: charger -> green Android mic indicator ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP. Do not repoint this checkpoint.
+Physical v57 acceptance is pending.
 
 ## Protected AIO state
 
-BOOP remains the permanent fallback wake name; custom names are additive. External power allows continuous wake; unplugged phone remains tap-to-talk. Preserve one 16 kHz microphone owner, the three-second command window, local five-say profiles, silent no-match/timeout recovery, pull-only `show diagnostics`, HA names/Home controls, locked eyes/hue/blink, headphones/puppetry, five-digit yellow hands, room isolation and Shield scaling.
+BOOP remains the permanent fallback wake name; custom names are additive. Any external power allows continuous wake; unplugged phone remains tap-to-talk. Preserve one 16 kHz microphone owner, local five-say profiles, the v56 exact 100 ms command bridge, silent wake handoff, silent no-match/timeout re-arm, pull-only `show diagnostics`, HA names/Home controls, locked eyes/hue/blink, headphones/puppetry, five-digit yellow hands, room isolation and Shield scaling.
+
+The exact physically proven v48 wake rollback remains `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`; do not repoint it.
 
 The clean Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a later merge. Ryan owns visual/device/acoustic acceptance. No automatic installs/grants or signer/package changes.
