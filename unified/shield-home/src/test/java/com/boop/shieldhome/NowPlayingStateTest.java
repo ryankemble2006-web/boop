@@ -33,11 +33,15 @@ public final class NowPlayingStateTest {
 
         NowPlayingSnapshot first = snapshot(1L, "First", 3);
         bus.update(first);
-        assertEquals(List.of(null, first), seen);
+        assertEquals(2, seen.size());
+        assertNull(seen.get(0));
+        assertEquals(first, seen.get(1));
 
         unsubscribe.run();
         bus.update(snapshot(2L, "Second", 2));
-        assertEquals(List.of(null, first), seen);
+        assertEquals(2, seen.size());
+        assertNull(seen.get(0));
+        assertEquals(first, seen.get(1));
     }
 
     @Test public void equalSnapshotIsNotRepublished() {
