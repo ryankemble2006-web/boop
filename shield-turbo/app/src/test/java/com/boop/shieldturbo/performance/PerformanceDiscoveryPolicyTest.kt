@@ -35,4 +35,20 @@ class PerformanceDiscoveryPolicyTest {
         assertFalse(Regex("echo\\s+.+>").containsMatchIn(command))
         PerformanceDiscoveryPolicy.paths.forEach { assertTrue(command.contains(it)) }
     }
+
+    @Test fun clueCommandsAreReadOnlyAndTreatNoMatchAsEmptyEvidence() {
+        val expected = listOf(
+            "(settings list global | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+            "(settings list secure | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+            "(settings list system | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+            "(getprop | grep -Ei 'nvidia|processor|performance|fan|power' | head -n 120) || true",
+            "cmd power help"
+        )
+        assertEquals(expected, PerformanceDiscoveryPolicy.clueCommands)
+        expected.dropLast(1).forEach { assertTrue(it.endsWith("|| true")) }
+        expected.forEach {
+            assertFalse(it.contains("settings put"))
+            assertFalse(it.contains("set-fixed-performance-mode-enabled true"))
+        }
+    }
 }
