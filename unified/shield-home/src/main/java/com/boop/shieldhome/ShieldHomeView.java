@@ -130,18 +130,15 @@ public final class ShieldHomeView extends LinearLayout {
             return true;
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
-            // Ignore repeats from the centre-button hold that initiated the grab.
             if (event.getRepeatCount() == 0 && activeCallbacks != null) {
                 commitGrab(activeCallbacks);
             }
             return true;
         }
 
-        // Up/down cannot escape to another row while an item is being carried.
         return true;
     }
 
-    /** Short Back always cancels any transient grab and returns focus to favourite item 1. */
     boolean resetToFirstFavourite() {
         if (grabSession != null) {
             List<String> original = grabSession.cancel();
@@ -221,8 +218,8 @@ public final class ShieldHomeView extends LinearLayout {
                 beginGrab(entry, card);
                 return true;
             });
-            LayoutParams params = new LayoutParams(dp(250), dp(185));
-            params.rightMargin = dp(6);
+            LayoutParams params = new LayoutParams(dp(234), dp(185));
+            params.rightMargin = dp(2);
             favouriteRow.addView(card, params);
 
             if (grabbedComponent != null && grabbedComponent.equals(entry.component())) {
