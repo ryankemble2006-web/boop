@@ -81,4 +81,15 @@ public final class ShieldHomeStoreTest {
         assertTrue(store.rowEnabled(OptionalRowRegistry.Key.PLAY_NEXT));
         assertTrue(store.rowEnabled(OptionalRowRegistry.Key.APP_CHANNELS));
     }
+
+    @Test public void preferredNowPlayingPlayerDefaultsAutomaticAndPersists() {
+        MemoryPreferences preferences = new MemoryPreferences();
+        ShieldHomeStore store = new ShieldHomeStore(preferences);
+
+        assertEquals("", store.nowPlayingPlayerPackage());
+        store.setNowPlayingPlayerPackage("deezer.android.app");
+        assertEquals("deezer.android.app", store.nowPlayingPlayerPackage());
+        store.setNowPlayingPlayerPackage(null);
+        assertEquals("", store.nowPlayingPlayerPackage());
+    }
 }
