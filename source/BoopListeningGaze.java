@@ -1,6 +1,6 @@
 package com.boop.alpha1;
 
-/** Pure geometry for the active-listening reading gaze. */
+/** Pure geometry/compositing policy for the active-listening reading gaze. */
 final class BoopListeningGaze {
     static final long HALF_SWEEP_MS = 720L;
     private static final float HORIZONTAL_SOURCE_PX = 48f;
@@ -25,5 +25,9 @@ final class BoopListeningGaze {
 
     static float zoom() {
         return LISTENING_ZOOM;
+    }
+
+    static boolean clearBaseApertureBeforeShiftedPatch() {
+        return true;
     }
 }
