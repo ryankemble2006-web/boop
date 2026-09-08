@@ -112,6 +112,9 @@ jobs:
             adb shell am start -W -n com.boop.shieldturbo/.MainActivity
             sleep 3
             adb shell pidof com.boop.shieldturbo
+            adb shell uiautomator dump /sdcard/turbo-home.xml
+            adb pull /sdcard/turbo-home.xml shield-turbo-home.xml
+            python3 shield-turbo/tests/check_emulator_ui.py shield-turbo-home.xml --home
             adb shell input keyevent 23
             sleep 2
             adb shell uiautomator dump /sdcard/turbo-ui.xml
@@ -139,6 +142,7 @@ jobs:
             shield-turbo-built-commit.txt
             shield-turbo-badging.txt
             shield-turbo-signer.txt
+            shield-turbo-home.xml
             shield-turbo-ui.xml
             shield-turbo-focus.xml
           if-no-files-found: error
