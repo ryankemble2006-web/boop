@@ -5,54 +5,45 @@ Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 ## Accepted physical state
 
 - v0.5.7 CLEAN START notice visible.
-- v0.5.8 CLEAN START job `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
-- v0.5.10 compact 9sp ANALYSE report fits one readable screenshot.
-- v0.5.11 manual NVIDIA Processor Mode Optimized -> Max mapped:
-  - `system:nv_power_mode` `1 -> 0`;
-  - CPU/GPU/FRT boosts `0/0/0 -> 5/5/5`;
-  - FRT minimum `15 -> 20`.
+- v0.5.8 CLEAN START job: `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
+- v0.5.10 compact 9sp ANALYSE report physically accepted.
+- v0.5.11 manual NVIDIA Processor Mode mapping: Optimized `1/0/0/0/15` to Max `0/5/5/5/20`.
+- v0.5.13 one-shot NVIDIA actuator proof physically **PASSED**:
+  - baseline Optimized `1/0/0/0/15`;
+  - Max `0/5/5/5/20` verified after writing only `system:nv_power_mode=0`;
+  - final Optimized `1/0/0/0/15` verified after writing only `system:nv_power_mode=1`;
+  - `DIRECT VENDOR WRITES • NONE`.
 
-`nv_power_mode` is the stock actuator candidate. The four `persist.vendor.sys.phs.*` values are downstream NVIDIA evidence only and are never direct write targets.
-
-## v0.5.12 physical result
-
-The one-shot proof started from the correct physical baseline `mode=1 cpu=0 gpu=0 frt=0 min=15`, then failed at both Max verification and restore verification with `Unexpected ADB stream`. `DIRECT VENDOR WRITES • NONE` remained true. Final state was not verified, so Processor Mode must be manually set to **Optimized** before another proof.
-
-The failure was reproduced in CI as a stale closed-stream ADB lifecycle bug, not as a Shield permission rejection:
-- RED commit `60ea18c70c7f167ba9cab7f4835201f534312cdb`;
-- run `34269551454`, job `102207364057`;
-- 89 JVM tests total, exactly the new stream lifecycle regression failed with `Unexpected ADB stream`;
-- all 46 source/security contracts stayed green.
-
-Minimal transport fix commit `1b632e09706652d2f2802c6ca4bb28963d9e7685` ignores only stale `OKAY` / `WRTE` / `CLSE` packets addressed to older already-closed local streams. Current/future/invalid stream IDs still fail closed. NVIDIA proof logic and safety boundaries are unchanged.
+`system:nv_power_mode` is now the physically accepted stock actuator for persistent TURBO v1. The four `persist.vendor.sys.phs.*` values remain read-only downstream evidence.
 
 ## Current candidate
 
-**v0.5.13 / code 20**, exact release source `ca11a45c0db170a9a2031193b9250663c6b5d914`.
+**v0.6.0 / code 21**, exact release source:
+`87feccaeba1c2c5fa2044aeeb572fad947aa985c`
 
-Release run `34270157522`, job `102209457841`, conclusion **success**:
-- **89 JVM tests passed**;
-- **46 source/API/security contracts passed**;
-- lint **0 errors / 26 warnings**;
-- package/version/Leanback/signer/archive checks passed;
-- emulator install, cold/warm launch and no-fatal smoke passed;
-- APK SHA-256 `592d012d187d0089b269a48cf5a33065d74d3fd284839995ff6aa4e2662507b0`;
-- APK size `2413118` bytes;
-- `SHIELD-TURBO` artifact ID `10073578805`, ZIP SHA-256 `928be6e7bdfccdda47fc6a3c478d49cb597f6cce64623bf143192a9d653d7496`;
-- `SHIELD-TURBO-TESTS` artifact ID `10073625187`, ZIP SHA-256 `f7a4e93f385533dbba2c675ffe44502a60c487014e73f8ed3273e49e5a8427f7`.
+Persistent TURBO v1 includes exact pre-TURBO state persistence, verified Max/restore transactions, reboot persistence, private foreground thermal watchdog, thermal check before boot reapply, SEVERE-or-higher auto-NORMAL with manual re-arm, and a remote-first ON/OFF panel with Processor mode, Thermal state, Watchdog, and Last change readouts.
 
-Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, DN `CN=BOOP Development,O=BOOP`.
+The only writable performance lever remains `system:nv_power_mode`. No root, voltage changes, above-stock clocks, direct vendor-property writes, thermal bypass, arbitrary sysfs tuning, kernel, boot-image, or bootloader work was added.
 
-v0.5.13 is machine verified. **Physical actuator-proof retest is pending.**
+Final release run `34280026842`, job `102242293277`, conclusion **success**:
 
-## One-shot actuator boundary
+- **101 JVM tests passed**;
+- **62 source/API/security contracts passed**;
+- Android lint completed successfully with warnings only;
+- package `com.boop.shieldturbo`, versionCode 21, versionName 0.6.0, Leanback launchable;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
+- APK ZIP integrity passed;
+- APK SHA-256 `db0ca06c03a51e7985ca11c479b88becfd1471ca8ad5a7218a0710f7348deb43`;
+- signed artifact ID `10077342574`, artifact ZIP SHA-256 `0f63b6ecc36df91731d1f3ab91041142fa1f58ae740a1d2f4cc949f73b88aced`;
+- test artifact ID `10077384107`, ZIP SHA-256 `3aa92aad10e4bcd5f0906cfa54fe4fcf38d7cd2699eb87fcecb0bbace539ea4f`;
+- emulator install passed, cold launch `1541ms`, warm launch `387ms`, process remained alive, no package fatal exception.
 
-`PROVE NVIDIA MAX SWITCH` remains non-persistent. Starting from Optimized it writes only `settings put system nv_power_mode 0`, verifies Max plus downstream `5/5/5/20`, restores only `settings put system nv_power_mode 1`, and verifies final Optimized plus `0/0/0/15`. No direct vendor-property writes, `setprop`, performance watchdog, boot reapply or persistent TURBO state exist yet.
+A post-build lifecycle regression also proved and fixed that leaving the TURBO UI must not cancel an in-flight performance transaction. RED commit `5603246265d30993177a83be649318d25bfc4887`; GREEN source `87feccaeba1c2c5fa2044aeeb572fad947aa985c`.
 
-## Approved future TURBO design
-
-Only after a physical actuator PASS may `nv_power_mode` enter persistent TURBO. Persistent TURBO must preserve exact NORMAL state, persist across reboot, run a foreground thermal watchdog while active, check thermal state before boot reapply, and restore/stay NORMAL at Android SEVERE or higher until manual re-arm. No root, custom kernel, bootloader unlock, voltage changes, above-stock clocks, or thermal bypass.
+**v0.6.0 is machine verified. Persistent TURBO is not physically accepted yet.**
 
 ## Next step
 
-Manually set Processor Mode to **Optimized**, install v0.5.13, run `PROVE NVIDIA MAX SWITCH` without manually changing mode during the proof, and return the full-screen result.
+On the real Shield, begin from Processor Mode Optimized, install v0.6.0, enable `TURBO MODE`, verify Max plus watchdog, reboot and verify TURBO persists, then disable TURBO and verify exact Optimized restoration. Do not intentionally overheat hardware for thermal fallback testing; use a safe injected/test path later.
+
+`main` remains separate at `4b0ab90abbad9c48dabd25b6a9ea002cdad18375`.
