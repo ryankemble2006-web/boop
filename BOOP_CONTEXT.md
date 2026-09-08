@@ -1,5 +1,36 @@
 # BOOP shared context
 
+## Latest shared eye decision, 2026-09-08
+
+Ryan approved the final `glossy_cartoon_eyes_with_black_eyelids.png` as BOOP's
+permanent default across phone/Wall, Shield and all animation work. The blue/cyan
+eyeLID accent lines have been blackened; the blue/cyan IRIS remains the default.
+All animations must take this same form. Accessories come later as separate
+additions, not regenerated versions of the base character. This explicit approval
+supersedes older eye-bitmap locks below only for this exact master. No further
+redesign, regeneration per pose or return to the old torn-alpha artwork.
+
+Read `BOOP_EYES_MASTER.md` on `boop-unified` for the exact asset and integration
+state. Master: 1774 x 887 RGBA, 936803 bytes; SHA-256
+`ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`.
+Ryan has backed it up and explicitly requests replacement on phone and Shield.
+Preserve its supplied alpha and proportions, accepted iris-only colour controls,
+existing headphones/puppetry and locked five-digit yellow hands. Do not feed the
+new master through brightness-threshold/flood-fill transparency reconstruction.
+
+Ryan also clarified that blink had been turned off by him and is working.
+Preserve the working blink implementation, timing/curve/delay and motion/power
+safeguards. Do not repair a non-fault or change system animation settings.
+
+Approval and local backup are not APK integration: the PNG transfer into GitHub
+is still pending at this documentation checkpoint. The current chat connector
+has no mounted local-file upload argument, and direct container GitHub access
+failed. Ryan was asked to add the saved PNG to the root of `boop-unified`; the
+branch handoff owns subsequent transfer/build/physical evidence. No app-code,
+workflow, signing, permission, device or Windows-synchronization change is claimed.
+
+## Earlier shared context and historical receipts
+
 Reconciled 2026-09-07. Current user instructions and fresh device evidence win.
 Use BOOP_START_HERE.md for branch routing. Normal app development now belongs on
 `boop-unified`; older app branches are retained for rollback/reference.
