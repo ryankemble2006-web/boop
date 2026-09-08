@@ -25,31 +25,35 @@ Durable product flow:
 - changing to another name invalidates the old profile;
 - no cloud wake training and no second microphone listener.
 
-## Spoken rename phrase repair, v50
+## Spoken rename history: v49-v51
 
-Ryan physically tested v49 and confirmed `Hey BOOP` still woke BOOP. The next command `change name to steve` only produced a blink, then tapping BOOP yielded `sorry i cant find that`.
+v49 added automatic five-say enrolment after a changed custom name. Ryan physically confirmed `Hey BOOP` still woke BOOP but `change name to steve` fell through to ordinary handling.
 
-This was not an acoustic wake failure. `BoopWakeNameIntent` already owns local rename routing before general commands, but its SET prefixes omitted the natural phrase `change name to `. Ryan's exact phrase therefore returned `NONE` and fell through to ordinary handling.
+v50 added the missing local rename prefix `change name to `. Its parser-level TDD was valid, but Ryan physically tested v50 and the spoken rename still failed in exactly the same general flow. Wake remained healthy. He tried multiple rename wordings, fuller sentences, and a separated `Hey BOOP` -> listening cue -> rename command sequence. Treat v50 spoken rename as a physical FAIL downstream of wake detection, not as evidence to change Sherpa sensitivity.
 
-TDD RED: commit `64b5fe89afe884638497e5c49842909c840339fc`, workflow `34222645705`. The exact phrase `change name to Steve` was added to the existing parser test. 78 unified focused tests ran and exactly one failed: `BoopWakeNameIntentTest.parsesRequiredRenamePhrases`.
+Systematic tracing found the next real production-path defect. WAKE recognition uses controller PCM plus pre-roll and then `MainActivity` calls `BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best)` before local routing. The one-argument normalizer stripped only bare `BOOP`, while BOOP supports 33 natural wake calls. A recognizer result containing `HEY BOOP`, `OI BOOP`, `GOOD MORNING BOOP`, `BOOP WAKE UP`, or another established call before the command could therefore reach `BoopWakeNameIntent` still prefixed by the wake call and fail local rename routing.
 
-Minimal GREEN: commit `5f2d2941f3e5d2a0b9820b174563007570854379` adds only `change name to ` to `BoopWakeNameIntent.SET_PREFIXES`. Workflow `34222849165` completed successfully. Do not generalise this repair into wake sensitivity/model changes; none were needed.
+This source defect matches Ryan's physical result but does not prove the exact transcript Android returned. Preserve that distinction.
 
-Current signed v50 candidate:
+TDD RED for the normalization layer: commit `5794ed194cf90a744fc41c0b789718ceac97605c`, workflow `34224636115`. A new test runs all established BOOP wake forms before `change name to Steve`. 79 unified focused tests ran and exactly one failed: `BoopWakeTranscriptNormalizerTest.stripsAllEstablishedBoopWakeCallsBeforeCommand`.
 
-- Built code `59bea8d630f90be4940d399784325a8002fd6b8b`
-- Version 50 / `1.2.4-unified-wake-rename`
-- Workflow `34223081543` SUCCESS
-- Artifact `BOOP-Unified`, ID `10054611864`
-- APK SHA-256 `a9d9b10b626bb5e0699384606baeb0399323a12ad2c144c0a4e9daba8ed87e05`
-- Artifact ZIP SHA-256 `229ba23e904ec70945e8892150f50a6494d4d73299213e8610864ffbfec38745`
+Minimal repair `de2e1d825f4074f9b39ee9c409492e3edf46bff6` changes only `BoopWakeTranscriptNormalizer`: BOOP's natural wake grammar is stripped longest-first before command routing, custom-name stripping still falls back to BOOP, and ordinary non-addressed commands remain untouched. Workflow `34224978703` completed successfully. Do not reopen parser synonyms, wake controller, mic source, Sherpa, enrolment math or charging policy for this repair.
+
+Current signed v51 candidate:
+
+- Built code `4274ed008014d1ed5810af29b64b164bf8477072`
+- Version 51 / `1.2.5-unified-wake-command-normalize`
+- Workflow `34225351709` SUCCESS
+- Artifact `BOOP-Unified`, ID `10055532598`
+- APK SHA-256 `e768248f27c671d5c4377d68905405d8c5890d7125390e13bb6c5177aad23e5c`
+- Artifact ZIP SHA-256 `11127a3b08387ea64c07c66af1d68d3e9dbe6b7896f0f5ab8309cd669fcf2861`
 - Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Fresh v50 CI evidence: non-visual integration/materialisation passed; Launcher lint passed; 58 Shield focused tests and 78 unified focused tests passed with zero failures/errors/skips; signed assembly, package/version, manifest, signer and archive integrity passed; downloaded ZIP/APK hashes matched workflow receipts.
+Fresh v51 CI evidence: non-visual integration/materialization passed; Launcher lint passed; 58 Shield focused tests and 79 unified focused tests passed with zero failures/errors/skips; signed assembly, package/version, manifest, signer and archive integrity passed; downloaded ZIP/APK hashes matched workflow receipts.
 
-v50 physical sequence remains unaccepted: first confirm green sleeping mic + `Hey BOOP`; then say exactly `change name to Steve`; BOOP should enter local rename/five-say flow; say Steve five times; confirm normal wake returns; test Steve/Hey Steve/Oi Steve and finish with Hey BOOP. If the exact rename still fails while wake works, inspect the actual post-wake transcript/handoff before extending grammar further. If rename works but training fails, move downstream to enrolment capture/profile logic.
+v51 is not physically accepted yet. Required next boundary: green mic + `Hey BOOP`, then exactly `change name to Steve`. Expected next behavior is `Say Steve five times.` If this still fails, stop grammar/parser changes and inspect the actual Android recognizer result / wake command capture timing and handoff. If it succeeds, proceed into the existing five-say training/profile test and confirm BOOP fallback afterward.
 
-Detailed receipt: `docs/BOOP-V50-SPOKEN-RENAME-RECEIPT.md`.
+Detailed receipt: `docs/BOOP-V51-WAKE-COMMAND-NORMALIZE-RECEIPT.md`.
 
 ## Clean Shield HOME architecture boundary
 
