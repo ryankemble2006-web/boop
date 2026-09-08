@@ -15,6 +15,33 @@ data class CleanStartSummary(
     val items: List<CleanStartItem>
 )
 
+enum class CleanStartIndicatorWindowMode {
+    NOT_ATTEMPTED,
+    APPLICATION_CONTEXT,
+    DISPLAY_WINDOW_CONTEXT,
+    FALLBACK_APPLICATION_CONTEXT
+}
+
+enum class CleanStartIndicatorAddStatus { NOT_ATTEMPTED, ADDED, FAILED }
+
+enum class CleanStartIndicatorPresentationStatus {
+    NOT_ATTEMPTED,
+    BYPASSED,
+    DRAWN,
+    FRAME_COMMITTED,
+    TIMEOUT
+}
+
+data class CleanStartIndicatorDiagnostic(
+    val timestampMillis: Long,
+    val overlayAllowed: Boolean,
+    val windowMode: CleanStartIndicatorWindowMode,
+    val addStatus: CleanStartIndicatorAddStatus,
+    val presentationStatus: CleanStartIndicatorPresentationStatus,
+    val elapsedMs: Long,
+    val detail: String = ""
+)
+
 class CleanStartStore(private val store: Store) {
     interface Store {
         fun get(key: String): String?
@@ -26,6 +53,7 @@ class CleanStartStore(private val store: Store) {
         private const val TARGETS = "targets"
         private const val AUTO = "auto_clean"
         private const val SUMMARY = "last_summary"
+        private const val INDICATOR_DIAGNOSTIC = "last_indicator_diagnostic"
 
         fun android(context: Context): CleanStartStore = CleanStartStore(PreferencesStore(context))
     }
@@ -58,6 +86,49 @@ class CleanStartStore(private val store: Store) {
     }
 
     fun lastSummary(): CleanStartSummary? = store.get(SUMMARY)?.let(::decodeSummary)
+
+    fun recordIndicatorDiagnostic(diagnostic: CleanStartIndicatorDiagnostic): Boolean {
+        if (diagnostic.timestampMillis < 0 || diagnostic.elapsedMs !in 0..60_000L) return false
+        val detail = sanitizeDetail(diagnostic.detail)
+        val encoded = listOf(
+            "v1",
+            diagnostic.timestampMillis.toString(),
+            if (diagnostic.overlayAllowed) "1" else "0",
+            diagnostic.windowMode.name,
+            diagnostic.addStatus.name,
+            diagnostic.presentationStatus.name,
+            diagnostic.elapsedMs.toString(),
+            detail
+        ).joinToString("\t")
+        return store.put(INDICATOR_DIAGNOSTIC, encoded)
+    }
+
+    fun lastIndicatorDiagnostic(): CleanStartIndicatorDiagnostic? {
+        val raw = store.get(INDICATOR_DIAGNOSTIC) ?: return null
+        val fields = raw.split('\t', limit = 8)
+        if (fields.size != 8 || fields[0] != "v1") return null
+        val timestamp = fields[1].toLongOrNull()?.takeIf { it >= 0 } ?: return null
+        val overlayAllowed = when (fields[2]) {
+            "1" -> true
+            "0" -> false
+            else -> return null
+        }
+        val windowMode = runCatching { CleanStartIndicatorWindowMode.valueOf(fields[3]) }.getOrNull() ?: return null
+        val addStatus = runCatching { CleanStartIndicatorAddStatus.valueOf(fields[4]) }.getOrNull() ?: return null
+        val presentationStatus = runCatching {
+            CleanStartIndicatorPresentationStatus.valueOf(fields[5])
+        }.getOrNull() ?: return null
+        val elapsed = fields[6].toLongOrNull()?.takeIf { it in 0..60_000L } ?: return null
+        return CleanStartIndicatorDiagnostic(
+            timestamp,
+            overlayAllowed,
+            windowMode,
+            addStatus,
+            presentationStatus,
+            elapsed,
+            sanitizeDetail(fields[7])
+        )
+    }
 
     private fun encodeSummary(summary: CleanStartSummary): String? {
         if (summary.timestampMillis < 0 || summary.items.size > 64) return null
