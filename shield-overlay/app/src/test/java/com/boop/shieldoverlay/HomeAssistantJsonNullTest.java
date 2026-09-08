@@ -13,7 +13,7 @@ public final class HomeAssistantJsonNullTest {
                 .put("name_by_user", JSONObject.NULL)
                 .put("name", "Bedroom Fan");
 
-        assertNull(HomeAssistantRepository.optionalString(object, "name_by_user"));
-        assertEquals("Bedroom Fan", HomeAssistantRepository.optionalString(object, "name"));
+        assertNull(HaJsonStrings.optional(object, "name_by_user"));
+        assertEquals("Bedroom Fan", HaJsonStrings.optional(object, "name"));
     }
 }
