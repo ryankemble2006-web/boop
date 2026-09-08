@@ -49,6 +49,16 @@ Fresh final evidence: non-visual integration/materialization passed; Launcher li
 
 Detailed receipt: `docs/BOOP-V54-WAKE-COMMAND-BOUNDARY-RECEIPT.md`.
 
+## Physical v54 confirmation: command boundary passed
+
+Ryan installed v54 on the charged Pixel and repeated the intended two-stage interaction: wake first, then a separate spoken command after the listening cue. The persistent diagnostic captured:
+
+`WAKE ASR RESULT +2748ms ready=18 begin=871 end=2661 partial="change name to Steve" final="change name to Steve"`
+
+This is the physical proof the v54 boundary change was meant to produce. The post-wake recognizer is no longer terminating on the already-spoken wake phrase; it remains alive long enough to capture the separate rename command accurately inside the existing three-second command window. Ryan also reported that the rename flow responded and `Steve` was accepted.
+
+Treat the wake-command audio-boundary defect as physically passed on this Pixel. Do not change Sherpa sensitivity, the three-second window, transcript normalization or the no-pre-roll command policy in response to the older v53 trace. Full custom-name acceptance is still pending the five-say enrolment completion plus wake tests for both `Steve` and permanent fallback `Hey BOOP`.
+
 ## Previous diagnostic candidate: v53
 
 v52 introduced local-only post-wake ASR callback tracing. v53 made terminal results/errors persistent in a `BOOP wake diagnostic` dialog until Ryan pressed `Close`, which allowed the physical trace above to be captured. v53 built code `3b85e5ae8babe151c3f95c6aa4637d91fc5b2cb9`, workflow `34231784857`, APK SHA-256 `d1d21ff117bf21b761d7f9fb4f78d0499c3ba662c14408c3c17373428b92dbda`. Detailed receipt: `docs/BOOP-V53-PERSISTENT-WAKE-DIAGNOSTIC-RECEIPT.md`.
@@ -73,13 +83,12 @@ v50 physically preserved `Hey BOOP` wake but spoken rename still failed. v51 rep
 
 ## Required next Pixel test
 
-1. Install v54 over the existing BOOP install. Do not uninstall first.
-2. Keep the Pixel on its charger and let BOOP settle into the established sleeping-wake state.
-3. Confirm the Android green microphone indicator is present.
-4. Say `Hey BOOP` once.
-5. Wait for the listening cue, then say exactly `change name to Steve`.
-6. If `Say Steve five times.` appears, continue with five natural `Steve` examples, then test `Steve` wake and confirm `Hey BOOP` still works as the permanent fallback.
-7. If the persistent diagnostic reports an error, no speech or an unexpected transcript, capture it and stop before further grammar changes.
+1. Continue the current v54 enrolment with five natural `Steve` examples.
+2. Let BOOP report/return from enrolment normally; do not reinstall or clear app data.
+3. Keep the Pixel on its charger and let BOOP settle back into the established sleeping-wake state with the Android green microphone indicator present.
+4. Say `Steve` using a natural wake form and confirm BOOP wakes.
+5. Let BOOP settle again, then say `Hey BOOP` and confirm the permanent fallback still wakes it.
+6. If either wake fails, capture the exact behavior before changing sensitivity, grammar, training data or microphone ownership.
 
 ## Architecture boundary: clean Shield HOME remains standalone
 
