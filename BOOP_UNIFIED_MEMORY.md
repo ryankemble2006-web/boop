@@ -4,15 +4,15 @@ Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha
 
 ## Durable wake architecture
 
-BOOP permanently remains an accepted wake name. A custom name such as `Steve`, `Fred` or `Jeff` is additive, never a replacement. Custom-name training uses five local spoken examples from the existing single controller-owned 16 kHz PCM stream and stores only a compact pronunciation profile; raw enrolment PCM is not persisted. Never add a competing microphone listener.
+BOOP permanently remains an accepted wake name. A custom name is additive, never a replacement. Custom-name training uses five local spoken examples from the existing single controller-owned 16 kHz PCM stream and stores only a compact pronunciation profile; raw enrolment PCM is not persisted. Never add a competing microphone listener.
 
 Continuous phone wake is allowed while the phone is on any external power: wireless/magnetic dock, USB or AC. Unpowered handheld behavior remains tap-to-talk. The wake engine is the resting state while powered except while tap recognition, settings, command processing or TTS legitimately owns the microphone/state.
 
 After normal TTS, wake re-arms only after BOOP finishes speaking. A post-wake Android command-ASR no-match or speech timeout is silent and performs a genuine controller/coordinator re-arm. A hard wake-engine/microphone startup failure remains fail-safe latched rather than tight-loop retrying.
 
-`show diagnostics` is the hidden pull-only diagnostic command. Normal failures retain useful trace state but do not display a modal automatically, speak an error, persist raw audio or cloud-log diagnostics.
+`show diagnostics` is the hidden pull-only diagnostic command. Normal failures retain useful trace state but do not automatically display a modal, speak an error, persist raw audio or cloud-log diagnostics.
 
-## Durable wake-to-command audio boundary
+## Durable wake-to-command boundary
 
 v53 physically proved that feeding the full wake-detection history into Android command ASR is wrong because Android transcribed the wake phrase itself. v54 removed that old full one-second pre-roll.
 
@@ -24,86 +24,98 @@ v56 established the bounded seam rule:
 - keep natural wake-prefix transcript stripping as a defensive parser layer;
 - keep wake-to-command handoff acoustically silent and do not restore the artificial wake speaker cue.
 
-Do not widen that bridge merely because a wake + command phrase fails. Diagnose which detector path fired and when.
+## Durable learned-name rule from v57
 
-## Durable learned custom-name rule from v57
-
-Ryan physically proved v56 required a deliberate pause between a learned custom wake name and its command. A retained failed-session diagnostic after `Steve lights on` was:
+v56 physical testing showed learned custom names still required a deliberate pause before a command. A retained failed-session trace after `Steve lights on` was:
 
 `WAKE ASR ERROR 7 +1502ms ready=28 begin=290 end=1405 partial=- final=-`
 
-Source tracing found the learned matcher waited for two quiet 100 ms chunks before evaluating the name. Continuous `Steve lights on` therefore consumed command speech before wake handoff.
+Source tracing found the learned matcher waited for two quiet 100 ms chunks before evaluating the name. v57 made learned names matchable while speech is still active and kept the older silence-ended matcher as fallback, with expensive feature extraction gated behind cheap speech/RMS activity.
 
-v57 changed learned custom names to streaming matching during active speech, kept the older silence-ended matcher as fallback and gated expensive acoustic feature extraction behind cheap speech/RMS activity.
-
-Physical v57 evidence confirms this architecture generally:
+Physical v57 evidence proves the architecture generally:
 
 - `Steve lights on` worked naturally with no deliberate pause;
 - `Steve show diagnostics` worked naturally;
 - spoken rename to `Fred` invoked five-sample local enrolment and `Fred lights on` worked with `Done`;
 - spoken rename to `Jeff` repeated the same five-sample flow and `Jeff lights on` worked with `Done`.
 
-Durable rule: learned custom wake names must be eligible for matching while speech is still active; do not reintroduce a trailing-silence requirement or a second microphone path.
+Durable rule: learned custom wake names must remain matchable during active speech and must not regain a trailing-silence requirement or second microphone path.
 
 ## Durable default BOOP rule from v58
 
-The v57 physical test isolated a separate problem: permanent fallback `BOOP` still woke, but continuous `BOOP lights on` required a pause while Steve/Fred/Jeff did not.
+v57 physical testing isolated the remaining pause to permanent fallback `BOOP`. Root cause was Sherpa `config.setNumTrailingBlanks(1);`. v58 changes only this to `config.setNumTrailingBlanks(0);`.
 
-Root cause was the Sherpa default keyword configuration:
+Ryan physically accepted signed v58 on the powered Pixel: permanent/default `BOOP + command` works naturally without a deliberate pause whether spoken slowly or quickly.
 
-`config.setNumTrailingBlanks(1);`
+Durable rule:
 
-That intentionally waited for one trailing blank after the keyword before finalizing the wake. v58 changes only this to:
+- default/permanent BOOP keeps zero intentional Sherpa trailing blanks;
+- do not change wake score, threshold, phrase assets, sensitivity or the command bridge in response to this accepted behavior;
+- preserve natural one-breath commands for both default BOOP and learned custom names.
 
-`config.setNumTrailingBlanks(0);`
-
-Physical v58 acceptance now confirms the intended behavior on Ryan's powered Pixel: default `BOOP` accepts natural wake + command speech without a deliberate pause, and Ryan reports it works whether spoken slowly or quickly.
-
-Durable v58 rule:
-
-- default/permanent BOOP uses zero intentional trailing blanks;
-- do not change wake score, threshold, BOOP keyword phrases, sensitivity or command bridge as part of this behavior;
-- custom learned-name streaming remains separate and unchanged;
-- preserve the natural one-breath behavior for both default BOOP and learned names.
-
-No blanket false-positive acceptance is recorded yet because ordinary-room-chatter observation was not explicitly reported in the v58 acceptance turn. If false positives later appear, investigate Sherpa confirmation timing before altering sensitivity or the custom matcher.
-
-## Current physically accepted wake checkpoint: v58
-
-Final v58 build:
-
-- built code `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
-- version 58 / `1.2.12-unified-natural-boop-wake`
-- workflow `34252950640` SUCCESS
-- artifact `BOOP-Unified`, ID `10066828560`
-- artifact digest `sha256:feb800dd99d6da15876892fbae4027def903bd43f3887b4b771c0e384a2ab372`
-- APK SHA-256 `5a5b4846a55bc58d3444a8c8f178441af576e86695025c17c8d4483ad9fd01aa`
-- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- Shield focused tests 58/58; unified focused tests 92/92; zero failures/errors/skips
-- materialized wake-handoff contracts 2/2 PASS
-- Launcher lint, signed assembly, package/version, manifest, signer, APK integrity and artifact upload PASS.
-
-Physically accepted rollback branch:
+Exact physically accepted v58 rollback:
 
 `checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
 
-Never repoint it.
+Never repoint it. v58 workflow `34252950640`; artifact `10066828560`; APK SHA-256 `5a5b4846a55bc58d3444a8c8f178441af576e86695025c17c8d4483ad9fd01aa`.
 
-Detailed receipt: `docs/BOOP-V58-NATURAL-BOOP-WAKE-RECEIPT.md`.
+## Durable speech-censorship rule from v59
 
-## Physically proven rollback and wake landmarks
+After v58 acceptance, Ryan physically observed that spoken adult/profane wake names were returned by Android recognition as asterisks. BOOP then stored that masked transcript and TTS spoke the literal stars during five-sample training.
 
-The older exact v48 wake-arm code remains protected at `checkpoint-boop-unified-v48-wake-arm`, commit `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint it.
+BOOP's own rename code does not contain a profanity filter. The masking boundary was Android speech recognition: both the ordinary tap recognizer and post-wake command recognizer omitted `RecognizerIntent.EXTRA_MASK_OFFENSIVE_WORDS`, leaving the recognition service free to use its default masking behavior.
 
-Wake progression retained for diagnosis:
+v59 requests in **both** recognition paths:
 
-- v51 repaired natural wake-prefix stripping.
-- v53 introduced persistent physical ASR evidence.
-- v54 repaired full wake-history contamination and physically enabled separate post-wake rename.
-- v55 added any-external-power wake, silent failure re-arm and pull-only diagnostics.
-- v56 removed the artificial wake cue and kept exactly the final detector block as a 100 ms command bridge.
-- v57 made learned custom names stream-matchable and is physically accepted for natural Steve/Fred/Jeff commands plus five-sample spoken rename.
-- v58 removed the default Sherpa trailing-blank wait and is physically accepted for natural slow/fast `BOOP + command` speech.
+`intent.putExtra(RecognizerIntent.EXTRA_MASK_OFFENSIVE_WORDS, false);`
+
+Durable rule:
+
+- BOOP does not intentionally censor user-selected wake names or ordinary recognized speech;
+- tap-to-talk and post-wake recognition both request unmasked offensive words;
+- do not add a BOOP-side profanity blacklist or replace a recognized adult word with asterisks;
+- the Android recognizer service ultimately decides whether it honors this request, so physical acceptance is required before promoting v59;
+- if a device still returns stars, investigate the active recognizer service/transcript boundary rather than modifying wake sensitivity, local training, the command bridge or rename parser.
+
+## Current signed candidate: v59 uncensored speech
+
+TDD RED:
+
+- commit `b021b28d3f635f884dbc144252834b315712c94b`
+- workflow `34256341474`
+- materialized wake-handoff suite ran 3 tests; exactly the new uncensored-speech contract failed while the two existing seam tests passed.
+
+GREEN / release trail:
+
+- patch `09971b5a734c23134ed1b326aa9cab5036674855`
+- materializer wiring `3b2ebeb66c357b947bec4c793165d3e97a8b994f`
+- intermediate workflow `34256484198` reached 3/3 wake-handoff PASS before being superseded by the version bump
+- v59 bump `0f2fe9d12e473b122938d06d767facc646c65476`
+- first v59-labelled run `34256571189` compiled/tested/signed but failed package verification only because the workflow still expected v58 metadata
+- verifier-only correction `136b56e6faac8ce450b957ac3057a379c68c7b7b` updated expected version fields without changing app behavior.
+
+Final v59 build:
+
+- built code `136b56e6faac8ce450b957ac3057a379c68c7b7b`
+- version 59 / `1.2.13-unified-uncensored-speech`
+- workflow `34257117357` SUCCESS
+- artifact `BOOP-Unified`, ID `10068400476`
+- artifact digest `sha256:f397a85aa4747a51394d0bbc42266658cc6609a355a25b210bd761d8813e023c`
+- APK SHA-256 `7d48cc77407b69428bd2456b80cefbe56cb60f6f8326eb2e3686aa7b22bc7a2e`
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
+- materialized wake-handoff contracts 3/3 PASS
+- Shield focused tests 58/58; unified focused tests 92/92; zero failures/errors/skips
+- Launcher lint, signed assembly, package/version, manifest, signer, APK integrity and artifact upload PASS.
+
+CI/signer green only. Required physical test: install over v58, voice-rename to an adult/profane wake name, verify the five-sample prompt contains the actual word rather than stars, finish training, use the new name with a normal HA command, and confirm permanent BOOP still works naturally.
+
+Detailed receipt: `docs/BOOP-V59-UNCENSORED-SPEECH-RECEIPT.md`.
+
+## Historical wake landmarks retained
+
+The older exact v48 wake-arm rollback remains protected at `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint it.
+
+Wake progression: v51 natural prefix stripping; v53 persistent ASR evidence; v54 full-pre-roll repair; v55 any-external-power wake, silent real re-arm and pull-only diagnostics; v56 silent wake seam + exact 100 ms bridge; v57 streaming learned names; v58 default BOOP zero trailing blank; v59 unmasked Android recognition request.
 
 ## Clean Shield HOME boundary
 
