@@ -54,29 +54,30 @@ v0.5.10 real-Shield report established:
 - no reviewed GPU stock sysfs control was exposed;
 - no allowlisted performance-write path was exposed;
 - `cmd power help` did not expose Android fixed-performance mode;
-- generic matches such as `low_power`, `nvidia_ranger_enabled`, `power_sounds_enabled` and `sys_uidcpupower` are not NVIDIA Processor Mode evidence;
 - observed CPU frequency values are point-in-time diagnostics, not maximum-clock proof.
 
 Therefore do not perform random sysfs or generic power-key experimentation.
 
-## Processor Mode Trace decision
+## Processor Mode physical decision
 
-v0.5.11 adds the next targeted discovery pass. It is still **read-only with respect to the Shield**.
+v0.5.11 Processor Mode Trace is physically accepted on the target Shield.
 
-The two-step flow deliberately compares the same real Shield around one manual change:
-1. Ryan sets NVIDIA Processor mode to **Optimized** and captures the baseline.
-2. Ryan manually sets Processor mode to **Max performance** and captures again.
-3. SHIELD TURBO displays all changed settings/properties, ranking plausible NVIDIA/performance/mode keys first.
+Ryan captured the Shield in NVIDIA Processor Mode **Optimized**, manually switched to **Max performance**, then captured again. The exact physical diff was:
+- `system:nv_power_mode`: `1 -> 0`;
+- `property:persist.vendor.sys.phs.cpufreq.boost`: `0 -> 5`;
+- `property:persist.vendor.sys.phs.gpufreq.boost`: `0 -> 5`;
+- `property:persist.vendor.sys.phs.frt.boost`: `0 -> 5`;
+- `property:persist.vendor.sys.phs.frt.min`: `15 -> 20`.
 
-The tracer reads exactly:
-- `settings list global`;
-- `settings list secure`;
-- `settings list system`;
-- `getprop`.
+Durable interpretation:
+- the observed GUI mapping is `system:nv_power_mode=1` for Optimized and `0` for Max performance;
+- `system:nv_power_mode` is the leading stock actuator candidate;
+- the four `persist.vendor.sys.phs.*` properties are downstream NVIDIA effects and must **not** be written directly by SHIELD TURBO;
+- this physical trace establishes read-side meaning but does not yet prove SHIELD TURBO can safely write/restore the setting and cause NVIDIA to apply/revert its dependent state.
 
-It must not issue `settings put/delete`, `setprop`, `cmd power set`, sysfs writes, fixed-performance enable commands or other performance mutations. The only write is private app state storing `optimized_snapshot` in `SharedPreferences("processor_mode_trace")` using the tested codec. It adds no service, receiver, foreground-service permission, watchdog or boot component. It does not touch CLEAN START or brightness.
+The next proof must write only `system:nv_power_mode`, read back both the setting and the four downstream properties, then restore the exact original state. Vendor-property direct writes remain forbidden.
 
-A changed key remains a candidate, not permission to write it. No performance write enters the allowlist until physical before/after evidence establishes unambiguous meaning and a complete read-back/restore path.
+Only after a successful physical actuator proof may `nv_power_mode` enter the persistent TURBO allowlist.
 
 ## Compact diagnostic presentation
 
@@ -97,8 +98,17 @@ Release run `34261526060`, job `102180473668`, success:
 - signed artifact `SHIELD-TURBO` ID `10070181954`, artifact SHA-256 `0fbf8aafd5a236463babb6ff90e060e72381eec37ac4a1a560eadb4ba2094f46`;
 - test artifact `SHIELD-TURBO-TESTS` ID `10070244960`, artifact SHA-256 `316d4182c68bffe0b995eafc3d84d067a942c51a7121cfeb194f4585c8c57bda`.
 
-v0.5.11 is machine verified. Processor Mode Trace is **not physically accepted until Ryan runs the Optimized→Max comparison on the real Shield**.
+v0.5.11 is machine verified and its read-only Optimized→Max trace is physically verified.
 
 ## Next safe decision
 
-Use the v0.5.11 physical diff to identify the actual NVIDIA Processor Mode state path. Ignore unrelated transient changes. No write before a candidate has unambiguous state meaning, read-back and restore semantics.
+Build a bounded actuator proof around **only** `settings put system nv_power_mode`:
+- require/read Optimized baseline `1` and downstream `0/0/0/15`;
+- request Max by writing `0`;
+- verify read-back `0` plus downstream `5/5/5/20`;
+- restore by writing `1`;
+- verify read-back `1` plus downstream `0/0/0/15`;
+- if any check fails, prefer restore-to-Optimized/recovery and retain exact diagnostics;
+- never write the four vendor properties directly.
+
+No persistent Turbo, boot reapply or watchdog should be enabled until this actuator proof passes physically.
