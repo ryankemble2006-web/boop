@@ -30,15 +30,6 @@ if [ -d shield-overlay/app/src/main/assets ]; then
     cp -R shield-overlay/app/src/main/assets "$ROOT/shield-lib/src/main/assets"
 fi
 
-# Clean Shield HOME stays isolated in unified source, then materializes into shield-lib.
-if [ -d unified/shield-home/src/main/java ]; then
-    cp -R unified/shield-home/src/main/java/. "$ROOT/shield-lib/src/main/java/"
-fi
-if [ -d unified/shield-home/src/test/java ]; then
-    mkdir -p "$ROOT/shield-lib/src/test/java"
-    cp -R unified/shield-home/src/test/java/. "$ROOT/shield-lib/src/test/java/"
-fi
-
 # Re-run the Shield dashboard patch against the copied library tree too.
 python3 scripts/patch-unified-shield-dashboard.py
 
