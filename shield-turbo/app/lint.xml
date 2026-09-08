@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!--
+      SHIELD TURBO is a Leanback/Android TV remote application. The target
+      interaction is KEYCODE_BACK from a D-pad remote, including NVIDIA Shield
+      Experience devices that currently run below Android 16 predictive-back
+      gesture behavior. Keep Activity.onBackPressed so the same remote path is
+      exercised by the emulator smoke test. If this app gains a touch/gesture
+      surface, replace this suppression with OnBackPressedDispatcher before
+      enabling that surface.
+    -->
+    <issue id="GestureBackNavigation" severity="ignore" />
+</lint>
