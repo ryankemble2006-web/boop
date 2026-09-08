@@ -7,77 +7,49 @@ Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
 - Protected physically-green HOME mechanism: version 8 / `0.8.0-reboot-rearm`
 - Physically accepted Apps drawer: 0.9 floating square icons
 - Physically-good HOME geometry/chrome: 0.9.4
-- v0.10.1 Notification Access routing: physical FAIL
-- v0.10.2 Accessibility media path: physical FAIL
 - Notification Listener manually enabled on real Shield: **physical PASS, Now Playing appeared immediately**
-- v0.10.3 collision layout: **physical result MUCH BETTER**, remaining small control/nav/artwork issues
-- Current candidate: code 19 / `0.10.4-artwork-spacing`
-- Build source: `184974d97126d4adbf9f4c573bac04d109065c59`
-- Workflow: `34285227706` SUCCESS
-- Artifact ID: `10079223274`
-- APK SHA-256: `fe7007f29b36b69b43f90f692906da1ac55e2b1b26c8d53fcbcf7eb0775a1541`
-- Artifact ZIP SHA-256: `047b8475578fb0265b86e48042bbab30f8292c00a537cf23bba9e3f9c818e377`
+- v0.10.3 major collision fix: physical **much better**
+- v0.10.4 spacing: physical **awesome spacing**; album art still absent
+- Current candidate: code 20 / `0.10.5-remote-artwork`
+- Build source: `102ea618935bb5a8c7b0fef14657ff3e75756262`
+- Workflow: `34286575434` SUCCESS
+- Artifact ID: `10079722116`
+- APK SHA-256: `01e4e81538f2c8048aeff930b7ef8b5838d85f7ea0d6e701b6d1e193b3b98363`
+- Artifact ZIP SHA-256: `df875000340b08e936f8f867d9f59c6ed88224e808695283c3c6753796758458`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- Functional/build/signer/package green; v0.10.4 artwork/spacing pending Ryan's Shield
+- Functional/build/signer/package green; remote artwork and 4dp control lift physically pending Ryan
 
 ## Physically proven media path
 
-`Shield Settings -> Apps -> Special app access -> Notification access -> BOOP Now Playing` is the authority path. `Media access` uses the Notification Listener grant; BOOP Home Override Accessibility is HOME-only.
+`Shield Settings -> Apps -> Special app access -> Notification access -> BOOP Now Playing` is the authority path. `Media access` uses the Notification Listener grant. BOOP Home Override Accessibility remains HOME-only.
 
-## v0.10.3 physical follow-up
+## v0.10.4 physical result
 
-Ryan's v0.10.3 screenshot confirmed the major mascot collision was solved and described it as **much better**. Remaining issues:
+Ryan reported **awesome spacing**. Requested one final visual tweak: lift the Prev / Rew / Play-Pause / Fwd / Next row by 4dp. Album art remained grey after the notification-artwork fallback.
 
-- transport buttons still slightly too large/crowded;
-- top Apps / Launcher Settings / Settings row needs moving down a touch;
-- Deezer title/artist/playback worked but album-art square stayed grey.
+## v0.10.5 changes
 
-## v0.10.4 candidate
+- transport row top margin 8dp -> **4dp**; all other accepted spacing remains unchanged;
+- MediaSession bitmap artwork still wins first;
+- local MediaMetadata artwork URIs remain supported;
+- HTTPS MediaMetadata ART_URI / ALBUM_ART_URI / DISPLAY_ICON_URI can now be downloaded asynchronously, never blocking launcher UI;
+- HTTPS only, no cleartext; 4s connect / 6s read timeout, image MIME check, bounded cache;
+- normal `INTERNET` permission added only for optional remote cover artwork;
+- notification fallback now accepts Android media-session notifications **or** `CATEGORY_TRANSPORT`, and checks large-icon/picture artwork forms;
+- notification title/body/messages/actions remain ignored.
 
-Spacing:
-
-- media controls 78x48dp -> **70x42dp**;
-- control font 16sp -> **15sp**;
-- controls row 52 -> 46dp, top margin 10 -> 8dp;
-- top navigation row translated down **8dp** only;
-- existing 182dp Now Playing card, 230dp mascot bay and Favourite apps geometry remain unchanged.
-
-Album art:
-
-- MediaMetadata art remains first choice;
-- if absent, BOOP may use artwork only from a **media notification** matched by player package;
-- supported fallback sources are notification large-icon/picture bitmap/icon fields;
-- notification title/body/messages/actions remain ignored;
-- fallback clears when the media notification is removed or listener observation ends.
+Artwork-source TDD RED: `1536be0b51a7f6e0db9d0cb71ae1aaf5e5fffc59`, then production policy/resolver. A JVM-stub issue in the pure URI-policy test was corrected by making the scheme parser pure Java. Final v0.10.5 workflow `34286575434` passed the fast functional/build/sign/package lane.
 
 ## Fast CI rule
 
-Ryan owns real-device visual acceptance. CI sets `BOOP_SKIP_MANUAL_VISUAL_TESTS=1`; no screenshot, golden, emulator appearance, layout, focus-scale or animation visual acceptance runs.
-
-CI still verifies functional Java/Android logic, signed assembly, exact package/version, protected manifest/service/resource presence, permanent signer, APK archive integrity and artifact upload.
-
-Artwork TDD RED: `dc8d969875766b0d926a808216f7ee5a47951e4d`, workflow `34284805898`, 69 tests / exactly 1 expected failure on the missing artwork-fallback boundary.
-
-Final v0.10.4 workflow `34285227706` passed the fast functional/build/sign/package lane. The downloaded APK independently matched CI SHA and signer.
+Ryan owns real-device visual acceptance. CI sets `BOOP_SKIP_MANUAL_VISUAL_TESTS=1`; no screenshot, golden, emulator appearance, layout, focus-scale or animation visual acceptance runs. Functional logic, signed assembly, exact package/version, manifest/service/resource presence, permanent signer, APK integrity and upload remain checked.
 
 ## Locked behavior
 
-Preserve:
-
-- single Home -> BOOP;
-- double Home -> native Recent Apps;
-- BOOP Home Override across reboot;
-- stock Android TV Home installed/enabled as recovery/trigger;
-- real wide HOME banners and grab/reorder;
-- accepted floating-square Apps drawer;
-- no HOME black focus plate or normal favourite stars;
-- artwork-only HOME focus scaling;
-- single Back -> favourite item 1;
-- long Back/top-right Settings -> real Shield Settings;
-- volume/CEC/system shortcuts and animations.
+Preserve single Home -> BOOP; double Home -> native Recent Apps; reboot rearm; stock Android TV Home recovery; banners/grab/reorder; accepted Apps drawer; HOME focus behavior; Back behavior; Shield Settings access; volume/CEC/system shortcuts and animations.
 
 ## Next gate
 
-Install/update v0.10.4 and physically check album art, transport spacing, top-nav vertical position, mascot confinement and unchanged favourites. Then recheck single/double Home.
+Install/update v0.10.5. Skip to a fresh Deezer track, return HOME and allow a moment for asynchronous HTTPS artwork. Check the 4dp-higher controls row and whether album art appears. If art is still grey, stop blind fallbacks and instrument only sanitized artwork-source diagnostics (field presence + URI scheme/host, no notification text).
 
 Real Shield behavior is the authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
