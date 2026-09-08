@@ -37,7 +37,8 @@ runpy.run_path('scripts/patch-unified-iris-cache.py', run_name='__main__')
 settings = Path('boop-build/BOOP-Alpha1/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java')
 if not settings.exists():
     runpy.run_path('scripts/patch-unified-wake-arm.py', run_name='__main__')
-    runpy.run_path('scripts/make-locked-eyes-transparent.py', run_name='__main__')
+    # The permanent approved RGBA master already supplies its own transparency.
+    # Never run the retired brightness/row-span alpha reconstruction on it.
 else:
     runpy.run_path('scripts/patch-unified-room-switch.py', run_name='__main__')
     runpy.run_path('scripts/patch-unified-ha-null-names.py', run_name='__main__')
