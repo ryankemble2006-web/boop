@@ -25,7 +25,8 @@ class CleanStartStoreTest {
         val store = CleanStartStore(MemoryStore())
         assertFalse(store.autoEnabled())
         assertTrue(store.setAutoEnabled(true))
-        assertTrue(store.autoEnabled(false))
+        assertTrue(store.autoEnabled())
+        assertTrue(store.setAutoEnabled(false))
         assertFalse(store.autoEnabled())
     }
 
