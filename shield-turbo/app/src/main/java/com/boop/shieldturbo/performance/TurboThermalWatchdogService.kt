@@ -1,5 +1,6 @@
 package com.boop.shieldturbo.performance
 
+import android.Manifest
 import android.annotation.TargetApi
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,6 +8,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -74,18 +76,21 @@ class TurboThermalWatchdogService : Service() {
 
     private fun handleOutcome(outcome: TurboOutcome) {
         if (outcome.snapshot.phase == TurboPhase.TURBO_VERIFIED && outcome.snapshot.desiredTurbo) {
-            notificationManager().notify(ACTIVE_NOTIFICATION_ID, activeNotification())
             return
         }
 
         val severeFallback = outcome.snapshot.lastThermalStatus
             ?.let { it >= PowerManager.THERMAL_STATUS_SEVERE } == true &&
             outcome.snapshot.lastThermalFallbackEpochMs != null
-        if (severeFallback) {
+        if (severeFallback && canPostNotifications()) {
             notificationManager().notify(FALLBACK_NOTIFICATION_ID, fallbackNotification())
         }
         stopSelf()
     }
+
+    private fun canPostNotifications(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
     private fun ensureChannel() {
         notificationManager().createNotificationChannel(
