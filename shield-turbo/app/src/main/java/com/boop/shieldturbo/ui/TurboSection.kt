@@ -5,7 +5,8 @@ enum class TurboSection(val key: String) {
     PICTURE("picture"),
     APPS("apps"),
     NETWORK("network"),
-    SHIELD("shield");
+    SHIELD("shield"),
+    ADVANCED("advanced");
 
     companion object {
         fun fromKey(key: String): TurboSection? = values().firstOrNull { it.key == key }
