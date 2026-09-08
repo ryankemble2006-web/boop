@@ -5,10 +5,12 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.Display
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -25,8 +27,18 @@ class CleanStartIndicator(context: Context) {
     @Volatile private var view: View? = null
     private var windowManager: WindowManager? = null
 
-    private fun dp(value: Int): Int =
-        (value * context.resources.displayMetrics.density + 0.5f).toInt()
+    private fun dp(windowContext: Context, value: Int): Int =
+        (value * windowContext.resources.displayMetrics.density + 0.5f).toInt()
+
+    private fun overlayWindowContext(): Context {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return context
+        val displayManager = context.getSystemService(DisplayManager::class.java) ?: return context
+        val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY) ?: return context
+        return runCatching {
+            context.createDisplayContext(display)
+                .createWindowContext(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null)
+        }.getOrDefault(context)
+    }
 
     fun show() {
         if (Looper.myLooper() != Looper.getMainLooper()) {
@@ -38,29 +50,36 @@ class CleanStartIndicator(context: Context) {
             presented.countDown()
             return
         }
-        val manager = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
+
+        val windowContext = overlayWindowContext()
+        val manager = windowContext.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
         if (manager == null) {
             presented.countDown()
             return
         }
 
-        val card = LinearLayout(context).apply {
+        val card = LinearLayout(windowContext).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setPadding(dp(24), dp(12), dp(24), dp(12))
+            setPadding(
+                dp(windowContext, 24),
+                dp(windowContext, 12),
+                dp(windowContext, 24),
+                dp(windowContext, 12)
+            )
             background = GradientDrawable().apply {
                 setColor(0xEE000000.toInt())
-                cornerRadius = dp(14).toFloat()
-                setStroke(dp(1), Color.CYAN)
+                cornerRadius = dp(windowContext, 14).toFloat()
+                setStroke(dp(windowContext, 1), Color.CYAN)
             }
-            addView(TextView(context).apply {
+            addView(TextView(windowContext).apply {
                 text = "SHIELD TURBO · CLEAN START"
                 textSize = 18f
                 setTextColor(Color.CYAN)
                 setTypeface(typeface, Typeface.BOLD)
                 gravity = Gravity.CENTER
             })
-            addView(TextView(context).apply {
+            addView(TextView(windowContext).apply {
                 text = "Tidying startup apps"
                 textSize = 14f
                 setTextColor(Color.WHITE)
@@ -78,7 +97,7 @@ class CleanStartIndicator(context: Context) {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = dp(28)
+            y = dp(windowContext, 28)
             windowAnimations = 0
         }
 

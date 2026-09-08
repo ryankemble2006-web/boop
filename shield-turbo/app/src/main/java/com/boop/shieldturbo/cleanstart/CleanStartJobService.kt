@@ -15,7 +15,7 @@ import java.util.concurrent.Future
  */
 class CleanStartJobService : JobService() {
     companion object {
-        private const val INDICATOR_PRESENT_TIMEOUT_MS = 3_000L
+        private const val INDICATOR_PRESENT_TIMEOUT_MS = 500L
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -38,8 +38,10 @@ class CleanStartJobService : JobService() {
         task = executor.submit {
             try {
                 // Do not begin ADB/force-stop work merely because the window was requested.
-                // Wait for Android to commit the static card's first frame, with a bounded fallback.
-                indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)
+                // Wait briefly for a committed static frame, then fail open so presentation
+                // can never add several seconds to the physically proven cleanup path.
+                val presented = indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)
+                if (!presented) indicator.hide()
 
                 val localBridge = LocalBridge(applicationContext)
                 bridge = localBridge
