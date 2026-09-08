@@ -68,7 +68,17 @@ def apply() -> None:
         '    private void stopListening() {\n',
         '''    private void showWakeDiagnostic(BoopWakeDiagnosticTrace trace, boolean terminal) {
         if (trace == null) return;
-        Toast.makeText(this, trace.summary(SystemClock.elapsedRealtime()), Toast.LENGTH_LONG).show();
+        String summary = trace.summary(SystemClock.elapsedRealtime());
+        if (trace.requiresAcknowledgement()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("BOOP wake diagnostic")
+                    .setMessage(summary)
+                    .setCancelable(false)
+                    .setPositiveButton("Close", (dialog, which) -> dialog.dismiss())
+                    .show();
+        } else {
+            Toast.makeText(this, summary, Toast.LENGTH_LONG).show();
+        }
         if (terminal && wakeDiagnosticTrace == trace) {
             wakeDiagnosticTrace = null;
         }
@@ -76,7 +86,7 @@ def apply() -> None:
 
     private void stopListening() {
 ''',
-        'wake diagnostic toast helper')
+        'wake diagnostic presentation helper')
 
     replace_once(
         '    @Override public void onReadyForSpeech(Bundle params) { }\n',
@@ -194,7 +204,7 @@ def apply() -> None:
         'destroy diagnostic cleanup')
 
     MAIN.write_text(text, encoding='utf-8')
-    print('Wake ASR callback diagnostics materialized; recognizer behavior unchanged')
+    print('Wake ASR callback diagnostics materialized; terminal evidence requires acknowledgement')
 
 
 if __name__ == '__main__':
