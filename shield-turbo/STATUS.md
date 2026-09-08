@@ -6,17 +6,25 @@ Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
 CLEAN START's force-stop/read-back core remains physically accepted from earlier Shield tests. Stale Recents/task-manager cards can remain after force-stop while the apps themselves are unloaded and reload only when focused. Normal deliberate launch still works.
 
-Latest real-device notice evidence came from v0.5.5: the sign remained invisible, while CLEAN START reported `permission=yes`, `window=DISPLAY_WINDOW_CONTEXT`, `add=ADDED`, `present=DRAWN`, about `54ms`. This proved the old draw callback was a false-positive presentation signal, not proof of compositor delivery.
+Latest v0.5.6 real-device notice result:
+- navigation remained quick;
+- Android Home appeared to refresh for a microsecond;
+- **no static startup sign was visible**;
+- diagnostic reported **`present=FRAME_COMMITTED` in about `103ms`**.
 
-Presentation history: v0.5.1 flashed only at the end; v0.5.2 showed nothing; v0.5.3 showed nothing and stretched Turbo to almost eight seconds; v0.5.4 showed nothing but restored fast navigation within roughly one second; v0.5.5 showed nothing and exposed the `DRAWN` false-positive.
+Ryan did not restate the other diagnostic fields or target-package stopped state in this specific v0.5.6 report, so do not infer them.
+
+`FRAME_COMMITTED` is app-side frame-submission evidence, not physical display proof. Android documents that the frame may not currently be visible when the callback fires, and the system may change an application-overlay window's position, size or visibility.
+
+Presentation history: v0.5.1 flashed only at the end; v0.5.2 showed nothing; v0.5.3 showed nothing and stretched Turbo to almost eight seconds; v0.5.4 showed nothing but restored fast navigation; v0.5.5 showed nothing and exposed the `DRAWN` false-positive; v0.5.6 showed nothing despite `FRAME_COMMITTED` ~103ms.
 
 ## Current candidate
 
-**v0.5.6 / code 13** is signed and machine-verified. Exact built source `5870742c83b193251b323a48e12b0ef6c5b8b5ad`.
+**v0.5.6 / code 13** remains the latest signed machine-verified build. Exact source `5870742c83b193251b323a48e12b0ef6c5b8b5ad`.
 
-v0.5.6 requests a hardware-accelerated overlay and, on Android 10+, waits until the view is attached before registering `registerFrameCommitCallback`. `DRAWN` no longer counts as presentation on Android 10+; only `FRAME_COMMITTED` does. Pre-Android-10 keeps the OnDraw fallback. The 500 ms fail-open remains unchanged, so a failed notice cannot recreate v0.5.3's long slowdown.
+The current small `WRAP_CONTENT` boot card is now physically rejected. Do not add another timing delay or longer wait.
 
-A concurrent evidence improvement is also preserved: failed trusted boot ADB now records the actual exception class/message and CLEAN START can show `LAST CLEAN START DETAIL:`. Cleanup targets, force-stop/read-back semantics, trusted ADB, current-app skip and 30/60/120-second max-three scheduler are unchanged.
+The next presentation experiment should use the physically proven brightness-style surface: transparent `MATCH_PARENT x MATCH_PARENT` overlay host with `FLAG_LAYOUT_NO_LIMITS`, containing the same static top-centre CLEAN START card. Change presentation geometry only; preserve non-touch/non-focus, no movement, 500ms fail-open and all cleanup/ADB behavior.
 
 ## Exact v0.5.6 verification
 
@@ -26,8 +34,8 @@ Signed artifact `10057548249`, ZIP `765636` bytes, SHA-256 `1c601a47fd94d002f8a4
 
 Delivered APK `Shield-Turbo-v0.5.6.apk`, `2330594` bytes, SHA-256 `e462db094cf3f09fa4815949b492ed85f0fa12a57a53635951ce875c8c48cd78`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Downloaded artifact digests, APK digest, built-source receipt and package/version receipt all matched. The APK v2 signing block was independently parsed and matched `CN=BOOP Development,O=BOOP` and the permanent certificate. **No GitHub visual confirmation ran.** Ryan owns real-device appearance/timing/motionlessness acceptance.
+Downloaded artifact digests, APK digest, built-source receipt and package/version receipt all matched. APK v2 signer independently matched `CN=BOOP Development,O=BOOP`. **No GitHub visual confirmation ran.** Ryan owns real-device appearance/timing/motionlessness acceptance.
 
-## Next test
+## Next safe step
 
-Install v0.5.6, reboot, then report sign visibility, navigation responsiveness, exact `STARTUP NOTICE DIAGNOSTIC:` line, and whether the selected Kodi forks are stopped. Android 10+ success should say `present=FRAME_COMMITTED`; do not add arbitrary timing delays if it does not.
+No more small-window/timing variants. If notice work continues, write the RED contract first and test a brightness-style full-screen transparent host with the static card as its child. CLEAN START core stays untouched.

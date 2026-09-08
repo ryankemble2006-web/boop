@@ -1,6 +1,6 @@
 # SHIELD TURBO durable decisions
 
-Updated 2026-09-08. SESSION_HANDOFF.md owns exact current evidence/receipts; STATUS.md is the concise view. Fresh physical evidence overrides old pending-test notes.
+Updated 2026-09-08. `SESSION_HANDOFF.md` owns exact current evidence/receipts; `STATUS.md` is the concise view. Fresh physical evidence overrides old pending-test notes.
 
 ## Identity and continuity
 
@@ -22,23 +22,23 @@ Physical history:
 - v0.5.1 flashed only at the end;
 - v0.5.2 showed nothing;
 - v0.5.3 showed nothing and caused almost eight seconds total completion time;
-- v0.5.4 still showed nothing but restored fast navigation with the 500 ms fail-open;
-- v0.5.5 still showed nothing and reported `permission=yes`, `DISPLAY_WINDOW_CONTEXT`, `ADDED`, `DRAWN`, about 54 ms.
+- v0.5.4 still showed nothing but restored fast navigation with the 500ms fail-open;
+- v0.5.5 still showed nothing and reported `permission=yes`, `DISPLAY_WINDOW_CONTEXT`, `ADDED`, `DRAWN`, about 54ms;
+- v0.5.6 kept navigation quick, caused only a microsecond-looking Home refresh, showed no card, and reported `FRAME_COMMITTED` in about 103ms.
 
-The v0.5.5 line is the key durable finding: `DRAWN` was a false-positive because `isHardwareAccelerated` had been checked before the overlay attached. A draw callback did not prove a frame was committed to the Shield display compositor.
+## Durable interpretation of v0.5.6
 
-## v0.5.6 presentation decision
+`FRAME_COMMITTED` is **not physical visual acceptance**. Android's API contract says the content has been rendered into a frame and submitted to the swap chain, but that frame may not currently be visible on the display. Android also explicitly reserves the ability to change `TYPE_APPLICATION_OVERLAY` position, size or visibility.
 
-On Android 10+:
-- request `FLAG_HARDWARE_ACCELERATED`;
-- wait for overlay attachment via `addOnAttachStateChangeListener` / `onViewAttachedToWindow`;
-- only after attachment inspect hardware acceleration and register `registerFrameCommitCallback`;
-- only `FRAME_COMMITTED` counts as presentation;
-- never treat `DRAWN` as sufficient on Android 10+.
+Therefore:
+- permission/add/render timing is no longer the useful problem boundary;
+- the small boot-time `WRAP_CONTENT` application-overlay window is physically unreliable on Ryan's Shield;
+- do not add another sleep, preroll, timeout extension, draw callback or commit callback tweak;
+- the next experiment belongs at window-surface geometry/visibility.
 
-Pre-Android-10 may retain the OnDraw fallback. Presentation stays bounded to **500 ms max** and fail-open. Do not add another arbitrary delay.
+The physically proven in-app reference is `BrightnessService`, which uses a `MATCH_PARENT x MATCH_PARENT` `TYPE_APPLICATION_OVERLAY` with `FLAG_LAYOUT_NO_LIMITS` and is visibly effective on the Shield.
 
-If a future physical test is invisible while diagnostics say `FRAME_COMMITTED`, investigate Shield/Tegra compositor/z-order or move to an architecture based on the physically proven brightness-overlay surface. If diagnostics time out or report non-hardware acceleration, investigate that exact boundary first.
+If startup notice work continues, the next architecture is therefore locked as a **brightness-style transparent full-screen host** containing the same static card at top-centre. Change geometry only first. Preserve non-touch/non-focus, no movement, the 500ms fail-open and all CLEAN START/ADB behavior. This is evidence-driven architecture testing, not another timing guess.
 
 ## CLEAN START mechanism and safety retained
 
@@ -46,7 +46,7 @@ If a future physical test is invisible while diagnostics say `FRAME_COMMITTED`, 
 
 AUTO CLEAN START is opt-in and bounded. Boot cleanup uses only the already-trusted loopback ADB key through `withTrustedAdb`, never a fresh RSA approval. Attempts remain ~30/60/120 seconds after boot, max 3; no periodic/resident cleaner. Current resumed app is skipped. Background-only playback is not separately detected. Deliberate manual launch releases stopped state.
 
-Failed trusted boot ADB should retain the actual bounded exception class/message in CLEAN START item detail and expose it as `LAST CLEAN START DETAIL:`. Do not replace it with only generic `ADB unavailable` wording. Retry scheduling itself remains unchanged.
+Failed trusted boot ADB should retain the actual bounded exception class/message in CLEAN START item detail and expose it as `LAST CLEAN START DETAIL:`. Retry scheduling itself remains unchanged.
 
 Only eligible non-system user apps are targets. Preserve BOOP/Android/NVIDIA/Google-core/system exclusions. HARD BLOCK remains separate and explicit. Preserve old StartupLedger undo records.
 
@@ -66,6 +66,6 @@ Historical v0.5.5/v0.5.4/v0.5.3/v0.5.2/v0.5.1 receipts remain in Git; never repo
 
 A temporary preparation branch `shield-turbo-v01-stamp-temp` points to the already-green `d290042...` implementation. It is not canonical. Delete it later only with a normal safe branch deletion if/when tooling permits; never move the live Turbo branch to clean it up.
 
-## Next physical evidence required
+## Next safe step
 
-After v0.5.6 reboot, capture sign visibility, navigation responsiveness, exact `STARTUP NOTICE DIAGNOSTIC:` line and whether selected Kodi forks are stopped. No further presentation change should be made until that evidence exists.
+No further small-window/timing change. If Ryan continues notice work, use TDD first for the brightness-style transparent full-screen host. Keep CLEAN START core untouched and require real Shield acceptance.
