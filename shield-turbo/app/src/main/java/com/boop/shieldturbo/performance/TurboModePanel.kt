@@ -59,9 +59,7 @@ class TurboModePanel(private val activity: Activity) {
 
     fun close() {
         closed = true
-        operation?.cancel(true)
-        operation = null
-        worker.shutdownNow()
+        worker.shutdown()
         ui.removeCallbacksAndMessages(null)
     }
 
