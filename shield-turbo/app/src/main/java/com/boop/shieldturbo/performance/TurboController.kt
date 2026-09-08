@@ -61,12 +61,12 @@ class TurboController(
                 lastChangeEpochMs = clock.now()
             )
             if (!store.save(active)) {
-                restore(enabling, "TURBO not applied: verified state could not be saved")
+                rollbackEnableFailure(enabling, "TURBO not applied: verified state could not be saved")
             } else {
                 TurboOutcome(true, true, active, "TURBO ON: NVIDIA Max performance verified")
             }
         } catch (failure: Exception) {
-            restore(enabling, "TURBO not applied: ${detail(failure)}")
+            rollbackEnableFailure(enabling, "TURBO not applied: ${detail(failure)}")
         }
     }
 
@@ -159,6 +159,18 @@ class TurboController(
             "TURBO off: Shield reached SEVERE thermal status",
             thermalFallbackStatus = status
         )
+    }
+
+    private fun rollbackEnableFailure(source: TurboSnapshot, reason: String): TurboOutcome {
+        val restored = restore(source, reason)
+        return if (restored.snapshot.phase == TurboPhase.NORMAL) {
+            restored.copy(
+                success = false,
+                message = "$reason; original NORMAL restored and verified"
+            )
+        } else {
+            restored.copy(success = false)
+        }
     }
 
     private fun restore(
