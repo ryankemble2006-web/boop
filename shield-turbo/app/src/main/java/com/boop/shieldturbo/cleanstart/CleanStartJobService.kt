@@ -41,6 +41,7 @@ class CleanStartJobService : JobService() {
                 // Wait briefly for a committed static frame, then fail open so presentation
                 // can never add several seconds to the physically proven cleanup path.
                 val presented = indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)
+                store.recordIndicatorDiagnostic(indicator.diagnostic(presented))
                 if (!presented) indicator.hide()
 
                 val localBridge = LocalBridge(applicationContext)
