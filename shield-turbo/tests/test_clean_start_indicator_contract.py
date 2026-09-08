@@ -71,6 +71,19 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         self.assertIn("val presented = indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)", text)
         self.assertIn("if (!presented) indicator.hide()", text)
 
+    def test_boot_indicator_records_local_diagnostics_for_physical_followup(self):
+        indicator = (SOURCE / "cleanstart/CleanStartIndicator.kt").read_text()
+        store = (SOURCE / "cleanstart/CleanStartStore.kt").read_text()
+        job = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
+        startup = (SOURCE / "startup/StartupManagerActivity.kt").read_text()
+        self.assertIn("fun diagnostic(presented: Boolean): CleanStartIndicatorDiagnostic", indicator)
+        self.assertIn("data class CleanStartIndicatorDiagnostic", store)
+        self.assertIn("fun recordIndicatorDiagnostic", store)
+        self.assertIn("fun lastIndicatorDiagnostic", store)
+        self.assertIn("store.recordIndicatorDiagnostic(indicator.diagnostic(presented))", job)
+        self.assertIn("cleanStore.lastIndicatorDiagnostic()", startup)
+        self.assertIn("STARTUP NOTICE DIAGNOSTIC:", startup)
+
     def test_indicator_does_not_change_clean_start_scheduler(self):
         text = (SOURCE / "cleanstart/CleanStartScheduler.kt").read_text()
         self.assertIn("30_000L", text)
