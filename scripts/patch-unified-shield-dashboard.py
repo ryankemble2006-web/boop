@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import runpy
 
 OLD = '''    private void emit() { listener.onViewState(new ViewState(status, cards, status == Status.LIVE && !cards.isEmpty() && !toggleInFlight, message, this::toggleCard)); }
 '''
@@ -14,7 +15,6 @@ NEW = '''    private void emit() {
         listener.onViewState(state);
     }
 '''
-
 paths = [
     Path('shield-overlay/app/src/main/java/com/boop/shieldoverlay/HomeDashboardController.java'),
     Path('boop-build/BOOP-Alpha1/shield-lib/src/main/java/com/boop/shieldoverlay/HomeDashboardController.java'),
@@ -24,14 +24,13 @@ for controller in paths:
     if not controller.exists():
         continue
     text = controller.read_text(encoding='utf-8')
-    if NEW in text:
-        patched += 1
-        continue
-    count = text.count(OLD)
-    if count != 1:
-        raise SystemExit(f'{controller}: expected one current dashboard emit method, found {count}')
-    controller.write_text(text.replace(OLD, NEW, 1), encoding='utf-8')
+    if NEW not in text:
+        if text.count(OLD) != 1:
+            raise SystemExit(f'{controller}: expected one current dashboard emit method')
+        controller.write_text(text.replace(OLD, NEW, 1), encoding='utf-8')
     patched += 1
 if patched == 0:
     raise SystemExit('No Shield dashboard source was available to patch')
-print(f'Shield room-scoped dashboard state bus patched in {patched} tree(s)')
+runpy.run_path('scripts/patch-unified-room-controls.py', run_name='__main__')
+print(f'Shield room-scoped dashboard integration patched in {patched} tree(s)')
+runpy.run_path('scripts/patch-unified-iris-cache.py', run_name='__main__')

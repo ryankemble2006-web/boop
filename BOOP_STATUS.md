@@ -1,30 +1,13 @@
 # BOOP unified status
 
-Updated 2026-09-07. Branch `boop-unified`; package `com.boop.alpha1`.
+Updated 2026-09-08. Canonical app branch `boop-unified`; package and permanent signer unchanged.
 
-## Available candidate
+Current source candidate: based on `848a99725b6d64d4fb80d74fc466bdff807dd41e`, pending fresh CI and signed artifact. It includes the accumulated wake-name repair, modern Room -> Devices Home, configuration-only Settings, Favourites removal, robust HA category filtering, stable D-pad focus, and cached iris-only hue.
 
-Built code: `6cd9c67a03c639a20acde892e2d57186652e13d5`.
-Green run: `34125882296`; artifact `BOOP-Unified` / `10020439707`.
-APK SHA-256: `603e72b6f3a83eca429e90a11559454ca2d9c140eee69bff9bcd537d9a276a4e`.
-Version metadata remains 43 / `1.1.0-unified-dock-mirror-shield-settings`.
-Permanent signer and original BOOP keyword asset preserved.
+Last delivered artifact: `6cd9c67a03c639a20acde892e2d57186652e13d5`, run `34125882296`, artifact `10020439707`. It is not an accepted wake-name release. Ryan reports failed custom and fallback waking after rename, but continuing media/blink/colour functionality after his Android 17 upgrade. Shield layout/control defects from that candidate are the reason for this pass.
 
-Verification: CI tests/lint/build, signing and package identity, Shield-entry emulator smoke, downloaded artifact checksum, APK archive and required settings/name DEX markers all passed. Physical Shield Settings navigation and real HA inventory have NOT been verified.
+Local checkpoint: adapter Python syntax, workflow YAML parse and four synthetic colour fixture methods passed. Full Android/CI and physical-device acceptance remain pending for this candidate. Earlier dashboard functional test failures are not visual failures and must not be skipped to make a build green.
 
-## Important incomplete work
+CI policy: no automated visual acceptance. Focused functional tests and signer/package/archive verification remain. Upload signed test APK before the slower non-visual launch smoke. Ryan performs appearance/real-device acceptance. Rule is durable in BOOP_RULES.md.
 
-Custom wake-name preference, settings and verbal parsing exist, and custom call prefixes are now removed before normal command routing. However the built custom-name tokenizer applies BPE merging to a UNIGRAM model. Treat custom-name waking as defective/unverified, despite green existing CI.
-
-Repair commit `1c63dac26e2fb0f84a1bf4ee1a445869aff31462` exists separately but its branch publication was blocked by the connector's safety-status check. It is NOT in the above APK or branch. Its local tokenization comparison passed 5032/5032 reference cases; full CI for it remains pending. Documentation changes do not integrate that application repair.
-
-The signed candidate is suitable for checking the requested Shield settings presentation using BOOP as fallback. It is not the completed two-feature release Ryan requested.
-
-## Device evidence
-
-Last accepted rollback: `e746affbb82b577cef2f1cf6e731dff186c8f881`.
-Ryan reported unchanged Shield UI on earlier `950611d`; cause remains unproven. That binary did contain its newer settings class. Confirm unified `com.boop.alpha1` is actually launched rather than standalone `com.boop.shieldoverlay`. Do not automatically uninstall or modify grants/defaults.
-
-Portable handheld remains tap-to-talk; wireless dock permits foreground wake listening. Real camera/dock/thermal, remote-focus, custom acoustic accuracy and persistence tests remain outstanding.
-
-See `SESSION_HANDOFF.md` and `docs/BOOP-UNIFIED-WAKE-NAME-RECHECK.md` for exact failures and next steps. Original pre-recheck status is preserved verbatim at `docs/history/unified-v43/BOOP_STATUS.md`; no historical checkpoint was repointed.
+Protected rollback: `e746affbb82b577cef2f1cf6e731dff186c8f881`. No user-device install, grant, reset, signing change or Windows synchronization performed. See SESSION_HANDOFF.md for exact evidence and next step.

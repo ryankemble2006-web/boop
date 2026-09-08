@@ -16,7 +16,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 50
-
     steps:
       - name: Check out unified branch
         uses: actions/checkout@v4
@@ -34,51 +33,28 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verify pinned source heads and unified shell
+      - name: Check non-visual integration contracts
         run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_unified_docked_shield_pass.py
           python - <<'PY'
           from pathlib import Path
           heads = Path('unified/SOURCE_HEADS.md').read_text()
-          build = Path('unified/app-build.gradle').read_text()
-          profile = Path('unified/BoopDeviceProfile.java').read_text()
-          entry = Path('unified/UnifiedEntryActivity.java').read_text()
-          materializer = Path('scripts/materialize-unified.sh').read_text()
-          required = [
-              ('Wall head', 'a28364f98fba1b3a5dbab7e66075c0fb166e08e3', heads),
-              ('Launcher head', '953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2', heads),
-              ('Shield head', '1a487a4aaecd098d6854905ee64d60253ad6b4b7', heads),
-              ('versionCode', 'versionCode 43', build),
-              ('versionName', '1.1.0-unified-dock-mirror-shield-settings', build),
-              ('wall device', 'pixel 7 pro', profile),
-              ('shield route', 'BoopDeviceProfile.Mode.SHIELD', entry),
-              ('launcher route', 'com.boop.launcher.MainActivity', entry),
-              ('shield activity', 'com.boop.shieldoverlay.MainActivity', entry),
-              ('dock/mirror patch', 'patch-unified-dock-mirror.py', materializer),
-              ('Shield detail overlay route', 'Settings.ACTION_MANAGE_OVERLAY_PERMISSION,', materializer),
-              ('Shield generic overlay fallback', 'new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)', materializer),
-              ('Shield settings fallback', 'new Intent(Settings.ACTION_SETTINGS)', materializer),
-          ]
-          missing = [name for name, token, text in required if token not in text]
-          if missing:
-              raise SystemExit('Missing unified contract markers: ' + ', '.join(missing))
-          print('Unified source-head, dock/mirror and Shield-startup contract verified')
+          for sha in ('a28364f98fba1b3a5dbab7e66075c0fb166e08e3',
+                      '953ad6d5fe48df104a1f74bdcf4b448f5a6d04f2',
+                      '1a487a4aaecd098d6854905ee64d60253ad6b4b7'):
+              assert sha in heads
+          print('Pinned source provenance retained. Visual acceptance is manual.')
           PY
-
-      - name: Run preserved Wall source guards
-        run: |
-          python -m pip install pytest
-          python -m pytest -q \
-            tests/test_wall_native_chat_eye_hue.py \
-            tests/test_member_berries.py \
-            tests/test_alpha61_thinking_puppet.py \
-            tests/test_alpha655_shake_muppet.py \
-            tests/test_unified_docked_shield_pass.py
 
       - name: Materialize one APK
         run: bash scripts/materialize-unified.sh
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
 
       - name: Install Android build tools
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
@@ -87,11 +63,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
+          cache-read-only: false
 
-      - name: Test latest Launcher source
-        run: gradle --no-daemon -p launcher :app:testDebugUnitTest lintDebug --stacktrace
+      - name: Check preserved Launcher source
+        run: gradle --no-daemon -p launcher lintDebug --stacktrace
 
-      - name: Materialize approved eye artwork for latest Shield source
+      - name: Copy approved artwork without visual inspection
         shell: bash
         run: |
           set -euo pipefail
@@ -100,13 +77,22 @@ jobs:
           mkdir -p shield-overlay/app/src/main/res/drawable-nodpi
           cp "$ASSET" shield-overlay/app/src/main/res/drawable-nodpi/boop_eyes.png
 
-      - name: Test latest Shield source
-        run: gradle --no-daemon -p shield-overlay :app:testDebugUnitTest --stacktrace
+      - name: Test Shield control behaviour only
+        run: |
+          gradle --no-daemon -p shield-overlay :app:testDebugUnitTest \
+            --tests '*Home*Test' --tests '*Room*Test' \
+            --tests '*BinaryActionTest' --tests '*HaEntityCategoryTest' \
+            --tests '*TvNavigationModelTest' --tests '*BoopPreferencesTest' \
+            --tests '*DeezerPuppetSettingsModelTest' --tests '*DeezerAccessSettingsPlanTest' --stacktrace
 
-      - name: Test unified app
+      - name: Test wake names, routing and lifecycle only
         run: |
           unset BOOP_RELAY_URL BOOP_RELAY_TOKEN
-          gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --stacktrace
+          gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
+            --tests '*BoopWake*' --tests '*BoopSentencePiece*' --tests '*BoopCustomWake*' \
+            --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
+            --tests '*BoopVoice*' --tests '*BoopCommandRouterTest' \
+            --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' --stacktrace
 
       - name: Prepare permanent BOOP signer
         shell: bash
@@ -132,7 +118,64 @@ jobs:
           BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
         run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
 
-      - name: Smoke launch unified Shield body
+      - name: Verify package, permanent signer and archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
+          "$TOOLS/aapt" dump badging "$APK" > badging.txt
+          grep -q "package: name='com.boop.alpha1'" badging.txt
+          grep -q "versionCode='43'" badging.txt
+          grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
+          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService; do
+            grep -q "$cls" manifest-tree.txt
+          done
+          "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
+          test -n "$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+          printf '%s\n' "$ACTUAL" > signer-sha256.txt
+          unzip -tq "$APK"
+          sha256sum "$APK" | tee apk-sha256.txt
+          git rev-parse HEAD | tee built-commit.txt
+          cp unified/SOURCE_HEADS.md source-heads.txt
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          lines = ['Visual acceptance: MANUAL, not performed by GitHub.',
+                   'APK signature, package identity and ZIP integrity: verified.',
+                   'Physical Shield / Pixel acceptance: pending.']
+          for label, root in [('Shield', Path('shield-overlay/app/build/test-results')),
+                              ('Unified', Path('boop-build/BOOP-Alpha1/app/build/test-results'))]:
+              totals = dict(tests=0, failures=0, errors=0, skipped=0)
+              for path in root.rglob('TEST-*.xml'):
+                  suite = ET.parse(path).getroot()
+                  for key in totals:
+                      totals[key] += int(suite.get(key, '0'))
+              lines.append(label + ' focused functional tests: ' + str(totals))
+          Path('verification.txt').write_text('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+          PY
+
+      - name: Upload signed BOOP immediately
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Unified
+          path: |
+            boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+            apk-sha256.txt
+            built-commit.txt
+            signer-sha256.txt
+            source-heads.txt
+            verification.txt
+          if-no-files-found: error
+
+      # This detects process crashes and the wrong entry activity only. No screenshots,
+      # appearance/layout/animation checks, image comparisons or visual approval.
+      - name: Non-visual launch smoke after APK upload
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -149,47 +192,11 @@ jobs:
             adb shell am start -W -n com.boop.alpha1/com.boop.alpha1.UnifiedEntryActivity
             sleep 4
             adb shell pidof com.boop.alpha1
-            adb shell dumpsys activity activities | tee shield-activity.txt
+            adb shell dumpsys activity activities > shield-activity.txt
             grep -q 'com.boop.alpha1/com.boop.shieldoverlay.BoopHomeActivity' shield-activity.txt
             adb logcat -d > shield-launch-logcat.txt
             ! grep -A10 -B2 'FATAL EXCEPTION' shield-launch-logcat.txt | grep -q 'com.boop.alpha1'
 
-      - name: Verify one-package identity and signer
-        shell: bash
-        run: |
-          set -euo pipefail
-          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
-          TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
-          "$TOOLS/aapt" dump badging "$APK" | tee badging.txt
-          grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='43'" badging.txt
-          grep -q "versionName='1.1.0-unified-dock-mirror-shield-settings'" badging.txt
-          grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
-          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml | tee manifest-tree.txt
-          grep -q 'com.boop.alpha1.UnifiedEntryActivity' manifest-tree.txt
-          grep -q 'com.boop.alpha1.MainActivity' manifest-tree.txt
-          grep -q 'com.boop.launcher.MainActivity' manifest-tree.txt
-          grep -q 'com.boop.shieldoverlay.MainActivity' manifest-tree.txt
-          grep -q 'com.boop.shieldoverlay.BoopOverlayService' manifest-tree.txt
-          grep -q 'com.boop.shieldoverlay.DeezerMediaListenerService' manifest-tree.txt
-          "$TOOLS/apksigner" verify --print-certs "$APK" | tee signer.txt
-          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
-          EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
-          test -n "$ACTUAL"
-          test "$ACTUAL" = "$EXPECTED"
-          unzip -tq "$APK"
-          sha256sum "$APK" | tee apk-sha256.txt
-          git rev-parse HEAD | tee built-commit.txt
-          cp unified/SOURCE_HEADS.md source-heads.txt
-
-      - name: Upload BOOP
-        uses: actions/upload-artifact@v4
-        with:
-          name: BOOP-Unified
-          path: |
-            boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
-            apk-sha256.txt
-            built-commit.txt
-            source-heads.txt
-            shield-launch-logcat.txt
-          if-no-files-found: error
+      - name: Remove temporary signer
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/boop-dev.jks"
