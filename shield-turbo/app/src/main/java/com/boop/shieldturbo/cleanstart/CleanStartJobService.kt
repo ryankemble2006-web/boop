@@ -15,7 +15,7 @@ import java.util.concurrent.Future
  */
 class CleanStartJobService : JobService() {
     companion object {
-        private const val INDICATOR_PREROLL_MS = 500L
+        private const val INDICATOR_PRESENT_TIMEOUT_MS = 3_000L
     }
 
     private val executor = Executors.newSingleThreadExecutor()
@@ -37,9 +37,9 @@ class CleanStartJobService : JobService() {
 
         task = executor.submit {
             try {
-                // Give Android a brief render opportunity before the ADB/force-stop work begins.
-                // This sleeps only the worker thread; the static overlay and launcher UI stay unblocked.
-                Thread.sleep(INDICATOR_PREROLL_MS)
+                // Do not begin ADB/force-stop work merely because the window was requested.
+                // Wait for Android to commit the static card's first frame, with a bounded fallback.
+                indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)
 
                 val localBridge = LocalBridge(applicationContext)
                 bridge = localBridge

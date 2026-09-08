@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -13,11 +14,14 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /** Static, non-interactive notice shown only while automatic CLEAN START is running. */
 class CleanStartIndicator(context: Context) {
     private val context = context.applicationContext
     private val main = Handler(Looper.getMainLooper())
+    private val presented = CountDownLatch(1)
     @Volatile private var view: View? = null
     private var windowManager: WindowManager? = null
 
@@ -29,8 +33,16 @@ class CleanStartIndicator(context: Context) {
             main.post { show() }
             return
         }
-        if (view != null || !Settings.canDrawOverlays(context)) return
-        val manager = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
+        if (view != null) return
+        if (!Settings.canDrawOverlays(context)) {
+            presented.countDown()
+            return
+        }
+        val manager = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
+        if (manager == null) {
+            presented.countDown()
+            return
+        }
 
         val card = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -70,12 +82,34 @@ class CleanStartIndicator(context: Context) {
             windowAnimations = 0
         }
 
-        runCatching { manager.addView(card, params) }
-            .onSuccess {
-                windowManager = manager
-                view = card
-            }
+        val added = runCatching { manager.addView(card, params) }.isSuccess
+        if (!added) {
+            presented.countDown()
+            return
+        }
+
+        windowManager = manager
+        view = card
+        armPresentationSignal(card)
     }
+
+    private fun armPresentationSignal(card: View) {
+        val observer = card.viewTreeObserver
+        if (!observer.isAlive) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && card.isHardwareAccelerated) {
+            runCatching {
+                observer.registerFrameCommitCallback { presented.countDown() }
+            }
+        } else {
+            runCatching {
+                observer.addOnDrawListener { presented.countDown() }
+            }
+        }
+        card.invalidate()
+    }
+
+    fun awaitPresented(timeoutMs: Long): Boolean =
+        presented.await(timeoutMs, TimeUnit.MILLISECONDS)
 
     fun hide() {
         if (Looper.myLooper() != Looper.getMainLooper()) {
