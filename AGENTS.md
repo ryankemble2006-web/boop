@@ -68,23 +68,6 @@ request first. These rules are for BOOP work, not permission to do unrelated wor
 - User stop/read-only instructions win. No automatic app installation, permission
   grants or device deployment are implied by a build.
 
-## APK handoff delivery rule
-
-- Every BOOP APK explicitly handed to Ryan should also be uploaded to his private
-  FTP `apk/` folder after the exact signed APK has passed the applicable
-  functional/build/package/signer checks, whenever the current session has
-  authorized FTP upload capability and runtime credentials.
-- Upload the exact verified APK, normally using its versioned filename. Do not
-  silently substitute or rebuild a different binary for FTP delivery.
-- GitHub remains the provenance/archive: preserve source commit, workflow/artifact,
-  APK SHA-256 and signer evidence even when FTP delivery succeeds.
-- The repository is public. Never commit FTP host/user/password/encoded password,
-  client exports or connection configuration. Credentials stay private and
-  runtime-only.
-- Confirm transfer completion and report the remote `apk/` filename/path when the
-  available tool can verify it. If FTP is unavailable or fails, state that plainly
-  and still hand over the exact verified APK by the available artifact path.
-
 ## Canonical deployment and rollback rule
 
 - One canonical BOOP APK lineage. Make one intentional functional change per
