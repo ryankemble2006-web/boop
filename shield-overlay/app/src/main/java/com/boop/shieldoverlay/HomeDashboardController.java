@@ -55,7 +55,8 @@ public final class HomeDashboardController {
             }
             List<EntityCard> scoped = RoomScopedEntities.keep(room, snapshot.cards());
             boolean rejectedUnscoped = scoped.size() != snapshot.cards().size();
-            cards = Collections.unmodifiableList(new ArrayList<>(scoped)); status = Status.LIVE; toggleInFlight = false;
+            List<EntityCard> actionable = keepActionable(scoped);
+            cards = Collections.unmodifiableList(new ArrayList<>(actionable)); status = Status.LIVE; toggleInFlight = false;
             message = rejectedUnscoped ? "I hid controls that aren't confirmed in " + room.name() + "." : null;
             cache.clear(room); emit();
         });
@@ -91,6 +92,28 @@ public final class HomeDashboardController {
         }
         if (!replaced) updated.add(confirmed); cards = Collections.unmodifiableList(updated);
     }
+
+    private static List<EntityCard> keepActionable(List<EntityCard> source) {
+        if (source == null || source.isEmpty()) return Collections.emptyList();
+        List<EntityCard> result = new ArrayList<>();
+        for (EntityCard card : source) {
+            if (isActionable(card)) result.add(card);
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    private static boolean isActionable(EntityCard card) {
+        if (card == null || card.hidden()) return false;
+        String category = clean(card.entityCategory());
+        if ("config".equalsIgnoreCase(category) || "diagnostic".equalsIgnoreCase(category)) return false;
+        String domain = card.domain();
+        boolean supportedDomain = "light".equals(domain)
+                || "switch".equals(domain)
+                || "fan".equals(domain)
+                || "input_boolean".equals(domain);
+        return supportedDomain && ("on".equals(card.state()) || "off".equals(card.state()));
+    }
+
     private void emit() { listener.onViewState(new ViewState(status, cards, status == Status.LIVE && !cards.isEmpty() && !toggleInFlight, message, this::toggleCard)); }
     private static String plainError(String value, String fallback) { String clean = clean(value); return clean == null ? fallback : clean; }
     private static String clean(String value) { if (value == null) return null; String trimmed = value.trim(); return trimmed.isEmpty() ? null : trimmed; }
