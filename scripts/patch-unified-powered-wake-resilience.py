@@ -156,7 +156,7 @@ def apply() -> None:
     }
 
 '''
-    new_helper = '''    private void rememberWakeDiagnostic(BoopWakeDiagnosticTrace trace) {
+    new_helper = r'''    private void rememberWakeDiagnostic(BoopWakeDiagnosticTrace trace) {
         if (trace == null) return;
         lastWakeDiagnosticSummary = trace.summary(SystemClock.elapsedRealtime());
         if (trace.terminal() && wakeDiagnosticTrace == trace) {
@@ -219,7 +219,7 @@ def apply() -> None:
                 });
             }
 ''',
-        '''            @Override
+        r'''            @Override
             public void onWakeFailure(String message) {
                 runOnUiThread(() -> {
                     lastWakeDiagnosticSummary = "WAKE ENGINE FAILURE\n" + message;
