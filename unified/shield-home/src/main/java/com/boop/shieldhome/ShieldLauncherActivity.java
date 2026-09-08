@@ -61,6 +61,7 @@ public final class ShieldLauncherActivity extends Activity {
     private ShieldNowPlayingManager nowPlayingManager;
     private Runnable unsubscribeNowPlaying;
     private NowPlayingSnapshot nowPlayingSnapshot;
+    private ShieldNowPlayingPuppetView nowPlayingPuppetView;
     private ExecutorService executor;
     private FrameLayout root;
     private View currentView;
@@ -98,6 +99,11 @@ public final class ShieldLauncherActivity extends Activity {
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
 
+        nowPlayingPuppetView = new ShieldNowPlayingPuppetView(this);
+        root.addView(nowPlayingPuppetView, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+
         repository = new TvAppRepository(this);
         store = new ShieldHomeStore(this);
         nowPlayingManager = ShieldNowPlayingManager.get(this);
@@ -116,6 +122,7 @@ public final class ShieldLauncherActivity extends Activity {
         if (nowPlayingManager != null) {
             nowPlayingManager.refreshAccess();
         }
+        updatePuppetForCurrentPage();
         if (root != null && store != null && currentPage == Page.SETTINGS) {
             showSettings();
         }
@@ -127,10 +134,21 @@ public final class ShieldLauncherActivity extends Activity {
             return;
         }
         nowPlayingSnapshot = snapshot;
+        updatePuppetForCurrentPage();
         if (destroyed || currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) {
             return;
         }
         ((ShieldHomeView) currentView).setNowPlaying(snapshot);
+    }
+
+    private void updatePuppetForCurrentPage() {
+        if (nowPlayingPuppetView == null || destroyed) {
+            return;
+        }
+        nowPlayingPuppetView.setSnapshot(currentPage == Page.HOME ? nowPlayingSnapshot : null);
+        if (root != null && nowPlayingPuppetView.getParent() == root) {
+            root.bringChildToFront(nowPlayingPuppetView);
+        }
     }
 
     private void reloadApps() {
@@ -238,6 +256,7 @@ public final class ShieldLauncherActivity extends Activity {
                     return;
                 }
                 view.render(favouriteEntries(), readyRows, nowPlayingSnapshot, homeCallbacks());
+                updatePuppetForCurrentPage();
                 if (focusFirstFavourite) {
                     view.post(view::resetToFirstFavourite);
                 }
@@ -710,6 +729,7 @@ public final class ShieldLauncherActivity extends Activity {
         root.addView(next, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
+        updatePuppetForCurrentPage();
         next.animate()
                 .alpha(1f)
                 .translationX(0f)
@@ -780,6 +800,9 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onDestroy() {
         destroyed = true;
         ++optionalGeneration;
+        if (nowPlayingPuppetView != null) {
+            nowPlayingPuppetView.setSnapshot(null);
+        }
         if (unsubscribeNowPlaying != null) {
             unsubscribeNowPlaying.run();
             unsubscribeNowPlaying = null;
