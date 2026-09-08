@@ -1,0 +1,52 @@
+name: Test Shield HOME routing
+
+on:
+  push:
+    branches: [ "boop-unified" ]
+    paths:
+      - 'unified/ShieldEntryRoute*.java'
+      - 'unified/UnifiedEntryActivity.java'
+      - 'scripts/materialize-unified.sh'
+      - '.github/workflows/test-shield-home-routing.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boop-shield-home-routing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  routing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Materialize unified app
+        run: bash scripts/materialize-unified.sh
+
+      - name: Install routing contract test into generated app
+        run: cp unified/ShieldEntryRouteTest.java boop-build/BOOP-Alpha1/app/src/test/java/com/boop/alpha1/ShieldEntryRouteTest.java
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: false
+
+      - name: Run Shield HOME routing contract
+        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest --tests '*ShieldEntryRouteTest' --stacktrace
