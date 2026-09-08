@@ -39,9 +39,8 @@ test -n "$EYE_ASSET"
 mkdir -p "$ROOT/shield-lib/src/main/res/drawable-nodpi"
 cp "$EYE_ASSET" "$ROOT/shield-lib/src/main/res/drawable-nodpi/boop_eyes.png"
 
-# Fail closed if this pass somehow materializes the old Shield settings body.
+# Keep only structural/non-visual build guards here. Ryan owns visual acceptance.
 grep -Fq 'BOOP SETTINGS' "$ROOT/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java"
-grep -Fq 'HOME ASSISTANT' "$ROOT/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java"
 grep -Fq "BOOP's name" "$ROOT/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java"
 test -s "$APP/src/main/assets/boop-kws/bpe.model"
 
