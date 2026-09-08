@@ -1,6 +1,7 @@
 package com.boop.shieldhome;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.media.session.PlaybackState;
@@ -129,6 +130,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
         progress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(1000);
+        progress.setProgressTintList(ColorStateList.valueOf(FocusChrome.accentColor(context)));
         LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(8));
         progressParams.topMargin = dp(9);
@@ -258,7 +260,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         view.setFocusable(true);
         view.setClickable(true);
         view.setPadding(dp(8), dp(5), dp(8), dp(5));
-        view.setBackground(buttonBackground());
+        view.setBackground(buttonBackground(false));
         installFocusPop(view);
         return view;
     }
@@ -270,11 +272,18 @@ public final class ShieldNowPlayingView extends FrameLayout {
     }
 
     private void installFocusPop(View view) {
-        view.setOnFocusChangeListener((v, focused) -> v.animate()
-                .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
-                .scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
-                .setDuration(TvAppCardView.FOCUS_DURATION_MS)
-                .start());
+        view.setOnFocusChangeListener((v, focused) -> {
+            if (v == artwork) {
+                v.setForeground(focused ? FocusChrome.outline(getContext(), 2) : null);
+            } else if (v instanceof TextView) {
+                v.setBackground(buttonBackground(focused));
+            }
+            v.animate()
+                    .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS)
+                    .start();
+        });
     }
 
     private TextView text(int sp, int colour) {
@@ -296,11 +305,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
         return background;
     }
 
-    private GradientDrawable buttonBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.rgb(44, 44, 44));
-        background.setCornerRadius(dp(9));
-        return background;
+    private GradientDrawable buttonBackground(boolean focused) {
+        return FocusChrome.filled(getContext(), Color.rgb(44, 44, 44), 9, focused);
     }
 
     private String stateText(int state) {
