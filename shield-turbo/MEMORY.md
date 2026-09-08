@@ -1,6 +1,14 @@
 # SHIELD TURBO durable decisions
 
-Updated 2026-09-07. Read `SESSION_HANDOFF.md` for the exact current build receipt and `STATUS.md` for the current candidate. This file records durable rules and physical acceptance checks, not a claim of hardware success.
+Updated 2026-09-08. Read `SESSION_HANDOFF.md` for exact build receipts and `STATUS.md` for the current candidate. This file records durable rules and physical evidence.
+
+## Physical evidence now established
+
+Ryan physically installed SHIELD TURBO on the bedroom NVIDIA Shield and confirmed the brightness control worked. Preserve the original working brightness checkpoint: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
+
+Ryan also physically installed the first STANDARD control-centre candidate, source `91b2e28178d14ba4f2098076b958726ce064a8e1`, run `34187498176`, artifact `10041082348`. Two Shield-only UX defects were observed: the TURBO maintenance row could not be reached with D-pad Down, and APPS OK showed the package name instead of directly launching the app. Those observations are authoritative physical feedback and must not be lost.
+
+The current machine-verified correction is source `d277ebe713cdbe5298f6205ef34fa4d493ea2114` with functional change at `8d48e3b30c51605bbc9d47bdad01e55bf651abb9`, run `34189880390`, artifact `10041897001`, APK SHA-256 `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`. It routes the last TURBO result down to `FREE SPACE`; the three maintenance controls navigate horizontally and back upward; APPS OK launches directly and hold-OK opens Android App Info. Hardware acceptance of these two corrections is pending Ryan's retest.
 
 ## Identity and ownership
 
@@ -24,29 +32,36 @@ The picture-brightness control is an explicitly authorised exception to the orig
 
 Current permissions are `ACCESS_NETWORK_STATE` for diagnostics and `SYSTEM_ALERT_WINDOW` for the authorised dim overlay. No microphone, camera or relay credentials are involved.
 
+## STANDARD control-centre behavior
+
+STANDARD is designed around a Shield remote. All useful controls must be genuinely focusable from D-pad navigation. A visible control that cannot be reached is a functional failure, not cosmetic polish.
+
+The APPS surface is primarily a launcher: pressing OK on an app launches it immediately using the Leanback launch intent when available, then the ordinary Android launch intent as fallback. Holding OK may open Android App Info. Do not interpose package-name dialogs on normal launch.
+
+TURBO's maintenance controls are safe routes only: storage/free-space settings, Android manage-apps settings, and restarting SHIELD TURBO itself. They are not process killers or cleaners.
+
 ## Privilege direction
 
 STANDARD is the expected ordinary app state. ADB TURBO requires actual elevated diagnostic evidence; usage access or enabled debugging is not proof. The current app has no ADB helper/setup/grant action. A one-time grant is not a permanent shell connection, and reboot/disabling-debugging behavior must be physically verified before promises are made.
+
+Do not begin ADB TURBO expansion until the current STANDARD candidate is physically accepted unless Ryan explicitly changes that order.
 
 ROOT is reported only for actual root process authority. The existence of a su executable or root-management app is not authority. Do not invoke su merely to fill in a badge.
 
 Reuse the existing secret-backed `boop-dev` signer and verify public certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Never create a replacement key, expose secret values, copy private keys into Git, use BOOP relay credentials, or deploy to a physical device without explicit instruction.
 
-## Physical Shield acceptance checklist
+## Current Shield acceptance checklist
 
-Use the exact brightness live-test candidate recorded in `SESSION_HANDOFF.md`: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
+Use the current corrected STANDARD candidate recorded above.
 
-1. Install it independently of BOOP. Confirm SHIELD TURBO appears in the Android TV launcher and starts normally.
-2. Verify ANALYSE SHIELD and all result cards still work using only the remote. Centre opens details; Back closes them.
-3. Focus PICTURE BRIGHTNESS and verify remote Left/Right changes the percentage through the full 10–100% range without trapping focus.
-4. At 100%, confirm there is no visible dimming and no overlay permission is required for the untouched state.
-5. Move below 100%. Confirm the Shield presents the display-over-other-apps permission flow in understandable form. Grant it, return to SHIELD TURBO and verify dimming can be applied.
-6. Test several points, especially 90%, 50%, 10%, then return to 100%. Confirm the dimming is monotonic and 100% completely removes the overlay.
-7. While below 100%, leave SHIELD TURBO for launcher, Kodi/media and another app. Confirm the selected dim level persists without stealing D-pad focus, clicks, playback controls or BOOP behavior.
-8. Reopen SHIELD TURBO and confirm the displayed percentage matches the active setting. Change it again and confirm the new value persists across app switches.
-9. Exercise sleep/wake. If practical during acceptance, reboot once. Record whether dimming returns as expected, disappears safely, or needs the app reopened. Do not promise boot persistence until observed.
-10. Deny/revoke display-over-other-apps and confirm the app fails safe: no stuck overlay, no crash, and 100% remains available as the clean state.
-11. Run the original diagnostic checks: compare memory/storage/device/transport with device settings and record exact exposed CPU/thermal source paths without guessing sensor identity.
-12. Record Ryan's result against the exact source/run/artifact/checksum above. Only explicit positive Shield hardware evidence creates a brightness rollback checkpoint.
+1. Install/update SHIELD TURBO and confirm it opens normally.
+2. Open TURBO. After results render, D-pad to the final reading and press Down. Confirm focus lands on `FREE SPACE`.
+3. Confirm Left/Right traverses `FREE SPACE`, `MANAGE APPS`, and `RESTART TURBO`; Up returns to the diagnostic results.
+4. Activate `FREE SPACE` and `MANAGE APPS` and confirm Android opens the intended settings surfaces. Confirm `RESTART TURBO` restarts this app cleanly.
+5. Open APPS and press OK on several entries, including a system/media app if visible. Confirm the selected app launches directly and no `com.android...` package dialog appears.
+6. Hold OK on an app and confirm Android App Info opens if long-press is delivered by the Shield remote.
+7. Recheck the already-proven brightness control and confirm the STANDARD changes did not regress it.
+8. Exercise NETWORK and SHIELD shortcuts with the remote and record any firmware-specific routes that Android refuses to expose.
+9. Only after the above passes should STANDARD be treated as physically accepted and ADB TURBO become the next development phase.
 
-The CI emulator is API 30 on a handheld profile with simulated D-pad input. It proved install/launch/basic navigation and absence of an app fatal exception, but it did not exercise the Shield overlay-permission UI or prove actual TV dimming.
+The CI emulator is API 30 on a handheld profile with simulated D-pad input. It proves install/launch/basic navigation and absence of an app fatal exception, but physical Shield feedback remains authoritative for TV focus behavior and NVIDIA firmware settings routes.
