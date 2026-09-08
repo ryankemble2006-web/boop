@@ -31,8 +31,6 @@ def apply() -> None:
         '    private BoopWakeDiagnosticTrace wakeDiagnosticTrace;\n',
         'diagnostic trace field')
 
-    # patch-wake-partial-fallback.py has already inserted its accumulator reset
-    # immediately after this line, so anchor only on the stable session assignment.
     replace_once(
         '        wakeAudioSession = session;\n',
         '''        final BoopWakeDiagnosticTrace diagnosticTrace =
@@ -54,12 +52,9 @@ def apply() -> None:
             closeWakeAudioSession();
 ''',
         '''        } catch (RuntimeException e) {
-            if (wakeDiagnosticTrace == diagnosticTrace) {
-                wakeDiagnosticTrace = null;
-            }
-            Toast.makeText(this,
-                    "WAKE ASR START FAILED " + e.getClass().getSimpleName(),
-                    Toast.LENGTH_LONG).show();
+            diagnosticTrace.startFailure(
+                    e.getClass().getSimpleName(), SystemClock.elapsedRealtime());
+            showWakeDiagnostic(diagnosticTrace, true);
             closeWakeAudioSession();
 ''',
         'wake recognition start failure diagnostic')
@@ -133,8 +128,6 @@ def apply() -> None:
 ''',
         'error callback trace capture')
 
-    # The partial-fallback materializer inserts its accumulator reset inside this
-    # branch. Add diagnostics at the branch entrance and leave that behavior intact.
     replace_once(
         '        if (failedMode == RecognitionMode.WAKE) {\n',
         '''        if (failedMode == RecognitionMode.WAKE) {
@@ -145,8 +138,6 @@ def apply() -> None:
 ''',
         'wake error diagnostic')
 
-    # Chat-mode materialization inserts a foreground guard immediately after the
-    # onResults() signature. Anchor on the stable completed-mode assignment instead.
     replace_once(
         '        RecognitionMode completedMode = recognitionMode;\n',
         '''        RecognitionMode completedMode = recognitionMode;
@@ -154,8 +145,6 @@ def apply() -> None:
 ''',
         'result callback trace capture')
 
-    # Capture the effective final transcript after the existing partial fallback
-    # has promoted a useful partial, if Android's final result is empty.
     replace_once(
         '''        if (completedMode == RecognitionMode.WAKE) {
             best = wakeTranscriptAccumulator.chooseFinal(best);
@@ -171,8 +160,6 @@ def apply() -> None:
 ''',
         'wake final result diagnostic')
 
-    # The partial fallback already handles WAKE and returns. Record the same raw
-    # first partial before that branch, then let the existing accumulator own routing.
     replace_once(
         '''    public void onPartialResults(Bundle partialResults) {
 ''',
