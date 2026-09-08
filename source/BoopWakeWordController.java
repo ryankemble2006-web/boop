@@ -343,7 +343,8 @@ final class BoopWakeWordController {
                 new ParcelFileDescriptor.AutoCloseOutputStream(pipe[1]);
         boolean handedOff = false;
         try {
-            writeLittleEndianPcm(writer, preRollSnapshot, preRollSnapshot.length);
+            short[] recognizerPrelude = BoopWakeCommandAudioPolicy.recognizerPrelude(preRollSnapshot);
+            writeLittleEndianPcm(writer, recognizerPrelude, recognizerPrelude.length);
             synchronized (lock) {
                 if (!running) return;
                 commandWriter = writer;
