@@ -220,8 +220,9 @@ public final class ShieldHomeView extends LinearLayout {
         row.addView(apps, new LayoutParams(dp(150), dp(60)));
 
         TextView homeRows = actionButton(ShieldHomeSettingsView.launcherSettingsLabel());
+        homeRows.setSingleLine(true);
         homeRows.setOnClickListener(v -> callbacks.onOpenHomeRows());
-        LayoutParams homeRowsParams = new LayoutParams(dp(190), dp(60));
+        LayoutParams homeRowsParams = new LayoutParams(dp(220), dp(60));
         homeRowsParams.leftMargin = dp(12);
         row.addView(homeRows, homeRowsParams);
 
