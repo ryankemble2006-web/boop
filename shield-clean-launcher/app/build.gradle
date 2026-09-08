@@ -1,0 +1,54 @@
+plugins {
+    id 'com.android.application'
+}
+
+def boopStore = System.getenv('BOOP_SIGNING_STORE_FILE')
+def boopStorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
+def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
+
+android {
+    namespace 'com.boop.shieldhome'
+    compileSdk 36
+
+    signingConfigs {
+        boopDev {
+            if (boopStore != null) {
+                storeFile file(boopStore)
+                storePassword boopStorePassword
+                keyAlias 'boop-dev'
+                keyPassword boopKeyPassword
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId 'com.boop.shieldhome'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0-standalone'
+    }
+
+    sourceSets {
+        main.java.srcDirs += '../../unified/shield-home/src/main/java'
+        test.java.srcDirs += '../../unified/shield-home/src/test/java'
+    }
+
+    buildTypes {
+        debug {
+            if (boopStore != null) {
+                signingConfig signingConfigs.boopDev
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}
