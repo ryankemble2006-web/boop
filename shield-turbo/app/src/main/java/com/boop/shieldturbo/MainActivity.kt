@@ -533,7 +533,7 @@ class MainActivity : Activity() {
             isFillViewport = true
             isFocusable = true
             isFocusableInTouchMode = true
-            addView(reportBody, ScrollView.LayoutParams(-1, -2))
+            addView(reportBody, ViewGroup.LayoutParams(-1, -2))
         }
         val reportRoot = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
