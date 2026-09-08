@@ -9,44 +9,63 @@ This clean Nvidia Shield HOME replacement remains a **standalone APK for physica
 - Standalone package: `com.boop.shieldhome`
 - Unified/AIO package: `com.boop.alpha1` (separate and untouched)
 - Stock Nvidia/Android TV launcher remains installed as the emergency recovery path.
+- Normal users must not need ADB, developer options, a laptop, root, Shizuku or hidden APIs.
 
 ## Current candidate
 
-- Build head: `2e5dcca8fd2a7c635b0c54faa4b10fb07880f6fd`
-- Version: 4 / `0.4.0-home-replacement`
-- Workflow: `34226492186` SUCCESS
-- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10055945427`
-- APK SHA-256: `64c9c92603a481ffbc5d66df0a5826269823f6e9dbe94889a8294fdaa1d29b4f`
-- Artifact ZIP SHA-256: `303ad4f81c1e47558fcf052908a14c0c5392f661201a3097cbbe827e9f26c7ab`
+- Candidate build head: `c30f09e45ee4c029ec84ac3717f3bbba1d289e9b`
+- Version: 5 / `0.5.0-home-target-fix`
+- Workflow: `34228609323` SUCCESS
+- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10056836704`
+- APK SHA-256: `d055d65222968fb894a11746f3723eb00a04fb9380e89b75251a8c4d4f763019`
+- Artifact ZIP SHA-256: `7e1bf68d919a5aabcb0f713a12fdd81d84a93ec7678f7fce3af0cce8657b195f`
 - Permanent BOOP signer reused and verified.
-- Focused Shield HOME suite: 42 tests, green. Signed assembly, package/version, HOME/Leanback, signer, APK integrity and artifact upload all green.
+- Focused Shield HOME tests, signed assembly, exact package/version, HOME/Leanback categories, signer, APK integrity and artifact upload all passed on the candidate head.
 
 CI-green is not physical acceptance.
 
-## Latest physical evidence
+## Physical evidence
 
-Ryan physically confirmed on the real Shield:
+Ryan physically confirmed on a real Shield:
 
-- the Android TV banners are good and must be preserved;
-- 0.2 grab movement failed because normal focus navigation won;
-- after the 0.3 parent-level input-routing repair, **the grabbed favourite actually moved** (Ryan: "the booger moved :)"). Treat grab/reorder movement as physically working at this checkpoint.
+- Android TV banners are good and must be preserved.
+- 0.2 grab movement failed because normal focus navigation won.
+- 0.3 parent-level input-routing repair succeeded: the grabbed favourite actually moved (Ryan: "the booger moved :)"). Treat grab/reorder movement as physically working at this checkpoint.
+- 0.4 HOME retirement/default persistence **failed**. `Retire Android TV Home` opened package `com.google.android.tungsten.setupwraith`; after reboot the original Shield UI was still HOME.
 
-Single-Back -> favourite item 1 and long-Back -> real Shield Settings were implemented in 0.3 but are not recorded as physically accepted until Ryan explicitly confirms them.
+The 0.4 failure is authoritative physical evidence. Do not describe 0.4 HOME replacement as accepted or merely untested.
 
-## 0.4 no-ADB HOME replacement flow
+## 0.4 root cause
 
-Ryan rejected ADB/developer-option setup for normal users. The locked simplicity rule is now: **install -> Android confirmation -> BOOP is Home**, with recovery available from BOOP itself.
+0.4 selected the first competing system HOME-capable package. On Shield, Google TV Setup / provisioning package `com.google.android.tungsten.setupwraith` can appear HOME-capable enough to satisfy that heuristic, even though it is not the normal Android TV launcher.
 
-0.4 adds:
+Verified package identities for the repair:
 
-- On first ordinary launch, if BOOP is not already the HOME role and the prompt has not already been shown, BOOP asks Android's own `RoleManager.ROLE_HOME` confirmation. It does not repeatedly nag after the first automatic prompt.
-- `Home rows` now exposes `Make BOOP my Home`, which reopens the Android-owned HOME-role/chooser flow manually at any time.
-- `Retire Android TV Home` dynamically discovers the competing **system HOME launcher** and opens that exact package's Android App Info page. The user can press Android's own **Disable** button if Shield firmware exposes it. BOOP does not use ADB, root, Shizuku, hidden APIs or privileged package-disable permissions.
-- `Restore Shield Home` dynamically finds the stock system HOME again, including a disabled package. If it is disabled, BOOP opens its App Info so the user can press **Enable**. If it is enabled, BOOP opens Android's HOME chooser so it can be selected again.
-- The standalone manifest explicitly queries HOME candidates so the recovery flow can discover stock HOME components.
-- Stock launcher package names are not hard-coded. Recovery selects another system HOME package rather than BOOP itself or an arbitrary third-party launcher.
+- `com.google.android.tungsten.setupwraith` = TV Setup / provisioning. Never select as a stock launcher retirement target.
+- `com.google.android.tvlauncher` = Android TV Home and the known stock Shield launcher target for this firmware family.
+- `com.google.android.apps.tv.launcherx` is also recognized as a known Google TV HOME package for future compatibility.
 
-The intended consumer sequence is: **install/open BOOP -> accept Make BOOP Home -> Home rows -> Retire Android TV Home -> Disable**. After that, BOOP should be the HOME surface and the stock launcher should remain installed but disabled for emergencies. Real Shield firmware must confirm that the stock App Info page actually exposes Disable.
+0.4 also trusted `RoleManager.isRoleHeld(ROLE_HOME)` whenever available. Ryan's reboot result proved that the consumer flow must verify the package Android actually resolves for `MAIN + CATEGORY_HOME`, not assume role bookkeeping means BOOP is the persisted launcher.
+
+## 0.5 HOME target repair
+
+TDD / regression evidence:
+
+- `HomeReplacementPolicyTest` commit `addf85e2ac37ee9f291b10074f1389fc5c426847`, workflow `34227581884`: RED with only the missing resolver-aware policy APIs. The regression literally places SetupWraith ahead of Android TV Home and requires `com.google.android.tvlauncher` to win.
+- Policy fix commit `cf6c91a158615801266515598114c15251bb57a1`: rejects setup/provisioning HOME candidates, prefers the actually resolved eligible stock HOME, then known Android/Google TV HOME packages, while keeping a disabled stock launcher discoverable for recovery.
+- `HomeReplacementUiContractTest` commit `df11fb0d323d3e636d21dcda9725c5b69f39fb89`, workflow `34227880751`: RED on the new resolved-HOME/fresh-prompt contract.
+- Activity fix commit `957f4ae55e6331324ed2c3a6c3347771575b8294`: actual resolved HOME package is now the truth for whether BOOP is default. The setup prompt key is versioned to `home_prompt_shown_v2`, so upgrading from broken 0.4 gets one fresh setup attempt.
+- Feature-head workflow `34228336811`: SUCCESS through tests, signing, package verification and artifact upload before release version bump.
+- Final 0.5 release workflow `34228609323`: SUCCESS end-to-end on candidate head `c30f09e45ee4c029ec84ac3717f3bbba1d289e9b`.
+
+0.5 behavior:
+
+- On upgrade from 0.4, BOOP gets a fresh one-time HOME setup attempt because the old prompt flag is intentionally superseded.
+- `Make BOOP my Home` prefers Android's explicit `Settings.ACTION_HOME_SETTINGS` chooser on Shield, with the platform HOME role request only as fallback.
+- BOOP considers itself default only when Android's resolved HOME package is exactly `com.boop.shieldhome`.
+- `Retire Android TV Home` dynamically enumerates HOME candidates but rejects SetupWraith/setup/provisioning packages. The resolved eligible stock HOME wins; otherwise known `com.google.android.tvlauncher` / Google TV HOME wins before generic system launchers.
+- `Restore Shield Home` uses the same corrected target logic and can still find the stock HOME when it is disabled.
+- BOOP still does not programmatically disable another system package. It opens Android's App Info and the user presses the OS-provided Disable/Enable control if Shield exposes it.
 
 ## Existing launcher behavior to preserve
 
@@ -67,14 +86,14 @@ Physical acceptance must preserve double-tap Home -> Recent Apps/task switcher, 
 
 ## Next physical test
 
-1. Update/install standalone 0.4. Confirm `com.boop.alpha1` AIO remains untouched.
-2. Confirm the first-run Android HOME confirmation appears (unless BOOP is already default) and choose BOOP.
-3. Press Home from several apps and confirm it returns directly to BOOP rather than loading stock Android TV Home first.
-4. Open `Home rows -> Retire Android TV Home`. Confirm it opens the real stock launcher App Info. If Android exposes **Disable**, disable it and return to BOOP.
-5. Reboot/wake and confirm BOOP remains the HOME surface with stock launcher disabled.
-6. Recheck double-tap Home -> Recent Apps/task switcher, volume/CEC and other system shortcuts.
-7. Confirm single Back -> favourite item 1 and long Back -> real Settings.
-8. Test `Restore Shield Home`: if stock is disabled it should open its App Info for Enable; once enabled, the HOME chooser should allow returning to stock.
-9. Confirm the already-liked banners and physically working grab/reorder remain unchanged.
+1. Update/install standalone 0.5 over 0.4. Confirm AIO `com.boop.alpha1` remains untouched.
+2. Confirm the fresh Android HOME chooser appears and explicitly select **BOOP Shield Home**.
+3. Press Home from another app and confirm it resolves directly to BOOP.
+4. Open `Home rows -> Retire Android TV Home`. It must target `com.google.android.tvlauncher` on this Shield, **never `com.google.android.tungsten.setupwraith`**.
+5. If Android exposes Disable, disable Android TV Home and return to BOOP.
+6. Reboot. Confirm BOOP is HOME after reboot rather than the original Shield UI.
+7. Recheck double-tap Home -> Recent Apps/task switcher, volume/CEC, single/long Back and other system shortcuts.
+8. Confirm banners and the physically working grab/reorder remain unchanged.
+9. Test `Restore Shield Home`: if Android TV Home is disabled, it should open that package's App Info for Enable, then the HOME chooser can restore stock.
 
 Do not merge into unified until Ryan explicitly approves the standalone behavior on real Shield hardware.
