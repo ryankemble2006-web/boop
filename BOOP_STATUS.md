@@ -6,12 +6,12 @@ Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
 - Unified/AIO package: `com.boop.alpha1` (separate, untouched)
 - Protected physically-green HOME mechanism: version 8 / `0.8.0-reboot-rearm`
 - Physically accepted Apps drawer presentation: 0.9 floating square icons
-- Current HOME visual candidate: version 11 / `0.9.2-home-pack`
-- 0.9.2 build head: `85054f38ca584ba200308db2448441633a9347ec`
-- 0.9.2 workflow: `34249370093` SUCCESS
-- 0.9.2 artifact ID: `10065417245`
-- 0.9.2 APK SHA-256: `a42afcaf533023fd7605c317b2bc668f02265ab7ab6c1d394957a56b74e4802c`
-- 0.9.2 artifact ZIP SHA-256: `f1e360246d1d248e3a8228434a1827a41f87e5114b8c1f76e2472e2c01fbe8fc`
+- Current HOME visual candidate: version 12 / `0.9.3-focus-clearance`
+- 0.9.3 build head: `99900d761a8dc11c7c17d6989898aee7e9582796`
+- 0.9.3 workflow: `34251324746` SUCCESS
+- 0.9.3 artifact ID: `10066192982`
+- 0.9.3 APK SHA-256: `99c5896c78a760de8ff22e9ccae792d8c6245854ca5fb772f009ce8feca20295`
+- 0.9.3 artifact ZIP SHA-256: `b5a6d672df6c51fdfe8c653d5d77774caa4500ef35105b5edc111ca1b207563d`
 - Permanent BOOP signer reused and verified
 
 ## Physical state
@@ -26,25 +26,24 @@ Core mechanism physically green from 0.8:
 
 Visual state:
 
-- 0.9 Apps drawer: **physically accepted** by Ryan ("app drawer great"). Preserve its floating square-icon presentation exactly.
-- 0.9 HOME: directionally liked, spacing physically failed as too wide.
-- 0.9.1 HOME: **physical FAIL**. Ryan supplied a real Shield/TV photo and reported: **"they got further apart..."**.
+- 0.9 Apps drawer: **physically accepted** by Ryan ("app drawer great"). Preserve it exactly.
+- 0.9 HOME: directionally liked, too much spacing.
+- 0.9.1 HOME: **physical FAIL**, spacing looked even wider.
+- 0.9.2 HOME: **physical FAIL**, spacing became much better but focused card overlapped its neighbour. Ryan's verdict: **"better but we now have overlap."**
 
-0.9.1 root cause: the 230 dp visible banner was still centred inside a 250 dp card plus 6 dp margin, leaving about 26 dp of invisible inter-banner spacing. The fix must make the HOME card hug the banner rather than only shrinking the outer slot.
+0.9.2 root cause: the tightly packed HOME row still inherited Apps-card focus/grab scales, so the card expanded into adjacent banners.
 
-## Current 0.9.2 candidate
+## Current 0.9.3 candidate
 
-0.9.2 changes HOME favourites only:
+0.9.3 changes HOME focus clearance only:
 
-- visible banner remains 230 dp;
-- HOME card width is 234 dp;
-- HOME horizontal card padding is 2 dp;
-- HOME inter-card margin is 2 dp;
-- focused card may overlap the tiny gap when it scales;
-- Apps drawer remains unchanged;
+- HOME banner/card packing remains tight;
+- inter-card margin is increased slightly from 0.9.2;
+- HOME focus/grab enlargement is reduced substantially;
+- Apps drawer keeps its accepted stronger focus/grab scale and geometry;
 - artwork, grab/reorder, Accessibility override, reboot re-arm and Home/Recent Apps behavior are unchanged.
 
-CI/signer/package/integrity checks are green. Per BOOP visual rules, **0.9.2 HOME appearance is not physically accepted until Ryan judges it on the real Shield**.
+CI/signer/package/integrity checks are green. Per BOOP visual rules, **0.9.3 HOME appearance is not physically accepted until Ryan judges it on the real Shield**.
 
 ## Locked behavior
 
@@ -65,4 +64,4 @@ Keep unchanged:
 
 ## Next gate
 
-Install/update to 0.9.2 and judge HOME spacing by eye. Apps drawer should remain visually unchanged from the accepted 0.9 drawer. If Home spacing is accepted, recheck grab plus single Home, double Home and reboot before promoting the visual candidate.
+Install/update to 0.9.3 and judge HOME idle spacing plus focused-card clearance by eye. Apps drawer should remain visually unchanged from the accepted 0.9 drawer. If Home is accepted, recheck grab plus single Home, double Home and reboot before promoting the visual candidate.
