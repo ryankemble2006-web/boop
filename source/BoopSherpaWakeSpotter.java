@@ -64,7 +64,16 @@ final class BoopSherpaWakeSpotter implements AutoCloseable {
                 Log.w(TAG, "Custom wake name could not be prepared; BOOP fallback remains active", error);
             }
         }
-        stream = combined == null || combined.isBlank() ? spotter.createStream("") : spotter.createStream(combined);
+        if (combined == null || combined.isBlank()) {
+            stream = spotter.createStream("");
+        } else {
+            try {
+                stream = spotter.createStream(combined);
+            } catch (Throwable error) {
+                Log.w(TAG, "Custom wake stream failed; using BOOP fallback only", error);
+                stream = spotter.createStream("");
+            }
+        }
     }
 
     boolean accept(short[] pcm, int count) {
