@@ -21,14 +21,15 @@ import android.widget.TextView;
 public final class TvAppCardView extends FrameLayout {
     public static final float FOCUSED_SCALE = 1.08f;
     public static final float GRABBED_SCALE = 1.14f;
-    private static final float HOME_FOCUSED_SCALE = 1.02f;
-    private static final float HOME_GRABBED_SCALE = 1.03f;
+    private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.03f;
+    private static final float HOME_ARTWORK_GRABBED_SCALE = 1.03f;
     public static final long FOCUS_DURATION_MS = 120L;
 
     private final ImageView iconView;
     private final TextView labelView;
     private final TextView favouriteBadge;
     private boolean grabbed;
+    private boolean favourite;
     private boolean homeFavourite;
 
     public TvAppCardView(Context context) {
@@ -93,22 +94,26 @@ public final class TvAppCardView extends FrameLayout {
 
     private void bindInternal(TvAppEntry entry, boolean favourite, boolean preferBanner) {
         grabbed = false;
+        this.favourite = favourite;
         homeFavourite = preferBanner;
         configureCardPadding(preferBanner);
+        setScaleX(1f);
+        setScaleY(1f);
+        iconView.setScaleX(1f);
+        iconView.setScaleY(1f);
+
         if (entry == null) {
             labelView.setText("");
             iconView.setImageDrawable(null);
-            favouriteBadge.setVisibility(View.GONE);
             setContentDescription("");
             configureArtworkSize(false);
+            refreshBadge();
             refreshEmphasis();
             return;
         }
 
         labelView.setText(entry.label());
         setContentDescription(entry.label());
-        favouriteBadge.setText("★");
-        favouriteBadge.setVisibility(favourite ? View.VISIBLE : View.GONE);
 
         Drawable artwork = null;
         boolean banner = false;
@@ -144,19 +149,27 @@ public final class TvAppCardView extends FrameLayout {
         configureArtworkSize(banner);
         iconView.setScaleType(banner ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
         iconView.setImageDrawable(artwork);
+        refreshBadge();
         refreshEmphasis();
     }
 
     public void setGrabbed(boolean grabbed) {
         this.grabbed = grabbed;
-        favouriteBadge.setText(grabbed ? "↔" : "★");
-        favouriteBadge.setVisibility(grabbed ? View.VISIBLE : favouriteBadge.getVisibility());
+        refreshBadge();
         refreshEmphasis();
     }
 
     @Override public void setSelected(boolean selected) {
         super.setSelected(selected);
         refreshEmphasis();
+    }
+
+    private void refreshBadge() {
+        favouriteBadge.setText(grabbed ? "↔" : "★");
+        favouriteBadge.setVisibility(
+                AppCardChromePolicy.showBadge(homeFavourite, favourite, grabbed)
+                        ? View.VISIBLE
+                        : View.GONE);
     }
 
     private void configureCardPadding(boolean homeFavourite) {
@@ -175,20 +188,32 @@ public final class TvAppCardView extends FrameLayout {
     private void refreshEmphasis() {
         boolean focused = hasFocus();
         boolean selected = isSelected();
-        boolean showPlate = AppCardChromePolicy.showPlate(focused, selected, grabbed);
+        boolean showPlate = AppCardChromePolicy.showPlate(
+                homeFavourite, focused, selected, grabbed);
         setBackground(showPlate ? cardBackground() : new ColorDrawable(Color.TRANSPARENT));
-        animateScale(focused || selected);
+        animateEmphasis(focused || selected);
     }
 
-    private void animateScale(boolean emphasized) {
-        float target;
-        if (grabbed) {
-            target = homeFavourite ? HOME_GRABBED_SCALE : GRABBED_SCALE;
-        } else if (emphasized) {
-            target = homeFavourite ? HOME_FOCUSED_SCALE : FOCUSED_SCALE;
-        } else {
-            target = 1f;
+    private void animateEmphasis(boolean emphasized) {
+        if (AppCardChromePolicy.emphasizeArtworkOnly(homeFavourite)) {
+            animate().cancel();
+            setScaleX(1f);
+            setScaleY(1f);
+            float artworkTarget = grabbed
+                    ? HOME_ARTWORK_GRABBED_SCALE
+                    : (emphasized ? HOME_ARTWORK_FOCUSED_SCALE : 1f);
+            iconView.animate()
+                    .scaleX(artworkTarget)
+                    .scaleY(artworkTarget)
+                    .setDuration(FOCUS_DURATION_MS)
+                    .start();
+            return;
         }
+
+        iconView.animate().cancel();
+        iconView.setScaleX(1f);
+        iconView.setScaleY(1f);
+        float target = grabbed ? GRABBED_SCALE : (emphasized ? FOCUSED_SCALE : 1f);
         animate()
                 .scaleX(target)
                 .scaleY(target)
