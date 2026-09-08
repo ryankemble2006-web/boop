@@ -16,13 +16,23 @@ public final class UnifiedApplication extends Application {
             return;
         }
 
+        Resources applicationResources = getResources();
+        int configuredDensity = applicationResources.getConfiguration().densityDpi;
+        final int baseDensity = configuredDensity > 0
+                ? configuredDensity
+                : applicationResources.getDisplayMetrics().densityDpi;
+        final int shieldDensity = Math.max(1, Math.round(baseDensity * SHIELD_UI_SCALE));
+
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
             public void onActivityPreCreated(Activity activity, Bundle savedInstanceState) {
                 Resources resources = activity.getResources();
-                Configuration scaled = new Configuration(resources.getConfiguration());
-                int baseDensity = scaled.densityDpi;
-                scaled.densityDpi = Math.max(1, Math.round(baseDensity * SHIELD_UI_SCALE));
+                Configuration current = resources.getConfiguration();
+                if (current.densityDpi == shieldDensity) {
+                    return;
+                }
+                Configuration scaled = new Configuration(current);
+                scaled.densityDpi = shieldDensity;
                 resources.updateConfiguration(scaled, resources.getDisplayMetrics());
             }
 
