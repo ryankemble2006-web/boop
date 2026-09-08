@@ -10,6 +10,7 @@ public final class BoopWakeSessionCoordinatorTest {
     private static final class FakeEngine implements BoopWakeSessionCoordinator.Engine {
         int armCalls;
         int suspendCalls;
+        int reloadCalls;
         int shutdownCalls;
         boolean armResult = true;
 
@@ -20,6 +21,10 @@ public final class BoopWakeSessionCoordinatorTest {
 
         @Override public void suspendAll() {
             suspendCalls++;
+        }
+
+        @Override public void reload() {
+            reloadCalls++;
         }
 
         @Override public void shutdown() {
@@ -105,6 +110,33 @@ public final class BoopWakeSessionCoordinatorTest {
         coordinator.markWakeProcessing();
         assertEquals(BoopWakeSessionState.State.PROCESSING, coordinator.state());
         assertEquals(before + 1, engine.suspendCalls);
+    }
+
+    @Test public void reloadWhileArmedRearmsInsteadOfLeavingPhantomArmedState() {
+        FakeEngine engine = new FakeEngine();
+        BoopWakeSessionCoordinator coordinator = ready(engine);
+        assertEquals(1, engine.armCalls);
+
+        coordinator.reloadEngine();
+
+        assertEquals(1, engine.reloadCalls);
+        assertEquals(2, engine.armCalls);
+        assertEquals(BoopWakeSessionState.State.ARMED, coordinator.state());
+    }
+
+    @Test public void reloadWhileSettingsOpenWaitsForSettingsToCloseBeforeRearming() {
+        FakeEngine engine = new FakeEngine();
+        BoopWakeSessionCoordinator coordinator = ready(engine);
+        coordinator.setVoiceSettingsOpen(true);
+        assertEquals(1, engine.suspendCalls);
+
+        coordinator.reloadEngine();
+        assertEquals(1, engine.reloadCalls);
+        assertEquals(1, engine.armCalls);
+
+        coordinator.setVoiceSettingsOpen(false);
+        assertEquals(2, engine.armCalls);
+        assertEquals(BoopWakeSessionState.State.ARMED, coordinator.state());
     }
 
     @Test public void failedArmLatchesUntilFreshForegroundSupportResult() {
