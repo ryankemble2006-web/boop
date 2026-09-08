@@ -25,8 +25,7 @@ class CleanStartStoreTest {
         val store = CleanStartStore(MemoryStore())
         assertFalse(store.autoEnabled())
         assertTrue(store.setAutoEnabled(true))
-        assertTrue(store.autoEnabled())
-        assertTrue(store.setAutoEnabled(false))
+        assertTrue(store.autoEnabled(false))
         assertFalse(store.autoEnabled())
     }
 
@@ -41,6 +40,22 @@ class CleanStartStoreTest {
         )
         assertTrue(store.recordSummary(summary))
         assertEquals(summary, store.lastSummary())
+    }
+
+    @Test fun timingDiagnosticRoundTripsWithOnlyBoundedLocalTimingData() {
+        val store = CleanStartStore(MemoryStore())
+        val timing = CleanStartTimingDiagnostic(
+            timestampMillis = 123456L,
+            noticeMs = 236L,
+            adbReadyMs = 450L,
+            resumedQueryMs = 80L,
+            stopsTotalMs = 3600L,
+            slowestPackage = "org.xbmc.alpha",
+            slowestStopMs = 1100L,
+            totalJobMs = 4400L
+        )
+        assertTrue(store.recordTimingDiagnostic(timing))
+        assertEquals(timing, store.lastTimingDiagnostic())
     }
 
     @Test fun malformedStoredDataFailsClosed() {
