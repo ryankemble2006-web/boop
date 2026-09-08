@@ -25,8 +25,8 @@ android {
         applicationId 'com.boop.shieldhome'
         minSdk 26
         targetSdk 36
-        versionCode 11
-        versionName '0.9.2-home-pack'
+        versionCode 12
+        versionName '0.9.3-focus-clearance'
     }
 
     sourceSets {
