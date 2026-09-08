@@ -1,6 +1,8 @@
 package com.boop.alpha1;
 
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,14 +13,25 @@ import java.util.Map;
 final class BoopSentencePieceBpe implements BoopWakeKeywordBuilder.Tokenizer {
     private static final String SPACE = "\u2581";
     private final Map<String, Float> scores;
+    private final int modelType;
+    private final int maxPieceLength;
 
     BoopSentencePieceBpe(byte[] modelBytes) {
-        this.scores = Collections.unmodifiableMap(parseModel(modelBytes));
-        if (scores.isEmpty()) throw new IllegalArgumentException("SentencePiece model has no usable pieces");
+        this(parseModel(modelBytes), parseModelType(modelBytes));
     }
 
     BoopSentencePieceBpe(Map<String, Float> scores) {
+        this(scores, 2);
+    }
+
+    private BoopSentencePieceBpe(Map<String, Float> scores, int modelType) {
+        if (scores == null || scores.isEmpty()) throw new IllegalArgumentException("SentencePiece model has no usable pieces");
+        if (modelType != 1 && modelType != 2) throw new IllegalArgumentException("Unsupported SentencePiece model type");
         this.scores = Collections.unmodifiableMap(new HashMap<>(scores));
+        this.modelType = modelType;
+        int longest = 0;
+        for (String piece : scores.keySet()) longest = Math.max(longest, piece.length());
+        this.maxPieceLength = longest;
     }
 
     @Override
@@ -26,6 +39,7 @@ final class BoopSentencePieceBpe implements BoopWakeKeywordBuilder.Tokenizer {
         String text = normalize(raw);
         if (text == null) return Collections.emptyList();
         String surface = SPACE + text.replace(" ", SPACE);
+        if (modelType == 1) return encodeUnigram(surface);
         List<String> pieces = new ArrayList<>();
         surface.codePoints().forEach(cp -> pieces.add(new String(Character.toChars(cp))));
 
@@ -51,9 +65,60 @@ final class BoopSentencePieceBpe implements BoopWakeKeywordBuilder.Tokenizer {
         return Collections.unmodifiableList(pieces);
     }
 
+    private List<String> encodeUnigram(String surface) {
+        float[] best = new float[surface.length() + 1];
+        Arrays.fill(best, Float.NEGATIVE_INFINITY);
+        int[] previous = new int[best.length];
+        Arrays.fill(previous, -1);
+        best[0] = 0f;
+        for (int start = 0; start < surface.length(); start++) {
+            if (best[start] == Float.NEGATIVE_INFINITY) continue;
+            for (int end = start; end < surface.length();) {
+                end += Character.charCount(surface.codePointAt(end));
+                if (end - start > maxPieceLength) break;
+                Float score = scores.get(surface.substring(start, end));
+                if (score == null) continue;
+                double candidate = (double) best[start] + score;
+                if (candidate > best[end]) {
+                    best[end] = (float) candidate;
+                    previous[end] = start;
+                }
+            }
+        }
+        if (previous[surface.length()] < 0) return Collections.emptyList();
+        List<String> pieces = new ArrayList<>();
+        for (int end = surface.length(); end > 0; end = previous[end]) {
+            pieces.add(surface.substring(previous[end], end));
+        }
+        Collections.reverse(pieces);
+        return Collections.unmodifiableList(pieces);
+    }
+
+    private static int parseModelType(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) return 1;
+        Cursor cursor = new Cursor(bytes, 0, bytes.length);
+        while (cursor.pos < cursor.end) {
+            long key = cursor.readVarint();
+            int wire = (int) (key & 7);
+            if ((key >>> 3) == 2 && wire == 2) {
+                int length = cursor.readLength();
+                int end = cursor.checkedEnd(length);
+                Cursor trainer = new Cursor(bytes, cursor.pos, end);
+                while (trainer.pos < trainer.end) {
+                    long field = trainer.readVarint();
+                    if ((field >>> 3) == 3 && (field & 7) == 0) return (int) trainer.readVarint();
+                    trainer.skip((int) (field & 7));
+                }
+                return 1;
+            }
+            cursor.skip(wire);
+        }
+        return 1;
+    }
+
     private static String normalize(String raw) {
         if (raw == null) return null;
-        String value = raw.toUpperCase(Locale.ROOT)
+        String value = Normalizer.normalize(raw, Normalizer.Form.NFKC).toUpperCase(Locale.ROOT)
                 .replaceAll("[^\\p{L}\\p{N}]+", " ")
                 .trim()
                 .replaceAll("\\s+", " ");
