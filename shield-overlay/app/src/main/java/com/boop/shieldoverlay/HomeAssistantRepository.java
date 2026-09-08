@@ -30,102 +30,60 @@ public final class HomeAssistantRepository {
     }
 
     public interface StateChangePort {
-        interface Listener {
-            void onStateChanged(String entityId, String state);
-        }
-
-        interface Subscription {
-            void cancel();
-        }
-
-        interface Callback {
-            void onResult(Subscription subscription, String error);
-        }
-
+        interface Listener { void onStateChanged(String entityId, String state); }
+        interface Subscription { void cancel(); }
+        interface Callback { void onResult(Subscription subscription, String error); }
         void subscribe(Listener listener, Callback callback);
     }
 
-    public interface AreasCallback {
-        void onResult(List<AreaInfo> areas, String error);
-    }
-
-    public interface BinaryActionCallback {
-        void onResult(boolean success, EntityCard card, String error);
-    }
-
-    public interface DashboardCallback {
-        void onResult(DashboardSnapshot snapshot, String error);
-    }
+    public interface AreasCallback { void onResult(List<AreaInfo> areas, String error); }
+    public interface BinaryActionCallback { void onResult(boolean success, EntityCard card, String error); }
+    public interface DashboardCallback { void onResult(DashboardSnapshot snapshot, String error); }
 
     private final CommandPort commandPort;
     private final StateChangePort stateChangePort;
 
-    public HomeAssistantRepository(CommandPort commandPort) {
-        this(commandPort, null);
-    }
+    public HomeAssistantRepository(CommandPort commandPort) { this(commandPort, null); }
 
     public HomeAssistantRepository(CommandPort commandPort, StateChangePort stateChangePort) {
-        if (commandPort == null) {
-            throw new IllegalArgumentException("Home Assistant command port is required");
-        }
+        if (commandPort == null) throw new IllegalArgumentException("Home Assistant command port is required");
         this.commandPort = commandPort;
         this.stateChangePort = stateChangePort;
     }
 
     public void loadAreas(AreasCallback callback) {
-        if (callback == null) {
-            throw new IllegalArgumentException("areas callback is required");
-        }
-
-        commandPort.send(
-                "config/area_registry/list",
-                new JSONObject(),
-                (success, result, error) -> {
-                    if (!success) {
-                        callback.onResult(
-                                null,
-                                plainError(error, "I couldn't load your rooms from Home Assistant."));
-                        return;
-                    }
-                    if (!(result instanceof JSONArray)) {
-                        callback.onResult(null, "Home Assistant returned an unreadable room list.");
-                        return;
-                    }
-
-                    JSONArray array = (JSONArray) result;
-                    List<AreaInfo> areas = new ArrayList<>();
-                    for (int index = 0; index < array.length(); index++) {
-                        Object item = array.opt(index);
-                        if (!(item instanceof JSONObject)) {
-                            continue;
-                        }
-                        JSONObject object = (JSONObject) item;
-                        String id = clean(object.optString("area_id", null));
-                        String name = clean(object.optString("name", null));
-                        if (id == null || name == null) {
-                            continue;
-                        }
-                        areas.add(new AreaInfo(id, name));
-                    }
-
-                    areas.sort(Comparator.comparing(
-                            AreaInfo::name,
-                            String.CASE_INSENSITIVE_ORDER));
-                    if (areas.isEmpty()) {
-                        callback.onResult(null, "I couldn't find any rooms in Home Assistant.");
-                        return;
-                    }
-                    callback.onResult(areas, null);
-                });
+        if (callback == null) throw new IllegalArgumentException("areas callback is required");
+        commandPort.send("config/area_registry/list", new JSONObject(), (success, result, error) -> {
+            if (!success) {
+                callback.onResult(null, plainError(error, "I couldn't load your rooms from Home Assistant."));
+                return;
+            }
+            if (!(result instanceof JSONArray)) {
+                callback.onResult(null, "Home Assistant returned an unreadable room list.");
+                return;
+            }
+            JSONArray array = (JSONArray) result;
+            List<AreaInfo> areas = new ArrayList<>();
+            for (int index = 0; index < array.length(); index++) {
+                Object item = array.opt(index);
+                if (!(item instanceof JSONObject)) continue;
+                JSONObject object = (JSONObject) item;
+                String id = clean(object.optString("area_id", null));
+                String name = clean(object.optString("name", null));
+                if (id != null && name != null) areas.add(new AreaInfo(id, name));
+            }
+            areas.sort(Comparator.comparing(AreaInfo::name, String.CASE_INSENSITIVE_ORDER));
+            if (areas.isEmpty()) {
+                callback.onResult(null, "I couldn't find any rooms in Home Assistant.");
+                return;
+            }
+            callback.onResult(areas, null);
+        });
     }
 
     public void loadDashboard(AreaInfo room, DashboardCallback callback) {
-        if (room == null) {
-            throw new IllegalArgumentException("room is required");
-        }
-        if (callback == null) {
-            throw new IllegalArgumentException("dashboard callback is required");
-        }
+        if (room == null) throw new IllegalArgumentException("room is required");
+        if (callback == null) throw new IllegalArgumentException("dashboard callback is required");
 
         final JSONObject targetBody;
         try {
@@ -147,65 +105,91 @@ public final class HomeAssistantRepository {
                 callback.onResult(null, "Home Assistant returned an unreadable room membership list.");
                 return;
             }
-
             Set<String> referenced = referencedEntities((JSONObject) result);
-            loadDashboardRegistry(room, referenced, callback);
+            loadDashboardDevices(room, referenced, callback);
+        });
+    }
+
+    private void loadDashboardDevices(AreaInfo room, Set<String> referenced, DashboardCallback callback) {
+        commandPort.send("config/device_registry/list", new JSONObject(), (success, result, error) -> {
+            if (!success) {
+                callback.onResult(null, plainError(error, "I couldn't read the devices in that room."));
+                return;
+            }
+            if (!(result instanceof JSONArray)) {
+                callback.onResult(null, "Home Assistant returned an unreadable device list.");
+                return;
+            }
+            Map<String, DeviceInfo> devices = new HashMap<>();
+            JSONArray array = (JSONArray) result;
+            for (int index = 0; index < array.length(); index++) {
+                Object item = array.opt(index);
+                if (!(item instanceof JSONObject)) continue;
+                JSONObject object = (JSONObject) item;
+                String id = clean(object.optString("id", null));
+                if (id == null) continue;
+                String areaId = clean(object.optString("area_id", null));
+                String name = clean(object.optString("name_by_user", null));
+                if (name == null) name = clean(object.optString("name", null));
+                devices.put(id, new DeviceInfo(id, areaId, name));
+            }
+            loadDashboardRegistry(room, referenced, devices, callback);
         });
     }
 
     private void loadDashboardRegistry(
             AreaInfo room,
             Set<String> referenced,
+            Map<String, DeviceInfo> devices,
             DashboardCallback callback) {
-        commandPort.send(
-                "config/entity_registry/list_for_display",
-                new JSONObject(),
-                (success, result, error) -> {
-                    if (!success) {
-                        callback.onResult(
-                                null,
-                                plainError(error, "I couldn't read the room controls from Home Assistant."));
-                        return;
-                    }
-                    if (!(result instanceof JSONObject)) {
-                        callback.onResult(null, "Home Assistant returned an unreadable control list.");
-                        return;
-                    }
+        commandPort.send("config/entity_registry/list_for_display", new JSONObject(), (success, result, error) -> {
+            if (!success) {
+                callback.onResult(null, plainError(error, "I couldn't read the room controls from Home Assistant."));
+                return;
+            }
+            if (!(result instanceof JSONObject)) {
+                callback.onResult(null, "Home Assistant returned an unreadable control list.");
+                return;
+            }
 
-                    JSONObject registryResult = (JSONObject) result;
-                    JSONArray entities = registryResult.optJSONArray("entities");
-                    if (entities == null) {
-                        callback.onResult(null, "Home Assistant returned an unreadable control list.");
-                        return;
-                    }
+            JSONObject registryResult = (JSONObject) result;
+            JSONArray entities = registryResult.optJSONArray("entities");
+            if (entities == null) {
+                callback.onResult(null, "Home Assistant returned an unreadable control list.");
+                return;
+            }
 
-                    JSONArray categories = registryResult.optJSONArray("entity_categories");
-                    Map<String, RegistryEntry> registry = new HashMap<>();
-                    for (int index = 0; index < entities.length(); index++) {
-                        Object item = entities.opt(index);
-                        if (!(item instanceof JSONObject)) {
-                            continue;
-                        }
-                        JSONObject object = (JSONObject) item;
-                        String entityId = clean(object.optString("ei", null));
-                        if (entityId == null || !referenced.contains(entityId)) {
-                            continue;
-                        }
+            Object categories = registryResult.opt("entity_categories");
+            Map<String, RegistryEntry> registry = new HashMap<>();
+            for (int index = 0; index < entities.length(); index++) {
+                Object item = entities.opt(index);
+                if (!(item instanceof JSONObject)) continue;
+                JSONObject object = (JSONObject) item;
+                String entityId = clean(object.optString("ei", null));
+                if (entityId == null || !referenced.contains(entityId)) continue;
 
-                        String areaId = clean(object.optString("ai", null));
-                        if (areaId == null) {
-                            areaId = room.id();
-                        }
-                        String name = clean(object.optString("en", null));
-                        boolean hidden = object.optBoolean("hb", false);
-                        String category = entityCategory(object.opt("ec"), categories);
-                        registry.put(
-                                entityId,
-                                new RegistryEntry(entityId, areaId, name, hidden, category));
-                    }
+                String deviceId = clean(object.optString("di", null));
+                DeviceInfo device = deviceId == null ? null : devices.get(deviceId);
+                String areaId = clean(object.optString("ai", null));
+                if (areaId == null && device != null) areaId = device.areaId;
+                // Fail closed. Target expansion can nominate members, but Home only exposes
+                // entities whose direct/device-inherited area can still be confirmed here.
+                if (areaId == null || !room.id().equals(areaId)) continue;
 
-                    loadDashboardStates(room, referenced, registry, callback);
-                });
+                String name = clean(object.optString("en", null));
+                boolean hidden = object.optBoolean("hb", false);
+                String category = HaEntityCategory.resolve(object.opt("ec"), categories);
+                registry.put(entityId, new RegistryEntry(
+                        entityId,
+                        areaId,
+                        name,
+                        hidden,
+                        category,
+                        deviceId,
+                        device == null ? null : device.name));
+            }
+            loadDashboardStates(room, referenced, registry, callback);
+        });
     }
 
     private void loadDashboardStates(
@@ -227,15 +211,11 @@ public final class HomeAssistantRepository {
             Map<String, EntityState> states = new HashMap<>();
             for (int index = 0; index < stateArray.length(); index++) {
                 Object item = stateArray.opt(index);
-                if (!(item instanceof JSONObject)) {
-                    continue;
-                }
+                if (!(item instanceof JSONObject)) continue;
                 JSONObject object = (JSONObject) item;
                 String entityId = clean(object.optString("entity_id", null));
                 String state = clean(object.optString("state", null));
-                if (entityId == null || state == null || !referenced.contains(entityId)) {
-                    continue;
-                }
+                if (entityId == null || state == null || !referenced.contains(entityId)) continue;
                 JSONObject attributes = object.optJSONObject("attributes");
                 String friendlyName = attributes == null
                         ? null
@@ -243,42 +223,33 @@ public final class HomeAssistantRepository {
                 states.put(entityId, new EntityState(entityId, state, friendlyName));
             }
 
-            List<EntityCard> cards = new ArrayList<>();
+            List<EntityCard> candidates = new ArrayList<>();
             for (RegistryEntry entry : registry.values()) {
                 EntityState state = states.get(entry.entityId);
-                if (state == null) {
-                    continue;
-                }
+                if (state == null) continue;
                 String displayName = entry.name != null ? entry.name : state.friendlyName();
-                if (displayName == null) {
-                    continue;
-                }
+                if (displayName == null) continue;
                 EntityCard card = new EntityCard(
                         entry.entityId,
                         entry.areaId,
                         displayName,
                         state.state(),
                         entry.hidden,
-                        entry.category);
-                if (isDashboardControl(card)) {
-                    cards.add(card);
-                }
+                        entry.category,
+                        entry.deviceId,
+                        entry.deviceName);
+                if (isDashboardControl(card)) candidates.add(card);
             }
 
-            cards.sort(Comparator.comparing(
-                    EntityCard::displayName,
-                    String.CASE_INSENSITIVE_ORDER));
+            List<EntityCard> cards = RoomDeviceControls.collapseToDevices(candidates);
+            cards.sort(Comparator.comparing(EntityCard::displayName, String.CASE_INSENSITIVE_ORDER));
             callback.onResult(new DashboardSnapshot(room, cards), null);
         });
     }
 
     public void toggleBinary(EntityCard card, BinaryActionCallback callback) {
-        if (card == null) {
-            throw new IllegalArgumentException("entity card is required");
-        }
-        if (callback == null) {
-            throw new IllegalArgumentException("binary action callback is required");
-        }
+        if (card == null) throw new IllegalArgumentException("entity card is required");
+        if (callback == null) throw new IllegalArgumentException("binary action callback is required");
         if (!isSupportedBinary(card)) {
             callback.onResult(false, null, "That control isn't a simple on/off thing.");
             return;
@@ -301,7 +272,6 @@ public final class HomeAssistantRepository {
             callback.onResult(false, null, "I couldn't prepare that Home Assistant command.");
             return;
         }
-
         new BinaryConfirmation(card, expectedState, body, callback).start();
     }
 
@@ -310,18 +280,13 @@ public final class HomeAssistantRepository {
         private final String expectedState;
         private final JSONObject serviceBody;
         private final BinaryActionCallback callback;
-
         private StateChangePort.Subscription subscription;
         private ScheduledFuture<?> timeout;
         private boolean serviceSucceeded;
         private boolean expectedStateSeen;
         private boolean done;
 
-        BinaryConfirmation(
-                EntityCard original,
-                String expectedState,
-                JSONObject serviceBody,
-                BinaryActionCallback callback) {
+        BinaryConfirmation(EntityCard original, String expectedState, JSONObject serviceBody, BinaryActionCallback callback) {
             this.original = original;
             this.expectedState = expectedState;
             this.serviceBody = serviceBody;
@@ -338,27 +303,18 @@ public final class HomeAssistantRepository {
 
         private void onSubscribed(StateChangePort.Subscription active, String error) {
             if (active == null || error != null) {
-                if (active != null) {
-                    active.cancel();
-                }
+                if (active != null) active.cancel();
                 complete(false, plainError(error, "I couldn't listen for the new Home Assistant state."));
                 return;
             }
-
             synchronized (this) {
-                if (done) {
-                    active.cancel();
-                    return;
-                }
+                if (done) { active.cancel(); return; }
                 subscription = active;
                 timeout = BINARY_CONFIRM_EXECUTOR.schedule(
-                        () -> complete(
-                                false,
-                                "Home Assistant changed it, but I couldn't confirm the new state."),
+                        () -> complete(false, "Home Assistant changed it, but I couldn't confirm the new state."),
                         BINARY_CONFIRM_TIMEOUT_MS,
                         TimeUnit.MILLISECONDS);
             }
-
             try {
                 commandPort.send("call_service", serviceBody, this::onServiceResult);
             } catch (RuntimeException couldNotSend) {
@@ -367,22 +323,14 @@ public final class HomeAssistantRepository {
         }
 
         private void onStateChanged(String entityId, String state) {
-            if (!original.entityId().equals(clean(entityId))
-                    || !expectedState.equals(clean(state))) {
-                return;
-            }
-
+            if (!original.entityId().equals(clean(entityId)) || !expectedState.equals(clean(state))) return;
             boolean finish;
             synchronized (this) {
-                if (done) {
-                    return;
-                }
+                if (done) return;
                 expectedStateSeen = true;
                 finish = serviceSucceeded;
             }
-            if (finish) {
-                complete(true, null);
-            }
+            if (finish) complete(true, null);
         }
 
         private void onServiceResult(boolean success, Object result, String error) {
@@ -390,40 +338,28 @@ public final class HomeAssistantRepository {
                 complete(false, plainError(error, "Home Assistant didn't do that."));
                 return;
             }
-
             boolean finish;
             synchronized (this) {
-                if (done) {
-                    return;
-                }
+                if (done) return;
                 serviceSucceeded = true;
                 finish = expectedStateSeen;
             }
-            if (finish) {
-                complete(true, null);
-            }
+            if (finish) complete(true, null);
         }
 
         private void complete(boolean success, String error) {
             final StateChangePort.Subscription toCancel;
             final ScheduledFuture<?> timeoutToCancel;
             synchronized (this) {
-                if (done) {
-                    return;
-                }
+                if (done) return;
                 done = true;
                 toCancel = subscription;
                 subscription = null;
                 timeoutToCancel = timeout;
                 timeout = null;
             }
-
-            if (timeoutToCancel != null) {
-                timeoutToCancel.cancel(false);
-            }
-            if (toCancel != null) {
-                toCancel.cancel();
-            }
+            if (timeoutToCancel != null) timeoutToCancel.cancel(false);
+            if (toCancel != null) toCancel.cancel();
             callback.onResult(
                     success,
                     success ? original.withState(expectedState) : null,
@@ -434,38 +370,16 @@ public final class HomeAssistantRepository {
     private static Set<String> referencedEntities(JSONObject result) {
         Set<String> referenced = new LinkedHashSet<>();
         JSONArray entities = result.optJSONArray("referenced_entities");
-        if (entities == null) {
-            return referenced;
-        }
+        if (entities == null) return referenced;
         for (int index = 0; index < entities.length(); index++) {
             String entityId = clean(entities.optString(index, null));
-            if (entityId != null) {
-                referenced.add(entityId);
-            }
+            if (entityId != null) referenced.add(entityId);
         }
         return referenced;
     }
 
-    private static String entityCategory(Object categoryRef, JSONArray categories) {
-        if (categoryRef instanceof Number && categories != null) {
-            int index = ((Number) categoryRef).intValue();
-            if (index >= 0 && index < categories.length()) {
-                return clean(categories.optString(index, null));
-            }
-            return null;
-        }
-        return categoryRef instanceof String ? clean((String) categoryRef) : null;
-    }
-
     private static boolean isDashboardControl(EntityCard card) {
-        if (card.hidden()) {
-            return false;
-        }
-        String category = clean(card.entityCategory());
-        if ("config".equalsIgnoreCase(category) || "diagnostic".equalsIgnoreCase(category)) {
-            return false;
-        }
-        return isSupportedBinary(card);
+        return RoomDeviceControls.isActionable(card);
     }
 
     private static boolean isSupportedBinary(EntityCard card) {
@@ -478,9 +392,7 @@ public final class HomeAssistantRepository {
     }
 
     private static String clean(String value) {
-        if (value == null) {
-            return null;
-        }
+        if (value == null) return null;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
@@ -490,24 +402,41 @@ public final class HomeAssistantRepository {
         return clean == null ? fallback : clean;
     }
 
+    private static final class DeviceInfo {
+        final String id;
+        final String areaId;
+        final String name;
+        DeviceInfo(String id, String areaId, String name) {
+            this.id = id;
+            this.areaId = areaId;
+            this.name = name;
+        }
+    }
+
     private static final class RegistryEntry {
         final String entityId;
         final String areaId;
         final String name;
         final boolean hidden;
         final String category;
+        final String deviceId;
+        final String deviceName;
 
         RegistryEntry(
                 String entityId,
                 String areaId,
                 String name,
                 boolean hidden,
-                String category) {
+                String category,
+                String deviceId,
+                String deviceName) {
             this.entityId = entityId;
             this.areaId = areaId;
             this.name = name;
             this.hidden = hidden;
             this.category = category;
+            this.deviceId = deviceId;
+            this.deviceName = deviceName;
         }
     }
 }
