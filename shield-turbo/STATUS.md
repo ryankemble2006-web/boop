@@ -4,71 +4,60 @@ Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
 ## Physical state
 
-CLEAN START remains physically accepted:
-- v0.5.7 full-screen static notice visible on the real Shield;
-- v0.5.8 job timing `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
+Accepted real-Shield evidence remains:
+- v0.5.7 static CLEAN START notice visible;
+- v0.5.8 CLEAN START job `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`;
+- v0.5.10 compact 9sp ANALYSE report fits one readable screenshot;
+- v0.5.11 Processor Mode Trace physically mapped Optimized -> Max performance as:
+  - `system:nv_power_mode` `1 -> 0`;
+  - CPU boost `0 -> 5`;
+  - GPU boost `0 -> 5`;
+  - FRT boost `0 -> 5`;
+  - FRT min `15 -> 20`.
 
-v0.5.10 compact ANALYSE presentation is physically accepted. The real-Shield screenshot fit the complete report in one frame at 9sp monospace and remained readable.
-
-Physical Stage-1 performance evidence from v0.5.10:
-- trusted local ADB works, tier `ADB TURBO`;
-- Android thermal status is exposed;
-- reviewed CPU/GPU stock sysfs controls are not exposed;
-- no allowlisted performance-write path is exposed;
-- Android fixed-performance command is not exposed;
-- generic power-key clues are not evidence of NVIDIA Processor Mode control.
+`nv_power_mode` is the stock actuator candidate. The four `persist.vendor.sys.phs.*` values are downstream NVIDIA evidence only, never direct write targets.
 
 ## Current candidate
 
-**v0.5.11 / code 18**, exact release source `8ba8402fdcc970adddcb1acc97b758f5fce76db4`.
+**v0.5.12 / code 19**, exact release source `47ef633c1dde937ea9bd94a8e9a7182272c9b9b2`.
 
-Release run `34261526060`, job `102180473668`, conclusion **success**:
-- **82 JVM tests passed**, 0 failures/errors/skips;
-- all source/API/security contracts passed, including processor-trace read-only guards;
+Release run `34266282069`, job `102196408374`, conclusion **success**:
+- **88 JVM tests passed**;
+- **46 source/API/security contracts passed**;
 - lint **0 errors / 26 warnings**;
-- permanent signer/package/version/archive checks passed;
-- nonvisual emulator install/launch/no-fatal smoke passed;
-- APK SHA-256 `8b452d1acb6210b6af0c400500edd609026d166a74b71e89b64a27baf180dd6b`;
-- APK size `2391774` bytes;
-- `SHIELD-TURBO` artifact ID `10070181954`, artifact SHA-256 `0fbf8aafd5a236463babb6ff90e060e72381eec37ac4a1a560eadb4ba2094f46`;
-- `SHIELD-TURBO-TESTS` artifact ID `10070244960`, artifact SHA-256 `316d4182c68bffe0b995eafc3d84d067a942c51a7121cfeb194f4585c8c57bda`.
+- package/version/Leanback/signer/archive checks passed;
+- nonvisual emulator install, cold/warm launch and no-fatal smoke passed;
+- APK SHA-256 `f219eff88054e9776c2b96af985dd68d94ef30ffc1a64a09d7cc4c3aadceb1a8`;
+- APK size `2413082` bytes;
+- `SHIELD-TURBO` artifact ID `10072080338`, ZIP SHA-256 `64e4ff80feaea554efa87ab4caeb4ccff8305dd1e9ddefc8e9d566ab79569f59`;
+- `SHIELD-TURBO-TESTS` artifact ID `10072132751`, ZIP SHA-256 `d7bec2515be014b7814553e9906356a2b2f0cdde741733cec4fcfc0670914227`.
 
 Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, DN `CN=BOOP Development,O=BOOP`.
 
-v0.5.11 is machine green and the **Processor Mode Trace is now physically accepted** on Ryan's Shield.
+v0.5.12 is machine verified. **Physical actuator-proof acceptance is pending.**
 
-## Processor Mode Trace physical result
+## v0.5.12 actuator proof
 
-Ryan captured Optimized first, manually changed NVIDIA Processor Mode to Max performance, then captured Max. The physical before/after diff showed exactly:
-- `system:nv_power_mode`: `1 -> 0`;
-- `property:persist.vendor.sys.phs.cpufreq.boost`: `0 -> 5`;
-- `property:persist.vendor.sys.phs.gpufreq.boost`: `0 -> 5`;
-- `property:persist.vendor.sys.phs.frt.boost`: `0 -> 5`;
-- `property:persist.vendor.sys.phs.frt.min`: `15 -> 20`.
+`PROVE NVIDIA MAX SWITCH` is a one-shot test, not persistent TURBO.
 
-This is authoritative physical evidence that NVIDIA Processor Mode has a real stock state transition on this firmware. The leading actuator candidate is `system:nv_power_mode`, where the observed manual GUI mapping is `1 = Optimized` and `0 = Max performance`. The four `persist.vendor.sys.phs.*` values are treated as NVIDIA downstream effects, not direct write targets.
+Starting from Optimized, it:
+1. requires baseline `nv_power_mode=1` and downstream `0/0/0/15`;
+2. writes only `settings put system nv_power_mode 0`;
+3. verifies `0` and downstream `5/5/5/20`;
+4. restores only `settings put system nv_power_mode 1`;
+5. verifies final `1` and downstream `0/0/0/15`;
+6. shows a compact proof report including `DIRECT VENDOR WRITES • NONE` and PASS/FAIL.
 
-The trace remains read-only. No performance write has been implemented yet.
+If baseline is wrong, nothing changes. If the Max observation fails, restore is still attempted. No `setprop`, no vendor-property writes, no service/receiver/watchdog/boot reapply/persistent Turbo were added. CLEAN START and brightness remain untouched.
 
-## Approved persistent stock TURBO design
+## Approved future TURBO design
 
-Written spec:
-`docs/superpowers/specs/2026-09-08-shield-turbo-stock-performance-mode-design.md`
-
-Locked future behavior after a genuine writable stock lever is proven:
-- persistent across reboot;
-- NVIDIA Max Performance only with verified state/read-back/restore;
-- additional stock controls only when allowlisted, within firmware limits, reversible and verified;
-- foreground thermal watchdog only while active;
-- boot-time thermal check before reapply;
-- auto-restore NORMAL at SEVERE or higher and stay NORMAL until manual re-arm;
-- exact original NORMAL snapshot preserved through reboot and failed restore;
-- no root, custom kernel, bootloader unlock, voltage modification, above-stock clocks or thermal bypass.
+After a physical actuator PASS, `nv_power_mode` may enter the persistent TURBO allowlist. Persistent TURBO must preserve exact NORMAL state, persist across reboot, use a foreground thermal watchdog while active, check thermal state before boot reapply, and restore/stay NORMAL at Android SEVERE or higher until manual re-arm. No root, custom kernel, bootloader unlock, voltage changes, above-stock clocks, or thermal bypass.
 
 ## Locked existing behavior
 
-Freeze the physically proven CLEAN START overlay/core/timing path, trusted loopback ADB, target exclusions, bounded 30/60/120s max-three scheduler, brightness 10–100%, APPS direct launch/remote navigation, and v0.5.10 compact ANALYSE layout. Display & Sound and Accessibility remain parked.
+Freeze the accepted CLEAN START overlay/core/timing, trusted local ADB and target exclusions, bounded 30/60/120s max-three scheduler, brightness 10-100%, APPS direct launch/remote navigation, and compact diagnostic layout. Display & Sound and Accessibility remain parked.
 
 ## Next step
 
-Build a bounded reversible actuator proof that writes **only** `system:nv_power_mode` through trusted local ADB. Starting from the physically observed Optimized state, verify `1 -> 0` and that NVIDIA itself moves the four downstream properties to `5 / 5 / 5 / 20`; then restore `nv_power_mode` to `1` and verify the downstream properties return to `0 / 0 / 0 / 15`. Do not write the vendor properties directly. If any read-back or restore check fails, prefer NORMAL/recovery and report the exact mismatch.
+Install v0.5.12, put SHIELD Processor Mode on **Optimized**, run `PROVE NVIDIA MAX SWITCH`, and return the full-screen proof report. The final Optimized read-back decides whether the actuator is physically accepted.
