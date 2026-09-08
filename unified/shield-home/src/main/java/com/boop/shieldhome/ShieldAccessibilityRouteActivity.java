@@ -12,22 +12,38 @@ import android.provider.Settings;
  * the generic android.settings.ACCESSIBILITY_SETTINGS intent.
  */
 public final class ShieldAccessibilityRouteActivity extends Activity {
+    static String tvSettingsPackage() {
+        return "com.android.tv.settings";
+    }
+
+    static String preferredTvAccessibilityClassName() {
+        return "com.android.tv.settings.system.AccessibilityActivity";
+    }
+
+    static String modernTvAccessibilityClassName() {
+        return "com.android.tv.settings.oemlink.AccessibilitySettingsActivity";
+    }
+
+    static String tvSettingsFallbackClassName() {
+        return "com.android.tv.settings.MainSettings";
+    }
+
     static ComponentName preferredTvAccessibilityComponent() {
         return new ComponentName(
-                "com.android.tv.settings",
-                "com.android.tv.settings.system.AccessibilityActivity");
+                tvSettingsPackage(),
+                preferredTvAccessibilityClassName());
     }
 
     static ComponentName modernTvAccessibilityComponent() {
         return new ComponentName(
-                "com.android.tv.settings",
-                "com.android.tv.settings.oemlink.AccessibilitySettingsActivity");
+                tvSettingsPackage(),
+                modernTvAccessibilityClassName());
     }
 
     static ComponentName tvSettingsFallbackComponent() {
         return new ComponentName(
-                "com.android.tv.settings",
-                "com.android.tv.settings.MainSettings");
+                tvSettingsPackage(),
+                tvSettingsFallbackClassName());
     }
 
     @Override protected void onCreate(Bundle state) {
