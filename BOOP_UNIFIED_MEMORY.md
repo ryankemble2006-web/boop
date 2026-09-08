@@ -1,44 +1,42 @@
 # BOOP unified memory
 
-Updated 2026-09-08. Canonical branch `boop-unified`, package `com.boop.alpha1`, permanent signer. Historical/primary checkouts are not automatically current app source.
+Updated 2026-09-08. Canonical app branch `boop-unified`, package `com.boop.alpha1`, permanent signer. Fresh main owns shared contracts; old primary checkouts are not automatically current.
 
-## Durable decisions
+## Permanent approved face, latest user decision
 
-- BOOP forever. One additional spoken wake name may be stored; BOOP fallback remains permanently accepted. Foreground wireless charging may listen continuously; undocked phone remains tap-to-talk. Preserve coordinator/controller/Sherpa/recording ownership and never add competing microphone listeners.
-- Shield Home = Room -> real controllable physical devices. No Favourites, helper/diagnostic/config plumbing or loose entities. Use HA target + device registry + entity registry, including device-inherited room membership. Fail closed when physical-device/room identity is uncertain. HA membership is read-only.
-- Changing room makes the new room authoritative immediately: dispose old navigation/dashboard/socket/controller state, store the room, then rebuild Home. Preserve D-pad behaviour.
-- Locked phone/Wall eye bitmap and accepted landscape proportions are Shield's reference. No regeneration. Reuse canonical `BoopEyeLayout` / `BoopIdleBlink`; blink is 183 ms with the same curve and 3-7 second delay. Phone iris-only colour, whites/pupils/reflections/outline/default blue, headphones and locked puppetry remain unchanged.
-- Shield UI density scaling must be idempotent and derived from an unmodified application baseline. Never repeatedly scale current density and never modify system-wide Shield density/resolution.
-- Unified CI performs focused functional tests, compilation/lint, package/signature/integrity/security checks and artifact upload only. Ryan owns screenshots/appearance/animation, emulator/device launch/install and all physical acceptance. Do not reintroduce aesthetic source-string guards.
+Ryan approved the final black-lidded paired-eye PNG as BOOP's default forever. All animations must take this same form; accessories come later, separately. He now explicitly requests replacing it on phone/Wall and Shield, and has downloaded a backup.
 
-## Shield remote microphone button decision
+Read `BOOP_EYES_MASTER.md`. Exact source filename `glossy_cartoon_eyes_with_black_eyelids.png`, 1774 x 887 RGBA, 936803 bytes, SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`. Preserve supplied alpha and character proportions; no regeneration per pose, no blue eyelid lines, no old threshold/flood-fill transparency conversion. Preserve accepted iris-only user colour, with blue/cyan default; do not tint whites/pupils/highlights/eyelids. Existing headphones/puppetry and five-digit yellow hands are not being redesigned.
 
-Approved route is Android's official assistant integration first: explicit reversible user choice, `RoleManager.ROLE_ASSISTANT` where available, `VoiceInteractionService` / session service only as required, or `ACTION_ASSIST` into BOOP's existing one-shot voice path. No microphone capture in the overlay and no second recorder/recognizer stack.
+This explicit approval replaces the older eye-source lock only for this master. The PNG remains local to the chat/Ryan's backup, NOT integrated or committed. GitHub text/API writes are available but have no mounted-file upload argument, and direct container GitHub access failed. A Canva upload attempt returned metadata/thumbnail only, not original bytes in GitHub. Ryan was asked to upload the PNG to the root of `boop-unified` under its existing filename. Fetch live HEAD and verify exact hash before canonical storage/integration. Do not claim an approval note or thumbnail is an uploaded master or new APK.
 
-BOOP must never silently disable Google, grant permissions, change the default assistant or claim remote-mic success. `Keep my current assistant` leaves the current assistant alone; if BOOP is already selected, Android settings are opened for an explicit user change.
+## Blink correction
 
-Do not add a local `KEYCODE_ASSIST` fallback until a real Shield proves firmware delivers that key to BOOP without privileged/ADB hacks. No Button Mapper/third-party app and no OpenAI API integration.
+Ryan explicitly says blink had been turned off by him and is working. Earlier unresolved missing-blink notes are superseded. Keep blink implementation, 183 ms canonical curve, 3-7 second delay and motion/power/lifecycle gates unchanged. No system-settings changes or blink rewrite in the image replacement task.
 
-Physical success requires BOTH remote-button activation and actual audio from THAT Shield remote microphone, followed by BOOP's existing local media/HA routing, response, clean recording end/cancel/repeat handling and previous-app return where appropriate. Opening BOOP alone is not success.
+## Other durable contracts
 
-## Latest real-device evidence: HA works; eyes/blink and assistant do not
+- BOOP permanently remains an accepted wake name; a custom name is additional. Foreground wireless charging permits continuous phone wake; undocked phone remains tap-to-talk. Preserve coordinator/controller/Sherpa/recording ownership and coordinator-owned reload/re-arm; no competing listeners.
+- Home contains rooms and confirmed physical controllable devices only. No Favourites, helpers, diagnostics, config/entity plumbing or loose unconfirmed entities. Use read-only HA target/device/entity relationships, including inherited area. Fail closed, never rename/move HA records or expose the whole house on uncertainty.
+- New room becomes authoritative immediately: tear down old navigation/dashboard/socket/controller state, persist room, rebuild Home, preserve D-pad.
+- Shield UI density scaling is idempotent from an unmodified baseline, never cumulative or system-wide.
+- GitHub performs focused non-visual tests, compilation/lint, package/signature/integrity/security checks and artifact upload. Ryan owns visual and real-device acceptance. No screenshots/golden comparisons, aesthetic source-string gates or emulator install/launch acceptance.
 
-On the repair APK from `949f1085328a3e815d9bc57747425f1f930c48db`, Ryan confirmed HA names no longer show `null` and Home buttons actually control his devices. This HA result is physically accepted; freeze this working path while repairing the remaining failures. It does not accept all room-switching scenarios or the whole APK.
+## Assistant boundary, still unresolved
 
-Ryan rejects the new eye rendering as worse. His private photo shows horizontal comb-like tearing at the inner upper eyelid edges. No visible blink is reported. Android still says `Assistant choice was not changed`, so assistant takeover and remote-mic success must not be claimed. The latest message does not retest phone acoustic wake; preserve its unresolved earlier failure rather than inventing an outcome.
+Use an explicit reversible assistant choice via official Android routes, handing directly to existing one-shot ownership. No microphone in the overlay, second recorder, Google-disable/default/permission hacks, Button Mapper or OpenAI API integration. A local KEYCODE_ASSIST fallback requires real firmware key-delivery evidence first.
 
-The alpha script guesses a separate opaque span on every image row from RGB brightness threshold 3 plus two-pixel expansion. This is not the locked silhouette and cannot distinguish black background from all dark eyelid pixels. Do not make another threshold-only repair, regenerate the art or modify the accepted phone iris-colour behaviour. An RGBA file header alone is not correctness evidence.
+The last physical selection says `Assistant choice was not changed`. The previous source investigation found missing `android:recognitionService` metadata in the shipped VoiceInteractionService declaration; do not call that a proven firmware limitation or invent a dummy recognizer. Primary source references remain in `SESSION_HANDOFF.md` and in the previous handoff at `438c3076875a56338ef26bd430f744f0a0cace32`.
 
-The declared VoiceInteractionService metadata omits `android:recognitionService`. AOSP Android 11/12 parsing rejects that omission; adding ACTION_ASSIST eligibility did not make the service valid. Treat it as an integration defect before blaming firmware. Do not invent a dummy recognizer or competing audio stack to satisfy a manifest field. Primary references and exact source paths are in `SESSION_HANDOFF.md`.
+Success requires BOTH remote-button invocation and actual audio from THAT remote microphone, local media/HA routing, response, clean recording end/cancel/repeat and previous-app return. Opening BOOP alone is not success. These repairs are not bundled into the newly requested bitmap-only pass.
 
-The Shield blink code checks system animator enablement/duration scale, power saving and display/visibility gates. Which gate blocks this physical device is not established. Check the actual animation setting, including any Turbo change, rather than silently enabling system animations or bypassing safeguards.
+## Physical evidence and artifact history
 
-## Artifact provenance and verification limits
+For code `949f1085328a3e815d9bc57747425f1f930c48db`, Ryan confirms HA null names fixed and Home buttons really control devices. Freeze this working path. Old eye rendering was physically rejected for torn eyelids; approved replacement is pending. Blink now works by user correction. Assistant remains unselected. Phone acoustic wake has no new test and remains unresolved; room switching and repeated-open scale have no new blanket acceptance.
 
-Repair code `949f1085328a3e815d9bc57747425f1f930c48db`, versionCode 45 / `1.1.2-unified-assist-repair`; successful run `34201200463`; artifact `BOOP-Unified` ID `10045928699`. Extracted APK SHA-256 `217e004f26bca33066e3d2089d2e2bc448c102c332abb25f97cf00122d5ed239`; permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Last delivered APK: version 45 / `1.1.2-unified-assist-repair`, successful run `34201200463`, artifact `BOOP-Unified` ID `10045928699`.
+APK SHA-256 `217e004f26bca33066e3d2089d2e2bc448c102c332abb25f97cf00122d5ed239`.
+Signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Historical checks: 58 Shield + 66 unified focused tests with zero failures/errors/skips; Launcher lint, compilation, package/manifest/signature/archive checks. Those checks are not new evidence for the unintegrated artwork.
 
-Historical build evidence: 58 Shield focused tests and 66 unified wake/routing/assistant tests, zero failures/errors/skips; Launcher lint; compilation; package/manifest/signature/archive checks. The APK was rehashed during this investigation and matched its receipt. No new app repair/build or fresh functional test pass is claimed. Documentation only records the physical retest and diagnosed defects. The overall candidate is not an accepted rollback.
-
-Earlier code `6dab12aa3232e821fed52b64e39f65e499b6c574` had null HA labels, failed phone wake, opaque eyes/no blink and failed assistant choice. JSON null repair is now physically confirmed; the other fixes did not gain blanket acceptance. Existing coordinator reload/re-arm, permanent BOOP fallback, room-switch lifecycle, idempotent scale and approved puppetry must survive subsequent work.
-
-Protected accepted rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. No automatic device installs/grants, Windows synchronization or unattended monitoring. User photos and raw diagnostics stay private.
+This checkpoint records documentation only. No code/assets in the app, permissions, signing, workflow or device changes; no new APK. Protected physical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. No Windows synchronization, automatic install/grants or unattended monitoring. Keep user photos and raw diagnostics private.
