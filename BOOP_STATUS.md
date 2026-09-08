@@ -2,52 +2,47 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current AIO signed candidate: v49 automatic five-say enrolment
+## Physically proven wake checkpoint
 
-Ryan physically confirmed the v48 upstream wake path on the Pixel: on the wireless charger the Android green microphone indicator turned on, stayed on after BOOP went to sleep, and saying `Hey BOOP` woke BOOP. The exact built v48 code is now pinned at branch `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Do not repoint that checkpoint.
+The exact built v48 wake-arm code is pinned at branch `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. On Ryan's Pixel: charger -> green Android mic indicator ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP. Do not repoint this checkpoint.
 
-v49 continues from that physically-proven wake-arm path and completes the intended custom-name product flow. Changing the Voice Settings name from BOOP to a custom name such as `Steve` now queues local enrolment automatically. When Voice Settings closes, BOOP prompts `Say Steve five times.` and reuses the existing controller-owned microphone for five spoken examples. An unchanged custom name does not nag on every settings close, BOOP itself never requires training, and a matching existing profile is not retrained automatically. The manual Train action remains available for deliberate retry/retraining.
+## Current AIO signed candidate: v50 spoken rename repair
 
-The underlying training engine remains the existing local implementation: five accepted utterances from the single 16 kHz PCM owner -> active-speech segmentation -> amplitude-normalised pronunciation features -> compact centroid/threshold/duration profile. Raw training PCM is not persisted. The learned matcher remains additive to Sherpa, BOOP remains permanent fallback, and custom names retain all 33 established natural wake forms. No second microphone listener or cloud training was added.
+Physical v49 result: `Hey BOOP` still woke BOOP, but the immediate command `change name to steve` only caused a blink and then fell through to ordinary handling; tapping BOOP afterwards produced `sorry i cant find that`.
+
+Root cause: the local `BoopWakeNameIntent` parser runs before ordinary command routing but did not accept the natural prefix `change name to `. It therefore returned `NONE` for Ryan's exact phrase and never reached the five-say enrolment path.
 
 TDD evidence:
 
-- RED commit `72591554376d2cada7df24d99d5934443a986278`, workflow `34220316310`: the new automatic-training policy test failed to compile because `BoopWakeTrainingPolicy` did not yet exist.
-- Implementation commit `7ed577d2cb683da0cf7ae5339efc509566123140`: adds the policy and generated settings-to-enrolment flow while preserving the v48 real-attempt arm gate.
-- Final signed v49 build commit `87a7abee880b9283d51fb71ed2bf9bd9ed187b28`.
+- RED commit `64b5fe89afe884638497e5c49842909c840339fc`, workflow `34222645705`: 78 unified focused tests ran, exactly one failed, `BoopWakeNameIntentTest.parsesRequiredRenamePhrases`, on the new exact phrase `change name to Steve`.
+- Minimal fix commit `5f2d2941f3e5d2a0b9820b174563007570854379`: adds only `change name to ` to the existing SET prefix list. Workflow `34222849165` completed successfully.
+- Final release build commit `59bea8d630f90be4940d399784325a8002fd6b8b`.
 
-Final v49 receipt:
+Final v50 receipt:
 
-- Version: 49 / `1.2.3-unified-wake-enrolment`
-- Workflow: `34221275050` SUCCESS
-- Artifact: `BOOP-Unified`, ID `10053919758`
-- APK SHA-256: `2fd65505bea205cce8e7cdc2124cba4a4fa818c5b1fd4ba0efdc5c24f064ffd9`
-- Artifact ZIP SHA-256: `fc27c729a848fbda98dee882b626633da46f1fd338a98fa08911cc76106eecb9`
+- Version: 50 / `1.2.4-unified-wake-rename`
+- Workflow: `34223081543` SUCCESS
+- Artifact: `BOOP-Unified`, ID `10054611864`
+- APK SHA-256: `a9d9b10b626bb5e0699384606baeb0399323a12ad2c144c0a4e9daba8ed87e05`
+- Artifact ZIP SHA-256: `229ba23e904ec70945e8892150f50a6494d4d73299213e8610864ffbfec38745`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Fresh final-run evidence: non-visual integration contracts and materialization passed; Launcher lint passed; Shield 58/58 and unified 78/78 focused functional tests passed with zero failures/errors/skips; signed assembly, package/version, manifest requirements, permanent signer and APK archive integrity passed. The downloaded artifact ZIP digest and extracted APK hash matched the workflow receipts. No emulator/device launch, screenshots, visual acceptance or v49 acoustic acceptance ran.
+Fresh final-run evidence: non-visual integration/materialisation passed; Launcher lint passed; Shield 58/58 and unified 78/78 focused functional tests passed with zero failures/errors/skips; signed assembly, package/version, manifest requirements, permanent signer and APK archive integrity passed. Downloaded artifact ZIP and APK hashes matched the workflow receipts. No emulator/device launch, screenshots, visual acceptance or v50 physical rename/five-say acceptance ran.
 
-## Required Pixel test for v49
+Read `docs/BOOP-V50-SPOKEN-RENAME-RECEIPT.md` for the exact trail.
 
-Install v49 over the working v48 lineage. Keep BOOP foreground and wirelessly charging/docked.
+## Five-say wake-name contract
 
-1. First confirm the green microphone indicator still remains on while BOOP sleeps and `Hey BOOP` still wakes him. This guards the v48 checkpoint behavior.
-2. Open Voice Settings and change the name from BOOP to `Steve`, then close/Done.
-3. BOOP should automatically prompt `Say Steve five times.` without requiring the separate Train button.
-4. Say `Steve` naturally five times with short pauses. Completion should end with `Steve. Got it.` and the normal wake mic should re-arm.
-5. Let BOOP sleep and test bare `Steve`, `Hey Steve`, `Oi Steve`, `Morning Steve`, `Steve wake up`, then confirm `Hey BOOP` still works.
-6. Record misses and false wakes separately. Do not tune thresholds from a single utterance.
+BOOP remains the permanent fallback. A custom name is additive. Five local examples are captured through the existing single controller-owned 16 kHz microphone stream and converted to a compact amplitude-normalised pronunciation profile; raw training PCM is not persisted. Custom names keep all 33 established wake forms. No second microphone listener or cloud training.
 
-v49 is CI/signer green only until Ryan physically tests this flow. The v48 checkpoint remains the rollback anchor.
+The intended spoken flow is now: `Hey BOOP` -> `change name to Steve` -> local rename handling -> `Say Steve five times.` -> five examples -> completion -> normal sleeping wake resumes. This is CI/signer green only until Ryan physically tests v50.
 
 ## IMPORTANT architecture boundary: clean Shield HOME is standalone
 
-The clean Nvidia Shield HOME replacement is **not part of AIO yet**. It remains a standalone test app to be physically accepted first and merged later.
-
-Standalone launcher branch: `boop-shield-clean-launcher`. Standalone package: `com.boop.shieldhome`. Do not re-route unified Shield HOME to the standalone launcher until Ryan explicitly approves that later merge. The standalone launcher's locked rule remains: **remove the crap, preserve Shield behavior**.
+The clean Nvidia Shield HOME replacement remains standalone on branch `boop-shield-clean-launcher`, package `com.boop.shieldhome`. Do not route or merge it into AIO until Ryan explicitly approves that later step.
 
 ## Protected AIO state
 
-Approved paired black-lidded eyes remain locked in the unified phone/Wall and Shield path. Preserve approved geometry/alpha, iris-only hue, headphones/puppetry and five-digit yellow hands. Blink is user-confirmed working; preserve its existing timing/gates. HA names/Home controls are physically accepted and must stay intact. Room isolation and idempotent Shield density scaling remain protected. Assistant remote invocation/audio remains a separate unresolved physical boundary.
+Approved paired black-lidded eyes remain locked; preserve approved geometry/alpha, iris-only hue, headphones/puppetry and five-digit yellow hands. Blink is user-confirmed working and is not a current defect. HA names/Home controls are physically accepted and must stay intact. Room isolation and idempotent Shield density scaling remain protected. Assistant remote invocation/audio remains a separate unresolved physical boundary.
 
 Ryan owns visual/device/acoustic acceptance. No screenshots/golden/aesthetic acceptance, emulator device acceptance, automatic installs/grants or signer/package changes.
