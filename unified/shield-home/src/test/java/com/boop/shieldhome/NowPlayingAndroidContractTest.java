@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.service.notification.NotificationListenerService;
 import java.lang.reflect.Method;
 import org.junit.Test;
@@ -30,5 +31,12 @@ public final class NowPlayingAndroidContractTest {
             assertNotNull(method);
         }
         assertNotNull(ShieldNowPlayingManager.class.getMethod("openSource", Activity.class));
+    }
+
+    @Test public void managerAcceptsArtworkOnlyNotificationFallback() throws Exception {
+        assertNotNull(ShieldNowPlayingManager.class.getDeclaredMethod(
+                "onNotificationArtwork", String.class, Bitmap.class));
+        assertNotNull(ShieldNowPlayingManager.class.getDeclaredMethod(
+                "onNotificationArtworkRemoved", String.class));
     }
 }
