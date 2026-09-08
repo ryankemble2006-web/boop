@@ -36,6 +36,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private final TextView playPauseButton;
     private final TextView fastForwardButton;
     private final TextView nextButton;
+    private final ShieldNowPlayingPuppetView puppetView;
 
     private NowPlayingSnapshot snapshot;
     private ShieldHomeView.Callbacks callbacks;
@@ -166,13 +167,10 @@ public final class ShieldNowPlayingView extends FrameLayout {
         addControl(controls, fastForwardButton);
         addControl(controls, nextButton);
 
-        // The launcher-owned headphones puppet is a separate non-focusable view layered by the
-        // activity. Reserve identical physical space here so controls/text never draw beneath it.
-        View mascotBay = new View(context);
-        mascotBay.setFocusable(false);
-        mascotBay.setClickable(false);
-        mascotBay.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        row.addView(mascotBay, new LinearLayout.LayoutParams(
+        // BOOP now physically lives inside the reserved bay. The puppet view remains
+        // non-focusable/non-clickable and clips all motion to this stage.
+        puppetView = new ShieldNowPlayingPuppetView(context);
+        row.addView(puppetView, new LinearLayout.LayoutParams(
                 dp(MASCOT_BAY_DP), LayoutParams.MATCH_PARENT));
 
         setVisibility(GONE);
@@ -182,6 +180,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         this.callbacks = callbacks;
         this.snapshot = snapshot;
         stopTicker();
+        puppetView.setSnapshot(snapshot);
 
         if (snapshot == null || !NowPlayingSelectionPolicy.eligible(snapshot.playbackState())) {
             setVisibility(GONE);
