@@ -17,6 +17,7 @@ class CleanStartJobService : JobService() {
     private val executor = Executors.newSingleThreadExecutor()
     @Volatile private var task: Future<*>? = null
     @Volatile private var bridge: LocalBridge? = null
+    @Volatile private var activeIndicator: CleanStartIndicator? = null
 
     override fun onStartJob(params: JobParameters): Boolean {
         val attempt = params.extras.getInt(CleanStartScheduler.EXTRA_ATTEMPT, -1)
@@ -26,65 +27,76 @@ class CleanStartJobService : JobService() {
         val targets = store.targets()
         if (!CleanStartScheduler.shouldSchedule(store.autoEnabled(), targets.size)) return false
 
-        task = executor.submit {
-            val localBridge = LocalBridge(applicationContext)
-            bridge = localBridge
-            val summary = try {
-                localBridge.withTrustedAdb { adb ->
-                    val resumed = localBridge.resumedPackage(adb)
-                    val items = targets.map { packageName ->
-                        when {
-                            !safeTarget(packageName) -> CleanStartItem(
-                                packageName,
-                                CleanStartStatus.FAILED,
-                                "No longer an eligible user app"
-                            )
-                            packageName == resumed -> CleanStartItem(
-                                packageName,
-                                CleanStartStatus.SKIPPED_IN_USE,
-                                "App is currently in use"
-                            )
-                            else -> runCatching { localBridge.stopAndVerify(adb, packageName) }
-                                .fold(
-                                    onSuccess = {
-                                        CleanStartItem(packageName, CleanStartStatus.STOPPED, "Stopped and verified")
-                                    },
-                                    onFailure = { failure ->
-                                        CleanStartItem(
-                                            packageName,
-                                            CleanStartStatus.FAILED,
-                                            failure.message?.take(160) ?: "Stop could not be verified"
-                                        )
-                                    }
-                                )
-                        }
-                    }
-                    CleanStartSummary(System.currentTimeMillis(), items)
-                }
-            } catch (failure: Exception) {
-                val nextAttempt = attempt + 1
-                val retryScheduled = nextAttempt < CleanStartScheduler.MAX_ATTEMPTS &&
-                    store.autoEnabled() && store.targets().isNotEmpty() &&
-                    CleanStartScheduler.schedule(applicationContext, nextAttempt)
-                val detail = if (retryScheduled) {
-                    "ADB unavailable; bounded retry scheduled"
-                } else {
-                    "ADB unavailable; cleanup not applied"
-                }
-                CleanStartSummary(
-                    System.currentTimeMillis(),
-                    targets.map { CleanStartItem(it, CleanStartStatus.NOT_APPLIED, detail) }
-                )
-            }
+        val indicator = CleanStartIndicator(applicationContext)
+        activeIndicator = indicator
+        indicator.show()
 
-            store.recordSummary(summary)
-            bridge = null
-            jobFinished(params, false)
+        task = executor.submit {
+            try {
+                val localBridge = LocalBridge(applicationContext)
+                bridge = localBridge
+                val summary = try {
+                    localBridge.withTrustedAdb { adb ->
+                        val resumed = localBridge.resumedPackage(adb)
+                        val items = targets.map { packageName ->
+                            when {
+                                !safeTarget(packageName) -> CleanStartItem(
+                                    packageName,
+                                    CleanStartStatus.FAILED,
+                                    "No longer an eligible user app"
+                                )
+                                packageName == resumed -> CleanStartItem(
+                                    packageName,
+                                    CleanStartStatus.SKIPPED_IN_USE,
+                                    "App is currently in use"
+                                )
+                                else -> runCatching { localBridge.stopAndVerify(adb, packageName) }
+                                    .fold(
+                                        onSuccess = {
+                                            CleanStartItem(packageName, CleanStartStatus.STOPPED, "Stopped and verified")
+                                        },
+                                        onFailure = { failure ->
+                                            CleanStartItem(
+                                                packageName,
+                                                CleanStartStatus.FAILED,
+                                                failure.message?.take(160) ?: "Stop could not be verified"
+                                            )
+                                        }
+                                    )
+                            }
+                        }
+                        CleanStartSummary(System.currentTimeMillis(), items)
+                    }
+                } catch (failure: Exception) {
+                    val nextAttempt = attempt + 1
+                    val retryScheduled = nextAttempt < CleanStartScheduler.MAX_ATTEMPTS &&
+                        store.autoEnabled() && store.targets().isNotEmpty() &&
+                        CleanStartScheduler.schedule(applicationContext, nextAttempt)
+                    val detail = if (retryScheduled) {
+                        "ADB unavailable; bounded retry scheduled"
+                    } else {
+                        "ADB unavailable; cleanup not applied"
+                    }
+                    CleanStartSummary(
+                        System.currentTimeMillis(),
+                        targets.map { CleanStartItem(it, CleanStartStatus.NOT_APPLIED, detail) }
+                    )
+                }
+
+                store.recordSummary(summary)
+            } finally {
+                bridge = null
+                indicator.hide()
+                if (activeIndicator === indicator) activeIndicator = null
+                jobFinished(params, false)
+            }
         }
         return true
     }
 
     override fun onStopJob(params: JobParameters): Boolean {
+        activeIndicator?.hide()
+        activeIndicator = null
         bridge?.cancel()
         task?.cancel(true)
         bridge = null
@@ -92,6 +104,8 @@ class CleanStartJobService : JobService() {
     }
 
     override fun onDestroy() {
+        activeIndicator?.hide()
+        activeIndicator = null
         bridge?.cancel()
         task?.cancel(true)
         executor.shutdownNow()
