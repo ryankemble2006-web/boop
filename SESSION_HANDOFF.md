@@ -49,7 +49,7 @@ Fresh final evidence: non-visual integration/materialization passed; Launcher li
 
 Detailed receipt: `docs/BOOP-V54-WAKE-COMMAND-BOUNDARY-RECEIPT.md`.
 
-## Physical v54 confirmation: command boundary passed
+## Physical v54 confirmation: command boundary and custom wake passed
 
 Ryan installed v54 on the charged Pixel and repeated the intended two-stage interaction: wake first, then a separate spoken command after the listening cue. The persistent diagnostic captured:
 
@@ -57,7 +57,9 @@ Ryan installed v54 on the charged Pixel and repeated the intended two-stage inte
 
 This is the physical proof the v54 boundary change was meant to produce. The post-wake recognizer is no longer terminating on the already-spoken wake phrase; it remains alive long enough to capture the separate rename command accurately inside the existing three-second command window. Ryan also reported that the rename flow responded and `Steve` was accepted.
 
-Treat the wake-command audio-boundary defect as physically passed on this Pixel. Do not change Sherpa sensitivity, the three-second window, transcript normalization or the no-pre-roll command policy in response to the older v53 trace. Full custom-name acceptance is still pending the five-say enrolment completion plus wake tests for both `Steve` and permanent fallback `Hey BOOP`.
+Ryan then completed enough of the custom-name flow to use `Steve` as the wake name and physically confirmed `Steve, lights on` worked. That proves the custom wake name matched on-device and the resulting command continued through the existing local Home Assistant path successfully.
+
+Treat the wake-command audio-boundary defect and the `Steve` custom wake -> local HA command path as physically passed on this Pixel. Do not change Sherpa sensitivity, the three-second window, transcript normalization or the no-pre-roll command policy in response to the older v53 trace. Full custom-name acceptance still requires one final permanent-fallback check for `Hey BOOP` after the rename.
 
 ## Previous diagnostic candidate: v53
 
@@ -83,12 +85,10 @@ v50 physically preserved `Hey BOOP` wake but spoken rename still failed. v51 rep
 
 ## Required next Pixel test
 
-1. Continue the current v54 enrolment with five natural `Steve` examples.
-2. Let BOOP report/return from enrolment normally; do not reinstall or clear app data.
-3. Keep the Pixel on its charger and let BOOP settle back into the established sleeping-wake state with the Android green microphone indicator present.
-4. Say `Steve` using a natural wake form and confirm BOOP wakes.
-5. Let BOOP settle again, then say `Hey BOOP` and confirm the permanent fallback still wakes it.
-6. If either wake fails, capture the exact behavior before changing sensitivity, grammar, training data or microphone ownership.
+1. Keep the Pixel on its charger and let BOOP settle back into the established sleeping-wake state with the Android green microphone indicator present.
+2. Say `Hey BOOP, lights off` naturally and confirm the permanent fallback still wakes BOOP and routes the local command.
+3. If that works, the v54 rename path, custom `Steve` wake path, and permanent `BOOP` fallback are all physically accepted together.
+4. If fallback fails, capture the exact behavior before changing sensitivity, grammar, training data or microphone ownership.
 
 ## Architecture boundary: clean Shield HOME remains standalone
 
