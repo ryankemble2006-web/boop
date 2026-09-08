@@ -14,7 +14,7 @@ Source root cause: `scripts/patch-unified-wake-arm.py` already contained the int
 
 Minimal repair `7c0fc86f8cbb3d585e8d35dbf8156f88c67a97ac` adds `python3 scripts/patch-unified-wake-arm.py` immediately after the wake-name patch. No Sherpa model, training/profile math, microphone source, charging policy, HA, eyes or blink changed.
 
-Current signed AIO candidate after preserving concurrent Shield routing cleanup:
+Signed v48 candidate after preserving concurrent Shield routing cleanup:
 
 - Built code `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`
 - Version 48 / `1.2.2-unified-wake-arm`
@@ -24,9 +24,15 @@ Current signed AIO candidate after preserving concurrent Shield routing cleanup:
 - Artifact ZIP SHA-256 `6ebcb029673fc6e9785be04a6db8b1f93e64903e6eb6466e172cfc8edddba0d8`
 - Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Fresh v48 evidence: non-visual integration and materialization contracts passed; Launcher lint passed; 58 Shield focused tests and 74 unified focused tests passed with zero failures/errors/skips; signed assembly, package/version, manifest, signer and archive integrity passed. Downloaded ZIP/APK hashes matched workflow receipts. Physical v48 mic/wake behavior remains unaccepted until Ryan tests it.
+Fresh v48 CI evidence: non-visual integration and materialization contracts passed; Launcher lint passed; 58 Shield focused tests and 74 unified focused tests passed with zero failures/errors/skips; signed assembly, package/version, manifest, signer and archive integrity passed. Downloaded ZIP/APK hashes matched workflow receipts.
 
-Next physical discriminator is simple: in the continuous-wake condition, green Android mic indicator first. If green is absent, stay upstream and inspect dock/wakeAllowed/permission. If green returns but BOOP fails, move downstream to Sherpa/template recognition. Do not tune acoustics while the mic is not armed.
+### Physical v48 wake proof
+
+Ryan physically tested v48 in the established continuous-wake condition on the Pixel. After placing BOOP on the wireless charger, the Android green microphone privacy indicator turned on. BOOP then went to sleep while the green mic indicator stayed on. Saying `Hey BOOP` woke BOOP from sleep.
+
+Treat this as **physical confirmation that the upstream wake-arm/listening repair works on real hardware** and as a successful physical sample for the established `Hey BOOP` wake phrase while sleeping on the charger. The earlier v47 “not listening at all” defect is closed at this upstream layer.
+
+Do not generalize this into full acoustic acceptance. Bare `BOOP`, custom `Steve`, five-sample enrolment, the rest of the 33 natural variants, miss rate and false-wake rate remain physically untested in v48. When future misses occur with the green mic still active, investigate/tune Sherpa/template matching downstream. If the green mic disappears again, return upstream to dock/wakeAllowed/permission.
 
 Detailed receipt: `docs/BOOP-V48-WAKE-ARM-RECEIPT.md`.
 
