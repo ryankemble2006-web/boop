@@ -15,6 +15,7 @@ import android.view.Display
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import java.util.concurrent.CountDownLatch
@@ -127,22 +128,38 @@ class CleanStartIndicator(context: Context) {
             })
         }
 
+        // Mirror the full-screen overlay surface shape already proven by BrightnessService,
+        // while keeping the CLEAN START card itself small, static and top-centred.
+        val host = FrameLayout(windowContext).apply {
+            setBackgroundColor(Color.TRANSPARENT)
+        }
+        host.addView(
+            card,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            ).apply {
+                topMargin = dp(windowContext, 28)
+            }
+        )
+
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = dp(windowContext, 28)
+            gravity = Gravity.TOP or Gravity.START
             windowAnimations = 0
         }
 
-        val addResult = runCatching { manager.addView(card, params) }
+        val addResult = runCatching { manager.addView(host, params) }
         if (addResult.isFailure) {
             addStatus = CleanStartIndicatorAddStatus.FAILED
             presentationStatus = CleanStartIndicatorPresentationStatus.BYPASSED
@@ -154,8 +171,8 @@ class CleanStartIndicator(context: Context) {
 
         addStatus = CleanStartIndicatorAddStatus.ADDED
         windowManager = manager
-        view = card
-        armPresentationSignal(card)
+        view = host
+        armPresentationSignal(host)
     }
 
     private fun armPresentationSignal(card: View) {
