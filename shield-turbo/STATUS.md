@@ -4,28 +4,36 @@ Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
 ## Physical state
 
-CLEAN START's core result is physically confirmed on Ryan's Shield: selected Kodi forks are force-closed after boot. Recents/task-manager cards may remain from the previous session, but the apps are not loaded and reload only when focused. Normal deliberate launch still works.
+CLEAN START's force-stop/read-back core is physically accepted from earlier Shield tests. Stale Recents/task-manager cards can remain after force-stop, while the apps themselves are not loaded and reload only when focused. Normal deliberate launch still works.
 
-Presentation remains unaccepted. v0.5.1 flashed only at the end; v0.5.2 showed nothing; v0.5.3 also showed absolutely nothing and made Turbo take almost eight seconds to finish. Treat v0.5.3 as a physical presentation/timing failure, not a cleanup failure.
+Latest v0.5.4 physical result: **no static startup sign**, but the v0.5.3 slowdown was removed. Ryan had Shield navigation control again within roughly **one second**. Treat v0.5.4 as physically positive for fast fail-open/navigation responsiveness and negative for notice visibility. The latest v0.5.4 report did not separately re-check target stopped state, so do not invent v0.5.4-specific cleanup acceptance.
+
+Presentation history: v0.5.1 flashed only at the end; v0.5.2 showed nothing; v0.5.3 showed nothing and stretched Turbo to almost eight seconds; v0.5.4 still showed nothing but restored fast control. No arbitrary timing tweak should be attempted again without diagnostic evidence.
 
 Earlier physical evidence retained: bedroom brightness works; corrected STANDARD maintenance items are selectable; Developer Options opens; v0.4.1 Startup Manager menu and normal manual Kodi launch work. The old v0.4 app-op startup restriction failed. Display & Sound and Accessibility remain parked.
 
 ## Current candidate
 
-**v0.5.4 / code 11** is signed and machine-verified. Exact built source `5f50ac028eacbe64b1578466a535cef73f10b957`.
+**v0.5.5 / code 12** is signed and machine-verified. Exact built source `e22beecbaa9d95aeab036ae403684a32a7a33979`.
 
-v0.5.4 replaces the cold-boot overlay's plain application-context WindowManager path with an Android 11+ primary-display-bound window context created via `createDisplayContext(...).createWindowContext(TYPE_APPLICATION_OVERLAY, null)`. It keeps the committed-frame/on-draw presentation signal but reduces the wait from 3000 ms to **500 ms max**. If the card is not confirmed presented within that bound, it is hidden/abandoned and CLEAN START proceeds. No animation or movement was added.
+v0.5.5 keeps v0.5.4's Android 11+ display-bound overlay window context and **500 ms max fail-open**. It does not add another delay or rendering trick. Instead it persists the boot notice lifecycle result locally and displays it in CLEAN START as:
 
-CLEAN START targets, force-stop/read-back semantics, trusted ADB, current-app skip and the 30/60/120-second max-three scheduler remain unchanged.
+`STARTUP NOTICE DIAGNOSTIC: permission=... • window=... • add=... • present=... • ...ms [detail]`
 
-Expected physical result: the static `SHIELD TURBO · CLEAN START` / `Tidying startup apps` card appears before cleanup and remains motionless until cleanup completes. If the Shield still rejects the card, the failed notice must no longer impose v0.5.3's multi-second extra wait. Real-device visibility and duration remain pending Ryan's reboot.
+The diagnostic records overlay permission, window-context mode, addView result, draw/frame-commit/timeout state, elapsed time and a short failure detail. It is saved before ADB cleanup begins. CLEAN START targets, force-stop/read-back semantics, trusted ADB, current-app skip and 30/60/120-second max-three scheduler remain unchanged.
 
-## Exact v0.5.4 verification
+The next real-Shield reboot must determine the cause. Machine checks must not be described as visual acceptance.
 
-Run `34224066450`, job `102053781796`, conclusion **success**. 68 JVM tests passed with zero failures/errors/skips; source/API/security contracts passed; lint **0 errors / 24 warnings**; permanent signer/package/version/archive checks passed; nonvisual cold/warm launch/no-fatal smoke passed.
+## Exact v0.5.5 verification
 
-Signed artifact `10055037532`, ZIP `760722` bytes, SHA-256 `3b45611dfc5f9fd2795b66e55db7be73e2a369e48b9287f035b969452a2e0f56`. Test artifact `10055084368`, ZIP `93595` bytes, SHA-256 `c00df4b9b7a1dccb4091de41c4342b6e627c3cde74c9a73788320293aef45e55`.
+Run `34226811605`, job `102062828791`, conclusion **success**. 68 JVM tests passed with zero failures/errors/skips; source/API/security contracts passed; lint **0 errors / 24 warnings**; permanent signer/package/version/archive checks passed; nonvisual cold/warm launch/no-fatal smoke passed.
 
-Delivered APK `Shield-Turbo-v0.5.4.apk`, `2319510` bytes, SHA-256 `f3a685845a0e0a230ef81ae52935e15afb4db94d81197907c84ee4a2d12c476d`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Signed artifact `10056167964`, ZIP `764873` bytes, SHA-256 `85cb44b357b5c7979e3e719ac4b55088a6e8c860774c51047c40dcb0d9391340`. Test artifact `10056218423`, ZIP `96072` bytes, SHA-256 `f6fd08f62ccacd0f22baee16cae71357e29319f4b6d7603808e019a834537e25`.
 
-Downloaded artifact receipt/digest, APK digest, built source, package/version and signer were independently checked after CI. **No GitHub visual confirmation ran.** Ryan owns real-device appearance, timing and motionlessness acceptance.
+Delivered APK `Shield-Turbo-v0.5.5.apk`, `2328962` bytes, SHA-256 `40323820eda72df3592fc756a2b30ee15816cc8633a3e577ade65b5475d7b77f`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+Downloaded artifact ZIP digest matched GitHub; APK digest and built-source receipt matched; the APK v2 signing block was independently parsed and matched the permanent BOOP certificate. **No GitHub visual confirmation ran.** Ryan owns real-device appearance/timing/motionlessness acceptance.
+
+## Next test
+
+Install v0.5.5, reboot, open CLEAN START and report the exact diagnostic line plus sign visibility, navigation responsiveness and whether selected Kodi forks are stopped.
