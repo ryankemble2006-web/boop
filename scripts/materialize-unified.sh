@@ -6,6 +6,7 @@ python3 scripts/patch-unified-dock-mirror.py
 python3 scripts/patch-unified-wake-name.py
 python3 scripts/patch-unified-wake-arm.py
 python3 scripts/patch-unified-wake-diagnostics.py
+python3 scripts/patch-unified-powered-wake-resilience.py
 python3 scripts/patch-unified-shield-dashboard.py
 ROOT=boop-build/BOOP-Alpha1
 APP="$ROOT/app"
