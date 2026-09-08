@@ -56,8 +56,10 @@ public final class ShieldNowPlayingListenerService extends NotificationListenerS
             return false;
         }
         Notification notification = statusBarNotification.getNotification();
-        return notification.extras != null
+        boolean hasMediaSession = notification.extras != null
                 && notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION);
+        return NowPlayingArtworkSourcePolicy.isMediaNotification(
+                hasMediaSession, notification.category);
     }
 
     private Bitmap artworkFrom(Notification notification) {
@@ -68,6 +70,12 @@ public final class ShieldNowPlayingListenerService extends NotificationListenerS
         Bitmap fromLargeIcon = bitmapFrom(notification.getLargeIcon());
         if (fromLargeIcon != null) {
             return fromLargeIcon;
+        }
+
+        @SuppressWarnings("deprecation")
+        Bitmap legacyLargeIcon = notification.largeIcon;
+        if (legacyLargeIcon != null) {
+            return legacyLargeIcon;
         }
 
         if (notification.extras == null) {
