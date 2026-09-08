@@ -2,6 +2,7 @@ package com.boop.shieldturbo.system
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -23,5 +24,21 @@ class SystemShortcutTest {
             listOf("android.settings.APPLICATION_DEVELOPMENT_SETTINGS"),
             SystemShortcut.DEVELOPER.actions()
         )
+    }
+
+    @Test fun displaySoundTargetsTheCombinedTvActivityExplicitly() {
+        assertEquals(
+            SettingsComponent(
+                "com.android.tv.settings",
+                "com.android.tv.settings.device.displaysound.DisplaySoundActivity"
+            ),
+            SystemShortcut.DISPLAY_SOUND.component()
+        )
+    }
+
+    @Test fun nativeDisplayOverrideCannotRedirectTheOtherShortcuts() {
+        SystemShortcut.values().filter { it != SystemShortcut.DISPLAY_SOUND }.forEach { shortcut ->
+            assertNull(shortcut.component())
+        }
     }
 }

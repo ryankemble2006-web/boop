@@ -1,11 +1,9 @@
 package com.boop.shieldturbo.system
 
+data class SettingsComponent(val packageName: String, val className: String)
+
 enum class SystemShortcut(private vararg val routeActions: String) {
-    DISPLAY_SOUND(
-        "android.settings.SETTINGS",
-        "android.settings.DISPLAY_SETTINGS",
-        "android.settings.SOUND_SETTINGS"
-    ),
+    DISPLAY_SOUND,
     APPS("android.settings.APPLICATION_SETTINGS"),
     STORAGE(
         "android.settings.INTERNAL_STORAGE_SETTINGS",
@@ -20,4 +18,13 @@ enum class SystemShortcut(private vararg val routeActions: String) {
     ABOUT("android.settings.DEVICE_INFO_SETTINGS");
 
     fun actions(): List<String> = routeActions.toList()
+
+    /** The combined TV page, not Android's general, display-only or sound-only settings. */
+    fun component(): SettingsComponent? = when (this) {
+        DISPLAY_SOUND -> SettingsComponent(
+            "com.android.tv.settings",
+            "com.android.tv.settings.device.displaysound.DisplaySoundActivity"
+        )
+        else -> null
+    }
 }

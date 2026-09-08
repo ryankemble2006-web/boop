@@ -84,8 +84,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" | tee shield-turbo-badging.txt
           grep -q "package: name='com.boop.shieldturbo'" shield-turbo-badging.txt
-          grep -q "versionCode='2'" shield-turbo-badging.txt
-          grep -q "versionName='0.2.0'" shield-turbo-badging.txt
+          grep -q "versionCode='3'" shield-turbo-badging.txt
+          grep -q "versionName='0.2.1'" shield-turbo-badging.txt
           grep -q "launchable-activity: name='com.boop.shieldturbo.MainActivity'" shield-turbo-badging.txt
           ! grep -q 'application-debuggable' shield-turbo-badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" | tee shield-turbo-signer.txt
@@ -94,6 +94,17 @@ jobs:
           unzip -tq "$APK"
           sha256sum "$APK" | tee shield-turbo-sha256.txt
           git rev-parse HEAD | tee shield-turbo-built-commit.txt
+      - name: Upload signed candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: SHIELD-TURBO
+          path: |
+            shield-turbo/app/build/outputs/apk/release/app-release.apk
+            shield-turbo-sha256.txt
+            shield-turbo-built-commit.txt
+            shield-turbo-badging.txt
+            shield-turbo-signer.txt
+          if-no-files-found: error
       - name: Enable emulator acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -119,18 +130,6 @@ jobs:
             adb shell pidof com.boop.shieldturbo
             adb logcat -d > shield-turbo-logcat.txt
             ! grep -A10 -B2 'FATAL EXCEPTION' shield-turbo-logcat.txt | grep -q 'com.boop.shieldturbo'
-      - name: Upload signed candidate
-        uses: actions/upload-artifact@v4
-        with:
-          name: SHIELD-TURBO
-          path: |
-            shield-turbo/app/build/outputs/apk/release/app-release.apk
-            shield-turbo-sha256.txt
-            shield-turbo-built-commit.txt
-            shield-turbo-badging.txt
-            shield-turbo-signer.txt
-            shield-turbo-logcat.txt
-          if-no-files-found: error
       - name: Upload test reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -139,4 +138,5 @@ jobs:
           path: |
             shield-turbo/app/build/test-results/**/*.xml
             shield-turbo/app/build/reports/lint-results-debug.*
+            shield-turbo-logcat.txt
           if-no-files-found: warn
