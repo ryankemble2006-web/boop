@@ -34,40 +34,33 @@ Original v0.10.7 release receipt:
 - artifact `10080598609`
 - APK SHA-256 `5bb188d520fcf0ed73a871c6ef60007a58d782226349113377fcf58f406c2ae9`
 
-Ryan then physically reported that BOOP was correctly inside the box but had not become meaningfully larger and requested that he fill the available bay.
+Ryan then physically reported that BOOP was correctly inside the box but had not become meaningfully larger. The first fill refresh removed the old 88%-width / 75%-height artificial sizing and let the ImageView use the full stage bounds. Ryan then requested one more bounded visual tweak: **make BOOP 10% bigger**.
 
-## Current candidate: v0.10.7 fill refresh
+## Current candidate: v0.10.7 fill +10%
 
-This is intentionally a same-version visual refresh on code 22 / `0.10.7-puppet-bay`, because the connected GitHub write safety layer blocked editing the signing workflow verifier after the temporary code-23 bump. The branch was restored to the existing verified code-22 lane rather than leaving a broken release state.
+This remains a same-version visual refresh on code 22 / `0.10.7-puppet-bay`; no package, permission, media, HOME, focus, artwork, control, stage, or animation-policy changes were made.
 
-Visual-only change:
-- removed the previous 88%-width / 75%-height artificial puppet sizing;
-- the puppet ImageView now occupies the full stage bounds;
-- `FIT_CENTER` remains, so artwork proportions are preserved and no cropping is introduced;
-- stage size, media layout, controls, focus behavior, artwork path and animation policy are otherwise unchanged.
+Exact visual change:
+- `ShieldNowPlayingPuppetView.onSizeChanged()` now sizes the puppet ImageView to 110% of the stage width and height;
+- gravity remains centered;
+- `FIT_CENTER` remains, preserving artwork proportions;
+- the parent stage still clips children, so the enlarged puppet cannot escape into media controls;
+- current groove/acknowledgement motion remains untouched.
 
-Exact fill-refresh receipt:
-- source `85a3278d52a4c359a58716644b949924abaf961b`
-- workflow `34290757484` SUCCESS
-- artifact `BOOP-Shield-Clean-Launcher`, ID `10081272677`
+Exact signed candidate receipt:
+- source `242ad467d2cbe91d2de9d4cc5e44cf278ec20fa5`
+- workflow `34291502544` SUCCESS
+- artifact `BOOP-Shield-Clean-Launcher`, ID `10081530720`
 - package `com.boop.shieldhome`
 - version code 22 / `0.10.7-puppet-bay`
-- APK SHA-256 `f9509a3af47b4e50eac79fb96b173eba10216a625be1bf601a8bf148d4da7d21`
-- artifact ZIP SHA-256 `a01b88140192e4c6db534ab19cb4e54965c46f569152ab521fc27b43f34318eb`
+- APK SHA-256 `26e623be00928c263053427c9f07bd01540c2cf964a06b3f1bf55610fd00219d`
+- artifact ZIP SHA-256 `177bab9198ddece6bd6bbfc0ebef40e47cebc860302c5376b40ac39a3be146f0`
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-CI passed the fast functional tests, signed assembly, exact package/version, protected manifest/service/resource checks, permanent signer verification, APK integrity and artifact upload. `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` remained active. No visual acceptance was run.
-
-The downloaded artifact was independently unpacked and matched the CI APK hash, package, code 22/versionName and permanent signer.
-
-## FTP handoff rule / current result
-
-Shared BOOP rules now say verified APK handoffs should also be uploaded to Ryan's private FTP `/apk/` folder when the current runtime can reach it. Credentials must never be committed to this public repository.
-
-For this fill refresh, the direct FTP attempt failed with TCP connection refused on port 21 before authentication, so **no FTP upload occurred**. Do not claim a remote receipt for this build.
+GitHub completed the functional-test lane with **no visual checks**, prepared the permanent signer, built the signed standalone launcher, verified exact package/version/signer, checked APK integrity and uploaded the artifact. The downloaded artifact was independently unpacked and matched the CI APK hash, exact source commit, package, code 22/versionName and permanent signer.
 
 ## Next physical gate
 
-Install the v0.10.7 fill-refresh APK over the current launcher and judge BOOP in the Now Playing bay. He should now use the full bay bounds while retaining proportions. Confirm he remains clipped inside the bay, does not overlap media UI and remote navigation remains unchanged. Minor placement/scale tweaks can continue after use.
+Install the v0.10.7 fill +10% APK over the current launcher and judge BOOP in the Now Playing bay. Confirm the extra size is right, clipping remains clean and remote navigation/media UI remain unchanged. Real Shield appearance is authority; do not infer visual acceptance from CI.
 
-Do not begin the full Tegra/GPU puppetry pass until Ryan decides the stage placement is worth locking. Real Shield behavior is authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
+Do not begin the full Tegra/GPU puppetry pass until Ryan decides the stage placement/scale is worth locking. Do not merge into unified until Ryan explicitly approves the standalone behavior.
