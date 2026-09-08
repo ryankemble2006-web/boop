@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 public final class ShieldLauncherActivity extends Activity {
     public static final long PAGE_TRANSITION_MS = 140L;
     private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
-    private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown";
+    private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown_v2";
 
     public enum FavouriteEdit {
         MOVE_LEFT,
@@ -396,6 +396,14 @@ public final class ShieldLauncherActivity extends Activity {
         return Settings.ACTION_SETTINGS;
     }
 
+    static String homePromptKey() {
+        return KEY_HOME_PROMPT_SHOWN;
+    }
+
+    static String preferredHomeChooserAction() {
+        return Settings.ACTION_HOME_SETTINGS;
+    }
+
     private void openSystemSettings() {
         try {
             startActivity(new Intent(systemSettingsAction()));
@@ -415,36 +423,47 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void requestHomeRole() {
+        if (isBoopDefaultHome()) {
+            return;
+        }
+
+        try {
+            startActivity(new Intent(preferredHomeChooserAction()));
+            return;
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            // Fall through to the platform HOME role request if Shield omits the chooser.
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             RoleManager roles = getSystemService(RoleManager.class);
             if (roles != null && roles.isRoleAvailable(RoleManager.ROLE_HOME)) {
-                if (roles.isRoleHeld(RoleManager.ROLE_HOME)) {
-                    return;
-                }
                 try {
                     startActivity(roles.createRequestRoleIntent(RoleManager.ROLE_HOME));
                     return;
                 } catch (ActivityNotFoundException | SecurityException ignored) {
-                    // Fall through to the system HOME chooser.
+                    // Fall through to general Settings.
                 }
             }
         }
-        openHomeSettings();
+        openSystemSettings();
     }
 
     private boolean isBoopDefaultHome() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            RoleManager roles = getSystemService(RoleManager.class);
-            if (roles != null && roles.isRoleAvailable(RoleManager.ROLE_HOME)) {
-                return roles.isRoleHeld(RoleManager.ROLE_HOME);
-            }
-        }
+        return HomeReplacementPolicy.isOwnResolvedHome(
+                resolvedHomePackage(), getPackageName());
+    }
 
+    private String resolvedHomePackage() {
         Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
-        ResolveInfo resolved = getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
-        return resolved != null
-                && resolved.activityInfo != null
-                && getPackageName().equals(resolved.activityInfo.packageName);
+        ResolveInfo resolved;
+        try {
+            resolved = getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+        return resolved != null && resolved.activityInfo != null
+                ? resolved.activityInfo.packageName
+                : null;
     }
 
     private String findStockHomePackage() {
@@ -469,7 +488,8 @@ public final class ShieldLauncherActivity extends Activity {
             candidates.add(new HomeReplacementPolicy.Candidate(
                     info.activityInfo.packageName, system, enabled));
         }
-        return HomeReplacementPolicy.selectStockHome(candidates, getPackageName());
+        return HomeReplacementPolicy.selectStockHome(
+                candidates, getPackageName(), resolvedHomePackage());
     }
 
     private void openStockHomeAppInfo() {
@@ -526,7 +546,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void openHomeSettings() {
         try {
-            startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));
+            startActivity(new Intent(preferredHomeChooserAction()));
             return;
         } catch (ActivityNotFoundException | SecurityException ignored) {
             // Fall through to general settings on firmware without a HOME chooser surface.
