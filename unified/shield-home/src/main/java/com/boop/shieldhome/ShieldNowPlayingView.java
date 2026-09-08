@@ -139,7 +139,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         controls.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(46));
-        controlsParams.topMargin = dp(8);
+        controlsParams.topMargin = dp(4);
         details.addView(controls, controlsParams);
 
         previousButton = controlButton("Prev", () -> {
