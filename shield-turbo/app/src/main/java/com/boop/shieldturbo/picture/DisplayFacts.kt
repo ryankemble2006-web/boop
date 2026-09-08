@@ -23,7 +23,8 @@ data class DisplayFacts(
         fun current(activity: Activity): DisplayFacts = try {
             val display = activity.windowManager.defaultDisplay
             val mode = display.mode
-            val hdr = display.hdrCapabilities?.supportedHdrTypes.orEmpty().map(::hdrName)
+            val types = display.hdrCapabilities?.supportedHdrTypes ?: intArrayOf()
+            val hdr = types.map(::hdrName)
             DisplayFacts(mode.physicalWidth, mode.physicalHeight, mode.refreshRate, hdr)
         } catch (_: Exception) {
             DisplayFacts(0, 0, 0f, emptyList())
