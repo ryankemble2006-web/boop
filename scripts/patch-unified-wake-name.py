@@ -57,6 +57,44 @@ replace_once('''    private void hideVoiceSettings() {
 
 replace_once('        voiceSettingsOverlay = null;\n        voiceSettingsOpen = false;\n', '        voiceSettingsOverlay = null;\n        wakeNameInput = null;\n        voiceSettingsOpen = false;\n', 'clear wake-name field')
 
+replace_once('''        if (wakeWordController != null) {
+            wakeWordController.reloadSensitivity();
+        }
+        if (wakeCoordinator != null) {
+            wakeCoordinator.setVoiceSettingsOpen(false);
+        }
+''', '''        if (wakeCoordinator != null) {
+            // Reload through the coordinator so its engineArmed bookkeeping cannot
+            // claim the microphone is still armed after the controller was stopped.
+            wakeCoordinator.reloadEngine();
+            wakeCoordinator.setVoiceSettingsOpen(false);
+        } else if (wakeWordController != null) {
+            wakeWordController.reloadSensitivity();
+        }
+''', 'coordinated settings wake reload')
+
+replace_once('''            @Override public void suspendAll() {
+                if (wakeWordController != null) {
+                    wakeWordController.suspendAll();
+                }
+            }
+
+            @Override public void shutdown() {
+''', '''            @Override public void suspendAll() {
+                if (wakeWordController != null) {
+                    wakeWordController.suspendAll();
+                }
+            }
+
+            @Override public void reload() {
+                if (wakeWordController != null) {
+                    wakeWordController.reloadSensitivity();
+                }
+            }
+
+            @Override public void shutdown() {
+''', 'wake coordinator reload port')
+
 replace_once('''    private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
@@ -68,7 +106,10 @@ replace_once('''    private int dp(int value) {
     private void applyWakeName(String requestedName, boolean confirmByVoice) {
         String before = BoopWakeNameStore.load(this);
         String saved = BoopWakeNameStore.save(this, requestedName);
-        if (!before.equals(saved) && wakeWordController != null) wakeWordController.reloadSensitivity();
+        if (!before.equals(saved)) {
+            if (wakeCoordinator != null) wakeCoordinator.reloadEngine();
+            else if (wakeWordController != null) wakeWordController.reloadSensitivity();
+        }
         if (wakeNameInput != null && !saved.contentEquals(wakeNameInput.getText())) {
             wakeNameInput.setText(saved);
             wakeNameInput.setSelection(saved.length());
@@ -107,4 +148,4 @@ if not model.is_file():
     raise SystemExit(f'Wake-name BPE model missing from verified model cache: {model}')
 destination.parent.mkdir(parents=True, exist_ok=True)
 copy2(model, destination)
-print('Unified spoken wake-name UI/routing and BPE runtime asset patched')
+print('Unified spoken wake-name UI/routing and coordinated wake reload patched')
