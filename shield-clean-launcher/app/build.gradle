@@ -25,8 +25,8 @@ android {
         applicationId 'com.boop.shieldhome'
         minSdk 26
         targetSdk 36
-        versionCode 14
-        versionName '0.9.5-home-focus-pop'
+        versionCode 15
+        versionName '0.10.0-now-playing'
     }
 
     sourceSets {
