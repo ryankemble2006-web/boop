@@ -22,7 +22,7 @@ This clean Nvidia Shield HOME replacement remains a **standalone APK for physica
 - Permanent BOOP signer reused and verified.
 - 48 focused Shield HOME tests passed. Signed assembly, exact package/version, HOME/Leanback categories, Accessibility service, invisible Shield Accessibility router, signer, APK integrity and artifact upload all passed on the candidate head.
 
-CI-green is not physical acceptance.
+CI-green is not blanket physical acceptance.
 
 ## Physical evidence
 
@@ -33,30 +33,42 @@ Ryan physically confirmed on a real Shield:
 - 0.3 parent-level input-routing repair succeeded: the grabbed favourite actually moved (Ryan: "the booger moved :)"). Treat grab/reorder movement as physically working at this checkpoint.
 - 0.4 HOME retirement/default persistence **failed**. `Retire Android TV Home` opened package `com.google.android.tungsten.setupwraith`; after reboot the original Shield UI was still HOME.
 - 0.5 corrected the retirement target to real Android TV Home `com.google.android.tvlauncher`. Its App Info exposed **Force stop only, no Disable button**. Force stop removed stock Home temporarily, pressing Home then did nothing, and reboot restored the original launcher. Treat normal HOME chooser/RoleManager + retirement as a physical FAIL on this Shield firmware.
-- 0.6 did **not** reach the Accessibility override test. Selecting `Open Accessibility` produced the Shield message **"you dont have an app that can do this"**, and Ryan stopped. This is a physical setup-routing FAIL only. Do not describe the Accessibility service itself as physically failed or accepted because it was never enabled.
-- 0.7 removed that resolver error, but Ryan physically confirmed `Open Accessibility` lands on ordinary top-level Shield Settings rather than Accessibility. This proves the setup request now reaches a real Shield Settings surface, but **direct Accessibility setup is still not physically achieved**. The override service remains physically untested. Do not infer which explicit TV Settings component succeeded or redirected without instrumentation.
+- 0.6 did **not** reach the Accessibility override test. Selecting `Open Accessibility` produced the Shield message **"you dont have an app that can do this"**, and Ryan stopped. This was a setup-routing failure, not a service failure.
+- 0.7 removed that resolver error but its internal router landed on ordinary Shield Settings rather than directly on Accessibility.
+- Ryan then manually navigated Shield Settings to Accessibility, enabled the **BOOP Home Override** slider, and physically confirmed the override service works.
+- **Single Home now launches BOOP Shield Home.** This is physically working on candidate 0.7 with Accessibility override enabled.
+- **Double-press Home still opens Nvidia/Shield Recent Apps.** This locked muscle-memory behavior is physically preserved on candidate 0.7 and must remain unchanged.
 
-The 0.5 result proves this Shield firmware keeps Android TV Home as the persisted/preferred HOME and does not expose a normal consumer Disable route. The 0.6 result proves this Shield does not resolve the generic `android.settings.ACCESSIBILITY_SETTINGS` intent used by phones. The 0.7 result shows hard-coded AOSP TV Accessibility activity routes are not a reliable direct doorway on this Nvidia firmware.
+The 0.5 result proves this Shield firmware keeps Android TV Home as the persisted/preferred HOME and does not expose a normal consumer Disable route. The 0.6/0.7 setup results prove direct Accessibility deep-linking is firmware-specific. The manual Accessibility path successfully enables the no-ADB override.
 
-## 0.7 Shield Accessibility route repair and physical result
+## 0.7 Accessibility HOME override: physically working core path
 
-0.7 preserves the 0.6 Accessibility override mechanism and changes only the settings doorway.
+0.7 uses `ShieldHomeOverrideService` as a narrow Accessibility-based HOME override:
 
-- Existing `ShieldHomeOverrideService` remains unchanged in intent: it listens only for `TYPE_WINDOW_STATE_CHANGED` and reacts only when stock Android TV Home becomes foreground.
+- It listens only for `TYPE_WINDOW_STATE_CHANGED` and reacts when stock Android TV Home becomes foreground.
 - It does not retrieve screen/window content, type text, perform gestures, or filter/intercept remote keys.
-- BOOP still does **not** intercept `KEYCODE_HOME`. Preserving double-tap Home -> Recent Apps/task switcher remains a hard physical requirement.
-- An internal, invisible `ShieldAccessibilityRouteActivity` handles BOOP's Accessibility-settings request instead of relying only on the unresolved generic system action.
-- The router attempts Shield/Android TV Settings directly in this order:
-  1. `com.android.tv.settings/com.android.tv.settings.system.AccessibilityActivity`
-  2. `com.android.tv.settings/com.android.tv.settings.oemlink.AccessibilitySettingsActivity`
-  3. `com.android.tv.settings/com.android.tv.settings.MainSettings`
-  4. general Android Settings as a final recovery fallback.
-- The router is `exported=false`, `noHistory=true`, excluded from Recents and uses `Theme.NoDisplay`; it is only a doorway into Shield Settings, not another visible launcher surface.
-- Physical 0.7 result: the old resolver error is gone, but the user sees regular Shield Settings rather than the Accessibility page.
-- AOSP Android TV source shows Accessibility has moved between a dedicated activity and a fragment inside the normal Settings hierarchy across TvSettings generations. That matches the observed OEM divergence and is why another guessed class name should not be added without evidence.
-- Stock Android TV Home must remain installed and enabled during this experiment. Do **not** Force stop it: its foreground event is the trigger used by the Accessibility override.
+- BOOP does **not** intercept `KEYCODE_HOME`. This is deliberate and is now physically validated by double-press Home -> Recent Apps continuing to work.
+- Stock Android TV Home remains installed and enabled as the trigger and emergency recovery path. Do **not** Force stop it during normal override testing.
+- The current automatic Accessibility doorway is not good enough yet: BOOP opens regular Shield Settings, then the user must navigate manually to Accessibility and enable BOOP Home Override.
 
-No code change is justified yet from the 0.7 result alone. First test the service through Shield's native manual path: **Settings -> Device Preferences -> Accessibility -> Services -> BOOP Home Override**. If BOOP is not listed, investigate service registration. If it is listed and enables, test the actual takeover before spending another version on setup routing.
+### Physical state of 0.7
+
+**Physically green now:**
+- Accessibility service is visible and can be enabled through Shield Settings.
+- single Home -> BOOP launcher.
+- double Home -> native Shield Recent Apps.
+- banners preserved.
+- grab/reorder preserved from prior physical acceptance.
+
+**Still pending physical acceptance:**
+- whether stock Android TV Home visibly flashes before BOOP on single Home;
+- reboot persistence/takeover behavior;
+- whether BOOP appears cleanly after boot without unacceptable delay/flash;
+- single Back -> favourite item 1 and long Back -> real Settings after override is enabled;
+- volume/CEC/system shortcuts after override is enabled;
+- turning BOOP Home Override OFF cleanly restores ordinary Shield Home.
+
+Do not call the entire launcher physically accepted until those remaining checks are complete.
 
 ## 0.7 TDD / release evidence
 
@@ -85,17 +97,15 @@ No code change is justified yet from the 0.7 result alone. First test the servic
 
 Physical acceptance must preserve double-tap Home -> Recent Apps/task switcher, Back semantics above, volume/CEC, Nvidia/Android Settings, system remote shortcuts, app switching and system animations. Do not globally intercept Home or rebuild the Nvidia task switcher.
 
+**Double-tap Home -> Recent Apps is now physically confirmed working with BOOP Home Override enabled. Keep it locked.**
+
 ## Next physical test
 
-1. Keep standalone 0.7 installed. AIO `com.boop.alpha1` remains untouched.
-2. **Leave Android TV Home enabled. Do not Force stop it.**
-3. In the Shield Settings screen opened by BOOP, navigate manually to **Device Preferences -> Accessibility -> Services**.
-4. If **BOOP Home Override** is not listed, stop. The next debugging target is Accessibility service registration/visibility, not HOME takeover.
-5. If it is listed, open it and enable **BOOP Home Override**. Return to BOOP; `Home rows` should report `BOOP Home Override: ON`.
-6. Open another app and press Home once. Confirm whether BOOP appears and report whether Android TV Home is visibly seen even for a flash before BOOP arrives.
-7. Double-tap Home and confirm Shield Recent Apps/task switcher still appears. This is a HARD acceptance requirement.
-8. Reboot. Confirm whether BOOP takes over and report any visible stock-Home flash or delay.
-9. Recheck single Back -> favourite item 1, long Back -> real Settings, volume/CEC and other system shortcuts.
-10. Disable `BOOP Home Override` in Accessibility settings and confirm ordinary stock Shield Home returns, preserving simple emergency recovery.
+1. Keep standalone 0.7 installed with **BOOP Home Override enabled**. AIO `com.boop.alpha1` remains untouched.
+2. Open a normal app and single-press Home. BOOP should appear. Report whether stock Android TV Home is visible even for a flash before BOOP arrives.
+3. Double-press Home again occasionally during testing; native Recent Apps must continue to work.
+4. Reboot the Shield. Confirm whether BOOP takes over after boot and report any visible stock-Home flash or delay.
+5. Recheck single Back -> favourite item 1, long Back -> real Settings, volume/CEC and other system shortcuts.
+6. Disable **BOOP Home Override** in Accessibility settings and confirm ordinary stock Shield Home returns, preserving simple emergency recovery.
 
 Do not merge into unified until Ryan explicitly approves the standalone behavior on real Shield hardware.
