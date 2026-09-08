@@ -35,6 +35,18 @@
         </service>
 
         <activity
+            android:name=".ShieldAccessibilityRouteActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".ShieldLauncherActivity"
             android:exported="true"
             android:launchMode="singleTask"
