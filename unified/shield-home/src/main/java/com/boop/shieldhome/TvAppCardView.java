@@ -21,12 +21,15 @@ import android.widget.TextView;
 public final class TvAppCardView extends FrameLayout {
     public static final float FOCUSED_SCALE = 1.08f;
     public static final float GRABBED_SCALE = 1.14f;
+    private static final float HOME_FOCUSED_SCALE = 1.02f;
+    private static final float HOME_GRABBED_SCALE = 1.03f;
     public static final long FOCUS_DURATION_MS = 120L;
 
     private final ImageView iconView;
     private final TextView labelView;
     private final TextView favouriteBadge;
     private boolean grabbed;
+    private boolean homeFavourite;
 
     public TvAppCardView(Context context) {
         this(context, null);
@@ -90,6 +93,7 @@ public final class TvAppCardView extends FrameLayout {
 
     private void bindInternal(TvAppEntry entry, boolean favourite, boolean preferBanner) {
         grabbed = false;
+        homeFavourite = preferBanner;
         configureCardPadding(preferBanner);
         if (entry == null) {
             labelView.setText("");
@@ -177,7 +181,14 @@ public final class TvAppCardView extends FrameLayout {
     }
 
     private void animateScale(boolean emphasized) {
-        float target = grabbed ? GRABBED_SCALE : (emphasized ? FOCUSED_SCALE : 1f);
+        float target;
+        if (grabbed) {
+            target = homeFavourite ? HOME_GRABBED_SCALE : GRABBED_SCALE;
+        } else if (emphasized) {
+            target = homeFavourite ? HOME_FOCUSED_SCALE : FOCUSED_SCALE;
+        } else {
+            target = 1f;
+        }
         animate()
                 .scaleX(target)
                 .scaleY(target)
