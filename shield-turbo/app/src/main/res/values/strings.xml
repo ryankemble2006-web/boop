@@ -10,7 +10,7 @@
     <string name="section_network">NETWORK</string>
     <string name="section_shield">SHIELD</string>
     <string name="section_advanced">ADVANCED</string>
-    <string name="section_turbo_help">Live health snapshot and safe maintenance routes.</string>
+    <string name="section_turbo_help">Persistent stock performance mode with thermal protection, plus diagnostics and maintenance routes.</string>
     <string name="section_picture_help">Brightness and display information.</string>
     <string name="section_apps_help">Launch apps and jump to Android-owned app controls.</string>
     <string name="section_network_help">Connection state and network facts.</string>
@@ -24,6 +24,13 @@
     <string name="picture_more_coming">Display facts will live here without changing the proven brightness behaviour.</string>
     <string name="analyse">ANALYSE SHIELD</string>
     <string name="access_details">ACCESS DETAILS</string>
+    <string name="turbo_mode_on">TURBO MODE: ON</string>
+    <string name="turbo_mode_off">TURBO MODE: OFF</string>
+    <string name="turbo_mode_working">TURBO MODE: WORKING…</string>
+    <string name="turbo_mode_enable">TURN ON TURBO</string>
+    <string name="turbo_mode_confirm_title">TURN ON PERSISTENT TURBO?</string>
+    <string name="turbo_mode_confirm_message">TURBO persists across reboot and uses only NVIDIA stock performance controls. A thermal watchdog stays active while TURBO is on. If Android reports SEVERE thermal status or higher, SHIELD TURBO automatically restores NORMAL and leaves TURBO off until you turn it on again. No root, voltage changes, above-stock clocks or thermal-limit bypass are used.</string>
+    <string name="turbo_mode_result_title">SHIELD TURBO</string>
     <string name="processor_trace">PROCESSOR MODE TRACE</string>
     <string name="processor_trace_title">PROCESSOR MODE TRACE</string>
     <string name="processor_trace_first">Set SHIELD Processor mode to Optimized first, then capture the baseline. This reads settings and properties only. Nothing is changed.</string>
