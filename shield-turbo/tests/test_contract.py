@@ -1,4 +1,4 @@
-"""Source-level safety guards; runtime behavior is tested by Kotlin and emulator checks."""
+"""Source-level safety guards; visual acceptance belongs to the physical Shield."""
 from pathlib import Path
 import re
 import unittest
@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'app/src/main/java/com/boop/shieldturbo'
+WORKFLOW = ROOT.parent / '.github/workflows/shield-turbo.yml'
 ANDROID = '{http://schemas.android.com/apk/res/android}'
 
 class ContractTest(unittest.TestCase):
@@ -50,6 +51,7 @@ class ContractTest(unittest.TestCase):
         self.assertEqual({
             'android.permission.ACCESS_NETWORK_STATE',
             'android.permission.SYSTEM_ALERT_WINDOW',
+            'android.permission.WRITE_SECURE_SETTINGS',
         }, permissions)
         app = manifest.find('application')
         services = app.findall('service')
@@ -59,6 +61,14 @@ class ContractTest(unittest.TestCase):
         self.assertEqual([], app.findall('receiver'))
         categories = {c.get(ANDROID + 'name') for c in app.findall('.//category')}
         self.assertIn('android.intent.category.LEANBACK_LAUNCHER', categories)
+
+    def test_ci_does_not_judge_visual_ui(self):
+        workflow = WORKFLOW.read_text()
+        self.assertNotIn('uiautomator dump', workflow)
+        self.assertNotIn('check_emulator_ui.py', workflow)
+        self.assertNotIn('shield-turbo-home.xml', workflow)
+        self.assertNotIn('shield-turbo-ui.xml', workflow)
+        self.assertNotIn('shield-turbo-focus.xml', workflow)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
