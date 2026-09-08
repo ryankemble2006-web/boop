@@ -135,12 +135,11 @@ def apply() -> None:
 ''',
         'wake error diagnostic')
 
+    # Chat-mode materialization inserts a foreground guard immediately after the
+    # onResults() signature. Anchor on the stable completed-mode assignment instead.
     replace_once(
-        '''    public void onResults(Bundle results) {
-        RecognitionMode completedMode = recognitionMode;
-''',
-        '''    public void onResults(Bundle results) {
-        RecognitionMode completedMode = recognitionMode;
+        '        RecognitionMode completedMode = recognitionMode;\n',
+        '''        RecognitionMode completedMode = recognitionMode;
         BoopWakeDiagnosticTrace completedWakeTrace = wakeDiagnosticTrace;
 ''',
         'result callback trace capture')
