@@ -13,12 +13,8 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
     private final BoopNotificationRuntime runtime;
     private final WindowManager windowManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable timeoutRunnable;
     private View currentView;
-
-    private final Runnable timeoutRunnable = () -> {
-        hide();
-        runtime.onPresentationDismissed();
-    };
 
     BoopNotificationOverlayController(Context context, BoopNotificationRuntime runtime) {
         if (context == null) throw new IllegalArgumentException("context required");
@@ -26,6 +22,10 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
         this.context = context.getApplicationContext();
         this.runtime = runtime;
         this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        this.timeoutRunnable = () -> {
+            hide();
+            this.runtime.onPresentationDismissed();
+        };
     }
 
     @Override
