@@ -18,6 +18,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         default void onMakeBoopHome() { onChooseHomeApp(); }
         default void onRetireStockHome() { }
         default void onRestoreStockHome() { onChooseHomeApp(); }
+        default void onEnableHomeOverride() { onChooseHomeApp(); }
         void onBackHome();
     }
 
@@ -36,6 +37,14 @@ public final class ShieldHomeSettingsView extends LinearLayout {
     }
 
     public void render(boolean playNext, boolean appChannels, Callbacks callbacks) {
+        render(playNext, appChannels, false, callbacks);
+    }
+
+    public void render(
+            boolean playNext,
+            boolean appChannels,
+            boolean homeOverrideEnabled,
+            Callbacks callbacks) {
         removeAllViews();
 
         TextView title = text("Home rows", 28);
@@ -46,18 +55,19 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         addView(homeSection, wrap());
         addSpacer(dp(10));
 
-        TextView makeHome = action("Make BOOP my Home");
-        makeHome.setOnClickListener(v -> {
-            if (callbacks != null) callbacks.onMakeBoopHome();
+        TextView overrideHome = action(
+                "BOOP Home Override: " + (homeOverrideEnabled ? "ON" : "OFF"));
+        overrideHome.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onEnableHomeOverride();
         });
-        addView(makeHome, rowParams());
+        addView(overrideHome, rowParams());
         addSpacer(dp(10));
 
-        TextView retireHome = action("Retire Android TV Home");
-        retireHome.setOnClickListener(v -> {
+        TextView stockInfo = action("Android TV Home info");
+        stockInfo.setOnClickListener(v -> {
             if (callbacks != null) callbacks.onRetireStockHome();
         });
-        addView(retireHome, rowParams());
+        addView(stockInfo, rowParams());
         addSpacer(dp(10));
 
         TextView restoreHome = action("Restore Shield Home");
