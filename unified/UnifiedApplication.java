@@ -12,7 +12,9 @@ public final class UnifiedApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        if (BoopDeviceProfile.resolve(this) != BoopDeviceProfile.Mode.SHIELD) {
+        BoopDeviceProfile.Mode mode = BoopDeviceProfile.resolve(this);
+        if (BoopNotificationRuntime.shouldInitializeForMode(mode)) {
+            BoopNotificationRuntime.initialize(this);
             return;
         }
 
