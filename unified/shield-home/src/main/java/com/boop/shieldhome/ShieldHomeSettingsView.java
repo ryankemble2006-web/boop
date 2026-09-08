@@ -160,20 +160,20 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         view.setFocusable(true);
         view.setClickable(true);
         view.setPadding(dp(20), dp(10), dp(20), dp(10));
-        view.setBackground(actionBackground());
-        view.setOnFocusChangeListener((v, focused) -> v.animate()
-                .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
-                .scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
-                .setDuration(TvAppCardView.FOCUS_DURATION_MS)
-                .start());
+        view.setBackground(actionBackground(false));
+        view.setOnFocusChangeListener((v, focused) -> {
+            v.setBackground(actionBackground(focused));
+            v.animate()
+                    .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS)
+                    .start();
+        });
         return view;
     }
 
-    private GradientDrawable actionBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.rgb(42, 42, 42));
-        background.setCornerRadius(dp(10));
-        return background;
+    private GradientDrawable actionBackground(boolean focused) {
+        return FocusChrome.filled(getContext(), Color.rgb(42, 42, 42), 10, focused);
     }
 
     private LayoutParams rowParams() {
