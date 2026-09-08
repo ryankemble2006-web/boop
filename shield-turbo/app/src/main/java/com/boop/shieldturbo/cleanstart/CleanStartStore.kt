@@ -42,6 +42,17 @@ data class CleanStartIndicatorDiagnostic(
     val detail: String = ""
 )
 
+data class CleanStartTimingDiagnostic(
+    val timestampMillis: Long,
+    val noticeMs: Long,
+    val adbReadyMs: Long,
+    val resumedQueryMs: Long,
+    val stopsTotalMs: Long,
+    val slowestPackage: String,
+    val slowestStopMs: Long,
+    val totalJobMs: Long
+)
+
 class CleanStartStore(private val store: Store) {
     interface Store {
         fun get(key: String): String?
@@ -54,6 +65,8 @@ class CleanStartStore(private val store: Store) {
         private const val AUTO = "auto_clean"
         private const val SUMMARY = "last_summary"
         private const val INDICATOR_DIAGNOSTIC = "last_indicator_diagnostic"
+        private const val TIMING_DIAGNOSTIC = "last_timing_diagnostic"
+        private const val MAX_DIAGNOSTIC_MS = 120_000L
 
         fun android(context: Context): CleanStartStore = CleanStartStore(PreferencesStore(context))
     }
@@ -127,6 +140,53 @@ class CleanStartStore(private val store: Store) {
             presentationStatus,
             elapsed,
             sanitizeDetail(fields[7])
+        )
+    }
+
+    fun recordTimingDiagnostic(diagnostic: CleanStartTimingDiagnostic): Boolean {
+        if (diagnostic.timestampMillis < 0) return false
+        val durations = listOf(
+            diagnostic.noticeMs,
+            diagnostic.adbReadyMs,
+            diagnostic.resumedQueryMs,
+            diagnostic.stopsTotalMs,
+            diagnostic.slowestStopMs,
+            diagnostic.totalJobMs
+        )
+        if (durations.any { it !in 0..MAX_DIAGNOSTIC_MS }) return false
+        val slowestPackage = diagnostic.slowestPackage.trim()
+        if (slowestPackage.isNotEmpty() && !CleanStartPolicy.validPackage(slowestPackage)) return false
+        val encoded = listOf(
+            "v1",
+            diagnostic.timestampMillis.toString(),
+            diagnostic.noticeMs.toString(),
+            diagnostic.adbReadyMs.toString(),
+            diagnostic.resumedQueryMs.toString(),
+            diagnostic.stopsTotalMs.toString(),
+            slowestPackage,
+            diagnostic.slowestStopMs.toString(),
+            diagnostic.totalJobMs.toString()
+        ).joinToString("\t")
+        return store.put(TIMING_DIAGNOSTIC, encoded)
+    }
+
+    fun lastTimingDiagnostic(): CleanStartTimingDiagnostic? {
+        val raw = store.get(TIMING_DIAGNOSTIC) ?: return null
+        val fields = raw.split('\t', limit = 9)
+        if (fields.size != 9 || fields[0] != "v1") return null
+        val timestamp = fields[1].toLongOrNull()?.takeIf { it >= 0 } ?: return null
+        fun duration(index: Int): Long? = fields[index].toLongOrNull()?.takeIf { it in 0..MAX_DIAGNOSTIC_MS }
+        val slowestPackage = fields[6].trim()
+        if (slowestPackage.isNotEmpty() && !CleanStartPolicy.validPackage(slowestPackage)) return null
+        return CleanStartTimingDiagnostic(
+            timestampMillis = timestamp,
+            noticeMs = duration(2) ?: return null,
+            adbReadyMs = duration(3) ?: return null,
+            resumedQueryMs = duration(4) ?: return null,
+            stopsTotalMs = duration(5) ?: return null,
+            slowestPackage = slowestPackage,
+            slowestStopMs = duration(7) ?: return null,
+            totalJobMs = duration(8) ?: return null
         )
     }
 

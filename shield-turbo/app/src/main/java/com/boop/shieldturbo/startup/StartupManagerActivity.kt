@@ -155,6 +155,18 @@ class StartupManagerActivity : Activity() {
                 )
             )
         }
+        cleanStore.lastTimingDiagnostic()?.let { timing ->
+            val slowest = timing.slowestPackage.takeIf { it.isNotBlank() }
+                ?.let { " • slowest=$it:${timing.slowestStopMs}ms" }
+                .orEmpty()
+            list.addView(
+                text(
+                    "CLEAN START TIMING: notice=${timing.noticeMs}ms • adbReady=${timing.adbReadyMs}ms • resumed=${timing.resumedQueryMs}ms • stops=${timing.stopsTotalMs}ms$slowest • total=${timing.totalJobMs}ms",
+                    14f,
+                    Color.LTGRAY
+                )
+            )
+        }
 
         val oldRecords = ledger.records()
         if (oldRecords.isNotEmpty()) {
