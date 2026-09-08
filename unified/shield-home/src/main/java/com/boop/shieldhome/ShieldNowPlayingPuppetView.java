@@ -16,6 +16,12 @@ import android.widget.ImageView;
 public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private static final long FRAME_MS = 33L;
 
+    // These match ShieldHomeView's fixed HOME/nav/card geometry and ShieldNowPlayingView's
+    // reserved right-hand mascot bay. The bay itself clips motion, so BOOP can never cover media UI.
+    private static final int BAY_HEIGHT_DP = 154;
+    private static final int BAY_RIGHT_MARGIN_DP = 60;
+    private static final int BAY_TOP_MARGIN_DP = 118;
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ImageView puppet;
     private final PowerManager powerManager;
@@ -61,8 +67,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         setClickable(false);
         setLongClickable(false);
         setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-        setClipChildren(false);
-        setClipToPadding(false);
+        setClipChildren(true);
+        setClipToPadding(true);
 
         powerManager = context.getSystemService(PowerManager.class);
         puppet = new ImageView(context);
@@ -73,6 +79,11 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         puppet.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         addView(puppet, puppetLayout());
         setVisibility(GONE);
+    }
+
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        lockToMascotBay();
     }
 
     public void setSnapshot(NowPlayingSnapshot next) {
@@ -151,18 +162,41 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         if (w <= 0 || h <= 0) return;
-        int width = Math.max(1, Math.round(w * 0.39f));
-        int height = Math.max(1, Math.round(h * 0.69f));
-        LayoutParams params = new LayoutParams(width, height, Gravity.END | Gravity.BOTTOM);
-        params.rightMargin = dp(30);
-        params.bottomMargin = dp(18);
+        int width = Math.max(1, Math.round(w * 0.88f));
+        int height = Math.max(1, Math.round(h * 0.75f));
+        LayoutParams params = new LayoutParams(width, height, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        params.bottomMargin = dp(3);
         puppet.setLayoutParams(params);
     }
 
+    private void lockToMascotBay() {
+        android.view.ViewGroup.LayoutParams current = getLayoutParams();
+        if (!(current instanceof FrameLayout.LayoutParams)) {
+            return;
+        }
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) current;
+        int width = dp(ShieldNowPlayingView.MASCOT_BAY_DP);
+        int height = dp(BAY_HEIGHT_DP);
+        int right = dp(BAY_RIGHT_MARGIN_DP);
+        int top = dp(BAY_TOP_MARGIN_DP);
+        if (params.width == width
+                && params.height == height
+                && params.gravity == (Gravity.END | Gravity.TOP)
+                && params.rightMargin == right
+                && params.topMargin == top) {
+            return;
+        }
+        params.width = width;
+        params.height = height;
+        params.gravity = Gravity.END | Gravity.TOP;
+        params.rightMargin = right;
+        params.topMargin = top;
+        setLayoutParams(params);
+    }
+
     private LayoutParams puppetLayout() {
-        LayoutParams params = new LayoutParams(dp(440), dp(620), Gravity.END | Gravity.BOTTOM);
-        params.rightMargin = dp(30);
-        params.bottomMargin = dp(18);
+        LayoutParams params = new LayoutParams(dp(202), dp(116), Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        params.bottomMargin = dp(3);
         return params;
     }
 
