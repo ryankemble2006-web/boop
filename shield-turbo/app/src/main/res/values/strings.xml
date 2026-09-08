@@ -3,17 +3,19 @@
     <string name="tagline">Read-only diagnostics. No pretend boosts.</string>
     <string name="control_centre_tagline">Shield tools without the snake oil.</string>
     <string name="control_centre_intro">Choose a section with the remote. Back always returns here first.</string>
-    <string name="control_centre_footer">STANDARD mode uses normal Android app authority. Deeper ADB TURBO controls come only after they are proven on real Shield hardware.</string>
+    <string name="control_centre_footer">STANDARD works immediately. ADVANCED unlocks only after its one-time ADB permission is genuinely present.</string>
     <string name="section_turbo">TURBO</string>
     <string name="section_picture">PICTURE</string>
     <string name="section_apps">APPS</string>
     <string name="section_network">NETWORK</string>
     <string name="section_shield">SHIELD</string>
+    <string name="section_advanced">ADVANCED</string>
     <string name="section_turbo_help">Live health snapshot and safe maintenance routes.</string>
     <string name="section_picture_help">Brightness and display information.</string>
     <string name="section_apps_help">Launch apps and jump to Android-owned app controls.</string>
     <string name="section_network_help">Connection state and network facts.</string>
     <string name="section_shield_help">Shield facts and useful Android settings shortcuts.</string>
+    <string name="section_advanced_help">One-time ADB TURBO access and reversible power-user controls.</string>
     <string name="apps_standard_note">App toolbox is being wired behind this card.</string>
     <string name="network_standard_note">Network toolbox is being wired behind this card.</string>
     <string name="shield_standard_note">Shield settings toolbox is being wired behind this card.</string>
@@ -31,8 +33,8 @@
     <string name="scan_paused">Scan stopped when the app left the screen. Press ANALYSE SHIELD to retry.</string>
     <string name="scan_unavailable">The scan could not finish. No changes were made. Press ANALYSE SHIELD to retry.</string>
     <string name="capability_tier">Capability tier</string>
-    <string name="standard_evidence">Normal app access. ADB setup is not enabled yet.</string>
-    <string name="adb_evidence">Diagnostic DUMP permission is present. This does not grant tuning or arbitrary shell access.</string>
+    <string name="standard_evidence">Normal app access. ADB TURBO has not been granted.</string>
+    <string name="adb_evidence">ADB-granted secure-settings authority is present. Advanced controls remain explicit and reversible.</string>
     <string name="root_evidence">This process has UID 0. No root commands have been executed.</string>
     <string name="reading_note">This is one snapshot, not a benchmark. A missing or restricted reading does not mean the device is faulty. The exposed thermal zone is not automatically the CPU or GPU temperature.</string>
     <string name="no_changes">Diagnostics do not change files, apps or tuning settings. Picture brightness remains a separate user control.</string>
@@ -41,5 +43,5 @@
     <string name="not_exposed">Not exposed</string>
     <string name="unavailable">Unavailable</string>
     <string name="close">CLOSE</string>
-    <string name="access_explanation">STANDARD&#10;Works immediately without setup. Measurements stay on this device.&#10;&#10;ADB TURBO&#10;Reserved for verified elevated access. SHIELD TURBO does not pretend that enabled debugging or a one-time permission equals permanent shell authority.&#10;&#10;ROOT&#10;Only actual root process authority counts. The app does not invoke su merely to fill in a badge.&#10;&#10;Picture brightness uses Android display-over-other-apps permission only when dimming below 100%.</string>
+    <string name="access_explanation">STANDARD&#10;Works immediately without setup. Measurements stay on this device.&#10;&#10;ADB TURBO&#10;Uses one explicit ADB grant for secure-settings controls. The app checks that permission before enabling advanced actions and does not keep an ADB connection open.&#10;&#10;ROOT&#10;Only actual root process authority counts. The app does not invoke su merely to fill in a badge.&#10;&#10;Picture brightness uses Android display-over-other-apps permission only when dimming below 100%.</string>
 </resources>
