@@ -54,16 +54,25 @@ class ContractTest(unittest.TestCase):
             'android.permission.WRITE_SECURE_SETTINGS',
             'android.permission.INTERNET',
             'android.permission.RECEIVE_BOOT_COMPLETED',
+            'android.permission.FOREGROUND_SERVICE',
+            'android.permission.FOREGROUND_SERVICE_SPECIAL_USE',
         }, permissions)
         app = manifest.find('application')
         services = {s.get(ANDROID + 'name'): s for s in app.findall('service')}
-        self.assertEqual({'.BrightnessService', '.cleanstart.CleanStartJobService'}, set(services))
+        self.assertEqual({
+            '.BrightnessService',
+            '.cleanstart.CleanStartJobService',
+            '.performance.TurboThermalWatchdogService',
+        }, set(services))
         self.assertEqual('false', services['.BrightnessService'].get(ANDROID + 'exported'))
         self.assertEqual('false', services['.cleanstart.CleanStartJobService'].get(ANDROID + 'exported'))
         self.assertEqual('android.permission.BIND_JOB_SERVICE', services['.cleanstart.CleanStartJobService'].get(ANDROID + 'permission'))
+        self.assertEqual('false', services['.performance.TurboThermalWatchdogService'].get(ANDROID + 'exported'))
+        self.assertEqual('specialUse', services['.performance.TurboThermalWatchdogService'].get(ANDROID + 'foregroundServiceType'))
         receivers = {r.get(ANDROID + 'name'): r for r in app.findall('receiver')}
-        self.assertEqual({'.cleanstart.CleanStartBootReceiver'}, set(receivers))
+        self.assertEqual({'.cleanstart.CleanStartBootReceiver', '.performance.TurboBootReceiver'}, set(receivers))
         self.assertEqual('false', receivers['.cleanstart.CleanStartBootReceiver'].get(ANDROID + 'exported'))
+        self.assertEqual('false', receivers['.performance.TurboBootReceiver'].get(ANDROID + 'exported'))
         categories = {c.get(ANDROID + 'name') for c in app.findall('.//category')}
         self.assertIn('android.intent.category.LEANBACK_LAUNCHER', categories)
         power = next(a for a in app.findall('activity') if a.get(ANDROID + 'name') == '.power.PowerActivity')
@@ -97,7 +106,6 @@ class ContractTest(unittest.TestCase):
         manifest_text = (ROOT / 'app/src/main/AndroidManifest.xml').read_text()
         self.assertIn('RECEIVE_BOOT_COMPLETED', manifest_text)
         self.assertNotIn('QUERY_ALL_PACKAGES', manifest_text)
-        self.assertNotIn('FOREGROUND_SERVICE', manifest_text)
 
         startup_dir = SOURCE / 'startup'
         startup_text = '\n'.join(p.read_text() for p in startup_dir.glob('*.*'))
@@ -108,6 +116,8 @@ class ContractTest(unittest.TestCase):
         self.assertNotIn('pm clear ', startup_text)
         self.assertNotIn('pm uninstall', startup_text)
         self.assertNotIn('rm -rf', startup_text)
+        self.assertNotIn('startForeground', startup_text)
+        self.assertNotIn('TurboThermalWatchdogService', startup_text)
 
         clean_dir = SOURCE / 'cleanstart'
         clean_text = '\n'.join(p.read_text() for p in clean_dir.glob('*.*'))
@@ -115,6 +125,7 @@ class ContractTest(unittest.TestCase):
         self.assertIn('MAX_ATTEMPTS = 3', clean_text)
         self.assertNotIn('setPeriodic', clean_text)
         self.assertNotIn('startForeground', clean_text)
+        self.assertNotIn('TurboThermalWatchdogService', clean_text)
 
         power = (SOURCE / 'power/PowerActivity.kt').read_text()
         self.assertIn('STARTUP MANAGER', power)
