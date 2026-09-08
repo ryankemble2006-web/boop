@@ -9,6 +9,7 @@ final class BoopWakeDiagnosticTrace {
     private long terminalAtMs = -1L;
     private String partialText;
     private String finalText;
+    private String startFailureClass;
     private boolean resultReceived;
     private boolean errorReceived;
     private int errorCode;
@@ -48,8 +49,14 @@ final class BoopWakeDiagnosticTrace {
         terminalAtMs = atMs;
     }
 
+    void startFailure(String exceptionClass, long atMs) {
+        if (terminal()) return;
+        startFailureClass = clean(exceptionClass);
+        terminalAtMs = atMs;
+    }
+
     boolean terminal() {
-        return resultReceived || errorReceived;
+        return resultReceived || errorReceived || startFailureClass != null;
     }
 
     boolean requiresAcknowledgement() {
@@ -59,7 +66,9 @@ final class BoopWakeDiagnosticTrace {
     String summary(long nowMs) {
         long elapsedMs = Math.max(0L, (terminal() ? terminalAtMs : nowMs) - startedAtMs);
         String state;
-        if (errorReceived) {
+        if (startFailureClass != null) {
+            state = "START FAILED " + startFailureClass;
+        } else if (errorReceived) {
             state = "ERROR " + errorCode;
         } else if (resultReceived) {
             state = "RESULT";
