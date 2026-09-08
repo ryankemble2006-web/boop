@@ -1,73 +1,93 @@
 # SHIELD TURBO handoff
 
 Updated 2026-09-08. Owner branch: `shield-turbo-v01`. Independent package: `com.boop.shieldturbo`.
-Current signed candidate: **v0.3.0 / versionCode 4**, not yet physically accepted.
+Current signed candidate: **v0.4.0 / versionCode 5**, machine-verified; Startup Manager physical acceptance pending.
 
-## Latest physical feedback and explicit request
+## Latest physical feedback and user goal
 
-Ryan reports v0.2.1 Accessibility says no app installed; Display & Sound first bounced Home, and subsequent clicks did nothing. Its guessed AOSP component is a failed hardware route, not a fix. Earlier v0.2.0 general Android Settings fallback was also rejected. Developer Options was physically confirmed working; brightness was confirmed on the bedroom Shield; corrected STANDARD maintenance controls became selectable. None of these reports prove the new ADB transport or power tools work on the physical Shield.
+Ryan reports four Kodi forks start themselves after Shield boot and later need force-closing. He approved a Startup Manager that prevents selected user apps from waking in the background while preserving manual launch, with an explicit stronger HARD BLOCK mode and exact rollback. He also reconfirmed that GitHub must not perform visual acceptance; Ryan owns real-Shield visual/remote testing.
 
-Ryan explicitly requested one-button ADB setup, useful advanced tools, web research, no GitHub visual confirmation, and a signed APK. This authorises the scoped self-ADB design below, not root, bulk process killing, other-app data deletion, unrelated BOOP changes or automatic physical deployment.
+Earlier physical evidence remains valid: bedroom brightness works, corrected STANDARD maintenance controls became selectable, and Developer Options opens correctly. Display & Sound and Accessibility remain unresolved firmware-route issues and were deliberately sidestepped for this pass.
 
-## Exact delivered v0.3.0 receipt
+## Exact signed v0.4.0 receipt
 
-- Built source: `ac5f79cd9138553a27df776e6b47e685f2cbf0ff`.
-- Build workflow run: `34196792381`, job `101966198551`, final conclusion **success**.
-- Signed artifact: `SHIELD-TURBO`, ID `10044276954`, ZIP size `731773` bytes.
-- Artifact ZIP SHA-256: `a279948eb1cf626955814d215c99642ba8cb655d5c7a230834d1b04aa8c5e6ce`.
-- APK inside artifact: `shield-turbo/app/build/outputs/apk/release/app-release.apk`.
-- Delivered filename: `Shield-Turbo-v0.3.0.apk`, size `2245278` bytes.
-- APK SHA-256: `fff6b791235b05938dcb34a886c99a97d4563132cd46db79493dd422b0f25846`.
+- Built source: `1358925716cf2c834171b767dd94f08d0c49e013`.
+- Workflow: `Build SHIELD TURBO`, run `34201159209`, job `101980019981`, conclusion **success**.
+- JVM tests: **51 passed**, 0 failures/errors/skips.
+- Source/security contracts: **10 passed**.
+- Android lint: **0 errors, 22 warnings**.
+- Signed artifact: `SHIELD-TURBO`, ID `10045926945`, ZIP size `744061` bytes.
+- Artifact ZIP SHA-256: `239a58277ed5eed513da6c23a334a11ece67271470ec004b5bb668c834ef8380`.
+- Test artifact: `10045969922`, ZIP size `98932` bytes, SHA-256 `faf31d577df7708fe5f3871b8a044c4dbb8d2c7da6b86a98b0201503320f0e4b`.
+- Delivered APK: `Shield-Turbo-v0.4.0.apk`, `2281902` bytes.
+- APK SHA-256: `cf12ccdfec929424ad89f6f5302c86f7b1331ef809ceef336fc0bda5d344657a`.
 - Established signer certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-- Test artifact: `10044314369`, ZIP SHA-256 `dc416161f41e347977888d3c121654a63e75e636cca851064cc6385700ba99b3`.
+- Package/version/non-debuggable/Leanback/archive checks: passed.
+- Nonvisual emulator smoke: install, cold launch, process check, Back, warm relaunch and no package fatal exception passed.
+- Visual checks: **none**. No screenshot, UI hierarchy, golden/image/layout or appearance assertions were used.
 
-Downloaded archive and extracted APK were verified against archive digest, inner checksum, built-source receipt, package/version/release metadata, signer receipt and ZIP/APK CRC integrity. The actual APK was supplied, not merely a renamed ZIP or an invented link. Candidate upload preceded the slower nonvisual smoke; the latter completed successfully before final handoff.
+## Startup Manager implementation
 
-## Machine verification and review
+ADVANCED now includes **STARTUP MANAGER**.
 
-43 JVM unit tests passed: zero failures, errors or skips. This includes the actual loopback fake-daemon authentication/command exchange, packet integrity/bounds/fragmentation, RSA token/public-key format, persisted identity, command status receipts, silent-peer timeout, package-injection exclusions, single-app restart policy and firmware routing policy. Nine source/security contracts passed. Android lint passed with **0 errors and 21 warnings**, not a warning-free claim. Signed release assembly, permanent signer/package/version/non-debuggable/archive checks and API 30 install/launch/relaunch/no-fatal smoke passed.
+### BLOCK STARTUP / KEEP LAUNCHABLE
 
-Initial transport frame test was locally RED on a stub before implementation. Expanded Java 17-targeted transport self-test was locally GREEN and then exercised in Android project's JVM CI. This is protocol/machine evidence, not a connection to Ryan's Shield. No screenshot, UI hierarchy, golden-image, layout or appearance judgement was run.
+This is the normal/default recommendation for Ryan's Kodi forks. For one selected non-system app, Turbo first captures the current Android background app-op state and package enabled state, then applies:
 
-Published diff was reviewed: changes are confined to shield-turbo and its existing workflow. MainActivity's runtime diff is the Advanced handoff and its explanatory sleep/reboot footer. The picture/brightness methods and Brightness.kt/BrightnessService.kt have no diff. No other BOOP body, signing identity, workflow permissions or checkpoint tags changed.
+- `RUN_IN_BACKGROUND -> ignore`
+- `RUN_ANY_IN_BACKGROUND -> ignore`
 
-## Implemented power tools
+The package remains enabled so its normal launcher icon can still be used manually. Turbo reads both app-op values back after the write. If the Shield rejects the change, Turbo attempts to restore the saved original state rather than silently claiming success.
 
-ADVANCED now opens private `power.PowerActivity`.
+### HARD BLOCK / DISABLE APP
 
-- **ENABLE ADB TURBO:** creates a per-install authentication identity in app-private `noBackupFilesDir`, connects only to loopback port 5555, handles standard Android RSA approval, verifies ADB shell UID, and explicitly grants only this package's existing WRITE_SECURE_SETTINGS permission. The actual permission is checked after the command. No commands need pasting into a laptop.
-- **Network Debugging first-use boundary:** a normal app cannot enable a disabled ADB daemon or approve its own RSA trust prompt. On connection refusal, Turbo opens the known-working Developer Options route. Ryan enables Network Debugging and returns; Turbo retries setup. Android's Allow/Always allow prompt still belongs to Ryan. No bypass is claimed.
-- **Diagnostics:** bounded on-demand shell CPU activity, memory, thermal-service and data-storage readings, displayed on-device. Missing firmware services remain visible as unavailable output, not fake readings/scores.
-- **Restart a stuck app:** user chooses and confirms ONE installed non-system app. Package and resolved launch component are validated/rechecked before force-stop plus launch. BOOP, NVIDIA, Android/system services and Google core services are excluded. No app data is cleared or disabled.
-- **Sleep / reboot:** explicit confirmation warns that playback/running work is interrupted. Sleep is keyevent 223. Reboot uses svc power reboot; a dropped connection during reboot is explicitly uncertain and requires looking at the TV, not asserted as a proven restart.
-- **Animation 0.5x / off / normal:** only the three Android animation-scale keys. Original values are saved before changing anything; writes are read back; partial failure attempts rollback. UNDO restores saved originals, unlike the older RESTORE 1x normal preset.
+This is deliberately separate and requires confirmation. It disables only the selected package for the current Android user with `pm disable-user`. It does not clear data, logins, files or caches. A hard-blocked app will not launch until restored.
 
-The app adds INTERNET permission only for its local client socket. There is no app-owned listening server, off-device address input, Internet endpoint, root command, startup receiver, extra service or permanent ADB session. Operations are bounded/cancellable and close the connection. Cancellation is not a promise to undo a command already sent.
+### Exact rollback ledger
 
-Network Debugging itself exposes the Shield's device-managed listener on the network. Use a trusted LAN and disable it in Developer Options when finished. A retained secure-settings grant and current shell connectivity are different capabilities; every shell operation verifies its own connection. Never imply a settings grant alone grants reboot/process control.
+Before the first Turbo mutation for a package, `StartupLedger` records the original background app-op modes and enabled state in private app preferences. **First original wins**: later Turbo changes do not overwrite the rollback point.
 
-## Display & Sound and Accessibility
+Per-app UNDO restores the exact recorded values and verifies read-back before removing the ledger entry. **UNDO ALL TURBO STARTUP CHANGES** restores each recorded app independently; any app whose restore cannot be verified keeps its ledger entry so the failure stays visible.
 
-The failed hardcoded activity and generic Accessibility route are removed from automatic routing. `FirmwarePages` inspects the installed system settings packages and their declared activity handlers, restricted to enabled/exported system activities. Scoped manifest queries permit discovery; QUERY_ALL_PACKAGES was not added.
+Turbo adds no boot receiver or startup background service for this feature. The Android app-op/package enabled states are persistent system state, so Turbo does not need to become another app that wakes at boot merely to reapply the policy.
 
-First use lists actual firmware entries, prioritises combined-page candidates and marks related subpages. Launches use the firmware-declared action where available, not a guessed ACTION_MAIN. On return, Ryan confirms whether that was the wanted native page. Only a confirmed installed route is saved for subsequent direct shortcuts. General Settings is an explicitly separate manual option, never called a successful Display & Sound fix. Route details are available locally for troubleshooting.
+## Safety boundaries retained
 
-**The exact NVIDIA destinations are still unresolved until Ryan tests this discovery flow.** This build provides discovery/confirmation instead of asserting another unverified class-name fix. If there is no matching public activity, record that limitation and obtain minimal private firmware evidence; do not add random classes, publish device dumps, or quietly substitute general Settings.
+Startup Manager lists safe user apps, including ledger-managed apps that may currently be disabled. Existing system/NVIDIA/Android/Google-core/BOOP exclusions remain. No QUERY_ALL_PACKAGES permission was added.
 
-AppCatalog also stops filtering launcher entries with MATCH_DEFAULT_ONLY, which incorrectly excluded valid launchers without CATEGORY_DEFAULT. Normal APPS click remains direct launch; no package-name modal returns.
+There is no bulk RAM cleaner, speed score, `pm clear`, uninstall, cache purge, app-data clearing, root, bootloader work, CPU/GPU clock/governor change or automatic hard-block action. The goal is reducing unwanted background/startup activity, not maximizing a free-RAM number.
 
-## Next physical test
+The existing one-button local ADB flow, diagnostics, selected-app restart, sleep/reboot and animation controls remain. Brightness implementation is unchanged from the physically accepted bedroom behavior.
 
-Install this signed v0.3.0 over the existing package. ADVANCED -> ENABLE ADB TURBO, enable Network Debugging only if asked, return and approve the Android prompt. Verify reported connection/grant success, read diagnostics, test 0.5x and UNDO, then explicitly test sleep/reboot or selected-app restart when playback can be interrupted. Test native-page discovery and confirmation separately. Recheck brightness without changing its established service behavior.
+## TDD / review evidence
 
-Do not equate CI success with successful Shield firmware navigation, visual acceptance, actual ADB authorisation, thermal behavior or hardware power control. Record exactly which operation Ryan reports working.
+- Startup policy RED: source `eea152e4bf2e7770191f1792746a450c02d82176`, run `34199708521`, failed because `StartupPolicy` did not exist while existing safety contracts remained green.
+- Undo-ledger RED: source `f698552ab0503bd7cbd33b94dc66f9e0f7ade56b`, run `34200071110`, failed because ledger classes did not exist.
+- Startup-manager contract RED: source `0b9f177318da99a4abd05cbc61fddb2eeea8cd6f`, run `34200548808`; unit tests passed, then the new safety contract failed because the Startup Manager activity/wiring did not yet exist.
+- Final v0.4.0 run `34201159209` is fully green at the machine level described above.
 
-## Historical receipts / rollback evidence
+The published runtime changes are confined to SHIELD TURBO and its dedicated workflow. No other BOOP body, signer, checkpoint tag or main-branch ownership contract changed.
 
-- v0.2.1: source `0e00f7c44758aa4192e7664b61d477b11494942d`, run `34192942800`, artifact `10042893415`, APK `0572aa2e66481703a91490078f6291350824bd266cbd44a834bfc4015cfada27`. Machine checks passed; native Display & Sound failed physically. Docs head was `4c881ea401fa4b481229c039c2239050bf910148`.
-- v0.2.0: source `81f448c417e3b0b122df55edc6ea6886d1bde5b2`, run `34191343078`, artifact `10042388530`, APK `7e5a769e68c88cf44749f7887c35e64d41369c3b76fe11a35a9473b350582636`. Developer Options physically worked; general Settings was rejected as Display & Sound.
-- Corrected pre-ADVANCED STANDARD: source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`. Maintenance selectability physically confirmed.
-- Original bedroom brightness: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`. Brightness physically confirmed.
-- Old pre-brightness `shield-turbo-v0.1.0` prerelease remains historical and must not be repointed. Do not promise an in-place downgrade to older versionCode APKs.
+## First physical Startup Manager test
 
-See `docs/superpowers/plans/2026-09-08-local-adb-power.md` for research, design and scope. Startup main was checked at `dd38cfc72eb5d00bc42121f88c633cb237805009`. No Windows checkout or physical device was modified/synchronised in this chat. App-specific handoff/status/memory are the applicable implementation context; shared BOOP ownership is unchanged. Documentation commits after the built source do not replace the APK receipt.
+Use **one Kodi fork first**:
+
+1. ADVANCED -> ENABLE ADB TURBO if access is not already authorised.
+2. ADVANCED -> STARTUP MANAGER.
+3. Select one Kodi fork -> **BLOCK STARTUP / KEEP LAUNCHABLE**.
+4. Reboot the Shield normally.
+5. Confirm that fork does not wake itself after boot.
+6. Launch the same fork manually from its normal icon and confirm it still works.
+7. Only after that works, repeat for the other forks.
+
+HARD BLOCK is not required for this initial test. If BLOCK STARTUP cannot read the original Shield state or Android reports an unsupported app-op mode, Turbo should fail closed before mutation rather than guess. Record the exact on-device result.
+
+## Historical receipts / rollback
+
+- v0.3.0 pre-Startup-Manager: source `ac5f79cd9138553a27df776e6b47e685f2cbf0ff`, run `34196792381`, artifact `10044276954`, APK `fff6b791235b05938dcb34a886c99a97d4563132cd46db79493dd422b0f25846`.
+- v0.2.1: source `0e00f7c44758aa4192e7664b61d477b11494942d`, run `34192942800`, artifact `10042893415`, APK `0572aa2e66481703a91490078f6291350824bd266cbd44a834bfc4015cfada27`; native Display & Sound failed physically.
+- v0.2.0: source `81f448c417e3b0b122df55edc6ea6886d1bde5b2`, run `34191343078`, artifact `10042388530`, APK `7e5a769e68c88cf44749f7887c35e64d41369c3b76fe11a35a9473b350582636`; Developer Options physically worked, Display & Sound fallback rejected.
+- Corrected STANDARD: source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`; maintenance selectability physically confirmed.
+- Original bedroom brightness: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`; brightness physically confirmed.
+
+Use only the established secret-backed `boop-dev` signer. Documentation commits after built source `1358925716cf2c834171b767dd94f08d0c49e013` do not identify a different APK. Distinguish branch documentation HEAD from the exact built source.
