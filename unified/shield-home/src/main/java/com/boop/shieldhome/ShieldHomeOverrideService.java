@@ -1,20 +1,14 @@
 package com.boop.shieldhome;
 
 import android.accessibilityservice.AccessibilityService;
-import android.app.Notification;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.media.session.MediaSession;
-import android.os.Parcelable;
 import android.os.SystemClock;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
  * No-ADB fallback for Shield firmware that pins Android TV Home as persistent HOME.
- *
- * The same already-enabled Accessibility service also accepts notification-state events for
- * Now Playing. It does not read notification text or actions: it extracts only Android's
- * MediaSession.Token from media-style notifications and hands that token to the media manager.
+ * Watches only for the stock HOME window and immediately brings BOOP to front.
  */
 public final class ShieldHomeOverrideService extends AccessibilityService {
     private static final long RELAUNCH_GUARD_MS = 350L;
@@ -31,17 +25,7 @@ public final class ShieldHomeOverrideService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event == null) {
-            return;
-        }
-
-        ShieldAccessibilityEventPolicy.Action action =
-                ShieldAccessibilityEventPolicy.actionFor(event.getEventType());
-        if (action == ShieldAccessibilityEventPolicy.Action.MEDIA_NOTIFICATION) {
-            handleMediaNotification(event);
-            return;
-        }
-        if (action != ShieldAccessibilityEventPolicy.Action.HOME_WINDOW) {
+        if (event == null || event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             return;
         }
 
@@ -57,30 +41,6 @@ public final class ShieldHomeOverrideService extends AccessibilityService {
         }
         lastLaunchElapsed = now;
         bringBoopToFront();
-    }
-
-    private void handleMediaNotification(AccessibilityEvent event) {
-        Parcelable payload = event.getParcelableData();
-        if (!(payload instanceof Notification)) {
-            return;
-        }
-        MediaSession.Token token = mediaSessionToken((Notification) payload);
-        if (token != null) {
-            ShieldNowPlayingManager.get(this).onAccessibilityMediaSession(token);
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    private static MediaSession.Token mediaSessionToken(Notification notification) {
-        if (notification == null || notification.extras == null) {
-            return null;
-        }
-        try {
-            Parcelable token = notification.extras.getParcelable(Notification.EXTRA_MEDIA_SESSION);
-            return token instanceof MediaSession.Token ? (MediaSession.Token) token : null;
-        } catch (RuntimeException ignored) {
-            return null;
-        }
     }
 
     private void bringBoopToFront() {
