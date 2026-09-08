@@ -12,7 +12,7 @@ This remains a **standalone Nvidia Shield clean-HOME experiment** for physical t
 - Normal users must not need ADB, developer options, a laptop, root or Shizuku.
 - Merge into AIO only after Ryan explicitly accepts the standalone behavior on real Shield hardware.
 
-## Current candidate: 0.8 reboot re-arm
+## Current physically-green HOME replacement checkpoint: 0.8
 
 - Candidate build head: `af8ebe1147bd56cc952b874c2e4180bd6a44d15d`
 - Version: 8 / `0.8.0-reboot-rearm`
@@ -24,9 +24,7 @@ This remains a **standalone Nvidia Shield clean-HOME experiment** for physical t
 - 49 focused Shield HOME tests passed.
 - Signed assembly, exact package/version, HOME/Leanback categories, Accessibility service/router, signer, APK integrity and artifact upload all passed.
 
-CI-green is not physical acceptance.
-
-## Physical evidence from 0.7
+## Physical evidence
 
 Ryan physically confirmed on a real Nvidia Shield:
 
@@ -35,23 +33,28 @@ Ryan physically confirmed on a real Nvidia Shield:
 - Manual Shield Accessibility setup successfully exposes and enables **BOOP Home Override**.
 - With BOOP Home Override enabled, **single Home launches BOOP Shield Home**.
 - With BOOP Home Override enabled, **double-press Home still opens native Nvidia/Shield Recent Apps**. This is a HARD locked acceptance behavior and must never be intercepted or replaced.
-- Reboot exposed the remaining fault: the Shield returned to stock Android TV Home.
-- Navigating back to Accessibility and toggling BOOP Home Override off then on immediately restored BOOP takeover.
+- 0.7 reboot persistence failed: Shield returned to stock Android TV Home until BOOP Home Override was toggled off/on.
+- 0.8 repairs that reboot race. After updating to 0.8 with BOOP Home Override already enabled, Ryan rebooted the Shield and physically confirmed:
+  - **BOOP Home Override still reports ON after reboot**;
+  - **the original Android TV Home did not launch**;
+  - BOOP remained the effective HOME without any Accessibility off/on ritual.
 
-Therefore the Accessibility override mechanism itself is physically working, but **0.7 reboot persistence/re-arm is a physical FAIL**.
+Ryan's acceptance message for the core objective: **"we beat it :)"**.
+
+Therefore the **core HOME replacement mechanism is physically green on 0.8**: BOOP survives reboot, remains the effective Home surface, and native double-Home Recent Apps is preserved.
 
 ## Root cause and 0.8 repair
 
 0.7 `ShieldHomeOverrideService` only reacted to future `TYPE_WINDOW_STATE_CHANGED` events from stock Android TV Home. It had no `onServiceConnected()` re-arm path.
 
-On reboot, Shield can present stock Home before Android finishes binding the already-enabled Accessibility service. If that stock-Home event happens first, BOOP misses the event and remains behind stock Home. Re-toggling Accessibility causes fresh service/window lifecycle activity, explaining why BOOP immediately takes over again.
+On reboot, Shield could present stock Home before Android finished binding the already-enabled Accessibility service. BOOP then missed the one stock-Home event it needed. Re-toggling Accessibility caused fresh lifecycle/window activity, explaining why BOOP immediately took over again.
 
 0.8 makes one bounded change:
 
-- `ShieldHomeOverrideService.onServiceConnected()` now immediately brings `ShieldLauncherActivity` forward when Android binds/rebinds the enabled Accessibility service.
-- The existing 350 ms relaunch guard is retained to suppress immediate duplicate window-event launches.
+- `ShieldHomeOverrideService.onServiceConnected()` immediately brings `ShieldLauncherActivity` forward whenever Android binds/rebinds the already-enabled Accessibility service.
+- The existing 350 ms relaunch guard remains in place to suppress immediate duplicate window-event launches.
 - Normal stock-Home window events still drive later single-Home takeover.
-- No BOOT_COMPLETED receiver was added.
+- No `BOOT_COMPLETED` receiver was added.
 - No new permission was added.
 - No Home-key interception was added.
 - Double-Home/Recent Apps code is untouched.
@@ -65,9 +68,13 @@ TDD evidence:
 
 ## Setup reality on this Shield firmware
 
-The built-in BOOP Accessibility shortcut currently reaches normal Shield Settings, not the exact Accessibility submenu. Do not keep guessing OEM activity class names. For this standalone test, the known working manual path is Shield Settings -> Accessibility -> Services -> **BOOP Home Override**.
+The built-in BOOP Accessibility shortcut currently reaches normal Shield Settings, not the exact Accessibility submenu. Do not keep guessing OEM activity class names.
 
-Once enabled, leave stock Android TV Home installed and enabled. Do not Force stop it during normal testing.
+Known working first-time setup on this Shield:
+
+**Shield Settings -> Accessibility -> Services -> BOOP Home Override -> ON**
+
+Once enabled, it persists across reboot on 0.8 and no retoggle is required. Stock Android TV Home remains installed/enabled as recovery and as the override trigger.
 
 ## Existing behavior to preserve
 
@@ -85,24 +92,18 @@ Once enabled, leave stock Android TV Home installed and enabled. Do not Force st
 **Remove the crap, preserve Shield behavior.**
 
 Physically confirmed and now locked:
-- single Home -> BOOP while override is alive;
+- BOOP Home Override remains enabled across reboot on 0.8;
+- stock Android TV Home does not reclaim the screen after reboot;
+- single Home -> BOOP;
 - double Home -> native Recent Apps/task switcher;
 - banners;
 - grab/reorder.
 
-Still required before standalone approval:
-- 0.8 must retake BOOP automatically after reboot without Accessibility off/on;
-- report whether stock Home visibly flashes during boot or single-Home takeover;
-- recheck Back shortcuts, volume/CEC and other system shortcuts;
-- disabling BOOP Home Override must cleanly restore ordinary stock Shield Home.
+Still worth checking before final standalone-to-AIO merge approval:
+- single Back -> favourite item 1 and long Back -> real Settings;
+- top-right Settings -> real Shield Settings;
+- volume/CEC and other native Shield shortcuts;
+- switching BOOP Home Override OFF cleanly restores ordinary stock Shield Home;
+- any visible stock-Home flash during ordinary single-Home use.
 
-## Next physical test
-
-1. Update 0.7 to standalone 0.8. AIO must remain untouched.
-2. Leave **BOOP Home Override enabled** and leave Android TV Home enabled.
-3. Confirm single Home -> BOOP and double Home -> native Recent Apps still work.
-4. Reboot the Shield **without touching the Accessibility toggle**.
-5. Report whether BOOP takes over automatically after boot, and whether stock Home is visible for a flash/delay first.
-6. If reboot succeeds, recheck Back, long-Back Settings, volume/CEC, and then disable BOOP Home Override once to prove stock-Home recovery remains simple.
-
-Do not merge into unified until Ryan explicitly approves the standalone behavior on real Shield hardware.
+The HOME replacement mechanism itself is physically accepted at this checkpoint. Do not regress it when polishing or later merging into AIO.
