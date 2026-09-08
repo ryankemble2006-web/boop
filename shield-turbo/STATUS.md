@@ -1,48 +1,40 @@
 # SHIELD TURBO status
 
-Updated 2026-09-08. Owning branch: `shield-turbo-v01`. Package: `com.boop.shieldturbo`.
+Updated 2026-09-08. Branch: `shield-turbo-v01`. Package: `com.boop.shieldturbo`.
 
-## Current live-test candidate
+## Current candidate
 
-**v0.2.0 (versionCode 2): DISPLAY + SOUND firmware-route fix plus the first ADB TURBO advanced controls are built, signed, CI-verified and basic install/launch smoke-tested. Physical NVIDIA Shield acceptance is pending.**
+**v0.2.1 (versionCode 3) is built and signed with a direct TV Display & Sound activity target. Required release checks passed. Exact NVIDIA firmware destination is not yet physically accepted.**
 
-| Evidence | Result |
+| Evidence | Receipt |
 | --- | --- |
-| Built source | `81f448c417e3b0b122df55edc6ea6886d1bde5b2` |
-| GitHub Actions | Run `34191343078`, job `101949873574`: success |
-| Kotlin unit tests | 33 passed, 0 failures/errors/skips |
-| Source safety/regression contracts | 7 passed |
-| Android lint | success; one narrowly documented `ProtectedPermissions` suppression on intentional ADB grant declaration |
-| Signed release | Established secret-backed `boop-dev` signer; certificate match passed |
-| APK checks | Package `com.boop.shieldturbo`, v0.2.0/versionCode 2, Leanback entry, non-debuggable release and archive integrity passed |
-| Emulator | Install, launch, relaunch and no app fatal exception passed; no visual assertions performed |
-| Signed artifact | `SHIELD-TURBO`, ID `10042388530`, digest `sha256:db35da41d66a23b1087072e4fd0e1fbc3b4ba4ef4320804a6f20953a720fbb95` |
-| Test artifact | `SHIELD-TURBO-TESTS`, ID `10042389014`, digest `sha256:ab3a00f16ec6d73e202447282a8b0d4fc80566dcac0533508441852e64299b71` |
-| APK SHA-256 | `7e5a769e68c88cf44749f7887c35e64d41369c3b76fe11a35a9473b350582636` |
+| Built source | `0e00f7c44758aa4192e7664b61d477b11494942d` |
+| Workflow | Run `34192942800`, job `101954559616` |
+| Required release gates | Unit tests, source safety contracts, lint, signed assembly and package/version/signer/archive verification succeeded |
+| Signed artifact | `SHIELD-TURBO`, ID `10042893415`, ZIP `709601` bytes |
+| Artifact ZIP SHA-256 | `2b4e8870ac728f44b5708c58710ad7844802fb3686a2113e8b85f3c3d8161331` |
+| Delivered APK | `Shield-Turbo-v0.2.1.apk`, `2198446` bytes |
+| APK SHA-256 | `0572aa2e66481703a91490078f6291350824bd266cbd44a834bfc4015cfada27` |
 | Signer certificate SHA-256 | `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` |
+| Nonvisual emulator check | Separate install/launch check ran after artifact upload; still in progress at initial APK delivery. Consult the run for its later conclusion |
+| Visual acceptance | Ryan, on the physical NVIDIA Shield; not GitHub |
 
-## Physical evidence
+The downloaded ZIP and extracted APK were checked against the build receipts, including CRC integrity, source, package/version and signer metadata. No screenshots, UI hierarchy assertions or visual judging were used.
 
-Brightness is physically proven on the bedroom NVIDIA Shield. Ryan then physically retested the corrected STANDARD build and reported the maintenance controls were now selectable. His next report identified only one remaining bug found in that pass: SHIELD -> DISPLAY + SOUND did nothing.
+## Hardware evidence
 
-v0.2.0 changes DISPLAY + SOUND to a Shield-safe fallback route beginning at Android main Settings. Real firmware confirmation of that route is pending.
+Ryan confirmed v0.2.0's ADVANCED -> Developer Options shortcut opens correctly. That route and all advanced control code are unchanged in v0.2.1.
 
-## ADVANCED / ADB TURBO
+Ryan rejected v0.2.0's SHIELD -> DISPLAY + SOUND behavior: it opens general Android Settings instead of the proper Shield page. v0.2.1 targets `com.android.tv.settings/com.android.tv.settings.device.displaysound.DisplaySoundActivity` explicitly and removes all unrelated fallbacks. The component is evidenced in AOSP TV Settings, not captured from Ryan's firmware. The native NVIDIA destination requires his retest.
 
-Ryan explicitly authorised moving into advanced work. v0.2.0 adds an `ADVANCED` section that remains locked until `android.permission.WRITE_SECURE_SETTINGS` is genuinely granted with:
+Brightness was previously confirmed on the bedroom Shield. Maintenance-row selectability was confirmed after the STANDARD correction. Neither the one-time ADB permission grant nor 0.5x/off/normal animation behavior has been physically confirmed by the latest feedback.
 
-`adb shell pm grant com.boop.shieldturbo android.permission.WRITE_SECURE_SETTINGS`
+## Scope and acceptance
 
-After the one-time grant, SHIELD TURBO exposes three reversible animation controls: 0.5x, off, and restore 1x. Only Android's three animation scale settings are written. No persistent ADB connection, root invocation, CPU/GPU tuning, process killing, blanket RAM cleaning, cache purge, other-app data clearing or fake boost scoring is present.
+Only the destination policy and route adapter changed at runtime. No permissions, signing identity, brightness, app-launch, advanced-action or UI layout changes. CI uploads the verified signed candidate before its slower nonvisual install/launch check, following the current manual-acceptance rule.
 
-## CI visual boundary
+Install over v0.2.0 and retest DISPLAY + SOUND. Do not accept a broader settings surface as success. See `SESSION_HANDOFF.md` for primary-source provenance and historical build/rollback receipts.
 
-By explicit user instruction, GitHub is not the visual acceptance authority. The workflow contains no UI hierarchy dumps, screenshot checking, focus/label visual assertions or appearance tests. CI still performs unit/source tests, lint, signed build, package/signature/archive verification and basic install/launch/no-crash smoke. Ryan performs real Shield visual and remote testing.
+ADB TURBO retains its optional manual `WRITE_SECURE_SETTINGS` grant and three animation-scale presets only. No root, permanent ADB connection, clock tuning, process killing, blanket cleaners or other-app data clearing.
 
-## Rollback receipts
-
-Physically proven brightness checkpoint: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
-
-Pre-ADVANCED corrected STANDARD candidate: source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK SHA-256 `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`.
-
-The older published `shield-turbo-v0.1.0` prerelease is pre-brightness and historical only. Do not repoint it.
+The historical `shield-turbo-v0.1.0` prerelease remains unchanged. All signing uses the existing secret-backed `boop-dev` signer.
