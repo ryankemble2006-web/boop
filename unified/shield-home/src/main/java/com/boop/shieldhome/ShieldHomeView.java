@@ -33,6 +33,7 @@ public final class ShieldHomeView extends LinearLayout {
     private HorizontalScrollView favouriteScroller;
     private LinearLayout favouriteRow;
     private TvAppCardView grabbedCard;
+    private Callbacks activeCallbacks;
 
     public ShieldHomeView(Context context) {
         this(context, null);
@@ -50,6 +51,7 @@ public final class ShieldHomeView extends LinearLayout {
 
     public void render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks callbacks) {
         removeAllViews();
+        activeCallbacks = callbacks;
         List<TvAppEntry> safeFavourites = favourites == null ? List.of() : favourites;
         List<HomeRow> safeOptionalRows = optionalRows == null ? List.of() : optionalRows;
 
@@ -83,6 +85,86 @@ public final class ShieldHomeView extends LinearLayout {
             addView(contentRow(row.cards(), callbacks), new LayoutParams(
                     LayoutParams.MATCH_PARENT, dp(150)));
         }
+    }
+
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (handleGrabKeyEvent(event)) {
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    private boolean handleGrabKeyEvent(KeyEvent event) {
+        if (grabSession == null || grabbedCard == null || event == null) {
+            return false;
+        }
+
+        int keyCode = event.getKeyCode();
+        boolean grabOwnedKey = keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+                || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+                || keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+                || keyCode == KeyEvent.KEYCODE_ENTER
+                || keyCode == KeyEvent.KEYCODE_DPAD_UP
+                || keyCode == KeyEvent.KEYCODE_DPAD_DOWN;
+        if (!grabOwnedKey) {
+            return false;
+        }
+
+        if (event.getAction() == KeyEvent.ACTION_UP) {
+            return true;
+        }
+        if (event.getAction() != KeyEvent.ACTION_DOWN) {
+            return true;
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+            if (grabSession.move(-1)) {
+                reorderFavouriteChildren(grabSession.current());
+            }
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            if (grabSession.move(1)) {
+                reorderFavouriteChildren(grabSession.current());
+            }
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+            // Ignore repeats from the centre-button hold that initiated the grab.
+            if (event.getRepeatCount() == 0 && activeCallbacks != null) {
+                commitGrab(activeCallbacks);
+            }
+            return true;
+        }
+
+        // Up/down cannot escape to another row while an item is being carried.
+        return true;
+    }
+
+    /** Short Back always cancels any transient grab and returns focus to favourite item 1. */
+    boolean resetToFirstFavourite() {
+        if (grabSession != null) {
+            List<String> original = grabSession.cancel();
+            reorderFavouriteChildren(original);
+            if (grabbedCard != null) {
+                grabbedCard.setGrabbed(false);
+            }
+            grabSession = null;
+            grabbedCard = null;
+        }
+
+        if (favouriteRow == null || favouriteRow.getChildCount() == 0) {
+            return false;
+        }
+        View first = favouriteRow.getChildAt(0);
+        if (first == null) {
+            return false;
+        }
+        boolean requested = first.requestFocus();
+        if (favouriteScroller != null) {
+            favouriteScroller.post(() -> favouriteScroller.smoothScrollTo(0, 0));
+        }
+        return requested || first.hasFocus();
     }
 
     private View navRow(Callbacks callbacks) {
@@ -139,7 +221,6 @@ public final class ShieldHomeView extends LinearLayout {
                 beginGrab(entry, card);
                 return true;
             });
-            card.setOnKeyListener((v, keyCode, event) -> handleGrabKey(v, keyCode, event, callbacks));
             LayoutParams params = new LayoutParams(dp(270), dp(185));
             params.rightMargin = dp(20);
             favouriteRow.addView(card, params);
@@ -172,48 +253,6 @@ public final class ShieldHomeView extends LinearLayout {
         card.setGrabbed(true);
         card.requestFocus();
         scrollGrabbedIntoView();
-    }
-
-    private boolean handleGrabKey(View view, int keyCode, KeyEvent event, Callbacks callbacks) {
-        if (grabSession == null || view != grabbedCard) {
-            return false;
-        }
-        if (event.getAction() != KeyEvent.ACTION_DOWN) {
-            return keyCode == KeyEvent.KEYCODE_DPAD_LEFT
-                    || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
-                    || keyCode == KeyEvent.KEYCODE_DPAD_CENTER
-                    || keyCode == KeyEvent.KEYCODE_ENTER
-                    || keyCode == KeyEvent.KEYCODE_BACK
-                    || keyCode == KeyEvent.KEYCODE_DPAD_UP
-                    || keyCode == KeyEvent.KEYCODE_DPAD_DOWN;
-        }
-
-        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-            if (grabSession.move(-1)) {
-                reorderFavouriteChildren(grabSession.current());
-            }
-            return true;
-        }
-        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-            if (grabSession.move(1)) {
-                reorderFavouriteChildren(grabSession.current());
-            }
-            return true;
-        }
-        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
-            commitGrab(callbacks);
-            return true;
-        }
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            List<String> original = grabSession.cancel();
-            reorderFavouriteChildren(original);
-            clearGrabState();
-            return true;
-        }
-        if (keyCode == KeyEvent.KEYCODE_DPAD_UP || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-            return true;
-        }
-        return false;
     }
 
     private void commitGrab(Callbacks callbacks) {
