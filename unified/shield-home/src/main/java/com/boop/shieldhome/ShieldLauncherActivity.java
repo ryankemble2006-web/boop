@@ -58,6 +58,9 @@ public final class ShieldLauncherActivity extends Activity {
 
     private TvAppRepository repository;
     private ShieldHomeStore store;
+    private ShieldNowPlayingManager nowPlayingManager;
+    private Runnable unsubscribeNowPlaying;
+    private NowPlayingSnapshot nowPlayingSnapshot;
     private ExecutorService executor;
     private FrameLayout root;
     private View currentView;
@@ -97,6 +100,9 @@ public final class ShieldLauncherActivity extends Activity {
 
         repository = new TvAppRepository(this);
         store = new ShieldHomeStore(this);
+        nowPlayingManager = ShieldNowPlayingManager.get(this);
+        unsubscribeNowPlaying = nowPlayingManager.state().subscribe(this::onNowPlayingChanged);
+        nowPlayingManager.refreshAccess();
         executor = Executors.newSingleThreadExecutor();
 
         registerPackageReceiver();
@@ -107,9 +113,24 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        if (nowPlayingManager != null) {
+            nowPlayingManager.refreshAccess();
+        }
         if (root != null && store != null && currentPage == Page.SETTINGS) {
             showSettings();
         }
+    }
+
+    private void onNowPlayingChanged(NowPlayingSnapshot snapshot) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            runOnUiThread(() -> onNowPlayingChanged(snapshot));
+            return;
+        }
+        nowPlayingSnapshot = snapshot;
+        if (destroyed || currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) {
+            return;
+        }
+        ((ShieldHomeView) currentView).setNowPlaying(snapshot);
     }
 
     private void reloadApps() {
@@ -169,7 +190,7 @@ public final class ShieldLauncherActivity extends Activity {
 
         ShieldHomeView view = new ShieldHomeView(this);
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
-        view.render(favourites, List.of(), callbacks);
+        view.render(favourites, List.of(), nowPlayingSnapshot, callbacks);
         transitionTo(view);
         if (focusFirstFavourite) {
             view.post(view::resetToFirstFavourite);
@@ -216,7 +237,7 @@ public final class ShieldLauncherActivity extends Activity {
                         || currentView != view) {
                     return;
                 }
-                view.render(favouriteEntries(), readyRows, homeCallbacks());
+                view.render(favouriteEntries(), readyRows, nowPlayingSnapshot, homeCallbacks());
                 if (focusFirstFavourite) {
                     view.post(view::resetToFirstFavourite);
                 }
@@ -252,6 +273,30 @@ public final class ShieldLauncherActivity extends Activity {
 
             @Override public void onContentSelected(HomeContentCard card) {
                 launchContent(card);
+            }
+
+            @Override public void onNowPlayingPrevious() {
+                if (nowPlayingManager != null) nowPlayingManager.previous();
+            }
+
+            @Override public void onNowPlayingRewind() {
+                if (nowPlayingManager != null) nowPlayingManager.rewind();
+            }
+
+            @Override public void onNowPlayingPlayPause() {
+                if (nowPlayingManager != null) nowPlayingManager.togglePlayPause();
+            }
+
+            @Override public void onNowPlayingFastForward() {
+                if (nowPlayingManager != null) nowPlayingManager.fastForward();
+            }
+
+            @Override public void onNowPlayingNext() {
+                if (nowPlayingManager != null) nowPlayingManager.next();
+            }
+
+            @Override public void onOpenNowPlayingSource() {
+                if (nowPlayingManager != null) nowPlayingManager.openSource(ShieldLauncherActivity.this);
             }
         };
     }
@@ -735,6 +780,10 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onDestroy() {
         destroyed = true;
         ++optionalGeneration;
+        if (unsubscribeNowPlaying != null) {
+            unsubscribeNowPlaying.run();
+            unsubscribeNowPlaying = null;
+        }
         if (inputHandler != null && backHoldRunnable != null) {
             inputHandler.removeCallbacks(backHoldRunnable);
         }
