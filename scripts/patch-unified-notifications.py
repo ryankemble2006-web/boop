@@ -67,7 +67,7 @@ if host_marker not in text:
 '''
     text = text.replace(resume_anchor, resume_block, 1)
 
-    pause_anchor = "    protected void onPause() {\n        if (sensorManager != null) {\n"
+    pause_anchor = "    protected void onPause() {\n"
     if text.count(pause_anchor) != 1:
         raise SystemExit(f"Expected one onPause anchor, found {text.count(pause_anchor)}")
     pause_block = '''    protected void onPause() {
@@ -78,7 +78,6 @@ if host_marker not in text:
                 // Notification setup is optional; normal Wall behavior continues.
             }
         }
-        if (sensorManager != null) {
 '''
     text = text.replace(pause_anchor, pause_block, 1)
     changed = True
