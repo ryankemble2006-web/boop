@@ -29,6 +29,7 @@ import com.boop.shieldturbo.apps.AppCatalog
 import com.boop.shieldturbo.apps.AppRoutes
 import com.boop.shieldturbo.model.ProbeResult
 import com.boop.shieldturbo.model.ProbeStatus
+import com.boop.shieldturbo.performance.PerformanceCapabilityProbe
 import com.boop.shieldturbo.picture.DisplayFacts
 import com.boop.shieldturbo.privilege.PrivilegeDetector
 import com.boop.shieldturbo.privilege.PrivilegeTier
@@ -437,7 +438,6 @@ class MainActivity : Activity() {
         brightness.progress = percent - Brightness.MIN_PERCENT
         brightnessValue.text = "$percent%"
     }
-
     private fun applyBrightness(percent: Int) {
         val safe = Brightness.clampPercent(percent)
         if (safe < 100 && !Settings.canDrawOverlays(this)) {
@@ -474,6 +474,7 @@ class MainActivity : Activity() {
                 val snapshot = ShieldAnalyzer(
                     listOf(DeviceProbe(), MemoryProbe(context), StorageProbe(), CpuProbe(), ThermalProbe(), NetworkProbe(context))
                 ).analyze()
+                val performance = PerformanceCapabilityProbe(context).readResults()
                 val privilege = ProbeResult(
                     "privilege",
                     getString(R.string.capability_tier),
@@ -487,7 +488,7 @@ class MainActivity : Activity() {
                 )
                 ui.post {
                     if (visible && generation == token && !isDestroyed && currentSection == TurboSection.TURBO) {
-                        render(snapshot.results + privilege)
+                        render(snapshot.results + performance + privilege)
                         scanning = false
                         scan = null
                         analyseButton.setText(R.string.analyse)
