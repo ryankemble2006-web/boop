@@ -41,6 +41,12 @@ class TurboModeUiContractTest(unittest.TestCase):
         self.assertIn('thermal watchdog could not start', text)
         self.assertIn('runtime.disable(', text)
 
+    def test_closing_panel_never_interrupts_an_inflight_performance_transaction(self):
+        text = (PERF / 'TurboModePanel.kt').read_text()
+        self.assertNotIn('operation?.cancel(true)', text)
+        self.assertNotIn('worker.shutdownNow()', text)
+        self.assertIn('worker.shutdown()', text)
+
     def test_main_places_persistent_control_before_diagnostics_and_keeps_remote_focus_path(self):
         main = MAIN.read_text()
         self.assertIn('TurboModePanel', main)
