@@ -73,6 +73,16 @@ def patch_face(text: str) -> str:
 
 
 def patch_main(text: str) -> str:
+    # A second manual invocation should validate and leave the completed tree alone.
+    if 'face.startListeningCue();' in text:
+        if text.count('face.startListeningCue();') != 2:
+            raise SystemExit('listening start hooks: partial or modified prior patch')
+        if text.count('face.stopListeningCue();') != 6:
+            raise SystemExit('listening stop hooks: partial or modified prior patch')
+        if 'face.animate().alpha(0.78f).setDuration(120).start();' in text:
+            raise SystemExit('listening start hooks: old dim cue survived prior patch')
+        return text
+
     start = '        face.animate().alpha(0.78f).setDuration(120).start();\n'
     if text.count(start) != 2:
         raise SystemExit(f'listening start hooks: expected two anchors, found {text.count(start)}')
