@@ -1,15 +1,33 @@
 # SHIELD TURBO handoff
 
 Updated 2026-09-08. Owner branch `shield-turbo-v01`. Independent package `com.boop.shieldturbo`.
-Current signed candidate: **v0.4.1 / versionCode 6**, machine-verified. Physical Startup Manager acceptance remains pending.
+Current signed candidate: **v0.4.1 / versionCode 6**, machine-verified. Startup menu and normal manual launch now have physical confirmation; boot suppression is NOT accepted.
 
-## Latest physical feedback and diagnosed blocker
+## Latest physical result: supersedes earlier pending-test notes
 
-Ryan installed v0.4.0 and reached Choose an app, but selecting an app showed its package name and the message beginning "Turbo changes one selected app" with no usable next action. That is a failed per-app action menu, not evidence that startup blocking was applied or tested. The goal remains suppressing four user-selected Kodi forks that he reports wake after Shield boot, while preserving manual launch.
+After installing v0.4.1, Ryan confirmed the intended Startup Manager action menu is available. He then rebooted and reported: "didnt change.. they still require force stop from me, they do still launch correctly". Preserve both findings: normal manual launch works, but the requested reduction in unwanted startup has not been accepted. Do not describe this as a successful Startup Manager merely because commands or CI passed.
 
-The root cause is in `StartupManagerActivity.choose`: the same Android AlertDialog builder called both `setMessage` and `setItems`. Android's standard dialog supports message OR list content, not both; the message displaced the action list. Primary reference: https://developer.android.com/develop/ui/views/components/dialogs (Adding a list). This is a reproducible API misuse, not another guessed NVIDIA settings component.
+The exact observed process list, actual fork package IDs, operation read-back after reboot and whether the observation is based on an enabled Force Stop button have not been supplied. Do not dismiss the report, but do not invent proof that all four processes were alive either.
 
-Display & Sound and Accessibility remain unresolved and parked. Do not spend this repair on them. Earlier physical evidence remains limited to bedroom brightness, corrected STANDARD maintenance selectability and Developer Options opening correctly.
+The existing BLOCK STARTUP implementation changes only RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND app-ops to ignore. It does not directly disable boot receivers, force-stop the app, or verify that the target has no running process. The button name overstates what was established.
+
+Next diagnostic: determine whether Ryan sees the forks in a running-process/service monitor or is using the availability of Force Stop in App Info. The AOSP Settings implementation enables Force Stop when FLAG_STOPPED is absent without first proving a live process exists. If actual process evidence is needed, obtain a bounded, read-only per-app snapshot through the existing local ADB route: target/current-user identity, persisted app-op values, package stopped/enabled state, process/service evidence and registered boot triggers. No screenshots or visual CI are required for that diagnostic.
+
+Research boundaries checked on 2026-09-08:
+- Android background restrictions vary by version/manufacturer and are not a universal boot-receiver block: https://developer.android.com/topic/performance/background-optimization
+- AOSP Force Stop availability is not a live-process test: https://github.com/aosp-mirror/platform_packages_apps_settings/blob/master/src/com/android/settings/applications/appinfo/AppButtonsPreferenceController.java (updateForceStopButton).
+- Upstream Kodi Omega declares BOOT_COMPLETED on XBMCBroadcastReceiver along with other events: https://github.com/xbmc/xbmc/blob/Omega/tools/android/packaging/xbmc/AndroidManifest.xml.in . This is a possible path, not proof of the contents or actual behaviour of Ryan's installed forks.
+- AOSP PackageManagerService restricts shell component-state changes for non-test apps; do not promise plain ADB can disable an individual boot receiver: https://android.googlesource.com/platform/frameworks/base.git/+/master/services/core/java/com/android/server/pm/PackageManagerService.java . Do not bypass this with root, re-signing third-party apps, device-owner changes or automatically escalating to HARD BLOCK.
+
+This follow-up is documentation/research only. No app code, permission, signer, workflow or device state changed, and no new APK or CI run was requested. Main ownership/context is unchanged. STATUS.md and MEMORY.md still describe the v0.4.1 pre-test state; use this newer physical-feedback section over those dated pending-test statements until their next reconciliation.
+
+## Previous diagnosed menu blocker
+
+Ryan installed v0.4.0 and reached Choose an app, but selecting an app showed its package name and the message beginning "Turbo changes one selected app" with no usable next action. That was a failed per-app action menu, not evidence that startup blocking had been applied or tested. The goal remains suppressing four user-selected Kodi forks that he reports wake after Shield boot, while preserving manual launch.
+
+The root cause was in `StartupManagerActivity.choose`: the same Android AlertDialog builder called both `setMessage` and `setItems`. Android's standard dialog supports message OR list content, not both; the message displaced the action list. Primary reference: https://developer.android.com/develop/ui/views/components/dialogs (Adding a list). This was a reproducible API misuse, not another guessed NVIDIA settings component.
+
+Display & Sound and Accessibility remain unresolved and parked. Do not spend this repair on them. Earlier physical evidence also includes bedroom brightness, corrected STANDARD maintenance selectability and Developer Options opening correctly.
 
 ## Exact signed v0.4.1 receipt
 
@@ -29,14 +47,14 @@ Display & Sound and Accessibility remain unresolved and parked. Do not spend thi
 - Post-upload nonvisual emulator install/cold launch/process/Back/warm launch/no-fatal check passed. The verified APK was linked before waiting for this slower check.
 - **No visual tests**: no screenshot, hierarchy dump, image/golden comparison or appearance/layout judgment. Ryan owns real-Shield visual and remote acceptance.
 
-## Changes and scope
+## v0.4.1 changes and scope
 
-1. Per-app actions now use a list-only dialog with the app title. The conflicting package-name information message is removed. Existing Block Startup, separately confirmed Hard Block, Undo, Launch and App Info callbacks are preserved.
+1. Per-app actions use a list-only dialog with the app title. The conflicting package-name information message is removed. Existing Block Startup, separately confirmed Hard Block, Undo, Launch and App Info callbacks are preserved.
 2. `StartupAppLabels` prefers a meaningful launcher label, then a meaningful application label, before the exact package ID. A launcher package-name fallback no longer prevents trying the application label. Truly missing labels remain the real package ID; no guessed app names or hardcoded Kodi identities are introduced.
 3. Cancel is allowed through the busy-operation guard; ordinary action buttons remain guarded. Remote Back cancels an in-flight Startup Manager task instead of requiring activity exit. Cancellation is not Undo: a command already sent may have taken effect.
 4. Version/package verification advanced to v0.4.1/code 6. The workflow retains the same nonvisual gates and signer, with an explicit manual-visual-acceptance comment.
 
-Runtime changes are confined to StartupManagerActivity and the small label-resolution helper. **LocalBridge, AdbWire, StartupPolicy, StartupLedger, manifest permissions, brightness, other power tools and firmware routes are unchanged.** Existing saved Undo records retain their format and preferences. Main and other BOOP bodies were not edited.
+Runtime changes were confined to StartupManagerActivity and the small label-resolution helper. **LocalBridge, AdbWire, StartupPolicy, StartupLedger, manifest permissions, brightness, other power tools and firmware routes were unchanged.** Existing saved Undo records retain their format and preferences. Main and other BOOP bodies were not edited.
 
 ## Regression and review evidence
 
@@ -48,17 +66,13 @@ The published diff was reviewed directly against `776560b2a7060e612d6ddfa2cd22d2
 
 ## Startup policy and rollback retained
 
-`BLOCK STARTUP / KEEP LAUNCHABLE` changes only RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND to ignore for one chosen safe user app, after saving its original state. It leaves the package enabled and reads the values back. These are background restrictions, not a universal guarantee against every boot trigger or a free-RAM score. Real Kodi boot behavior still needs testing.
+`BLOCK STARTUP / KEEP LAUNCHABLE` changes only RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND to ignore for one chosen safe user app, after saving its original state. It leaves the package enabled and reads the values back. These are background restrictions, not a universal guarantee against every boot trigger or a free-RAM score. See the latest physical failure report above.
 
 `HARD BLOCK / DISABLE APP` separately confirms disabling the selected package for the current Android user. It cannot launch until restored; no data, files, caches or logins are cleared. Do not make this the default.
 
 The first recorded original app-op/enabled state wins. Per-app Undo verifies restore before removing the ledger entry; failed restores retain records. Undo All attempts each recorded app independently. No boot receiver or background service was added. Android stores the restrictions; Turbo must not become another boot-starting app merely to reapply them.
 
 System/updated-system/NVIDIA/Android/Google-core/BOOP exclusions remain. No QUERY_ALL_PACKAGES, bulk cleaner, fake performance score, root/bootloader/clock/governor changes or automatic hard blocking.
-
-## Next physical check
-
-Install v0.4.1 over v0.4.0. Open ADVANCED -> STARTUP MANAGER, choose ONE Kodi fork and confirm the actual Block Startup / Hard Block / Launch / App Info action list is now available, instead of the old information-only message. Use ENABLE ADB TURBO first if the local debugging setup is not authorised. Choose BLOCK STARTUP / KEEP LAUNCHABLE and report the returned result. Only after read-back succeeds, reboot the Shield, check whether that fork self-starts and then launch it manually from its ordinary icon. Test the other forks only after the first succeeds. Verify Undo and Cancel separately. Do not equate the repaired dialog or CI pass with proven boot suppression.
 
 ## Historical receipts
 
