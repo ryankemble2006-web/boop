@@ -38,6 +38,7 @@ import com.boop.shieldturbo.performance.ProcessorModeTrace
 import com.boop.shieldturbo.performance.ProcessorModeTraceProbe
 import com.boop.shieldturbo.performance.ProcessorModeTraceReport
 import com.boop.shieldturbo.performance.ProcessorModeTraceStore
+import com.boop.shieldturbo.performance.TurboModePanel
 import com.boop.shieldturbo.picture.DisplayFacts
 import com.boop.shieldturbo.privilege.PrivilegeDetector
 import com.boop.shieldturbo.privilege.PrivilegeTier
@@ -77,6 +78,7 @@ class MainActivity : Activity() {
     private lateinit var brightnessValue: TextView
     private lateinit var scroll: ScrollView
     private lateinit var quickCheckText: TextView
+    private lateinit var turboModePanel: TurboModePanel
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
@@ -103,6 +105,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        if (::turboModePanel.isInitialized) turboModePanel.close()
         worker.shutdownNow()
         ui.removeCallbacksAndMessages(null)
         super.onDestroy()
@@ -184,6 +187,7 @@ class MainActivity : Activity() {
     }
 
     private fun showHome() {
+        if (::turboModePanel.isInitialized) turboModePanel.close()
         currentSection = null
         content.removeAllViews()
         content.addView(
@@ -253,6 +257,13 @@ class MainActivity : Activity() {
 
     private fun renderTurbo() {
         sectionHeader(R.string.section_turbo, R.string.section_turbo_help)
+
+        turboModePanel = TurboModePanel(this)
+        content.addView(
+            turboModePanel.root,
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) }
+        )
+
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         analyseButton = button(R.string.analyse).apply {
             id = R.id.analyse_button
@@ -325,6 +336,9 @@ class MainActivity : Activity() {
         maintenance.addView(restartButton, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
         content.addView(maintenance, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
 
+        turboModePanel.modeButton.nextFocusDownId = analyseButton.id
+        analyseButton.nextFocusUpId = turboModePanel.modeButton.id
+        accessButton.nextFocusUpId = turboModePanel.modeButton.id
         analyseButton.nextFocusDownId = processorTraceButton.id
         accessButton.nextFocusDownId = processorTraceButton.id
         processorTraceButton.nextFocusUpId = analyseButton.id
@@ -335,8 +349,7 @@ class MainActivity : Activity() {
         manageAppsButton.nextFocusUpId = processorActuatorButton.id
         restartButton.nextFocusUpId = processorActuatorButton.id
 
-        analyseButton.requestFocus()
-        analyse()
+        turboModePanel.modeButton.requestFocus()
     }
 
     private fun storageQuickCheck(): String = try {
