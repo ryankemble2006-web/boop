@@ -5,6 +5,7 @@ on:
     branches: [ "boop-unified" ]
     paths:
       - 'unified/shield-home/**'
+      - 'unified/assets/boop-eyes/boopApprovedEyes.png'
       - '.github/workflows/test-shield-home-models.yml'
   workflow_dispatch:
 
@@ -36,9 +37,11 @@ jobs:
           set -euo pipefail
           MAIN=shield-overlay/app/src/main/java/com/boop/shieldhome
           TEST=shield-overlay/app/src/test/java/com/boop/shieldhome
-          mkdir -p "$MAIN" "$TEST"
+          RES=shield-overlay/app/src/main/res/drawable-nodpi
+          mkdir -p "$MAIN" "$TEST" "$RES"
           cp -R unified/shield-home/src/main/java/com/boop/shieldhome/. "$MAIN/"
           cp -R unified/shield-home/src/test/java/com/boop/shieldhome/. "$TEST/"
+          cp unified/assets/boop-eyes/boopApprovedEyes.png "$RES/boop_eyes.png"
 
       - uses: android-actions/setup-android@v3
         with:
