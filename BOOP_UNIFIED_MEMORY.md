@@ -2,45 +2,54 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer. Fresh `main` owns shared contracts. Always re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Durable wake architecture and checkpoint
+## Durable wake architecture and rollback
 
 BOOP permanently remains an accepted wake name. A custom name is additive, never a replacement. Foreground wireless charging/docking permits continuous phone wake; undocked phone remains tap-to-talk. Preserve coordinator -> `BoopWakeWordController` -> Sherpa/template -> single 16 kHz `AudioRecord` ownership and coordinated reload/re-arm. Never add a competing microphone listener.
 
-The physically proven wake rollback is exact built v48 code `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`, pinned at branch `checkpoint-boop-unified-v48-wake-arm`. Do not repoint it. On Ryan's Pixel: charger -> Android green mic ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP. This physically closes the v47 upstream “not listening at all” defect and proves the sleeping arm path plus one established BOOP phrase.
+The physically proven wake rollback is exact built v48 code `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`, pinned at branch `checkpoint-boop-unified-v48-wake-arm`. Never repoint it. On Ryan's Pixel: charger -> Android green mic ON -> BOOP sleeps while green remains ON -> `Hey BOOP` wakes BOOP.
 
-v48 build receipt: version 48 / `1.2.2-unified-wake-arm`, workflow `34218173825`, APK SHA-256 `0264c3e289aab06a7be45067ce44bd72124355b11f9cc0a8ffa73afb7f4c5f02`, permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+v48 receipt: version 48 / `1.2.2-unified-wake-arm`, workflow `34218173825`, APK SHA-256 `0264c3e289aab06a7be45067ce44bd72124355b11f9cc0a8ffa73afb7f4c5f02`, permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
 ## Custom-name five-say contract
 
 Custom-name training uses five local spoken examples from the same controller-owned PCM stream. It stores only a compact amplitude-normalised pronunciation profile; raw training PCM is not persisted. The learned matcher is additive to Sherpa and must fail safely without disabling BOOP. Custom names receive all 33 established natural wake forms.
 
-The intended product flow is now explicit and durable:
+Durable product flow:
 
-- changing BOOP's name in Voice Settings to a new custom name such as `Steve` automatically queues training;
-- after Voice Settings closes BOOP prompts `Say Steve five times.`;
-- the same microphone owner captures five natural examples and completion returns to the normal wake path;
-- an unchanged custom name does not nag on every settings close;
-- BOOP itself never needs user training;
-- a matching existing profile is reused rather than automatically retrained;
-- the manual Train action remains available for deliberate retry/retraining;
-- changing to a genuinely different untrained name invalidates the old profile;
+- a genuinely new custom name queues/starts local five-say enrolment;
+- BOOP prompts `Say <name> five times.`;
+- the same microphone owner captures five natural examples and completion returns to normal wake;
+- unchanged names do not nag;
+- BOOP never requires user training;
+- a matching profile is reused unless the user deliberately retrains;
+- changing to another name invalidates the old profile;
 - no cloud wake training and no second microphone listener.
 
-TDD RED for this flow: commit `72591554376d2cada7df24d99d5934443a986278`, workflow `34220316310`, failed exactly because `BoopWakeTrainingPolicy` did not yet exist. Implementation commit `7ed577d2cb683da0cf7ae5339efc509566123140` added the pure policy and generated settings-close training flow without changing the v48 real-attempt arm behavior.
+## Spoken rename phrase repair, v50
 
-Current signed candidate:
+Ryan physically tested v49 and confirmed `Hey BOOP` still woke BOOP. The next command `change name to steve` only produced a blink, then tapping BOOP yielded `sorry i cant find that`.
 
-- Built code `87a7abee880b9283d51fb71ed2bf9bd9ed187b28`
-- Version 49 / `1.2.3-unified-wake-enrolment`
-- Workflow `34221275050` SUCCESS
-- Artifact `BOOP-Unified`, ID `10053919758`
-- APK SHA-256 `2fd65505bea205cce8e7cdc2124cba4a4fa818c5b1fd4ba0efdc5c24f064ffd9`
-- Artifact ZIP SHA-256 `fc27c729a848fbda98dee882b626633da46f1fd338a98fa08911cc76106eecb9`
+This was not an acoustic wake failure. `BoopWakeNameIntent` already owns local rename routing before general commands, but its SET prefixes omitted the natural phrase `change name to `. Ryan's exact phrase therefore returned `NONE` and fell through to ordinary handling.
+
+TDD RED: commit `64b5fe89afe884638497e5c49842909c840339fc`, workflow `34222645705`. The exact phrase `change name to Steve` was added to the existing parser test. 78 unified focused tests ran and exactly one failed: `BoopWakeNameIntentTest.parsesRequiredRenamePhrases`.
+
+Minimal GREEN: commit `5f2d2941f3e5d2a0b9820b174563007570854379` adds only `change name to ` to `BoopWakeNameIntent.SET_PREFIXES`. Workflow `34222849165` completed successfully. Do not generalise this repair into wake sensitivity/model changes; none were needed.
+
+Current signed v50 candidate:
+
+- Built code `59bea8d630f90be4940d399784325a8002fd6b8b`
+- Version 50 / `1.2.4-unified-wake-rename`
+- Workflow `34223081543` SUCCESS
+- Artifact `BOOP-Unified`, ID `10054611864`
+- APK SHA-256 `a9d9b10b626bb5e0699384606baeb0399323a12ad2c144c0a4e9daba8ed87e05`
+- Artifact ZIP SHA-256 `229ba23e904ec70945e8892150f50a6494d4d73299213e8610864ffbfec38745`
 - Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Fresh v49 evidence: non-visual integration/materialization passed; Launcher lint passed; 58 Shield focused tests and 78 unified focused tests passed with zero failures/errors/skips; signed assembly, package/version, manifest, signer and archive integrity passed; downloaded ZIP/APK hashes matched workflow receipts. v49 acoustic/product behavior is not physically accepted until Ryan tests it.
+Fresh v50 CI evidence: non-visual integration/materialisation passed; Launcher lint passed; 58 Shield focused tests and 78 unified focused tests passed with zero failures/errors/skips; signed assembly, package/version, manifest, signer and archive integrity passed; downloaded ZIP/APK hashes matched workflow receipts.
 
-Physical v49 sequence: first confirm v48 behavior still holds (green sleeping mic + `Hey BOOP`); change name to Steve and close settings; confirm automatic `Say Steve five times.`; speak Steve five times; confirm completion and re-arm; test Steve/Hey Steve/Oi Steve/Morning Steve/Steve wake up; finish by confirming Hey BOOP still works. Record misses and false wakes separately before tuning thresholds.
+v50 physical sequence remains unaccepted: first confirm green sleeping mic + `Hey BOOP`; then say exactly `change name to Steve`; BOOP should enter local rename/five-say flow; say Steve five times; confirm normal wake returns; test Steve/Hey Steve/Oi Steve and finish with Hey BOOP. If the exact rename still fails while wake works, inspect the actual post-wake transcript/handoff before extending grammar further. If rename works but training fails, move downstream to enrolment capture/profile logic.
+
+Detailed receipt: `docs/BOOP-V50-SPOKEN-RENAME-RECEIPT.md`.
 
 ## Clean Shield HOME architecture boundary
 
