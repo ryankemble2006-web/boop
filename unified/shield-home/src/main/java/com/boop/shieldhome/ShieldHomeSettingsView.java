@@ -10,7 +10,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** Presentation-only launcher settings; platform actions are owned by the activity. */
+/** Presentation-only Home rows controls; platform actions are owned by the activity. */
 public final class ShieldHomeSettingsView extends LinearLayout {
     public interface Callbacks {
         void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled);
@@ -35,11 +35,11 @@ public final class ShieldHomeSettingsView extends LinearLayout {
     public void render(boolean playNext, boolean appChannels, Callbacks callbacks) {
         removeAllViews();
 
-        TextView title = text("Launcher settings", 28);
+        TextView title = text("Home rows", 28);
         addView(title, wrap());
         addSpacer(dp(26));
 
-        TextView section = text("Optional Home Rows", 20);
+        TextView section = text("Optional rows", 20);
         addView(section, wrap());
         addSpacer(dp(12));
 
