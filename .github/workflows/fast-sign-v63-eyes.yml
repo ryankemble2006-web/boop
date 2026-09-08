@@ -1,4 +1,4 @@
-name: Fast Sign BOOP v63 Eyes
+name: Fast Sign BOOP Experimental Eyes
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: boop-v63-fast-eyes
+  group: boop-fast-eyes
   cancel-in-progress: true
 
 jobs:
@@ -42,8 +42,10 @@ jobs:
           gradle-version: '9.6.0'
           cache-read-only: false
 
-      - name: Materialize unified app
-        run: bash scripts/materialize-unified.sh
+      - name: Materialize experimental eye build
+        run: |
+          bash scripts/materialize-unified.sh
+          python3 scripts/patch-v64-procedural-sclera.py
 
       - name: Prepare permanent BOOP signer
         shell: bash
@@ -75,7 +77,7 @@ jobs:
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Unified-v63-Fast
+          name: BOOP-Unified-v64-Fast
           path: |
             boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
             apk-sha256.txt
