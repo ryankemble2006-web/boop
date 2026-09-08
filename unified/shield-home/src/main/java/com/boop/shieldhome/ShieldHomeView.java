@@ -27,12 +27,21 @@ public final class ShieldHomeView extends LinearLayout {
         void onOpenHomeRows();
         void onOpenSystemSettings();
         void onContentSelected(HomeContentCard card);
+        default void onNowPlayingPrevious() { }
+        default void onNowPlayingRewind() { }
+        default void onNowPlayingPlayPause() { }
+        default void onNowPlayingFastForward() { }
+        default void onNowPlayingNext() { }
+        default void onOpenNowPlayingSource() { }
     }
 
     private FavouriteGrabSession grabSession;
     private HorizontalScrollView favouriteScroller;
     private LinearLayout favouriteRow;
     private TvAppCardView grabbedCard;
+    private ShieldNowPlayingView nowPlayingView;
+    private View nowPlayingSpacer;
+    private NowPlayingSnapshot nowPlayingSnapshot;
     private Callbacks activeCallbacks;
 
     public ShieldHomeView(Context context) {
@@ -50,8 +59,22 @@ public final class ShieldHomeView extends LinearLayout {
     }
 
     public void render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks callbacks) {
+        render(favourites, optionalRows, null, callbacks);
+    }
+
+    public void render(
+            List<TvAppEntry> favourites,
+            List<HomeRow> optionalRows,
+            NowPlayingSnapshot snapshot,
+            Callbacks callbacks) {
         removeAllViews();
         activeCallbacks = callbacks;
+        nowPlayingSnapshot = snapshot;
+        favouriteScroller = null;
+        favouriteRow = null;
+        nowPlayingView = null;
+        nowPlayingSpacer = null;
+
         List<TvAppEntry> safeFavourites = favourites == null ? List.of() : favourites;
         List<HomeRow> safeOptionalRows = optionalRows == null ? List.of() : optionalRows;
 
@@ -64,7 +87,14 @@ public final class ShieldHomeView extends LinearLayout {
         }
 
         addView(navRow(callbacks), new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        addSpacer(dp(20));
+        addSpacer(dp(16));
+
+        nowPlayingView = new ShieldNowPlayingView(getContext());
+        addView(nowPlayingView, new LayoutParams(LayoutParams.MATCH_PARENT, dp(182)));
+        nowPlayingSpacer = new View(getContext());
+        addView(nowPlayingSpacer, new LayoutParams(1, dp(16)));
+        setNowPlaying(snapshot);
+
         addView(sectionTitle("Favourite apps"), wrap());
         addSpacer(dp(10));
 
@@ -84,6 +114,22 @@ public final class ShieldHomeView extends LinearLayout {
             addSpacer(dp(8));
             addView(contentRow(row.cards(), callbacks), new LayoutParams(
                     LayoutParams.MATCH_PARENT, dp(150)));
+        }
+    }
+
+    /** Updates only the media subview. Favourite/app rows are intentionally left untouched. */
+    public void setNowPlaying(NowPlayingSnapshot snapshot) {
+        nowPlayingSnapshot = snapshot;
+        ShieldNowPlayingView panel = nowPlayingView;
+        if (panel == null) {
+            return;
+        }
+        panel.bind(snapshot, activeCallbacks);
+        boolean visible = snapshot != null
+                && NowPlayingSelectionPolicy.eligible(snapshot.playbackState());
+        panel.setVisibility(visible ? VISIBLE : GONE);
+        if (nowPlayingSpacer != null) {
+            nowPlayingSpacer.setVisibility(visible ? VISIBLE : GONE);
         }
     }
 
