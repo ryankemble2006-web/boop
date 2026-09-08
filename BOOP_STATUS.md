@@ -2,16 +2,18 @@
 
 Updated 2026-09-08. Branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged.
 
-## Signed v45 test candidate
+## Signed repair candidate
 
-Code commit `6dab12aa3232e821fed52b64e39f65e499b6c574`, version 45 / `1.1.2-unified-assist-repair`. Run `34198363929` completed successfully; artifact `BOOP-Unified` ID `10044846308`. Extracted APK SHA-256 `77fe8d06223bdaa6a07e232baeb2ddb9162845e98e022477be559fb377915a6b`; permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Code commit `949f1085328a3e815d9bc57747425f1f930c48db`, version 45 / `1.1.2-unified-assist-repair`. Run `34201200463` completed successfully; artifact `BOOP-Unified` ID `10045928699`. Extracted APK SHA-256 `217e004f26bca33066e3d2089d2e2bc448c102c332abb25f97cf00122d5ed239`; permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Non-visual verification passed: 57 Shield focused tests + 64 unified wake/routing/assistant tests with zero failures/errors/skips, Launcher lint, compilation, package identity, manifest integration, permanent signature and ZIP integrity. No visual, screenshot/golden, aesthetic source-string, emulator launch/install or physical-device acceptance ran.
+Non-visual verification passed: 58 Shield focused tests + 66 unified wake/routing/assistant tests with zero failures/errors/skips, Launcher lint, compilation, package identity, manifest integration, permanent signature and ZIP integrity. No visual, screenshot/golden, aesthetic source-string, emulator launch/install or physical-device acceptance ran.
 
-Included repairs: canonical locked phone/Wall eyes and shared blink helpers on Shield; idempotent Shield density scaling; HA physical-device-only Home filtering with device-inherited room membership and fail-closed loose entities; authoritative room-switch teardown/rebuild; preserved coordinator-owned wake reload/re-arm and BOOP fallback; official Android assistant-role / VoiceInteractionService path for the Shield remote microphone button without a second microphone stack.
+## Previous physical failures now addressed in code
 
-The Shield first-start assistant choice is reversible. BOOP never silently changes Android defaults or disables Google. A local key fallback is intentionally absent until hardware proves firmware sends a usable assist key without privileged/ADB hacks.
+Ryan physically found the prior candidate still had four failures: assistant choice did not actually change Android's assistant, Home device labels appeared as literal `null`, neither BOOP nor the custom wake name triggered acoustically on phone, and the copied eye PNG had an opaque black border with no visible blink.
 
-Physical acceptance is still required for remote-button activation, actual audio from the Shield remote microphone, clean one-shot recording/cancel/repeat/return behaviour, BOOP/custom acoustic wake, exact eyes/blink, repeated-open scale stability, room switching and device-only Home cards. Opening BOOP by itself is not remote-mic success.
+Current repairs: HA JSON null/device-name fallback is fixed; Sherpa wake arming no longer gets vetoed by an advisory speech-support probe; the same locked eye RGB pixels are packaged with real alpha transparency; assistant role eligibility now includes both `VoiceInteractionService` and explicit `ACTION_ASSIST`. Existing room switching, physical-device-only filtering, idempotent Shield scaling, iris-only hue, headphones and puppetry remain preserved.
+
+Physical acceptance is still required for actual assistant role takeover where firmware permits, remote-button activation, actual audio from the Shield remote microphone, clean one-shot recording/cancel/repeat/return behaviour, BOOP/custom acoustic wake, exact eyes/blink, repeated-open scale stability, room switching and real device names. Opening BOOP alone is not remote-mic success.
 
 Protected physical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. No automatic install/grants, signing/package identity change, Windows synchronization or unattended monitoring.
