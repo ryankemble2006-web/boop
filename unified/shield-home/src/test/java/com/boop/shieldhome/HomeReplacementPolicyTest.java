@@ -15,24 +15,65 @@ public final class HomeReplacementPolicyTest {
         assertFalse(HomeReplacementPolicy.shouldAutoPrompt(true, true));
     }
 
-    @Test public void stockHomeSelectionPrefersSystemLauncherAndNeverBoop() {
+    @Test public void resolvedSystemHomeWinsOverOtherHomeCapableSystemPackages() {
         List<HomeReplacementPolicy.Candidate> candidates = List.of(
-                new HomeReplacementPolicy.Candidate("com.boop.shieldhome", true, true),
-                new HomeReplacementPolicy.Candidate("com.example.otherlauncher", false, true),
+                new HomeReplacementPolicy.Candidate("com.google.android.tungsten.setupwraith", true, true),
                 new HomeReplacementPolicy.Candidate("com.google.android.tvlauncher", true, true));
 
         assertEquals(
                 "com.google.android.tvlauncher",
-                HomeReplacementPolicy.selectStockHome(candidates, "com.boop.shieldhome"));
+                HomeReplacementPolicy.selectStockHome(
+                        candidates,
+                        "com.boop.shieldhome",
+                        "com.google.android.tvlauncher"));
     }
 
-    @Test public void disabledSystemLauncherRemainsAValidEmergencyCandidate() {
+    @Test public void setupWraithIsNeverAStockLauncherTarget() {
         List<HomeReplacementPolicy.Candidate> candidates = List.of(
-                new HomeReplacementPolicy.Candidate("com.boop.shieldhome", false, true),
-                new HomeReplacementPolicy.Candidate("com.stock.home", true, false));
+                new HomeReplacementPolicy.Candidate("com.google.android.tungsten.setupwraith", true, true),
+                new HomeReplacementPolicy.Candidate("com.google.android.tvlauncher", true, true));
 
         assertEquals(
-                "com.stock.home",
-                HomeReplacementPolicy.selectStockHome(candidates, "com.boop.shieldhome"));
+                "com.google.android.tvlauncher",
+                HomeReplacementPolicy.selectStockHome(
+                        candidates,
+                        "com.boop.shieldhome",
+                        "com.boop.shieldhome"));
+        assertTrue(HomeReplacementPolicy.isProvisioningHome(
+                "com.google.android.tungsten.setupwraith"));
+    }
+
+    @Test public void knownShieldStockHomeBeatsArbitrarySystemHomeWhenBoopIsResolved() {
+        List<HomeReplacementPolicy.Candidate> candidates = List.of(
+                new HomeReplacementPolicy.Candidate("com.vendor.somehome", true, true),
+                new HomeReplacementPolicy.Candidate("com.google.android.tvlauncher", true, true));
+
+        assertEquals(
+                "com.google.android.tvlauncher",
+                HomeReplacementPolicy.selectStockHome(
+                        candidates,
+                        "com.boop.shieldhome",
+                        "com.boop.shieldhome"));
+    }
+
+    @Test public void disabledShieldStockLauncherRemainsAValidEmergencyCandidate() {
+        List<HomeReplacementPolicy.Candidate> candidates = List.of(
+                new HomeReplacementPolicy.Candidate("com.boop.shieldhome", false, true),
+                new HomeReplacementPolicy.Candidate("com.google.android.tvlauncher", true, false));
+
+        assertEquals(
+                "com.google.android.tvlauncher",
+                HomeReplacementPolicy.selectStockHome(
+                        candidates,
+                        "com.boop.shieldhome",
+                        "com.boop.shieldhome"));
+    }
+
+    @Test public void defaultHomeTruthUsesResolvedPackageIdentity() {
+        assertTrue(HomeReplacementPolicy.isOwnResolvedHome(
+                "com.boop.shieldhome", "com.boop.shieldhome"));
+        assertFalse(HomeReplacementPolicy.isOwnResolvedHome(
+                "com.google.android.tvlauncher", "com.boop.shieldhome"));
+        assertFalse(HomeReplacementPolicy.isOwnResolvedHome(null, "com.boop.shieldhome"));
     }
 }
