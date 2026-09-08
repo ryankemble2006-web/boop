@@ -188,10 +188,19 @@ public final class TvAppCardView extends FrameLayout {
     private void refreshEmphasis() {
         boolean focused = hasFocus();
         boolean selected = isSelected();
+        boolean emphasized = focused || selected;
         boolean showPlate = AppCardChromePolicy.showPlate(
                 homeFavourite, focused, selected, grabbed);
         setBackground(showPlate ? cardBackground() : new ColorDrawable(Color.TRANSPARENT));
-        animateEmphasis(focused || selected);
+
+        if (homeFavourite) {
+            setForeground(null);
+            iconView.setForeground(emphasized ? FocusChrome.outline(getContext(), 2) : null);
+        } else {
+            iconView.setForeground(null);
+            setForeground(emphasized ? FocusChrome.outline(getContext(), 12) : null);
+        }
+        animateEmphasis(emphasized);
     }
 
     private void animateEmphasis(boolean emphasized) {
