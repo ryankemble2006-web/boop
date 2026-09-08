@@ -47,6 +47,7 @@ public final class ShieldNowPlayingManager {
     private final NowPlayingState state = new NowPlayingState();
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
     private final LinkedHashMap<String, Bitmap> notificationArtwork = new LinkedHashMap<>();
+    private final NowPlayingArtworkResolver artworkResolver;
 
     private final MediaSessionManager.OnActiveSessionsChangedListener activeSessionsChanged =
             this::reconcileControllers;
@@ -84,6 +85,8 @@ public final class ShieldNowPlayingManager {
         listenerComponent = new ComponentName(
                 applicationContext, ShieldNowPlayingListenerService.class);
         mainHandler = new Handler(Looper.getMainLooper());
+        artworkResolver = new NowPlayingArtworkResolver(
+                applicationContext, mainHandler, this::publishSelection);
         store = new ShieldHomeStore(applicationContext);
         preferredPackage = store.nowPlayingPlayerPackage();
     }
@@ -306,6 +309,7 @@ public final class ShieldNowPlayingManager {
             binding.unregister();
         }
         notificationArtwork.clear();
+        artworkResolver.clear();
         selectedId = 0L;
         selectedController = null;
         state.update(null);
@@ -452,10 +456,8 @@ public final class ShieldNowPlayingManager {
         }
         long duration = metadata == null ? 0L : metadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
         String packageName = controller.getPackageName();
-        Bitmap resolvedArtwork = artwork(metadata);
-        if (resolvedArtwork == null) {
-            resolvedArtwork = notificationArtwork.get(packageName);
-        }
+        Bitmap resolvedArtwork = artworkResolver.resolve(
+                metadata, notificationArtwork.get(packageName));
 
         return new NowPlayingSnapshot(
                 binding.id,
