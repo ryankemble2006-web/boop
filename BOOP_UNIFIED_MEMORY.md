@@ -32,12 +32,7 @@ v56 physical testing showed learned custom names still required a deliberate pau
 
 Source tracing found the learned matcher waited for two quiet 100 ms chunks before evaluating the name. v57 made learned names matchable while speech is still active and kept the older silence-ended matcher as fallback, with expensive feature extraction gated behind cheap speech/RMS activity.
 
-Physical v57 evidence proves the architecture generally:
-
-- `Steve lights on` worked naturally with no deliberate pause;
-- `Steve show diagnostics` worked naturally;
-- spoken rename to `Fred` invoked five-sample local enrolment and `Fred lights on` worked with `Done`;
-- spoken rename to `Jeff` repeated the same five-sample flow and `Jeff lights on` worked with `Done`.
+Physical v57 evidence proves the architecture generally: `Steve lights on`, `Steve show diagnostics`, spoken rename/five-sample training to `Fred` followed by `Fred lights on`, and the same flow with `Jeff` all worked naturally.
 
 Durable rule: learned custom wake names must remain matchable during active speech and must not regain a trailing-silence requirement or second microphone path.
 
@@ -57,65 +52,86 @@ Exact physically accepted v58 rollback:
 
 `checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
 
-Never repoint it. v58 workflow `34252950640`; artifact `10066828560`; APK SHA-256 `5a5b4846a55bc58d3444a8c8f178441af576e86695025c17c8d4483ad9fd01aa`.
+Never repoint it.
 
-## Durable speech-censorship rule from v59
+## Durable uncensored-speech rule from v59
 
-After v58 acceptance, Ryan physically observed that spoken adult/profane wake names were returned by Android recognition as asterisks. BOOP then stored that masked transcript and TTS spoke the literal stars during five-sample training.
+v59 requests `RecognizerIntent.EXTRA_MASK_OFFENSIVE_WORDS=false` in both ordinary tap-to-talk and post-wake command recognition. BOOP must not add its own profanity blacklist or replace recognized adult/profane speech with asterisks.
 
-BOOP's own rename code does not contain a profanity filter. The masking boundary was Android speech recognition: both the ordinary tap recognizer and post-wake command recognizer omitted `RecognizerIntent.EXTRA_MASK_OFFENSIVE_WORDS`, leaving the recognition service free to use its default masking behavior.
+Ryan physically accepted this on the Pixel: spoken adult/profane rename survives as the actual word, BOOP's five-sample prompt says the actual word instead of stars, and the local training flow completes.
 
-v59 requests in **both** recognition paths:
+Protected v59 rollback:
 
-`intent.putExtra(RecognizerIntent.EXTRA_MASK_OFFENSIVE_WORDS, false);`
+`checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`
 
-Durable rule:
+Never repoint it.
 
-- BOOP does not intentionally censor user-selected wake names or ordinary recognized speech;
-- tap-to-talk and post-wake recognition both request unmasked offensive words;
-- do not add a BOOP-side profanity blacklist or replace a recognized adult word with asterisks;
-- the Android recognizer service ultimately decides whether it honors this request, so physical acceptance is required before promoting v59;
-- if a device still returns stars, investigate the active recognizer service/transcript boundary rather than modifying wake sensitivity, local training, the command bridge or rename parser.
+v59 build landmarks:
 
-## Current signed candidate: v59 uncensored speech
-
-TDD RED:
-
-- commit `b021b28d3f635f884dbc144252834b315712c94b`
-- workflow `34256341474`
-- materialized wake-handoff suite ran 3 tests; exactly the new uncensored-speech contract failed while the two existing seam tests passed.
-
-GREEN / release trail:
-
-- patch `09971b5a734c23134ed1b326aa9cab5036674855`
-- materializer wiring `3b2ebeb66c357b947bec4c793165d3e97a8b994f`
-- intermediate workflow `34256484198` reached 3/3 wake-handoff PASS before being superseded by the version bump
-- v59 bump `0f2fe9d12e473b122938d06d767facc646c65476`
-- first v59-labelled run `34256571189` compiled/tested/signed but failed package verification only because the workflow still expected v58 metadata
-- verifier-only correction `136b56e6faac8ce450b957ac3057a379c68c7b7b` updated expected version fields without changing app behavior.
-
-Final v59 build:
-
-- built code `136b56e6faac8ce450b957ac3057a379c68c7b7b`
 - version 59 / `1.2.13-unified-uncensored-speech`
 - workflow `34257117357` SUCCESS
-- artifact `BOOP-Unified`, ID `10068400476`
-- artifact digest `sha256:f397a85aa4747a51394d0bbc42266658cc6609a355a25b210bd761d8813e023c`
 - APK SHA-256 `7d48cc77407b69428bd2456b80cefbe56cb60f6f8326eb2e3686aa7b22bc7a2e`
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+## Durable listening-eyes rule from v60
+
+Ryan asked for a tiny visual indication that BOOP is actively listening, then explicitly rejected replacement/generated eye artwork. The listening state must therefore reuse the exact approved black-lidded BOOP eye master already in the app. Do not regenerate or substitute a listening-pose image.
+
+v60 listening behavior:
+
+- active only while tap-to-talk ASR or post-wake command ASR is actually listening;
+- ordinary powered/wake-armed waiting is **not** active listening and must not pulse;
+- use a gentle vertical runtime scale pulse in the existing renderer, half-cycle `520 ms`, scale `1.025` to `1.060`;
+- use the static maximum attentive pose if Android animations are disabled;
+- stop on recognition result/error/cancel, idle/sleep, thinking, Activity pause or destroy;
+- preserve the existing `listening` gate that blocks idle blink while command ASR owns the interaction;
+- the old static alpha-dim recognizer cue is not the listening indicator in v60.
+
+Visual boundaries:
+
+- approved PNG bytes remain untouched;
+- iris-only hue behavior remains unchanged;
+- approved geometry, black lids and blink timing/gates remain unchanged;
+- listening feedback is a runtime renderer state only.
+
+No wake detector, learned matcher, five-sample training, microphone ownership, exact 100 ms bridge, command window, powered wake/recovery, diagnostics, HA routing, TTS, Launcher, Shield behavior, package or signer is intentionally changed by v60.
+
+### v60 TDD / release trail
+
+RED:
+
+- commit `5e2e0160994d44804f33a06faef3bd668d8a57d4`
+- workflow `34258998143`
+- new listening lifecycle test failed exactly because `BoopListeningCueState` did not exist.
+
+GREEN/review:
+
+- code-green commit `921e221e608e900537bb6d6c5797fc1cab7ee5ad`
+- workflow `34259741946` passed materialization, lint, focused tests, signing, assembly, verification and upload
+- materializer idempotency review at `490eb26b286c33e29e4d4a2e1ca497379bec4c61`, no runtime behavior change.
+
+Final v60 build:
+
+- built code `47e2edb1cd4415d8716a108cfc0f0cf7fb82de8a`
+- version 60 / `1.2.14-unified-listening-eyes`
+- workflow `34260135850` SUCCESS
+- artifact `BOOP-Unified`, ID `10069626604`
+- artifact digest `sha256:533672bee255644d6db50a60d0bc1dfe8d46b1184f46d9a2e6504b25197ac3a0`
+- APK SHA-256 `4478be2d4b684ff2688fea5ae662a205bcce0ce5da1e25f162b4ef7ed411d1c6`
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- materialized wake-handoff contracts 3/3 PASS
-- Shield focused tests 58/58; unified focused tests 92/92; zero failures/errors/skips
+- wake-handoff contracts 3/3 PASS
+- Shield focused tests 58/58; unified focused tests 93/93; zero failures/errors/skips
 - Launcher lint, signed assembly, package/version, manifest, signer, APK integrity and artifact upload PASS.
 
-CI/signer green only. Required physical test: install over v58, voice-rename to an adult/profane wake name, verify the five-sample prompt contains the actual word rather than stars, finish training, use the new name with a normal HA command, and confirm permanent BOOP still works naturally.
+v60 is CI/signer green but **not yet visually accepted**. Do not create a v60 rollback checkpoint until Ryan confirms the real Pixel appearance and lifecycle. If he wants the pulse tuned, modify only the listening pose parameters unless new physical evidence identifies a different defect.
 
-Detailed receipt: `docs/BOOP-V59-UNCENSORED-SPEECH-RECEIPT.md`.
+Detailed receipt: `docs/BOOP-V60-LISTENING-EYES-RECEIPT.md`.
 
 ## Historical wake landmarks retained
 
 The older exact v48 wake-arm rollback remains protected at `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint it.
 
-Wake progression: v51 natural prefix stripping; v53 persistent ASR evidence; v54 full-pre-roll repair; v55 any-external-power wake, silent real re-arm and pull-only diagnostics; v56 silent wake seam + exact 100 ms bridge; v57 streaming learned names; v58 default BOOP zero trailing blank; v59 unmasked Android recognition request.
+Wake progression: v51 natural prefix stripping; v53 persistent ASR evidence; v54 full-pre-roll repair; v55 any-external-power wake, silent real re-arm and pull-only diagnostics; v56 silent wake seam + exact 100 ms bridge; v57 streaming learned names; v58 default BOOP zero trailing blank; v59 uncensored recognizer request; v60 exact-approved-eye active-listening visual state.
 
 ## Clean Shield HOME boundary
 
