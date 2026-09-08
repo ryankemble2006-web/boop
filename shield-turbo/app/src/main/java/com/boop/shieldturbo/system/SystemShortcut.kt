@@ -2,6 +2,7 @@ package com.boop.shieldturbo.system
 
 enum class SystemShortcut(private vararg val routeActions: String) {
     DISPLAY_SOUND(
+        "android.settings.SETTINGS",
         "android.settings.DISPLAY_SETTINGS",
         "android.settings.SOUND_SETTINGS"
     ),
