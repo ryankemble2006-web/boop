@@ -22,6 +22,16 @@ class ContractTest(unittest.TestCase):
         self.assertIn('cancel(true)', text)
         self.assertNotIn('FLAG_KEEP_SCREEN_ON', text)
 
+    def test_turbo_results_do_not_trap_dpad_focus(self):
+        text = (SOURCE / 'MainActivity.kt').read_text()
+        self.assertIn('freeSpaceButton.id', text)
+        self.assertNotIn('if (index == cards.lastIndex) card.id else cards[index + 1].id', text)
+
+    def test_app_click_launches_directly_without_package_dialog(self):
+        text = (SOURCE / 'MainActivity.kt').read_text()
+        self.assertIn('actionButton(app.label) { safeStart(AppRoutes.launch(this, app.packageName)) }', text)
+        self.assertNotIn('.setMessage(app.packageName)', text)
+
     def test_usage_access_and_su_files_are_not_privilege_proof(self):
         text = (SOURCE / 'privilege/PrivilegeDetector.kt').read_text()
         self.assertNotIn('PACKAGE_USAGE_STATS', text)
