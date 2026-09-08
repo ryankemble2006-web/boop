@@ -2,36 +2,43 @@
 
 Updated 2026-09-08. Canonical app branch `boop-unified`, package `com.boop.alpha1`, permanent signer unchanged. Fresh main owns shared contracts; this file owns current unified implementation/evidence.
 
-## Current signed v45 candidate
+## Current signed repair candidate
 
-Code commit `6dab12aa3232e821fed52b64e39f65e499b6c574`, versionCode 45 / `1.1.2-unified-assist-repair`. GitHub Actions run `34198363929` completed successfully and uploaded artifact `BOOP-Unified` ID `10044846308`.
+Code commit `949f1085328a3e815d9bc57747425f1f930c48db`, versionCode 45 / `1.1.2-unified-assist-repair`. GitHub Actions run `34201200463` completed successfully and uploaded artifact `BOOP-Unified` ID `10045928699`.
 
-Extracted APK SHA-256: `77fe8d06223bdaa6a07e232baeb2ddb9162845e98e022477be559fb377915a6b`. Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Artifact ZIP digest reported by GitHub: `sha256:ad6a5cf4cb0f4bce1af98fa3deaac201f187c178db6d9388d1df1d2c46d79ade`.
+Extracted APK SHA-256: `217e004f26bca33066e3d2089d2e2bc448c102c332abb25f97cf00122d5ed239`. Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Artifact ZIP digest reported by GitHub: `sha256:393cf5b5f9263afed6566fe6ce8287e4043830e757bbbd112f09484695ce1c32`.
 
-Fresh non-visual verification: 57 Shield focused tests and 64 unified wake/routing/assistant tests, zero failures/errors/skips; non-visual contracts; Launcher lint; compilation; permanent signing; package identity; manifest component presence; APK ZIP integrity. GitHub performed no emulator install/launch, screenshot/golden test, appearance judgement or aesthetic source-string check. Physical Shield/Pixel acceptance remains Ryan-owned.
+Fresh non-visual verification: 58 Shield focused tests and 66 unified wake/routing/assistant tests, zero failures/errors/skips; non-visual contracts; Launcher lint; compilation; permanent signing; package identity; manifest component presence; APK ZIP integrity. GitHub performed no emulator install/launch, screenshot/golden test, appearance judgement or aesthetic source-string check. Physical Shield/Pixel acceptance remains Ryan-owned.
 
-## Repairs included
+## Real-device failures from previous candidate
 
-- Shield scale is idempotent: activity opens derive the target density from the unmodified application baseline instead of repeatedly scaling the current density. This addresses the cumulative shrink source bug without system-wide density changes.
-- Shield presentation materializes the exact locked phone/Wall `boop_eyes.png` and canonical `BoopEyeLayout` / `BoopIdleBlink` helpers. Same 183 ms blink curve and 3-7 second delay. No eye regeneration. Phone iris-only tint, headphones and existing puppetry are untouched.
-- Home Assistant Home uses read-only area/device/entity registry relationships, including device-inherited area membership. Unconfirmed/loose entities fail closed; category/helper/diagnostic plumbing stays out; `RoomDeviceControls` collapses supported entities to one primary control per confirmed physical device. No Favourites and no whole-house fallback.
-- Room changes now tear down previous-room navigation/dashboard/socket/controller state before storing the selected room and rebuilding Home, preventing stale previous-room cards while retaining existing D-pad view/navigation classes.
-- Wake-name lifecycle keeps coordinator-owned reload/re-arm after changes. BOOP remains the permanent fallback and custom wake remains additional. Existing Sherpa stream/recording ownership is preserved; no competing listener was added. Acoustic wake still requires hardware verification.
+Ryan physically tested the prior signed candidate and found:
+- Shield assistant choice UI appeared, but Android did not actually change the selected assistant.
+- Shield Home showed device labels as literal `null`.
+- Pixel/phone had no acoustic wake for BOOP or the custom wake name.
+- The copied eye PNG was opaque/black-backed and produced a visible black border; blink was not visibly working.
 
-## Shield remote microphone button
+These failures supersede the previous candidate's physical-pending status. Do not describe that older APK as working.
 
-Approved official Android assistant route is implemented. On first Shield startup BOOP asks `Use BOOP for the microphone button` or `Keep my current assistant`; the choice is persisted and can be reopened from Shield Settings.
+## Repairs in current candidate
 
-`Use BOOP` requests Android's assistant role through `RoleManager` where available. Android, not BOOP, owns the confirmation/default change. `Keep my current assistant` never silently changes the assistant; if BOOP is already selected it opens Android voice/assistant settings for the user to change explicitly.
-
-The assistant entry is a lightweight `VoiceInteractionService` plus `VoiceInteractionSessionService`. Its session starts BOOP's existing `MainActivity` one-shot voice path via `ACTION_ASSIST`; it does not create another recorder or put microphone capture in the visual overlay. The assist input-device ID is forwarded/logged when Android supplies it. After BOOP's response, the one-shot activity finishes so the voice task can return to the prior app.
-
-No `KEYCODE_ASSIST` fallback was added because there is no real-device evidence yet that Shield firmware delivers that key to BOOP without privileged/ADB tricks. No Google-disable hack, silent permission/default change, Button Mapper dependency or OpenAI API integration was added.
+- Home Assistant JSON `null` values are preserved as null instead of becoming the literal string `"null"`; physical device names now fall back from `name_by_user` to the registry `name` correctly.
+- Wake arming no longer depends on `SpeechRecognizer.checkRecognitionSupport()`, which can return false negatives. On supported Android with an available recognizer, Sherpa is allowed to arm and the existing real recognition start/error path remains the capability authority. Coordinator/controller/Sherpa/audio ownership is unchanged and BOOP fallback remains permanent.
+- The canonical eye RGB artwork is not regenerated or recoloured. Build materialization adds an alpha silhouette to the same locked pixels, producing an actual RGBA PNG for phone/Shield use. The packaged APK was structurally confirmed to contain alpha; visual acceptance remains manual. Canonical `BoopEyeLayout` and `BoopIdleBlink` remain in use.
+- Assistant eligibility now exposes both Android-supported qualification paths: the existing `VoiceInteractionService` integration and an explicit `ACTION_ASSIST` intent filter. Android still owns the user-confirmed default change. No silent default change, Google disable, privileged/ADB hack, second microphone stack or overlay capture was added.
+- Existing idempotent Shield density scaling, room-switch teardown/rebuild, physical-device-only HA filtering, iris-only hue, headphones and puppetry remain unchanged.
 
 ## Physical tests still required
 
-Ryan must verify on Shield: remote mic button actually invokes BOOP; spoken audio actually arrives from THAT REMOTE'S microphone; media/HA command routing works; recording ends after response/cancel/repeated presses; previous-app return; BOOP and custom acoustic wake; exact Shield eyes/blink; repeated-open scale stability; room switching and device-only Home cards. Opening BOOP alone is not mic-button success.
+Ryan must verify on the new candidate:
+- assistant role actually changes when `Use BOOP for the microphone button` is selected, where Shield firmware permits;
+- remote mic button invokes BOOP and speech audio arrives from THAT REMOTE'S microphone;
+- recording ends cleanly on response/cancel/repeat and returns to the prior app where appropriate;
+- BOOP fallback and custom acoustic wake both trigger on the wireless-charging phone;
+- eye border is gone, locked eye appearance remains correct, and blink is visibly present;
+- Home shows real device names instead of `null`, and room switching remains authoritative;
+- repeated Shield activity opens no longer shrink the UI.
 
-If Shield firmware blocks assistant activation or remote-mic routing, record the exact firmware behaviour and user-authorised setup required. Do not substitute the Shield box mic or another microphone and call it working.
+If Shield firmware still refuses the assistant role or remote-mic routing, record that exact firmware behaviour and only user-authorised setup required. Do not substitute another microphone and call it working.
 
-Protected physical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. Earlier v44 evidence remains in Git history. No automatic user-device installation, grants, Windows sync or unattended monitoring is claimed.
+Protected physical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. No automatic user-device installation, grants, Windows sync or unattended monitoring is claimed.
