@@ -32,6 +32,10 @@ import com.boop.shieldturbo.model.ProbeResult
 import com.boop.shieldturbo.model.ProbeStatus
 import com.boop.shieldturbo.performance.CompactAnalysisReport
 import com.boop.shieldturbo.performance.PerformanceCapabilityProbe
+import com.boop.shieldturbo.performance.ProcessorModeTrace
+import com.boop.shieldturbo.performance.ProcessorModeTraceProbe
+import com.boop.shieldturbo.performance.ProcessorModeTraceReport
+import com.boop.shieldturbo.performance.ProcessorModeTraceStore
 import com.boop.shieldturbo.picture.DisplayFacts
 import com.boop.shieldturbo.privilege.PrivilegeDetector
 import com.boop.shieldturbo.privilege.PrivilegeTier
@@ -47,6 +51,7 @@ class MainActivity : Activity() {
     private val worker = Executors.newSingleThreadExecutor()
     private val ui = Handler(Looper.getMainLooper())
     private var scan: Future<*>? = null
+    private var trace: Future<*>? = null
     private var generation = 0
     private var visible = false
     private var scanning = false
@@ -60,6 +65,7 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var analyseButton: Button
     private lateinit var accessButton: Button
+    private lateinit var processorTraceButton: Button
     private lateinit var freeSpaceButton: Button
     private lateinit var manageAppsButton: Button
     private lateinit var restartButton: Button
@@ -83,6 +89,7 @@ class MainActivity : Activity() {
     override fun onStop() {
         visible = false
         cancelScan()
+        cancelTrace()
         ui.removeCallbacksAndMessages(null)
         details?.dismiss()
         details = null
@@ -101,6 +108,7 @@ class MainActivity : Activity() {
     override fun onBackPressed() {
         if (currentSection != null) {
             cancelScan()
+            cancelTrace()
             showHome()
         } else {
             super.onBackPressed()
@@ -116,6 +124,12 @@ class MainActivity : Activity() {
             if (::status.isInitialized) status.setText(R.string.scan_paused)
             if (::analyseButton.isInitialized) analyseButton.setText(R.string.analyse)
         }
+    }
+
+    private fun cancelTrace() {
+        trace?.cancel(true)
+        trace = null
+        if (::processorTraceButton.isInitialized) processorTraceButton.setText(R.string.processor_trace)
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
@@ -248,6 +262,15 @@ class MainActivity : Activity() {
         controls.addView(accessButton, LinearLayout.LayoutParams(0, dp(56), 1f).apply { marginStart = dp(12) })
         content.addView(controls, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(4) })
 
+        processorTraceButton = button(R.string.processor_trace).apply {
+            id = View.generateViewId()
+            setOnClickListener { showProcessorTracePrompt() }
+        }
+        content.addView(
+            processorTraceButton,
+            LinearLayout.LayoutParams(-1, dp(52)).apply { bottomMargin = dp(4) }
+        )
+
         status = text(getString(R.string.ready), 15f, Color.LTGRAY).apply {
             id = R.id.analysis_status
             accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
@@ -288,6 +311,14 @@ class MainActivity : Activity() {
         maintenance.addView(manageAppsButton, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
         maintenance.addView(restartButton, LinearLayout.LayoutParams(0, dp(54), 1f).apply { marginStart = dp(10) })
         content.addView(maintenance, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
+
+        analyseButton.nextFocusDownId = processorTraceButton.id
+        accessButton.nextFocusDownId = processorTraceButton.id
+        processorTraceButton.nextFocusUpId = analyseButton.id
+        processorTraceButton.nextFocusDownId = freeSpaceButton.id
+        freeSpaceButton.nextFocusUpId = processorTraceButton.id
+        manageAppsButton.nextFocusUpId = processorTraceButton.id
+        restartButton.nextFocusUpId = processorTraceButton.id
 
         analyseButton.requestFocus()
         analyse()
@@ -466,6 +497,144 @@ class MainActivity : Activity() {
         )
     }
 
+    private fun showProcessorTracePrompt() {
+        if (trace?.isDone == false || !visible || currentSection != TurboSection.TURBO) return
+        val hasBaseline = ProcessorModeTraceStore(applicationContext).loadOptimized() != null
+        details?.dismiss()
+        details = AlertDialog.Builder(this)
+            .setTitle(R.string.processor_trace_title)
+            .setMessage(if (hasBaseline) R.string.processor_trace_second else R.string.processor_trace_first)
+            .setNegativeButton(R.string.close, null)
+            .apply {
+                if (hasBaseline) {
+                    setNeutralButton(R.string.recapture_optimized) { _, _ -> captureProcessorBaseline() }
+                    setPositiveButton(R.string.capture_max) { _, _ -> captureProcessorMax() }
+                } else {
+                    setPositiveButton(R.string.capture_optimized) { _, _ -> captureProcessorBaseline() }
+                }
+            }
+            .show()
+    }
+
+    private fun captureProcessorBaseline() {
+        if (trace?.isDone == false || !visible || currentSection != TurboSection.TURBO) return
+        processorTraceButton.setText(R.string.processor_trace_busy)
+        trace = worker.submit {
+            try {
+                val context = applicationContext
+                val snapshot = ProcessorModeTraceProbe(context).capture()
+                check(ProcessorModeTraceStore(context).saveOptimized(snapshot)) {
+                    getString(R.string.processor_trace_failed)
+                }
+                ui.post {
+                    if (visible && !isDestroyed && currentSection == TurboSection.TURBO) {
+                        trace = null
+                        processorTraceButton.setText(R.string.processor_trace)
+                        details?.dismiss()
+                        details = AlertDialog.Builder(this@MainActivity)
+                            .setTitle(R.string.processor_trace_title)
+                            .setMessage(R.string.processor_trace_saved)
+                            .setPositiveButton(R.string.close, null)
+                            .show()
+                    }
+                }
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            } catch (_: Exception) {
+                ui.post { showProcessorTraceFailure() }
+            }
+        }
+    }
+
+    private fun captureProcessorMax() {
+        if (trace?.isDone == false || !visible || currentSection != TurboSection.TURBO) return
+        val before = ProcessorModeTraceStore(applicationContext).loadOptimized()
+        if (before == null) {
+            showProcessorTracePrompt()
+            return
+        }
+        processorTraceButton.setText(R.string.processor_trace_busy)
+        trace = worker.submit {
+            try {
+                val after = ProcessorModeTraceProbe(applicationContext).capture()
+                val changes = ProcessorModeTrace.diff(before, after)
+                val report = ProcessorModeTraceReport.format(changes)
+                ui.post {
+                    if (visible && !isDestroyed && currentSection == TurboSection.TURBO) {
+                        trace = null
+                        processorTraceButton.setText(R.string.processor_trace)
+                        showProcessorTraceReport(report)
+                    }
+                }
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            } catch (_: Exception) {
+                ui.post { showProcessorTraceFailure() }
+            }
+        }
+    }
+
+    private fun showProcessorTraceFailure() {
+        trace = null
+        if (::processorTraceButton.isInitialized) processorTraceButton.setText(R.string.processor_trace)
+        if (!visible || isDestroyed || currentSection != TurboSection.TURBO) return
+        details?.dismiss()
+        details = AlertDialog.Builder(this)
+            .setTitle(R.string.processor_trace_title)
+            .setMessage(R.string.processor_trace_failed)
+            .setPositiveButton(R.string.close, null)
+            .show()
+    }
+
+    private fun showProcessorTraceReport(report: String) {
+        analysisReport?.dismiss()
+        val reportBody = TextView(this).apply {
+            text = report
+            textSize = 9f
+            setTextColor(Color.WHITE)
+            typeface = Typeface.MONOSPACE
+            includeFontPadding = false
+            setLineSpacing(0f, 0.95f)
+            setPadding(0, dp(2), 0, dp(4))
+        }
+        val reportScroll = ScrollView(this).apply {
+            isFillViewport = true
+            isFocusable = true
+            isFocusableInTouchMode = true
+            addView(reportBody, ViewGroup.LayoutParams(-1, -2))
+        }
+        val reportRoot = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.BLACK)
+            setPadding(dp(14), dp(7), dp(14), dp(7))
+            addView(TextView(this@MainActivity).apply {
+                setText(R.string.processor_trace_report_title)
+                textSize = 13f
+                setTextColor(Color.CYAN)
+                setTypeface(typeface, Typeface.BOLD)
+                includeFontPadding = false
+            })
+            addView(TextView(this@MainActivity).apply {
+                setText(R.string.read_only_back_close)
+                textSize = 8f
+                setTextColor(Color.LTGRAY)
+                includeFontPadding = false
+            })
+            addView(reportScroll, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(3) })
+        }
+        val dialog = Dialog(this, android.R.style.Theme_Material_NoActionBar_Fullscreen)
+        dialog.setContentView(reportRoot)
+        dialog.setCancelable(true)
+        dialog.setOnDismissListener {
+            if (analysisReport === dialog) analysisReport = null
+        }
+        dialog.show()
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.black)
+        analysisReport = dialog
+        reportScroll.requestFocus()
+    }
+
     private fun analyse() {
         if (scanning || !visible || currentSection != TurboSection.TURBO) return
         scanning = true
@@ -594,23 +763,24 @@ class MainActivity : Activity() {
             }
         }
         cards.forEachIndexed { index, card ->
-            card.nextFocusUpId = if (index == 0) analyseButton.id else cards[index - 1].id
+            card.nextFocusUpId = if (index == 0) processorTraceButton.id else cards[index - 1].id
             card.nextFocusDownId = if (index == cards.lastIndex) freeSpaceButton.id else cards[index + 1].id
             results.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(4), 0, dp(4)) })
         }
+        analyseButton.nextFocusDownId = processorTraceButton.id
+        accessButton.nextFocusDownId = processorTraceButton.id
+        processorTraceButton.nextFocusUpId = analyseButton.id
         if (cards.isNotEmpty()) {
-            analyseButton.nextFocusDownId = cards.first().id
-            accessButton.nextFocusDownId = cards.first().id
+            processorTraceButton.nextFocusDownId = cards.first().id
             val lastCardId = cards.last().id
             freeSpaceButton.nextFocusUpId = lastCardId
             manageAppsButton.nextFocusUpId = lastCardId
             restartButton.nextFocusUpId = lastCardId
         } else {
-            analyseButton.nextFocusDownId = freeSpaceButton.id
-            accessButton.nextFocusDownId = freeSpaceButton.id
-            freeSpaceButton.nextFocusUpId = analyseButton.id
-            manageAppsButton.nextFocusUpId = analyseButton.id
-            restartButton.nextFocusUpId = analyseButton.id
+            processorTraceButton.nextFocusDownId = freeSpaceButton.id
+            freeSpaceButton.nextFocusUpId = processorTraceButton.id
+            manageAppsButton.nextFocusUpId = processorTraceButton.id
+            restartButton.nextFocusUpId = processorTraceButton.id
         }
         results.addView(text(getString(R.string.no_changes), 14f, Color.LTGRAY))
         val available = readings.count { it.status == ProbeStatus.AVAILABLE }
