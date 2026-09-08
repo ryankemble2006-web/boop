@@ -12,15 +12,9 @@ def replace_once(old: str, new: str, label: str) -> None:
         raise SystemExit(f'{label}: expected one anchor, found {count}')
     text = text.replace(old, new, 1)
 
+# First apply the already-reviewed custom-name integration to the fresh materialized source.
 replace_once('import android.widget.Button;\n', 'import android.widget.Button;\nimport android.widget.EditText;\n', 'EditText import')
-replace_once('    private LinearLayout voiceSettingsOverlay;\n', '''    private LinearLayout voiceSettingsOverlay;
-    private EditText wakeNameInput;
-    private Button wakeNameTrainButton;
-    private TextView wakeNameTrainingStatus;
-    private boolean wakeEnrollmentActive;
-    private boolean wakeEnrollmentPauseOwned;
-    private String pendingWakeEnrollmentName;
-''', 'wake-name fields')
+replace_once('    private LinearLayout voiceSettingsOverlay;\n', '    private LinearLayout voiceSettingsOverlay;\n    private EditText wakeNameInput;\n', 'wake-name field')
 
 replace_once('''        voiceSettingsOverlay.addView(title, titleParams);
 
@@ -43,59 +37,26 @@ replace_once('''        voiceSettingsOverlay.addView(title, titleParams);
         });
         LinearLayout.LayoutParams wakeNameParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(60));
-        wakeNameParams.setMargins(0, dp(4), 0, dp(8));
+        wakeNameParams.setMargins(0, dp(4), 0, dp(22));
         voiceSettingsOverlay.addView(wakeNameInput, wakeNameParams);
 
-        wakeNameTrainButton = new Button(this);
-        wakeNameTrainButton.setText("Train wake name · say it 5 times");
-        wakeNameTrainButton.setTextSize(18f);
-        wakeNameTrainButton.setAllCaps(false);
-        wakeNameTrainButton.setContentDescription("Train custom wake name five times");
-        wakeNameTrainButton.setOnClickListener(view -> {
-            saveWakeNameFromSettings();
-            String selected = BoopWakeNameStore.load(this);
-            if (BoopWakeName.isDefault(selected)) {
-                speak("BOOP is always ready.");
-            } else {
-                promptWakeNameEnrollment(selected);
-            }
-        });
-        LinearLayout.LayoutParams wakeTrainParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, dp(60));
-        voiceSettingsOverlay.addView(wakeNameTrainButton, wakeTrainParams);
-        wakeNameTrainingStatus = voiceSettingLabel(wakeNameTrainingStatusText(), 18f, false);
-        LinearLayout.LayoutParams wakeStatusParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        wakeStatusParams.setMargins(0, dp(4), 0, dp(22));
-        voiceSettingsOverlay.addView(wakeNameTrainingStatus, wakeStatusParams);
-
         TextView pitchLabel = voiceSettingLabel("Pitch", 22f, false);
-''', 'voice wake-name setting and enrolment')
+''', 'voice wake-name setting')
 
 replace_once('''    private void hideVoiceSettings() {
         if (!voiceSettingsOpen) {
             return;
         }
-        saveWakeNameFromSettings();
         if (interactionSurface != null && voiceSettingsOverlay != null) {
 ''', '''    private void hideVoiceSettings() {
         if (!voiceSettingsOpen) {
             return;
         }
-        if (wakeEnrollmentActive) cancelWakeNameEnrollment(false);
         saveWakeNameFromSettings();
         if (interactionSurface != null && voiceSettingsOverlay != null) {
-''', 'cancel wake-name enrolment on settings close')
+''', 'save wake name on settings close')
 
-replace_once('''        voiceSettingsOverlay = null;
-        wakeNameInput = null;
-        voiceSettingsOpen = false;
-''', '''        voiceSettingsOverlay = null;
-        wakeNameInput = null;
-        wakeNameTrainButton = null;
-        wakeNameTrainingStatus = null;
-        voiceSettingsOpen = false;
-''', 'clear wake-name controls')
+replace_once('        voiceSettingsOverlay = null;\n        voiceSettingsOpen = false;\n', '        voiceSettingsOverlay = null;\n        wakeNameInput = null;\n        voiceSettingsOpen = false;\n', 'clear wake-name field')
 
 replace_once('''        if (wakeWordController != null) {
             wakeWordController.reloadSensitivity();
@@ -135,7 +96,10 @@ replace_once('''            @Override public void suspendAll() {
             @Override public void shutdown() {
 ''', 'wake coordinator reload port')
 
-replace_once('''    private void saveWakeNameFromSettings() {
+replace_once('''    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+''', '''    private void saveWakeNameFromSettings() {
         if (wakeNameInput == null) return;
         applyWakeName(wakeNameInput.getText() == null ? null : wakeNameInput.getText().toString(), false);
     }
@@ -155,17 +119,104 @@ replace_once('''    private void saveWakeNameFromSettings() {
     }
 
     private int dp(int value) {
-''', '''    private void saveWakeNameFromSettings() {
-        if (wakeNameInput == null) return;
-        applyWakeName(wakeNameInput.getText() == null ? null : wakeNameInput.getText().toString(), false);
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+''', 'wake-name helpers')
+
+replace_once('''    private void handleRecognizedSpeech(String transcript) {
+        BoopMirrorIntent.Action mirrorAction = BoopMirrorIntent.actionFor(transcript);
+''', '''    private void handleRecognizedSpeech(String transcript) {
+        BoopWakeNameIntent.Result wakeNameChange = BoopWakeNameIntent.parse(transcript);
+        if (wakeNameChange.action() == BoopWakeNameIntent.Action.SET
+                || wakeNameChange.action() == BoopWakeNameIntent.Action.RESET) {
+            applyWakeName(wakeNameChange.name(), true);
+            return;
+        }
+
+        BoopMirrorIntent.Action mirrorAction = BoopMirrorIntent.actionFor(transcript);
+''', 'verbal wake-name routing')
+
+replace_once(
+    'BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best);',
+    'BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best, BoopWakeNameStore.load(this));',
+    'custom call prefix before command routing')
+
+# Now extend that known-good custom-name materialization with five-sample local enrolment.
+replace_once('    private EditText wakeNameInput;\n', '''    private EditText wakeNameInput;
+    private Button wakeNameTrainButton;
+    private TextView wakeNameTrainingStatus;
+    private boolean wakeEnrollmentActive;
+    private boolean wakeEnrollmentPauseOwned;
+    private String pendingWakeEnrollmentName;
+''', 'wake enrolment fields')
+
+replace_once('''        wakeNameParams.setMargins(0, dp(4), 0, dp(22));
+        voiceSettingsOverlay.addView(wakeNameInput, wakeNameParams);
+
+        TextView pitchLabel = voiceSettingLabel("Pitch", 22f, false);
+''', '''        wakeNameParams.setMargins(0, dp(4), 0, dp(8));
+        voiceSettingsOverlay.addView(wakeNameInput, wakeNameParams);
+
+        wakeNameTrainButton = new Button(this);
+        wakeNameTrainButton.setText("Train wake name · say it 5 times");
+        wakeNameTrainButton.setTextSize(18f);
+        wakeNameTrainButton.setAllCaps(false);
+        wakeNameTrainButton.setContentDescription("Train custom wake name five times");
+        wakeNameTrainButton.setOnClickListener(view -> {
+            saveWakeNameFromSettings();
+            String selected = BoopWakeNameStore.load(this);
+            if (BoopWakeName.isDefault(selected)) speak("BOOP is always ready.");
+            else promptWakeNameEnrollment(selected);
+        });
+        LinearLayout.LayoutParams wakeTrainParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(60));
+        voiceSettingsOverlay.addView(wakeNameTrainButton, wakeTrainParams);
+        wakeNameTrainingStatus = voiceSettingLabel(wakeNameTrainingStatusText(), 18f, false);
+        LinearLayout.LayoutParams wakeStatusParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        wakeStatusParams.setMargins(0, dp(4), 0, dp(22));
+        voiceSettingsOverlay.addView(wakeNameTrainingStatus, wakeStatusParams);
+
+        TextView pitchLabel = voiceSettingLabel("Pitch", 22f, false);
+''', 'wake enrolment controls')
+
+replace_once('''        saveWakeNameFromSettings();
+        if (interactionSurface != null && voiceSettingsOverlay != null) {
+''', '''        if (wakeEnrollmentActive) cancelWakeNameEnrollment(false);
+        saveWakeNameFromSettings();
+        if (interactionSurface != null && voiceSettingsOverlay != null) {
+''', 'cancel wake enrolment on settings close')
+
+replace_once('''        voiceSettingsOverlay = null;
+        wakeNameInput = null;
+        voiceSettingsOpen = false;
+''', '''        voiceSettingsOverlay = null;
+        wakeNameInput = null;
+        wakeNameTrainButton = null;
+        wakeNameTrainingStatus = null;
+        voiceSettingsOpen = false;
+''', 'clear wake enrolment controls')
+
+replace_once('''    private void applyWakeName(String requestedName, boolean confirmByVoice) {
+        String before = BoopWakeNameStore.load(this);
+        String saved = BoopWakeNameStore.save(this, requestedName);
+        if (!before.equals(saved)) {
+            if (wakeCoordinator != null) wakeCoordinator.reloadEngine();
+            else if (wakeWordController != null) wakeWordController.reloadSensitivity();
+        }
+        if (wakeNameInput != null && !saved.contentEquals(wakeNameInput.getText())) {
+            wakeNameInput.setText(saved);
+            wakeNameInput.setSelection(saved.length());
+        }
+        if (confirmByVoice) speak(saved + ". Got it.");
     }
 
-    private void applyWakeName(String requestedName, boolean confirmByVoice) {
+    private int dp(int value) {
+''', '''    private void applyWakeName(String requestedName, boolean confirmByVoice) {
         String before = BoopWakeNameStore.load(this);
         String saved = BoopWakeNameStore.save(this, requestedName);
         boolean changed = !before.equals(saved);
         if (changed) {
-            // A pronunciation profile belongs only to the name it was trained for.
             BoopWakeEnrollmentStore.clear(this);
             if (wakeCoordinator != null) wakeCoordinator.reloadEngine();
             else if (wakeWordController != null) wakeWordController.reloadSensitivity();
@@ -176,11 +227,8 @@ replace_once('''    private void saveWakeNameFromSettings() {
         }
         updateWakeNameTrainingUi();
         if (!confirmByVoice) return;
-        if (BoopWakeName.isDefault(saved)) {
-            speak("BOOP. Got it.");
-        } else {
-            promptWakeNameEnrollment(saved);
-        }
+        if (BoopWakeName.isDefault(saved)) speak("BOOP. Got it.");
+        else promptWakeNameEnrollment(saved);
     }
 
     private String wakeNameTrainingStatusText() {
@@ -234,18 +282,15 @@ replace_once('''    private void saveWakeNameFromSettings() {
             @Override public void onEnrollmentProgress(String name, int accepted, int required) {
                 if (wakeNameTrainingStatus != null) wakeNameTrainingStatus.setText(name + " · " + accepted + " / " + required);
             }
-
             @Override public void onEnrollmentRetry(String name, int accepted, int required) {
                 if (wakeNameTrainingStatus != null) wakeNameTrainingStatus.setText("Again please · " + accepted + " / " + required);
             }
-
             @Override public void onEnrollmentComplete(String name) {
                 wakeEnrollmentActive = false;
                 finishWakeNameEnrollmentPause();
                 updateWakeNameTrainingUi();
                 speak(name + ". Got it.");
             }
-
             @Override public void onEnrollmentFailure(String message) {
                 wakeEnrollmentActive = false;
                 finishWakeNameEnrollmentPause();
@@ -280,25 +325,7 @@ replace_once('''    private void saveWakeNameFromSettings() {
     }
 
     private int dp(int value) {
-''', 'wake-name save/enrolment helpers')
-
-replace_once('''    private void handleRecognizedSpeech(String transcript) {
-        BoopMirrorIntent.Action mirrorAction = BoopMirrorIntent.actionFor(transcript);
-''', '''    private void handleRecognizedSpeech(String transcript) {
-        BoopWakeNameIntent.Result wakeNameChange = BoopWakeNameIntent.parse(transcript);
-        if (wakeNameChange.action() == BoopWakeNameIntent.Action.SET
-                || wakeNameChange.action() == BoopWakeNameIntent.Action.RESET) {
-            applyWakeName(wakeNameChange.name(), true);
-            return;
-        }
-
-        BoopMirrorIntent.Action mirrorAction = BoopMirrorIntent.actionFor(transcript);
-''', 'verbal wake-name routing')
-
-replace_once(
-    'BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best);',
-    'BoopWakeTranscriptNormalizer.stripLeadingWakeWord(best, BoopWakeNameStore.load(this));',
-    'custom call prefix before command routing')
+''', 'wake enrolment helpers')
 
 main.write_text(text, encoding='utf-8')
 
