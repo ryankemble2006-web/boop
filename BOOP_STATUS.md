@@ -8,35 +8,31 @@ Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
 - Physically accepted Apps drawer: 0.9 floating square icons
 - Physically-good HOME geometry/chrome: 0.9.4
 - 0.9.5 stronger focus pop remains a physical visual candidate
-- Current functional candidate: version 16 / `0.10.1-media-access-route`
-- Build head: `df4445e6a0c6488355002d5ed99ebfb88ca4e9c1`
-- Workflow: `34278312090` SUCCESS
-- Artifact ID: `10076663643`
-- APK SHA-256: `1f8f9f82871ca80f6e5496a3047068171042edfdc3502f829faa3ebc2fe31ff5`
-- Artifact ZIP SHA-256: `7c54e96b4d9ca5de4e6690f68cccff87b4ee70499631467aa52f02986bb8d9a3`
+- 0.10.1 Notification Access route: **physical FAIL**
+- Current candidate: version 17 / `0.10.2-accessibility-media`
+- Build head: `6f72deafad2c050f8b3f6e283b3b65f45a7cf230`
+- Workflow: `34280253602` SUCCESS
+- Artifact ID: `10077375611`
+- APK SHA-256: `9be4f47ca4f20307ca51d5d93d810a9f7f843efde633edb3256f859602d60923`
+- Artifact ZIP SHA-256: `2059dc47b5abd41351fc3c97eba64e068001b4b5c28abf527d84dca7b75d383b`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- CI/signer/package green; physical verification of the corrected Settings destination is pending Ryan
+- CI/signer/package green; real-Shield Accessibility media delivery is pending Ryan
 
-## 0.10.1 scoped fix
+## 0.10.2 change
 
-Physical 0.10.0 report: **Media access: OFF opened general Shield Settings instead of Notification Access.**
+The Shield no longer needs a separate Notification Access setup for the intended Now Playing path.
 
-Root cause: API 30+ attempted the per-listener `DETAIL` Settings action before Android TV's generic Notification Listener settings action. Shield accepted the detail intent into the wrong Settings surface, preventing the TV route from being tried.
+- Existing BOOP Home Override Accessibility keeps its protected Home-window behavior.
+- It now also receives notification-state events.
+- BOOP extracts only `Notification.EXTRA_MEDIA_SESSION` when it contains a `MediaSession.Token`.
+- Notification text/content/actions are not read or stored; `canRetrieveWindowContent=false` remains.
+- The token feeds the existing `MediaController` Now Playing path for metadata, artwork, playback state and transport controls.
+- Launcher Settings `Media access` now follows the already-enabled BOOP Home Override Accessibility service and opens Accessibility settings.
+- The Notification Listener service remains only as an optional compatibility fallback, not the intended Shield setup route.
 
-Fix:
+TDD RED `62af0ecea0e787b767025ca25f06ad5e678f6c57` failed on the intentionally missing accessibility event policy. Final run `34280253602` passed focused functional tests, signed build, exact code17/version/package checks, HOME/Accessibility and Now Playing manifest/resource checks, permanent signer verification, archive integrity and artifact upload.
 
-- modern route order is now `GENERIC, DETAIL`;
-- older Android remains `GENERIC` only;
-- no UI/layout/artwork/animation source changed;
-- no HOME override, launcher visuals, permissions or media-session behavior changed.
-
-TDD:
-
-- RED `65385a8078d8a734b7556514091077e4eeaed566`: 79 tests, exactly 1 failure, the new generic-first route assertion.
-- GREEN production fix `5c549474c9f87400a5a55a94eecb7a6288ff27dd`.
-- Final run `34278312090`: all 79 focused tests passed, signed build passed, exact code16/version/package passed, protected HOME/Accessibility and Now Playing manifest/resource checks passed, permanent signer passed, APK archive integrity passed and artifact uploaded.
-
-No GitHub screenshot/golden/appearance/layout/animation acceptance was run. Visual acceptance remains Ryan's real-device call.
+No GitHub screenshot/golden/appearance/layout/animation acceptance was run. The downloaded APK independently matched the CI SHA exactly.
 
 ## Locked behavior
 
@@ -56,6 +52,6 @@ Preserve:
 
 ## Next gate
 
-Install/update 0.10.1 and check only the reported fault first: Launcher Settings -> **Media access: OFF** should land on Android TV Notification Access / Notification Listener special access, not general Shield Settings. Enable BOOP there and confirm the launcher reports `Media access: ON` on return.
+Install/update 0.10.2. With BOOP Home Override already ON, Launcher Settings should report **Media access: ON** without separate Notification Access. Start Deezer, return HOME and test Now Playing. Recheck single Home and double Home. Real Shield behavior is the authority.
 
-Continue the wider 0.10 Now Playing physical tests after that. Do not merge into unified until Ryan explicitly approves the standalone behavior.
+Do not merge into unified until Ryan explicitly approves the standalone behavior.
