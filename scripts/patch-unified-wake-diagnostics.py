@@ -31,11 +31,10 @@ def apply() -> None:
         '    private BoopWakeDiagnosticTrace wakeDiagnosticTrace;\n',
         'diagnostic trace field')
 
+    # patch-wake-partial-fallback.py has already inserted its accumulator reset
+    # immediately after this line, so anchor only on the stable session assignment.
     replace_once(
-        '''        wakeAudioSession = session;
-        recognitionMode = RecognitionMode.WAKE;
-        listening = true;
-''',
+        '        wakeAudioSession = session;\n',
         '''        final BoopWakeDiagnosticTrace diagnosticTrace =
                 new BoopWakeDiagnosticTrace(SystemClock.elapsedRealtime());
         wakeDiagnosticTrace = diagnosticTrace;
@@ -47,8 +46,6 @@ def apply() -> None:
             }, 4_500L);
         }
         wakeAudioSession = session;
-        recognitionMode = RecognitionMode.WAKE;
-        listening = true;
 ''',
         'wake recognition diagnostic start')
 
@@ -68,8 +65,7 @@ def apply() -> None:
         'wake recognition start failure diagnostic')
 
     replace_once(
-        '''    private void stopListening() {
-''',
+        '    private void stopListening() {\n',
         '''    private void showWakeDiagnostic(BoopWakeDiagnosticTrace trace, boolean terminal) {
         if (trace == null) return;
         Toast.makeText(this, trace.summary(SystemClock.elapsedRealtime()), Toast.LENGTH_LONG).show();
@@ -127,16 +123,15 @@ def apply() -> None:
 ''',
         'error callback trace capture')
 
+    # The partial-fallback materializer inserts its accumulator reset inside this
+    # branch. Add diagnostics at the branch entrance and leave that behavior intact.
     replace_once(
-        '''        if (failedMode == RecognitionMode.WAKE) {
-            closeWakeAudioSession();
-''',
+        '        if (failedMode == RecognitionMode.WAKE) {\n',
         '''        if (failedMode == RecognitionMode.WAKE) {
             if (failedWakeTrace != null) {
                 failedWakeTrace.error(error, SystemClock.elapsedRealtime());
                 showWakeDiagnostic(failedWakeTrace, true);
             }
-            closeWakeAudioSession();
 ''',
         'wake error diagnostic')
 
@@ -150,35 +145,42 @@ def apply() -> None:
 ''',
         'result callback trace capture')
 
+    # Capture the effective final transcript after the existing partial fallback
+    # has promoted a useful partial, if Android's final result is empty.
     replace_once(
         '''        if (completedMode == RecognitionMode.WAKE) {
-            closeWakeAudioSession();
+            best = wakeTranscriptAccumulator.chooseFinal(best);
+            wakeTranscriptAccumulator.reset();
 ''',
         '''        if (completedMode == RecognitionMode.WAKE) {
+            best = wakeTranscriptAccumulator.chooseFinal(best);
+            wakeTranscriptAccumulator.reset();
             if (completedWakeTrace != null) {
                 completedWakeTrace.result(best, SystemClock.elapsedRealtime());
                 showWakeDiagnostic(completedWakeTrace, true);
             }
-            closeWakeAudioSession();
 ''',
         'wake final result diagnostic')
 
+    # The partial fallback already handles WAKE and returns. Record the same raw
+    # first partial before that branch, then let the existing accumulator own routing.
     replace_once(
         '''    public void onPartialResults(Bundle partialResults) {
-        if (!assistantFollowUpListening || recognitionMode != RecognitionMode.TAP) {
 ''',
         '''    public void onPartialResults(Bundle partialResults) {
-        if (recognitionMode == RecognitionMode.WAKE && wakeDiagnosticTrace != null) {
-            ArrayList<String> wakeMatches = partialResults.getStringArrayList(
+        if (recognitionMode == RecognitionMode.WAKE
+                && wakeDiagnosticTrace != null
+                && partialResults != null) {
+            ArrayList<String> diagnosticMatches = partialResults.getStringArrayList(
                     SpeechRecognizer.RESULTS_RECOGNITION);
-            if (wakeMatches != null && !wakeMatches.isEmpty()) {
-                String wakeCandidate = wakeMatches.get(0);
-                if (wakeCandidate != null && !wakeCandidate.isBlank()) {
-                    wakeDiagnosticTrace.partial(wakeCandidate, SystemClock.elapsedRealtime());
+            if (diagnosticMatches != null && !diagnosticMatches.isEmpty()) {
+                String diagnosticCandidate = diagnosticMatches.get(0);
+                if (diagnosticCandidate != null && !diagnosticCandidate.isBlank()) {
+                    wakeDiagnosticTrace.partial(
+                            diagnosticCandidate, SystemClock.elapsedRealtime());
                 }
             }
         }
-        if (!assistantFollowUpListening || recognitionMode != RecognitionMode.TAP) {
 ''',
         'wake partial result diagnostic')
 
