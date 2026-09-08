@@ -14,20 +14,37 @@ class LocalBridge(private val context: Context) {
 
     fun resetCancellation() { cancelled = false }
     fun cancel() { cancelled = true; runCatching { active?.close() } }
-    fun <T> withAdb(approval: () -> Unit = {}, operation: (AdbWire) -> T): T {
+
+    fun <T> withAdb(approval: () -> Unit = {}, operation: (AdbWire) -> T): T =
+        withAdbInternal(allowNewApproval = true, approval = approval, operation = operation)
+
+    /** Background/boot use only: the saved key must already exist and already be trusted. */
+    fun <T> withTrustedAdb(operation: (AdbWire) -> T): T =
+        withAdbInternal(allowNewApproval = false, approval = {}, operation = operation)
+
+    private fun <T> withAdbInternal(
+        allowNewApproval: Boolean,
+        approval: () -> Unit,
+        operation: (AdbWire) -> T
+    ): T {
         if (cancelled || Thread.currentThread().isInterrupted) throw IOException("Cancelled")
-        val identity = AdbWire.identity(File(context.noBackupFilesDir, "turbo-local-adb.key"))
+        val identityFile = File(context.noBackupFilesDir, "turbo-local-adb.key")
+        if (!allowNewApproval && !identityFile.exists()) {
+            throw AdbWire.AdbApprovalRequiredException("ADB TURBO has not been authorised interactively yet")
+        }
+        val identity = AdbWire.identity(identityFile)
         AdbWire().use { adb ->
             active = adb
             try {
                 if (cancelled || Thread.currentThread().isInterrupted) throw IOException("Cancelled")
-                adb.connect(5555, identity, 45000, Runnable { approval() })
+                adb.connect(5555, identity, 45000, Runnable { approval() }, allowNewApproval)
                 val uid = checked(adb, "id -u").trim()
                 if (uid != "2000" && uid != "0") throw IOException("The local connection is not an ADB shell")
                 return operation(adb)
             } finally { active = null }
         }
     }
+
     fun checked(adb: AdbWire, command: String): String {
         val result = adb.execute(command, 20000)
         if (result.exitCode != 0 || result.output.lineSequence().any {
