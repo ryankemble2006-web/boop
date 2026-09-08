@@ -4,21 +4,53 @@ Updated 2026-09-08. Canonical app branch `boop-unified`; package `com.boop.alpha
 
 ## Current unified candidate
 
-The clean Nvidia Shield HOME replacement is implemented in the canonical unified lineage and has a fully green non-visual GitHub build.
+The current signed unified candidate adds local five-sample custom wake-name training on top of the clean Nvidia Shield HOME work.
 
-Candidate code: `e2c938ed0a035913b6fb8499aad1c3b89eb3aaac`.
-Version: 46 / `1.2.0-unified-shield-home`.
-Successful workflow: `34215725283`.
-Artifact: `BOOP-Unified`, ID `10051749294`.
-APK SHA-256: `94f0046a93797606176fdd247c328aa189adb161cb6468346d26f69b8f71cb54`.
+Candidate code: `aad1e20aae1bbd15423a7bf0f307d364039cf506`.
+Version: 47 / `1.2.1-unified-wake-training`.
+Successful workflow: `34216093167`.
+Artifact: `BOOP-Unified`, ID `10051904537`.
+APK SHA-256: `b99a83873a44a5dd3a4ac2fea8e32633db71a14ef38fac8bcc7b6cbf6970b6b2`.
 Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `e3fb91691c0f828edba8469e15677814fb48ce1fc2955693eb793343356e5cd4`.
+Artifact ZIP SHA-256: `12140acd259093ed4c1a48b6a3be169d46635b7e613f08f0afc589de00b1c104`.
 
-Fresh workflow evidence: 5 non-visual integration contracts passed; Launcher lint passed; 58 Shield focused tests, 26 Shield HOME focused tests and 74 unified focused tests all completed with zero failures/errors/skips; signed APK assembly passed; package `com.boop.alpha1`, version, internal `com.boop.shieldhome.ShieldLauncherActivity`, exported `UnifiedEntryActivity`, HOME category, permanent signer and ZIP integrity were verified. No emulator/device launch, screenshots, golden tests or visual acceptance were performed.
+Fresh workflow evidence: 5 non-visual integration contracts passed; Launcher lint passed; 58 Shield focused tests, 26 Shield HOME focused tests and 74 unified focused tests all completed with zero failures/errors/skips; signed APK assembly passed; package `com.boop.alpha1`, version 47 / `1.2.1-unified-wake-training`, internal `com.boop.shieldhome.ShieldLauncherActivity`, exported `UnifiedEntryActivity`, HOME category, permanent signer and APK ZIP integrity were verified. The downloaded artifact ZIP and extracted APK were re-hashed locally and matched the workflow receipt. No emulator/device launch, screenshots, golden tests, visual acceptance or acoustic wake acceptance were performed.
 
-Physical acceptance of this candidate is still pending Ryan's real Shield test.
+Physical acceptance of the custom-name acoustics is still pending Ryan's real Pixel test. Do not describe wake accuracy as fixed until he confirms it on hardware.
 
-## Shield clean HOME behavior
+## Custom wake-name training, implemented in v47
+
+Ryan approved moving arbitrary-name training to the user rather than pretending one generated keyword model fits everybody.
+
+- `BOOP` permanently remains a valid wake name and does not require user training.
+- A custom name is additive, never a replacement for the BOOP fallback.
+- Setting a non-BOOP name verbally or in Voice Settings now prompts the user to say that name five times. Voice Settings also exposes a manual `Train wake name · say it 5 times` action.
+- Training uses the existing `BoopWakeWordController` microphone ownership. It does **not** open a second competing `AudioRecord` or create another background listener.
+- Five spoken examples are segmented from the same 16 kHz PCM stream, trimmed to active speech and converted into amplitude-normalised local pronunciation features. A compact centroid/threshold/duration profile is stored in BOOP preferences; raw PCM enrolment audio is not persisted.
+- An obviously inconsistent training example is rejected and the user is asked to say it again rather than silently poisoning the profile.
+- At runtime Sherpa remains first. The trained local matcher is an additional route for the custom spoken name and fails safely back to the permanent BOOP/Sherpa path if its profile cannot be used.
+- Changing the selected custom name clears the old pronunciation profile because a profile belongs to the name it was trained for.
+- Custom names now receive the same full 33 natural wake forms used by BOOP, including bare name plus `hey`, `ey`, `hi`, `hello`, `yo`, `oi`, `ok`, `okay`, `morning`, `good morning`, `evening`, `good evening`, `wake up`, `come on`, `you there`, `listen`, `excuse me` and established prefix/suffix combinations.
+- Existing post-wake command capture, coordinator reload/re-arm ownership, charging policy and tap-to-talk policy remain intact.
+
+The acoustic profile is intentionally lightweight and local. CI verifies its deterministic feature/profile/codec contracts, not whether a particular human voice in a particular room crosses the right real-world threshold. Tune only from physical evidence.
+
+## Wake-name physical test order
+
+1. Install the normal signed v47 unified APK on the Pixel 7 Pro test body without changing unrelated permissions/settings.
+2. With the phone in its normal continuous-wake condition, choose a custom name such as `Steve`.
+3. Let BOOP prompt for five examples; say the same name naturally five times with a short pause between examples.
+4. Confirm training reports completion and the selected name remains after reopening BOOP.
+5. Try the bare custom name repeatedly from normal listening distance.
+6. Try several established wrappers, especially `Hey Steve`, `Oi Steve`, `Morning Steve`, `Steve wake up`, `Listen Steve` and `Excuse me Steve`.
+7. Confirm plain `BOOP` still wakes BOOP after custom training.
+8. Try ordinary conversation, TV/music and similar-sounding words to watch for false wakes.
+9. Repeat at quieter/louder levels and a little farther away before changing thresholds.
+10. Undock the phone and confirm the existing tap-to-talk policy still wins where continuous wake is intentionally disabled.
+
+Record misses and false wakes separately. Do not tune from one lucky or unlucky utterance.
+
+## Shield clean HOME behavior to preserve
 
 Default Shield HOME is deliberately small and quiet:
 
@@ -51,29 +83,12 @@ If a system shortcut breaks on real hardware, fix that narrow break later rather
 
 ## Other current BOOP state to preserve
 
-The approved paired black-lidded eye master is now materialized into the unified phone/Wall and Shield build path. Preserve the approved eye geometry/alpha, iris-only user hue behavior, existing blink curve/timing/lifecycle gates, headphones/puppetry and five-digit yellow hands. Ryan owns visual acceptance.
+The approved paired black-lidded eye master is materialized into the unified phone/Wall and Shield build path. Preserve the approved eye geometry/alpha, iris-only user hue behavior, existing blink curve/timing/lifecycle gates, headphones/puppetry and five-digit yellow hands. Ryan owns visual acceptance.
 
-HA naming and Home control buttons were physically accepted earlier; preserve that path. Room changes must tear down previous-room state before rebuilding and Shield density scaling must remain idempotent, never cumulative or system-wide.
+Blink is user-confirmed working; do not reopen that defect. HA naming and Home control buttons were physically accepted earlier; preserve that path. Room changes must tear down previous-room state before rebuilding and Shield density scaling must remain idempotent, never cumulative or system-wide.
 
-Custom wake naming now includes the local five-utterance enrolment materialization that landed concurrently before the successful candidate run. Do not infer physical wake acceptance from CI alone.
-
-Assistant selection/remote microphone remains a separate physical boundary. Use supported Android assistant routes only, with no overlay microphone, competing recorder, Google-disable/default hacks, Button Mapper, privileged/ADB ownership or OpenAI API requirement. Success still requires actual remote-button invocation plus audio from THAT remote and clean return behavior.
-
-## Physical test order for the Shield HOME candidate
-
-1. Install the normal signed unified APK without removing the stock launcher.
-2. Explicitly select BOOP as HOME through Android's supported HOME selection flow.
-3. Verify single Home returns reliably to the clean favourites screen.
-4. Immediately verify **double-tap Home still opens Recent Apps/task switcher**.
-5. Verify Back, volume/CEC, system Settings and ordinary app switching remain normal.
-6. Verify default HOME has favourites only, no ad/Shop/Discover space, and smooth local focus/scroll behavior.
-7. Verify favourite launch/add/remove/reorder with the Shield remote.
-8. Toggle optional rows on/off and confirm state survives restart.
-9. Repeatedly return to HOME and confirm no cumulative UI shrinking.
-10. Confirm stock launcher can still be selected again.
-
-CI-green and signed does not equal physical acceptance. Record real-device failures individually and repair only what breaks.
+Assistant selection/remote microphone remains a separate unresolved physical boundary. Use supported Android assistant routes only, with no overlay microphone, competing recorder, Google-disable/default hacks, Button Mapper, privileged/ADB ownership or OpenAI API requirement. Success still requires actual remote-button invocation plus audio from THAT remote and clean return behavior.
 
 ## Protected contracts
 
-Keep package `com.boop.alpha1` and the permanent signer. Keep private photos, credentials, device IPs and raw diagnostics out of this public repository. No automatic installs/grants or claims of Windows synchronization. Protected historical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881` unless Ryan explicitly promotes a newer physically accepted checkpoint.
+Keep package `com.boop.alpha1` and the permanent signer. Keep private photos, credentials, device IPs and raw diagnostics out of this public repository. No automatic installs/grants or claims of Windows synchronization. GitHub performs functional/non-visual verification only; Ryan owns visual, animation, device and acoustic acceptance. Protected historical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881` unless Ryan explicitly promotes a newer physically accepted checkpoint.
