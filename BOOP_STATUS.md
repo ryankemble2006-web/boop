@@ -2,70 +2,58 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v60 listening eyes
+## Current signed candidate: v62 single-layer reading eyes
 
-v60 adds a visual listening state while preserving the exact approved BOOP eye artwork. No new eye image is used.
+v61 made the active-listening cue much more obvious with the exact approved eyes: 1.16x zoom, slightly downward reading gaze, smooth left/right sweep, plus wider iris hue coverage. Physical Pixel testing showed the motion itself was good but exposed a compositing defect: the stationary original iris/pupil remained visible behind the shifted reading patch, creating a double/ghost eye.
 
-Behavior:
+v62 changes only that compositing boundary. While active listening the face is drawn on a temporary layer, the stationary iris aperture is cleared, and a single shifted iris/pupil patch from the same approved bitmap is drawn into it. No replacement eye artwork is used. Wake/audio, HA routing, TTS, blink, package and signer are intentionally unchanged.
 
-- cue starts only when tap-to-talk ASR or post-wake command ASR is actually listening;
-- existing approved black-lidded eyes perform a gentle vertical attentive pulse;
-- half-cycle `520 ms`, vertical scale `1.025` to `1.060`;
-- static maximum attentive pose when Android animations are disabled;
-- cue stops on recognition result/error/cancel, idle/sleep, thinking, Activity pause or destroy;
-- ordinary powered/wake-armed waiting does not pulse;
-- previous static alpha-dim listening cue is removed from active recognizer start/stop paths.
+TDD/release evidence:
 
-No approved bitmap bytes, hue behavior, blink timing/gates, wake/audio path, command routing, TTS, Launcher, Shield, package or signer is intentionally changed.
-
-TDD/build evidence:
-
-- RED commit `5e2e0160994d44804f33a06faef3bd668d8a57d4`, workflow `34258998143`: new listening-state test failed exactly on the missing lifecycle helper.
-- code-green commit `921e221e608e900537bb6d6c5797fc1cab7ee5ad`, workflow `34259741946`: materialization, lint, focused tests, signer/build/verification/upload passed.
-- materializer idempotency review fix `490eb26b286c33e29e4d4a2e1ca497379bec4c61`, no runtime behavior change.
-
-Final v60 receipt:
-
-- built code `47e2edb1cd4415d8716a108cfc0f0cf7fb82de8a`
-- version 60 / `1.2.14-unified-listening-eyes`
-- workflow `34260135850` SUCCESS
-- artifact `BOOP-Unified`, ID `10069626604`
-- artifact digest `sha256:533672bee255644d6db50a60d0bc1dfe8d46b1184f46d9a2e6504b25197ac3a0`
-- APK SHA-256 `4478be2d4b684ff2688fea5ae662a205bcce0ce5da1e25f162b4ef7ed411d1c6`
-- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- wake-handoff contracts 3/3 PASS
-- Shield focused tests 58/58, zero failures/errors/skips
-- unified focused tests 93/93, zero failures/errors/skips
+- RED `7b19f2c81f0fa2a6cb7a3512186298b3bdf4b5e4`, workflow `34265189069`: 97 focused unified tests ran and exactly the new anti-ghost compositing test failed.
+- compositing policy `b54e6fad8dc30e4f90ff13a126038053d8d73881`.
+- renderer `d7e4632ab014b026459fd63d8d9d17a8fd9dc16f`.
+- version bump `55753ff70428a35b7b3f6d9da668b01e358fcb62`.
+- final built code `6877bf3d97d069eda950938060e355da039d53cf`.
+- version 62 / `1.2.16-unified-single-layer-reading-eyes`.
+- workflow `34265615662` SUCCESS.
+- artifact `BOOP-Unified`, ID `10071797863`.
+- artifact digest `sha256:adb58b5eb0373fa1b581dccd625638a6bcaf151477215b57c930197ed52142ef`.
+- APK SHA-256 `5def47113929e6b0aa59b868e5880056607473fb3ba1ff4e54ac3f771bb7bc3b`.
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+- wake-handoff contracts 3/3 PASS.
+- Shield focused tests 58/58, zero failures/errors/skips.
+- unified focused tests 97/97, zero failures/errors/skips.
 - Launcher lint, signed assembly, package/version, manifest, signer, APK integrity and artifact upload PASS.
 
-Detailed receipt: `docs/BOOP-V60-LISTENING-EYES-RECEIPT.md`.
+Detailed receipt: `docs/BOOP-V62-SINGLE-LAYER-READING-EYES-RECEIPT.md`.
 
-CI/signer green. Physical visual acceptance pending.
+CI/signer green. Physical visual acceptance pending. v61 is physically rejected for eye-layer ghosting and is not a rollback checkpoint.
 
-## v59 is physically accepted
+## Required Pixel acceptance
 
-Ryan physically confirmed v59's uncensored speech path on the Pixel. Spoken adult/profane rename no longer becomes asterisks, the five-sample prompt uses the actual recognized word, and local training completes.
+Install v62 over v61 without uninstalling. Confirm active listening from both wake-name command and tap-to-talk shows only one moving pupil/iris per eye, with no stationary ghost underneath. Confirm the reading motion still looks good, the previously missed blue iris portions now follow the selected hue, and natural current-name plus permanent BOOP commands remain operational.
 
-Protected exact v59 rollback:
+Do not create a v62 checkpoint until Ryan physically accepts this exact signed build.
+
+## Physically accepted rollback
+
+v59 remains the latest exact physically accepted rollback for the functional wake/name path:
 
 `checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`
 
-Never repoint it.
+Ryan physically confirmed adult/profane spoken rename, five-sample training and use work without asterisk masking.
 
 v58 natural-wake rollback remains:
 
 `checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
 
-Older wake-arm rollback remains `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint any accepted checkpoint.
-
-## Required Pixel acceptance for v60
-
-Install v60 over v59 without uninstalling. Confirm the same approved eyes visibly pulse only while active listening, both after wake and during tap-to-talk, then return to ordinary eyes before/when BOOP replies. Confirm idle powered wake-armed waiting does not pulse. Reconfirm the current custom name and permanent BOOP still execute natural no-pause HA commands.
-
-Do not create a v60 checkpoint until Ryan accepts the visual on the real Pixel. If tuning is requested, adjust only the listening-pulse parameters and preserve the approved asset plus all accepted wake/audio behavior.
+Older wake-arm rollback remains `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Never repoint accepted checkpoints.
 
 ## Protected AIO state
 
-BOOP remains the permanent fallback wake name; custom names are additive. Any external power allows continuous wake; unplugged phone remains tap-to-talk. Preserve one 16 kHz microphone owner, local five-say profiles, streaming learned-name matching, default BOOP zero-trailing-blank behavior, the exact 100 ms command bridge, silent wake handoff, silent no-match/timeout re-arm, pull-only `show diagnostics`, uncensored recognizer request, HA names/Home controls, locked eye master/hue/blink, headphones/puppetry, five-digit yellow hands, room isolation and Shield scaling.
+BOOP remains the permanent fallback wake name; custom names are additive. Any external power allows continuous wake; unplugged phone remains tap-to-talk. Preserve one 16 kHz microphone owner, local five-say profiles, streaming learned-name matching, default BOOP zero-trailing-blank behavior, exact 100 ms bridge, silent wake handoff, silent no-match/timeout re-arm, pull-only `show diagnostics`, uncensored recognizer request, HA names/Home controls, locked eye master/hue/blink, headphones/puppetry, five-digit yellow hands, room isolation and Shield scaling.
+
+Listening animation must use the existing approved eye bitmap. Do not regenerate listening poses. A moving gaze must replace the stationary iris/pupil aperture instead of stacking a second visible eye layer over it.
 
 The clean Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a later merge. Ryan owns visual/device/acoustic acceptance. No automatic installs/grants or signer/package changes.
