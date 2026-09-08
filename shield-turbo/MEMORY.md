@@ -47,32 +47,55 @@ Durable interpretation:
 - `system:nv_power_mode` is the leading stock actuator candidate;
 - the four `persist.vendor.sys.phs.*` values are downstream NVIDIA evidence and MUST NOT be directly written by SHIELD TURBO.
 
-## v0.5.12 one-shot actuator proof decision
+## v0.5.12 physical FAIL and ADB transport lesson
 
-Current machine-verified candidate is **v0.5.12 / code 19**, exact release source `47ef633c1dde937ea9bd94a8e9a7182272c9b9b2`, run `34266282069`, job `102196408374`.
+The first physical actuator proof on v0.5.12 began from the exact expected Optimized baseline `1 / 0 / 0 / 0 / 15` but both Max and restore verification ended with `Unexpected ADB stream`. The report retained `DIRECT VENDOR WRITES • NONE` and could not verify final Optimized state.
+
+Durable interpretation:
+- do not classify this as NVIDIA rejecting `nv_power_mode`;
+- it was a SHIELD TURBO ADB transport failure before state verification;
+- after any proof whose final restore is not verified, manually put the Shield back on **Optimized** before another test.
+
+Systematic debugging reproduced the physical failure exactly in `AdbWireStreamLifecycleTest`:
+- RED commit `60ea18c70c7f167ba9cab7f4835201f534312cdb`;
+- run `34269551454`, job `102207364057`;
+- 89 JVM tests with exactly one failure, `java.io.IOException: Unexpected ADB stream` in the new lifecycle regression;
+- all 46 source/security contracts remained green.
+
+Root cause: the custom single-connection ADB client treated any stream packet addressed to a stream other than the current one as fatal. Legitimate already-in-flight traffic for an older closed stream can arrive after a later stream starts.
+
+Minimal fix commit `1b632e09706652d2f2802c6ca4bb28963d9e7685`:
+- ignore only `OKAY`, `WRTE` or `CLSE` packets whose positive local stream ID is lower than the current local stream ID;
+- current, future and invalid stream IDs retain strict validation/failure;
+- no NVIDIA proof command, safety allowlist, vendor-property rule, CLEAN START behavior, brightness behavior or permissions changed.
+
+Do not broaden this transport exception without a new reproduced protocol case.
+
+## Current machine candidate
+
+**v0.5.13 / code 20**, exact release source `ca11a45c0db170a9a2031193b9250663c6b5d914`.
 
 Machine evidence:
-- 88 JVM tests, 0 failures/errors/skips;
+- run `34270157522`, job `102209457841`, success;
+- 89 JVM tests, 0 failures/errors/skips, including stale closed-stream regression;
 - 46 source/API/security contracts passed;
 - lint 0 errors / 26 warnings;
-- package/version/signer/archive checks passed;
-- emulator install/cold/warm launch/no-fatal smoke passed;
-- APK SHA-256 `f219eff88054e9776c2b96af985dd68d94ef30ffc1a64a09d7cc4c3aadceb1a8`;
-- signed artifact ID `10072080338`, ZIP SHA-256 `64e4ff80feaea554efa87ab4caeb4ccff8305dd1e9ddefc8e9d566ab79569f59`;
-- test artifact ID `10072132751`, ZIP SHA-256 `d7bec2515be014b7814553e9906356a2b2f0cdde741733cec4fcfc0670914227`.
+- package/version/signer/archive and nonvisual emulator install/cold/warm/no-fatal checks passed;
+- APK SHA-256 `592d012d187d0089b269a48cf5a33065d74d3fd284839995ff6aa4e2662507b0`;
+- APK size `2413118` bytes;
+- signed artifact ID `10073578805`, ZIP SHA-256 `928be6e7bdfccdda47fc6a3c478d49cb597f6cce64623bf143192a9d653d7496`;
+- test artifact ID `10073625187`, ZIP SHA-256 `f7a4e93f385533dbba2c675ffe44502a60c487014e73f8ed3273e49e5a8427f7`.
 
-v0.5.12 exposes `PROVE NVIDIA MAX SWITCH`. It is a bounded one-shot proof, not persistent Turbo:
-- require baseline `1` + downstream `0/0/0/15`;
-- write only `settings put system nv_power_mode 0`;
-- verify `0` + downstream `5/5/5/20`;
-- restore only `settings put system nv_power_mode 1`;
-- verify final `1` + downstream `0/0/0/15`;
-- report exact evidence and `DIRECT VENDOR WRITES • NONE`.
+v0.5.13 is machine verified. Physical actuator proof remains pending.
 
-No `setprop`, vendor-property direct writes, service, receiver, watchdog, boot reapply or persistent Turbo state is permitted in this proof. If baseline mismatches, nothing changes. If Max verification fails, restore is still attempted. A final restore mismatch is a physical FAIL.
+## One-shot actuator proof boundary
 
-Only after Ryan physically gets PASS with final Optimized restoration may `nv_power_mode` enter the persistent TURBO allowlist.
+The proof remains non-persistent and may write only:
+- `settings put system nv_power_mode 0`;
+- `settings put system nv_power_mode 1`.
+
+It must verify downstream values, never write the four `persist.vendor.sys.phs.*` properties, always attempt restore after a Max attempt, and require final Optimized verification for PASS. No `setprop`, watchdog, boot reapply or persistent TURBO state is allowed until the proof passes physically.
 
 ## Next safe decision
 
-Ryan installs v0.5.12, sets Processor Mode to Optimized, runs `PROVE NVIDIA MAX SWITCH`, and returns the proof report. Do not implement persistent TURBO until that real-device evidence is positive.
+Manually confirm Processor Mode is Optimized, install v0.5.13, rerun `PROVE NVIDIA MAX SWITCH`, and return the proof report. Only a physical PASS with verified final Optimized state allows `nv_power_mode` into persistent TURBO.
