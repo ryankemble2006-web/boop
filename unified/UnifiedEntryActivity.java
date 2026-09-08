@@ -6,7 +6,10 @@ import android.os.Bundle;
 
 public final class UnifiedEntryActivity extends Activity {
     private static final int REQ_ASSISTANT_FIRST_RUN = 2400;
+    private static final int REQ_NOTIFICATION_FIRST_RUN = 2402;
+
     private boolean waitingForAssistantChoice;
+    private boolean waitingForNotificationSetup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +27,11 @@ public final class UnifiedEntryActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_NOTIFICATION_FIRST_RUN) {
+            waitingForNotificationSetup = false;
+            route();
+            return;
+        }
         if (requestCode == REQ_ASSISTANT_FIRST_RUN) {
             waitingForAssistantChoice = false;
             route();
@@ -32,6 +40,22 @@ public final class UnifiedEntryActivity extends Activity {
 
     private void route() {
         BoopDeviceProfile.Mode mode = BoopDeviceProfile.resolve(this);
+
+        if (BoopNotificationStartupGate.resolve(
+                mode,
+                BoopNotificationOnboardingState.isSeen(this))
+                == BoopNotificationStartupGate.Target.NOTIFICATION_ONBOARDING) {
+            if (!waitingForNotificationSetup) {
+                waitingForNotificationSetup = true;
+                startActivityForResult(
+                        new Intent().setClassName(
+                                getPackageName(),
+                                "com.boop.alpha1.BoopNotificationOnboardingActivity"),
+                        REQ_NOTIFICATION_FIRST_RUN);
+            }
+            return;
+        }
+
         boolean homeIntent = getIntent() != null
                 && getIntent().hasCategory(Intent.CATEGORY_HOME);
         ShieldEntryRoute.Target destination = ShieldEntryRoute.resolve(mode, homeIntent);
