@@ -8,31 +8,55 @@ Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
 - Physically accepted Apps drawer: 0.9 floating square icons
 - Physically-good HOME geometry/chrome: 0.9.4
 - 0.9.5 stronger focus pop remains a physical visual candidate
-- 0.10.1 Notification Access route: **physical FAIL**
-- Current candidate: version 17 / `0.10.2-accessibility-media`
-- Build head: `6f72deafad2c050f8b3f6e283b3b65f45a7cf230`
-- Workflow: `34280253602` SUCCESS
-- Artifact ID: `10077375611`
-- APK SHA-256: `9be4f47ca4f20307ca51d5d93d810a9f7f843efde633edb3256f859602d60923`
-- Artifact ZIP SHA-256: `2059dc47b5abd41351fc3c97eba64e068001b4b5c28abf527d84dca7b75d383b`
+- v0.10.1 Notification Access routing: physical FAIL
+- v0.10.2 Accessibility media path: physical FAIL
+- Notification Listener access manually enabled on real Shield: **physical PASS, Now Playing appeared immediately**
+- Current candidate: code 18 / `0.10.3-now-playing-layout`
+- Build source: `db7aadc18c872b75da8dfa2713c520c7e39d993b`
+- Workflow: `34284059958` SUCCESS
+- Artifact ID: `10078781887`
+- APK SHA-256: `a5400182fbf9364c0d60ae2b5f7148682e3c5eb78bb4ad6b9f4a0994974f20aa`
+- Artifact ZIP SHA-256: `888231d6633864b50901e6f18461f654b17e6275a0ca22af0f0080ddf6e78edc`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- CI/signer/package green; real-Shield Accessibility media delivery is pending Ryan
+- Functional/build/signer/package green; v0.10.3 visual layout pending Ryan's Shield
 
-## 0.10.2 change
+## Physically proven media path
 
-The Shield no longer needs a separate Notification Access setup for the intended Now Playing path.
+Ryan manually enabled **Shield Settings -> Apps -> Special app access -> Notification access -> BOOP Now Playing**. After HOME refresh the Deezer Now Playing card appeared immediately. That is the authority path.
 
-- Existing BOOP Home Override Accessibility keeps its protected Home-window behavior.
-- It now also receives notification-state events.
-- BOOP extracts only `Notification.EXTRA_MEDIA_SESSION` when it contains a `MediaSession.Token`.
-- Notification text/content/actions are not read or stored; `canRetrieveWindowContent=false` remains.
-- The token feeds the existing `MediaController` Now Playing path for metadata, artwork, playback state and transport controls.
-- Launcher Settings `Media access` now follows the already-enabled BOOP Home Override Accessibility service and opens Accessibility settings.
-- The Notification Listener service remains only as an optional compatibility fallback, not the intended Shield setup route.
+v0.10.3 therefore:
 
-TDD RED `62af0ecea0e787b767025ca25f06ad5e678f6c57` failed on the intentionally missing accessibility event policy. Final run `34280253602` passed focused functional tests, signed build, exact code17/version/package checks, HOME/Accessibility and Now Playing manifest/resource checks, permanent signer verification, archive integrity and artifact upload.
+- makes `Media access` reflect the Notification Listener grant;
+- tries exact Android TV `com.android.tv.settings.privacy.NotificationAccessActivity` first;
+- keeps generic/detail Notification Listener settings as fallbacks;
+- returns BOOP Home Override Accessibility to `typeWindowStateChanged` only.
 
-No GitHub screenshot/golden/appearance/layout/animation acceptance was run. The downloaded APK independently matched the CI SHA exactly.
+## v0.10.3 collision candidate
+
+The first working Now Playing screenshot showed headphones BOOP overlapping transport controls/right-side content, obscured `Next`, competing `Open player`, insufficient title width and a wrapped/clipped `Launcher Settings` top button.
+
+Candidate changes:
+
+- existing 182dp Now Playing card height retained;
+- 230dp right-hand mascot reservation added;
+- headphones BOOP constrained to a clipped 230x154dp matching bay;
+- title/subtitle use one-line end ellipsis;
+- five controls compacted to fit their middle region;
+- `Open player` stays outside mascot space;
+- `Launcher Settings` widened 190dp -> 220dp and forced to one line;
+- Favourite apps dimensions/order/grab behavior unchanged.
+
+These are **not** visually green until Ryan tests them on the real Shield.
+
+## Fast CI rule
+
+Ryan explicitly chose real-device visual acceptance over GitHub visual checks. CI now sets `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` and excludes the selected historical appearance/layout contract classes from the fast test source set.
+
+No GitHub screenshots, golden images, emulator layout judgement, focus-scale judgement or animation appearance acceptance.
+
+CI still verifies functional Java/Android logic, signed assembly, exact package/version, protected manifest/service presence, permanent signer, APK archive integrity and artifact upload.
+
+TDD permission-route RED: `1213094c165457b579578d220eb2eec0158656ae`, workflow `34283351013`, failed exactly on the missing exact-TV route. Final v0.10.3 workflow `34284059958` passed the fast functional/build/sign/package lane.
 
 ## Locked behavior
 
@@ -52,6 +76,6 @@ Preserve:
 
 ## Next gate
 
-Install/update 0.10.2. With BOOP Home Override already ON, Launcher Settings should report **Media access: ON** without separate Notification Access. Start Deezer, return HOME and test Now Playing. Recheck single Home and double Home. Real Shield behavior is the authority.
+Install/update v0.10.3. Test `Media access` direct routing, Deezer -> HOME, collision clearance, all five media controls, one-line `Launcher Settings`, unchanged favourites, then single/double Home.
 
-Do not merge into unified until Ryan explicitly approves the standalone behavior.
+Real Shield behavior is the authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
