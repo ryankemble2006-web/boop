@@ -13,6 +13,15 @@ public final class BoopWakeTranscriptNormalizerTest {
                 BoopWakeTranscriptNormalizer.stripLeadingWakeWord(" BOOP! "));
     }
 
+    @Test public void stripsAllEstablishedBoopWakeCallsBeforeCommand() {
+        for (String phrase : BoopWakeKeywordBuilder.naturalPhrases("BOOP")) {
+            assertEquals(phrase,
+                    "change name to Steve",
+                    BoopWakeTranscriptNormalizer.stripLeadingWakeWord(
+                            phrase + " change name to Steve"));
+        }
+    }
+
     @Test public void leavesOrdinaryAndLaterBoopUntouched() {
         assertEquals("pause the music",
                 BoopWakeTranscriptNormalizer.stripLeadingWakeWord("pause the music"));
