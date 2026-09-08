@@ -1,62 +1,59 @@
 # SHIELD TURBO handoff
 
 Owner branch: `shield-turbo-v01`. Package: `com.boop.shieldturbo`.
-Candidate version: `0.1.0`, versionCode `1`.
+Current candidate: `0.2.0`, versionCode `2`.
 
-## Current corrected STANDARD candidate, 2026-09-08
+## Current signed ADVANCED candidate, 2026-09-08
 
-This is the candidate to hand to Ryan next. It contains the STANDARD control centre plus the two fixes discovered during physical bedroom-Shield testing.
+Ryan physically retested the corrected STANDARD build and reported the previously unreachable TURBO maintenance row was now selectable. He then reported only one remaining STANDARD bug: SHIELD -> DISPLAY + SOUND did nothing on the real NVIDIA Shield. He explicitly authorised fixing that and moving into the approved advanced/ADB TURBO phase. He also explicitly made physical hardware the visual acceptance authority and instructed GitHub CI not to judge visuals.
 
-- Built source: `d277ebe713cdbe5298f6205ef34fa4d493ea2114`.
-- Functional fix commit: `8d48e3b30c51605bbc9d47bdad01e55bf651abb9`.
-- GitHub Actions workflow: `Build SHIELD TURBO`, run `34189880390`, job `101945584070`, completed successfully.
-- Signed candidate artifact: `SHIELD-TURBO`, ID `10041897001`, ZIP size `708605` bytes, artifact digest `sha256:a0be86bd02e2bcfeeb6eee118559777c1e4e052548806155a490e1b3683716d8`.
-- Test artifact: `SHIELD-TURBO-TESTS`, ID `10041897447`, ZIP size `37144` bytes, digest `sha256:c5f60787a2bd3f6ab11528ff7a3a672144a0069de628e4c6880b1286a9602e8d`.
-- APK path inside artifact: `shield-turbo/app/build/outputs/apk/release/app-release.apk`.
-- Extracted APK SHA-256: `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`.
-- Signer certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Current built source: `81f448c417e3b0b122df55edc6ea6886d1bde5b2`.
+GitHub Actions workflow: `Build SHIELD TURBO`, run `34191343078`, job `101949873574`, success.
+Signed candidate artifact: `SHIELD-TURBO`, ID `10042388530`, ZIP size `751853` bytes, artifact digest `sha256:db35da41d66a23b1087072e4fd0e1fbc3b4ba4ef4320804a6f20953a720fbb95`.
+Test artifact: `SHIELD-TURBO-TESTS`, ID `10042389014`, ZIP size `37814` bytes, digest `sha256:ab3a00f16ec6d73e202447282a8b0d4fc80566dcac0533508441852e64299b71`.
+APK path inside artifact: `shield-turbo/app/build/outputs/apk/release/app-release.apk`.
+Extracted APK SHA-256: `7e5a769e68c88cf44749f7887c35e64d41369c3b76fe11a35a9473b350582636`.
+Signer certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Verification receipt: 29 Kotlin unit tests passed with zero failures/errors/skips; six source safety/regression contracts passed; Android lint succeeded; release assembly succeeded; package/version/Leanback/non-debuggable checks passed; signer fingerprint and APK archive integrity passed; API 30 installed-release emulator smoke passed; artifact upload succeeded.
+Fresh verification: 33 Kotlin unit tests passed with zero failures/errors/skips; seven source safety/regression contracts passed; Android lint succeeded; signed release assembly succeeded; package/version/Leanback/non-debuggable checks passed; signer fingerprint and APK archive integrity passed; API 30 install/launch/no-fatal smoke passed; artifact upload succeeded. CI no longer performs UI hierarchy dumps, focus/label assertions, screenshots or any other visual judgement.
 
-## Physical Shield evidence
+## Changes in v0.2.0
 
-Brightness has real hardware evidence. Ryan installed the earlier brightness candidate on the bedroom NVIDIA Shield and confirmed the brightness control worked. Preserve that rollback checkpoint: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
+### Shield DISPLAY + SOUND route
 
-Ryan then installed the first STANDARD control-centre candidate from source `91b2e28178d14ba4f2098076b958726ce064a8e1`, run `34187498176`, artifact `10041082348`. He found two concrete defects:
+The dead generic display shortcut was replaced with a Shield-safe settings fallback chain. DISPLAY + SOUND now tries Android main Settings first, then generic display settings, then generic sound settings. The intent is to guarantee a usable NVIDIA Shield settings entry rather than silently doing nothing. This exact firmware route still requires Ryan's physical confirmation.
 
-1. In TURBO, `FREE SPACE`, `MANAGE APPS`, and `RESTART TURBO` were visible but not selectable with the Shield remote.
-2. In APPS, pressing OK opened a package-name dialog such as `com.android.gallery3d` rather than launching the app.
+### ADVANCED / ADB TURBO first slice
 
-Root causes were confirmed in source. The last diagnostic card explicitly looped D-pad Down back to itself. APPS normal click explicitly built a package-name dialog before offering LAUNCH / APP INFO.
+A sixth `ADVANCED` control-centre section is present. It is locked unless the app genuinely holds `android.permission.WRITE_SECURE_SETTINGS`.
 
-## What the current candidate changes
+The setup screen shows the one-time command:
 
-TURBO now gives the maintenance buttons generated view IDs and explicit remote navigation. The final diagnostic card routes Down to `FREE SPACE`; Left/Right moves through `FREE SPACE`, `MANAGE APPS`, and `RESTART TURBO`; Up returns to the final diagnostic card. The no-results fallback also routes from the top controls to the maintenance row.
+`adb shell pm grant com.boop.shieldturbo android.permission.WRITE_SECURE_SETTINGS`
 
-APPS now treats normal OK as launch. It uses `getLeanbackLaunchIntentForPackage` first and Android's ordinary launch intent as fallback. Holding OK opens Android App Info. The package-name dialog is removed from the normal path.
+The app checks the permission itself. It does not auto-grant it, store an ADB address/password/key, or keep an ADB socket/session open. Reinstalling or clearing app data may require the grant again.
 
-Regression guards were added before the production fix. The intentional RED run was `34189571449`, where the new contracts failed against the old behavior while the existing Kotlin suite stayed green. A first GREEN attempt exposed an over-broad source assertion that also matched unrelated home-row navigation; that test-only false positive was narrowed at `d277ebe7...`. Run `34189880390` is the final green receipt.
+Once granted, the first advanced control is Android UI animation speed:
+- FAST 0.5x
+- ANIMATIONS OFF
+- RESTORE 1x
 
-## STANDARD scope and next step
+Those actions write only `window_animation_scale`, `transition_animation_scale`, and `animator_duration_scale`. RESTORE 1x is the explicit rollback. No CPU/GPU clock changes, overclocking, process killing, RAM cleaner, cache purge, other-app data clearing or fake boost score was added.
 
-STANDARD currently contains:
+`WRITE_SECURE_SETTINGS` is a protected Android permission, so lint's `ProtectedPermissions` warning is suppressed only on that one manifest declaration with an explanatory comment. Lint remains enabled normally everywhere else.
 
-- TURBO: honest on-demand diagnostics, storage sanity text, safe storage/manage-app routes, restart-this-app.
-- PICTURE: physically proven 10–100% brightness overlay plus read-only active display/HDR facts.
-- APPS: launch visible TV apps; hold OK for Android App Info.
-- NETWORK: connection/reachability status, recheck, Android network settings.
-- SHIELD: device/build/uptime facts plus useful Android/Shield settings routes.
+## Physical evidence and rollback
 
-No blanket RAM cleaner, process killing, other-app data clearing, overclocking, governor hacks or pretend speed-up score is present.
+Brightness remains physically proven on the bedroom NVIDIA Shield. Preserve the original brightness rollback checkpoint: source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK SHA-256 `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
 
-Ryan's next physical acceptance should specifically verify the maintenance-row D-pad path and direct app launching on this exact APK, then recheck brightness for regression. Any Shield firmware shortcut that fails should be recorded by exact button/action rather than guessed.
+The first STANDARD control-centre build exposed D-pad/app-launch defects. The corrected STANDARD candidate was source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK SHA-256 `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`. Ryan's next feedback said the controls were now selectable and identified DISPLAY + SOUND as the only remaining bug he had found, so preserve that corrected STANDARD receipt as the pre-ADVANCED fallback.
 
-ADB TURBO remains the next phase only after STANDARD is physically accepted, unless Ryan explicitly changes that order.
+The v0.2.0 DISPLAY + SOUND fix and ADB TURBO animation controls are CI/signer green but not physically accepted yet. Ryan is the visual and real-Shield acceptance authority.
 
-## Signing and publication rules
+## Next physical check
 
-Continue using the existing secret-backed `boop-dev` signer only. Never publish private key material, replace the signer, or use BOOP relay credentials. SHIELD TURBO remains independent of unified BOOP and all work stays inside `shield-turbo/` plus its workflow unless explicitly authorised otherwise.
+Install v0.2.0. Confirm DISPLAY + SOUND opens a usable Shield settings surface. Open ADVANCED before the ADB grant and confirm it stays locked. Grant `WRITE_SECURE_SETTINGS` once, recheck access, then test 0.5x, animations off and RESTORE 1x. Confirm brightness and existing STANDARD controls did not regress. Record firmware-specific results rather than inferring them from emulator behavior.
 
-The historical published `shield-turbo-v0.1.0` prerelease is pre-brightness and must not be repointed. Use the Actions artifact receipt above for the current candidate.
+Continue using the established secret-backed `boop-dev` signer only. Never expose private key material or BOOP relay credentials. SHIELD TURBO remains independent of unified BOOP.
 
-Documentation-only commits after built source `d277ebe713cdbe5298f6205ef34fa4d493ea2114` do not alter the tested APK. Always distinguish live branch documentation HEAD from the built-source receipt.
+Documentation-only commits after built source `81f448c417e3b0b122df55edc6ea6886d1bde5b2` do not replace the signed APK receipt above. Distinguish branch documentation HEAD from the built source.
