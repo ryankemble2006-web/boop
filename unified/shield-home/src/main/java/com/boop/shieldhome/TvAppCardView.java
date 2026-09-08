@@ -1,10 +1,12 @@
 package com.boop.shieldhome;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -17,11 +19,13 @@ import android.widget.TextView;
 /** Remote-first app card with only local focus/selection animation. */
 public final class TvAppCardView extends FrameLayout {
     public static final float FOCUSED_SCALE = 1.08f;
+    public static final float GRABBED_SCALE = 1.14f;
     public static final long FOCUS_DURATION_MS = 120L;
 
     private final ImageView iconView;
     private final TextView labelView;
     private final TextView favouriteBadge;
+    private boolean grabbed;
 
     public TvAppCardView(Context context) {
         this(context, null);
@@ -75,25 +79,72 @@ public final class TvAppCardView extends FrameLayout {
     }
 
     public void bind(TvAppEntry entry, boolean favourite) {
+        bindInternal(entry, favourite, false);
+    }
+
+    /** HOME favourites prefer the Android TV banner, falling back to the app icon. */
+    public void bindFavourite(TvAppEntry entry) {
+        bindInternal(entry, true, true);
+    }
+
+    private void bindInternal(TvAppEntry entry, boolean favourite, boolean preferBanner) {
+        grabbed = false;
         if (entry == null) {
             labelView.setText("");
             iconView.setImageDrawable(null);
             favouriteBadge.setVisibility(View.GONE);
             setContentDescription("");
+            configureArtworkSize(false);
             return;
         }
 
         labelView.setText(entry.label());
         setContentDescription(entry.label());
+        favouriteBadge.setText("★");
         favouriteBadge.setVisibility(favourite ? View.VISIBLE : View.GONE);
 
-        Drawable icon = null;
-        try {
-            icon = getContext().getPackageManager().getApplicationIcon(entry.packageName());
-        } catch (PackageManager.NameNotFoundException ignored) {
-            // A package change can race rendering. The activity will reconcile the catalogue.
+        Drawable artwork = null;
+        boolean banner = false;
+        PackageManager pm = getContext().getPackageManager();
+        if (preferBanner) {
+            ComponentName component = ComponentName.unflattenFromString(entry.component());
+            if (component != null) {
+                try {
+                    ActivityInfo info = pm.getActivityInfo(component, 0);
+                    artwork = info.loadBanner(pm);
+                } catch (PackageManager.NameNotFoundException ignored) {
+                    // Package changes can race rendering. Fall through to package banner/icon.
+                }
+            }
+            if (artwork == null) {
+                try {
+                    artwork = pm.getApplicationBanner(entry.packageName());
+                } catch (PackageManager.NameNotFoundException ignored) {
+                    // Fall through to normal icon.
+                }
+            }
+            banner = artwork != null;
         }
-        iconView.setImageDrawable(icon);
+
+        if (artwork == null) {
+            try {
+                artwork = pm.getApplicationIcon(entry.packageName());
+            } catch (PackageManager.NameNotFoundException ignored) {
+                // The activity will reconcile a package that vanished mid-render.
+            }
+        }
+
+        configureArtworkSize(banner);
+        iconView.setScaleType(banner ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
+        iconView.setImageDrawable(artwork);
+        animateScale(hasFocus() || isSelected());
+    }
+
+    public void setGrabbed(boolean grabbed) {
+        this.grabbed = grabbed;
+        favouriteBadge.setText(grabbed ? "↔" : "★");
+        favouriteBadge.setVisibility(grabbed ? View.VISIBLE : favouriteBadge.getVisibility());
+        animateScale(hasFocus() || isSelected());
     }
 
     @Override public void setSelected(boolean selected) {
@@ -101,10 +152,19 @@ public final class TvAppCardView extends FrameLayout {
         animateScale(selected || hasFocus());
     }
 
+    private void configureArtworkSize(boolean banner) {
+        LinearLayout.LayoutParams params = banner
+                ? new LinearLayout.LayoutParams(dp(230), dp(129))
+                : new LinearLayout.LayoutParams(dp(76), dp(76));
+        params.bottomMargin = banner ? dp(6) : dp(10);
+        iconView.setLayoutParams(params);
+    }
+
     private void animateScale(boolean emphasized) {
+        float target = grabbed ? GRABBED_SCALE : (emphasized ? FOCUSED_SCALE : 1f);
         animate()
-                .scaleX(emphasized ? FOCUSED_SCALE : 1f)
-                .scaleY(emphasized ? FOCUSED_SCALE : 1f)
+                .scaleX(target)
+                .scaleY(target)
                 .setDuration(FOCUS_DURATION_MS)
                 .start();
     }
