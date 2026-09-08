@@ -1,6 +1,8 @@
 package com.boop.shieldhome;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.role.RoleManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -22,6 +24,7 @@ import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.FrameLayout;
 
 import java.net.URISyntaxException;
@@ -39,6 +42,7 @@ public final class ShieldLauncherActivity extends Activity {
     public static final long PAGE_TRANSITION_MS = 140L;
     private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
     private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown_v2";
+    private static final String KEY_HOME_OVERRIDE_PROMPT_SHOWN = "home_override_prompt_shown_v1";
 
     public enum FavouriteEdit {
         MOVE_LEFT,
@@ -98,7 +102,14 @@ public final class ShieldLauncherActivity extends Activity {
         registerPackageReceiver();
         showHome();
         reloadApps();
-        root.post(this::maybePromptForHomeRole);
+        root.post(this::maybePromptForHomeOverride);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (root != null && store != null && currentPage == Page.SETTINGS) {
+            showSettings();
+        }
     }
 
     private void reloadApps() {
@@ -268,19 +279,24 @@ public final class ShieldLauncherActivity extends Activity {
 
         boolean playNext = store.rowEnabled(OptionalRowRegistry.Key.PLAY_NEXT);
         boolean appChannels = store.rowEnabled(OptionalRowRegistry.Key.APP_CHANNELS);
+        boolean homeOverrideEnabled = isHomeOverrideEnabled();
         ShieldHomeSettingsView view = new ShieldHomeSettingsView(this);
-        view.render(playNext, appChannels, new ShieldHomeSettingsView.Callbacks() {
+        view.render(playNext, appChannels, homeOverrideEnabled, new ShieldHomeSettingsView.Callbacks() {
             @Override public void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
                 store.setRowEnabled(key, enabled);
                 showSettings();
             }
 
             @Override public void onChooseHomeApp() {
-                openHomeSettings();
+                openAccessibilitySettings();
             }
 
             @Override public void onMakeBoopHome() {
-                requestHomeRole();
+                openAccessibilitySettings();
+            }
+
+            @Override public void onEnableHomeOverride() {
+                openAccessibilitySettings();
             }
 
             @Override public void onRetireStockHome() {
@@ -288,7 +304,7 @@ public final class ShieldLauncherActivity extends Activity {
             }
 
             @Override public void onRestoreStockHome() {
-                restoreStockHome();
+                openAccessibilitySettings();
             }
 
             @Override public void onBackHome() {
@@ -404,12 +420,71 @@ public final class ShieldLauncherActivity extends Activity {
         return Settings.ACTION_HOME_SETTINGS;
     }
 
+    static String homeOverrideSettingsAction() {
+        return Settings.ACTION_ACCESSIBILITY_SETTINGS;
+    }
+
     private void openSystemSettings() {
         try {
             startActivity(new Intent(systemSettingsAction()));
         } catch (ActivityNotFoundException | SecurityException ignored) {
             // System Settings is OS-owned. HOME remains usable if firmware omits the route.
         }
+    }
+
+    private void maybePromptForHomeOverride() {
+        if (isHomeOverrideEnabled()) {
+            return;
+        }
+        SharedPreferences prefs = getSharedPreferences(SETUP_PREFS, MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_HOME_OVERRIDE_PROMPT_SHOWN, false)) {
+            return;
+        }
+        prefs.edit().putBoolean(KEY_HOME_OVERRIDE_PROMPT_SHOWN, true).apply();
+        new AlertDialog.Builder(this)
+                .setTitle("Use BOOP as Shield Home")
+                .setMessage("Shield keeps Android TV Home locked. Turn on BOOP Home Override once. BOOP only watches for the stock Home screen and does not read screen content or intercept remote keys.")
+                .setPositiveButton("Open Accessibility", (dialog, which) -> openAccessibilitySettings())
+                .setNegativeButton("Not now", null)
+                .show();
+    }
+
+    private void openAccessibilitySettings() {
+        try {
+            startActivity(new Intent(homeOverrideSettingsAction()));
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            openSystemSettings();
+        }
+    }
+
+    private boolean isHomeOverrideEnabled() {
+        AccessibilityManager manager =
+                (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
+        if (manager == null) {
+            return false;
+        }
+        List<AccessibilityServiceInfo> enabled;
+        try {
+            enabled = manager.getEnabledAccessibilityServiceList(
+                    AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+        if (enabled == null) {
+            return false;
+        }
+        String serviceName = ShieldHomeOverrideService.class.getName();
+        for (AccessibilityServiceInfo info : enabled) {
+            ResolveInfo resolveInfo = info == null ? null : info.getResolveInfo();
+            if (resolveInfo == null || resolveInfo.serviceInfo == null) {
+                continue;
+            }
+            if (getPackageName().equals(resolveInfo.serviceInfo.packageName)
+                    && serviceName.equals(resolveInfo.serviceInfo.name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void maybePromptForHomeRole() {
