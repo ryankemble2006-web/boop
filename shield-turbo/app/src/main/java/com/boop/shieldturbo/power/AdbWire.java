@@ -22,6 +22,11 @@ public final class AdbWire implements Closeable {
     private long deadline;
     private int streamId;
 
+    /** Used when a background caller is allowed to use only an already-trusted ADB key. */
+    public static final class AdbApprovalRequiredException extends IOException {
+        public AdbApprovalRequiredException(String message) { super(message); }
+    }
+
     public static final class Packet {
         public final int command, arg0, arg1;
         public final byte[] payload;
@@ -63,6 +68,9 @@ public final class AdbWire implements Closeable {
         output.write(encode(c,a,b,bytes)); output.flush();
     }
     public void connect(int port,KeyPair identity,int timeoutMs,Runnable approvalRequired) throws Exception {
+        connect(port,identity,timeoutMs,approvalRequired,true);
+    }
+    public void connect(int port,KeyPair identity,int timeoutMs,Runnable approvalRequired,boolean allowNewApproval) throws Exception {
         if(port<1 || port>65535) throw new IllegalArgumentException("Invalid local ADB port");
         // No hostname, network scan, user-supplied IP or off-device address is accepted.
         socket.connect(new InetSocketAddress(InetAddress.getByAddress(new byte[]{127,0,0,1}),port),2000);
@@ -77,6 +85,7 @@ public final class AdbWire implements Closeable {
             if(p.command!=AUTH || p.arg0!=1 || p.payload.length!=20) throw new IOException("Unsupported ADB handshake");
             if(!signatureSent) { send(AUTH,2,0,sign(identity,p.payload)); signatureSent=true; }
             else if(!publicSent) {
+                if(!allowNewApproval) throw new AdbApprovalRequiredException("ADB key is not already trusted; open SHIELD TURBO and enable ADB TURBO interactively");
                 send(AUTH,3,0,publicPayload(identity)); publicSent=true; approvalRequired.run();
             } else throw new IOException("Debugging approval was not accepted");
         }
