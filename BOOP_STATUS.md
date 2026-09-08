@@ -24,16 +24,19 @@ This remains a standalone Shield experiment pending later AIO merge only after e
 - 0.4 retirement physically failed by targeting SetupWraith rather than the launcher.
 - 0.5 correctly targeted `com.google.android.tvlauncher`, but App Info offered **Force stop only, no Disable**. Force stop caused Home to do nothing; reboot restored stock Home. Normal HOME chooser/RoleManager + retirement is therefore a physical FAIL on this Shield firmware.
 - 0.6 Accessibility **setup routing** physically failed before the override service was enabled: `Open Accessibility` produced **"you dont have an app that can do this"**. The override service itself remains physically untested, not failed.
+- 0.7 removes the old resolver failure and opens real Shield Settings, but Ryan physically confirmed it lands on the ordinary top-level Shield Settings screen rather than Accessibility. Direct Accessibility setup is therefore still **not physically achieved**, and the override service remains physically untested. Do not infer which explicit TV Settings component succeeded or redirected without further evidence.
 
-## 0.7 Shield Accessibility route repair
+## 0.7 Shield Accessibility route result
 
-0.7 changes only the settings doorway for the existing no-ADB Accessibility override experiment.
+0.7 changed only the settings doorway for the existing no-ADB Accessibility override experiment.
 
-An internal `ShieldAccessibilityRouteActivity` catches BOOP's Accessibility-settings request and forwards it directly into Shield/Android TV Settings, trying the TV Accessibility activities first and `com.android.tv.settings.MainSettings` as recovery fallback. It is invisible, internal, no-history and excluded from Recents.
+An internal `ShieldAccessibilityRouteActivity` catches BOOP's Accessibility-settings request and attempts Shield/Android TV Settings directly. The old resolver error is gone on hardware, proving the request now reaches a real Shield Settings surface, but the candidate does not land directly on Accessibility on Ryan's current Shield firmware.
+
+AOSP Android TV history explains why hard-coded activity names are unreliable here: some TvSettings generations expose Accessibility as a dedicated activity while others attach an Accessibility fragment to the normal Settings hierarchy. Do not keep guessing OEM activity class names.
+
+For the next hardware test, use the native Shield path manually: **Settings -> Device Preferences -> Accessibility -> Services -> BOOP Home Override**. Leave Android TV Home enabled and do not Force stop it. If `BOOP Home Override` is absent from Services, stop and investigate service registration. If it is present, enable it and only then test the takeover mechanism.
 
 The Accessibility override service remains intentionally narrow: window-state events only, no screen-content retrieval, gestures, typing or key filtering. BOOP still does not intercept Home/KEYCODE_HOME.
-
-For 0.7 testing, **leave Android TV Home enabled and do not Force stop it**. Its foreground event is the trigger for the override.
 
 Regression/release evidence:
 - `34233903841` RED on missing direct Shield Accessibility route;
@@ -47,4 +50,4 @@ Default launcher surface remains favourites-first. Banners, physically working g
 
 LOCKED: **remove the crap, preserve Shield behavior.** Double-tap Home -> Recent Apps/task switcher, volume/CEC, system Settings, Back semantics, system shortcuts, app switching and animations remain physical acceptance requirements.
 
-0.7 is CI/signer green. **Physical acceptance starts with one thing: does Open Accessibility now reach real Shield Accessibility/Settings without the old resolver error?** Only after Ryan can enable `BOOP Home Override` can takeover speed, reboot behavior and double-tap Home be evaluated.
+0.7 is CI/signer green but **not physically accepted**. The next gate is manual enabling of `BOOP Home Override` through Shield's own Accessibility menu. If that succeeds: open another app, single-press Home and report takeover/stock-Home flash, then double-press Home and confirm native Recent Apps still opens.
