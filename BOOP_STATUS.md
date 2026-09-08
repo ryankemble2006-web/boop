@@ -2,66 +2,52 @@
 
 Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current AIO signed candidate: v48 wake-arm repair
+## Current AIO signed candidate: v49 automatic five-say enrolment
 
-Ryan physically tested v47 and found BOOP was not listening at all: the Android green microphone privacy indicator was absent, and `BOOP`, `Steve` and wake variants did nothing. Treat v47 wake as a physical FAIL upstream of acoustic matching.
+Ryan physically confirmed the v48 upstream wake path on the Pixel: on the wireless charger the Android green microphone indicator turned on, stayed on after BOOP went to sleep, and saying `Hey BOOP` woke BOOP. The exact built v48 code is now pinned at branch `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`. Do not repoint that checkpoint.
 
-Source investigation found that `scripts/patch-unified-wake-arm.py` already contained the intended repair for Android `checkRecognitionSupport()` false negatives, but `scripts/materialize-unified.sh` never invoked it. `BoopWakeSessionState` requires recognition support before entering ARMED, so the old advisory result could keep the coordinator DISARMED and prevent `BoopWakeWordController.arm()` from starting `AudioRecord`. This is sufficient to cause the missing green-mic symptom.
+v49 continues from that physically-proven wake-arm path and completes the intended custom-name product flow. Changing the Voice Settings name from BOOP to a custom name such as `Steve` now queues local enrolment automatically. When Voice Settings closes, BOOP prompts `Say Steve five times.` and reuses the existing controller-owned microphone for five spoken examples. An unchanged custom name does not nag on every settings close, BOOP itself never requires training, and a matching existing profile is not retrained automatically. The manual Train action remains available for deliberate retry/retraining.
 
-TDD red: commit `2639188a7603be5fb61cdb2db8649aad571400a4`, workflow `34217732094`, failed exactly on the missing materializer call: 1 failed / 5 passed.
+The underlying training engine remains the existing local implementation: five accepted utterances from the single 16 kHz PCM owner -> active-speech segmentation -> amplitude-normalised pronunciation features -> compact centroid/threshold/duration profile. Raw training PCM is not persisted. The learned matcher remains additive to Sherpa, BOOP remains permanent fallback, and custom names retain all 33 established natural wake forms. No second microphone listener or cloud training was added.
 
-Minimal repair: `7c0fc86f8cbb3d585e8d35dbf8156f88c67a97ac` invokes `patch-unified-wake-arm.py` immediately after the wake-name patch. No Sherpa model, local training/profile math, mic source, charging policy, HA controls, eyes or blink changed.
+TDD evidence:
 
-Final signed descendant candidate:
+- RED commit `72591554376d2cada7df24d99d5934443a986278`, workflow `34220316310`: the new automatic-training policy test failed to compile because `BoopWakeTrainingPolicy` did not yet exist.
+- Implementation commit `7ed577d2cb683da0cf7ae5339efc509566123140`: adds the policy and generated settings-to-enrolment flow while preserving the v48 real-attempt arm gate.
+- Final signed v49 build commit `87a7abee880b9283d51fb71ed2bf9bd9ed187b28`.
 
-- Built code: `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`
-- Version: 48 / `1.2.2-unified-wake-arm`
-- Workflow: `34218173825` SUCCESS
-- Artifact: `BOOP-Unified`, ID `10052711766`
-- APK SHA-256: `0264c3e289aab06a7be45067ce44bd72124355b11f9cc0a8ffa73afb7f4c5f02`
-- Artifact ZIP SHA-256: `6ebcb029673fc6e9785be04a6db8b1f93e64903e6eb6466e172cfc8edddba0d8`
+Final v49 receipt:
+
+- Version: 49 / `1.2.3-unified-wake-enrolment`
+- Workflow: `34221275050` SUCCESS
+- Artifact: `BOOP-Unified`, ID `10053919758`
+- APK SHA-256: `2fd65505bea205cce8e7cdc2124cba4a4fa818c5b1fd4ba0efdc5c24f064ffd9`
+- Artifact ZIP SHA-256: `fc27c729a848fbda98dee882b626633da46f1fd338a98fa08911cc76106eecb9`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-Fresh final-run evidence: non-visual integration contracts and materialization passed; Launcher lint passed; Shield 58/58 and unified 74/74 focused functional tests passed with zero failures/errors/skips; signed APK assembly, package/version, manifest requirements, permanent signer and archive integrity passed. Downloaded artifact ZIP digest and extracted APK hash matched the workflow receipts. No emulator/device launch, screenshots or visual acceptance ran.
+Fresh final-run evidence: non-visual integration contracts and materialization passed; Launcher lint passed; Shield 58/58 and unified 78/78 focused functional tests passed with zero failures/errors/skips; signed assembly, package/version, manifest requirements, permanent signer and APK archive integrity passed. The downloaded artifact ZIP digest and extracted APK hash matched the workflow receipts. No emulator/device launch, screenshots, visual acceptance or v49 acoustic acceptance ran.
 
-### Physical v48 wake result
+## Required Pixel test for v49
 
-Ryan then physically tested v48 on the Pixel in the established continuous-wake condition. With the phone placed on the wireless charger, the Android green microphone privacy indicator turned on, stayed on after BOOP went to sleep, and `Hey BOOP` physically woke BOOP. This confirms the upstream microphone-arm/listening path is restored on real hardware and proves at least one established BOOP wake phrase works while sleeping on the charger.
+Install v49 over the working v48 lineage. Keep BOOP foreground and wirelessly charging/docked.
 
-Do **not** generalize this into full acoustic acceptance yet. Bare `BOOP`, custom `Steve`, five-sample enrolment, the remaining natural variants, miss rate and false-wake rate are still physically untested in v48.
+1. First confirm the green microphone indicator still remains on while BOOP sleeps and `Hey BOOP` still wakes him. This guards the v48 checkpoint behavior.
+2. Open Voice Settings and change the name from BOOP to `Steve`, then close/Done.
+3. BOOP should automatically prompt `Say Steve five times.` without requiring the separate Train button.
+4. Say `Steve` naturally five times with short pauses. Completion should end with `Steve. Got it.` and the normal wake mic should re-arm.
+5. Let BOOP sleep and test bare `Steve`, `Hey Steve`, `Oi Steve`, `Morning Steve`, `Steve wake up`, then confirm `Hey BOOP` still works.
+6. Record misses and false wakes separately. Do not tune thresholds from a single utterance.
 
-Read `docs/BOOP-V48-WAKE-ARM-RECEIPT.md` for the exact failure/root-cause/build trail.
+v49 is CI/signer green only until Ryan physically tests this flow. The v48 checkpoint remains the rollback anchor.
 
-## Next Pixel checks
+## IMPORTANT architecture boundary: clean Shield HOME is standalone
 
-No urgent further testing is required from this checkpoint. When Ryan resumes wake testing:
+The clean Nvidia Shield HOME replacement is **not part of AIO yet**. It remains a standalone test app to be physically accepted first and merged later.
 
-1. Try plain `BOOP` several times.
-2. Train `Steve` with five natural utterances.
-3. Try bare `Steve` and several established variants.
-4. Confirm plain `BOOP` remains valid after custom training.
-5. Note misses and false wakes separately before tuning thresholds.
+Standalone launcher branch: `boop-shield-clean-launcher`. Standalone package: `com.boop.shieldhome`. Do not re-route unified Shield HOME to the standalone launcher until Ryan explicitly approves that later merge. The standalone launcher's locked rule remains: **remove the crap, preserve Shield behavior**.
 
-The green mic + sleeping `Hey BOOP` success means future wake tuning can now happen downstream in Sherpa/template recognition rather than the upstream arm gate, unless the green indicator disappears again.
+## Protected AIO state
 
-## Wake-name contract
+Approved paired black-lidded eyes remain locked in the unified phone/Wall and Shield path. Preserve approved geometry/alpha, iris-only hue, headphones/puppetry and five-digit yellow hands. Blink is user-confirmed working; preserve its existing timing/gates. HA names/Home controls are physically accepted and must stay intact. Room isolation and idempotent Shield density scaling remain protected. Assistant remote invocation/audio remains a separate unresolved physical boundary.
 
-BOOP permanently remains the fallback. Custom names are additive and use the same controller-owned 16 kHz microphone path. Five local utterances create a compact pronunciation profile; raw training PCM is not persisted. Changing the custom name clears its old profile. Custom names also receive all 33 established natural wake forms. No competing microphone listener or cloud training.
-
-## IMPORTANT architecture correction: clean Shield HOME is standalone
-
-Ryan clarified that the clean Nvidia Shield HOME replacement is **not part of AIO yet**. It is a standalone test app to be physically accepted first and merged later.
-
-Standalone launcher branch: `boop-shield-clean-launcher`.
-Standalone package: `com.boop.shieldhome`.
-Standalone green build: `d6e775de68f0f19661736abff6c0432e25320196`, workflow `34217924617`, artifact `BOOP-Shield-Clean-Launcher` ID `10052578743`, APK SHA-256 `374d86419abbc3aca367f79d2a13e36667ab41e8f975dc3f9b1b12f89ca26c68`.
-
-The accidental clean-launcher integration was removed from unified materialisation, manifest and AIO CI. `ShieldEntryRoute` now keeps both Shield HOME and ordinary Shield launches on the existing AIO Shield body (`com.boop.shieldoverlay.MainActivity`). Do not re-route unified Shield HOME to the standalone launcher until Ryan explicitly approves that later merge.
-
-The standalone launcher's locked rule remains: **remove the crap, preserve Shield behavior**. Physical acceptance must preserve double-tap Home -> Recent Apps/task switcher, Back, volume/CEC, Nvidia/Android Settings, system remote shortcuts, app switching and system animations.
-
-## Other protected AIO state
-
-Approved paired black-lidded eyes remain in the unified materialized build path; preserve approved geometry/alpha, iris-only hue, blink timing/gates, headphones/puppetry and five-digit hands. Blink is user-confirmed working. HA names/Home controls were physically accepted earlier and must stay intact. Room isolation and idempotent Shield density scaling remain protected. Assistant remote invocation/audio remains a separate unresolved physical boundary.
-
-Ryan owns visual/device/acoustic acceptance. No screenshots/golden/aesthetic acceptance, emulator device acceptance, automatic installs/grants or signer/package changes. Protected historical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881` until Ryan explicitly promotes a newer physically accepted checkpoint.
+Ryan owns visual/device/acoustic acceptance. No screenshots/golden/aesthetic acceptance, emulator device acceptance, automatic installs/grants or signer/package changes.
