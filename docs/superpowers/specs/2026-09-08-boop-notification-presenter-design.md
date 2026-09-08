@@ -4,10 +4,11 @@ Date: 2026-09-08
 Status: user-approved design, implementation not started
 Owning app: canonical `boop-unified`
 Package: `com.boop.alpha1`
+Related visual reference: `animation-lab/lockscreen-notifications/README.md` on `animation-freddie-mercury`
 
 ## Purpose
 
-Give BOOP an opt-in, phone-wide notification presentation system that can wake the display, interrupt the user with BOOP's established eyes and floating yellow hands, group notification bursts, and open the original notification target while leaving Android's real notification state intact.
+Give BOOP an opt-in, phone-wide notification presentation system that can wake the display, interrupt the user with BOOP's established eyes and floating yellow hands, group notification bursts, and open the original notification target while leaving Android's real notification state intact except for normal tap/open semantics.
 
 This is a presentation layer over Android notifications, not a replacement notification database or a lock-screen replacement.
 
@@ -17,14 +18,14 @@ This is a presentation layer over Android notifications, not a replacement notif
 - Inside an allowed app, the user can choose Android notification channels/categories where available.
 - Granting Notification Access or overlay permission does not automatically allow any app.
 - Swiping BOOP away dismisses only BOOP's presentation. The underlying Android notification remains.
-- Tapping a single notification uses its original `PendingIntent`.
+- Tapping a single notification uses its original `PendingIntent` and should preserve Android's normal auto-cancel behavior where applicable.
 - Tapping a mixed-app bundle opens BOOP's own full-screen inbox first.
 - Message-bomb bursts are grouped into one bundle rather than repeatedly interrupting the user.
 - BOOP replaces the audible/vibration presentation for BOOP-managed channels. Android's original channel is guided to silent by the user.
 - Notification controls live under the existing Voice Settings UI, not as a new top-level settings area.
-- The display timeout is user configurable.
+- The display timeout is user configurable, with an initial default of eight seconds.
 - Locked presentation is privacy safe. Unlocked presentation may show richer content.
-- BOOP never silently grants permissions, modifies unrelated channels, cancels notifications, marks messages read, or bypasses Android keyguard security.
+- BOOP never silently grants permissions, modifies unrelated channels, cancels notifications on swipe, marks messages read, or bypasses Android keyguard security.
 
 ## Recommended architecture
 
@@ -82,7 +83,9 @@ Locked presentation exposes only:
 
 No sender name, message text, account detail, contact photo, or message preview is shown while locked.
 
-If the device becomes unlocked while the presentation is active, the presenter may transition to the richer unlocked card state.
+If the device becomes unlocked while the presentation is active, the presenter transitions to the richer unlocked card state without replaying the entrance sound.
+
+When an ignored locked presentation times out, BOOP finishes its Activity and releases any wake hold it owns. BOOP does not request privileged device-power control solely to force the display off; normal Android lock-screen/screen timeout behavior resumes immediately after BOOP stops holding the presentation awake.
 
 ### 5. BOOP inbox
 
@@ -91,6 +94,14 @@ A bundle spanning one or more applications opens into BOOP's own full-screen inb
 It may show app identity, title and message content only while unlocked. Each item retains its original `PendingIntent` so tapping it opens the source application's intended destination.
 
 The inbox does not become a durable notification archive. When Android removes an active notification, BOOP removes the corresponding inbox item.
+
+## Notification tap semantics
+
+Swiping or timing out BOOP never calls the notification-listener cancellation APIs.
+
+A successful tap sends the original notification `PendingIntent`. If the source notification carries Android's `FLAG_AUTO_CANCEL`, BOOP then requests cancellation of that notification so opening it behaves like a normal Android notification tap. Notifications without auto-cancel semantics remain active unless the source app removes them itself.
+
+If the `PendingIntent` is already cancelled or cannot be launched, BOOP keeps the card available, leaves the Android notification untouched, and shows a short plain-English message such as `Can't open that right now.` The ordinary BOOP timeout still applies.
 
 ## Visual and animation contract
 
@@ -138,7 +149,7 @@ The section contains:
 - BOOP Notifications master toggle;
 - allowed applications;
 - allowed notification channels/categories per app;
-- presentation timeout;
+- presentation timeout, initially eight seconds;
 - routes back to Android Notification Access, overlay and channel settings when repair is needed.
 
 The settings UI should remain simple and remote-friendly where that existing UI contract applies. Detailed controls are deliberately hidden behind Voice Settings rather than exposed on BOOP's primary surface.
@@ -147,11 +158,9 @@ The settings UI should remain simple and remote-friendly where that existing UI 
 
 BOOP must fail safe toward Android's original notification.
 
-If Notification Access is revoked, the listener is restarted, overlay permission disappears, a `PendingIntent` is cancelled, the process dies, or BOOP cannot present, BOOP does not cancel or alter the source notification.
+If Notification Access is revoked or the listener disconnects/restarts, overlay permission disappears, the process dies, or BOOP cannot present, BOOP does not cancel or alter the source notification.
 
 If BOOP-managed Android channels are silent but BOOP presentation permissions are no longer usable, Voice Settings must clearly flag the unhealthy state and provide a direct route back to the relevant Android settings. BOOP does not silently reconfigure the user's channels.
-
-If an original `PendingIntent` cannot be launched, BOOP closes or retains its presentation according to the normal UI state but leaves the Android notification untouched and shows a plain-English failure message rather than pretending the destination opened.
 
 ## Local data and privacy
 
@@ -176,9 +185,15 @@ After restart, temporary inbox state is rebuilt from Android's currently active 
 5. Device lock/display/foreground state selects the locked Activity, in-place BOOP surface, or unlocked overlay presenter.
 6. BOOP plays one local cue for the resulting presentation/bundle.
 7. Swipe dismisses only BOOP's UI.
-8. Tap on a single card launches the original `PendingIntent`.
-9. Tap on a mixed bundle opens BOOP's inbox, where individual items launch their own original `PendingIntent`.
+8. Tap on a single card sends the original `PendingIntent`, applying normal Android auto-cancel semantics only when the source notification requests them.
+9. Tap on a mixed bundle opens BOOP's inbox, where individual items use the same tap behavior.
 10. Android remains authoritative for whether the notification itself is still active.
+
+## Platform boundary
+
+Implementation must use supported Android notification-listener, overlay and Activity APIs. `Activity.setShowWhenLocked` and `Activity.setTurnScreenOn` are the intended locked-presentation primitives on supported API levels; the implementation must not add device-admin, root, accessibility automation, alarm/call full-screen-intent abuse, or keyguard-bypass behavior just to achieve presentation.
+
+`NotificationListenerService.getActiveNotifications()` is the source for rebuilding temporary inbox state after listener connection/restart. Cancellation APIs are reserved for successful taps that need to mirror `FLAG_AUTO_CANCEL`; they are never used for a BOOP swipe or timeout.
 
 ## Testing strategy
 
@@ -197,9 +212,10 @@ Required automated coverage:
 - timeout scheduling and cancellation;
 - rebuild from Android active notifications after coordinator/process restart;
 - swipe/dismiss path never cancelling the Android notification;
-- correct `PendingIntent` forwarding;
+- successful `PendingIntent` forwarding;
+- `FLAG_AUTO_CANCEL` tap semantics;
 - cancelled/broken `PendingIntent` failure handling;
-- permission-loss state transitions;
+- permission-loss/listener-disconnect state transitions;
 - no persistent notification-body storage.
 
 Do not add screenshot tests, golden-image comparisons, source-string appearance guards, emulator visual acceptance, or CI claims that BOOP's animation looks correct.
@@ -217,11 +233,12 @@ Ryan owns device/visual/acoustic acceptance. The initial Pixel acceptance pass m
 - interruption over another foreground app;
 - in-place presentation while BOOP/Wall is foreground;
 - single notification tap-to-open;
+- normal auto-cancel behavior after opening where applicable;
 - swipe-away without Android notification dismissal;
 - same-app message bomb grouping;
 - mixed-app grouping into one bundle;
 - BOOP inbox navigation;
-- presentation timeout;
+- presentation timeout and release of BOOP's wake hold;
 - process/reboot recovery from Android active notifications;
 - revoked-permission warning/repair flow;
 - BOOP replacement sound/vibration quality.
@@ -245,7 +262,7 @@ The feature is ready for a signed test candidate when all of the following are t
 - allowed notifications can wake the screen and present privacy-safe locked UI without bypassing keyguard;
 - unlocked allowed notifications interrupt above other apps;
 - swiping BOOP never dismisses the underlying Android notification;
-- notification taps preserve the source application's original `PendingIntent` behavior;
+- notification taps preserve the source application's original `PendingIntent` behavior and expected auto-cancel semantics;
 - bursts group into one presentation and mixed bundles open BOOP's inbox;
 - BOOP supplies one replacement sound/vibration cue per presentation/bundle for user-silenced managed channels;
 - user settings persist locally while notification content does not become a durable BOOP archive;
