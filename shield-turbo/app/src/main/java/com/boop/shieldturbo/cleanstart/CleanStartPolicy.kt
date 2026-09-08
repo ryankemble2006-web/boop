@@ -22,8 +22,11 @@ object CleanStartPolicy {
     fun userStateCommand(packageName: String, userId: Int): String {
         require(userId >= 0) { "Invalid user id" }
         val pkg = requirePackage(packageName)
-        return "dumpsys package '$pkg' | grep -m1 'User $userId:'"
+        return "dumpsys package '$pkg' | grep -A1 -m1 'User $userId:'"
     }
+
+    fun resumedActivityCommand(): String =
+        "dumpsys activity activities | grep -m2 -E 'mResumedActivity:|topResumedActivity='"
 
     fun parseCurrentUser(output: String): Int? = output.trim().toIntOrNull()?.takeIf { it >= 0 }
 
