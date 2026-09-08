@@ -12,73 +12,85 @@ This remains a **standalone Nvidia Shield clean-HOME experiment** for physical t
 - Normal users must not need ADB, developer options, a laptop, root or Shizuku.
 - Merge into AIO only after Ryan explicitly accepts the standalone behavior on real Shield hardware.
 
-## Current physically-green HOME replacement checkpoint: 0.8
+## Protected physically-green HOME replacement checkpoint: 0.8
 
-- Candidate build head: `af8ebe1147bd56cc952b874c2e4180bd6a44d15d`
+- Build head: `af8ebe1147bd56cc952b874c2e4180bd6a44d15d`
 - Version: 8 / `0.8.0-reboot-rearm`
 - Workflow: `34239594403` SUCCESS
-- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10061456035`
+- Artifact ID: `10061456035`
 - APK SHA-256: `7088b4be9dca7cb47bd67c740aaea940d71fd2471da623fb3f0c9fe23d5b2ff0`
 - Artifact ZIP SHA-256: `fb9dde5f313ca8345057da26f9ff6ce7a08d43caf9d20d334eb1684ff020d9cb`
 - Permanent BOOP signer reused and verified.
-- 49 focused Shield HOME tests passed.
-- Signed assembly, exact package/version, HOME/Leanback categories, Accessibility service/router, signer, APK integrity and artifact upload all passed.
-
-## Physical evidence
 
 Ryan physically confirmed on a real Nvidia Shield:
 
 - Android TV banners are good and must be preserved.
-- Long-press grab/reorder physically works (earlier confirmation: "the booger moved :)").
-- Manual Shield Accessibility setup successfully exposes and enables **BOOP Home Override**.
-- With BOOP Home Override enabled, **single Home launches BOOP Shield Home**.
-- With BOOP Home Override enabled, **double-press Home still opens native Nvidia/Shield Recent Apps**. This is a HARD locked acceptance behavior and must never be intercepted or replaced.
-- 0.7 reboot persistence failed: Shield returned to stock Android TV Home until BOOP Home Override was toggled off/on.
-- 0.8 repairs that reboot race. After updating to 0.8 with BOOP Home Override already enabled, Ryan rebooted the Shield and physically confirmed:
-  - **BOOP Home Override still reports ON after reboot**;
-  - **the original Android TV Home did not launch**;
-  - BOOP remained the effective HOME without any Accessibility off/on ritual.
+- Long-press grab/reorder works ("the booger moved :)").
+- Manual Shield Accessibility setup exposes and enables **BOOP Home Override**.
+- Single Home launches BOOP Shield Home.
+- Double-press Home still opens native Nvidia/Shield Recent Apps. This is HARD locked and must never be intercepted or replaced.
+- 0.7 reboot persistence failed, but 0.8 repaired the Accessibility service reconnect race.
+- On 0.8 after reboot, **BOOP Home Override remained ON**, **the original Android TV Home did not launch/reclaim the screen**, and BOOP returned automatically without an Accessibility off/on ritual.
 
 Ryan's acceptance message for the core objective: **"we beat it :)"**.
 
-Therefore the **core HOME replacement mechanism is physically green on 0.8**: BOOP survives reboot, remains the effective Home surface, and native double-Home Recent Apps is preserved.
+Therefore 0.8 remains the protected physical checkpoint for the HOME replacement mechanism. Later visual polish must not change the Accessibility override, reboot re-arm or native double-Home behavior.
 
-## Root cause and 0.8 repair
+## Current visual candidate: 0.9 floating cards
 
-0.7 `ShieldHomeOverrideService` only reacted to future `TYPE_WINDOW_STATE_CHANGED` events from stock Android TV Home. It had no `onServiceConnected()` re-arm path.
+0.9 changes only app-card chrome around the protected 0.8 mechanism.
 
-On reboot, Shield could present stock Home before Android finished binding the already-enabled Accessibility service. BOOP then missed the one stock-Home event it needed. Re-toggling Accessibility caused fresh lifecycle/window activity, explaining why BOOP immediately took over again.
+- Candidate build head: `79919976adebf5f989a0efd86bef525b6273ed44`
+- Version: 9 / `0.9.0-floating-cards`
+- Workflow: `34244270100` SUCCESS
+- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10063361724`
+- APK SHA-256: `7abd913b51329a3c2cef556fa853bfbb8a78007b046d131a12b639daa9bd589b`
+- Artifact ZIP SHA-256: `481f893058ff36b48aa9dec4069d4a3e6dc069486963768ad0cd01d1528ddd1b`
+- Permanent BOOP signer reused and verified.
+- Full focused Shield HOME suite passed (49 tests).
+- Signed assembly, exact package/version, HOME/Leanback categories, Accessibility service/router, signer, APK integrity and artifact upload passed.
 
-0.8 makes one bounded change:
+**0.9 is CI/signer green only. Its visual appearance is not physically accepted until Ryan tests it on the real Shield.**
 
-- `ShieldHomeOverrideService.onServiceConnected()` immediately brings `ShieldLauncherActivity` forward whenever Android binds/rebinds the already-enabled Accessibility service.
-- The existing 350 ms relaunch guard remains in place to suppress immediate duplicate window-event launches.
-- Normal stock-Home window events still drive later single-Home takeover.
-- No `BOOT_COMPLETED` receiver was added.
-- No new permission was added.
-- No Home-key interception was added.
-- Double-Home/Recent Apps code is untouched.
+### Approved 0.9 visual contract
 
-TDD evidence:
+- HOME favourites keep the real installed Android TV **wide banners**, using the existing banner-first lookup and icon fallback.
+- App drawer keeps the real installed app **square icons**.
+- BOOP does not recolour, tint or replace installed artwork.
+- Idle app/favourite cards have **no charcoal backing plate**, giving the artwork a floating look.
+- Focused, selected or grabbed cards restore the existing dark rounded backing plate.
+- Existing focus scale remains `1.08`; grabbed scale remains `1.14`; focus duration remains 120 ms.
+- The same shared card chrome drives HOME and the Apps drawer, so the focus treatment stays consistent while their artwork aspect ratios remain different.
+- Background remains **pure black** for 0.9. Background-provider work is separate and deferred.
+- The protected 0.8 Accessibility HOME override, reboot re-arm and native double-Home/Recent Apps behavior were not changed.
 
-- RED commit `e8c9adef39a067b07cd70d75534aebe960b300b9`, workflow `34239129796`: 49 tests ran, exactly one failed because `ShieldHomeOverrideService.onServiceConnected()` was absent.
-- Production repair commit `5ac04b0bc519f5f2235129c5c40c75ba3eddca46`, workflow `34239319902`: full launcher suite and signed build green.
-- Version promotion `20a38183af0ca66edd0e29799c6af84e6581cfac`.
-- Final 0.8 certification head `af8ebe1147bd56cc952b874c2e4180bd6a44d15d`, workflow `34239594403`: green end-to-end.
+### 0.9 TDD / implementation evidence
+
+- RED contract commit `7895d6417a705329cf803af293efc111cb8d1bdc`, workflow `34243722284`: production compiled, unit-test compilation failed only because `AppCardChromePolicy` did not yet exist.
+- Policy commit `d7837b96f83aad780ce80651af4c8784e426e760`.
+- Shared-card implementation commit `f54101cc05189f63409685032d06a9a417f1cd28`; intermediate workflow `34243916604` passed end-to-end.
+- Version promotion `eac3cb867fe9b975d9abfb670e5764a9c020cd7c`.
+- The intermediate version-bump run used the still-v8 verifier, so tests/build passed and its expected old identity check rejected v9. This was superseded by the corrected final certification workflow and is not a production regression.
+- Final 0.9 certification head `79919976adebf5f989a0efd86bef525b6273ed44`, workflow `34244270100`: green end-to-end.
+
+## Background / Ambient Mode boundary
+
+0.9 deliberately keeps BOOP black. The Google imagery already present on Shield is the device's Ambient Mode/screensaver system, not a supported general launcher-wallpaper feed. BOOP can leave the existing Shield/Google screensaver behavior alone after inactivity while separately owning the HOME surface. Do not add a cloud image dependency or embedded third-party API credential merely to decorate the launcher.
+
+Future background work can separately consider `Black` as the zero-network default plus a user-chosen local image. Online-provider selection needs its own explicit design/approval.
 
 ## Setup reality on this Shield firmware
 
-The built-in BOOP Accessibility shortcut currently reaches normal Shield Settings, not the exact Accessibility submenu. Do not keep guessing OEM activity class names.
+The built-in BOOP Accessibility shortcut reaches normal Shield Settings rather than the exact Accessibility submenu. Do not keep guessing OEM activity class names.
 
-Known working first-time setup on this Shield:
+Known working first-time setup:
 
 **Shield Settings -> Accessibility -> Services -> BOOP Home Override -> ON**
 
-Once enabled, it persists across reboot on 0.8 and no retoggle is required. Stock Android TV Home remains installed/enabled as recovery and as the override trigger.
+Once enabled, 0.8 proved it persists across reboot without retoggle. Stock Android TV Home remains installed/enabled as recovery and as the override trigger.
 
 ## Existing behavior to preserve
 
-- HOME favourites prefer Android TV banners with normal icon fallback.
 - Long-press favourite enters grabbed mode; Left/Right moves the grabbed tile across the row; Select drops/persists.
 - Single Back returns to HOME/favourite item 1 and cancels/restores an active grab.
 - Long Back opens real Shield/Android Settings.
@@ -91,19 +103,22 @@ Once enabled, it persists across reboot on 0.8 and no retoggle is required. Stoc
 
 **Remove the crap, preserve Shield behavior.**
 
-Physically confirmed and now locked:
-- BOOP Home Override remains enabled across reboot on 0.8;
+Physically confirmed and locked from 0.8:
+- BOOP Home Override remains enabled across reboot;
 - stock Android TV Home does not reclaim the screen after reboot;
 - single Home -> BOOP;
 - double Home -> native Recent Apps/task switcher;
 - banners;
 - grab/reorder.
 
-Still worth checking before final standalone-to-AIO merge approval:
-- single Back -> favourite item 1 and long Back -> real Settings;
-- top-right Settings -> real Shield Settings;
-- volume/CEC and other native Shield shortcuts;
-- switching BOOP Home Override OFF cleanly restores ordinary stock Shield Home;
-- any visible stock-Home flash during ordinary single-Home use.
+## Next physical test: 0.9
 
-The HOME replacement mechanism itself is physically accepted at this checkpoint. Do not regress it when polishing or later merging into AIO.
+1. Update 0.8 to standalone 0.9. AIO `com.boop.alpha1` remains untouched.
+2. HOME: confirm idle wide banners float with no dark card backing.
+3. Move focus: the dark rounded plate should appear only behind the focused banner and disappear from the old one; supplied banner colours/artwork must be unchanged.
+4. Grab a favourite: existing drag/reorder must still work and the grabbed card should keep its stronger emphasized state.
+5. Apps drawer: confirm square installed icons float when idle and the selected/focused icon gets the same dark rounded plate; icon colours must be unchanged.
+6. Confirm single Home -> BOOP and double Home -> native Recent Apps.
+7. Reboot once and confirm BOOP Home Override remains ON and BOOP still wins startup.
+
+Do not merge into unified until Ryan explicitly approves the standalone behavior on real Shield hardware.
