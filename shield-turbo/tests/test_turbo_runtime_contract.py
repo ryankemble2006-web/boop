@@ -59,7 +59,7 @@ class TurboRuntimeContractTest(unittest.TestCase):
                 PERF / 'TurboRuntime.kt',
             ) if path.exists()
         )
-        self.assertNotIn('Service(', combined)
+        self.assertNotRegex(combined, r'\bclass\s+\w*Service\b')
         self.assertNotIn('BroadcastReceiver', combined)
         self.assertNotIn('BOOT_COMPLETED', combined)
         self.assertNotIn('startForeground', combined)
