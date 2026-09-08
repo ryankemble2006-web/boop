@@ -10,8 +10,12 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 
 import java.net.URISyntaxException;
@@ -55,8 +59,23 @@ public final class ShieldLauncherActivity extends Activity {
     private boolean destroyed;
     private int optionalGeneration;
 
+    private final BackPressGesture backPressGesture = new BackPressGesture();
+    private Handler inputHandler;
+    private Runnable backHoldRunnable;
+
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+
+        inputHandler = new Handler(Looper.getMainLooper());
+        backHoldRunnable = () -> {
+            if (destroyed || !backPressGesture.onHoldTriggered()) {
+                return;
+            }
+            if (currentView instanceof ShieldHomeView) {
+                ((ShieldHomeView) currentView).resetToFirstFavourite();
+            }
+            openSystemSettings();
+        };
 
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -120,6 +139,10 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showHome() {
+        showHome(false);
+    }
+
+    private void showHome(boolean focusFirstFavourite) {
         currentPage = Page.HOME;
         int generation = ++optionalGeneration;
         List<TvAppEntry> favourites = favouriteEntries();
@@ -128,6 +151,9 @@ public final class ShieldLauncherActivity extends Activity {
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
         view.render(favourites, List.of(), callbacks);
         transitionTo(view);
+        if (focusFirstFavourite) {
+            view.post(view::resetToFirstFavourite);
+        }
 
         List<HomeRowProvider> providers;
         try {
@@ -171,6 +197,9 @@ public final class ShieldLauncherActivity extends Activity {
                     return;
                 }
                 view.render(favouriteEntries(), readyRows, homeCallbacks());
+                if (focusFirstFavourite) {
+                    view.post(view::resetToFirstFavourite);
+                }
             });
         });
     }
@@ -420,19 +449,60 @@ public final class ShieldLauncherActivity extends Activity {
         }
     }
 
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (event.getRepeatCount() == 0) {
+                    backPressGesture.onDown();
+                    if (inputHandler != null && backHoldRunnable != null) {
+                        inputHandler.removeCallbacks(backHoldRunnable);
+                        inputHandler.postDelayed(
+                                backHoldRunnable,
+                                ViewConfiguration.getLongPressTimeout());
+                    }
+                }
+                return true;
+            }
+
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                if (inputHandler != null && backHoldRunnable != null) {
+                    inputHandler.removeCallbacks(backHoldRunnable);
+                }
+                if (event.isCanceled()) {
+                    backPressGesture.cancel();
+                } else if (backPressGesture.onUpShouldRunShortBack()) {
+                    handleShortBack();
+                }
+                return true;
+            }
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    private void handleShortBack() {
+        if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
+            ((ShieldHomeView) currentView).resetToFirstFavourite();
+            return;
+        }
+        showHome(true);
+    }
+
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     @Override public void onBackPressed() {
-        if (currentPage != Page.HOME) {
-            showHome();
-        }
+        handleShortBack();
     }
 
     @Override protected void onDestroy() {
         destroyed = true;
         ++optionalGeneration;
+        if (inputHandler != null && backHoldRunnable != null) {
+            inputHandler.removeCallbacks(backHoldRunnable);
+        }
+        backPressGesture.cancel();
         if (receiverRegistered && packageReceiver != null) {
             try {
                 unregisterReceiver(packageReceiver);
