@@ -13,6 +13,7 @@ class TurboSectionTest {
         assertEquals(TurboSection.APPS, TurboSection.fromKey("apps"))
         assertEquals(TurboSection.NETWORK, TurboSection.fromKey("network"))
         assertEquals(TurboSection.SHIELD, TurboSection.fromKey("shield"))
+        assertEquals(TurboSection.ADVANCED, TurboSection.fromKey("advanced"))
         assertNull(TurboSection.fromKey("adb"))
     }
 }
