@@ -15,6 +15,9 @@ public final class ShieldHomeSettingsView extends LinearLayout {
     public interface Callbacks {
         void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled);
         void onChooseHomeApp();
+        default void onMakeBoopHome() { onChooseHomeApp(); }
+        default void onRetireStockHome() { }
+        default void onRestoreStockHome() { onChooseHomeApp(); }
         void onBackHome();
     }
 
@@ -27,7 +30,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         setOrientation(VERTICAL);
         setGravity(Gravity.CENTER_VERTICAL);
         setBackgroundColor(Color.BLACK);
-        setPadding(dp(52), dp(38), dp(52), dp(36));
+        setPadding(dp(52), dp(30), dp(52), dp(28));
         setClipChildren(false);
         setClipToPadding(false);
     }
@@ -37,11 +40,37 @@ public final class ShieldHomeSettingsView extends LinearLayout {
 
         TextView title = text("Home rows", 28);
         addView(title, wrap());
-        addSpacer(dp(26));
+        addSpacer(dp(18));
+
+        TextView homeSection = text("Shield Home", 20);
+        addView(homeSection, wrap());
+        addSpacer(dp(10));
+
+        TextView makeHome = action("Make BOOP my Home");
+        makeHome.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onMakeBoopHome();
+        });
+        addView(makeHome, rowParams());
+        addSpacer(dp(10));
+
+        TextView retireHome = action("Retire Android TV Home");
+        retireHome.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onRetireStockHome();
+        });
+        addView(retireHome, rowParams());
+        addSpacer(dp(10));
+
+        TextView restoreHome = action("Restore Shield Home");
+        restoreHome.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onRestoreStockHome();
+        });
+        addView(restoreHome, rowParams());
+
+        addSpacer(dp(20));
 
         TextView section = text("Optional rows", 20);
         addView(section, wrap());
-        addSpacer(dp(12));
+        addSpacer(dp(10));
 
         TextView playNextRow = action("Play Next: " + (playNext ? "ON" : "OFF"));
         playNextRow.setOnClickListener(v -> {
@@ -50,7 +79,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
             }
         });
         addView(playNextRow, rowParams());
-        addSpacer(dp(12));
+        addSpacer(dp(10));
 
         TextView channelsRow = action("App content rows: " + (appChannels ? "ON" : "OFF"));
         channelsRow.setOnClickListener(v -> {
@@ -60,14 +89,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         });
         addView(channelsRow, rowParams());
 
-        addSpacer(dp(30));
-
-        TextView chooseHome = action("Choose Home app");
-        chooseHome.setOnClickListener(v -> {
-            if (callbacks != null) callbacks.onChooseHomeApp();
-        });
-        addView(chooseHome, rowParams());
-        addSpacer(dp(12));
+        addSpacer(dp(20));
 
         TextView back = action("Back to Home");
         back.setOnClickListener(v -> {
@@ -89,7 +111,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         view.setGravity(Gravity.CENTER_VERTICAL);
         view.setFocusable(true);
         view.setClickable(true);
-        view.setPadding(dp(20), dp(12), dp(20), dp(12));
+        view.setPadding(dp(20), dp(10), dp(20), dp(10));
         view.setBackground(actionBackground());
         view.setOnFocusChangeListener((v, focused) -> v.animate()
                 .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
@@ -107,7 +129,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
     }
 
     private LayoutParams rowParams() {
-        return new LayoutParams(dp(420), dp(68));
+        return new LayoutParams(dp(440), dp(62));
     }
 
     private LayoutParams wrap() {
