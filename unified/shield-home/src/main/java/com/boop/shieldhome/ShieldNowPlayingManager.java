@@ -95,6 +95,11 @@ public final class ShieldNowPlayingManager {
         runOnMain(this::refreshAccessOnMain);
     }
 
+    /** Returns Android's current Notification Listener grant for the BOOP media bridge. */
+    public boolean hasAccess() {
+        return isAccessGranted();
+    }
+
     /** Opens the most specific Notification Listener settings page available on this Android TV. */
     public boolean openAccessSettings(Activity activity) {
         if (activity == null) {
