@@ -4,41 +4,41 @@ Updated 2026-09-08. Branch `shield-turbo-v01`; independent package `com.boop.shi
 
 ## Current signed candidate
 
-**v0.4.0 / versionCode 5 is built, signed and machine-verified. Startup Manager physical Shield acceptance is pending.**
+**v0.4.1 / versionCode 6 is built, signed and machine-verified. It repairs the Startup Manager action-menu blocker. Physical Shield acceptance remains pending.**
 
 | Evidence | Receipt |
 | --- | --- |
-| Built source | `1358925716cf2c834171b767dd94f08d0c49e013` |
-| Actions run / job | `34201159209` / `101980019981`: success |
-| JVM tests | 51 passed, 0 failures/errors/skips |
-| Source/security contracts | 10 passed |
-| Android lint | 0 errors, 22 warnings; gate passed |
-| Signed artifact | `SHIELD-TURBO`, ID `10045926945`, ZIP `744061` bytes |
-| Artifact ZIP SHA-256 | `239a58277ed5eed513da6c23a334a11ece67271470ec004b5bb668c834ef8380` |
-| Test artifact | `10045969922`, SHA-256 `faf31d577df7708fe5f3871b8a044c4dbb8d2c7da6b86a98b0201503320f0e4b` |
-| Delivered APK | `Shield-Turbo-v0.4.0.apk`, `2281902` bytes |
-| APK SHA-256 | `cf12ccdfec929424ad89f6f5302c86f7b1331ef809ceef336fc0bda5d344657a` |
+| Built source | `0961153e5dea94c38027cdf31530f500c5b29573` |
+| Actions run / job | `34204102153` / `101989443983`: success |
+| JVM tests | 58 passed, 0 failures/errors/skips, verified from JUnit XML |
+| Source/API/security checks | 13 checks; successful gate |
+| Android lint | 0 errors, 22 warnings, verified from lint XML |
+| Signed artifact | `SHIELD-TURBO`, ID `10047107169`, ZIP 744535 bytes |
+| Artifact ZIP SHA-256 | `4a1f31abe78e7876414c3524d98701d96ec9fbf3a2c46eb27280ab97eb8c6ee5` |
+| Test artifact | `10047154897`, SHA-256 `f98ef2b3092f56cf3baabb24576d984d95fe7bcb0055a08da3f3e482bff4e752` |
+| Delivered APK | `Shield-Turbo-v0.4.1.apk`, 2283246 bytes |
+| APK SHA-256 | `c7bc147a70378dfe62a14e542aeb5dcb1036fbe6818551e98ddcf6fe061793fa` |
 | Permanent signer certificate SHA-256 | `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` |
-| Package/signature/archive checks | Passed; expected package/version/Leanback entry, non-debuggable release |
-| Nonvisual emulator smoke | Install/cold launch/process/Back/warm launch/no-fatal passed |
-| Visual tests | None; Ryan owns visual acceptance |
+| Release checks | Expected package/version/Leanback/non-debuggable, cryptographic signer and archive integrity passed |
+| Post-upload smoke | Basic install, cold/warm launch, process and no-fatal checks passed |
+| Visual tests | None. Ryan is the real-device visual/remote acceptance authority |
 
-## Startup Manager
+The actual extracted APK was linked only after its existence, digest, archive integrity and build receipts were checked. It was made available before the slower nonvisual smoke completed.
 
-ADVANCED now contains **STARTUP MANAGER** for the user's specific four-Kodi-fork boot problem.
+## What was wrong
 
-`BLOCK STARTUP / KEEP LAUNCHABLE` is the default recommendation. It saves the app's original Android background app-op modes and package enabled state, applies `RUN_IN_BACKGROUND=ignore` and `RUN_ANY_IN_BACKGROUND=ignore`, and verifies read-back. The package remains enabled for manual launch.
+Ryan could select an app in v0.4.0 but only saw its package name and the explanatory message. `StartupManagerActivity.choose` incorrectly combined AlertDialog `setMessage` and `setItems`; the message displaced the action list. A test-first API-use regression reproduced this exact mistake at `47abd6136448ee7ef6771729584d6471569f6c9f`, run `34203516856`. That test now passes.
 
-`HARD BLOCK / DISABLE APP` is stronger and separately confirmed. It disables only the selected user package. It does not clear data, caches, files or logins.
+## Patch scope
 
-Per-app UNDO and `UNDO ALL TURBO STARTUP CHANGES` restore the exact original state recorded before the first Turbo mutation. Ledger entries remain when restore cannot be verified. No boot receiver or background service was added; Turbo relies on persistent Android system state rather than becoming another boot-starting app.
+The per-app dialog now uses the title and action list without the conflicting message. Label lookup tries a real launcher/application label before the package ID; it never invents names when metadata is absent. Cancel bypasses the busy guard, and remote Back cancels an in-flight operation. These are control-flow/data-resolution changes, not visual acceptance claims.
 
-System/updated-system/NVIDIA/Android/Google-core/BOOP packages remain excluded. No QUERY_ALL_PACKAGES, bulk RAM cleaner, fake speed score, app-data clearing, uninstall, root, overclocking or governor changes were added.
+No change to background app-op commands, Hard Block semantics, Undo records, ADB protocol/access, permissions, brightness, diagnostics, sleep/reboot, native settings or other BOOP bodies. Existing signer and package remain. Display & Sound and Accessibility stay parked.
 
-## Physical evidence
+## Physical boundary and next test
 
-Already accepted: bedroom brightness works; corrected STANDARD maintenance row selectable; Developer Options opens correctly. Display & Sound and Accessibility remain unresolved and were intentionally sidestepped.
+Previously confirmed: bedroom brightness, corrected STANDARD maintenance selectability, Developer Options opening. Startup Manager has not yet passed the real-Shield selection, write/read-back, boot-suppression, manual-launch or Undo cycle. v0.4.0's machine-green result did not make its broken action menu acceptable.
 
-No v0.4.0 Startup Manager policy has yet been physically confirmed. First hardware test is one Kodi fork with BLOCK STARTUP, reboot, confirm it does not self-start, then manually launch it normally. Repeat for the other forks only after the first succeeds. HARD BLOCK is not needed for that initial acceptance pass.
+Next: install v0.4.1, ADVANCED -> STARTUP MANAGER -> one Kodi fork -> BLOCK STARTUP / KEEP LAUNCHABLE. Confirm the real menu opens and read-back succeeds before reboot testing. Test manual launch afterward; only then repeat for the remaining forks. These app-ops restrict background activity, not every conceivable startup mechanism. HARD BLOCK remains separately confirmed and prevents manual launch until Undo.
 
-Only the existing secret-backed `boop-dev` signer was used. No physical device was modified by CI or this chat. See `SESSION_HANDOFF.md` for the TDD red/green receipts, implementation boundaries and historical rollback points.
+See SESSION_HANDOFF.md for exact diagnosis, verification and historical receipts. Main ownership/context did not change, and no physical installation or laptop synchronization was performed by this chat.
