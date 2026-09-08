@@ -112,6 +112,13 @@ final class BoopWakeSessionState {
         reevaluate();
     }
 
+    void recoverWakeSession() {
+        wakeFailed = false;
+        commandDeadlineMs = -1L;
+        state = State.DISARMED;
+        reevaluate();
+    }
+
     void failWakeSession() {
         wakeFailed = true;
         commandDeadlineMs = -1L;
