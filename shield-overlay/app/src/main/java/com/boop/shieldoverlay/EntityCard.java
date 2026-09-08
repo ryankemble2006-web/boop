@@ -7,6 +7,8 @@ public final class EntityCard {
     private final String state;
     private final boolean hidden;
     private final String entityCategory;
+    private final String deviceId;
+    private final String deviceName;
 
     public EntityCard(
             String entityId,
@@ -15,37 +17,36 @@ public final class EntityCard {
             String state,
             boolean hidden,
             String entityCategory) {
+        this(entityId, areaId, displayName, state, hidden, entityCategory, null, null);
+    }
+
+    public EntityCard(
+            String entityId,
+            String areaId,
+            String displayName,
+            String state,
+            boolean hidden,
+            String entityCategory,
+            String deviceId,
+            String deviceName) {
         this.entityId = requireText(entityId, "entity id");
         this.areaId = clean(areaId);
         this.displayName = requireText(displayName, "display name");
         this.state = requireText(state, "state").toLowerCase();
         this.hidden = hidden;
         this.entityCategory = clean(entityCategory);
+        this.deviceId = clean(deviceId);
+        this.deviceName = clean(deviceName);
     }
 
-    public String entityId() {
-        return entityId;
-    }
-
-    public String areaId() {
-        return areaId;
-    }
-
-    public String displayName() {
-        return displayName;
-    }
-
-    public String state() {
-        return state;
-    }
-
-    public boolean hidden() {
-        return hidden;
-    }
-
-    public String entityCategory() {
-        return entityCategory;
-    }
+    public String entityId() { return entityId; }
+    public String areaId() { return areaId; }
+    public String displayName() { return displayName; }
+    public String state() { return state; }
+    public boolean hidden() { return hidden; }
+    public String entityCategory() { return entityCategory; }
+    public String deviceId() { return deviceId; }
+    public String deviceName() { return deviceName; }
 
     public String domain() {
         int dot = entityId.indexOf('.');
@@ -59,21 +60,31 @@ public final class EntityCard {
                 displayName,
                 newState,
                 hidden,
-                entityCategory);
+                entityCategory,
+                deviceId,
+                deviceName);
+    }
+
+    public EntityCard withDisplayName(String newDisplayName) {
+        return new EntityCard(
+                entityId,
+                areaId,
+                newDisplayName,
+                state,
+                hidden,
+                entityCategory,
+                deviceId,
+                deviceName);
     }
 
     private static String requireText(String value, String label) {
         String clean = clean(value);
-        if (clean == null) {
-            throw new IllegalArgumentException(label + " is required");
-        }
+        if (clean == null) throw new IllegalArgumentException(label + " is required");
         return clean;
     }
 
     private static String clean(String value) {
-        if (value == null) {
-            return null;
-        }
+        if (value == null) return null;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
