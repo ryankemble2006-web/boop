@@ -4,15 +4,17 @@ import java.util.Arrays;
 
 /** Additional custom-name detector fed by the same PCM stream as Sherpa. */
 final class BoopWakeTemplateMatcher {
-    private static final float[] STREAM_WINDOW_RATIOS = {0.82f, 0.94f, 1.00f, 1.06f, 1.18f};
-
     private final BoopWakeAcousticProfile profile;
     private final int sampleRate;
     private final BoopWakeUtteranceSegmenter segmenter;
-    private final int[] streamWindowSamples;
-    private final int streamEndStepSamples;
+    private final int trainedSamples;
+    private final int minStreamingSamples;
     private final short[] streamHistory;
+
     private int streamHistoryCount;
+    private boolean streamSpeechActive;
+    private int streamQuietChunks;
+    private double streamNoiseFloor = 90d;
 
     BoopWakeTemplateMatcher(BoopWakeAcousticProfile profile, int sampleRate) {
         if (profile == null) throw new IllegalArgumentException("profile required");
@@ -20,91 +22,116 @@ final class BoopWakeTemplateMatcher {
         this.profile = profile;
         this.sampleRate = sampleRate;
         this.segmenter = new BoopWakeUtteranceSegmenter(sampleRate);
-
-        int trainedSamples = Math.max(1,
+        this.trainedSamples = Math.max(1,
                 Math.round(profile.averageDurationSeconds() * sampleRate));
-        streamWindowSamples = new int[STREAM_WINDOW_RATIOS.length];
-        int largestWindow = 0;
-        for (int i = 0; i < STREAM_WINDOW_RATIOS.length; i++) {
-            int samples = Math.max(1, Math.round(trainedSamples * STREAM_WINDOW_RATIOS[i]));
-            streamWindowSamples[i] = samples;
-            largestWindow = Math.max(largestWindow, samples);
-        }
-        // The controller feeds 100 ms blocks. Inspect candidate endings every 25 ms
-        // inside the newest block so a command that immediately follows the learned
-        // name cannot hide the name boundary from this detector.
-        streamEndStepSamples = Math.max(1, sampleRate / 40);
-        streamHistory = new short[largestWindow + sampleRate];
+        this.minStreamingSamples = Math.max(sampleRate / 8,
+                Math.round(trainedSamples * 0.72f));
+        this.streamHistory = new short[Math.max(sampleRate, Math.round(sampleRate * 2.6f))];
     }
 
     boolean accept(short[] input, int count) {
         int bounded = input == null ? 0 : Math.min(Math.max(0, count), input.length);
         if (bounded <= 0) return false;
 
-        appendStreamHistory(input, bounded);
-        if (matchesStreamingWindow(bounded)) {
+        // Keep the original silence-terminated matcher as a fallback. It remains
+        // useful for deliberate wake-only utterances and preserves the proven path.
+        short[] utterance = segmenter.accept(input, bounded);
+
+        boolean streamingMatched = updateStreamingCandidate(input, bounded);
+        if (streamingMatched) {
             reset();
             return true;
         }
 
-        // Preserve the original silence-terminated path as a fallback for deliberate
-        // wake-only utterances and for profiles that do not match an early window.
-        short[] utterance = segmenter.accept(input, bounded);
-        if (utterance == null) return false;
-        BoopWakePronunciationFeatures.Result features =
-                BoopWakePronunciationFeatures.extract(utterance, sampleRate);
-        boolean matched = features != null
-                && profile.matches(features.vector(), features.durationSeconds());
-        if (matched) reset();
-        return matched;
-    }
-
-    private boolean matchesStreamingWindow(int newestSamples) {
-        int firstNewEnd = Math.max(1, streamHistoryCount - newestSamples);
-        int lastEnd = streamHistoryCount;
-        for (int end = firstNewEnd; end <= lastEnd; end += streamEndStepSamples) {
-            if (matchesAtEnd(end)) return true;
-        }
-        if ((lastEnd - firstNewEnd) % streamEndStepSamples != 0 && matchesAtEnd(lastEnd)) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean matchesAtEnd(int end) {
-        for (int windowSamples : streamWindowSamples) {
-            int start = end - windowSamples;
-            if (start < 0 || end > streamHistoryCount) continue;
-            short[] candidate = Arrays.copyOfRange(streamHistory, start, end);
+        if (utterance != null) {
             BoopWakePronunciationFeatures.Result features =
-                    BoopWakePronunciationFeatures.extract(candidate, sampleRate);
-            if (features != null
-                    && profile.matches(features.vector(), features.durationSeconds())) {
+                    BoopWakePronunciationFeatures.extract(utterance, sampleRate);
+            boolean matched = features != null
+                    && profile.matches(features.vector(), features.durationSeconds());
+            resetStreaming();
+            if (matched) {
+                reset();
                 return true;
             }
         }
         return false;
     }
 
+    private boolean updateStreamingCandidate(short[] input, int count) {
+        double level = rms(input, count);
+        double startThreshold = Math.max(180d, streamNoiseFloor * 2.8d);
+        if (!streamSpeechActive) {
+            if (level < startThreshold) {
+                streamNoiseFloor = streamNoiseFloor * 0.96d + level * 0.04d;
+                return false;
+            }
+            streamSpeechActive = true;
+            streamQuietChunks = 0;
+            streamHistoryCount = 0;
+        }
+
+        appendStreamHistory(input, count);
+        double quietThreshold = Math.max(120d, streamNoiseFloor * 1.45d);
+        if (level <= quietThreshold) streamQuietChunks++;
+        else streamQuietChunks = 0;
+
+        boolean matched = false;
+        if (streamHistoryCount >= minStreamingSamples) {
+            int end = streamHistoryCount;
+            int halfBlockEnd = Math.max(0, end - count / 2);
+
+            // Prefix candidates let a bare learned name fire before trailing
+            // silence. Target-duration suffixes also tolerate a short natural
+            // lead-in without turning the matcher into a second microphone path.
+            matched = matchesCandidate(0, end)
+                    || matchesCandidate(0, halfBlockEnd)
+                    || matchesCandidate(Math.max(0, end - trainedSamples), end)
+                    || matchesCandidate(Math.max(0, halfBlockEnd - trainedSamples), halfBlockEnd);
+        }
+
+        if (matched) return true;
+        if (streamQuietChunks >= 2 || streamHistoryCount >= streamHistory.length) {
+            resetStreaming();
+        }
+        return false;
+    }
+
+    private boolean matchesCandidate(int start, int end) {
+        int length = end - start;
+        if (length < minStreamingSamples || end > streamHistoryCount) return false;
+        short[] candidate = Arrays.copyOfRange(streamHistory, start, end);
+        BoopWakePronunciationFeatures.Result features =
+                BoopWakePronunciationFeatures.extract(candidate, sampleRate);
+        return features != null
+                && profile.matches(features.vector(), features.durationSeconds());
+    }
+
     private void appendStreamHistory(short[] input, int count) {
-        if (count >= streamHistory.length) {
-            System.arraycopy(input, count - streamHistory.length,
-                    streamHistory, 0, streamHistory.length);
-            streamHistoryCount = streamHistory.length;
-            return;
+        int remaining = streamHistory.length - streamHistoryCount;
+        int copied = Math.min(count, Math.max(0, remaining));
+        if (copied > 0) {
+            System.arraycopy(input, 0, streamHistory, streamHistoryCount, copied);
+            streamHistoryCount += copied;
         }
-        int overflow = Math.max(0, streamHistoryCount + count - streamHistory.length);
-        if (overflow > 0) {
-            System.arraycopy(streamHistory, overflow, streamHistory, 0,
-                    streamHistoryCount - overflow);
-            streamHistoryCount -= overflow;
+    }
+
+    private static double rms(short[] input, int count) {
+        double sum = 0d;
+        for (int i = 0; i < count; i++) {
+            double value = input[i];
+            sum += value * value;
         }
-        System.arraycopy(input, 0, streamHistory, streamHistoryCount, count);
-        streamHistoryCount += count;
+        return Math.sqrt(sum / Math.max(1, count));
+    }
+
+    private void resetStreaming() {
+        streamHistoryCount = 0;
+        streamSpeechActive = false;
+        streamQuietChunks = 0;
     }
 
     void reset() {
         segmenter.reset();
-        streamHistoryCount = 0;
+        resetStreaming();
     }
 }
