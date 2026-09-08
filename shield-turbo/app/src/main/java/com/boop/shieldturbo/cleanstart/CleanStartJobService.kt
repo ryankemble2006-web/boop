@@ -14,6 +14,10 @@ import java.util.concurrent.Future
  * stops reviewed targets, records bounded results, and exits.
  */
 class CleanStartJobService : JobService() {
+    companion object {
+        private const val INDICATOR_PREROLL_MS = 500L
+    }
+
     private val executor = Executors.newSingleThreadExecutor()
     @Volatile private var task: Future<*>? = null
     @Volatile private var bridge: LocalBridge? = null
@@ -33,6 +37,10 @@ class CleanStartJobService : JobService() {
 
         task = executor.submit {
             try {
+                // Give Android a brief render opportunity before the ADB/force-stop work begins.
+                // This sleeps only the worker thread; the static overlay and launcher UI stay unblocked.
+                Thread.sleep(INDICATOR_PREROLL_MS)
+
                 val localBridge = LocalBridge(applicationContext)
                 bridge = localBridge
                 val summary = try {
