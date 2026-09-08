@@ -32,6 +32,7 @@ def test_wall_materializer_copies_master_directly_without_alpha_rebuild():
 def test_unified_shield_reuses_materialized_master_and_shared_geometry():
     materializer = Path("scripts/materialize-unified.sh").read_text()
     shield_patch = Path("scripts/patch-unified-shield-presentation.py").read_text()
+    dashboard_patch = Path("scripts/patch-unified-shield-dashboard.py").read_text()
     geometry_patch = Path("scripts/patch-approved-eye-geometry.py").read_text()
     assert 'cp "$EYE_ASSET" "$ROOT/shield-lib/src/main/res/drawable-nodpi/boop_eyes.png"' in materializer
     assert "BoopApprovedEyeGeometry.java" in shield_patch
@@ -39,3 +40,4 @@ def test_unified_shield_reuses_materialized_master_and_shared_geometry():
     assert "BoopApprovedEyeGeometry.LEFT_SOURCE" in geometry_patch
     assert "BoopApprovedEyeGeometry.RIGHT_SOURCE" in geometry_patch
     assert "make-locked-eyes-transparent.py" not in shield_patch
+    assert "make-locked-eyes-transparent.py" not in dashboard_patch
