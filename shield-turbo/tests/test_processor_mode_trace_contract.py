@@ -1,12 +1,10 @@
 """Processor-mode before/after tracer contracts: read-only, local, and non-resident."""
 from pathlib import Path
 import unittest
-import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'app/src/main/java/com/boop/shieldturbo'
 PERF = SOURCE / 'performance'
-ANDROID = '{http://schemas.android.com/apk/res/android}'
 
 
 class ProcessorModeTraceContractTest(unittest.TestCase):
@@ -47,15 +45,13 @@ class ProcessorModeTraceContractTest(unittest.TestCase):
         self.assertIn('ProcessorModeTraceReport.format(changes)', main)
         self.assertIn('trace = worker.submit', main)
 
-    def test_trace_adds_no_service_receiver_or_permission(self):
-        manifest = ET.parse(ROOT / 'app/src/main/AndroidManifest.xml').getroot()
-        app = manifest.find('application')
-        services = {s.get(ANDROID + 'name') for s in app.findall('service')}
-        receivers = {r.get(ANDROID + 'name') for r in app.findall('receiver')}
-        permissions = {p.get(ANDROID + 'name') for p in manifest.findall('uses-permission')}
-        self.assertFalse(any(name and '.performance.' in name for name in services))
-        self.assertFalse(any(name and '.performance.' in name for name in receivers))
-        self.assertNotIn('android.permission.FOREGROUND_SERVICE', permissions)
+    def test_trace_sources_remain_nonresident_even_beside_persistent_turbo(self):
+        trace = '\n'.join(path.read_text() for path in PERF.glob('ProcessorModeTrace*.kt'))
+        self.assertNotRegex(trace, r'\bclass\s+\w*Service\b')
+        self.assertNotIn('BroadcastReceiver', trace)
+        self.assertNotIn('startForeground', trace)
+        self.assertNotIn('TurboThermalWatchdogService', trace)
+        self.assertNotIn('TurboBootReceiver', trace)
 
     def test_trace_does_not_touch_clean_start_or_brightness(self):
         clean = (SOURCE / 'cleanstart/CleanStartJobService.kt').read_text()
