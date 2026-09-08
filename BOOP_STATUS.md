@@ -4,17 +4,25 @@ Updated 2026-09-08. Canonical branch `boop-unified`; package `com.boop.alpha1`; 
 
 ## Current green candidate
 
-Shield clean HOME implementation is complete in the unified lineage and the latest full non-visual build is green.
+The latest signed unified candidate adds five-sample local custom wake-name training while preserving the clean Shield HOME implementation.
 
-- Code: `e2c938ed0a035913b6fb8499aad1c3b89eb3aaac`
-- Version: 46 / `1.2.0-unified-shield-home`
-- Workflow: `34215725283` SUCCESS
-- Artifact: `BOOP-Unified`, ID `10051749294`
-- APK SHA-256: `94f0046a93797606176fdd247c328aa189adb161cb6468346d26f69b8f71cb54`
+- Code: `aad1e20aae1bbd15423a7bf0f307d364039cf506`
+- Version: 47 / `1.2.1-unified-wake-training`
+- Workflow: `34216093167` SUCCESS
+- Artifact: `BOOP-Unified`, ID `10051904537`
+- APK SHA-256: `b99a83873a44a5dd3a4ac2fea8e32633db71a14ef38fac8bcc7b6cbf6970b6b2`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- Artifact ZIP SHA-256: `e3fb91691c0f828edba8469e15677814fb48ce1fc2955693eb793343356e5cd4`
+- Artifact ZIP SHA-256: `12140acd259093ed4c1a48b6a3be169d46635b7e613f08f0afc589de00b1c104`
 
-Fresh evidence: integration contracts passed; Launcher lint passed; Shield 58/58, Shield HOME 26/26 and unified 74/74 focused functional tests passed with zero failures/errors/skips; signed APK assembly, package/version, manifest HOME/internal launcher presence, permanent signer and ZIP integrity passed. Physical/device/visual acceptance is pending Ryan.
+Fresh evidence: integration contracts passed; Launcher lint passed; Shield 58/58, Shield HOME 26/26 and unified 74/74 focused functional tests passed with zero failures/errors/skips; signed APK assembly, package/version, manifest HOME/internal launcher presence, permanent signer and APK archive integrity passed. The downloaded artifact and extracted APK re-hashed to the same GitHub receipts. Physical/device/visual/acoustic acceptance remains Ryan's job.
+
+## Custom wake training
+
+BOOP remains the permanent fallback wake name. A non-BOOP name can be selected verbally or in Voice Settings and is trained locally by saying it five times. Training reuses the existing `BoopWakeWordController` / single 16 kHz `AudioRecord` ownership, stores only a compact amplitude-normalised pronunciation profile, and does not retain raw training PCM. Changing the name clears its previous profile.
+
+The trained matcher is additive to Sherpa rather than a replacement. Custom names now receive all 33 established natural wake forms, including the existing `hey`, `oi`, `ok`, `morning`, `wake up`, `listen`, `excuse me` and prefix/suffix variants. A matcher/profile failure must leave BOOP/Sherpa available.
+
+CI proves deterministic training/profile/codec and routing contracts only. Real recognition quality, miss rate and false-wake rate are not accepted until Ryan trains and tests a name such as `Steve` on the Pixel 7 Pro.
 
 ## Shield HOME contract
 
@@ -32,6 +40,6 @@ If one of these breaks on hardware, repair that narrow break later. Do not answe
 
 ## Other protected state
 
-Approved paired black-lidded eyes are now in the unified materialized build path; preserve approved geometry/alpha, iris-only hue, blink timing/gates, headphones/puppetry and five-digit hands. HA names/Home controls were physically accepted earlier and must stay intact. Shield scaling remains idempotent/non-cumulative. Assistant remote invocation/audio remains a separate physical acceptance boundary. Custom wake five-utterance enrolment is now materialized but still requires real-device acceptance.
+Approved paired black-lidded eyes are in the unified materialized build path; preserve approved geometry/alpha, iris-only hue, blink timing/gates, headphones/puppetry and five-digit hands. Blink is user-confirmed working and is not a current defect. HA names/Home controls were physically accepted earlier and must stay intact. Shield scaling remains idempotent/non-cumulative. Assistant remote invocation/audio remains a separate unresolved physical acceptance boundary.
 
 Protected historical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881` until Ryan explicitly promotes a newer physically accepted checkpoint. No screenshots/golden/aesthetic-source checks, emulator device acceptance, automatic installs/grants or signer/package changes.
