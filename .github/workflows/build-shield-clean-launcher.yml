@@ -79,8 +79,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.shieldhome'" badging.txt
-          grep -q "versionCode='17'" badging.txt
-          grep -q "versionName='0.10.2-accessibility-media'" badging.txt
+          grep -q "versionCode='18'" badging.txt
+          grep -q "versionName='0.10.3-now-playing-layout'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
           grep -q "com.boop.shieldhome.ShieldLauncherActivity" manifest-tree.txt
           grep -q "com.boop.shieldhome.ShieldHomeOverrideService" manifest-tree.txt
