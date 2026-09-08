@@ -5,6 +5,7 @@ plugins {
 def boopStore = System.getenv('BOOP_SIGNING_STORE_FILE')
 def boopStorePassword = System.getenv('BOOP_DEV_STORE_PASSWORD')
 def boopKeyPassword = System.getenv('BOOP_DEV_KEY_PASSWORD')
+def skipManualVisualTests = System.getenv('BOOP_SKIP_MANUAL_VISUAL_TESTS') == '1'
 
 android {
     namespace 'com.boop.shieldhome'
@@ -32,6 +33,13 @@ android {
     sourceSets {
         main.java.srcDirs += '../../unified/shield-home/src/main/java'
         test.java.srcDirs += '../../unified/shield-home/src/test/java'
+        if (skipManualVisualTests) {
+            // Ryan owns real-device appearance acceptance. Keep these source files as historical
+            // checks, but do not compile/run them in the fast GitHub delivery lane.
+            test.java.exclude 'com/boop/shieldhome/AppCardChromePolicyTest.java'
+            test.java.exclude 'com/boop/shieldhome/ShieldLauncherViewsTest.java'
+            test.java.exclude 'com/boop/shieldhome/NowPlayingPuppetIntegrationContractTest.java'
+        }
     }
 
     buildTypes {
