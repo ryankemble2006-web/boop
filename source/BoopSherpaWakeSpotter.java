@@ -50,7 +50,7 @@ final class BoopSherpaWakeSpotter implements AutoCloseable {
         config.setMaxActivePaths(4);
         config.setKeywordsScore(BoopWakeSensitivity.keywordScore(context));
         config.setKeywordsThreshold(0.25f);
-        config.setNumTrailingBlanks(1);
+        config.setNumTrailingBlanks(0);
 
         spotter = new KeywordSpotter(context.getAssets(), config);
         String selectedName = BoopWakeNameStore.load(context);
