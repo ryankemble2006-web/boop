@@ -56,6 +56,7 @@ class ContractTest(unittest.TestCase):
             'android.permission.RECEIVE_BOOT_COMPLETED',
             'android.permission.FOREGROUND_SERVICE',
             'android.permission.FOREGROUND_SERVICE_SPECIAL_USE',
+            'android.permission.POST_NOTIFICATIONS',
         }, permissions)
         app = manifest.find('application')
         services = {s.get(ANDROID + 'name'): s for s in app.findall('service')}
