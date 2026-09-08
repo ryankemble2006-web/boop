@@ -2,7 +2,6 @@ package com.boop.alpha1;
 
 final class ShieldEntryRoute {
     enum Target {
-        SHIELD_HOME("com.boop.shieldhome.ShieldLauncherActivity", false),
         SHIELD_PUPPET("com.boop.shieldoverlay.MainActivity", true),
         WALL("com.boop.alpha1.MainActivity", true),
         HANDHELD_LAUNCHER("com.boop.launcher.MainActivity", true);
@@ -28,7 +27,7 @@ final class ShieldEntryRoute {
 
     static Target resolve(BoopDeviceProfile.Mode mode, boolean homeIntent) {
         if (mode == BoopDeviceProfile.Mode.SHIELD) {
-            return homeIntent ? Target.SHIELD_HOME : Target.SHIELD_PUPPET;
+            return Target.SHIELD_PUPPET;
         }
         return mode == BoopDeviceProfile.Mode.WALL
                 ? Target.WALL
