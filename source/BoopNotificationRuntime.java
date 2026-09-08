@@ -1,15 +1,18 @@
 package com.boop.alpha1;
 
 import android.app.Application;
+import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 final class BoopNotificationRuntime {
@@ -43,15 +46,20 @@ final class BoopNotificationRuntime {
     private final BoopNotificationSettingsStore settingsStore;
     private final BoopNotificationCoordinator coordinator;
     private final LinkedHashMap<String, RuntimeRecord> records = new LinkedHashMap<>();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final BoopNotificationOverlayController overlayController;
 
     private BoopNotificationSettingsState settings;
     private BoopNotificationListenerService attachedListener;
+    private BoopNotificationHost wallHost;
+    private BoopNotificationSurface activeSurface;
 
     private BoopNotificationRuntime(Application application) {
         this.application = application;
         this.settingsStore = new BoopNotificationSettingsStore(application);
         this.settings = settingsStore.load();
         this.coordinator = new BoopNotificationCoordinator(BURST_WINDOW_MS);
+        this.overlayController = new BoopNotificationOverlayController(application, this);
     }
 
     static boolean shouldInitializeForMode(BoopDeviceProfile.Mode mode) {
@@ -101,6 +109,7 @@ final class BoopNotificationRuntime {
             return;
         }
         rebuildCoordinatorFromCurrentRecords();
+        scheduleHideAllSurfaces();
     }
 
     synchronized Set<BoopNotificationChannelInfo> observedChannels() {
@@ -130,7 +139,11 @@ final class BoopNotificationRuntime {
             return BoopNotificationCoordinator.Decision.ignore();
         }
         records.put(envelope.key(), record);
-        return coordinator.onPosted(envelope, nowMs, settings);
+        BoopNotificationCoordinator.Decision decision = coordinator.onPosted(envelope, nowMs, settings);
+        if (decision.kind() != BoopNotificationCoordinator.Kind.IGNORE) {
+            schedulePresentation(decision.kind());
+        }
+        return decision;
     }
 
     synchronized void rebuild(Collection<RuntimeRecord> activeRecords) {
@@ -149,16 +162,23 @@ final class BoopNotificationRuntime {
             }
         }
         coordinator.rebuild(envelopes, settings);
+        scheduleHideAllSurfaces();
     }
 
     synchronized void remove(String key) {
         if (key == null) return;
         records.remove(key);
         coordinator.onRemoved(key);
+        if (coordinator.visibleBundle().isEmpty()) {
+            scheduleHideAllSurfaces();
+        } else {
+            schedulePresentation(BoopNotificationCoordinator.Kind.UPDATE);
+        }
     }
 
     synchronized void onPresentationDismissed() {
         coordinator.onPresentationDismissed();
+        scheduleHideAllSurfaces();
     }
 
     synchronized RuntimeRecord record(String key) {
@@ -173,6 +193,38 @@ final class BoopNotificationRuntime {
         return coordinator.visibleBundle();
     }
 
+    synchronized void registerWallHost(BoopNotificationHost host) {
+        if (host == null) return;
+        wallHost = host;
+        if (!coordinator.visibleBundle().isEmpty()) {
+            schedulePresentation(BoopNotificationCoordinator.Kind.UPDATE);
+        }
+    }
+
+    synchronized void unregisterWallHost(BoopNotificationHost host) {
+        if (wallHost != host) return;
+        wallHost = null;
+        if (activeSurface == BoopNotificationSurface.IN_PLACE) {
+            host.hide();
+            activeSurface = null;
+            if (!coordinator.visibleBundle().isEmpty()) {
+                schedulePresentation(BoopNotificationCoordinator.Kind.PRESENT);
+            }
+        }
+    }
+
+    void transitionAfterUnlock() {
+        schedulePresentation(BoopNotificationCoordinator.Kind.UPDATE);
+    }
+
+    synchronized void onPresentationFailed(BoopNotificationSurface surface) {
+        if (surface == activeSurface) {
+            activeSurface = null;
+        }
+        coordinator.onPresentationDismissed();
+        scheduleHideAllSurfaces();
+    }
+
     synchronized void cancelAfterSuccessfulAutoCancelTap(String key) {
         if (key == null || key.isEmpty() || attachedListener == null) {
             return;
@@ -182,6 +234,102 @@ final class BoopNotificationRuntime {
         } catch (SecurityException ignored) {
             // Source notification remains authoritative if Android rejects cancellation.
         }
+    }
+
+    private void schedulePresentation(BoopNotificationCoordinator.Kind kind) {
+        mainHandler.post(() -> presentVisibleBundle(kind));
+    }
+
+    private void scheduleHideAllSurfaces() {
+        mainHandler.post(this::hideAllSurfaces);
+    }
+
+    private void presentVisibleBundle(BoopNotificationCoordinator.Kind kind) {
+        final List<BoopNotificationEnvelope> bundle;
+        final long timeoutMs;
+        final BoopNotificationHost currentWallHost;
+        final BoopNotificationSurface previousSurface;
+        synchronized (this) {
+            bundle = coordinator.visibleBundle();
+            timeoutMs = settings.timeoutMs();
+            currentWallHost = wallHost;
+            previousSurface = activeSurface;
+        }
+        if (bundle.isEmpty()) {
+            hideAllSurfaces();
+            return;
+        }
+
+        PowerManager power = (PowerManager) application.getSystemService(Context.POWER_SERVICE);
+        KeyguardManager keyguard =
+                (KeyguardManager) application.getSystemService(Context.KEYGUARD_SERVICE);
+        boolean interactive = power != null && power.isInteractive();
+        boolean keyguardLocked = keyguard != null && keyguard.isKeyguardLocked();
+        BoopNotificationSurface surface = BoopNotificationSurfaceSelector.choose(
+                interactive,
+                keyguardLocked,
+                currentWallHost != null);
+        BoopNotificationPresentation presentation = BoopNotificationPresentation.from(
+                bundle,
+                surface,
+                surface == BoopNotificationSurface.LOCKED);
+
+        if (surface == BoopNotificationSurface.LOCKED) {
+            if (currentWallHost != null) currentWallHost.hide();
+            overlayController.hide();
+            synchronized (this) {
+                activeSurface = BoopNotificationSurface.LOCKED;
+            }
+            Intent intent = new Intent(application, BoopNotificationLockActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            try {
+                application.startActivity(intent);
+            } catch (RuntimeException unavailable) {
+                onPresentationFailed(BoopNotificationSurface.LOCKED);
+            }
+            return;
+        }
+
+        if (surface == BoopNotificationSurface.IN_PLACE) {
+            overlayController.hide();
+            if (currentWallHost == null) {
+                onPresentationFailed(BoopNotificationSurface.IN_PLACE);
+                return;
+            }
+            synchronized (this) {
+                activeSurface = BoopNotificationSurface.IN_PLACE;
+            }
+            if (previousSurface == BoopNotificationSurface.IN_PLACE
+                    && kind == BoopNotificationCoordinator.Kind.UPDATE) {
+                currentWallHost.update(presentation, timeoutMs);
+            } else {
+                currentWallHost.show(presentation, timeoutMs);
+            }
+            return;
+        }
+
+        if (currentWallHost != null) currentWallHost.hide();
+        synchronized (this) {
+            activeSurface = BoopNotificationSurface.OVERLAY;
+        }
+        if (previousSurface == BoopNotificationSurface.OVERLAY
+                && kind == BoopNotificationCoordinator.Kind.UPDATE) {
+            overlayController.update(presentation, timeoutMs);
+        } else {
+            overlayController.show(presentation, timeoutMs);
+        }
+    }
+
+    private void hideAllSurfaces() {
+        BoopNotificationHost currentWallHost;
+        synchronized (this) {
+            currentWallHost = wallHost;
+            activeSurface = null;
+        }
+        if (currentWallHost != null) currentWallHost.hide();
+        overlayController.hide();
     }
 
     private void rebuildCoordinatorFromCurrentRecords() {
