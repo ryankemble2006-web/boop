@@ -2,20 +2,24 @@ package com.boop.alpha1;
 
 /** Colour arithmetic for the approved permanent eye master. The PNG itself is never changed. */
 final class BoopIrisTintMath {
+    private static final double LEFT_IRIS_CENTRE_X = 535.0;
+    private static final double RIGHT_IRIS_CENTRE_X = 1233.0;
+    private static final double IRIS_CENTRE_Y = 543.0;
+
     private BoopIrisTintMath() { }
 
     static boolean inIris(int x, int y, int width, int height) {
         if (width <= 0 || height <= 0) return false;
         double ax = (x + 0.5) * 1774.0 / width;
         double ay = (y + 0.5) * 887.0 / height;
-        return inRing(ax, ay, 522.0) || inRing(ax, ay, 1204.0);
+        return inRing(ax, ay, LEFT_IRIS_CENTRE_X) || inRing(ax, ay, RIGHT_IRIS_CENTRE_X);
     }
 
     private static boolean inRing(double x, double y, double centreX) {
         double dx = x - centreX;
-        double dy = y - 529.0;
-        // Restrict colour changes to the blue/cyan iris annulus. The pupil,
-        // highlights, white sclera, eyelids and supplied alpha stay untouched.
+        double dy = y - IRIS_CENTRE_Y;
+        // Exact approved-master iris geometry. The previous mask was slightly
+        // left/up, leaving visible blue slivers when users selected another hue.
         return dx * dx / (205.0 * 205.0) + dy * dy / (205.0 * 205.0) < 1.0
                 && dx * dx / (148.0 * 148.0) + dy * dy / (153.0 * 153.0) > 1.0;
     }
@@ -30,7 +34,9 @@ final class BoopIrisTintMath {
         float min = Math.min(r, Math.min(g, b));
         float delta = max - min;
         float saturation = max == 0f ? 0f : delta / max;
-        if (saturation < .30f || max < .18f || delta == 0f) return argb;
+        // Keep neutral sclera/highlights untouched, but include the approved
+        // master's very dark navy upper-iris shading as part of the colourable iris.
+        if (saturation < .30f || max < .08f || delta == 0f) return argb;
         float originalHue;
         if (max == r) originalHue = 60f * ((g - b) / delta);
         else if (max == g) originalHue = 60f * ((b - r) / delta + 2f);
