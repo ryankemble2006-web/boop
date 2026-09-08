@@ -138,8 +138,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
         controls.setOrientation(LinearLayout.HORIZONTAL);
         controls.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(52));
-        controlsParams.topMargin = dp(10);
+                LayoutParams.MATCH_PARENT, dp(46));
+        controlsParams.topMargin = dp(8);
         details.addView(controls, controlsParams);
 
         previousButton = controlButton("Prev", () -> {
@@ -236,13 +236,15 @@ public final class ShieldNowPlayingView extends FrameLayout {
     }
 
     private void addControl(LinearLayout row, TextView button) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(78), dp(48));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(70), dp(42));
         params.rightMargin = dp(8);
         row.addView(button, params);
     }
 
     private TextView controlButton(String label, Runnable action) {
         TextView button = actionButton(label);
+        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        button.setPadding(dp(6), dp(4), dp(6), dp(4));
         button.setOnClickListener(v -> {
             if (v.isEnabled()) action.run();
         });
