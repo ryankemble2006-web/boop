@@ -101,7 +101,10 @@ public final class AdbWire implements Closeable {
         ByteArrayOutputStream bytes=new ByteArrayOutputStream();
         for(int count=0;count<8192;count++) {
             Packet p=receive();
-            if(p.arg1!=local) throw new IOException("Unexpected ADB stream");
+            if(p.arg1!=local) {
+                if(p.arg1>0 && p.arg1<local && (p.command==OKAY || p.command==WRTE || p.command==CLSE)) continue;
+                throw new IOException("Unexpected ADB stream");
+            }
             if(p.command==OKAY) { remote=p.arg0;opened=true; }
             else if(p.command==WRTE) {
                 remote=p.arg0;opened=true;
