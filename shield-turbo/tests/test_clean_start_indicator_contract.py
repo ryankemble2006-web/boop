@@ -65,6 +65,20 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         self.assertLess(show_at, await_at)
         self.assertLess(await_at, bridge_at)
 
+    def test_android_10_plus_arms_commit_only_after_window_attachment(self):
+        text = (SOURCE / "cleanstart/CleanStartIndicator.kt").read_text()
+        self.assertIn("FLAG_HARDWARE_ACCELERATED", text)
+        self.assertIn("addOnAttachStateChangeListener", text)
+        self.assertIn("onViewAttachedToWindow", text)
+        self.assertIn("armAttachedPresentationSignal", text)
+        self.assertIn("if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)", text)
+        self.assertIn("if (!card.isHardwareAccelerated)", text)
+        self.assertIn("registerFrameCommitCallback", text)
+        self.assertNotIn(
+            "Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && card.isHardwareAccelerated",
+            text,
+        )
+
     def test_failed_indicator_presentation_fails_open_within_half_second(self):
         text = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
         self.assertIn("INDICATOR_PRESENT_TIMEOUT_MS = 500L", text)
@@ -83,6 +97,14 @@ class CleanStartIndicatorContractTest(unittest.TestCase):
         self.assertIn("store.recordIndicatorDiagnostic(indicator.diagnostic(presented))", job)
         self.assertIn("cleanStore.lastIndicatorDiagnostic()", startup)
         self.assertIn("STARTUP NOTICE DIAGNOSTIC:", startup)
+
+    def test_failed_boot_clean_start_surfaces_the_actual_adb_reason(self):
+        job = (SOURCE / "cleanstart/CleanStartJobService.kt").read_text()
+        startup = (SOURCE / "startup/StartupManagerActivity.kt").read_text()
+        self.assertIn("failure.javaClass.simpleName", job)
+        self.assertIn("failure.message", job)
+        self.assertIn("LAST CLEAN START DETAIL:", startup)
+        self.assertIn("item.detail", startup)
 
     def test_indicator_does_not_change_clean_start_scheduler(self):
         text = (SOURCE / "cleanstart/CleanStartScheduler.kt").read_text()
