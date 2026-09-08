@@ -10,84 +10,64 @@ Standalone Nvidia Shield clean-HOME validation app. Package `com.boop.shieldhome
 
 Preserve the v0.8 HOME mechanism: single Home -> BOOP; double Home -> native Nvidia/Shield Recent Apps; reboot rearm; stock Android TV Home remains installed/enabled for recovery/trigger. Preserve accepted banners, grab/reorder, floating-square Apps drawer, 0.9.4 HOME geometry/chrome and normal Shield system behavior.
 
-Ryan owns visual acceptance. GitHub must not run screenshot/golden/layout/animation judging.
+Ryan owns visual acceptance. GitHub must not run screenshot/golden/layout/animation/focus-scale judging.
 
-## Physically proven Now Playing authority
+## Physically proven Now Playing path
 
-Notification Listener access is the proven Shield media-session authority. Ryan manually enabled **Shield Settings -> Apps -> Special app access -> Notification access -> BOOP Now Playing**, and Deezer Now Playing appeared immediately. Accessibility is HOME-only again.
+Notification Listener access is the proven Shield media-session authority. Ryan manually enabled **Shield Settings -> Apps -> Special app access -> Notification access -> BOOP Now Playing**, and Deezer Now Playing appeared immediately. Accessibility is HOME-only.
 
-`Media access` reflects the Notification Listener grant and tries Android TV's exact Notification Access activity first, with generic/detail listener fallbacks.
-
-## Physical progress through v0.10.5
-
-- v0.10.3 removed the large headphones-BOOP collisions; Ryan reported it **much better**.
-- v0.10.4 reduced transport controls and moved the top navigation row down; Ryan reported **awesome spacing**.
-- v0.10.5 lifted the transport row by 4dp and added HTTPS MediaMetadata artwork support plus broader artwork-only notification fallback.
-- Ryan physically confirmed **album art now works** on v0.10.5. It appeared without even skipping the current Deezer track.
+Physical progress:
+- v0.10.3 collision layout: **much better**;
+- v0.10.4 spacing: **awesome spacing**;
+- v0.10.5 album art: **physical PASS**, appeared without skipping track;
+- v0.10.6 focus outline: CI/signer green, physical judgement pending unless Ryan explicitly accepts it.
 
 Album-art plumbing is physically green and should not be changed casually.
 
-## v0.10.6 focus outline
+## v0.10.7 card-owned puppet stage
 
-Version code 21 / `0.10.6-focus-outline`, source `7ff4e64a0cdb1ca02dd4b4af5391ba1095b2569d`, workflow `34287673372` SUCCESS, artifact `10080137191`, APK SHA-256 `048ca7fa179c21b4f307774f07eb7eabb6eb706444b228fa4b32391a9c746ea1`.
+Version code 22 / `0.10.7-puppet-bay` moved the existing approved headphones BOOP into the reserved 230dp right-hand Now Playing bay. `ShieldNowPlayingView` owns `ShieldNowPlayingPuppetView`; the former Activity-root overlay is gone. Existing groove/acknowledgement motion, power-saver behavior, non-focusable/non-clickable behavior and clipping are preserved. Full Tegra/GPU puppetry remains deliberately deferred until placement is physically settled.
 
-It adds the shared cyan/blue focus treatment requested for HOME, Apps drawer and Launcher Settings while preserving existing scale/pop behavior. This visual treatment remains physical-pending unless Ryan explicitly accepts it.
+Original v0.10.7 release receipt:
+- source `8d6486ba51e747286847b7453189981266f13243`
+- workflow `34288943710` SUCCESS
+- artifact `10080598609`
+- APK SHA-256 `5bb188d520fcf0ed73a871c6ef60007a58d782226349113377fcf58f406c2ae9`
 
-## Current candidate: v0.10.7 card-owned BOOP stage
+Ryan then physically reported that BOOP was correctly inside the box but had not become meaningfully larger and requested that he fill the available bay.
 
-Version code 22 / `0.10.7-puppet-bay`.
+## Current candidate: v0.10.7 fill refresh
 
-Ryan approved putting headphones BOOP into the open right-hand Now Playing space, while deliberately deferring a full Shield/Tegra 2.5D animation engine until placement is physically settled.
+This is intentionally a same-version visual refresh on code 22 / `0.10.7-puppet-bay`, because the connected GitHub write safety layer blocked editing the signing workflow verifier after the temporary code-23 bump. The branch was restored to the existing verified code-22 lane rather than leaving a broken release state.
 
-Implementation boundary:
+Visual-only change:
+- removed the previous 88%-width / 75%-height artificial puppet sizing;
+- the puppet ImageView now occupies the full stage bounds;
+- `FIT_CENTER` remains, so artwork proportions are preserved and no cropping is introduced;
+- stage size, media layout, controls, focus behavior, artwork path and animation policy are otherwise unchanged.
 
-- existing approved `ShieldNowPlayingPuppetView` and `boop_headphones` artwork are reused unchanged;
-- existing groove / acknowledgement motion policy and power-saver / animator-disable behavior are preserved;
-- `ShieldNowPlayingView` now owns the puppet directly inside the existing **230dp reserved right-hand bay**;
-- the former Activity-root puppet overlay and its manual page-position lifecycle were removed;
-- the puppet remains non-focusable, non-clickable and excluded from accessibility navigation;
-- its stage is clipped by the puppet view, so motion stays inside the reserved bay;
-- Now Playing snapshot binding drives the puppet directly; when media is hidden the puppet hides with the card;
-- no new GPU/OpenGL/skeletal animation engine is introduced in this candidate.
+Exact fill-refresh receipt:
+- source `85a3278d52a4c359a58716644b949924abaf961b`
+- workflow `34290757484` SUCCESS
+- artifact `BOOP-Shield-Clean-Launcher`, ID `10081272677`
+- package `com.boop.shieldhome`
+- version code 22 / `0.10.7-puppet-bay`
+- APK SHA-256 `f9509a3af47b4e50eac79fb96b173eba10216a625be1bf601a8bf148d4da7d21`
+- artifact ZIP SHA-256 `a01b88140192e4c6db534ab19cb4e54965c46f569152ab521fc27b43f34318eb`
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 
-This creates the intended clean future seam: later richer Tegra/GPU puppetry can replace the internals of the card-owned puppet stage without moving the launcher layout again.
+CI passed the fast functional tests, signed assembly, exact package/version, protected manifest/service/resource checks, permanent signer verification, APK integrity and artifact upload. `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` remained active. No visual acceptance was run.
 
-## TDD / verification
+The downloaded artifact was independently unpacked and matched the CI APK hash, package, code 22/versionName and permanent signer.
 
-Ownership contract RED:
+## FTP handoff rule / current result
 
-- test commit `980b2d698032124b81a477e54c538171dbee1142`;
-- workflow `34288555747`;
-- **73 tests, exactly 1 failure**, `NowPlayingPuppetHostContractTest.nowPlayingCardOwnsPuppetInsteadOfActivityOverlay`, because `ShieldNowPlayingView` did not yet own `puppetView`.
+Shared BOOP rules now say verified APK handoffs should also be uploaded to Ryan's private FTP `/apk/` folder when the current runtime can reach it. Credentials must never be committed to this public repository.
 
-Production transplant:
-
-- card ownership commit `ff8efc77efb36ca31d17de7bcb00fcad6d634af3`;
-- Activity overlay removal `17dcc253a25344ab424a01110666fe0b67529e51`;
-- workflow `34288770043` then passed the full fast functional/build/sign/package lane.
-
-Final v0.10.7 release:
-
-- APK source: `8d6486ba51e747286847b7453189981266f13243`
-- workflow: `34288943710` SUCCESS
-- artifact: `BOOP-Shield-Clean-Launcher`, ID `10080598609`
-- version: code 22 / `0.10.7-puppet-bay`
-- APK SHA-256: `5bb188d520fcf0ed73a871c6ef60007a58d782226349113377fcf58f406c2ae9`
-- artifact ZIP SHA-256: `a7b453e6922aa35fd227337318e9a371379bd2f03c7e5fbcd8d5b6f40b97332c`
-- permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-
-Final CI passed functional tests, signed assembly, exact package/code22/version, protected manifest/service/resource checks, permanent signer verification, APK integrity and artifact upload. `BOOP_SKIP_MANUAL_VISUAL_TESTS=1` remained active; no visual acceptance was run.
-
-The downloaded artifact was independently unpacked. Its APK SHA matched CI exactly; package `com.boop.shieldhome`, code 22 / `0.10.7-puppet-bay` and the permanent signer were independently confirmed.
+For this fill refresh, the direct FTP attempt failed with TCP connection refused on port 21 before authentication, so **no FTP upload occurred**. Do not claim a remote receipt for this build.
 
 ## Next physical gate
 
-Install/update v0.10.7 and inspect the Now Playing card on the real Shield:
+Install the v0.10.7 fill-refresh APK over the current launcher and judge BOOP in the Now Playing bay. He should now use the full bay bounds while retaining proportions. Confirm he remains clipped inside the bay, does not overlap media UI and remote navigation remains unchanged. Minor placement/scale tweaks can continue after use.
 
-1. BOOP should appear inside the right-hand reserved bay rather than as a separate Activity overlay.
-2. He must not overlap title, progress, Open player, transport controls or favourite apps.
-3. Remote navigation must remain unchanged because the puppet is non-focusable/non-clickable.
-4. Existing groove / track-change acknowledgement motion should still run within the bay.
-5. Judge size and exact vertical/horizontal placement manually; minor position/scale tweaks can follow after use.
-
-Do not begin the full Tegra/GPU puppetry pass until Ryan decides the card placement is worth locking. Real Shield behavior is authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
+Do not begin the full Tegra/GPU puppetry pass until Ryan decides the stage placement is worth locking. Real Shield behavior is authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
