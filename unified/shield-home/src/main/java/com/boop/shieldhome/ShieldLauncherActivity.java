@@ -1,7 +1,6 @@
 package com.boop.shieldhome;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -25,7 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Internal Shield launcher surface. UnifiedEntryActivity remains the exported HOME entry. */
+/** Standalone Shield launcher surface. */
 public final class ShieldLauncherActivity extends Activity {
     public static final long PAGE_TRANSITION_MS = 140L;
 
@@ -182,16 +181,24 @@ public final class ShieldLauncherActivity extends Activity {
                 launchApp(entry);
             }
 
-            @Override public void onFavouriteLongPressed(TvAppEntry entry) {
-                showFavouriteActions(entry);
+            @Override public void onFavouriteOrderCommitted(List<String> components) {
+                List<String> stable = components == null ? List.of() : List.copyOf(components);
+                if (!stable.equals(favouriteComponents)) {
+                    saveFavouriteEdit(stable);
+                    showHome();
+                }
             }
 
             @Override public void onOpenApps() {
                 showApps();
             }
 
-            @Override public void onOpenSettings() {
+            @Override public void onOpenHomeRows() {
                 showSettings();
+            }
+
+            @Override public void onOpenSystemSettings() {
+                openSystemSettings();
             }
 
             @Override public void onContentSelected(HomeContentCard card) {
@@ -250,33 +257,6 @@ public final class ShieldLauncherActivity extends Activity {
                 : FavouriteOrder.add(favouriteComponents, entry.component());
         saveFavouriteEdit(next);
         showApps();
-    }
-
-    private void showFavouriteActions(TvAppEntry entry) {
-        if (entry == null || entry.component().isEmpty()) {
-            return;
-        }
-        String[] actions = {"Move left", "Move right", "Remove from favourites"};
-        new AlertDialog.Builder(this)
-                .setTitle(entry.label())
-                .setItems(actions, (dialog, which) -> {
-                    FavouriteEdit edit;
-                    if (which == 0) {
-                        edit = FavouriteEdit.MOVE_LEFT;
-                    } else if (which == 1) {
-                        edit = FavouriteEdit.MOVE_RIGHT;
-                    } else {
-                        edit = FavouriteEdit.REMOVE;
-                    }
-                    List<String> next = applyFavouriteEdit(
-                            favouriteComponents, entry.component(), edit);
-                    if (next.equals(favouriteComponents)) {
-                        return;
-                    }
-                    saveFavouriteEdit(next);
-                    showHome();
-                })
-                .show();
     }
 
     static List<String> applyFavouriteEdit(
@@ -362,6 +342,18 @@ public final class ShieldLauncherActivity extends Activity {
         }
     }
 
+    static String systemSettingsAction() {
+        return Settings.ACTION_SETTINGS;
+    }
+
+    private void openSystemSettings() {
+        try {
+            startActivity(new Intent(systemSettingsAction()));
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            // System Settings is OS-owned. HOME remains usable if firmware omits the route.
+        }
+    }
+
     private void openHomeSettings() {
         try {
             startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));
@@ -369,11 +361,7 @@ public final class ShieldLauncherActivity extends Activity {
         } catch (ActivityNotFoundException | SecurityException ignored) {
             // Fall through to general settings on firmware without a HOME chooser surface.
         }
-        try {
-            startActivity(new Intent(Settings.ACTION_SETTINGS));
-        } catch (ActivityNotFoundException | SecurityException ignored) {
-            // Settings remains non-destructive and optional.
-        }
+        openSystemSettings();
     }
 
     private void registerPackageReceiver() {
