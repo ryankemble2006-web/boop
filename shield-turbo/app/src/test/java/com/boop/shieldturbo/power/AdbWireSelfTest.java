@@ -47,6 +47,7 @@ public final class AdbWireSelfTest {
         byte[] struct=Base64.getDecoder().decode(pub.split(" ")[0]);
         check(struct.length==524 && ByteBuffer.wrap(struct).order(ByteOrder.LITTLE_ENDIAN).getInt()==64 && pub.endsWith("SHIELD_TURBO@localhost\0"),"ADB public-key format");
         protocolRoundTrip(key,token);
+        protocolNoPromptRejectsApproval(key,token);
         check(file.delete() && dir.delete(),"Private fixture cleanup");
     }
     private static void protocolRoundTrip(KeyPair key,byte[] token) throws Exception {
@@ -84,5 +85,31 @@ public final class AdbWireSelfTest {
             fixture.get(6,TimeUnit.SECONDS);
         } finally { worker.shutdownNow(); }
     }
-    public static void main(String[] args) throws Exception { runAll();System.out.println("PASS: frame integrity, bounds, fragmented reads, RSA, persistent identity, authorisation, stream flow control and exit receipts"); }
+    private static void protocolNoPromptRejectsApproval(KeyPair key,byte[] token) throws Exception {
+        ExecutorService worker=Executors.newSingleThreadExecutor();
+        try(ServerSocket server=new ServerSocket(0,1,InetAddress.getLoopbackAddress())) {
+            Future<?> fixture=worker.submit(() -> {
+                try(Socket socket=server.accept()) {
+                    socket.setSoTimeout(3000);InputStream in=socket.getInputStream();OutputStream out=socket.getOutputStream();
+                    check(AdbWire.read(in).command==AdbWire.CNXN,"Trusted connect packet");
+                    out.write(AdbWire.encode(AdbWire.AUTH,1,0,token));out.flush();
+                    AdbWire.Packet signature=AdbWire.read(in);
+                    check(signature.command==AdbWire.AUTH && signature.arg0==2,"Trusted path may send saved signature");
+                    out.write(AdbWire.encode(AdbWire.AUTH,1,0,token));out.flush();
+                    try {
+                        AdbWire.Packet forbidden=AdbWire.read(in);
+                        throw new AssertionError("Trusted path sent approval payload type "+forbidden.arg0);
+                    } catch(EOFException | SocketException | SocketTimeoutException expected) { }
+                } catch(Exception e) { throw new RuntimeException(e); }
+            });
+            try(AdbWire client=new AdbWire()) {
+                try {
+                    client.connect(server.getLocalPort(),key,3000,() -> { throw new AssertionError("No prompt callback allowed"); },false);
+                    throw new AssertionError("Trusted connect accepted an unapproved key");
+                } catch(AdbWire.AdbApprovalRequiredException expected) { }
+            }
+            fixture.get(4,TimeUnit.SECONDS);
+        } finally { worker.shutdownNow(); }
+    }
+    public static void main(String[] args) throws Exception { runAll();System.out.println("PASS: frame integrity, bounds, fragmented reads, RSA, persistent identity, authorisation, no-prompt auth, stream flow control and exit receipts"); }
 }
