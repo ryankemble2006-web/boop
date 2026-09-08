@@ -6,16 +6,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 final class BoopWakeTranscriptNormalizer {
-    private static final Pattern LEADING_BOOP =
-            Pattern.compile("(?i)^\\s*boop\\b[\\s,;:!?.-]*");
-
     private BoopWakeTranscriptNormalizer() { }
 
     static String stripLeadingWakeWord(String text) {
         if (text == null) {
             return "";
         }
-        return LEADING_BOOP.matcher(text).replaceFirst("").trim();
+        String transcript = text.trim();
+        String stripped = stripLeadingNaturalWakeCall(transcript, BoopWakeName.DEFAULT);
+        return stripped == null ? transcript : stripped;
     }
 
     static String stripLeadingWakeWord(String text, String selectedName) {
@@ -23,13 +22,20 @@ final class BoopWakeTranscriptNormalizer {
             return stripLeadingWakeWord(text);
         }
         String transcript = text.trim();
+        String stripped = stripLeadingNaturalWakeCall(transcript, selectedName);
+        if (stripped != null) return stripped;
+        // Keep BOOP as the permanent fallback even after a custom name is trained.
+        return stripLeadingWakeWord(text);
+    }
+
+    private static String stripLeadingNaturalWakeCall(String transcript, String selectedName) {
         List<String> phrases = new ArrayList<>(BoopWakeKeywordBuilder.naturalPhrases(selectedName));
-        // Match the whole call before the bare name ("Steve wake up", not just "Steve").
+        // Match the whole call before the bare name ("BOOP WAKE UP", not just "BOOP").
         phrases.sort((left, right) -> Integer.compare(right.length(), left.length()));
         for (String phrase : phrases) {
-            StringBuilder expression = new StringBuilder("^");
+            StringBuilder expression = new StringBuilder("^\\s*");
             for (String word : phrase.split(" ")) {
-                if (expression.length() > 1) expression.append("[\\s\\p{P}]+");
+                if (expression.length() > 4) expression.append("[\\s\\p{P}]+");
                 expression.append(Pattern.quote(word));
             }
             expression.append("(?![\\p{L}\\p{N}'’])[\\s\\p{P}]*");
@@ -37,8 +43,7 @@ final class BoopWakeTranscriptNormalizer {
                     Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE).matcher(transcript);
             if (call.find()) return transcript.substring(call.end()).trim();
         }
-        // Keep the established BOOP fallback and non-addressed commands unchanged.
-        return stripLeadingWakeWord(text);
+        return null;
     }
 }
 
