@@ -8,7 +8,7 @@ final class NowPlayingAccessSettingsPlan {
 
     static Route[] routesForSdk(int sdk) {
         if (sdk >= 30) {
-            return new Route[] { Route.DETAIL, Route.GENERIC };
+            return new Route[] { Route.GENERIC, Route.DETAIL };
         }
         return new Route[] { Route.GENERIC };
     }
