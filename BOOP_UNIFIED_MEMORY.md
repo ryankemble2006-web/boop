@@ -13,7 +13,7 @@ Updated 2026-09-08. Canonical branch `boop-unified`, package `com.boop.alpha1`, 
 
 ## Shield remote microphone button decision
 
-Approved route is Android's official assistant integration first: explicit reversible user choice, `RoleManager.ROLE_ASSISTANT` where available, `VoiceInteractionService` / session service, then `ACTION_ASSIST` into BOOP's existing one-shot voice path. No microphone capture in the overlay and no second recorder/recognizer stack.
+Approved route is Android's official assistant integration first: explicit reversible user choice, `RoleManager.ROLE_ASSISTANT` where available, `VoiceInteractionService` / session service only as required, or `ACTION_ASSIST` into BOOP's existing one-shot voice path. No microphone capture in the overlay and no second recorder/recognizer stack.
 
 BOOP must never silently disable Google, grant permissions, change the default assistant or claim remote-mic success. `Keep my current assistant` leaves the current assistant alone; if BOOP is already selected, Android settings are opened for an explicit user change.
 
@@ -21,16 +21,24 @@ Do not add a local `KEYCODE_ASSIST` fallback until a real Shield proves firmware
 
 Physical success requires BOTH remote-button activation and actual audio from THAT Shield remote microphone, followed by BOOP's existing local media/HA routing, response, clean recording end/cancel/repeat handling and previous-app return where appropriate. Opening BOOP alone is not success.
 
-## Latest real-device evidence and repair
+## Latest real-device evidence: HA works; eyes/blink and assistant do not
 
-Ryan physically tested the prior v45 candidate and found four failures: Android presented BOOP's assistant-choice UI but did not actually change the selected assistant; Shield Home rendered physical-device labels as literal `null`; neither BOOP nor the custom wake name triggered acoustically on phone; and the copied eye PNG was opaque/black-backed with a visible border and no visible blink. These results override the earlier physical-pending wording for that APK.
+On the repair APK from `949f1085328a3e815d9bc57747425f1f930c48db`, Ryan confirmed HA names no longer show `null` and Home buttons actually control his devices. This HA result is physically accepted; freeze this working path while repairing the remaining failures. It does not accept all room-switching scenarios or the whole APK.
 
-The current repair code commit is `949f1085328a3e815d9bc57747425f1f930c48db`, still package `com.boop.alpha1` with the permanent signer. Green run `34201200463`, artifact `BOOP-Unified` ID `10045928699`, extracted APK SHA-256 `217e004f26bca33066e3d2089d2e2bc448c102c332abb25f97cf00122d5ed239`, permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Ryan rejects the new eye rendering as worse. His private photo shows horizontal comb-like tearing at the inner upper eyelid edges. No visible blink is reported. Android still says `Assistant choice was not changed`, so assistant takeover and remote-mic success must not be claimed. The latest message does not retest phone acoustic wake; preserve its unresolved earlier failure rather than inventing an outcome.
 
-Repairs: HA JSON null values no longer become the text `null`, so device names can fall back to the real registry name; Sherpa wake arming is no longer vetoed by advisory `SpeechRecognizer.checkRecognitionSupport()` false negatives, with the real recognition attempt/error path retained as authority; the locked eye RGB pixels are not regenerated or recoloured but are packaged with an alpha silhouette so the PNG is actually transparent outside the eyes; and assistant eligibility now includes both the existing `VoiceInteractionService` path and explicit `ACTION_ASSIST` eligibility. No second microphone stack, silent default change, Google disable or privileged fallback was added.
+The alpha script guesses a separate opaque span on every image row from RGB brightness threshold 3 plus two-pixel expansion. This is not the locked silhouette and cannot distinguish black background from all dark eyelid pixels. Do not make another threshold-only repair, regenerate the art or modify the accepted phone iris-colour behaviour. An RGBA file header alone is not correctness evidence.
 
-Fresh non-visual evidence: 58 Shield focused tests and 66 unified wake/routing/assistant tests, zero failures/errors/skips; Launcher lint; compilation; package/manifest/signature/archive checks. The packaged eye asset is structurally RGBA with real alpha, but appearance/blink remain Ryan-owned physical acceptance.
+The declared VoiceInteractionService metadata omits `android:recognitionService`. AOSP Android 11/12 parsing rejects that omission; adding ACTION_ASSIST eligibility did not make the service valid. Treat it as an integration defect before blaming firmware. Do not invent a dummy recognizer or competing audio stack to satisfy a manifest field. Primary references and exact source paths are in `SESSION_HANDOFF.md`.
 
-Current physical retest still required: actual assistant takeover where Shield firmware permits; remote microphone button plus audio from that remote; BOOP/custom acoustic wake while wireless charging; correct transparent eye appearance and visible blink; real HA device names/room switching; repeated-open Shield scale stability.
+The Shield blink code checks system animator enablement/duration scale, power saving and display/visibility gates. Which gate blocks this physical device is not established. Check the actual animation setting, including any Turbo change, rather than silently enabling system animations or bypassing safeguards.
 
-Protected accepted rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. No automatic device install/grants, Windows synchronization or unattended monitoring was established.
+## Artifact provenance and verification limits
+
+Repair code `949f1085328a3e815d9bc57747425f1f930c48db`, versionCode 45 / `1.1.2-unified-assist-repair`; successful run `34201200463`; artifact `BOOP-Unified` ID `10045928699`. Extracted APK SHA-256 `217e004f26bca33066e3d2089d2e2bc448c102c332abb25f97cf00122d5ed239`; permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+Historical build evidence: 58 Shield focused tests and 66 unified wake/routing/assistant tests, zero failures/errors/skips; Launcher lint; compilation; package/manifest/signature/archive checks. The APK was rehashed during this investigation and matched its receipt. No new app repair/build or fresh functional test pass is claimed. Documentation only records the physical retest and diagnosed defects. The overall candidate is not an accepted rollback.
+
+Earlier code `6dab12aa3232e821fed52b64e39f65e499b6c574` had null HA labels, failed phone wake, opaque eyes/no blink and failed assistant choice. JSON null repair is now physically confirmed; the other fixes did not gain blanket acceptance. Existing coordinator reload/re-arm, permanent BOOP fallback, room-switch lifecycle, idempotent scale and approved puppetry must survive subsequent work.
+
+Protected accepted rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. No automatic device installs/grants, Windows synchronization or unattended monitoring. User photos and raw diagnostics stay private.
