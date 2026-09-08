@@ -10,7 +10,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** Presentation-only Home rows controls; platform actions are owned by the activity. */
+/** Presentation-only launcher controls; platform actions are owned by the activity. */
 public final class ShieldHomeSettingsView extends LinearLayout {
     public interface Callbacks {
         void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled);
@@ -19,6 +19,8 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         default void onRetireStockHome() { }
         default void onRestoreStockHome() { onChooseHomeApp(); }
         default void onEnableHomeOverride() { onChooseHomeApp(); }
+        default void onOpenNowPlayingAccess() { }
+        default void onChooseNowPlayingPlayer() { }
         void onBackHome();
     }
 
@@ -36,8 +38,12 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         setClipToPadding(false);
     }
 
+    public static String launcherSettingsLabel() {
+        return "Launcher Settings";
+    }
+
     public void render(boolean playNext, boolean appChannels, Callbacks callbacks) {
-        render(playNext, appChannels, false, callbacks);
+        render(playNext, appChannels, false, false, "Automatic", callbacks);
     }
 
     public void render(
@@ -45,9 +51,19 @@ public final class ShieldHomeSettingsView extends LinearLayout {
             boolean appChannels,
             boolean homeOverrideEnabled,
             Callbacks callbacks) {
+        render(playNext, appChannels, homeOverrideEnabled, false, "Automatic", callbacks);
+    }
+
+    public void render(
+            boolean playNext,
+            boolean appChannels,
+            boolean homeOverrideEnabled,
+            boolean nowPlayingAccess,
+            String nowPlayingPlayerLabel,
+            Callbacks callbacks) {
         removeAllViews();
 
-        TextView title = text("Home rows", 28);
+        TextView title = text(launcherSettingsLabel(), 28);
         addView(title, wrap());
         addSpacer(dp(18));
 
@@ -75,6 +91,28 @@ public final class ShieldHomeSettingsView extends LinearLayout {
             if (callbacks != null) callbacks.onRestoreStockHome();
         });
         addView(restoreHome, rowParams());
+
+        addSpacer(dp(20));
+
+        TextView nowPlayingSection = text("Now Playing", 20);
+        addView(nowPlayingSection, wrap());
+        addSpacer(dp(10));
+
+        TextView access = action("Media access: " + (nowPlayingAccess ? "ON" : "OFF"));
+        access.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onOpenNowPlayingAccess();
+        });
+        addView(access, rowParams());
+        addSpacer(dp(10));
+
+        String playerLabel = nowPlayingPlayerLabel == null || nowPlayingPlayerLabel.trim().isEmpty()
+                ? "Automatic"
+                : nowPlayingPlayerLabel.trim();
+        TextView player = action("Player: " + playerLabel);
+        player.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onChooseNowPlayingPlayer();
+        });
+        addView(player, rowParams());
 
         addSpacer(dp(20));
 
