@@ -221,8 +221,8 @@ public final class ShieldHomeView extends LinearLayout {
                 beginGrab(entry, card);
                 return true;
             });
-            LayoutParams params = new LayoutParams(dp(270), dp(185));
-            params.rightMargin = dp(20);
+            LayoutParams params = new LayoutParams(dp(250), dp(185));
+            params.rightMargin = dp(6);
             favouriteRow.addView(card, params);
 
             if (grabbedComponent != null && grabbedComponent.equals(entry.component())) {
