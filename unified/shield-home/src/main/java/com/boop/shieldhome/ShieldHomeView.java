@@ -214,6 +214,7 @@ public final class ShieldHomeView extends LinearLayout {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setTranslationY(dp(8));
 
         TextView apps = actionButton("Apps");
         apps.setOnClickListener(v -> callbacks.onOpenApps());
