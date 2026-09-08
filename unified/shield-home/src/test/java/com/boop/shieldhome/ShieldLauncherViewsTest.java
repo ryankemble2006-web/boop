@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.provider.Settings;
 import android.widget.FrameLayout;
 import java.lang.reflect.Method;
@@ -55,5 +56,21 @@ public final class ShieldLauncherViewsTest {
         assertNotNull(callbacks);
         assertEquals(List.of(OptionalRowRegistry.Key.PLAY_NEXT, OptionalRowRegistry.Key.APP_CHANNELS),
                 List.of(OptionalRowRegistry.Key.values()));
+    }
+
+    @Test public void launcherSettingsExposeNowPlayingSetupContract() throws Exception {
+        assertEquals("Launcher Settings", ShieldHomeSettingsView.launcherSettingsLabel());
+        assertNotNull(ShieldHomeSettingsView.Callbacks.class.getMethod("onOpenNowPlayingAccess"));
+        assertNotNull(ShieldHomeSettingsView.Callbacks.class.getMethod("onChooseNowPlayingPlayer"));
+        assertNotNull(ShieldHomeSettingsView.class.getMethod(
+                "render",
+                boolean.class,
+                boolean.class,
+                boolean.class,
+                boolean.class,
+                String.class,
+                ShieldHomeSettingsView.Callbacks.class));
+        assertNotNull(ShieldNowPlayingManager.class.getMethod("hasAccess"));
+        assertNotNull(ShieldNowPlayingManager.class.getMethod("openAccessSettings", Activity.class));
     }
 }
