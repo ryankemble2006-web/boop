@@ -1,65 +1,49 @@
 # SHIELD TURBO durable decisions
 
-Updated 2026-09-08. Read SESSION_HANDOFF.md for exact current/historical receipts and STATUS.md for verification. Current user instructions and fresh hardware evidence supersede older dated implementation policies.
+Updated 2026-09-08. SESSION_HANDOFF.md owns current evidence and source references; STATUS.md is the concise verification view. New user evidence overrides dated pending-test notes.
 
-## Identity and workflow
+## Identity and continuity
 
-Independent utility `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`. Hosting in BOOP's repository does not make this a unified BOOP body. Confine changes to Turbo and its existing workflow unless explicitly authorised otherwise.
+Independent utility `shield-turbo/`, branch `shield-turbo-v01`, package `com.boop.shieldturbo`. It is not the unified BOOP body. Keep changes scoped to Turbo and its existing workflow. Use connected GitHub tools in chat when available, not a mandatory Work-mode detour. Read main startup/rules and Turbo docs, check live main and owning branch before editing/publishing, preserve concurrent/dirty work, and verify live HEAD after publication. GitHub publication is not Windows synchronization or device deployment.
 
-Ryan wants development/signing through connected GitHub tools in chat. Do not insist on Work mode when those tools can perform the task. Fetch live branch/main, preserve concurrent work, publish reviewed scoped changes, update these app docs and verify live remote HEAD. GitHub publication is not laptop sync or physical deployment.
+Use only the established secret-backed boop-dev signer; certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Never replace/expose it, publish credentials or private device dumps, or repoint checkpoints. Detailed historical receipts remain in the handoff history.
 
-## Physical findings
+## User goal and physical evidence
 
-Bedroom brightness was confirmed on source `192879ba87082b9daf5275c89a706bfd5f1106d2`, run `34129557124`, artifact `10021629767`, APK `3ad1a87f2d007a972d66aa6a3f1ee687596e3903e7038db2b252f5eaf9075a6d`.
+Ryan has four Kodi forks he does not want waking after boot. He wants essential Android/Shield functionality only at startup, with optional apps available for deliberate manual use. He explicitly clarified that the forks remain in the **Shield task manager** and that swiping/force-closing them noticeably improves performance. This is not just an enabled Force Stop button in App Info. Do not ask that distinction again or dismiss his observed improvement. Task-list entries are not quantified process/RAM evidence; collect that through an in-app read-only snapshot instead of inventing it.
 
-Corrected STANDARD source `d277ebe713cdbe5298f6205ef34fa4d493ea2114`, run `34189880390`, artifact `10041897001`, APK `f86ed5b9aac5926d98c09d9fa69b83a8d41e0cd8992ecd7b5bcdebccdbc60cf1`: maintenance controls became selectable. APPS OK is a direct launch, not a package-name dialog.
+v0.4.1's action menu and ordinary manual launch have physical confirmation. Boot suppression failed acceptance. v0.4.0's information-only dialog is historical and was repaired by removing setMessage from the setItems builder. Earlier accepted behavior: bedroom brightness, corrected STANDARD maintenance selectability, Developer Options opening. Display & Sound and Accessibility both remain physically unresolved and parked.
 
-Developer Options was physically confirmed in v0.2.0. Display & Sound's general-Settings fallback was rejected; v0.2.1's AOSP activity bounced Home then did nothing. Accessibility reported no app installed; v0.3.0 discovery also did not produce an accepted destination. Both native settings routes remain parked. Do not guess more component names or call general Settings a fix.
+## Existing startup behavior and limits
 
-Latest v0.4.0 feedback: selecting a Startup Manager app produced a package-name/explanation-only dialog. No background restriction, reboot result or manual-launch/Undo cycle was physically established. The v0.4.1 repair still requires Ryan's test.
+The delivered BLOCK STARTUP / KEEP LAUNCHABLE action changes only RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND to ignore, with original-state capture and read-back. Those app-ops are not a verified universal boot block. They do not themselves force-stop an app or prove no process exists. Do not keep presenting saved restrictions as a successful fix.
 
-## Android dialog and label contracts
+HARD BLOCK is a separate explicitly confirmed package disable. It prevents normal launching until restored and must not become the default or a hidden fallback. No package uninstall, pm clear, cache/file/login removal, rooting, bootloader work, overclocking or arbitrary governors.
 
-Do not combine AlertDialog setMessage with setItems/setAdapter/single-choice/multi-choice content in the same builder. Android standard dialog content is message OR list. Use title/list for actions and keep explanatory text on the parent page or in a separate confirmation. The API-use regression is functional; it is not visual certification.
+The exact rollback ledger must survive updates. First original wins. Verify restoration before removing a record; keep failed/unverified entries. Undo All handles each recorded app separately. Cancelling an operation is not undo, and force-stop cannot restore interrupted playback or unsaved work.
 
-Use meaningful installed launcher/application labels ahead of a package-name fallback. Preserve distinctive launcher names for forks; use the actual package ID if all labels are unavailable. Never invent labels or confuse human-readable name selection with target package identity.
+## Proposed clean-start direction, not implemented
 
-Cancellation must remain callable while a task is busy; only duplicate mutation actions are guarded. Cancellation cannot undo a shell command already sent. Back now invokes cancellation for busy Startup Manager tasks.
+A real selected-app STOP AND VERIFY action should precede automated enforcement. Use current-user ADB force-stop, verify actual target/stopped/enabled/process state and keep manual launching and app data. Do not use a task card or a saved preference as proof of a stopped process.
 
-## Brightness and ordinary controls
+Optional automatic CLEAN START would require a small bounded post-boot task, explicitly enabled in-app for a reviewed group. It would wait for already-authorised loopback ADB readiness, stop only approved eligible apps, record outcome and finish. No indefinite retries, resident RAM killer, periodic sweeps, remote targets, unsolicited boot-time permission prompts or silent newly-installed-app inclusion. Protect active manual use/playback and provide KEEP RUNNING exceptions. Skip and report when access or identity cannot be verified.
 
-Preserve the 10-100% brightness overlay and private non-exported BrightnessService. 100% removes the overlay; input is not intercepted. New power/startup work must not silently change it.
+That proposed boot task differs from the previously chosen no-boot-task implementation; it is not in v0.4.1 and is not silently authorised or installed by this note. It must be visible in future design/release notes and controllable by the user. No RECEIVE_BOOT_COMPLETED or background service was added during this documentation update.
 
-Normal APPS OK launches directly; hold may show App Info. A visible but unreachable action is a functional failure. Launcher intent filters need not declare CATEGORY_DEFAULT. Native settings shortcuts must never silently substitute unrelated pages.
+Do not promise optional apps never execute momentarily at boot: post-boot stopping is cleanup, not interception. Force-stopped state is released by deliberate launch; explicit activation mechanisms may bypass normal broadcast exclusions. Stock shell component-state restrictions also prevent guaranteeing individual receiver disabling for arbitrary non-test apps. Root/re-signing/device-owner work are not implied solutions.
 
-## Local ADB agreement
+Essential classification must account for actual roles and dependencies, including launcher, input/remote/accessibility, networking/VPN where used, media/DRM and necessary NVIDIA services. Neither com.android prefix nor system/non-system status alone proves necessity. Keep existing system exclusions until reviewed replacement protection exists. Optional vendor/system components need individual evidence rather than blanket disabling.
 
-ENABLE ADB TURBO may create an app-private per-install RSA authentication identity in noBackupFilesDir, connect only to loopback port 5555, request Android's trust prompt, verify shell UID and grant only this package's WRITE_SECURE_SETTINGS permission after user setup. That authentication identity is not the APK signer and must never be exported, published or backed up.
+## Existing controls to preserve
 
-No off-device target field, LAN scan, listening server, persistent shell or automatic background job. A normal app cannot start a disabled ADB daemon or approve its own trust prompt. Guide the first Network Debugging switch/RSA approval; every shell operation establishes and verifies its transient connection. Existing settings authority is not proof of a currently available shell.
+Keep the proven 10-100% brightness overlay and non-exported BrightnessService unchanged; 100% removes the overlay without intercepting input. Normal APPS OK launches directly. Keep actual installed launcher/application labels ahead of package fallback and never invent fork names or IDs. AlertDialog list choices must not compete with message content. Cancel and remote Back must remain usable while busy.
 
-## Startup Manager contract
+Local ADB uses only loopback port 5555 and a private per-install RSA key in noBackupFilesDir. This is not the APK signer and must not be exported. Initial Network Debugging switch and RSA trust approval belong to the user. Verify shell identity on each transient connection; a secure-settings grant alone does not prove current ADB availability. No LAN scanning, listening server or persistent shell. Sleep/reboot are confirmed disruptive actions; single-app restart preserves data; animation settings retain original-value undo; diagnostics are bounded snapshots.
 
-Ryan's use case is four Kodi forks that he reports wake after Shield boot. Operate only on explicitly selected safe user apps. The normal action remains BLOCK STARTUP / KEEP LAUNCHABLE: save the original state first, set RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND to ignore, and verify read-back. Leave the package enabled. These are background restrictions, not a guarantee against all boot triggers or a free-RAM/speed score.
+## Testing, delivery and latest receipt
 
-HARD BLOCK / DISABLE APP is separate and explicitly confirmed because the package will not launch until restored. Never apply hard blocking as the default. Do not clear app data, logins, files or caches.
+Ryan owns all real-device visuals and remote acceptance. No GitHub screenshots, UI hierarchy dumps, image/golden/layout/appearance checks or source-string appearance certification. Keep focused API/data/logic/protocol/security tests, lint, compilation, permanent-signer/package/archive verification and basic nonvisual crash smoke. Offer a verified signed APK before slower optional smoke, but never equate any machine gate with effective startup suppression.
 
-Before the first mutation, record original app-op modes and package enabled state. First original wins: later Turbo actions cannot replace the rollback point. Per-app Undo verifies restore before removing a ledger entry. Undo All attempts each managed app independently; failed/unverified restores retain records. Preserve the preference format across this patch.
+Latest APK remains v0.4.1/code 6, built `0961153e5dea94c38027cdf31530f500c5b29573`, run `34204102153`, job `101989443983`, artifact `10047107169`, SHA-256 `c7bc147a70378dfe62a14e542aeb5dcb1036fbe6818551e98ddcf6fe061793fa`, 2283246 bytes. Its historical 58 JVM tests / 13 Python checks / lint 0 errors and 22 warnings / signer/package/nonvisual launch results passed. Physical acceptance is partial as above.
 
-No RECEIVE_BOOT_COMPLETED receiver or startup/background service. Android's app-op/enabled states are persistent system state; Turbo must not become another startup app merely to reapply them. Target discovery retains system/updated-system, NVIDIA, Android, Google-core and BOOP exclusions. No QUERY_ALL_PACKAGES, blanket force-stop, RAM cleaner, pm clear, uninstall, root/bootloader work, overclocking or arbitrary governor changes.
-
-## Existing power tools
-
-Restart is scoped to one selected safe user app and retains its data. Sleep/reboot require confirmation and can interrupt playback or CEC equipment. Animation changes save/read back original values and retain Undo. Diagnostics are on-demand snapshots, not continuous monitoring, benchmark scores or unsupported claims of throttling.
-
-## Verification and delivery
-
-Ryan owns real-device visual/remote acceptance. Do not run GitHub screenshots, UI hierarchy dumps, golden-image checks, layout/appearance judgment or source-string appearance certification. Keep focused API/data/logic/protocol/security checks, lint, compilation, permanent-signer/package/archive verification and basic nonvisual process-launch smoke. Upload and offer the verified signed APK before slower smoke work. Never equate an install/launch pass with a usable menu or effective Kodi boot restriction.
-
-Current v0.4.1/code 6: built source `0961153e5dea94c38027cdf31530f500c5b29573`, run `34204102153`, job `101989443983`, artifact `10047107169`, APK SHA-256 `c7bc147a70378dfe62a14e542aeb5dcb1036fbe6818551e98ddcf6fe061793fa`, size 2283246 bytes. 58 JVM tests and the 13-check Python gate passed; lint 0 errors/22 warnings; permanent-signer/package/archive and post-upload nonvisual launch checks passed. No v0.4.1 physical acceptance yet.
-
-The previous v0.4.0 source `1358925716cf2c834171b767dd94f08d0c49e013`, run `34201159209`, artifact `10045926945`, APK `cf12ccdfec929424ad89f6f5302c86f7b1331ef809ceef336fc0bda5d344657a` was machine-green but its per-app dialog failed physically. Historical receipts remain in the handoff/Git history; do not repoint old checkpoints.
-
-Next acceptance: one Kodi fork, actual action menu, BLOCK STARTUP write/read-back, reboot and check self-start, normal manual launch, then Undo/Cancel checks. Repeat for the other forks only after the first succeeds. Keep HARD BLOCK out of that initial test.
-
-Only existing secret-backed boop-dev signing is allowed. Public certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Never replace/expose the signer or use BOOP relay credentials. Documentation HEAD after the built source does not identify a different APK.
+Current change is documentation/research only. No new APK, app permissions, boot tasks, signing, visual tests, installations or physical-device actions. Primary-source references for the proposed mechanism and limits are in SESSION_HANDOFF.md. Preserve all historical receipt details via the handoff at `d64d51db1fd6b7201429ce484be3e93973ff622c` and older Git history.

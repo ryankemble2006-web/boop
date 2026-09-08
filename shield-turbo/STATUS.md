@@ -1,44 +1,22 @@
 # SHIELD TURBO status
 
-Updated 2026-09-08. Branch `shield-turbo-v01`; independent package `com.boop.shieldturbo`.
+Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
-## Current signed candidate
+## Physical acceptance
 
-**v0.4.1 / versionCode 6 is built, signed and machine-verified. It repairs the Startup Manager action-menu blocker. Physical Shield acceptance remains pending.**
+- Confirmed: v0.4.1 Startup Manager action menu opens; Kodi forks still launch manually.
+- Failed outcome: after reboot, Ryan still sees the forks in the Shield task manager and reports noticeable improvement after swiping/force-closing them. The startup suppression requirement is not met. Do not repeat the already answered task-manager versus App Info question.
+- Prior confirmations retained: bedroom brightness, corrected STANDARD maintenance selectability, Developer Options opening.
+- Parked: native Display & Sound and Accessibility routes.
 
-| Evidence | Receipt |
-| --- | --- |
-| Built source | `0961153e5dea94c38027cdf31530f500c5b29573` |
-| Actions run / job | `34204102153` / `101989443983`: success |
-| JVM tests | 58 passed, 0 failures/errors/skips, verified from JUnit XML |
-| Source/API/security checks | 13 checks; successful gate |
-| Android lint | 0 errors, 22 warnings, verified from lint XML |
-| Signed artifact | `SHIELD-TURBO`, ID `10047107169`, ZIP 744535 bytes |
-| Artifact ZIP SHA-256 | `4a1f31abe78e7876414c3524d98701d96ec9fbf3a2c46eb27280ab97eb8c6ee5` |
-| Test artifact | `10047154897`, SHA-256 `f98ef2b3092f56cf3baabb24576d984d95fe7bcb0055a08da3f3e482bff4e752` |
-| Delivered APK | `Shield-Turbo-v0.4.1.apk`, 2283246 bytes |
-| APK SHA-256 | `c7bc147a70378dfe62a14e542aeb5dcb1036fbe6818551e98ddcf6fe061793fa` |
-| Permanent signer certificate SHA-256 | `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` |
-| Release checks | Expected package/version/Leanback/non-debuggable, cryptographic signer and archive integrity passed |
-| Post-upload smoke | Basic install, cold/warm launch, process and no-fatal checks passed |
-| Visual tests | None. Ryan is the real-device visual/remote acceptance authority |
+The latest delivered candidate remains **v0.4.1 / code 6**, built from `0961153e5dea94c38027cdf31530f500c5b29573`. Run `34204102153`, job `101989443983`, artifact `10047107169`. APK SHA-256 `c7bc147a70378dfe62a14e542aeb5dcb1036fbe6818551e98ddcf6fe061793fa`, 2283246 bytes.
 
-The actual extracted APK was linked only after its existence, digest, archive integrity and build receipts were checked. It was made available before the slower nonvisual smoke completed.
+Historical verification for that APK: 58 JVM tests, 13 API/safety checks, lint 0 errors / 22 warnings, permanent-signer/package/archive and nonvisual launch checks passed. That does not establish effective boot blocking. Exact ZIP/test-artifact/signer receipts are in SESSION_HANDOFF.md.
 
-## What was wrong
+## Next direction, not shipped
 
-Ryan could select an app in v0.4.0 but only saw its package name and the explanatory message. `StartupManagerActivity.choose` incorrectly combined AlertDialog `setMessage` and `setItems`; the message displaced the action list. A test-first API-use regression reproduced this exact mistake at `47abd6136448ee7ef6771729584d6471569f6c9f`, run `34203516856`. That test now passes.
+CLEAN START proposal: actual selected-package force-stop with process/stopped-state verification first, then optional bounded post-boot cleanup of a reviewed app group with protected essentials and explicit KEEP RUNNING exceptions. Initial case remains the four user-selected Kodi forks. No blanket system disable, no permanent polling killer, no guessed package IDs, and no disruption to manually started foreground apps or playback.
 
-## Patch scope
+Post-boot cleanup must not be advertised as preventing every initial boot launch. Manual opening releases stopped state; ordinary ADB cannot enforce a universal permanent manual-only policy for every package while keeping normal launching unchanged. The desired clean-boot policy is recorded; effectiveness and exact firmware mechanisms are not yet proven.
 
-The per-app dialog now uses the title and action list without the conflicting message. Label lookup tries a real launcher/application label before the package ID; it never invents names when metadata is absent. Cancel bypasses the busy guard, and remote Back cancels an in-flight operation. These are control-flow/data-resolution changes, not visual acceptance claims.
-
-No change to background app-op commands, Hard Block semantics, Undo records, ADB protocol/access, permissions, brightness, diagnostics, sleep/reboot, native settings or other BOOP bodies. Existing signer and package remain. Display & Sound and Accessibility stay parked.
-
-## Physical boundary and next test
-
-Previously confirmed: bedroom brightness, corrected STANDARD maintenance selectability, Developer Options opening. Startup Manager has not yet passed the real-Shield selection, write/read-back, boot-suppression, manual-launch or Undo cycle. v0.4.0's machine-green result did not make its broken action menu acceptable.
-
-Next: install v0.4.1, ADVANCED -> STARTUP MANAGER -> one Kodi fork -> BLOCK STARTUP / KEEP LAUNCHABLE. Confirm the real menu opens and read-back succeeds before reboot testing. Test manual launch afterward; only then repeat for the remaining forks. These app-ops restrict background activity, not every conceivable startup mechanism. HARD BLOCK remains separately confirmed and prevents manual launch until Undo.
-
-See SESSION_HANDOFF.md for exact diagnosis, verification and historical receipts. Main ownership/context did not change, and no physical installation or laptop synchronization was performed by this chat.
+This feedback/research update is documentation-only. No app code, boot receiver, service, permission, signing, workflow or device state changed; no new APK was produced. CI is skipped. GitHub visual tests remain prohibited. Handoff, status and memory are reconciled; main and other BOOP work are untouched.
