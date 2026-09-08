@@ -47,6 +47,11 @@ class StartupManagerActivity : Activity() {
         render("Choose an app. BLOCK STARTUP is the normal choice; manual launch stays available.")
     }
 
+    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+    override fun onBackPressed() {
+        if (busy) cancel() else super.onBackPressed()
+    }
+
     override fun onDestroy() {
         generation++
         bridge.cancel()
@@ -64,7 +69,7 @@ class StartupManagerActivity : Activity() {
         setPadding(0, dp(5), 0, dp(5))
     }
 
-    private fun button(label: String, action: () -> Unit) = Button(this).apply {
+    private fun button(label: String, allowWhileBusy: Boolean = false, action: () -> Unit) = Button(this).apply {
         id = View.generateViewId()
         text = label
         textSize = 18f
@@ -74,7 +79,7 @@ class StartupManagerActivity : Activity() {
         isFocusableInTouchMode = true
         minHeight = dp(58)
         background = getDrawable(R.drawable.focus_panel)
-        setOnClickListener { if (!busy) action() }
+        setOnClickListener { if (!busy || allowWhileBusy) action() }
     }
 
     private data class Target(val packageName: String, val label: String, val system: Boolean)
@@ -89,7 +94,8 @@ class StartupManagerActivity : Activity() {
             }.getOrNull() ?: return@mapNotNull null
             val system = (info.flags and (ApplicationInfo.FLAG_SYSTEM or ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
             if (!PowerPolicy.safeUserPackage(pkg, system)) return@mapNotNull null
-            val label = launchable[pkg]?.label ?: runCatching { info.loadLabel(packageManager).toString() }.getOrNull().orEmpty().ifBlank { pkg }
+            val applicationLabel = runCatching { info.loadLabel(packageManager).toString() }.getOrNull()
+            val label = StartupAppLabels.resolve(pkg, launchable[pkg]?.label, applicationLabel)
             Target(pkg, label, system)
         }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label })
     }
@@ -109,7 +115,8 @@ class StartupManagerActivity : Activity() {
         setContentView(root)
 
         if (busy) {
-            list.addView(button("CANCEL") { cancel() })
+            // Cancellation must bypass the guard that prevents duplicate mutations.
+            list.addView(button("CANCEL", allowWhileBusy = true) { cancel() })
             list.getChildAt(0)?.requestFocus()
             return
         }
@@ -150,9 +157,10 @@ class StartupManagerActivity : Activity() {
         actions += "LAUNCH APP NOW"
         actions += "ANDROID APP INFO"
         dialog?.dismiss()
+        // AlertDialog message and list content are mutually exclusive. Keep the
+        // explanatory text on the main page so the action list can receive input.
         dialog = AlertDialog.Builder(this)
             .setTitle(app.label)
-            .setMessage("${app.packageName}\n\nTurbo changes one selected app only and keeps its original state for Undo.")
             .setItems(actions.toTypedArray()) { _, which ->
                 when (actions[which]) {
                     "BLOCK STARTUP / KEEP LAUNCHABLE" -> blockStartup(app)

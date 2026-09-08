@@ -1,5 +1,7 @@
 name: Build SHIELD TURBO
 
+# Physical Shield appearance and remote acceptance belong to Ryan.
+# No screenshots, UI hierarchy dumps, image comparisons or visual certification.
 on:
   push:
     branches: [ "shield-turbo-v01" ]
@@ -84,8 +86,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" | tee shield-turbo-badging.txt
           grep -q "package: name='com.boop.shieldturbo'" shield-turbo-badging.txt
-          grep -q "versionCode='5'" shield-turbo-badging.txt
-          grep -q "versionName='0.4.0'" shield-turbo-badging.txt
+          grep -q "versionCode='6'" shield-turbo-badging.txt
+          grep -q "versionName='0.4.1'" shield-turbo-badging.txt
           grep -q "launchable-activity: name='com.boop.shieldturbo.MainActivity'" shield-turbo-badging.txt
           ! grep -q 'application-debuggable' shield-turbo-badging.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" | tee shield-turbo-signer.txt
