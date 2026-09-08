@@ -4,81 +4,85 @@ Updated 2026-09-08. Authoritative branch: `boop-shield-clean-launcher`.
 
 ## Product boundary
 
-This is the standalone Nvidia Shield clean-HOME validation app, not unified/AIO yet.
+Standalone Nvidia Shield clean-HOME validation app. Do not merge into unified/AIO until Ryan explicitly approves it after physical Shield testing.
 
 - Package: `com.boop.shieldhome`
 - Unified/AIO package `com.boop.alpha1` is separate and untouched.
-- Stock Android TV Home remains installed/enabled as recovery and as the Accessibility override trigger.
-- No ADB, developer-options, root or Shizuku requirement for normal users.
-- Do not merge into unified until Ryan explicitly approves the standalone result after physical Shield testing.
+- Stock Android TV Home stays installed/enabled as recovery and as the Accessibility override trigger.
+- Normal use must not require ADB, developer options, root or Shizuku.
 
 ## Protected physical baseline
 
-The protected HOME mechanism remains version 8 / `0.8.0-reboot-rearm`, build `af8ebe1147bd56cc952b874c2e4180bd6a44d15d`.
-
-Physically confirmed on the real Shield and not to be disturbed by media work:
+Version 8 / `0.8.0-reboot-rearm`, build `af8ebe1147bd56cc952b874c2e4180bd6a44d15d`, remains the protected HOME mechanism:
 
 - single Home -> BOOP;
 - double Home -> native Nvidia/Shield Recent Apps;
 - BOOP Home Override survives reboot;
-- stock Android TV Home remains installed/enabled for recovery/trigger;
+- stock Android TV Home stays available for recovery/trigger;
 - banners and grab/reorder work.
 
-Visual baseline remains the physically-good 0.9.4 HOME geometry/chrome plus the 0.9.5 stronger focus-pop candidate. Preserve the accepted floating-square Apps drawer, fixed HOME lanes/labels, no black HOME focus plate, no normal favourite stars and artwork-only focus scaling. Ryan owns visual acceptance; GitHub must not run screenshot/golden/layout/animation judging.
+Visual baseline remains the physically-good 0.9.4 HOME geometry/chrome plus the 0.9.5 stronger focus-pop candidate. The floating-square Apps drawer is physically accepted. Ryan owns visual acceptance; GitHub must not run screenshot/golden/layout/animation judging.
 
-## Now Playing baseline: 0.10.0
+## Now Playing baseline
 
-0.10.0 introduced generic Android MediaSession Now Playing, Launcher Settings media-access/player controls, and the independent approved headphones BOOP layer. Build `f06cee260c98b2b03ddaa67ed19e505078bf3ac1`, workflow `34277141969`, artifact `10076198619`, APK SHA-256 `69cdf3d136c004c2cfb7ad377f8533a2992cb383eeb82b7926c8284e1985cc88`.
+0.10.0 introduced generic Android MediaSession Now Playing, Launcher Settings media/player controls and the approved independent headphones BOOP layer. Build `f06cee260c98b2b03ddaa67ed19e505078bf3ac1`, workflow `34277141969`, artifact `10076198619`.
 
-Notification Listener special access is used only as Android's supported authority for querying active media sessions. Notification posted/removed payloads are intentionally ignored. The approved `boop_headphones.png` is reused unchanged; its launcher-owned layer is non-focusable/non-clickable.
+The player-supplied metadata/artwork/progress/actions come from Android `MediaController`. The headphones layer remains launcher-owned, non-focusable and non-clickable.
 
-## Current candidate: 0.10.1 media-access route hotfix
+## Physical result: 0.10.1 route hotfix failed
 
-Ryan physically tested 0.10.0 and reported one scoped fault: selecting **Media access: OFF** opened general Shield Settings instead of the Android TV Notification Access page.
+0.10.1 / code 16 attempted to fix `Media access: OFF` by routing to Android Notification Listener settings. Ryan physically tested it and reported **nope**: the Shield still did not provide a usable Notification Access destination.
 
-Root cause: on API 30+ the launcher attempted the phone-style per-listener detail action before Android TV's generic Notification Listener settings action. Shield accepted that detail intent into the wrong Settings surface, so the generic TV route was never attempted.
+Do not keep iterating hidden Notification Access Settings routes as the primary Shield setup path.
 
-The fix is deliberately tiny:
+## Current candidate: 0.10.2 Accessibility media bridge
 
-- `NowPlayingAccessSettingsPlan.routesForSdk(30+)` now orders `GENERIC` before `DETAIL`;
-- older Android remains `GENERIC` only;
-- `DETAIL` remains the modern fallback if the generic route is unavailable;
-- no UI/layout/artwork/animation source changed;
-- no permissions, HOME override behavior, media-session logic or launcher visuals changed.
+Version 17 / `0.10.2-accessibility-media` removes the separate Notification Access requirement from the intended Shield flow.
 
-TDD evidence:
+Primary behavior:
 
-- RED commit `65385a8078d8a734b7556514091077e4eeaed566` changed the contract test to require `GENERIC, DETAIL`; workflow `34278118524` failed exactly one test: 79 tests / 1 failure, the new route-order assertion.
-- GREEN production fix commit `5c549474c9f87400a5a55a94eecb7a6288ff27dd` swapped only the route order.
-- Release version commit `13c695da9ab48f7374d64eb2f6c1342496f982a4` set versionCode 16 / `0.10.1-media-access-route`.
-- Final verified build head: `df4445e6a0c6488355002d5ed99ebfb88ca4e9c1`.
-- Workflow: `34278312090` SUCCESS.
-- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10076663643`.
-- APK SHA-256: `1f8f9f82871ca80f6e5496a3047068171042edfdc3502f829faa3ebc2fe31ff5`.
-- Artifact ZIP SHA-256: `7c54e96b4d9ca5de4e6690f68cccff87b4ee70499631467aa52f02986bb8d9a3`.
-- Permanent BOOP signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+- the already-working `BOOP Home Override` Accessibility service still handles `TYPE_WINDOW_STATE_CHANGED` using the protected Home override logic;
+- it additionally requests `TYPE_NOTIFICATION_STATE_CHANGED`;
+- for notification-state events it extracts only Android's `Notification.EXTRA_MEDIA_SESSION` value when it is a `MediaSession.Token`;
+- notification title, body, actions and screen content are not read or stored;
+- the token is handed to `ShieldNowPlayingManager`, which creates a `MediaController` and obtains the normal Now Playing metadata/artwork/playback state/actions from the media session;
+- `Media access: ON/OFF` now reflects whether BOOP Home Override Accessibility is enabled;
+- selecting the Media access row opens the same Accessibility settings route already used for BOOP Home Override;
+- the existing Notification Listener service remains packaged only as a compatible fallback if that permission was already granted. It is no longer the intended primary setup path.
 
-Final workflow verification passed:
+Privacy/scope remains narrow: `canRetrieveWindowContent=false`; no notification text parsing, typing, gestures or remote-key interception was added.
 
-- all 79 focused standalone launcher tests;
-- signed assembly;
-- exact package `com.boop.shieldhome`;
-- exact versionCode 16 / `0.10.1-media-access-route`;
-- HOME/Leanback entries and protected Accessibility service/router presence;
-- Now Playing listener service and packaged headphones resource presence;
-- permanent signer match;
-- APK archive integrity and artifact upload.
+## TDD and release verification
 
-No screenshot, golden-image, appearance, layout or animation acceptance was run. The downloaded APK was independently unpacked and its SHA-256 matched the CI receipt exactly.
+RED:
 
-**0.10.1 is CI/signer/package green. The corrected Settings destination still requires Ryan's real-Shield confirmation.**
+- test commit `62af0ecea0e787b767025ca25f06ad5e678f6c57` required the accessibility policy to preserve Home window handling, add media-notification handling and ignore unrelated events;
+- workflow `34279753997` failed only because the new `ShieldAccessibilityEventPolicy` did not yet exist.
+
+GREEN/release:
+
+- final build head: `6f72deafad2c050f8b3f6e283b3b65f45a7cf230`;
+- workflow: `34280253602` SUCCESS;
+- artifact: `BOOP-Shield-Clean-Launcher`, ID `10077375611`;
+- version: 17 / `0.10.2-accessibility-media`;
+- APK SHA-256: `9be4f47ca4f20307ca51d5d93d810a9f7f843efde633edb3256f859602d60923`;
+- artifact ZIP SHA-256: `2059dc47b5abd41351fc3c97eba64e068001b4b5c28abf527d84dca7b75d383b`;
+- permanent BOOP signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+Final workflow passed the full focused standalone launcher test suite, signed assembly, exact package/version checks, protected HOME/Accessibility and Now Playing manifest/resource checks, permanent signer verification, APK archive integrity and artifact upload. No screenshot/golden/appearance/layout/animation acceptance was run.
+
+The downloaded release artifact was independently unpacked after CI. Its APK SHA-256 matched the workflow receipt exactly, and `badging.txt` confirmed `com.boop.shieldhome`, code 17, `0.10.2-accessibility-media` with the established BOOP signer.
+
+**0.10.2 is CI/signer/package green only. Whether Shield actually delivers the expected media notification Accessibility event/token must be proven on Ryan's real Shield.**
 
 ## Next physical check
 
-Install/update to 0.10.1 and test only the reported fault first:
+Install/update 0.10.2 over the current BOOP Shield Home.
 
-1. Launcher Settings -> **Media access: OFF**.
-2. It should open Android TV's Notification Access / Notification Listener special-access page rather than general Shield Settings.
-3. Enable BOOP Now Playing there and return to Launcher Settings; `Media access` should report ON.
+1. If BOOP Home Override is already ON, Launcher Settings should show **Media access: ON** without any separate Notification Access setup.
+2. Start Deezer playback and return HOME.
+3. Verify the Now Playing panel receives title/artist/artwork/progress/actions and the headphones BOOP responds to playing/paused state.
+4. Recheck single Home -> BOOP and double Home -> native Recent Apps. The Accessibility Home behavior must be unchanged.
+5. If no Now Playing data appears, report that exact physical result. Do not infer success from CI.
 
-After that, continue the existing 0.10 Now Playing physical tests. Do not infer visual acceptance from CI and do not merge into unified until Ryan explicitly approves it.
+Do not merge into unified until Ryan explicitly approves the standalone behavior.
