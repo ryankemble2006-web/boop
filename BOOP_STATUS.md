@@ -1,6 +1,6 @@
 # BOOP Shield clean launcher status
 
-Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
+Updated 2026-09-09. Standalone branch `boop-shield-clean-launcher`.
 
 - Package: `com.boop.shieldhome`
 - Unified/AIO `com.boop.alpha1`: separate and untouched
@@ -12,26 +12,29 @@ Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
 - v0.10.4 spacing: physical **awesome spacing**
 - v0.10.5 album art: physical **PASS**
 - v0.10.6 focus outline: CI/signer green, physical judgement pending
-- Current candidate: same-version code 22 / `0.10.7-puppet-bay` **fill +10% refresh**
-- Build source: `242ad467d2cbe91d2de9d4cc5e44cf278ec20fa5`
-- Workflow: `34291502544` SUCCESS
-- Artifact ID: `10081530720`
-- APK SHA-256: `26e623be00928c263053427c9f07bd01540c2cf964a06b3f1bf55610fd00219d`
-- Artifact ZIP SHA-256: `177bab9198ddece6bd6bbfc0ebef40e47cebc860302c5376b40ac39a3be146f0`
+- +10% puppet size source: `242ad467d2cbe91d2de9d4cc5e44cf278ec20fa5`, physical judgement pending
+- Current candidate: code 22 / `0.10.7-puppet-bay`, playback dance + paused DJ sulk
+- Build source: `cc54657a3ef5e97114e4b753c23b8801d56b2bda`
+- Workflow: `34292426967` SUCCESS
+- Artifact ID: `10081873605`
+- APK SHA-256: `1d7607c5b8830b98d9d2235ec77a50f5b246875a67e583799c6281d3f5350a06`
+- Artifact ZIP SHA-256: `cd52b6100b14f6b4890d9ca1f141b1be23bb0854fe297ad2a00a0fa1d7e1808f`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- Functional/build/signer/package green; visual size/placement pending Ryan
+- Functional/build/signer/package green; animation feel physically pending Ryan
 
-## Current +10% visual pass
+## Dance / DJ sulk candidate
 
-Ryan reported the card-owned BOOP was correctly inside the Now Playing bay, then asked for him to be 10% bigger after the first full-bay fill pass.
+Ryan approved: **dance during playback; upset at the DJ when paused**.
 
-Current visual-only change:
-- puppet ImageView is 110% of the existing stage width and height;
-- stage remains the same size and clips the enlarged child;
-- gravity remains centered;
-- `FIT_CENTER` preserves the approved artwork proportions;
-- controls, focus treatment, album-art path, HOME behavior and animation policy are unchanged;
-- no GPU/OpenGL/skeletal renderer was added.
+- playing -> continuous 2.4s dance loop with lean, double bounce, tilt and gentle squash/stretch;
+- paused -> 5.2s upset loop with sulked lean/lower stance and periodic irritated head shakes;
+- buffering/other eligible non-playing states remain neutral REST;
+- track/session changes keep the existing acknowledgement hop layered over the current pose;
+- +10% puppet size and existing clipped 230dp bay are preserved;
+- controls, media artwork path, HOME behavior, focus, permissions and package identity are unchanged;
+- animator-disabled and power-saver safeguards remain.
+
+TDD RED: commit `64ea1be637092738942e92bb5ed5f0e3201607bc`, workflow `34292204559`, 74 tests with exactly 2 expected failures for missing UPSET state and insufficient dance amplitude. GREEN: source `cc54657a3ef5e97114e4b753c23b8801d56b2bda`, workflow `34292426967` SUCCESS.
 
 ## Fast CI rule
 
@@ -39,6 +42,6 @@ Ryan owns real-device visual acceptance. CI sets `BOOP_SKIP_MANUAL_VISUAL_TESTS=
 
 ## Next gate
 
-Install the v0.10.7 fill +10% APK and physically judge BOOP's size/perch inside the right-hand Now Playing bay. Confirm clipping and remote navigation remain unchanged. Minor sizing/placement tweaks can continue after use. Defer full Tegra/GPU puppetry until the stage placement is worth locking.
+Install the dance/DJ-sulk APK. Confirm BOOP dances continuously while playing and visibly sulks/shakes his head when paused. Judge amplitude/timing manually on the Shield, and confirm clipping, album art, controls and remote navigation remain unchanged.
 
-Real Shield behavior is authority. Do not merge into unified until Ryan explicitly approves the standalone behavior.
+Real Shield behavior is authority. Tune motion parameters only unless physical evidence requires a wider change. Do not begin full Tegra/GPU puppetry or merge into unified until Ryan explicitly approves.
