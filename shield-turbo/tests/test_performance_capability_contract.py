@@ -34,6 +34,11 @@ class PerformanceCapabilityContractTest(unittest.TestCase):
         self.assertIn('PerformanceCapabilityProbe(context).readResults()', main)
         self.assertIn('snapshot.results + performance + privilege', main)
 
+    def test_completed_scan_opens_compact_report(self):
+        main = (SOURCE / 'MainActivity.kt').read_text()
+        self.assertIn('CompactAnalysisReport.format(readings)', main)
+        self.assertIn('showAnalysisReport(allReadings)', main)
+
     def test_clean_start_and_brightness_remain_separate(self):
         main = (SOURCE / 'MainActivity.kt').read_text()
         self.assertNotIn('PerformanceCapabilityProbe', (SOURCE / 'cleanstart/CleanStartJobService.kt').read_text())
