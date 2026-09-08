@@ -4,14 +4,15 @@ Updated 2026-09-08. Standalone branch `boop-shield-clean-launcher`.
 
 - Standalone package: `com.boop.shieldhome`
 - Unified/AIO package: `com.boop.alpha1` (separate, untouched)
-- Candidate version: 6 / `0.6.0-accessibility-home-override`
-- Candidate build head: `c4a78ece4000131695af07739b2f0af434f44bdc`
-- Workflow: `34231043787` SUCCESS
-- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10057824777`
-- APK SHA-256: `2d921ea7c14e91eaaefe8337bed0e580c098a730fb73b0822b036fb28045ad8c`
-- Artifact ZIP SHA-256: `3d14b2783f918bd3c06c240b53c14b9a9e5ab5ede85e2c57788740f2b646d811`
+- Candidate version: 7 / `0.7.0-shield-accessibility-route`
+- Candidate build head: `79f8665dab5135b130af35a52a03d088d6e35b70`
+- Workflow: `34235512348` SUCCESS
+- Artifact: `BOOP-Shield-Clean-Launcher`, ID `10059749717`
+- APK SHA-256: `b56511fc21e6bad5e20cc83b5c79beebaf5c19caa49c6322be915fc5e256d815`
+- Artifact ZIP SHA-256: `7925ae9f66ee56904f94d724fd4630502d77d7a083752b4b34ffdde1a6f54f97`
 - Permanent BOOP signer reused and verified
-- Focused Shield HOME tests, signed build, exact package/version, HOME/Leanback, Accessibility service manifest entry, APK integrity and upload green
+- 48 focused Shield HOME tests green
+- Signed build, exact package/version, HOME/Leanback, Accessibility service, invisible Shield Accessibility router, APK integrity and upload green
 
 This remains a standalone Shield experiment pending later AIO merge only after explicit real-device acceptance.
 
@@ -21,25 +22,29 @@ This remains a standalone Shield experiment pending later AIO merge only after e
 - 0.2 grab movement physically failed.
 - 0.3 parent-level input-routing repair physically succeeded: Ryan confirmed the grabbed favourite moved ("the booger moved :)").
 - 0.4 retirement physically failed by targeting SetupWraith rather than the launcher.
-- 0.5 correctly targeted `com.google.android.tvlauncher`, but App Info offered **Force stop only, no Disable**. Force stop caused Home to do nothing; reboot restored stock Home. Therefore normal HOME chooser/RoleManager + App Info retirement is a **physical FAIL** on this Shield firmware.
+- 0.5 correctly targeted `com.google.android.tvlauncher`, but App Info offered **Force stop only, no Disable**. Force stop caused Home to do nothing; reboot restored stock Home. Normal HOME chooser/RoleManager + retirement is therefore a physical FAIL on this Shield firmware.
+- 0.6 Accessibility **setup routing** physically failed before the override service was enabled: `Open Accessibility` produced **"you dont have an app that can do this"**. The override service itself remains physically untested, not failed.
 
-## 0.6 Accessibility HOME override experiment
+## 0.7 Shield Accessibility route repair
 
-0.6 switches mechanism instead of retrying the failed normal-HOME path.
+0.7 changes only the settings doorway for the existing no-ADB Accessibility override experiment.
 
-`ShieldHomeOverrideService` is a minimal Accessibility service that listens only for window-state changes. When stock Android TV Home becomes foreground, it brings BOOP Shield Home to the front. It does not retrieve screen content, perform gestures, type text or intercept remote keys.
+An internal `ShieldAccessibilityRouteActivity` catches BOOP's Accessibility-settings request and forwards it directly into Shield/Android TV Settings, trying the TV Accessibility activities first and `com.android.tv.settings.MainSettings` as recovery fallback. It is invisible, internal, no-history and excluded from Recents.
 
-`Home rows` now shows `BOOP Home Override: ON/OFF`; selecting it opens Android Accessibility Settings. A one-time first-run dialog offers `Open Accessibility`. Stock Android TV Home stays installed **and enabled** because its foreground event is the trigger. Do not Force stop it for 0.6 testing.
+The Accessibility override service remains intentionally narrow: window-state events only, no screen-content retrieval, gestures, typing or key filtering. BOOP still does not intercept Home/KEYCODE_HOME.
 
-BOOP deliberately does not intercept Home/KEYCODE_HOME. Preserving Shield double-tap Home -> Recent Apps/task switcher remains a hard physical acceptance requirement.
+For 0.7 testing, **leave Android TV Home enabled and do not Force stop it**. Its foreground event is the trigger for the override.
 
-Regression evidence:
-- workflow `34230246946` RED exactly on missing Accessibility override policy/service/settings hooks;
-- feature workflow `34230792465` green after production implementation;
-- final versioned workflow `34231043787` green end-to-end on `c4a78ece4000131695af07739b2f0af434f44bdc`.
+Regression/release evidence:
+- `34233903841` RED on missing direct Shield Accessibility route;
+- `34234490629` RED on missing invisible router;
+- `34234692956` exposed only a JVM Android-stub test issue after production compiled;
+- `34234924895` clean RED on four deliberately missing JVM-safe route helpers;
+- `34235253856` green after production helper fix;
+- final `34235512348` green end-to-end on version 7 release head.
 
-Default HOME surface remains favourites-first. Banners, physically working grab/reorder, Back handling, real top-right Settings, optional-row defaults and the no-ad/Shop/Discover contract are preserved.
+Default launcher surface remains favourites-first. Banners, physically working grab/reorder, Back handling, real top-right Settings, optional-row defaults and the no-ad/Shop/Discover contract are preserved.
 
 LOCKED: **remove the crap, preserve Shield behavior.** Double-tap Home -> Recent Apps/task switcher, volume/CEC, system Settings, Back semantics, system shortcuts, app switching and animations remain physical acceptance requirements.
 
-0.6 is CI/signer green, **Accessibility takeover behavior is not yet physically accepted**. Key real-device questions are whether stock Home flashes before BOOP, whether reboot takeover is acceptably clean, and whether double-tap Home still opens Recent Apps.
+0.7 is CI/signer green. **Physical acceptance starts with one thing: does Open Accessibility now reach real Shield Accessibility/Settings without the old resolver error?** Only after Ryan can enable `BOOP Home Override` can takeover speed, reboot behavior and double-tap Home be evaluated.
