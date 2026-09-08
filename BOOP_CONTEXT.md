@@ -4,30 +4,36 @@ Updated 2026-09-08. Fresh main owns shared product/ownership contracts. `SESSION
 
 ## Approved app behaviour
 
-Home = Room -> supported controllable devices using cyan chunky TV controls. Settings = configuration only. No Favourites or diagnostic/helper inventory. Focus must not shift labels or disappear during updates. HA discovery is read-only/fail-closed, including device-inherited area membership; never move/rename entities or modify HA configuration to filter the UI. Routines retain distinct execution semantics.
+Home = Room -> real supported controllable physical devices using TV/D-pad-friendly controls. No Favourites, helper/diagnostic/config inventory or loose unconfirmed entities. HA discovery is read-only and fail-closed: use target expansion plus device/entity registries, including device-inherited area membership, but never move/rename HA entities/devices or expose whole-house controls when room/device identity is uncertain.
 
-BOOP forever: only an additional spoken call name is stored in `boop_voice/wake_name`, labelled `BOOP's name`. Natural BOOP phrases remain fallback. No name allowlist, cloud dependency, replacement engine or app/package/class/branding/HA/pairing/signing identity changes. UNIGRAM/tokenizer/fallback repairs require acoustic testing; the previous physical cause was not proven.
+A room selection is authoritative immediately. Dispose the previous room's dashboard/socket/controller/navigation ownership before persisting the new selection and rebuilding Home. Preserve D-pad navigation/focus.
 
-## Locked art and shared animation
+BOOP forever: a custom spoken call name is additional only; BOOP remains permanent fallback. Foreground wireless charging permits wake listening; undocked Wall/phone stays tap-to-talk. Preserve the existing coordinator -> controller -> Sherpa stream -> recording ownership, including coordinator-owned reload/re-arm after wake-name changes. Do not create competing listeners.
 
-Approved phone/Wall eyes, v40 landscape proportions, five-digit yellow hands and headphones remain locked. No regeneration. Shield uses canonical `BoopEyeLayout` and `BoopIdleBlink` source with namespace adaptation rather than separate numerical recipes. Uniform TV slot framing preserves current placement. Blink shares duration, curve and delay, with TV visibility/power gates that do not take input focus. Headphones puppetry is unchanged.
+## Locked art, blink and Shield scaling
 
-Eye hue affects only original blue/cyan iris-ring pixels, preserving sclera, pupils, highlights, outline and default blue. Reuse tint buffers instead of a full-image allocation per slider tick. Actual appearance remains Ryan's acceptance decision. Hands and 2.5D puppetry remain deferred.
+Approved phone/Wall eyes, corrected landscape proportions, five-digit yellow hands and headphones remain locked. No eye regeneration. Shield uses the exact locked `boop_eyes.png` plus canonical `BoopEyeLayout` and `BoopIdleBlink` namespace-adapted source, sharing the 183 ms blink curve and 3-7 second delay. Phone iris-only colour behaviour, whites/pupils/reflections/outline/default blue, headphones and existing puppetry stay unchanged.
+
+Shield activity density scaling is idempotent: derive the target from the unmodified application baseline, never repeatedly scale the current density and never alter system-wide Shield density/resolution.
+
+## Shield remote microphone button
+
+Approved integration is Android's official assistant route first. On Shield first startup the user chooses `Use BOOP for the microphone button` or `Keep my current assistant`; the choice is reversible from Settings.
+
+Where Android exposes it, BOOP requests `RoleManager.ROLE_ASSISTANT` through Android's user-confirmed flow. The assistant implementation is narrowly scoped `VoiceInteractionService` + `VoiceInteractionSessionService`; the session delegates through `ACTION_ASSIST` into BOOP's existing one-shot voice path. It does not create another microphone stack and the visual overlay never captures audio.
+
+Never silently disable Google, grant permissions, change defaults or claim success without hardware evidence. A local `KEYCODE_ASSIST` fallback is permitted only if real Shield firmware proves BOOP itself receives that key without privileged/ADB hacks. No third-party Button Mapper dependency and no OpenAI API integration.
+
+Physical success requires remote-button activation AND speech audio arriving from THAT Shield remote microphone, then existing local media/HA routing, BOOP response, clean recording end/cancel/repeat behaviour and previous-app return where appropriate. Opening BOOP alone is not success. If firmware blocks either side, document the exact limitation and user-authorised setup required; do not substitute another microphone.
 
 ## Manual acceptance rule
 
-Ryan owns visual and real-device acceptance unless he explicitly reverses this. No GitHub screenshot/golden-image tests, appearance/layout/animation judgement, aesthetic source-string guards, emulator installation or launch acceptance in the unified delivery path. The previously optional post-upload process smoke is removed. Keep focused non-visual tests, compilation/lint, package/signature/archive/security checks and immediate upload. Historical tests remain but are not selected; documentation-only pushes do not rebuild.
-
-## Privacy and lifecycle
-
-Local HA/media first; respect explicit room intent. Foreground wireless docking permits wake listening; undocked Wall is tap-to-talk. Preserve TTS/tap/settings/lifecycle mic ownership. Shield overlay stays non-focusable/non-touchable without microphone or HA socket. No automatic user-device installs or permission grants.
-
-Docked eyes may sleep. Proximity nudges/brief camera peeks are not continuous whole-room recognition. Explicit mirror preview remains separate. Future horizontal inside/outside sensor rails and AC teaching are deferred; never invent readings/mappings. Three-second chat-mode switching and accepted media/launcher behaviour remain intact.
+Ryan owns visual and real-device acceptance unless explicitly reversed. Unified CI has no screenshot/golden-image checks, appearance/layout/animation judgement, aesthetic source-string guards, emulator installation or device-launch acceptance. Keep focused non-visual functional tests, compilation/lint, package/signature/archive/security checks and immediate artifact upload.
 
 ## Current evidence
 
-Signed v44 code `4044ee55b5a39e2a220ee897de0393b796c29a5f`, green run `34192698906`, artifact `10042812867`, includes the accumulated repairs and shared Shield eyes/blink. Downloaded archive/checksum/commit receipts were verified; 52 Shield plus 59 unified/wake tests passed. No visual/emulator/device acceptance ran. See `docs/BOOP-V44-BUILD-RECEIPT.md`.
+Signed v45 code `6dab12aa3232e821fed52b64e39f65e499b6c574`, version `1.1.2-unified-assist-repair`, green run `34198363929`, artifact `10044846308`. Extracted APK SHA-256 `77fe8d06223bdaa6a07e232baeb2ddb9162845e98e022477be559fb377915a6b`; permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Delivered v43 `6cd9c67` had wrong/unreachable Shield device placement and old Home focus. Ryan's Pixel 7 after Android 17 handled media/blink/hue, but both wake names failed after rename; dock state/logs unknown. No full OS certification or proven wake cause. V44 still needs all relevant physical checks, especially fallback wake and Enable/access screens.
+Fresh non-visual verification passed 57 Shield focused tests and 64 unified wake/routing/assistant tests with zero failures/errors/skips, plus Launcher lint, compilation and package/manifest/signature/archive checks. Physical Shield/Pixel acceptance remains pending for remote mic/button, acoustic wake, exact eyes/blink, repeated-open scale stability, room switching and device-only Home cards.
 
-History remains in `docs/history/unified-v43/` and `unified/SOURCE_HEADS.md`. Publish no secrets, private addresses/screenshots or raw diagnostics. GitHub work does not imply Windows sync or unattended monitoring.
+Protected physical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. Publish no secrets/private diagnostics. GitHub work does not imply Windows synchronization, automatic device installation/grants or unattended monitoring.
