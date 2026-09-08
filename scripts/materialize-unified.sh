@@ -9,6 +9,7 @@ python3 scripts/patch-unified-wake-diagnostics.py
 python3 scripts/patch-unified-powered-wake-resilience.py
 python3 scripts/patch-unified-seamless-wake-command.py
 python3 scripts/patch-unified-uncensored-speech.py
+python3 scripts/patch-unified-listening-eyes.py
 python3 scripts/patch-unified-shield-dashboard.py
 ROOT=boop-build/BOOP-Alpha1
 APP="$ROOT/app"
