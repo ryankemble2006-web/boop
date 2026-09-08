@@ -28,7 +28,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
     private NowPlayingSnapshot snapshot;
     private NowPlayingPuppetPolicy.Mode mode = NowPlayingPuppetPolicy.Mode.HIDDEN;
-    private long grooveStartedMs;
+    private long motionStartedMs;
     private long acknowledgementStartedMs = -1L;
     private boolean frameScheduled;
     private boolean homeVisible = true;
@@ -38,9 +38,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             frameScheduled = false;
             if (!shouldAnimateFrame()) return;
             long now = SystemClock.uptimeMillis();
-            NowPlayingPuppetMotion.Pose pose = mode == NowPlayingPuppetPolicy.Mode.GROOVE
-                    ? NowPlayingPuppetMotion.groove(now - grooveStartedMs)
-                    : NowPlayingPuppetMotion.rest();
+            NowPlayingPuppetMotion.Pose pose = currentPose(now);
             if (acknowledgementStartedMs >= 0L) {
                 long ackElapsed = now - acknowledgementStartedMs;
                 pose = NowPlayingPuppetMotion.acknowledge(pose, ackElapsed);
@@ -49,7 +47,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
                 }
             }
             applyPose(pose);
-            if (mode == NowPlayingPuppetPolicy.Mode.GROOVE || acknowledgementStartedMs >= 0L) {
+            if (isContinuousMotionMode() || acknowledgementStartedMs >= 0L) {
                 scheduleFrame();
             }
         }
@@ -88,8 +86,12 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
     public void setSnapshot(NowPlayingSnapshot next) {
         NowPlayingSnapshot previous = snapshot;
+        NowPlayingPuppetPolicy.Mode previousMode = mode;
         snapshot = next;
         mode = NowPlayingPuppetPolicy.mode(next);
+        if (mode != previousMode) {
+            motionStartedMs = 0L;
+        }
         boolean changed = previous != null && next != null
                 && (previous.sessionId() != next.sessionId()
                     || !previous.trackKey().equals(next.trackKey()));
@@ -113,7 +115,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         if (!homeVisible || mode == NowPlayingPuppetPolicy.Mode.HIDDEN) {
             if (mode == NowPlayingPuppetPolicy.Mode.HIDDEN) {
                 acknowledgementStartedMs = -1L;
-                grooveStartedMs = 0L;
+                motionStartedMs = 0L;
                 applyPose(NowPlayingPuppetMotion.rest());
             }
             stopFrames();
@@ -123,10 +125,10 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
         setVisibility(VISIBLE);
         long now = SystemClock.uptimeMillis();
-        if (mode == NowPlayingPuppetPolicy.Mode.GROOVE && grooveStartedMs == 0L) {
-            grooveStartedMs = now;
-        } else if (mode != NowPlayingPuppetPolicy.Mode.GROOVE) {
-            grooveStartedMs = 0L;
+        if (isContinuousMotionMode() && motionStartedMs == 0L) {
+            motionStartedMs = now;
+        } else if (!isContinuousMotionMode()) {
+            motionStartedMs = 0L;
         }
 
         if (!animationAllowed()) {
@@ -136,9 +138,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             return;
         }
 
-        NowPlayingPuppetMotion.Pose pose = mode == NowPlayingPuppetPolicy.Mode.GROOVE
-                ? NowPlayingPuppetMotion.groove(now - grooveStartedMs)
-                : NowPlayingPuppetMotion.rest();
+        NowPlayingPuppetMotion.Pose pose = currentPose(now);
         if (acknowledgementStartedMs >= 0L) {
             long ackElapsed = now - acknowledgementStartedMs;
             pose = NowPlayingPuppetMotion.acknowledge(pose, ackElapsed);
@@ -147,7 +147,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             }
         }
         applyPose(pose);
-        if (mode == NowPlayingPuppetPolicy.Mode.GROOVE || acknowledgementStartedMs >= 0L) {
+        if (isContinuousMotionMode() || acknowledgementStartedMs >= 0L) {
             scheduleFrame();
         } else {
             stopFrames();
@@ -197,12 +197,28 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER);
     }
 
+    private NowPlayingPuppetMotion.Pose currentPose(long now) {
+        long elapsed = motionStartedMs == 0L ? 0L : Math.max(0L, now - motionStartedMs);
+        if (mode == NowPlayingPuppetPolicy.Mode.GROOVE) {
+            return NowPlayingPuppetMotion.groove(elapsed);
+        }
+        if (mode == NowPlayingPuppetPolicy.Mode.UPSET) {
+            return NowPlayingPuppetMotion.upset(elapsed);
+        }
+        return NowPlayingPuppetMotion.rest();
+    }
+
+    private boolean isContinuousMotionMode() {
+        return mode == NowPlayingPuppetPolicy.Mode.GROOVE
+                || mode == NowPlayingPuppetPolicy.Mode.UPSET;
+    }
+
     private boolean shouldAnimateFrame() {
         return homeVisible
                 && getVisibility() == VISIBLE
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
                 && animationAllowed()
-                && (mode == NowPlayingPuppetPolicy.Mode.GROOVE || acknowledgementStartedMs >= 0L);
+                && (isContinuousMotionMode() || acknowledgementStartedMs >= 0L);
     }
 
     private boolean animationAllowed() {

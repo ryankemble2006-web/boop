@@ -7,7 +7,8 @@ final class NowPlayingPuppetPolicy {
     enum Mode {
         HIDDEN,
         REST,
-        GROOVE
+        GROOVE,
+        UPSET
     }
 
     private NowPlayingPuppetPolicy() { }
@@ -16,8 +17,12 @@ final class NowPlayingPuppetPolicy {
         if (snapshot == null || !NowPlayingSelectionPolicy.eligible(snapshot.playbackState())) {
             return Mode.HIDDEN;
         }
-        return snapshot.playbackState() == PlaybackState.STATE_PLAYING
-                ? Mode.GROOVE
-                : Mode.REST;
+        if (snapshot.playbackState() == PlaybackState.STATE_PLAYING) {
+            return Mode.GROOVE;
+        }
+        if (snapshot.playbackState() == PlaybackState.STATE_PAUSED) {
+            return Mode.UPSET;
+        }
+        return Mode.REST;
     }
 }
