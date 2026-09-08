@@ -23,6 +23,7 @@ import com.boop.shieldturbo.model.ProbeStatus
 import com.boop.shieldturbo.privilege.PrivilegeDetector
 import com.boop.shieldturbo.privilege.PrivilegeTier
 import com.boop.shieldturbo.probe.*
+import com.boop.shieldturbo.ui.TurboSection
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
@@ -33,7 +34,11 @@ class MainActivity : Activity() {
     private var generation = 0
     private var visible = false
     private var scanning = false
+    private var currentSection: TurboSection? = null
     private var details: AlertDialog? = null
+
+    private lateinit var root: LinearLayout
+    private lateinit var content: LinearLayout
     private lateinit var results: LinearLayout
     private lateinit var status: TextView
     private lateinit var analyseButton: Button
@@ -42,112 +47,349 @@ class MainActivity : Activity() {
     private lateinit var brightnessValue: TextView
     private lateinit var scroll: ScrollView
 
-    override fun onCreate(state: Bundle?) { super.onCreate(state); setContentView(buildUi()) }
-    override fun onStart() { super.onStart(); visible = true; syncBrightness() }
-    override fun onStop() {
-        visible = false; generation++; scan?.cancel(true); scan = null; ui.removeCallbacksAndMessages(null)
-        if (scanning) { scanning = false; status.setText(R.string.scan_paused); analyseButton.setText(R.string.analyse) }
-        details?.dismiss(); details = null; super.onStop()
+    override fun onCreate(state: Bundle?) {
+        super.onCreate(state)
+        setContentView(buildUi())
+        showHome()
     }
-    override fun onDestroy() { worker.shutdownNow(); ui.removeCallbacksAndMessages(null); super.onDestroy() }
+
+    override fun onStart() {
+        super.onStart()
+        visible = true
+        syncBrightness()
+    }
+
+    override fun onStop() {
+        visible = false
+        cancelScan()
+        ui.removeCallbacksAndMessages(null)
+        details?.dismiss()
+        details = null
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        worker.shutdownNow()
+        ui.removeCallbacksAndMessages(null)
+        super.onDestroy()
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() {
+        if (currentSection != null) {
+            cancelScan()
+            showHome()
+        } else {
+            super.onBackPressed()
+        }
+    }
+
+    private fun cancelScan() {
+        generation++
+        scan?.cancel(true)
+        scan = null
+        if (scanning) {
+            scanning = false
+            if (::status.isInitialized) status.setText(R.string.scan_paused)
+            if (::analyseButton.isInitialized) analyseButton.setText(R.string.analyse)
+        }
+    }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density + 0.5f).toInt()
+
     private fun text(value: String, size: Float, colour: Int = Color.WHITE) = TextView(this).apply {
-        text = value; textSize = size; setTextColor(colour); setPadding(0, dp(3), 0, dp(3))
+        text = value
+        textSize = size
+        setTextColor(colour)
+        setPadding(0, dp(3), 0, dp(3))
     }
+
     private fun button(title: Int) = Button(this).apply {
-        setText(title); textSize = 18f; setTextColor(Color.WHITE); isAllCaps = false
-        isFocusable = true; isFocusableInTouchMode = true; minHeight = dp(56); background = getDrawable(R.drawable.focus_panel)
+        setText(title)
+        textSize = 18f
+        setTextColor(Color.WHITE)
+        isAllCaps = false
+        isFocusable = true
+        isFocusableInTouchMode = true
+        minHeight = dp(56)
+        background = getDrawable(R.drawable.focus_panel)
     }
 
     private fun buildUi(): View {
-        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(32), dp(16), dp(32), dp(16)); setBackgroundColor(Color.BLACK) }
-        root.addView(text(getString(R.string.app_name), 28f, Color.CYAN).apply { setTypeface(typeface, Typeface.BOLD) })
-        root.addView(text(getString(R.string.tagline), 16f, Color.LTGRAY))
+        root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(32), dp(16), dp(32), dp(16))
+            setBackgroundColor(Color.BLACK)
+        }
+        root.addView(text(getString(R.string.app_name), 28f, Color.CYAN).apply {
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        root.addView(text(getString(R.string.control_centre_tagline), 16f, Color.LTGRAY))
+        content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(content, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(12) })
+        return root
+    }
+
+    private fun showHome() {
+        currentSection = null
+        content.removeAllViews()
+        val intro = text(getString(R.string.control_centre_intro), 18f, Color.LTGRAY)
+        content.addView(intro, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val sections = listOf(
+            Triple(TurboSection.TURBO, R.string.section_turbo, R.string.section_turbo_help),
+            Triple(TurboSection.PICTURE, R.string.section_picture, R.string.section_picture_help),
+            Triple(TurboSection.APPS, R.string.section_apps, R.string.section_apps_help),
+            Triple(TurboSection.NETWORK, R.string.section_network, R.string.section_network_help),
+            Triple(TurboSection.SHIELD, R.string.section_shield, R.string.section_shield_help)
+        )
+        val cards = sections.map { (section, title, help) ->
+            Button(this).apply {
+                setText(title)
+                contentDescription = "${getString(title)}. ${getString(help)}"
+                textSize = 20f
+                setTextColor(Color.WHITE)
+                isAllCaps = false
+                isFocusable = true
+                isFocusableInTouchMode = true
+                minHeight = dp(112)
+                background = getDrawable(R.drawable.focus_panel)
+                setOnClickListener { openSection(section) }
+            }
+        }
+        cards.forEachIndexed { index, card ->
+            if (index > 0) card.nextFocusLeftId = cards[index - 1].id
+            if (index < cards.lastIndex) card.nextFocusRightId = cards[index + 1].id
+            row.addView(card, LinearLayout.LayoutParams(0, dp(112), 1f).apply {
+                if (index > 0) marginStart = dp(10)
+            })
+        }
+        content.addView(row, LinearLayout.LayoutParams(-1, -2))
+        content.addView(text(getString(R.string.control_centre_footer), 15f, Color.LTGRAY), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
+        cards.first().requestFocus()
+    }
+
+    private fun openSection(section: TurboSection) {
+        currentSection = section
+        content.removeAllViews()
+        when (section) {
+            TurboSection.TURBO -> renderTurbo()
+            TurboSection.PICTURE -> renderPicture()
+            TurboSection.APPS -> renderPlaceholder(R.string.section_apps, R.string.apps_standard_note)
+            TurboSection.NETWORK -> renderPlaceholder(R.string.section_network, R.string.network_standard_note)
+            TurboSection.SHIELD -> renderPlaceholder(R.string.section_shield, R.string.shield_standard_note)
+        }
+    }
+
+    private fun sectionHeader(title: Int, help: Int) {
+        content.addView(text(getString(title), 25f, Color.CYAN).apply { setTypeface(typeface, Typeface.BOLD) })
+        content.addView(text(getString(help), 15f, Color.LTGRAY), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
+    }
+
+    private fun renderPlaceholder(title: Int, message: Int) {
+        sectionHeader(title, message)
+        content.addView(text(getString(R.string.standard_tools_in_progress), 20f))
+        content.addView(text(getString(R.string.back_to_home_hint), 15f, Color.LTGRAY))
+    }
+
+    private fun renderTurbo() {
+        sectionHeader(R.string.section_turbo, R.string.section_turbo_help)
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        analyseButton = button(R.string.analyse).apply { id = R.id.analyse_button; setOnClickListener { analyse() } }
-        accessButton = button(R.string.access_details).apply { id = R.id.access_button; setOnClickListener { showAccess() } }
+        analyseButton = button(R.string.analyse).apply {
+            id = R.id.analyse_button
+            setOnClickListener { analyse() }
+        }
+        accessButton = button(R.string.access_details).apply {
+            id = R.id.access_button
+            setOnClickListener { showAccess() }
+        }
         controls.addView(analyseButton, LinearLayout.LayoutParams(0, dp(56), 2f))
         controls.addView(accessButton, LinearLayout.LayoutParams(0, dp(56), 1f).apply { marginStart = dp(12) })
-        root.addView(controls, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(8), 0, dp(4)) })
+        content.addView(controls, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(4) })
 
+        status = text(getString(R.string.ready), 15f, Color.LTGRAY).apply {
+            id = R.id.analysis_status
+            accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+        }
+        content.addView(status)
+        results = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            id = R.id.analysis_results
+            descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        }
+        scroll = ScrollView(this).apply {
+            isFillViewport = true
+            isFocusable = false
+            addView(results)
+        }
+        content.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        analyseButton.requestFocus()
+        analyse()
+    }
+
+    private fun renderPicture() {
+        sectionHeader(R.string.section_picture, R.string.section_picture_help)
         val brightTop = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        brightTop.addView(text(getString(R.string.brightness_title), 18f, Color.CYAN).apply { setTypeface(typeface, Typeface.BOLD) }, LinearLayout.LayoutParams(0, -2, 1f))
+        brightTop.addView(text(getString(R.string.brightness_title), 18f, Color.CYAN).apply {
+            setTypeface(typeface, Typeface.BOLD)
+        }, LinearLayout.LayoutParams(0, -2, 1f))
         brightnessValue = text("100%", 18f, Color.WHITE).apply { setTypeface(typeface, Typeface.BOLD) }
         brightTop.addView(brightnessValue)
-        root.addView(brightTop, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
+        content.addView(brightTop, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
         brightness = SeekBar(this).apply {
-            id = R.id.brightness_seek; max = 90; isFocusable = true; isFocusableInTouchMode = true
+            id = R.id.brightness_seek
+            max = 90
+            isFocusable = true
+            isFocusableInTouchMode = true
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    val percent = progress + Brightness.MIN_PERCENT; brightnessValue.text = "$percent%"
+                    val percent = progress + Brightness.MIN_PERCENT
+                    brightnessValue.text = "$percent%"
                     if (fromUser) applyBrightness(percent)
                 }
                 override fun onStartTrackingTouch(bar: SeekBar?) = Unit
                 override fun onStopTrackingTouch(bar: SeekBar?) = Unit
             })
         }
-        root.addView(brightness, LinearLayout.LayoutParams(-1, dp(48)))
-        root.addView(text(getString(R.string.brightness_help), 14f, Color.LTGRAY))
-
-        status = text(getString(R.string.ready), 15f, Color.LTGRAY).apply { id = R.id.analysis_status; accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
-        root.addView(status)
-        results = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; id = R.id.analysis_results; descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS }
-        scroll = ScrollView(this).apply { isFillViewport = true; isFocusable = false; addView(results) }
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        analyseButton.nextFocusDownId = brightness.id; accessButton.nextFocusDownId = brightness.id
-        brightness.nextFocusUpId = analyseButton.id
-        analyseButton.requestFocus(); syncBrightness(); return root
+        content.addView(brightness, LinearLayout.LayoutParams(-1, dp(48)))
+        content.addView(text(getString(R.string.brightness_help), 14f, Color.LTGRAY))
+        content.addView(text(getString(R.string.picture_more_coming), 16f, Color.LTGRAY), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
+        syncBrightness()
+        brightness.requestFocus()
     }
 
     private fun syncBrightness() {
         if (!::brightness.isInitialized) return
         val percent = BrightnessService.savedPercent(this)
-        brightness.progress = percent - Brightness.MIN_PERCENT; brightnessValue.text = "$percent%"
+        brightness.progress = percent - Brightness.MIN_PERCENT
+        brightnessValue.text = "$percent%"
     }
 
     private fun applyBrightness(percent: Int) {
         val safe = Brightness.clampPercent(percent)
         if (safe < 100 && !Settings.canDrawOverlays(this)) {
-            brightness.progress = 90; brightnessValue.text = "100%"
+            brightness.progress = 90
+            brightnessValue.text = "100%"
             details?.dismiss()
-            details = AlertDialog.Builder(this).setTitle(R.string.brightness_title).setMessage(R.string.overlay_needed)
+            details = AlertDialog.Builder(this)
+                .setTitle(R.string.brightness_title)
+                .setMessage(R.string.overlay_needed)
                 .setNegativeButton(R.string.close, null)
-                .setPositiveButton("ALLOW") { _, _ -> startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))) }.show()
+                .setPositiveButton("ALLOW") { _, _ ->
+                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                }.show()
             return
         }
-        startService(Intent(this, BrightnessService::class.java).setAction(BrightnessService.ACTION_APPLY).putExtra(BrightnessService.EXTRA_PERCENT, safe))
+        startService(
+            Intent(this, BrightnessService::class.java)
+                .setAction(BrightnessService.ACTION_APPLY)
+                .putExtra(BrightnessService.EXTRA_PERCENT, safe)
+        )
     }
 
     private fun analyse() {
-        if (scanning || !visible) return
-        scanning = true; val token = ++generation; status.setText(R.string.scanning); analyseButton.setText(R.string.scanning)
+        if (scanning || !visible || currentSection != TurboSection.TURBO) return
+        scanning = true
+        val token = ++generation
+        status.setText(R.string.scanning)
+        analyseButton.setText(R.string.scanning)
         scan = worker.submit {
             try {
-                val context = applicationContext; val tier = PrivilegeDetector.android(context).detect()
-                val snapshot = ShieldAnalyzer(listOf(DeviceProbe(), MemoryProbe(context), StorageProbe(), CpuProbe(), ThermalProbe(), NetworkProbe(context))).analyze()
-                val privilege = ProbeResult("privilege", getString(R.string.capability_tier), ProbeStatus.AVAILABLE, tier.name.replace('_', ' '), when (tier) {
-                    PrivilegeTier.STANDARD -> getString(R.string.standard_evidence); PrivilegeTier.ADB_TURBO -> getString(R.string.adb_evidence); PrivilegeTier.ROOT -> getString(R.string.root_evidence) })
-                ui.post { if (visible && generation == token && !isDestroyed) { render(snapshot.results + privilege); scanning = false; scan = null; analyseButton.setText(R.string.analyse) } }
-            } catch (_: InterruptedException) { Thread.currentThread().interrupt() }
-            catch (_: Exception) { ui.post { if (visible && generation == token && !isDestroyed) { scanning = false; scan = null; analyseButton.setText(R.string.analyse); status.setText(R.string.scan_unavailable) } } }
+                val context = applicationContext
+                val tier = PrivilegeDetector.android(context).detect()
+                val snapshot = ShieldAnalyzer(
+                    listOf(DeviceProbe(), MemoryProbe(context), StorageProbe(), CpuProbe(), ThermalProbe(), NetworkProbe(context))
+                ).analyze()
+                val privilege = ProbeResult(
+                    "privilege",
+                    getString(R.string.capability_tier),
+                    ProbeStatus.AVAILABLE,
+                    tier.name.replace('_', ' '),
+                    when (tier) {
+                        PrivilegeTier.STANDARD -> getString(R.string.standard_evidence)
+                        PrivilegeTier.ADB_TURBO -> getString(R.string.adb_evidence)
+                        PrivilegeTier.ROOT -> getString(R.string.root_evidence)
+                    }
+                )
+                ui.post {
+                    if (visible && generation == token && !isDestroyed && currentSection == TurboSection.TURBO) {
+                        render(snapshot.results + privilege)
+                        scanning = false
+                        scan = null
+                        analyseButton.setText(R.string.analyse)
+                    }
+                }
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+            } catch (_: Exception) {
+                ui.post {
+                    if (visible && generation == token && !isDestroyed && currentSection == TurboSection.TURBO) {
+                        scanning = false
+                        scan = null
+                        analyseButton.setText(R.string.analyse)
+                        status.setText(R.string.scan_unavailable)
+                    }
+                }
+            }
         }
     }
 
     private fun render(readings: List<ProbeResult>) {
         results.removeAllViews()
-        val cards = readings.map { reading -> LinearLayout(this).apply {
-            id = View.generateViewId(); orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(10), dp(16), dp(10)); background = getDrawable(R.drawable.focus_panel)
-            isFocusable = true; isFocusableInTouchMode = true; isClickable = true; contentDescription = "Reading: ${reading.label}. ${reading.value}. ${statusLabel(reading.status)}"
-            addView(text("${reading.label}  •  ${statusLabel(reading.status)}", 16f, Color.CYAN)); addView(text(reading.value, 24f)); addView(text(reading.evidence, 14f, Color.LTGRAY))
-            setOnClickListener { details?.dismiss(); details = AlertDialog.Builder(this@MainActivity).setTitle(reading.label).setMessage("${reading.value}\n\n${reading.evidence}\n\n${getString(R.string.reading_note)}").setPositiveButton(R.string.close, null).show() }
-        } }
-        cards.forEachIndexed { index, card -> card.nextFocusUpId = if (index == 0) brightness.id else cards[index - 1].id; card.nextFocusDownId = if (index == cards.lastIndex) card.id else cards[index + 1].id; results.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(4), 0, dp(4)) }) }
-        if (cards.isNotEmpty()) brightness.nextFocusDownId = cards.first().id
-        results.addView(text(getString(R.string.no_changes), 14f, Color.LTGRAY)); val available = readings.count { it.status == ProbeStatus.AVAILABLE }
-        status.text = getString(R.string.scan_complete, available, readings.size); scroll.scrollTo(0, 0)
+        val cards = readings.map { reading ->
+            LinearLayout(this).apply {
+                id = View.generateViewId()
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(16), dp(10), dp(16), dp(10))
+                background = getDrawable(R.drawable.focus_panel)
+                isFocusable = true
+                isFocusableInTouchMode = true
+                isClickable = true
+                contentDescription = "Reading: ${reading.label}. ${reading.value}. ${statusLabel(reading.status)}"
+                addView(text("${reading.label}  •  ${statusLabel(reading.status)}", 16f, Color.CYAN))
+                addView(text(reading.value, 24f))
+                addView(text(reading.evidence, 14f, Color.LTGRAY))
+                setOnClickListener {
+                    details?.dismiss()
+                    details = AlertDialog.Builder(this@MainActivity)
+                        .setTitle(reading.label)
+                        .setMessage("${reading.value}\n\n${reading.evidence}\n\n${getString(R.string.reading_note)}")
+                        .setPositiveButton(R.string.close, null)
+                        .show()
+                }
+            }
+        }
+        cards.forEachIndexed { index, card ->
+            card.nextFocusUpId = if (index == 0) analyseButton.id else cards[index - 1].id
+            card.nextFocusDownId = if (index == cards.lastIndex) card.id else cards[index + 1].id
+            results.addView(card, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, dp(4), 0, dp(4)) })
+        }
+        if (cards.isNotEmpty()) {
+            analyseButton.nextFocusDownId = cards.first().id
+            accessButton.nextFocusDownId = cards.first().id
+        }
+        results.addView(text(getString(R.string.no_changes), 14f, Color.LTGRAY))
+        val available = readings.count { it.status == ProbeStatus.AVAILABLE }
+        status.text = getString(R.string.scan_complete, available, readings.size)
+        scroll.scrollTo(0, 0)
     }
 
-    private fun statusLabel(value: ProbeStatus) = getString(when (value) { ProbeStatus.AVAILABLE -> R.string.available; ProbeStatus.RESTRICTED -> R.string.restricted; ProbeStatus.UNSUPPORTED -> R.string.not_exposed; ProbeStatus.ERROR -> R.string.unavailable })
-    private fun showAccess() { details?.dismiss(); details = AlertDialog.Builder(this).setTitle(R.string.access_details).setMessage(R.string.access_explanation).setPositiveButton(R.string.close, null).show() }
+    private fun statusLabel(value: ProbeStatus) = getString(
+        when (value) {
+            ProbeStatus.AVAILABLE -> R.string.available
+            ProbeStatus.RESTRICTED -> R.string.restricted
+            ProbeStatus.UNSUPPORTED -> R.string.not_exposed
+            ProbeStatus.ERROR -> R.string.unavailable
+        }
+    )
+
+    private fun showAccess() {
+        details?.dismiss()
+        details = AlertDialog.Builder(this)
+            .setTitle(R.string.access_details)
+            .setMessage(R.string.access_explanation)
+            .setPositiveButton(R.string.close, null)
+            .show()
+    }
 }
