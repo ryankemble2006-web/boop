@@ -16,12 +16,25 @@ public class BoopNotificationIntakePolicyTest {
 
     @Test
     public void allowedChannelMayReadRichContent() {
-        BoopNotificationSettingsState state = new BoopNotificationSettingsState(
-                true,
-                8000L,
-                Set.of("com.chat.app"),
-                Set.of(BoopNotificationSettingsCodec.channelKey("com.chat.app", "messages")));
+        BoopNotificationSettingsState state = fullyAllowed("com.chat.app", "messages");
         assertEquals(BoopNotificationIntakePolicy.Mode.READ_RICH_CONTENT,
                 BoopNotificationIntakePolicy.decide(state, "com.chat.app", "messages"));
+    }
+
+    @Test
+    public void fullyAllowedChannelCanReadRichContentButSiblingCannot() {
+        BoopNotificationSettingsState state = fullyAllowed("com.chat", "messages");
+        assertEquals(BoopNotificationIntakePolicy.Mode.READ_RICH_CONTENT,
+                BoopNotificationIntakePolicy.decide(state, "com.chat", "messages"));
+        assertEquals(BoopNotificationIntakePolicy.Mode.OBSERVE_CHANNEL_ONLY,
+                BoopNotificationIntakePolicy.decide(state, "com.chat", "promotions"));
+    }
+
+    private static BoopNotificationSettingsState fullyAllowed(String packageName, String channelId) {
+        return new BoopNotificationSettingsState(
+                true,
+                8000L,
+                Set.of(packageName),
+                Set.of(BoopNotificationSettingsCodec.channelKey(packageName, channelId)));
     }
 }
