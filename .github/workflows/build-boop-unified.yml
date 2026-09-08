@@ -88,14 +88,15 @@ jobs:
             --tests '*TvNavigationModelTest' --tests '*BoopPreferencesTest' \
             --tests '*DeezerPuppetSettingsModelTest' --tests '*DeezerAccessSettingsPlanTest' --stacktrace
 
-      - name: Test wake names, routing and lifecycle only
+      - name: Test wake names, routing, lifecycle and assistant policy only
         run: |
           unset BOOP_RELAY_URL BOOP_RELAY_TOKEN
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
             --tests '*BoopWake*' --tests '*BoopSentencePiece*' --tests '*BoopCustomWake*' \
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
             --tests '*BoopVoice*' --tests '*BoopCommandRouterTest' \
-            --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' --stacktrace
+            --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' \
+            --tests '*BoopAssistant*' --stacktrace
 
       - name: Prepare permanent BOOP signer
         shell: bash
@@ -129,11 +130,11 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
           grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='44'" badging.txt
-          grep -q "versionName='1.1.1-unified-eyes-wake-home'" badging.txt
+          grep -q "versionCode='45'" badging.txt
+          grep -q "versionName='1.1.2-unified-assist-repair'" badging.txt
           grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
-          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService; do
+          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
             grep -q "$cls" manifest-tree.txt
           done
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
@@ -152,7 +153,8 @@ jobs:
           lines = ['Visual acceptance: MANUAL, not performed by GitHub.',
                    'Device/emulator launch: MANUAL, not performed by GitHub.',
                    'APK signature, package identity and ZIP integrity: verified.',
-                   'Physical Shield / Pixel acceptance: pending.']
+                   'Physical Shield / Pixel acceptance: pending.',
+                   'Shield remote mic activation and remote-microphone audio: MANUAL, pending.']
           for label, root in [('Shield', Path('shield-overlay/app/build/test-results')),
                               ('Unified', Path('boop-build/BOOP-Alpha1/app/build/test-results'))]:
               totals = dict(tests=0, failures=0, errors=0, skipped=0)
