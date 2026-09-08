@@ -1,13 +1,11 @@
 package com.boop.shieldhome;
 
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadata;
@@ -21,7 +19,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
-import android.view.accessibility.AccessibilityManager;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -33,9 +30,8 @@ import java.util.Map;
 /**
  * Android media-session boundary for the standalone Shield launcher.
  *
- * Primary discovery on Shield comes from the already-enabled BOOP Accessibility service, which
- * passes only MediaSession.Token objects from media-style notification events. A previously
- * granted Notification Listener remains a compatible fallback for enumerating active sessions.
+ * Notification Listener access is Android's authority for querying active media sessions.
+ * Notification posted/removed payloads are intentionally ignored by BOOP.
  */
 public final class ShieldNowPlayingManager {
     private static final String ENABLED_LISTENERS = "enabled_notification_listeners";
@@ -94,27 +90,44 @@ public final class ShieldNowPlayingManager {
         return state;
     }
 
-    /** Refreshes the optional Notification Listener fallback without disturbing Accessibility media. */
+    /** Re-evaluates Android Notification Listener access and session observation. */
     public void refreshAccess() {
-        runOnMain(this::refreshListenerAccessOnMain);
+        runOnMain(this::refreshAccessOnMain);
     }
 
-    /** Media access now follows the already-approved BOOP Home Override Accessibility service. */
+    /** Returns Android's current Notification Listener grant for BOOP Now Playing. */
     public boolean hasAccess() {
-        return isAccessibilityBridgeEnabled();
+        return isAccessGranted();
     }
 
-    /** Opens the same Shield Accessibility setup used by BOOP Home Override. */
+    /** Opens Android TV Notification Access first, with platform-safe fallbacks. */
     public boolean openAccessSettings(Activity activity) {
         if (activity == null) {
             return false;
         }
-        try {
-            activity.startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
-            return true;
-        } catch (ActivityNotFoundException | SecurityException unavailable) {
-            return false;
+        for (NowPlayingAccessSettingsPlan.Route route
+                : NowPlayingAccessSettingsPlan.routesForSdk(Build.VERSION.SDK_INT)) {
+            Intent intent;
+            if (route == NowPlayingAccessSettingsPlan.Route.TV_EXACT) {
+                intent = new Intent().setComponent(new ComponentName(
+                        NowPlayingAccessSettingsPlan.tvSettingsPackage(),
+                        NowPlayingAccessSettingsPlan.tvNotificationAccessClassName()));
+            } else if (route == NowPlayingAccessSettingsPlan.Route.DETAIL) {
+                intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                        .putExtra(
+                                Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                                listenerComponent.flattenToString());
+            } else {
+                intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+            }
+            try {
+                activity.startActivity(intent);
+                return true;
+            } catch (ActivityNotFoundException | SecurityException unavailable) {
+                // Shield firmware varies. Try the next Notification Access route.
+            }
         }
+        return false;
     }
 
     public void setPreferredPackage(String packageName) {
@@ -179,69 +192,39 @@ public final class ShieldNowPlayingManager {
         }
     }
 
-    /**
-     * Registers a media session discovered by the BOOP Accessibility service.
-     * No notification text, actions or other notification payload is passed into this manager.
-     */
-    void onAccessibilityMediaSession(MediaSession.Token token) {
-        if (token == null) {
-            return;
-        }
-        runOnMain(() -> {
-            Binding binding = bindings.get(token);
-            if (binding == null) {
-                MediaController controller;
-                try {
-                    controller = new MediaController(applicationContext, token);
-                } catch (RuntimeException invalidToken) {
-                    return;
-                }
-                binding = new Binding(controller, allocateSessionId());
-                try {
-                    binding.register();
-                } catch (RuntimeException unavailable) {
-                    return;
-                }
-                bindings.put(token, binding);
-            }
-            binding.accessibilityBacked = true;
-            publishSelection();
-        });
-    }
-
     void onListenerConnected() {
         runOnMain(() -> {
             listenerConnected = true;
-            refreshListenerAccessOnMain();
+            refreshAccessOnMain();
         });
     }
 
     void onListenerDisconnected() {
         runOnMain(() -> {
             listenerConnected = false;
-            stopListenerObservation();
+            stopObservation();
         });
     }
 
-    private void refreshListenerAccessOnMain() {
-        boolean granted = isNotificationListenerAccessGranted();
+    private void refreshAccessOnMain() {
+        boolean granted = isAccessGranted();
         if (!granted) {
-            stopListenerObservation();
+            stopObservation();
             return;
         }
         if (!listenerConnected) {
             try {
                 NotificationListenerService.requestRebind(listenerComponent);
             } catch (SecurityException ignored) {
-                // Accessibility remains the primary path. This fallback can fail closed.
+                // Android remains the authority. The service callback will start observation.
             }
-            stopListenerObservation();
+            stopObservation();
             return;
         }
-        startListenerObservation();
+        startObservation();
     }
 
-    private boolean isNotificationListenerAccessGranted() {
+    private boolean isAccessGranted() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 return notificationManager != null
@@ -264,39 +247,9 @@ public final class ShieldNowPlayingManager {
         return false;
     }
 
-    private boolean isAccessibilityBridgeEnabled() {
-        AccessibilityManager manager =
-                (AccessibilityManager) applicationContext.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        if (manager == null) {
-            return false;
-        }
-        List<AccessibilityServiceInfo> enabled;
-        try {
-            enabled = manager.getEnabledAccessibilityServiceList(
-                    AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
-        } catch (RuntimeException unavailable) {
-            return false;
-        }
-        if (enabled == null) {
-            return false;
-        }
-        String serviceName = ShieldHomeOverrideService.class.getName();
-        for (AccessibilityServiceInfo info : enabled) {
-            ResolveInfo resolveInfo = info == null ? null : info.getResolveInfo();
-            if (resolveInfo == null || resolveInfo.serviceInfo == null) {
-                continue;
-            }
-            if (applicationContext.getPackageName().equals(resolveInfo.serviceInfo.packageName)
-                    && serviceName.equals(resolveInfo.serviceInfo.name)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void startListenerObservation() {
+    private void startObservation() {
         if (mediaSessionManager == null) {
-            stopListenerObservation();
+            stopObservation();
             return;
         }
         try {
@@ -307,12 +260,11 @@ public final class ShieldNowPlayingManager {
             }
             reconcileControllers(mediaSessionManager.getActiveSessions(listenerComponent));
         } catch (SecurityException denied) {
-            stopListenerObservation();
+            stopObservation();
         }
     }
 
-    /** Stops only Notification Listener-owned discovery; Accessibility-backed sessions survive. */
-    private void stopListenerObservation() {
+    private void stopObservation() {
         if (activeSessionsListenerRegistered && mediaSessionManager != null) {
             try {
                 mediaSessionManager.removeOnActiveSessionsChangedListener(activeSessionsChanged);
@@ -322,20 +274,26 @@ public final class ShieldNowPlayingManager {
         }
         activeSessionsListenerRegistered = false;
 
-        LinkedHashMap<MediaSession.Token, Binding> retained = new LinkedHashMap<>();
-        for (Map.Entry<MediaSession.Token, Binding> entry
-                : new ArrayList<>(bindings.entrySet())) {
-            Binding binding = entry.getValue();
-            binding.listenerBacked = false;
-            if (binding.accessibilityBacked) {
-                retained.put(entry.getKey(), binding);
-            } else {
-                binding.unregister();
-            }
-        }
+        List<Binding> detached = new ArrayList<>(bindings.values());
         bindings.clear();
-        bindings.putAll(retained);
-        publishSelection();
+        for (Binding binding : detached) {
+            binding.unregister();
+        }
+        selectedId = 0L;
+        selectedController = null;
+        state.update(null);
+    }
+
+    private void reconcileActiveSessions() {
+        if (!listenerConnected || !isAccessGranted() || mediaSessionManager == null) {
+            stopObservation();
+            return;
+        }
+        try {
+            reconcileControllers(mediaSessionManager.getActiveSessions(listenerComponent));
+        } catch (SecurityException denied) {
+            stopObservation();
+        }
     }
 
     private void reconcileControllers(List<MediaController> controllers) {
@@ -357,7 +315,7 @@ public final class ShieldNowPlayingManager {
                     try {
                         pendingControllers = mediaSessionManager.getActiveSessions(listenerComponent);
                     } catch (SecurityException denied) {
-                        stopListenerObservation();
+                        stopObservation();
                         return;
                     }
                 }
@@ -386,37 +344,17 @@ public final class ShieldNowPlayingManager {
                 binding = new Binding(controller, allocateSessionId());
                 binding.register();
             }
-            binding.listenerBacked = true;
             ordered.put(token, binding);
         }
 
         for (Map.Entry<MediaSession.Token, Binding> existing
                 : new ArrayList<>(bindings.entrySet())) {
-            if (ordered.containsKey(existing.getKey())) {
-                continue;
-            }
-            Binding binding = existing.getValue();
-            binding.listenerBacked = false;
-            if (binding.accessibilityBacked) {
-                ordered.put(existing.getKey(), binding);
-            } else {
-                binding.unregister();
+            if (!ordered.containsKey(existing.getKey())) {
+                existing.getValue().unregister();
             }
         }
         bindings.clear();
         bindings.putAll(ordered);
-    }
-
-    private void removeBinding(MediaSession.Token token) {
-        if (token == null) {
-            return;
-        }
-        Binding removed = bindings.remove(token);
-        if (removed == null) {
-            return;
-        }
-        removed.unregister();
-        publishSelection();
     }
 
     private long allocateSessionId() {
@@ -590,8 +528,6 @@ public final class ShieldNowPlayingManager {
         private final MediaController controller;
         private final long id;
         private boolean registered;
-        private boolean accessibilityBacked;
-        private boolean listenerBacked;
         private final MediaController.Callback callback = new MediaController.Callback() {
             @Override public void onMetadataChanged(MediaMetadata metadata) {
                 publishSelection();
@@ -602,8 +538,7 @@ public final class ShieldNowPlayingManager {
             }
 
             @Override public void onSessionDestroyed() {
-                MediaSession.Token token = controller.getSessionToken();
-                mainHandler.post(() -> removeBinding(token));
+                mainHandler.post(ShieldNowPlayingManager.this::reconcileActiveSessions);
             }
         };
 
