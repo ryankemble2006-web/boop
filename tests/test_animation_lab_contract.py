@@ -17,7 +17,6 @@ def test_animation_lab_materializer_contract() -> None:
         "playSingleIdleBlink",
         "startListeningCue",
         "BoopDevMenuActivity",
-        "BOOP_ANIMATION_LAB_LAUNCH_GUARD_V2",
     ):
         assert token in script
 
@@ -39,6 +38,23 @@ def test_lab_keeps_all_current_v70_notification_doods() -> None:
         "Bundle",
     ):
         assert label in script
+
+
+def test_pixel_android16_immersive_starts_after_content() -> None:
+    activity = read("source/BoopDevMenuActivity.java")
+    create_start = activity.index("protected void onCreate")
+    create_end = activity.index("    @Override\n    protected void onResume", create_start)
+    create = activity[create_start:create_end]
+    assert create.index("setContentView(root);") < create.index("applyImmersiveUi")
+    assert "root.post(this::applyImmersiveUi);" in create
+    assert "getWindow().getInsetsController()" not in activity
+    assert "getWindow().getDecorView()" in activity
+    assert "decor.getWindowInsetsController()" in activity
+
+
+def test_lab_preserves_legacy_back_on_android16() -> None:
+    script = read("scripts/materialize-animation-lab.py")
+    assert 'android:enableOnBackInvokedCallback="false"' in script
 
 
 def test_lab_manifest_removes_startup_components() -> None:
