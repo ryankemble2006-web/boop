@@ -32,14 +32,11 @@ public final class NowPlayingPuppetLegacyLidOcclusionTest {
     }
 
     private static Path findProjectRoot() {
-        Path cwd = Paths.get(System.getProperty("user.dir", ".")).toAbsolutePath().normalize();
-        Path[] candidates = {
-                cwd,
-                cwd.resolve("shield-clean-launcher"),
-                cwd.getParent() == null ? cwd : cwd.getParent().resolve("shield-clean-launcher")
-        };
-        for (Path candidate : candidates) {
-            if (Files.isRegularFile(candidate.resolve("app/build.gradle"))) return candidate;
+        Path start = Paths.get(System.getProperty("user.dir", ".")).toAbsolutePath().normalize();
+        for (Path cursor = start; cursor != null; cursor = cursor.getParent()) {
+            if (Files.isRegularFile(cursor.resolve("app/build.gradle"))) return cursor;
+            Path nested = cursor.resolve("shield-clean-launcher");
+            if (Files.isRegularFile(nested.resolve("app/build.gradle"))) return nested;
         }
         return null;
     }
