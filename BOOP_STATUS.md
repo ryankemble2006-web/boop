@@ -8,33 +8,34 @@ Updated 2026-09-09. Standalone branch `boop-shield-clean-launcher`.
 - Physically accepted Apps drawer: 0.9 floating square icons
 - Physically-good HOME geometry/chrome: 0.9.4
 - Notification Listener: physical PASS
-- v0.10.3 collision layout: physical **much better**
 - v0.10.4 spacing: physical **awesome spacing**
 - v0.10.5 album art: physical **PASS**
 - v0.10.6 focus outline: CI/signer green, physical judgement pending
-- +10% puppet size source: `242ad467d2cbe91d2de9d4cc5e44cf278ec20fa5`, physical judgement pending
-- Current candidate: code 22 / `0.10.7-puppet-bay`, playback dance + paused DJ sulk
-- Build source: `cc54657a3ef5e97114e4b753c23b8801d56b2bda`
-- Workflow: `34292426967` SUCCESS
-- Artifact ID: `10081873605`
-- APK SHA-256: `1d7607c5b8830b98d9d2235ec77a50f5b246875a67e583799c6281d3f5350a06`
-- Artifact ZIP SHA-256: `cd52b6100b14f6b4890d9ca1f141b1be23bb0854fe297ad2a00a0fa1d7e1808f`
+- +10% puppet size retained
+- Playback dance: after animations were re-enabled Ryan reported BOOP **"looks awesome"**
+- Paused DJ-sulk: implemented/signed; explicit physical acceptance not yet recorded
+- Current candidate: code 22 / `0.10.7-puppet-bay`, dance + sulk + natural blink
+- Exact APK source: `b5221b842aff959d283e561aeac1f8b32e25a5ca`
+- Workflow: `34293856616` SUCCESS
+- Artifact ID: `10082387913`
+- APK SHA-256: `5078e83e1763d92b2d58cb7748e50693d12f7b4407ecdc2c3f5a531c5f6a0ccd`
+- Artifact ZIP SHA-256: `69a4588e41fd724e9493afd3956cd4783992ad12e95b159993559877041811ff`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
-- Functional/build/signer/package green; animation feel physically pending Ryan
+- Functional/build/signer/package green; blink appearance physically pending Ryan
 
-## Dance / DJ sulk candidate
+## Natural blink pass
 
-Ryan approved: **dance during playback; upset at the DJ when paused**.
+Ryan approved a bounded blink experiment while preserving the dance/sulk renderer.
 
-- playing -> continuous 2.4s dance loop with lean, double bounce, tilt and gentle squash/stretch;
-- paused -> 5.2s upset loop with sulked lean/lower stance and periodic irritated head shakes;
-- buffering/other eligible non-playing states remain neutral REST;
-- track/session changes keep the existing acknowledgement hop layered over the current pose;
-- +10% puppet size and existing clipped 230dp bay are preserved;
-- controls, media artwork path, HOME behavior, focus, permissions and package identity are unchanged;
-- animator-disabled and power-saver safeguards remain.
+- blink duration 183ms using BOOP's proven soft close/reopen curve;
+- random interval 3–7 seconds;
+- 18% double-blink chance, 110ms gap;
+- existing `boop_headphones` artwork is unchanged;
+- near-black eyelid masks are drawn over the two eye ovals by the puppet ImageView;
+- dance/sulk transforms, +10% size, clipping, controls, album-art path, HOME behavior and focus are unchanged;
+- blink obeys the same animator-disabled and Power Saver safeguards.
 
-TDD RED: commit `64ea1be637092738942e92bb5ed5f0e3201607bc`, workflow `34292204559`, 74 tests with exactly 2 expected failures for missing UPSET state and insufficient dance amplitude. GREEN: source `cc54657a3ef5e97114e4b753c23b8801d56b2bda`, workflow `34292426967` SUCCESS.
+TDD RED: `c435f28e659c583b13cffd3aad0da8d245157226`, workflow `34293639208`, 77 tests with exactly 3 expected blink-contract failures and no signing. GREEN: `b5221b842aff959d283e561aeac1f8b32e25a5ca`, workflow `34293856616` SUCCESS.
 
 ## Fast CI rule
 
@@ -42,6 +43,6 @@ Ryan owns real-device visual acceptance. CI sets `BOOP_SKIP_MANUAL_VISUAL_TESTS=
 
 ## Next gate
 
-Install the dance/DJ-sulk APK. Confirm BOOP dances continuously while playing and visibly sulks/shakes his head when paused. Judge amplitude/timing manually on the Shield, and confirm clipping, album art, controls and remote navigation remain unchanged.
+Install the natural-blink APK and judge the eyelid placement/timing on the real Shield. Confirm the blink feels natural and does not disturb dance, sulk, clipping, album art, controls or remote navigation.
 
-Real Shield behavior is authority. Tune motion parameters only unless physical evidence requires a wider change. Do not begin full Tegra/GPU puppetry or merge into unified until Ryan explicitly approves.
+Real Shield behavior is authority. Do not merge into unified or begin full Tegra/GPU puppetry until Ryan explicitly approves.
