@@ -23,7 +23,7 @@ def test_spoken_dev_menu_is_materialized_before_ha_and_chat_routing() -> None:
 def test_dev_menu_launch_is_deferred_until_after_speech_callback_unwinds() -> None:
     source = MAIN.read_text(encoding="utf-8")
     helper_start = source.index("private void openDevMenuSafely()")
-    helper_end = source.index("private TextView voiceSettingLabel", helper_start)
+    helper_end = source.index("private int dp(int value)", helper_start)
     helper = source[helper_start:helper_end]
 
     assert '"com.boop.alpha1.BoopDevMenuActivity"' in helper
