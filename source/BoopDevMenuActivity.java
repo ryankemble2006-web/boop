@@ -24,11 +24,11 @@ public final class BoopDevMenuActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        applyImmersiveUi();
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
         setContentView(root);
         showMenu();
+        root.post(this::applyImmersiveUi);
     }
 
     @Override
@@ -276,11 +276,10 @@ public final class BoopDevMenuActivity extends Activity {
     }
 
     private void applyImmersiveUi() {
-        getWindow().setStatusBarColor(Color.BLACK);
-        getWindow().setNavigationBarColor(Color.BLACK);
+        View decor = getWindow().getDecorView();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             getWindow().setDecorFitsSystemWindows(false);
-            WindowInsetsController controller = getWindow().getInsetsController();
+            WindowInsetsController controller = decor.getWindowInsetsController();
             if (controller != null) {
                 controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
                 controller.setSystemBarsBehavior(
@@ -288,7 +287,9 @@ public final class BoopDevMenuActivity extends Activity {
             }
             return;
         }
-        getWindow().getDecorView().setSystemUiVisibility(
+        getWindow().setStatusBarColor(Color.BLACK);
+        getWindow().setNavigationBarColor(Color.BLACK);
+        decor.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
