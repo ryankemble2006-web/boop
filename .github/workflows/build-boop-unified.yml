@@ -2,7 +2,7 @@ name: Build BOOP Unified APK
 
 on:
   push:
-    branches: [ "boop-unified", "boop-unified-notifications" ]
+    branches: [ "boop-unified", "boop-unified-notifications", "boop-v70-natural-voices", "boop-v85-natural-tablet" ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -72,11 +72,11 @@ jobs:
       - name: Materialize one APK
         run: bash scripts/materialize-unified.sh
 
-      - name: Test notification and developer-lab contracts
+      - name: Test notification, developer-lab and natural-voice contracts
         run: |
-          python -m pytest -q tests/test_unified_notification_manifest_contract.py tests/test_unified_v70_materialized_dev_menu_contract.py
+          python -m pytest -q tests/test_unified_notification_manifest_contract.py tests/test_unified_v70_materialized_dev_menu_contract.py tests/test_unified_v70_natural_voices_contract.py tests/test_unified_v85_natural_voice_install_flow.py
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-            --tests '*BoopNotification*' --tests '*BoopDevMenuIntentTest' --stacktrace
+            --tests '*BoopNotification*' --tests '*BoopDevMenuIntentTest' --tests '*BoopNaturalVoice*' --stacktrace
 
       - name: Check seamless wake-command handoff
         run: python -m pytest -q tests/test_unified_wake_handoff_contract.py
@@ -123,7 +123,7 @@ jobs:
             --tests '*BoopNotification*' --tests '*BoopDevMenuIntentTest' \
             --tests '*BoopWake*' --tests '*BoopSentencePiece*' --tests '*BoopCustomWake*' \
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
-            --tests '*BoopVoice*' --tests '*BoopCommandRouterTest' \
+            --tests '*BoopVoice*' --tests '*BoopNaturalVoice*' --tests '*BoopCommandRouterTest' \
             --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' \
             --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --stacktrace
 

@@ -135,6 +135,10 @@ python3 scripts/patch-unified-shield-presentation.py
 # are appended. This keeps the full Voice Settings column vertically reachable.
 python3 scripts/patch-unified-v70-regressions.py
 
+# Add the optional app-private natural voice layer while the v70 Voice Settings
+# content is already scrollable, before notification/dev-menu patches add more UI.
+python3 scripts/patch-unified-natural-voices.py
+
 # Add phone notification controls after all current Wall source patches.
 python3 scripts/patch-unified-notifications.py
 

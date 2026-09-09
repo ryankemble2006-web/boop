@@ -1,0 +1,27 @@
+name: Test BOOP v85 Natural Install Flow
+
+on:
+  push:
+    branches: [ "boop-v85-natural-tablet" ]
+    paths:
+      - 'source/BoopNaturalVoiceDownloader.java'
+      - 'source/BoopNaturalVoicePack.java'
+      - 'scripts/patch-unified-natural-voices.py'
+      - 'tests/test_unified_v85_natural_voice_install_flow.py'
+      - '.github/workflows/test-boop-v85-natural-install.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pytest
+      - name: Check v85 natural install flow
+        run: python -m pytest -q tests/test_unified_v85_natural_voice_install_flow.py

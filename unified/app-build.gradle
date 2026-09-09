@@ -20,8 +20,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 70
-        versionName "1.2.24-unified-dev-menu-doods"
+        versionCode 85
+        versionName "1.2.85-unified-natural-voices-tablet"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }
@@ -58,6 +58,7 @@ dependencies {
     implementation project(':shield-lib')
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation files('libs/sherpa-onnx-1.13.7.aar')
+    implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.20'
     implementation 'androidx.browser:browser:1.9.0'
     testImplementation 'junit:junit:4.13.2'
