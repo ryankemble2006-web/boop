@@ -5,7 +5,7 @@ import android.view.View;
 
 final class BoopNotificationSwipeGesture {
     private static final float MIN_DISMISS_DISTANCE_DP = 72f;
-    private static final float MIN_HORIZONTAL_DOMINANCE = 1.5f;
+    private static final float MIN_DOMINANCE = 1.25f;
 
     private BoopNotificationSwipeGesture() { }
 
@@ -16,12 +16,12 @@ final class BoopNotificationSwipeGesture {
             float endY,
             float densityScale) {
         float density = densityScale > 0f ? densityScale : 1f;
-        float dx = endX - startX;
-        float dy = endY - startY;
-        float horizontal = Math.abs(dx);
-        float vertical = Math.abs(dy);
-        return horizontal / density >= MIN_DISMISS_DISTANCE_DP
-                && horizontal >= vertical * MIN_HORIZONTAL_DOMINANCE;
+        float dx = Math.abs(endX - startX);
+        float dy = Math.abs(endY - startY);
+        float dominant = Math.max(dx, dy);
+        float perpendicular = Math.min(dx, dy);
+        return dominant / density >= MIN_DISMISS_DISTANCE_DP
+                && dominant > perpendicular * MIN_DOMINANCE;
     }
 
     static void attach(View view, Runnable onDismiss) {
