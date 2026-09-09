@@ -1,23 +1,15 @@
 package com.boop.alpha1;
 
-import android.content.Context;
-import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Gravity;
-import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
+import android.widget.Toast;
 
 final class BoopNotificationInPlaceController implements BoopNotificationHost {
     private final FrameLayout parent;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable timeoutRunnable;
-    private View currentView;
+    private BoopNotificationPuppetView currentView;
 
     BoopNotificationInPlaceController(FrameLayout parent) {
         if (parent == null) throw new IllegalArgumentException("parent required");
@@ -27,12 +19,21 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
 
     @Override
     public void show(BoopNotificationPresentation presentation, long timeoutMs) {
-        render(presentation, timeoutMs);
+        renderNew(presentation, timeoutMs);
     }
 
     @Override
     public void update(BoopNotificationPresentation presentation, long timeoutMs) {
-        render(presentation, timeoutMs);
+        if (presentation == null || presentation.cards().isEmpty()) {
+            hide();
+            return;
+        }
+        if (currentView == null) {
+            renderNew(presentation, timeoutMs);
+            return;
+        }
+        currentView.updatePresentation(presentation);
+        resetTimeout(timeoutMs);
     }
 
     @Override
@@ -44,14 +45,59 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
         }
     }
 
-    private void render(BoopNotificationPresentation presentation, long timeoutMs) {
+    private void renderNew(BoopNotificationPresentation presentation, long timeoutMs) {
         hide();
         if (presentation == null || presentation.cards().isEmpty()) return;
-        currentView = createPlainPresentationView(parent.getContext(), presentation);
-        BoopNotificationSwipeGesture.attach(currentView, this::dismissPresentation);
+        currentView = new BoopNotificationPuppetView(
+                parent.getContext(),
+                presentation,
+                new BoopNotificationPuppetView.Callback() {
+                    @Override
+                    public void onOpen(String notificationKey) {
+                        openSingle(notificationKey);
+                    }
+
+                    @Override
+                    public void onOpenBundle() {
+                        openBundle();
+                    }
+
+                    @Override
+                    public void onDismiss() {
+                        dismissPresentation();
+                    }
+                });
         parent.addView(currentView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
+        resetTimeout(timeoutMs);
+    }
+
+    private void openSingle(String notificationKey) {
+        try {
+            BoopNotificationTapLauncher.Result result = BoopNotificationRuntime
+                    .get(parent.getContext())
+                    .openNotification(parent.getContext(), notificationKey);
+            if (result == BoopNotificationTapLauncher.Result.OPENED) return;
+        } catch (RuntimeException ignored) {
+            // Fall through to the non-destructive user message.
+        }
+        Toast.makeText(parent.getContext(), "Can't open that right now.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void openBundle() {
+        try {
+            if (BoopNotificationRuntime.get(parent.getContext()).openInbox(parent.getContext())) {
+                return;
+            }
+        } catch (RuntimeException ignored) {
+            // Fall through to the non-destructive user message.
+        }
+        Toast.makeText(parent.getContext(), "Can't open that right now.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void resetTimeout(long timeoutMs) {
+        handler.removeCallbacks(timeoutRunnable);
         handler.postDelayed(timeoutRunnable, Math.max(1L, timeoutMs));
     }
 
@@ -62,88 +108,5 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
         } catch (RuntimeException ignored) {
             // Android's source notification remains authoritative.
         }
-    }
-
-    static View createPlainPresentationView(
-            Context context,
-            BoopNotificationPresentation presentation) {
-        FrameLayout root = new FrameLayout(context);
-        root.setBackgroundColor(Color.argb(180, 0, 0, 0));
-        root.setClickable(true);
-        root.setFocusable(true);
-        root.setContentDescription("BOOP notification");
-
-        LinearLayout card = new LinearLayout(context);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setGravity(Gravity.CENTER);
-        int pad = dp(context, 24);
-        card.setPadding(pad, pad, pad, pad);
-        card.setBackgroundColor(Color.rgb(32, 32, 32));
-
-        int count = presentation == null ? 0 : presentation.cards().size();
-        TextView heading = text(context,
-                count == 1 ? appLabel(presentation) : count + " notifications",
-                24f,
-                true);
-        card.addView(heading, wrap());
-
-        if (presentation != null && !presentation.locked()) {
-            if (count == 1) {
-                BoopNotificationEnvelope item = presentation.cards().get(0);
-                if (item.title() != null && !item.title().trim().isEmpty()) {
-                    card.addView(text(context, item.title(), 19f, true), wrap());
-                }
-                if (item.text() != null && !item.text().trim().isEmpty()) {
-                    card.addView(text(context, item.text(), 17f, false), wrap());
-                }
-            } else {
-                Set<String> apps = new LinkedHashSet<>();
-                for (BoopNotificationEnvelope item : presentation.cards()) {
-                    if (item != null && !item.appLabel().trim().isEmpty()) {
-                        apps.add(item.appLabel());
-                    }
-                }
-                if (!apps.isEmpty()) {
-                    card.addView(text(context, String.join(" • ", apps), 17f, false), wrap());
-                }
-            }
-        }
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER);
-        int margin = dp(context, 32);
-        params.setMargins(margin, margin, margin, margin);
-        root.addView(card, params);
-        return root;
-    }
-
-    private static String appLabel(BoopNotificationPresentation presentation) {
-        if (presentation == null || presentation.cards().isEmpty()) return "Notification";
-        String label = presentation.cards().get(0).appLabel();
-        return label == null || label.trim().isEmpty() ? "Notification" : label;
-    }
-
-    private static TextView text(Context context, String value, float sizeSp, boolean bold) {
-        TextView view = new TextView(context);
-        view.setText(value);
-        view.setTextColor(Color.WHITE);
-        view.setTextSize(sizeSp);
-        view.setGravity(Gravity.CENTER);
-        if (bold) view.setTypeface(view.getTypeface(), android.graphics.Typeface.BOLD);
-        return view;
-    }
-
-    private static LinearLayout.LayoutParams wrap() {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 0, 0, 8);
-        return params;
-    }
-
-    private static int dp(Context context, int value) {
-        return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
 }
