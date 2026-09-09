@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +24,7 @@ public final class NowPlayingPuppetLegacyLidOcclusionTest {
         assertTrue("legacy headphones raster must remain intact behind the mask", Files.isRegularFile(legacy));
         assertFalse("the unmasked direct headphones resource must not remain selectable", Files.exists(oldDirect));
 
-        String xml = Files.readString(wrapper);
+        String xml = new String(Files.readAllBytes(wrapper), StandardCharsets.UTF_8);
         assertTrue(xml.contains("@drawable/boop_headphones_legacy"));
         assertTrue("left legacy lid mask must stay pinned", xml.contains("M440,480"));
         assertTrue("right legacy lid mask must stay pinned", xml.contains("M800,527.5"));
