@@ -117,7 +117,7 @@ def test_speak_remains_single_lifecycle_entry_and_natural_failure_falls_back_sam
     assert "UtteranceProgressListener" in android
 
 
-def test_natural_backend_uses_local_sherpa_and_existing_pitch_rate_controls() -> None:
+def test_natural_backend_uses_local_sherpa_and_safe_android_audio_controls() -> None:
     source = NATURAL_BACKEND.read_text(encoding="utf-8")
     assert "OfflineTtsKokoroModelConfig" in source
     assert "OfflineTtsModelConfig" in source
@@ -125,8 +125,8 @@ def test_natural_backend_uses_local_sherpa_and_existing_pitch_rate_controls() ->
     assert "setSid" in source
     assert "setSpeed" in source
     assert "AudioTrack" in source
-    assert "PlaybackParams" in source
-    assert "setPitch" in source
+    assert "AudioFormat.ENCODING_PCM_16BIT" in source
+    assert "PlaybackParams" not in source
     assert "lexicon-gb-en.txt" in source
 
 
