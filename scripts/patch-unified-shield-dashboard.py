@@ -33,9 +33,9 @@ if patched == 0:
     raise SystemExit('No Shield dashboard source was available to patch')
 runpy.run_path('scripts/patch-unified-room-controls.py', run_name='__main__')
 print(f'Shield room-scoped dashboard integration patched in {patched} tree(s)')
-# Do not re-run patch-unified-iris-cache.py here. materialize-android.sh applies
-# that legacy bitmap-era baseline before the procedural-eye stack. Reapplying it
-# from this late Shield dashboard pass would overwrite the procedural hue setter.
+# The legacy bitmap-era hue cache belongs only to the early Wall baseline pass.
+# Never reapply it from this late Shield dashboard pass because that would
+# overwrite the procedural-eye hue setter installed later in materialization.
 settings = Path('boop-build/BOOP-Alpha1/shield-lib/src/main/java/com/boop/shieldoverlay/TvSettingsView.java')
 if not settings.exists():
     runpy.run_path('scripts/patch-unified-wake-arm.py', run_name='__main__')
