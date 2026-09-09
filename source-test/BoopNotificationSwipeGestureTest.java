@@ -13,6 +13,16 @@ public class BoopNotificationSwipeGestureTest {
     }
 
     @Test
+    public void verticalSwipeAlsoDismisses() {
+        assertTrue(BoopNotificationSwipeGesture.isDismiss(10f, 10f, 18f, 190f, 2f));
+    }
+
+    @Test
+    public void approvedDominanceRatioAllowsClearlyDominantTravel() {
+        assertTrue(BoopNotificationSwipeGesture.isDismiss(0f, 0f, 100f, 70f, 1f));
+    }
+
+    @Test
     public void diagonalDriftDoesNotCountAsDismiss() {
         assertFalse(BoopNotificationSwipeGesture.isDismiss(0f, 0f, 180f, 150f, 2f));
     }
