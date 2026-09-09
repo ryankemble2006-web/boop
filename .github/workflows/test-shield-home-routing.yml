@@ -6,6 +6,7 @@ on:
     paths:
       - 'unified/ShieldEntryRoute*.java'
       - 'unified/UnifiedEntryActivity.java'
+      - 'unified/app-build.gradle'
       - 'scripts/materialize-unified.sh'
       - '.github/workflows/test-shield-home-routing.yml'
   workflow_dispatch:
@@ -38,7 +39,7 @@ jobs:
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
-          log-accepted-android-sdk-licenses: false
+        log-accepted-android-sdk-licenses: false
 
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
