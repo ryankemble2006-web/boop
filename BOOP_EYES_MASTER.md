@@ -1,33 +1,46 @@
 # BOOP permanent eye master
 
-Approved by Ryan on 2026-09-08. This decision supersedes the older eye-source requirement only for this explicitly approved replacement.
+Approved by Ryan on 2026-09-08 and re-confirmed on 2026-09-09 as the perfect default. This exact image is BOOP's permanent default across Wall/phone, tablet, Shield, Launcher references and animation work.
 
 ## Locked appearance
 
-The final paired-eye PNG with black eyelids and no blue/cyan eyelid accent lines is BOOP's permanent default. Ryan explicitly approved this exact result, said all animations must take this form, and then requested replacement on both phone/Wall and Shield. Future accessories are separate additions to this base. Do not regenerate the character for poses, restore the blue eyelid lines, or substitute an earlier generated image.
+The final paired-eye PNG with black eyelids and no blue/cyan eyelid accent lines is BOOP's permanent default. Preserve the approved shapes, proportions, spacing, pupils, highlights, shading and supplied alpha. The blue/cyan iris remains the default.
 
-Preserve the approved shapes, proportions, spacing, pupils, highlights, shading and supplied alpha. The blue/cyan iris remains the default. Preserve the already accepted user-selectable iris-only colour behaviour without tinting the whites, pupils, highlights or eyelids. Existing headphones, five-digit yellow hands and puppetry are not being redesigned in this replacement pass.
+DO NOT edit, flatten, recompress, regenerate, recreate, crop, resize on disk, recolor/recolour the master, threshold or flood-fill it, reconstruct its transparency, or substitute a close-enough version. Do not feed it through the rejected brightness/row-span transparency converter. Runtime code may scale, position, blink, mask or animate this source non-destructively. User-selectable eye colour may affect the iris at runtime, but must never rewrite the master bytes or tint the sclera, pupil, highlights or eyelids.
+
+Existing headphones, five-digit yellow hands and puppetry are separate accessories and are not part of this master.
 
 ## Exact file identity
 
-- Chat/source filename: `glossy_cartoon_eyes_with_black_eyelids.png`.
+- Original approved filename: `glossy_cartoon_eyes_with_black_eyelids.png`.
+- Canonical repository filename: `boopApprovedEyes.png`.
+- Canonical path: `unified/assets/boop-eyes/boopApprovedEyes.png`.
 - Dimensions: 1774 x 887.
-- PNG mode: RGBA; decoded alpha range 0..255.
-- File size: 936803 bytes.
+- PNG mode: RGBA; supplied alpha preserved.
+- File size: 936,803 bytes.
 - SHA-256: `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`.
+- Git blob: `f95375356b20297fa2b27ab8887f65d4cce5c7fd`.
 
-The bytes and format above were checked locally. Visual approval came from Ryan, not an automated appearance test. An RGBA header alone is not a silhouette check. Do not apply the rejected brightness/row-span transparency converter to this master; retain its existing alpha unchanged.
+Exact byte-identical reference copies are intentionally kept beside current app/art lineages. Each copy must retain the same Git blob and checksum rather than being exported or re-saved:
+
+- root `boopApprovedEyes.png`;
+- `unified/assets/boop-eyes/boopApprovedEyes.png`;
+- `shield-overlay/reference-assets/boop-eyes/boopApprovedEyes.png`;
+- `launcher/reference-assets/boop-eyes/boopApprovedEyes.png`;
+- animation-lab shared-assets copy on the current animation branch.
+
+Each reference folder carries a `DO_NOT_TOUCH_BOOP_EYES.md` and `.sha256` receipt. These are source/reference locks. A copy's presence does not by itself prove that a runtime renderer is presenting the master unchanged.
+
+## Current runtime boundary
+
+The master binary is present and locked in GitHub. Current renderer-uniformity work is separate. Some existing Wall/tablet materialization stages can procedurally redraw the iris at runtime, while the Shield presentation path is intended to consume the approved bitmap directly. Do not confuse source-image preservation with completion of the renderer-uniformity repair.
+
+The Shield/Wall uniform-eye mismatch reported on 2026-09-09 remains a separate implementation task. This asset-lock pass changes no renderer, app behavior, package, signer, permissions or build output.
 
 ## Blink correction
 
-Ryan subsequently reported that he had turned blink off himself and that it is working. The earlier missing-blink report is no longer an unresolved defect. Preserve the current blink code, timing, curve, delay and system-motion/power safeguards. Do not change system animation settings or rewrite blink while replacing the bitmap.
+Ryan reported that blink had been turned off by him and is working. Preserve the working blink implementation, timing, curve, delay and system-motion/power safeguards. Do not change system animation settings or rewrite blink merely because the master is being shared.
 
-## Integration state
+## Replacement rule
 
-APPROVED MASTER, NOT YET INTEGRATED. The exact PNG is present in the chat sandbox and Ryan has downloaded a backup. This documentation commit does not contain the PNG binary, change either renderer or produce an APK.
-
-The exposed GitHub actions accept text/API content but have no mounted local-file upload argument, and direct GitHub networking from this chat container failed. A Canva asset upload succeeded as a transfer attempt, but returned only metadata/a thumbnail; that is not the original file in GitHub and must not be used as the app texture.
-
-Next transfer: Ryan may upload the saved PNG, with its existing filename, to the root of `boop-unified`. Fetch live HEAD again, verify the exact bytes/hash, and retain a canonical copy under `unified/assets/boop-eyes/` before wiring phone and Shield. Adapt source rectangles to this new image rather than reusing the old portrait-atlas coordinates or guessing alpha from RGB. Preserve the approved character geometry when framing either device.
-
-No image regeneration, new accessories, unrelated repairs, new signer/package, device installation, permission change, or visual/device CI acceptance is authorised by this asset replacement alone.
+Replace this master only after Ryan explicitly approves a new permanent default and its exact dimensions, file size, SHA-256 and Git blob are recorded. Until then, this image is the source of truth.
