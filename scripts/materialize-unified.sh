@@ -11,6 +11,8 @@ python3 scripts/patch-unified-seamless-wake-command.py
 python3 scripts/patch-unified-uncensored-speech.py
 python3 scripts/patch-unified-listening-eyes.py
 python3 scripts/patch-unified-reading-eyes.py
+python3 scripts/patch-v64-procedural-sclera.py
+python3 scripts/patch-v65-feathered-sclera.py
 python3 scripts/patch-unified-shield-dashboard.py
 ROOT=boop-build/BOOP-Alpha1
 APP="$ROOT/app"
