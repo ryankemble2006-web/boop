@@ -1,6 +1,6 @@
 # SHIELD TURBO durable decisions
 
-Updated 2026-09-08. `SESSION_HANDOFF.md` owns exact receipts; `STATUS.md` is concise. Fresh physical Shield evidence beats CI and stale notes.
+Updated 2026-09-10. `SESSION_HANDOFF.md` owns exact receipts; `STATUS.md` is concise. Fresh physical Shield evidence beats CI and stale notes.
 
 ## Identity and continuity
 
@@ -11,7 +11,11 @@ Before edits, read BOOP startup docs plus this branch handoff/status/memory, fet
 ## Existing physical locks
 
 - v0.5.8 proves CLEAN START itself is sub-second on Ryan's Shield: `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
-- Preserve the accepted static CLEAN START notice, bounded 30/60/120s max-three boot scheduler, trusted loopback ADB/private key, target exclusions, current-app skip, HARD BLOCK separation and StartupLedger undo.
+- Preserve the bounded 30/60/120s max-three boot scheduler, trusted loopback ADB/private key, target exclusions, current-app skip, HARD BLOCK separation and StartupLedger undo.
+- **CLEAN START boot execution is now silent. Do not reintroduce a boot banner, overlay, popup, or presentation wait.**
+- Explain startup behaviour once on the first real app launch: silent CLEAN START or persistent TURBO startup work may cause a brief apparent hang while saved startup work finishes.
+- v0.5.7's physically visible static CLEAN START notice is historical evidence only and is superseded by the v0.6.1 UX decision.
+- The thermal watchdog's Android-required foreground-service notification association is separate from CLEAN START UX. Do not remove it unless the watchdog is safely redesigned; thermal fallback must not be weakened merely to eliminate notification plumbing.
 - Keep brightness 10-100%, APPS direct launch, labels, Cancel/Back and remote-first behavior unless Ryan explicitly changes those features.
 - v0.5.10 compact diagnostic sheets are physically accepted: full-screen black, 9sp monospace, tight spacing, screenshot-friendly, Back closes.
 - No uninstall, `pm clear`, cache/login/data deletion, broad kill-all, root/device-owner/bootloader work, third-party re-signing or fake RAM scores.
@@ -59,14 +63,29 @@ Ryan physically verified the complete normal operating loop on the real Shield:
 3. Reboot while TURBO is armed. Without manually enabling again, the panel returns `TURBO MODE: ON`, `Watchdog: ON`, and `Last change: TURBO retained after reboot`.
 4. Turn TURBO OFF. NVIDIA Processor Mode returns to Optimized.
 
-Therefore persistent TURBO v0.6.0 is the physical rollback checkpoint for:
+Therefore persistent TURBO v0.6.0 is the physical rollback checkpoint for normal enable to verified Max, persisted desired state across reboot, watchdog startup, boot thermal pre-check, trusted local ADB, and manual verified NORMAL restore.
 
-- normal enable to verified Max;
-- persisted desired state across reboot;
-- boot receiver and foreground watchdog startup;
-- thermal pre-check before boot retain/reapply;
-- trusted local ADB use during boot path;
-- manual verified restore to original Optimized NORMAL state.
+## v0.6.1 silent-startup UX candidate
+
+User decision 2026-09-10: replace CLEAN START boot presentation with one first-real-launch explanation, then remain silent during boot cleanup.
+
+Machine-verified source: `b030cb44791aa75f8d3e11c50716acff1e1c48c3`.
+Version: v0.6.1 / code 22.
+Run `34418790720`, job `102689465660`: success.
+
+Durable implementation:
+
+- `CleanStartIndicator.kt` is deleted;
+- CLEAN START no longer constructs/shows/waits for/hides a boot presentation surface;
+- first real `MainActivity` launch shows `SILENT STARTUP` once using preference `first_install_startup_note_shown`;
+- text warns that automatic CLEAN START or persistent TURBO can briefly make startup appear to hang while saved work finishes;
+- old `last_indicator_diagnostic` presentation evidence is retired on app start;
+- the old timing schema remains but `noticeMs` is recorded as `0`;
+- thermal-watchdog foreground-service notification plumbing stays because it belongs to the safety service, not CLEAN START presentation.
+
+Verification receipt: 101 JVM tests + 56 source contracts passed, Android lint/build/signing/archive/emulator smoke passed, APK SHA-256 `b9a94e46c90657bfcbf66d68fe36a25327193189c79ed92fbb9f6b7d45f10f9b`, signed artifact ID `10130188137`, test artifact ID `10130218493`.
+
+v0.6.1 is machine verified only until Ryan physically accepts it on the Shield. v0.6.0 remains the physical rollback checkpoint.
 
 ## Persistent TURBO safety rules
 
@@ -91,6 +110,10 @@ SEVERE-or-higher auto-NORMAL is machine-tested but has NOT been physically valid
 
 v0.5.12 exposed `Unexpected ADB stream`. Root cause was stale already-in-flight traffic from older closed streams in the single-connection ADB client. Commit `1b632e09706652d2f2802c6ca4bb28963d9e7685` allows only stale `OKAY`, `WRTE`, or `CLSE` packets addressed to older positive local stream IDs to be ignored. Current, future and invalid stream IDs still fail closed. Do not broaden this exception without a reproduced protocol case.
 
-## Next safe decision
+## Future performance expansion
 
-Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the accepted rollback point. Any future performance expansion should add one independently evidenced stock control at a time with save, write, read-back, restore and thermal-safe semantics.
+There is no accepted above-stock clock path. Future TURBO work should look for **additional stock-envelope controls only**, read-only first. Add at most one independently evidenced actuator at a time, and require save, write, read-back, restore and thermal-safe semantics before it can join persistent TURBO.
+
+Likely read-only discovery targets include CPU online/idle state, CPU/GPU governor and frequency ceilings, memory/EMC state, and any genuinely stock fan/thermal control exposed by current Shield firmware. Presence on generic Tegra Linux does not prove Shield TV writability.
+
+Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the physical rollback point until a newer build is physically accepted.

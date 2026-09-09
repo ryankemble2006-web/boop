@@ -1,10 +1,10 @@
 # SHIELD TURBO status
 
-Updated 2026-09-08. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
+Updated 2026-09-10. Branch `shield-turbo-v01`; package `com.boop.shieldturbo`.
 
 ## Accepted physical state
 
-- v0.5.7 CLEAN START notice visible.
+- v0.5.7 historically proved the old static CLEAN START notice could be displayed. That presentation is superseded by v0.6.1 and is no longer the desired behaviour.
 - v0.5.8 CLEAN START job: `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
 - v0.5.10 compact 9sp ANALYSE report physically accepted.
 - v0.5.11 manual NVIDIA Processor Mode mapping: Optimized `1/0/0/0/15` to Max `0/5/5/5/20`.
@@ -25,29 +25,40 @@ Ryan physically verified the full normal operating loop on the real Shield:
 
 1. Starting from NVIDIA Processor Mode Optimized, pressing `TURBO MODE: OFF` enabled TURBO and the Shield settings changed to Max performance.
 2. The TURBO panel reported `TURBO MODE: ON`, `Processor mode: Max performance verified`, `Thermal state: NONE`, and `Watchdog: ON`.
-3. After reboot, without manually enabling TURBO again, the panel still reported TURBO ON and `Last change: TURBO retained after reboot`; therefore the saved state, boot receiver, foreground watchdog service, thermal pre-check, trusted local ADB path, and boot retain/reapply path all executed successfully on hardware.
+3. After reboot, without manually enabling TURBO again, the panel still reported TURBO ON and `Last change: TURBO retained after reboot`; therefore the saved state, boot receiver, foreground watchdog service, thermal pre-check, trusted local ADB path, and retain/reapply path all executed successfully on hardware.
 4. Pressing TURBO OFF restored NVIDIA Processor Mode to Optimized on the real Shield.
 
 This is physical acceptance of persistent TURBO's normal enable, reboot persistence/watchdog startup, and manual NORMAL restore path.
 
 The only writable performance lever remains `system:nv_power_mode`. No root, voltage changes, above-stock clocks, direct vendor-property writes, thermal bypass, arbitrary sysfs tuning, kernel, boot-image, or bootloader work is present.
 
-## Machine verification for accepted build
+## v0.6.1 silent-startup candidate
 
-Final release run `34280026842`, job `102242293277`, conclusion success:
+**v0.6.1 / code 22**, source `b030cb44791aa75f8d3e11c50716acff1e1c48c3`.
+
+User-requested behaviour:
+
+- automatic CLEAN START is silent at boot;
+- the old CLEAN START banner/overlay/popup implementation is deleted;
+- the user gets a one-time `SILENT STARTUP` explanation on the first real app launch;
+- the explanation says silent CLEAN START or persistent TURBO startup work can cause a brief apparent startup hang;
+- the mandatory Android foreground-service notification plumbing for the separate thermal watchdog remains intact for safety.
+
+Machine verification run `34418790720`, job `102689465660`, conclusion success:
 
 - 101 JVM tests passed;
-- 62 source/API/security contracts passed;
+- 56 source safety contracts passed;
 - Android lint completed successfully with warnings only;
-- package `com.boop.shieldturbo`, versionCode 21, versionName 0.6.0, Leanback launchable;
+- release build/signing/archive passed;
+- package `com.boop.shieldturbo`, versionCode 22, versionName 0.6.1;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
 - APK ZIP integrity passed;
-- APK SHA-256 `db0ca06c03a51e7985ca11c479b88becfd1471ca8ad5a7218a0710f7348deb43`;
-- signed artifact ID `10077342574`, artifact ZIP SHA-256 `0f63b6ecc36df91731d1f3ab91041142fa1f58ae740a1d2f4cc949f73b88aced`;
-- test artifact ID `10077384107`, ZIP SHA-256 `3aa92aad10e4bcd5f0906cfa54fe4fcf38d7cd2699eb87fcecb0bbace539ea4f`;
-- emulator install passed, cold launch `1541ms`, warm launch `387ms`, process remained alive, no package fatal exception.
+- APK SHA-256 `b9a94e46c90657bfcbf66d68fe36a25327193189c79ed92fbb9f6b7d45f10f9b`;
+- signed artifact ID `10130188137`, artifact ZIP SHA-256 `5dde6432cfbd0f285d6e334a9cf99833e3b4cad7f68e6d5fea6bbce955f9cc30`;
+- test artifact ID `10130218493`, ZIP SHA-256 `abcc2cb5caee391ef513e68d7276aa5e240492664711908d2d2000ca2b147166`;
+- emulator API 30 install passed, cold launch `1151ms`, process remained alive with PID `2151`, no package fatal exception.
 
-A post-build lifecycle regression also proved and fixed that leaving the TURBO UI must not cancel an in-flight performance transaction. RED commit `5603246265d30993177a83be649318d25bfc4887`; GREEN source `87feccaeba1c2c5fa2044aeeb572fad947aa985c`.
+v0.6.1 is **machine verified but not yet physically accepted** on the real Shield.
 
 ## Thermal fallback boundary
 
@@ -55,6 +66,8 @@ The Android thermal watchdog logic is machine-tested to restore NORMAL at `SEVER
 
 ## Current state
 
-Persistent SHIELD TURBO v0.6.0 is the current physically accepted checkpoint for normal operation. Preserve it as the rollback point before any new performance work.
+- v0.6.0 / code 21 remains the current physically accepted rollback checkpoint for TURBO performance behaviour.
+- v0.6.1 / code 22 is the newest machine-verified candidate and changes startup presentation only: one first-launch explanation, then silent CLEAN START boot execution.
+- Future performance work must stay inside the stock envelope unless a completely new design is explicitly approved.
 
-`main` remains separate at `4b0ab90abbad9c48dabd25b6a9ea002cdad18375`.
+At the start of this session, live `main` was `5179f95961c9c43b4939dd1ea4349a32eb7f99d1`.

@@ -1,13 +1,13 @@
 # SHIELD TURBO handoff
 
-Updated 2026-09-08. Owning branch: `shield-turbo-v01`. Independent package: `com.boop.shieldturbo`.
+Updated 2026-09-10. Owning branch: `shield-turbo-v01`. Independent package: `com.boop.shieldturbo`.
 
 ## Current physical evidence
 
-CLEAN START remains physically accepted on Ryan's real Shield.
+CLEAN START and persistent stock TURBO remain physically accepted on Ryan's real Shield through v0.6.0.
 
-- v0.5.7 proved the static full-screen CLEAN START notice is physically visible.
-- v0.5.8 measured the accepted cleanup job at `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
+- v0.5.7 historically proved the old static CLEAN START notice could be made physically visible. **That presentation design is superseded by v0.6.1 and must not be restored.**
+- v0.5.8 measured CLEAN START at `notice=62ms • adbReady=113ms • resumed=56ms • stops=332ms • slowest=com.fork2.app:268ms • total=573ms`.
 - v0.5.10 compact ANALYSE report is physically accepted as a readable one-screen 9sp monospace evidence sheet.
 - v0.5.11 Processor Mode Trace physically mapped NVIDIA Processor Mode Optimized to Max performance:
   - `system:nv_power_mode`: `1 -> 0`;
@@ -28,7 +28,7 @@ Ryan then physically ran the v0.5.13 one-shot actuator proof on the real Shield.
 - final Optimized verified: `mode=1 cpu=0 gpu=0 frt=0 min=15`;
 - `DIRECT VENDOR WRITES • NONE`.
 
-Durable result: `system:nv_power_mode` is a physically accepted stock performance actuator. Mapping is `1=Optimized`, `0=Max performance`. Vendor boost properties remain evidence only.
+Durable result: `system:nv_power_mode` is the physically accepted stock performance actuator. Mapping is `1=Optimized`, `0=Max performance`. Vendor boost properties remain evidence only.
 
 ## Persistent TURBO v1 implementation
 
@@ -96,7 +96,46 @@ Physical acceptance on the real Shield:
 3. Ryan rebooted the Shield with TURBO armed. Without pressing the TURBO button again, the app returned showing TURBO ON and `Last change: TURBO retained after reboot`. This proves the persisted desired state, boot receiver, foreground watchdog service, thermal pre-check, trusted local ADB path, and retain/reapply flow executed successfully on hardware.
 4. Ryan then turned TURBO OFF and confirmed NVIDIA Processor Mode returned to Optimized.
 
-**Persistent TURBO v0.6.0 is physically accepted for its normal enable, reboot persistence/watchdog startup, and manual NORMAL restore path.**
+**Persistent TURBO v0.6.0 remains the physical rollback checkpoint for normal enable, reboot persistence/watchdog startup, and manual NORMAL restore.**
+
+## v0.6.1 silent-startup UX candidate
+
+User decision on 2026-09-10: CLEAN START should do its boot work silently. Do not show a boot banner, overlay, popup, or CLEAN START presentation attempt. Instead, explain the behaviour once on the first real app launch so the user knows that saved startup work is silent and may cause a brief apparent hang during startup.
+
+Implementation source: `b030cb44791aa75f8d3e11c50716acff1e1c48c3`.
+Version: **v0.6.1 / versionCode 22**.
+
+Implementation details:
+
+- deleted `CleanStartIndicator.kt` completely;
+- `CleanStartJobService` no longer constructs, shows, awaits, diagnoses, or hides a presentation surface;
+- CLEAN START still uses the accepted bounded 30/60/120-second max-three scheduler, trusted loopback ADB path, target safety checks, current-app skip, stop-and-verify logic, failure detail, and timing evidence;
+- the old timing field `noticeMs` remains for compatibility but is now always recorded as `0`;
+- added `TurboApplication`, which shows `SILENT STARTUP` once when the real `MainActivity` first resumes;
+- first-run text says SHIELD TURBO starts silently after reboot and that automatic CLEAN START or persistent TURBO can make the Shield briefly seem to hang while saved startup work finishes;
+- the new preference key is `first_install_startup_note_shown`;
+- stale `last_indicator_diagnostic` presentation evidence from older builds is cleared on app process start;
+- the foreground thermal watchdog remains separate from CLEAN START. Its Android-required foreground-service notification plumbing is retained because deleting that plumbing would weaken the accepted always-on thermal fallback.
+
+TDD / CI receipt:
+
+- RED contract commit `17129ab4f5a3241aa6792ec91df93c77b0bae550` intentionally failed run `34418479455`, job `102688517315`: all 101 existing JVM tests passed while the three new silent-startup contracts failed against the old implementation;
+- GREEN source commit `b030cb44791aa75f8d3e11c50716acff1e1c48c3`;
+- run `34418790720`, job `102689465660`, conclusion success;
+- 101 JVM tests passed with 0 failures/errors/skips;
+- 56 source safety contracts passed;
+- Android lint completed successfully with warnings only;
+- signed release build passed for package `com.boop.shieldturbo`, versionCode 22, versionName 0.6.1;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
+- APK ZIP integrity passed;
+- APK SHA-256 `b9a94e46c90657bfcbf66d68fe36a25327193189c79ed92fbb9f6b7d45f10f9b`;
+- signed artifact `SHIELD-TURBO`: ID `10130188137`, artifact ZIP SHA-256 `5dde6432cfbd0f285d6e334a9cf99833e3b4cad7f68e6d5fea6bbce955f9cc30`;
+- test artifact `SHIELD-TURBO-TESTS`: ID `10130218493`, artifact ZIP SHA-256 `abcc2cb5caee391ef513e68d7276aa5e240492664711908d2d2000ca2b147166`;
+- emulator API 30 install succeeded;
+- cold launch `1151ms`, process remained alive with PID `2151`, second launch remained alive, and no package `FATAL EXCEPTION` was found;
+- no screenshot, golden-image, UI hierarchy, or visual acceptance automation ran.
+
+**v0.6.1 is machine verified only. It has not yet replaced v0.6.0 as the physically accepted rollback checkpoint.**
 
 ## Thermal fallback boundary
 
@@ -104,12 +143,23 @@ The SEVERE-or-higher watchdog fallback remains machine-tested, not physically he
 
 ## Existing locks
 
-Preserve the physically accepted CLEAN START current-user force-stop plus verification core, bounded opt-in 30/60/120s max-three boot scheduler, trusted loopback ADB/private key, static notice host, brightness 10-100%, APPS direct launch/remote behavior, compact diagnostic sheet, no-data-deletion rules, and permanent signer.
+Preserve the physically accepted CLEAN START force-stop plus verification core, bounded opt-in 30/60/120s max-three boot scheduler, trusted loopback ADB/private key, brightness 10-100%, APPS direct launch/remote behavior, compact diagnostic sheet, no-data-deletion rules, and permanent signer.
+
+CLEAN START boot execution is now intentionally silent. Do not reintroduce the old banner/overlay/popup. Keep the one-time first-real-launch explanation instead. Do not confuse the Android-required foreground notification association for the thermal watchdog with CLEAN START presentation.
 
 Never direct-write `persist.vendor.sys.phs.cpufreq.boost`, `gpufreq.boost`, `frt.boost`, or `frt.min`. Never add root, voltage, thermal-disable, above-stock clocks, arbitrary sysfs performance writes, or bootloader/kernel changes without an entirely new approved design and physical evidence boundary.
 
 ## Next safe step
 
-Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the persistent TURBO rollback checkpoint. Any next performance expansion must preserve this exact accepted path and add one independently proven stock control at a time.
+Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the physical rollback checkpoint.
 
-`main` remains separate at `4b0ab90abbad9c48dabd25b6a9ea002cdad18375`.
+Physical acceptance for v0.6.1 should confirm only:
+
+1. the one-time `SILENT STARTUP` explanation appears on first real app launch;
+2. after reboot, CLEAN START performs no banner/overlay/popup attempt;
+3. any brief startup pause is acceptable;
+4. persistent TURBO still retains across reboot and restores NORMAL correctly.
+
+Any future performance expansion must preserve the v0.6.0 accepted performance path and add one independently proven stock control at a time.
+
+At the start of this session, live `main` was `5179f95961c9c43b4939dd1ea4349a32eb7f99d1`.
