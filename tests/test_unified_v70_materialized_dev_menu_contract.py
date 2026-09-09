@@ -4,6 +4,9 @@ from pathlib import Path
 MAIN = Path(
     "boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java"
 )
+DEV_INTENT = Path(
+    "boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopDevMenuIntent.java"
+)
 MATERIALIZER = Path("scripts/materialize-unified.sh")
 
 
@@ -14,6 +17,12 @@ def test_v70_scroll_repair_runs_before_later_unified_settings_patches() -> None:
     dev_menu = source.index("patch-unified-dev-menu.py")
 
     assert scroll < notifications < dev_menu
+
+
+def test_spoken_developer_menu_phrase_replaces_old_dev_menu_phrase() -> None:
+    source = DEV_INTENT.read_text(encoding="utf-8")
+    assert 'return "developer menu".equals(normalized);' in source
+    assert 'return "dev menu".equals(normalized);' not in source
 
 
 def test_spoken_developer_menu_is_materialized_before_ha_and_chat_routing() -> None:
@@ -41,7 +50,7 @@ def test_developer_menu_stays_in_main_activity_instead_of_activity_hop() -> None
     assert "developerMenuOverlay" in block
 
 
-def test_voice_settings_is_vertically_scrollable_to_dev_menu_and_done() -> None:
+def test_voice_settings_is_vertically_scrollable_to_developer_menu_and_done() -> None:
     source = MAIN.read_text(encoding="utf-8")
 
     assert "import android.widget.ScrollView;" in source
@@ -51,3 +60,4 @@ def test_voice_settings_is_vertically_scrollable_to_dev_menu_and_done() -> None:
     assert "voiceSettingsScroll.addView(voiceSettingsOverlay" in source
     assert "interactionSurface.addView(voiceSettingsScroll" in source
     assert "interactionSurface.removeView(voiceSettingsScroll);" in source
+    assert 'devMenu.setText("Developer menu");' in source
