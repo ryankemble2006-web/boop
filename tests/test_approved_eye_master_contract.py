@@ -82,3 +82,8 @@ def test_eye_colour_control_drives_procedural_iris_state_only():
     assert "setColorFilter(new" not in setter
     assert "android.graphics.Color.HSVToColor(new float[] {" in colourer
     assert "proceduralIrisHueDegrees, saturation, value" in colourer
+
+
+def test_late_shield_dashboard_patch_cannot_restore_legacy_bitmap_hue_setter():
+    dashboard = Path("scripts/patch-unified-shield-dashboard.py").read_text(encoding="utf-8")
+    assert "patch-unified-iris-cache.py" not in dashboard
