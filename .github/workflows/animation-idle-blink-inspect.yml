@@ -35,16 +35,19 @@ jobs:
       - name: Inspect exact Shield artwork
         run: python animation-lab/idle-blink/tools/inspect_artifacts.py
 
-      - name: Commit text-only diagnostic report
+      - name: Commit diagnostic evidence
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add animation-lab/idle-blink/analysis/artifact-map.txt
+          git add \
+            animation-lab/idle-blink/analysis/artifact-map.txt \
+            animation-lab/idle-blink/analysis/left-eye-inspection.jpg \
+            animation-lab/idle-blink/analysis/right-eye-inspection.jpg
           if git diff --cached --quiet; then
-            echo "Artifact map unchanged."
+            echo "Artifact evidence unchanged."
             exit 0
           fi
-          git commit -m "chore(animation): record eyelid artifact map"
+          git commit -m "chore(animation): record eyelid artifact evidence"
           git push
