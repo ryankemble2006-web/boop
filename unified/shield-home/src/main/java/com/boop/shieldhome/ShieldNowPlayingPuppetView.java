@@ -4,12 +4,14 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -33,7 +35,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private static final int BAY_TOP_MARGIN_DP = 118;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final BlinkingPuppetImageView puppet;
+    private final LayeredPuppetView puppet;
     private final PowerManager powerManager;
     private final Random blinkRandom = new Random();
 
@@ -94,7 +96,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
     public ShieldNowPlayingPuppetView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        setBackgroundColor(Color.TRANSPARENT);
         setFocusable(false);
         setFocusableInTouchMode(false);
         setClickable(false);
@@ -104,9 +106,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         setClipToPadding(true);
 
         powerManager = context.getSystemService(PowerManager.class);
-        puppet = new BlinkingPuppetImageView(context);
-        puppet.setImageResource(com.boop.shieldhome.R.drawable.boop_headphones);
-        puppet.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        puppet = new LayeredPuppetView(context);
         puppet.setFocusable(false);
         puppet.setClickable(false);
         puppet.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -356,28 +356,148 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
-    /** Draws eyelids over the existing approved headphones artwork; the art itself is never regenerated. */
-    private static final class BlinkingPuppetImageView extends ImageView {
-        private static final float SOURCE_WIDTH = 1536f;
-        private static final float SOURCE_HEIGHT = 1024f;
-        private static final RectF LEFT_EYE = new RectF(395f, 465f, 711f, 790f);
-        private static final RectF RIGHT_EYE = new RectF(757f, 515f, 1075f, 850f);
-        private static final float TOP_LID_SHARE = 0.78f;
-        private static final float BOTTOM_LID_SHARE = 0.22f;
+    /** One poseable puppet: headphones, immutable approved eyes, then a moving top eyelid. */
+    private static final class LayeredPuppetView extends FrameLayout {
+        private final TopEyelidLayer eyelidLayer;
 
-        private final Paint eyelidPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Path eyeClip = new Path();
-        private float blinkOpenness = 1f;
-
-        BlinkingPuppetImageView(Context context) {
+        LayeredPuppetView(Context context) {
             super(context);
-            // Matches the near-black approved upper eyelids/headphone shadow closely enough
-            // that the existing art appears to close rather than being replaced.
-            eyelidPaint.setColor(Color.rgb(8, 12, 18));
+            setBackgroundColor(Color.TRANSPARENT);
+            setClipChildren(false);
+            setClipToPadding(false);
+            setFocusable(false);
+            setClickable(false);
+            setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+
+            ImageView headphonesLayer = new ImageView(context);
+            headphonesLayer.setImageResource(com.boop.shieldhome.R.drawable.boop_headphones);
+            headphonesLayer.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            headphonesLayer.setFocusable(false);
+            headphonesLayer.setClickable(false);
+            headphonesLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            addView(headphonesLayer, fillLayout());
+
+            ApprovedEyesLayer eyesLayer = new ApprovedEyesLayer(context);
+            eyesLayer.setFocusable(false);
+            eyesLayer.setClickable(false);
+            eyesLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            addView(eyesLayer, fillLayout());
+
+            eyelidLayer = new TopEyelidLayer(context);
+            eyelidLayer.setFocusable(false);
+            eyelidLayer.setClickable(false);
+            eyelidLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            addView(eyelidLayer, fillLayout());
         }
 
         void setBlinkOpenness(float openness) {
-            float next = Math.max(0f, Math.min(1f, openness));
+            eyelidLayer.setBlinkOpenness(openness);
+        }
+
+        private FrameLayout.LayoutParams fillLayout() {
+            return new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    Gravity.CENTER);
+        }
+    }
+
+    private static final class PuppetArtGeometry {
+        static final float HEADPHONES_WIDTH = 1536f;
+        static final float HEADPHONES_HEIGHT = 1024f;
+        static final RectF LEFT_SLOT = new RectF(395f, 465f, 711f, 790f);
+        static final RectF RIGHT_SLOT = new RectF(757f, 515f, 1075f, 850f);
+
+        // Exact connected-component bounds from the permanently approved 1774x887 PNG.
+        static final Rect LEFT_APPROVED = new Rect(102, 61, 825, 828);
+        static final Rect RIGHT_APPROVED = new Rect(947, 61, 1670, 828);
+        static final float APPROVED_EYE_ASPECT = 723f / 767f;
+
+        private PuppetArtGeometry() { }
+
+        static RectF mapSlot(RectF source, int width, int height) {
+            float sourceAspect = HEADPHONES_WIDTH / HEADPHONES_HEIGHT;
+            float viewAspect = width / (float) height;
+            float contentWidth;
+            float contentHeight;
+            if (viewAspect > sourceAspect) {
+                contentHeight = height;
+                contentWidth = contentHeight * sourceAspect;
+            } else {
+                contentWidth = width;
+                contentHeight = contentWidth / sourceAspect;
+            }
+            float left = (width - contentWidth) / 2f;
+            float top = (height - contentHeight) / 2f;
+            float scaleX = contentWidth / HEADPHONES_WIDTH;
+            float scaleY = contentHeight / HEADPHONES_HEIGHT;
+            return new RectF(
+                    left + source.left * scaleX,
+                    top + source.top * scaleY,
+                    left + source.right * scaleX,
+                    top + source.bottom * scaleY);
+        }
+
+        static RectF fitApprovedEye(RectF slot) {
+            float width = slot.width();
+            float height = width / APPROVED_EYE_ASPECT;
+            if (height > slot.height()) {
+                height = slot.height();
+                width = height * APPROVED_EYE_ASPECT;
+            }
+            float left = slot.centerX() - width / 2f;
+            float top = slot.centerY() - height / 2f;
+            return new RectF(left, top, left + width, top + height);
+        }
+    }
+
+    /** Draws the exact approved eye master over the old raster eye positions. */
+    private static final class ApprovedEyesLayer extends View {
+        private final Bitmap approvedEyes;
+        private final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+        private final Paint oldEyeOcclusion = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        ApprovedEyesLayer(Context context) {
+            super(context);
+            approvedEyes = BitmapFactory.decodeResource(
+                    getResources(), com.boop.shieldhome.R.drawable.boop_approved_eyes);
+            oldEyeOcclusion.setColor(Color.BLACK);
+        }
+
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            if (approvedEyes == null || getWidth() <= 0 || getHeight() <= 0) return;
+            drawEye(canvas, PuppetArtGeometry.LEFT_APPROVED, PuppetArtGeometry.LEFT_SLOT);
+            drawEye(canvas, PuppetArtGeometry.RIGHT_APPROVED, PuppetArtGeometry.RIGHT_SLOT);
+        }
+
+        private void drawEye(Canvas canvas, Rect sourceEye, RectF sourceSlot) {
+            RectF slot = PuppetArtGeometry.mapSlot(sourceSlot, getWidth(), getHeight());
+            RectF destination = PuppetArtGeometry.fitApprovedEye(slot);
+
+            // The headphones raster predates the permanent eye master and still contains its
+            // old eye pixels. Hide only that eye oval, then place the immutable master above it.
+            canvas.drawOval(slot, oldEyeOcclusion);
+            canvas.drawBitmap(approvedEyes, sourceEye, destination, bitmapPaint);
+        }
+    }
+
+    /** Top black round eyelid only. It is clipped to each eye, so no slab can appear above it. */
+    private static final class TopEyelidLayer extends View {
+        private final Paint eyelidPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Path eyeClip = new Path();
+        private final Path lidPath = new Path();
+        private float blinkOpenness = 1f;
+
+        TopEyelidLayer(Context context) {
+            super(context);
+            eyelidPaint.setColor(Color.BLACK);
+        }
+
+        void setBlinkOpenness(float openness) {
+            float next = Float.isFinite(openness)
+                    ? Math.max(0f, Math.min(1f, openness))
+                    : 1f;
             if (Math.abs(blinkOpenness - next) < 0.001f) return;
             blinkOpenness = next;
             invalidate();
@@ -386,51 +506,39 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             if (blinkOpenness >= 0.999f || getWidth() <= 0 || getHeight() <= 0) return;
-            Drawable drawable = getDrawable();
-            if (drawable == null) return;
-
-            float sourceAspect = SOURCE_WIDTH / SOURCE_HEIGHT;
-            float viewAspect = getWidth() / (float) getHeight();
-            float contentWidth;
-            float contentHeight;
-            if (viewAspect > sourceAspect) {
-                contentHeight = getHeight();
-                contentWidth = contentHeight * sourceAspect;
-            } else {
-                contentWidth = getWidth();
-                contentHeight = contentWidth / sourceAspect;
-            }
-            float left = (getWidth() - contentWidth) / 2f;
-            float top = (getHeight() - contentHeight) / 2f;
-            float scaleX = contentWidth / SOURCE_WIDTH;
-            float scaleY = contentHeight / SOURCE_HEIGHT;
-
-            drawEyelids(canvas, LEFT_EYE, left, top, scaleX, scaleY);
-            drawEyelids(canvas, RIGHT_EYE, left, top, scaleX, scaleY);
+            drawTopLid(canvas, PuppetArtGeometry.LEFT_SLOT);
+            drawTopLid(canvas, PuppetArtGeometry.RIGHT_SLOT);
         }
 
-        private void drawEyelids(
-                Canvas canvas,
-                RectF sourceEye,
-                float contentLeft,
-                float contentTop,
-                float scaleX,
-                float scaleY) {
-            RectF eye = new RectF(
-                    contentLeft + sourceEye.left * scaleX,
-                    contentTop + sourceEye.top * scaleY,
-                    contentLeft + sourceEye.right * scaleX,
-                    contentTop + sourceEye.bottom * scaleY);
-            float closed = 1f - blinkOpenness;
-            float topCover = eye.height() * TOP_LID_SHARE * closed;
-            float bottomCover = eye.height() * BOTTOM_LID_SHARE * closed;
+        private void drawTopLid(Canvas canvas, RectF sourceSlot) {
+            RectF slot = PuppetArtGeometry.mapSlot(sourceSlot, getWidth(), getHeight());
+            RectF eye = PuppetArtGeometry.fitApprovedEye(slot);
+            float sideY = eye.top + eye.height() * NowPlayingPuppetLidTravel.sideEdge(blinkOpenness);
+            float centreY = eye.top + eye.height() * NowPlayingPuppetLidTravel.centreEdge(blinkOpenness);
+            float overhang = eye.width() * 0.12f;
+            float left = eye.left - overhang;
+            float right = eye.right + overhang;
+            float centre = eye.centerX();
 
             eyeClip.reset();
             eyeClip.addOval(eye, Path.Direction.CW);
             int save = canvas.save();
             canvas.clipPath(eyeClip);
-            canvas.drawRect(eye.left, eye.top, eye.right, eye.top + topCover, eyelidPaint);
-            canvas.drawRect(eye.left, eye.bottom - bottomCover, eye.right, eye.bottom, eyelidPaint);
+
+            lidPath.reset();
+            lidPath.moveTo(left, eye.top - eye.height());
+            lidPath.lineTo(right, eye.top - eye.height());
+            lidPath.lineTo(right, sideY);
+            lidPath.cubicTo(
+                    right - eye.width() * 0.18f, sideY,
+                    centre + eye.width() * 0.18f, centreY,
+                    centre, centreY);
+            lidPath.cubicTo(
+                    centre - eye.width() * 0.18f, centreY,
+                    left + eye.width() * 0.18f, sideY,
+                    left, sideY);
+            lidPath.close();
+            canvas.drawPath(lidPath, eyelidPaint);
             canvas.restoreToCount(save);
         }
     }

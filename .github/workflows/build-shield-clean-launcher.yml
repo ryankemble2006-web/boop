@@ -44,6 +44,15 @@ jobs:
         with:
           gradle-version: '9.6.0'
 
+      - name: Verify locked eye master bytes without visual inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          MASTER=shield-clean-launcher/app/src/main/res/drawable-nodpi/boop_approved_eyes.png
+          test -f "$MASTER"
+          ACTUAL="$(sha256sum "$MASTER" | awk '{print $1}')"
+          test "$ACTUAL" = "ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22"
+
       - name: Test functional Shield HOME logic (no visual checks)
         env:
           BOOP_SKIP_MANUAL_VISUAL_TESTS: '1'
@@ -93,6 +102,7 @@ jobs:
           grep -q "android.settings.ACCESSIBILITY_SETTINGS" manifest-tree.txt
           "$TOOLS/aapt" dump resources "$APK" > resources.txt
           grep -q "boop_headphones" resources.txt
+          grep -q "boop_approved_eyes" resources.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
