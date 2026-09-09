@@ -35,7 +35,28 @@ jobs:
       - name: Python natural voice contracts
         run: python -m pytest -q tests/test_unified_v70_natural_voices_contract.py tests/test_unified_v85_natural_voice_install_flow.py
 
-      - name: Gradle natural voice tests
+      - name: Capture Gradle natural voice tests
+        shell: bash
         run: |
+          set +e
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-            --tests '*BoopNaturalVoice*' --stacktrace
+            --tests '*BoopNaturalVoice*' --stacktrace > natural-gradle.log 2>&1
+          code=$?
+          printf '%s\n' "$code" > natural-gradle-exit.txt
+          tail -n 250 natural-gradle.log
+          exit 0
+
+      - name: Upload natural voice diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boop-natural-voice-diagnostic
+          path: |
+            natural-gradle.log
+            natural-gradle-exit.txt
+          if-no-files-found: error
+
+      - name: Assert Gradle natural voice tests passed
+        if: always()
+        shell: bash
+        run: test "$(cat natural-gradle-exit.txt)" = "0"
