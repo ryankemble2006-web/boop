@@ -1,23 +1,23 @@
 # BOOP unified memory
 
-Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Fresh `main` owns shared contracts. Re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
+Updated 2026-09-10. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Fresh `main` owns shared contracts. Re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Current canonical candidate: v86 natural voice preview fix
+## Current canonical candidate: v87 Kokoro JNI crash fix
 
-Exact app/test head before documentation-only follow-up commits:
+Exact app/test release head before documentation-only follow-up commits:
 
-`071159fa8991a92584f301e3072033abe8c405e1`
+`c046309cece7a4f4abc7e742190c0adb262c1c44`
 
 Release identity:
 
-- versionCode `86`;
-- versionName `1.2.86-unified-natural-voice-preview-fix`;
+- versionCode `87`;
+- versionName `1.2.87-unified-kokoro-jni-crash-fix`;
 - package `com.boop.alpha1`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Canonical workflow `34414497922`: SUCCESS. Shield HOME routing workflow `34414497875`: SUCCESS. Artifact `BOOP-Unified`, ID `10128637096`, size `63,993,556` bytes. Artifact ZIP SHA-256 `2d791d7247ce0827ba66bc4cdfd13aec74ce09e0ad4112da0a0752e9bbcd73b0`. APK SHA-256 `ed567c3e04c7d5bf91a57fe01cdf607f7df76539f30522dcabab45cf3e3d6e80`. Shield focused tests `58/58`; Unified focused tests `155/155`; zero failures/errors/skips.
+Canonical workflow `34416346339`: SUCCESS. Shield HOME routing workflow `34416346368`: SUCCESS. Artifact `BOOP-Unified`, ID `10129329924`, size `63,993,437` bytes. Artifact ZIP SHA-256 `86077df44d1ee78582b5cac762458673545a2dec5cee71388fc71fea0308e420`. APK SHA-256 `ae1aeb5f73341c0b4b68ea3ab019d107604b2dc82182b0857c0e74fb0f8e77d8`. Shield focused tests `58/58`; Unified focused tests `155/155`; zero failures/errors/skips.
 
-v86 is CI/signer green only until Ryan physically accepts the exact APK. No v86 rollback checkpoint exists. Latest fully physically accepted rollback remains v59.
+v86 is physically rejected. v87 is CI/signer green only until Ryan physically accepts the exact APK. No v87 rollback checkpoint exists. Latest fully physically accepted rollback remains v59.
 
 ## Durable natural-voice contract
 
@@ -36,9 +36,9 @@ Installing the pack must not silently change the selected voice. Android TextToS
 
 ### Durable v86 selector/demo behavior
 
-Ryan reported that pressing Emma / Isabella / George / Fable on v85 spoke whichever Android TTS voice was selected.
+Ryan originally reported on v85 that pressing Emma / Isabella / George / Fable spoke whichever Android TTS voice was selected.
 
-Preserve the v86 repair exactly:
+Preserve the selector/demo repair:
 
 - on startup, if the current natural pack is already installed and passes `isInstalled()`, restore the controller's verified pack state with the current manifest version;
 - if no valid pack is installed, leave natural-pack usability false;
@@ -47,14 +47,35 @@ Preserve the v86 repair exactly:
 - preview uses the dedicated `previewNaturalVoice(...)` path, not generic `speak(...)`;
 - natural preview calls `naturalSpeechBackend.speak(...)` directly with the selected speaker SID, pitch and speech rate;
 - natural preview failure must not call `speakWithAndroidTts`; show a short local failure message instead;
-- ordinary BOOP `speak(...)` must still keep same-utterance Android TTS fallback if natural synthesis fails;
+- ordinary BOOP `speak(...)` must still keep same-utterance Android TTS fallback for catchable natural synthesis failures;
 - the Kokoro backend must not force `kokoro.setLang("eng")`; retain the explicit `lexicon-gb-en.txt` lexicon path.
 
 Why this separation matters: generic BOOP speech needs resilience, but a voice demo must never silently substitute another engine because that makes every natural voice button sound like the current Android voice and hides the real failure.
 
-Test lineage:
+### Durable v87 Android Kokoro crash rule
 
-- `0fe518ac4c921da5dfed27f2a68e647b531491af` first regression test;
+Physical v86 testing exposed a native crash that CI could not exercise on hardware:
+
+- tapping a downloaded natural voice could produce no sound and crash/minimise BOOP;
+- after natural voice selection, normal acknowledgements could crash the same way;
+- `lights on` still completed the Home Assistant action, then BOOP gave no spoken reply and minimised exactly when speech output began.
+
+Root cause is Sherpa-ONNX 1.13.7's Android JNI callback generation path. BOOP v86 used `generateWithConfigAndCallback(...)`; the native callback bridge can abort the process before Java fallback runs.
+
+**Locked rule while using Sherpa-ONNX 1.13.7 on Android:** do not call `generateWithConfigAndCallback(...)` for BOOP natural speech. Use `tts.generateWithConfig(text, generation)` and check cancellation after synthesis before playback.
+
+v87 TDD lineage:
+
+- regression commit `0c83d3756288668387575bd449ccc9767781cf5d`, workflow `34416099991`: RED exactly on the forbidden callback symbol (`1 failed, 25 passed`);
+- production fix `87041a002b16e10401c21282dd29d24f2a56a9b3`: switched to non-callback generation only; relevant natural contracts, Gradle natural tests and wake handoff went green in workflow `34416181606` before the release commit superseded/cancelled that run;
+- release head `c046309cece7a4f4abc7e742190c0adb262c1c44`, workflow `34416346339`: SUCCESS end-to-end;
+- Shield HOME routing workflow `34416346368`: SUCCESS.
+
+The v86-docs-head to v87-release diff is intentionally narrow: natural backend, one regression test, and version metadata only. Do not attribute HA routing, Android TTS, speaker IDs, eyes/artwork, launcher behavior or package identity changes to v87.
+
+### Historical v86 lineage
+
+- `0fe518ac4c921da5dfed27f2a68e647b531491af` first selector/demo regression test;
 - `9b6167f7550fd6519648a361e6a72ef0fa44194e` corrected the startup gate test;
 - `ca2ae929dd3bc781197f9d63f99e44cd72b44a46` startup verified-state repair, full workflow `34412253710` SUCCESS;
 - `95c48d77da26179b2e4f6fdbece620d8cb118281` natural-only preview/frontend regression contracts;
@@ -62,7 +83,7 @@ Test lineage:
 - `659ad2aef78a6b94dbdad2ee3e121371e0e969ed` implemented selector + natural-only preview;
 - temporary diagnostic workflow proved materialization, Python natural contracts and Gradle natural tests green, then was removed;
 - clean full v85-equivalent validation at `fe19092dcfa6248c25b11aaf765958632848004a`, workflow `34414131237`, SUCCESS;
-- final v86 release head `071159fa8991a92584f301e3072033abe8c405e1`, workflow `34414497922`, SUCCESS.
+- v86 release head `071159fa8991a92584f301e3072033abe8c405e1`, workflow `34414497922`, SUCCESS in CI but later physically rejected for the JNI callback crash.
 
 ### Durable v85 download/install flow
 
@@ -176,4 +197,4 @@ Also preserve:
 - `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`;
 - `checkpoint-boop-unified-v65-procedural-eyes`.
 
-Do not create or repoint a v86 checkpoint until Ryan explicitly reports the exact canonical APK physically accepted.
+Do not create or repoint a v87 checkpoint until Ryan explicitly reports the exact canonical APK physically accepted.
