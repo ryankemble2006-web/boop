@@ -5,7 +5,6 @@ import re
 def test_v85_combines_tablet_routing_with_natural_voice_install_flow():
     profile = Path("unified/BoopDeviceProfile.java").read_text(encoding="utf-8")
     downloader = Path("source/BoopNaturalVoiceDownloader.java").read_text(encoding="utf-8")
-    patch = Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
 
     # The combined candidate must retain the already-accepted generic tablet route.
     assert "TABLET_MIN_SMALLEST_WIDTH_DP = 600" in profile
@@ -17,8 +16,8 @@ def test_v85_combines_tablet_routing_with_natural_voice_install_flow():
     assert "MessageDigest" in downloader
     assert "digest.update(buffer, 0, count)" in downloader
     assert "Installing natural voices" in downloader
-    assert "onInstallProgress" in downloader
-    assert "onInstallProgress" in patch
+    assert "default void onInstallProgress" in downloader
+    assert 'onStatus("Installing natural voices… " + safePercent + "%")' in downloader
 
     # Cancel from Voice Settings must be cooperative. It may set the cancellation
     # flag / cancel the HTTP call, but must not synchronously enter pack cleanup
