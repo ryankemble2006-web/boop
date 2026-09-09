@@ -2,86 +2,72 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v67 finished eyes + repaired colour control
+## Current signed candidate: v68 procedural hue wire fix
 
-Ryan identified that canonical v63 notifications had landed before the later finished default-eye work. He confirmed the later v65 eye pass was the one where the sclera/whites were finally correct and asked to bring that finished eye implementation into canonical Unified, repair the eye-colour changer for it, and jump directly to v67.
+Ryan physically tested signed v67 and reported that the eye hue control did not work. v67 is not physically accepted.
+
+Root cause was confirmed in canonical materialization: after the v65 procedural-eye stack installed the new `setEyeHueDegrees()` implementation, `scripts/patch-unified-shield-dashboard.py` reran the old bitmap-era iris-cache patch. Because the rendered iris is procedural, that late overwrite changed a bitmap no longer used for the visible iris.
+
+v68 removes only that stale late invocation. The legacy iris-cache baseline still runs early in `scripts/materialize-android.sh`, before the procedural renderer replaces it. No eye geometry, sclera/white feathering, artwork, blink, notification, wake, Home, room, package or signer behavior was intentionally changed.
 
 Built code head:
 
-`63bb80283af7424bc1012fe71444552d8b942a74`
-
-Production eye transplant commit:
-
-`c35b57a44ec0e7fb8f06cb49a4f0ab10915dbf5d`
+`91e562754be31745a5ee76538ebef50e6c6a9b2d`
 
 Release identity:
 
-- versionCode `67`;
-- versionName `1.2.21-unified-finished-eyes-hue`;
-- workflow `34312779359` SUCCESS;
-- separate Shield HOME routing workflow `34312684627` SUCCESS on the production code commit;
-- artifact `BOOP-Unified`, ID `10089043590`;
-- artifact ZIP digest `sha256:c0a291a324b0e96a81c4726ad187efa5f65f0ba63dc41d428d7aaae1bc001000`;
-- APK SHA-256 `13c51f8a56e109a9dc57bc37cba3175ce5290b210f65b2692ce575d76194b55b`;
+- versionCode `68`;
+- versionName `1.2.22-unified-hue-wire-fix`;
+- workflow `34314023763` SUCCESS;
+- artifact `BOOP-Unified`, ID `10089480166`;
+- artifact ZIP digest `sha256:f1b546f52800260a878940db0b8f074b1a8a07fec9df4370b2843acfc59c1699`;
+- APK SHA-256 `571f0a501e5a3df921fc1e521ae235810860df3f493c223af491f974cd30e352`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Detailed receipt: `docs/BOOP-V67-FINISHED-EYES-HUE-RECEIPT.md`.
+Detailed receipt: `docs/BOOP-V68-HUE-WIRE-FIX-RECEIPT.md`.
 
-## What changed in v67
+## Test-first evidence
 
-The protected/reference v65 eye lineage was not wholesale-merged. Only the finished eye renderer stack was transplanted into current canonical Unified:
+Regression commit `8e4527e99f835acc4bf4000d2fa9a9c53a32e9d7` produced workflow `34313965830`, which failed at the non-visual integration-contract step exactly because the late Shield dashboard patch still referenced the legacy iris-cache patch.
 
-- `scripts/patch-unified-reading-eyes.py` now uses the v65 procedural Canvas iris renderer;
-- `scripts/patch-v64-procedural-sclera.py` is now part of normal canonical materialization and covers the full moving-iris envelope without the old dark socket/remnant crescent;
-- `scripts/patch-v65-feathered-sclera.py` is now part of normal canonical materialization and fades the neutral cleanup into the approved grey sclera shading rather than leaving an opaque pale oval;
-- the existing colour-control UI/voice trigger remains, but `setEyeHueDegrees()` now drives `proceduralIrisHueDegrees` directly;
-- procedural iris colours consume the selected hue, so colour changes target the iris rather than recolouring the eye bitmap;
-- sclera, pupil, catchlights, black lids and the rest of the approved eye artwork remain outside the user hue control;
-- the approved PNG remains the base source for eye bodies/lids and no moving PNG iris patch is stacked over a stationary iris.
+Fresh v68 workflow `34314023763` then passed:
 
-v67 preserves the v63 notification presenter, wake/name architecture, blink, headphones/puppetry, Home controls, room isolation, exact notification hands and standalone Shield HOME boundary.
-
-## Fresh non-visual CI evidence
-
-The new eye/hue contract was developed test-first. RED workflow `34312326378` failed 2 tests / passed 10 before production changes because canonical materialization lacked the v64/v65 sclera stages and procedural hue wiring.
-
-A first production run `34312684631` later failed only because the new semantic test used a regex that treated Python patch-source `\\n` escapes as already-materialized Java. Production code was unchanged; the test representation was corrected in the final built head.
-
-Fresh canonical workflow `34312779359` then passed:
-
-- non-visual integration contracts 12/12;
-- canonical materialization including procedural irises, v64 sclera cleanup and v65 feathering;
+- non-visual integration contracts;
+- canonical materialization;
 - notification presenter/manifest contracts;
 - seamless wake-command handoff;
-- preserved Launcher lint/source checks;
+- preserved Launcher checks;
 - Shield focused functional tests 58/58, zero failures/errors/skips;
 - Unified focused functional tests 136/136, zero failures/errors/skips;
 - signed APK assembly;
 - package/version/permanent-signer/APK ZIP integrity;
 - artifact upload.
 
-Separate Shield HOME routing workflow `34312684627` also passed on `c35b57a44ec0e7fb8f06cb49a4f0ab10915dbf5d`.
+The downloaded artifact was independently re-hashed after extraction and matched the CI APK receipt exactly.
 
-## Visual acceptance remains manual
+## Eye state and durable ordering rule
 
-**GitHub did not perform visual acceptance.** No screenshot, golden-image, appearance/layout/animation comparison or pixel-judging CI was added or run. Ryan explicitly owns the real-device visual decision.
+The finished v65 procedural eye stack remains canonical:
 
-v67 is CI/signer green, not physically accepted as an integrated build. Do not create or repoint a v67 rollback checkpoint until Ryan explicitly accepts this exact signed APK on real hardware.
+1. `scripts/patch-unified-reading-eyes.py` installs procedural Canvas iris/pupil/catchlight rendering and the procedural hue setter;
+2. `scripts/patch-v64-procedural-sclera.py` covers the complete moving-iris envelope;
+3. `scripts/patch-v65-feathered-sclera.py` feathers cleanup back into the approved grey sclera shading.
 
-Real-device acceptance should confirm:
+After those stages, no later patch may rerun the legacy bitmap hue-cache setter. In particular, the Shield dashboard materialization pass must never invoke `scripts/patch-unified-iris-cache.py` after procedural eyes are installed.
 
-1. default eyes match the finished v65 look, especially the sclera/white blend;
-2. the eye colour control changes only the iris and follows the selected hue live;
-3. default cyan/blue remains correct;
-4. reading/listening motion has one procedural iris/pupil per eye with no stationary ghost or socket crescent;
-5. blink remains unchanged;
-6. unlocked and privacy-safe locked notification presentation still work;
-7. notification tap/swipe/timeout and cue policy still behave as intended;
-8. natural BOOP/custom wake and existing Home/room controls remain intact.
+User hue remains iris-only. Default cyan/blue remains 190 degrees. Sclera, pupil, catchlights, black lids and the rest of the approved eye artwork remain outside hue control. Do not restore shifted PNG iris patches or whole-bitmap tinting for the active procedural renderer.
+
+## Visual/device acceptance
+
+**GitHub did not perform visual acceptance.** Ryan owns the physical result.
+
+v68 is CI/signer green, not physically accepted. The immediate real-device check is simple: open the existing hue control and move the slider across obvious colours. The procedural iris should update live while whites, pupils, highlights and black lids remain unchanged. Also confirm the finished v65 sclera/whites still look correct.
+
+Do not create or repoint a v68 rollback checkpoint until Ryan explicitly accepts this exact signed APK.
 
 ## Preserved notification contract
 
-Android's original notification remains authoritative. BOOP is a puppet mirror around it. Locked state may expose app identity/icon/count only before authentication. Tap preserves the source `PendingIntent`; swipe/timeout dismiss BOOP's mirror only; duplicate alert prevention remains in force.
+Android's original notification remains authoritative. BOOP is a puppet mirror around it. Locked state may expose app identity/icon/count only before authentication. Tap preserves the source `PendingIntent`; swipe/timeout dismiss BOOP's mirror only; duplicate-alert prevention remains in force.
 
 Exact approved notification hands remain locked:
 
@@ -106,7 +92,7 @@ Older wake-arm rollback remains:
 
 `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`
 
-The existing `checkpoint-boop-unified-v65-procedural-eyes` remains a protected/reference lineage for the finished eye work. Never repoint accepted/protected checkpoints.
+`checkpoint-boop-unified-v65-procedural-eyes` remains protected/reference eye provenance. Never repoint protected/accepted checkpoints.
 
 ## Architecture boundary and protected state
 
