@@ -1,26 +1,34 @@
 # BOOP context
 
-Updated 2026-09-08. Fresh main owns shared product/ownership contracts. `SESSION_HANDOFF.md` owns implementation/evidence. Normal app work uses `boop-unified`, package `com.boop.alpha1` and the permanent signer. Protect historical/physically accepted checkpoints.
+Updated 2026-09-09. Fresh main owns shared product/ownership contracts. App-specific `SESSION_HANDOFF.md` owns implementation/evidence. Protect historical and physically accepted checkpoints.
 
-## Permanent face and current replacement request
+## Permanent BOOP face authority
 
-Ryan has explicitly approved the final paired-eye PNG with BLACK eyelids and no blue/cyan eyelid accent lines as BOOP's permanent default. All animations must take this same form; accessories come later as separate additions. He now requests replacement on BOTH phone/Wall and Shield. This approval supersedes older bitmap-source restrictions for this one master, not permission to redesign future poses.
+Ryan has visually confirmed the exact paired-eye PNG with black upper lids and no blue/cyan eyelid accent lines as BOOP's permanent eye identity and explicitly said: **lock him in forever, infinitely poseable**.
 
-Read `BOOP_EYES_MASTER.md`: source `glossy_cartoon_eyes_with_black_eyelids.png`, 1774 x 887 RGBA, 936803 bytes, SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`. Keep its existing alpha and proportions. Do not apply the rejected row-brightness mask, restore blue eyelid lines or regenerate the character. Preserve accepted iris-only colour selection and the default blue/cyan, plus existing headphones/puppetry and five-digit yellow hands.
+Read `BOOP_EYES_MASTER.md`. Authority is 1774 x 887 RGBA, 936803 bytes, SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`.
 
-The master is locally available and Ryan has a backup, but it is not yet committed/integrated. Transfer via the exposed GitHub local-file capability is blocked; direct container GitHub networking also failed. The user was asked to upload the PNG to the root of `boop-unified`. This checkpoint is documentation, not image replacement or a new APK.
+"Infinitely poseable" means BOOP remains a puppet: the whole approved master may move, rotate, scale, bounce, dance, tilt, clip into product frames and combine with approved performance/eyelid/accessory layers. It does not authorise regeneration or anatomy drift. Do not redraw, symmetrise, normalise, beautify or replace the source eye pair. The approved source's one-pixel-left pair offset is part of the identity and is now contract-tested.
 
-## Blink is working
+Preserve the accepted default blue/cyan iris and any separately accepted iris-only colour behavior without tinting whites, pupils, highlights or eyelids. Headphones, approved five-digit yellow hands and future props remain separate puppet layers rather than reasons to regenerate the eyes.
 
-Ryan clarified he had switched blink off himself and it works. Earlier missing-blink claims are superseded. Leave the working blink implementation, canonical 183 ms curve, 3-7 second delay and system-motion/power/lifecycle safeguards alone. No system-setting changes.
+## Shield top-only blink integration
+
+The standalone Shield branch `boop-shield-clean-launcher` now packages the exact approved master and hash-checks its bytes before building. Final blink source is `e28f073c8566803bb8553c9f6ad1f4a0fb302f69`.
+
+Shield rendering is layered: headphones -> exact approved eye pair -> animated black top eyelids. The pair is rendered as one undistorted master. Blink has no animated bottom lid; each curved top lid travels fully down and reopens, and the animated paint is clipped to its eye oval so no black slab can appear above/outside the eye.
+
+Existing natural-blink behavior remains: 183 ms curve, 3-7 second irregular delay, 18% double-blink chance, 110 ms double gap, plus system-animation/Power Saver/hidden-detached safeguards. Existing playback dance, paused upset behavior, acknowledgement hop, +10% size and clipped right-hand bay are preserved.
+
+Final Shield workflow `34297552148` passed the locked asset gate, 81 focused functional tests, permanent signing, signed assembly, package/version/manifest/service/resource/signer/archive verification and artifact upload. Visual checks remained disabled. Artifact ID `10083716832`; APK SHA-256 `d4e3fafa43d072b1a269aeb89c99d61754dc7e8bf35f306c0e864e1debaf8aa7`. Real Shield visual acceptance remains Ryan's authority.
 
 ## Approved app behaviour
 
 Home = Room -> real supported controllable physical devices using TV/D-pad-friendly controls. No Favourites, helpers, diagnostics, config inventory or loose unconfirmed entities. HA discovery stays read-only and fail-closed using target/device/entity relationships, including inherited area. Never rename/move HA entities/devices or expose whole-house controls when membership is uncertain.
 
-A room selection is authoritative immediately. Dispose previous-room dashboard/socket/controller/navigation ownership before persisting and rebuilding Home. Preserve D-pad navigation/focus. HA null-name repair and working Home buttons are physically confirmed and must not be refactored during the bitmap replacement.
+A room selection is authoritative immediately. Dispose previous-room dashboard/socket/controller/navigation ownership before persisting and rebuilding Home. Preserve D-pad navigation/focus. HA null-name repair and working Home buttons are physically confirmed and must not be casually refactored.
 
-BOOP forever: custom spoken name is additional only. Foreground wireless charging permits phone wake; undocked phone stays tap-to-talk. Preserve coordinator/controller/Sherpa/recording ownership and coordinator-owned reload/re-arm. No competing listeners. Phone acoustic wake has no new acceptance from the artwork/blink messages.
+BOOP forever: custom spoken name is additional only. Foreground wireless charging permits phone wake; undocked phone stays tap-to-talk. Preserve coordinator/controller/Sherpa/recording ownership and coordinator-owned reload/re-arm. No competing listeners.
 
 Shield density scaling remains idempotent from the unmodified application baseline, never current-density accumulation or a system-wide setting change.
 
@@ -28,17 +36,10 @@ Shield density scaling remains idempotent from the unmodified application baseli
 
 Use official Android assistant routes first, with explicit reversible `Use BOOP for the microphone button` / `Keep my current assistant` choice. Supported assistant entry must hand directly into existing one-shot ownership, without a second microphone stack or microphone capture in the overlay.
 
-The last physical result remains `Assistant choice was not changed`. Previous source investigation found required recognitionService metadata missing from the shipped VoiceInteractionService; ACTION_ASSIST eligibility alone did not establish correct system selection. Do not blame firmware or invent a dummy recognizer. Exact findings/primary references remain in `SESSION_HANDOFF.md` and the prior investigation commit.
-
 Never silently disable Google, grant permissions or change defaults. No privileged/ADB hack, Button Mapper, third-party dependency or OpenAI API integration. Local KEYCODE_ASSIST fallback requires real firmware delivery evidence. Success requires remote-button invocation AND speech from THAT remote microphone, local media/HA routing, response, clean recording end/cancel/repeat and previous-app return. Launching BOOP alone does not count.
 
 ## Acceptance and evidence
 
-Ryan owns visual and real-device acceptance. No GitHub screenshots/golden checks, appearance/layout/animation judging, aesthetic source-string guards, emulator installation or device-launch acceptance. Keep focused non-visual tests, compile/lint, package/signature/archive/security checks and immediate signed artifact delivery.
+Ryan owns visual and real-device acceptance. No GitHub screenshots/golden checks, appearance/layout/animation judging, aesthetic source-string guards, emulator installation or device-launch acceptance. Keep focused non-visual tests, compile/package/signature/archive/security checks and immediate signed artifact delivery.
 
-Last delivered repair: code `949f1085328a3e815d9bc57747425f1f930c48db`, version 45 / `1.1.2-unified-assist-repair`, successful run `34201200463`, artifact `10045928699`.
-APK SHA-256 `217e004f26bca33066e3d2089d2e2bc448c102c332abb25f97cf00122d5ed239`; permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-
-Historical checks: 58 Shield + 66 unified focused tests, zero failures/errors/skips; Launcher lint, compilation, package/manifest/signature/archive checks. HA names/buttons and corrected blink are user-confirmed; delivered eye rendering is rejected, replacement pending, assistant and phone wake unresolved. No new blanket acceptance for room switching, repeated-open scale or remote-mic audio. No fresh code test/build is claimed by this documentation checkpoint.
-
-Protected physical rollback remains `e746affbb82b577cef2f1cf6e731dff186c8f881`. Publish no secrets/private diagnostics/photos. GitHub work does not imply Windows synchronization, automatic installs/grants or unattended monitoring. Prior investigation detail is retained in Git at `438c3076875a56338ef26bd430f744f0a0cace32`.
+GitHub work does not imply Windows synchronization, automatic installs/grants or unattended monitoring. Publish no secrets/private diagnostics/photos.

@@ -1,33 +1,64 @@
 # BOOP permanent eye master
 
-Approved by Ryan on 2026-09-08. This decision supersedes the older eye-source requirement only for this explicitly approved replacement.
+Approved by Ryan and permanently locked on 2026-09-09. This file is the appearance authority for BOOP's eyes across products unless Ryan explicitly replaces the master in a future approval.
 
-## Locked appearance
+## FOREVER LOCK
 
-The final paired-eye PNG with black eyelids and no blue/cyan eyelid accent lines is BOOP's permanent default. Ryan explicitly approved this exact result, said all animations must take this form, and then requested replacement on both phone/Wall and Shield. Future accessories are separate additions to this base. Do not regenerate the character for poses, restore the blue eyelid lines, or substitute an earlier generated image.
+The exact paired-eye PNG identified below is BOOP's permanent eye identity.
 
-Preserve the approved shapes, proportions, spacing, pupils, highlights, shading and supplied alpha. The blue/cyan iris remains the default. Preserve the already accepted user-selectable iris-only colour behaviour without tinting the whites, pupils, highlights or eyelids. Existing headphones, five-digit yellow hands and puppetry are not being redesigned in this replacement pass.
+Do not regenerate, redraw, trace, beautify, symmetrise, normalise, reinterpret, restyle or substitute it. Do not silently repair source quirks. Preserve the exact raster, alpha, eye anatomy, relative scale, spacing, level relationship, pupils, highlights, shading, black upper lids and default blue/cyan irises.
+
+The source pair contains a deliberate-by-approval one-source-pixel left offset from mathematical canvas centre. That exact source geometry is part of the authority. Code and tests must preserve it rather than making the pair mathematically prettier.
+
+### Infinitely poseable
+
+"Locked forever" does **not** mean frozen. BOOP is a puppet.
+
+The approved master may be translated, rotated, uniformly scaled, moved through space, bounced, danced, tilted, clipped into product-specific frames, animated with gaze/expression layers, combined with approved props/accessories and covered by approved eyelid animation. Temporary whole-puppet performance transforms are allowed. The immutable source master must remain recoverable unchanged and must not be baked into a newly redrawn eye design.
+
+In short: **pose the puppet; never replace the puppet.**
 
 ## Exact file identity
 
-- Chat/source filename: `glossy_cartoon_eyes_with_black_eyelids.png`.
+- Canonical repository filename: `boopApprovedEyes.png` / `unified/assets/boop-eyes/boopApprovedEyes.png`.
+- Shield packaged copy: `shield-clean-launcher/app/src/main/res/drawable-nodpi/boop_approved_eyes.png`.
 - Dimensions: 1774 x 887.
-- PNG mode: RGBA; decoded alpha range 0..255.
+- PNG mode: RGBA.
 - File size: 936803 bytes.
 - SHA-256: `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`.
+- Git blob reused for the packaged copy: `f95375356b20297fa2b27ab8887f65d4cce5c7fd`.
+- Left eye alpha component: `(102,61)-(825,828)`, 723 x 767.
+- Right eye alpha component: `(947,61)-(1670,828)`, 723 x 767.
 
-The bytes and format above were checked locally. Visual approval came from Ryan, not an automated appearance test. An RGBA header alone is not a silhouette check. Do not apply the rejected brightness/row-span transparency converter to this master; retain its existing alpha unchanged.
+GitHub's Shield build lane hashes the packaged master before testing/building and fails if the bytes differ. Visual approval belongs to Ryan; the hash gate protects identity, not aesthetics.
 
-## Blink correction
+## Approved Shield blink contract
 
-Ryan subsequently reported that he had turned blink off himself and that it is working. The earlier missing-blink report is no longer an unresolved defect. Preserve the current blink code, timing, curve, delay and system-motion/power safeguards. Do not change system animation settings or rewrite blink while replacing the bitmap.
+The Now Playing blink is layered art:
 
-## Integration state
+1. headphones layer;
+2. the exact approved eye pair drawn as one undistorted master layer;
+3. animated black top-eyelid layer.
 
-APPROVED MASTER, NOT YET INTEGRATED. The exact PNG is present in the chat sandbox and Ryan has downloaded a backup. This documentation commit does not contain the PNG binary, change either renderer or produce an APK.
+Blink rules are locked for this implementation:
 
-The exposed GitHub actions accept text/API content but have no mounted local-file upload argument, and direct GitHub networking from this chat container failed. A Canva asset upload succeeded as a transfer attempt, but returned only metadata/a thumbnail; that is not the original file in GitHub and must not be used as the app texture.
+- top black round/curved eyelid only;
+- no animated bottom eyelid;
+- each top lid travels fully down over its eye, then returns open;
+- animated lid paint is clipped to the eye oval, so it cannot leave a black slab above/outside the eye;
+- preserve the existing 183 ms blink curve, 3-7 second random delay, 18% double-blink chance and 110 ms double gap;
+- preserve animator-disabled, Power Saver, hidden/detached lifecycle safeguards;
+- preserve playback dance, paused upset behavior, acknowledgement hop, +10% puppet size and clipped bay placement.
 
-Next transfer: Ryan may upload the saved PNG, with its existing filename, to the root of `boop-unified`. Fetch live HEAD again, verify the exact bytes/hash, and retain a canonical copy under `unified/assets/boop-eyes/` before wiring phone and Shield. Adapt source rectangles to this new image rather than reusing the old portrait-atlas coordinates or guessing alpha from RGB. Preserve the approved character geometry when framing either device.
+## Shield integration receipt
 
-No image regeneration, new accessories, unrelated repairs, new signer/package, device installation, permission change, or visual/device CI acceptance is authorised by this asset replacement alone.
+Final blink source: `e28f073c8566803bb8553c9f6ad1f4a0fb302f69`.
+
+GitHub workflow `34297552148` completed successfully with the locked-asset hash gate, 81 focused functional tests, permanent signer preparation, signed assembly, package/resource/signer/archive verification and artifact upload. Visual checks remained disabled with `BOOP_SKIP_MANUAL_VISUAL_TESTS=1`.
+
+- Artifact ID: `10083716832`.
+- APK SHA-256: `d4e3fafa43d072b1a269aeb89c99d61754dc7e8bf35f306c0e864e1debaf8aa7`.
+- Artifact ZIP SHA-256: `011abdd1723f4278a6801ee32bdfeb6f0997f0057e840f2da325dbcb2c812ba3`.
+- Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+Real Shield visual acceptance remains Ryan's physical gate. No screenshot/golden/emulator visual acceptance is implied by this receipt.
