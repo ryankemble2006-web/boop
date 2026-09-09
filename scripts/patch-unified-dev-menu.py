@@ -64,7 +64,7 @@ if scroll_marker not in text:
         android.widget.ScrollView voiceSettingsScroller = new android.widget.ScrollView(this);
         voiceSettingsScroller.setFillViewport(true);
         voiceSettingsScroller.setVerticalScrollBarEnabled(true);
-        voiceSettingsScroller.addView(voiceSettingsOverlay, new android.widget.ScrollView.LayoutParams(
+        voiceSettingsScroller.addView(voiceSettingsOverlay, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT));
         interactionSurface.addView(voiceSettingsScroller, new FrameLayout.LayoutParams(
@@ -74,12 +74,23 @@ if scroll_marker not in text:
 '''
     text = text.replace(attachment, scroll_block, 1)
 
+    hide_signature = "    private void hideVoiceSettings() {\n"
+    hide_start = text.find(hide_signature)
+    if hide_start < 0:
+        raise SystemExit("Expected hideVoiceSettings() method")
+    hide_end = text.find("    private int dp(int value) {\n", hide_start)
+    if hide_end < 0:
+        raise SystemExit("Expected dp() helper after hideVoiceSettings()")
+    hide_method = text[hide_start:hide_end]
     hide_block = '''        if (interactionSurface != null && voiceSettingsOverlay != null) {
             interactionSurface.removeView(voiceSettingsOverlay);
         }
 '''
-    if text.count(hide_block) != 1:
-        raise SystemExit(f"Expected one Voice Settings removal block, found {text.count(hide_block)}")
+    if hide_method.count(hide_block) != 1:
+        raise SystemExit(
+            "Expected one Voice Settings removal block inside hideVoiceSettings(), "
+            f"found {hide_method.count(hide_block)}"
+        )
     hide_replacement = '''        if (interactionSurface != null && voiceSettingsOverlay != null) {
             android.view.ViewParent parent = voiceSettingsOverlay.getParent();
             if (parent instanceof View) {
@@ -89,7 +100,8 @@ if scroll_marker not in text:
             }
         }
 '''
-    text = text.replace(hide_block, hide_replacement, 1)
+    hide_method = hide_method.replace(hide_block, hide_replacement, 1)
+    text = text[:hide_start] + hide_method + text[hide_end:]
     changed = True
 
 if helper_marker not in text:
