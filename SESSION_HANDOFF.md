@@ -2,66 +2,108 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current canonical signed candidate: v85 natural voices + tablet routing
+## Current canonical signed candidate: v86 natural voice preview fix
 
 Release identity:
 
-- versionCode `85`;
-- versionName `1.2.85-unified-natural-voices-tablet`;
+- versionCode `86`;
+- versionName `1.2.86-unified-natural-voice-preview-fix`;
 - package `com.boop.alpha1`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Exact **app/test head** (before documentation-only follow-up commits):
+Exact **app/test head** before documentation-only follow-up commits:
 
-`b7a4b4d035419e4ef7e62b474da3a0fc039a08eb`
+`071159fa8991a92584f301e3072033abe8c405e1`
 
-That merge combines the current Unified/tablet lineage with the local natural-voice work. It does not merge the separate clean Shield HOME package.
+Canonical workflow `34414497922`: **SUCCESS**. Separate Shield HOME routing workflow `34414497875`: **SUCCESS**.
 
-### Canonical verification receipt
-
-Canonical post-merge workflow `34409371052`: **SUCCESS**.
-
-Also passed the separate Shield HOME routing workflow `34409371028`.
-
-The canonical workflow passed non-visual integration contracts, materialization, natural-voice/developer-lab/notification contracts, wake handoff, Launcher lint, Shield functional tests, broader Unified routing/lifecycle/assistant tests, permanent signing, APK assembly, package/version/signer/archive verification, and artifact upload.
+Verification receipt:
 
 - artifact `BOOP-Unified`;
-- artifact ID `10126738984`;
-- artifact size `63,993,838` bytes;
-- artifact ZIP SHA-256 `579e6aae724d2ac2da67ff851f488fdf7759bb1ec971a0ee5ab97bc85cef69c6`;
-- APK SHA-256 `a6257ab2a8540633649276e676da2a3bcbd46be375382ed9d3cd437b00de3c40`;
+- artifact ID `10128637096`;
+- artifact size `63,993,556` bytes;
+- artifact ZIP SHA-256 `2d791d7247ce0827ba66bc4cdfd13aec74ce09e0ad4112da0a0752e9bbcd73b0`;
+- APK SHA-256 `ed567c3e04c7d5bf91a57fe01cdf607f7df76539f30522dcabab45cf3e3d6e80`;
 - Shield focused functional tests `58/58`, zero failures/errors/skips;
 - Unified focused functional tests `155/155`, zero failures/errors/skips.
 
-The exact artifact ZIP was independently downloaded after CI. Its SHA-256 matched GitHub's artifact digest. `built-commit.txt` matched `b7a4b4d0...`; `badging.txt` confirmed package `com.boop.alpha1`, versionCode `85`, versionName `1.2.85-unified-natural-voices-tablet`; `apk-sha256.txt` matched the extracted APK; and `signer-sha256.txt` matched the permanent BOOP signer.
+The exact artifact ZIP was downloaded after CI. Its SHA-256 matched GitHub's artifact digest. `built-commit.txt` matched `071159fa...`; `badging.txt` confirmed package `com.boop.alpha1`, versionCode `86`, versionName `1.2.86-unified-natural-voice-preview-fix`; `apk-sha256.txt` matched the extracted APK; `signer-sha256.txt` matched the permanent BOOP signer.
 
-## Natural voices: verify/install hang repair
+## v86 natural voice selector/demo repair
 
-Ryan physically reported that the model download reached the post-download **Verify** state and appeared stuck there.
+Ryan physically reported on v85 that tapping Emma, Isabella, George or Fable spoke the currently selected Android TTS voice instead of demonstrating/selecting the requested downloaded natural voice.
 
-Root cause in the v70 implementation: after downloading the roughly 350 MB Kokoro archive, BOOP performed a second full archive SHA-256 read and then the complete bzip2/tar extraction while the UI still showed one static `Verifying natural voices…` label. Cancel could also synchronously enter pack cleanup while extraction owned the pack monitor, making the UI look wedged.
+Two defects were repaired:
 
-v85 fixes the pipeline at its source:
+1. On a later app launch, an already-installed current natural pack could be marked usable without restoring the controller's persisted `verified` state. The generic `speak()` path therefore considered natural speech unavailable and silently fell back to Android TTS.
+2. Voice-name buttons called generic `speak(preview)`. Generic speech is intentionally allowed to fall back to Android TTS for normal BOOP operation, so a failed natural demo could masquerade as a successful natural demo.
 
-- SHA-256 is calculated while the download bytes are written, removing the second full archive reread;
-- the post-download `Verifying natural voices…` stage is now the immediate size/hash receipt check;
-- extraction is a separate `Installing natural voices… N%` phase with progress life-signs;
-- Cancel sets the cooperative cancellation flag and cancels the HTTP call without synchronously waiting on pack cleanup;
-- the worker owns terminal cleanup after observing cancellation;
-- archive path/link/traversal validation and required-file validation remain intact;
-- the pack remains app-private and the archive is deleted after successful activation.
+v86 behavior is now explicit:
 
-Focused TDD evidence:
+- tapping Emma / Isabella / George / Fable selects that exact natural speaker;
+- Voice Settings shows `Selected: <name>` immediately;
+- the demo goes through a dedicated natural-only preview path;
+- the preview never substitutes Android TTS if Kokoro synthesis fails;
+- a failed or unavailable natural demo gives a short local failure message instead;
+- normal BOOP speech still retains Android TTS fallback for resilience;
+- startup reconciles a current installed pack with the controller's verified state before previews can run;
+- the invalid Kokoro `eng` language override was removed while the explicit GB English lexicon path remains.
 
-- clean RED head `35c2c1657bee210802873157fe72630666355c85`, workflow `34408308677`, failed specifically because streaming SHA calculation was absent;
-- GREEN focused head `65e524aa05fde80966ded2681d92dfa4f80a630b`, workflow `34408705699`: SUCCESS;
-- full combined/canonical workflows then passed as recorded above.
+Natural voice order remains:
 
-Natural voice model remains Sherpa-ONNX Kokoro `kokoro-multi-lang-v1_0`, downloaded in-app from the pinned HTTPS release asset and verified against the pinned size/SHA manifest. Voice order remains Emma (`bf_emma`, speaker 21), Isabella (`bf_isabella`, 22), George (`bm_george`, 26), Fable (`bm_fable`, 25). Existing Android TextToSpeech remains fallback. Installing the pack does not silently select a natural voice.
+1. Emma: `bf_emma`, speaker `21`;
+2. Isabella: `bf_isabella`, speaker `22`;
+3. George: `bm_george`, speaker `26`;
+4. Fable: `bm_fable`, speaker `25`.
+
+### Test lineage for this repair
+
+- `0fe518ac...` added the first regression test;
+- `9b6167f7...` corrected the test to the real startup gate;
+- `ca2ae929...` restored verified installed-pack state on startup; workflow `34412253710` passed end-to-end;
+- `95c48d77...` added natural-only preview and Kokoro frontend regression contracts;
+- `f388c8c5...` removed the bad Kokoro `eng` override;
+- `659ad2ae...` changed voice-name taps to selector + dedicated natural preview;
+- a temporary split diagnostic workflow proved materialization, Python natural contracts and Gradle natural tests all green, then was removed;
+- clean full validation at v85-equivalent code head `fe19092d...`, workflow `34414131237`: SUCCESS;
+- release bump `071159fa...`, workflow `34414497922`: SUCCESS.
+
+The earlier red runs during TDD are historical evidence only. Do not treat them as the current branch state.
+
+## Natural voice download/install flow from v85 remains protected
+
+Preserve the v85 repair:
+
+- SHA-256 is calculated while download bytes are written;
+- post-download Verify is an immediate size/hash receipt check;
+- extraction is separately visible as `Installing natural voices… N%`;
+- Cancel is cooperative/non-blocking and does not synchronously enter pack cleanup from the UI thread;
+- worker owns terminal cleanup;
+- archive traversal/link rejection, required-file validation, app-private storage, safe activation and archive deletion remain intact.
+
+Natural voices remain optional and local/offline after the one-time in-app model download. Installing the pack does not silently select a natural voice.
+
+## Physical acceptance boundary for v86
+
+v86 is **CI/signer green, physically pending**.
+
+Primary check:
+
+1. Install v86 over the current BOOP build.
+2. Open Voice Settings with the natural pack already installed. It should not redownload.
+3. Tap Emma. Status should change to `Selected: Emma` and the demo must sound like Emma, not the Android voice.
+4. Repeat with at least one male voice, ideally George or Fable, and confirm the timbre changes.
+5. Close/reopen BOOP and repeat one natural demo to prove installed-pack verification survives restart.
+6. Speak a normal BOOP response with a natural voice selected and confirm it uses the chosen natural voice.
+7. If a natural demo fails, Android TTS must not impersonate it; the app should report the natural preview failure instead.
+
+Tablet check remains: Xiaomi Pad 7 Pro should route to Wall through the generic `smallestScreenWidthDp >= 600` rule, preserve touch/tap-to-speak, portrait/landscape handling and local HA control.
+
+Do **not** create or repoint a v86 rollback checkpoint until Ryan explicitly accepts the physical APK. Latest fully physically accepted rollback remains v59.
 
 ## Durable Android tablet routing
 
-Preserve the Unified profile order:
+Preserve profile order:
 
 1. explicit persistent recovery/debug override;
 2. Android TV / Leanback / television mode -> `SHIELD`;
@@ -69,38 +111,21 @@ Preserve the Unified profile order:
 4. other non-TV Android devices with `smallestScreenWidthDp >= 600` -> `WALL`;
 5. sub-600dp handheld Android -> `LAUNCHER`.
 
-This is generic tablet support, not a Xiaomi model hardcode. BOOP's approved eye source is not forked or regenerated for tablets.
+This is generic tablet support, not a Xiaomi model hardcode.
 
-Ryan previously gave positive Xiaomi Pad 7 Pro evidence for the 600dp Wall route, touch operation and local Home Assistant control on the v70 tablet candidate. The **combined v85 APK itself still needs a physical Pad recheck** because CI/device acceptance are separate gates.
+## Durable developer-menu / developer-lab state
 
-## Physical acceptance boundary for v85
-
-v85 is **CI/signer green only** until Ryan tests this exact APK.
-
-Primary voice check:
-
-1. Open Voice Settings and download natural voices.
-2. Confirm download reaches 100%, Verify completes, then `Installing natural voices… N%` advances instead of appearing frozen.
-3. Confirm it reaches `Natural voices ready` and exposes Emma, Isabella, George and Fable.
-4. Select at least one female and one male voice and confirm BOOP speaks locally.
-5. Reopen BOOP and confirm the installed pack remains usable without another download.
-6. Optional cancellation check: start again only if a clean retry is needed, cancel, and confirm the UI remains responsive and returns to a retryable state.
-
-Pad check: launch on the Xiaomi Pad 7 Pro, confirm direct Wall routing, rotate portrait/landscape, then check touch/tap-to-speak and one local HA command.
-
-Existing physical evidence remains valid for the in-place `developer menu` route and pinned BOOP face. Notification raised-banner/hands appearance remains Ryan's visual judgement; GitHub does not certify appearance.
-
-Do **not** create or repoint a v85 rollback checkpoint until Ryan explicitly accepts the physical build. Latest fully physically accepted rollback remains v59.
+Preserve the accepted in-place `developer menu` route inside `MainActivity`; do not restore the rejected activity-hop route. Voice Settings stays vertically scrollable. Dev Lab pins the real current BOOP face and uses its horizontal animation selector. Notification dood previews remain local fixtures only and do not create shade notifications or new authority.
 
 ## Durable protected state
 
 - Permanent approved eye master remains `unified/assets/boop-eyes/boopApprovedEyes.png`, SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`. Do not regenerate or destructively edit it.
 - Canonical procedural-eye order remains `patch-unified-reading-eyes.py` -> `patch-v64-procedural-sclera.py` -> `patch-v65-feathered-sclera.py`. No later legacy bitmap hue pass.
 - User eye hue remains iris-only; default cyan/blue remains 190 degrees.
-- Exact approved notification hands remain byte-locked; shared pose currently rests at `1.12x` with banner `36dp` upward pending physical visual acceptance.
+- Exact approved notification hands remain byte-locked; current shared pose remains `1.12x` with banner `36dp` upward pending physical visual acceptance.
 - Android's original notification remains authoritative; BOOP mirrors it without changing locked privacy/tap/dismiss semantics.
-- One 16 kHz microphone owner, accepted wake-name/training architecture, exact 100 ms wake bridge and uncensored speech request remain protected.
-- Clean Nvidia Shield HOME remains standalone on `boop-shield-clean-launcher`, package `com.boop.shieldhome`, until Ryan explicitly approves a later merge.
+- Preserve one 16 kHz microphone owner, accepted wake/name architecture, exact 100 ms wake bridge and uncensored-speech request.
+- Clean Nvidia Shield HOME remains standalone on `boop-shield-clean-launcher`, package `com.boop.shieldhome`, until Ryan explicitly approves a future merge.
 - GitHub performs functional/non-visual verification only. No screenshot/golden/pixel appearance tests. Ryan owns visual, device and acoustic acceptance.
 - No automatic installs, permission grants or signer/package changes.
 
@@ -115,5 +140,3 @@ Also preserve:
 - `checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`;
 - `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`;
 - `checkpoint-boop-unified-v65-procedural-eyes` as protected eye provenance.
-
-Historical v70 developer-lab/tablet/notification receipts remain preserved in Git history immediately before the v85 integration; do not repoint historical checkpoints.
