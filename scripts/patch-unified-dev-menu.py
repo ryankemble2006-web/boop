@@ -93,9 +93,9 @@ if scroll_marker not in text:
     changed = True
 
 if helper_marker not in text:
-    anchor = "    private TextView voiceSettingLabel(String text, float sizeSp, boolean bold) {\n"
+    anchor = "    private int dp(int value) {\n"
     if text.count(anchor) != 1:
-        raise SystemExit(f"Expected one Voice Settings label helper anchor, found {text.count(anchor)}")
+        raise SystemExit(f"Expected one dp helper anchor, found {text.count(anchor)}")
     helper = '''    // BOOP_DEV_MENU_DEFERRED_LAUNCH_V1
     private void openDevMenuSafely() {
         if (voiceSettingsOpen) {
