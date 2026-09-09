@@ -2,8 +2,8 @@
 """Inspect the two black Photoshop leftovers above BOOP's real eyelids.
 
 This script is deliberately diagnostic only. It reads the exact Shield headphones
-PNG copied into Animation Lab and emits text, not replacement artwork. That lets
-us locate the unwanted flattened pixels without regenerating or reinterpreting
+PNG copied into Animation Lab and emits evidence, not replacement artwork. That
+lets us locate the unwanted flattened pixels without regenerating or reinterpreting
 BOOP's approved character.
 """
 from __future__ import annotations
@@ -16,10 +16,11 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets" / "boop-headphones-source.png"
-REPORT = ROOT / "analysis" / "artifact-map.txt"
+ANALYSIS = ROOT / "analysis"
+REPORT = ANALYSIS / "artifact-map.txt"
 
 # Broad upper-eye windows derived from the real Shield renderer geometry and the
-# 2026-09-09 physical video. They intentionally stop above the pupils.
+# 2026-09-09 physical video. They intentionally stop above the lower face.
 ROIS = {
     "left": (360, 360, 760, 660),
     "right": (760, 360, 1160, 660),
@@ -120,9 +121,20 @@ def row_counts(image: Image.Image, roi: tuple[int, int, int, int]) -> list[str]:
     return out
 
 
+def write_visual_crop(image: Image.Image, name: str, roi: tuple[int, int, int, int]) -> None:
+    # A neutral background makes transparent gaps and the flat-black leftovers
+    # visible in a small GitHub-viewable diagnostic. This never touches source art.
+    background = Image.new("RGBA", image.size, (184, 184, 184, 255))
+    preview = Image.alpha_composite(background, image)
+    crop = preview.crop(roi).convert("RGB")
+    crop.thumbnail((320, 240), Image.Resampling.LANCZOS)
+    crop.save(ANALYSIS / f"{name}-eye-inspection.jpg", "JPEG", quality=82, optimize=True)
+
+
 def main() -> None:
     raw = SOURCE.read_bytes()
     image = Image.open(SOURCE).convert("RGBA")
+    ANALYSIS.mkdir(parents=True, exist_ok=True)
     lines = [
         "BOOP Shield eyelid-artifact inspection",
         "========================================",
@@ -133,10 +145,11 @@ def main() -> None:
         f"alpha_bbox={image.getchannel('A').getbbox()}",
         "",
         "Legend: # = mostly <=42 RGB, + = mostly <=80 RGB, . = opaque brighter pixel, space = transparent.",
-        "This is only a diagnostic map. No pixels are changed by this script.",
+        "This is diagnostic evidence only. No source pixels are changed by this script.",
         "",
     ]
     for name, roi in ROIS.items():
+        write_visual_crop(image, name, roi)
         lines.append(f"[{name}] roi={roi}")
         comps = components(image, roi)
         lines.append("largest dark connected components (threshold <=42):")
@@ -149,7 +162,6 @@ def main() -> None:
         lines.extend(row_counts(image, roi))
         lines.append("")
 
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(REPORT)
 
