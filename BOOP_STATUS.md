@@ -2,78 +2,82 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v69 internal dev menu
+## Current signed candidate: v70 developer lab + app-specific notification doods
 
-v69 adds one internal developer/demo surface reachable from Voice settings.
+Release identity:
 
-Animations shelf:
-- Wake
-- Think
-- Berry
-- Shake
-- Sleep
+- versionCode `70`;
+- versionName `1.2.24-unified-dev-menu-doods`;
+- final production/build commit `825593a16c004d9c0825720eb014c4f5cc8e58af`;
+- app implementation `2f4a62150121b299a433674e971de1e058f6330f`, materialized-router test correction `9c907d3497067eb88ea1308875084b8965413951`.
 
-Notification demos shelf:
-- Unlocked
-- Locked
-- Bundle
+v70 adds a local spoken `dev menu` command intercepted before HA/command-router/chat fallback. It opens non-exported `BoopDevMenuActivity` with no Chat Mode, OpenCode/ChatGPT Web or internet dependency.
 
-The animation controls invoke the existing BOOP face behaviors. Notification demos use the production `BoopNotificationPuppetView` with local-only fixtures. Locked demo content is privacy-redacted by the production presentation model. The dev activity is `exported=false` and does not call Android `NotificationManager`, the notification listener service, or `BoopNotificationRuntime`.
+The BOOP Dev presentation is fullscreen/immersive, black, scrollable and remote-friendly. Animation actions are Wake, Think, Stop, Berry 1, Berry 2, Berry 3, Shake and Sleep and call the real current BOOP face/animation methods rather than a fake engine.
 
-v69 carries the v68 procedural hue-wire fix and the finished v65 procedural-eye/sclera stack forward unchanged. v68 was not physically accepted before v69 was built.
+Notification demos are local presentation fixtures for Facebook, WhatsApp, Gmail, X/Twitter, YouTube, Messenger, Instagram, Discord, Spotify and Reddit, plus Locked and Bundle. They use the real `BoopNotificationPuppetView`, current procedural eye stack and exact approved five-finger yellow hands. They do not post through Android `NotificationManager`, do not call the notification runtime/listener and do not require listener access merely to preview. The concept sheet `Glossy Boop App Icon Collection.png` supplied service identity/style direction only; old sheet eyes/hands are not runtime art.
 
-Built source:
+Locked preview remains privacy-redacted through the production presentation model: app identity/icon/count style only before authentication, with no message title/body leakage.
 
-`709c74eb39d28c0d894661e5bde66da18f9ea6cf`
+## CI / artifact status
 
-Release evidence:
+Final exact-head evidence:
 
-- version 69 / `1.2.23-unified-dev-menu`;
-- main workflow `34317400589` SUCCESS;
-- separate Shield HOME routing workflow `34317400631` SUCCESS;
-- artifact `BOOP-Unified`, ID `10090644503`;
-- artifact digest `sha256:af14acccfa0ae730a1254f518f2210a46645d45fdcd6d2056f9aa4fb4b9449a9`;
-- APK SHA-256 `31da93c3fdfd7116b8bc9b083fd947dadc5952a77c5c67c5d3808b99f0c57f88`;
+- Build BOOP Unified APK workflow `34322564398`: SUCCESS;
+- Shield HOME routing workflow `34322564357`: SUCCESS;
+- artifact `BOOP-Unified`, ID `10092558111`, size `62,739,368` bytes;
+- artifact ZIP SHA-256 `3c68ba78f2fb36bf50d6bbaf0d85a50a8a51dc5d345349b2dc70c32ae45c00e1`;
+- APK SHA-256 `53c2956873e7a7268b829da5d9bd4f23d0f6ee20a0919051cb95bbd275f867a4`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
-- Shield focused tests 58/58, zero failures/errors/skips;
-- Unified focused tests 140/140, zero failures/errors/skips;
-- dev-menu/local-only preview plumbing, notification presenter/manifest, wake handoff, Launcher preservation, signed assembly, package/version/signer/integrity and artifact upload all PASS.
+- Shield focused functional tests 58/58;
+- Unified focused functional tests 144/144;
+- Shield HOME routing PASS;
+- materialization, notification/dev contracts, wake handoff, Launcher checks, signed assembly, package/version/signature/archive verification and artifact upload PASS.
 
-The downloaded artifact was independently extracted and the APK re-hashed; it matched the CI receipt exactly.
+The exact final artifact ZIP was independently downloaded and SHA-256 checked against GitHub's artifact digest. Its APK was independently extracted and SHA-256 checked against the CI receipt. The APK v2 signing block was independently parsed and the embedded signer certificate digest matched the canonical permanent BOOP signer.
 
-Detailed receipt: `docs/BOOP-V69-DEV-MENU-RECEIPT.md`.
+Detailed receipt: `docs/BOOP-V70-DEV-MENU-DOODS-RECEIPT.md`.
 
 ## Acceptance boundary
 
-**No visual acceptance was performed by GitHub.** v69 is CI/signer green only.
+**GitHub performed NO visual acceptance. Physical v70 acceptance is pending and belongs to Ryan.** No screenshot tests, golden-image tests, pixel comparisons or automated visual judgments were used.
 
 Physical checks:
 
-1. Voice settings -> `Dev menu` opens BOOP Dev.
-2. Wake/Think/Berry/Shake/Sleep run correctly and look right on-device.
-3. Unlocked/Locked/Bundle demos use the intended BOOP notification puppet presentation.
-4. Locked demo exposes no title/body text.
-5. Demo previews do not create Android shade notifications.
-6. Recheck carried v68 hue: slider changes the procedural iris live while sclera, pupils, catchlights and black lids stay unchanged.
-7. Finished v65 sclera/white blend remains correct.
+1. Say `dev menu` and confirm the lab opens locally before any HA/chat fallback.
+2. Confirm fullscreen/immersive behavior and clean exit/return.
+3. Exercise Wake, Think/Stop, Berry 1/2/3, Shake and Sleep repeatedly.
+4. Exercise all ten app-specific notification doods plus Locked and Bundle; judge service identity, current BOOP face and exact hands on-device.
+5. Confirm Locked exposes no title/body and previews add no real shade notification.
+6. Recheck carried v68 iris-only hue and finished v65 sclera/white blend.
 
-Do not create or repoint a v69 rollback checkpoint until Ryan explicitly accepts this exact signed APK.
+No v70 rollback checkpoint was created or repointed. Latest physically accepted rollback remains v59.
 
 ## Durable eye ordering
 
-The canonical procedural eye stages remain:
+Canonical procedural-eye stages remain:
 
 1. `patch-unified-reading-eyes.py`;
 2. `patch-v64-procedural-sclera.py`;
 3. `patch-v65-feathered-sclera.py`.
 
-No later materialization stage may rerun the legacy bitmap hue setter after those stages. The Shield dashboard pass must remain unrelated to Wall iris tinting.
+No later materialization stage may rerun the legacy bitmap hue setter. User hue remains procedural-iris-only. Sclera, pupils, catchlights, black lids and approved eye artwork remain outside hue control.
+
+## Locked notification hands
+
+Canonical asset `unified/assets/boop-notifications/boop-yellow-hands-approved.png` remains exactly:
+
+- size `1,809,990` bytes;
+- SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`;
+- Git blob `d47037271bf320f4f110e3f8416f59882062afac`.
+
+Do not regenerate, recompress, recolour/recolor, crop or weaken this guard.
 
 ## Preserved contracts
 
-Android's original notification remains authoritative; BOOP mirrors it. Locked notification presentation stays privacy-safe. Exact notification hands remain locked. Preserve procedural iris-only hue, finished sclera feathering, approved black-lidded eye master, blink, notifications, headphones/puppetry, one microphone owner, wake/name architecture, exact 100 ms bridge, uncensored speech request, HA names/Home controls, room isolation and Shield scaling.
+Android's original notification remains authoritative; BOOP mirrors it. Production locked presentation remains identity/icon/count-only before authentication. Preserve approved black-lidded eye master, procedural iris-only hue, feathered sclera, blink, notification privacy/tap/dismiss semantics, headphones/puppetry, one microphone owner, wake/name architecture, exact 100 ms wake bridge, uncensored speech request, HA names/Home controls, room isolation and idempotent Shield scaling.
 
-The clean Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a later merge. No automatic installs/grants or signer/package changes.
+The clean Shield HOME remains standalone on `boop-shield-clean-launcher` / package `com.boop.shieldhome` until Ryan explicitly approves a later merge. No automatic installs/grants or signer/package changes.
 
 ## Physically accepted rollback
 
