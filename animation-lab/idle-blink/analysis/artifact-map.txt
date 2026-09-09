@@ -1,0 +1,669 @@
+BOOP Shield eyelid-artifact inspection
+========================================
+source=assets/boop-headphones-source.png
+sha256=c86d8fa046d1d6b6c96c15d5a6e38f3c0b89533a65946fc6d59347e7679250e9
+size_bytes=1192193
+image=1536x1024 RGBA
+alpha_bbox=(218, 120, 1300, 902)
+
+Legend: # = mostly <=42 RGB, + = mostly <=80 RGB, . = opaque brighter pixel, space = transparent.
+This is only a diagnostic map. No pixels are changed by this script.
+
+[left] roi=(360, 360, 760, 660)
+largest dark connected components (threshold <=42):
+  area= 25311 bbox=(360, 415, 718, 660)
+  area= 14993 bbox=(511, 506, 677, 660)
+  area=  4040 bbox=(360, 360, 475, 435)
+  area=    22 bbox=(442, 434, 463, 453)
+  area=    12 bbox=(572, 412, 584, 413)
+  area=     9 bbox=(586, 412, 595, 413)
+  area=     9 bbox=(638, 424, 647, 429)
+  area=     5 bbox=(564, 413, 569, 414)
+  area=     4 bbox=(601, 413, 605, 414)
+  area=     4 bbox=(558, 414, 562, 415)
+  area=     4 bbox=(698, 656, 699, 660)
+  area=     3 bbox=(360, 361, 362, 364)
+ascii map, 5 source pixels per character:
+|.+.....+###############
+|+......###############
+|.+....###############
+|+###++##############
+|++#################
+|++.###############
+|..+###########
+|..###########
+|.+##########
+|+###########
+|###########                            ###++++++##
+|###########                        ####++++++++++++++#
+|###########                      ####++++++++++......++#
+|#####+++++++++#               #####+++++++++++..........+#
+|##++++++++++++++#            #####+++++++++++++...........+#
+|+.+++++.......+..#         #######+++++++++++++++..........+#
+|+++++........++++++#      #######++++++++++++++++++........++#
+|++++........++++++++#   #########+++++++++++++++++++++......++#
+|+++........++++++++++  ##########################++++++++....++#
+|+++.......++++######+###############################++++++++++++#
+|++.......+++##########################################+++++++++++#
+|+.......+++#############################################++++++++++
+|+......+++###############################################+++++++++#
+|.......++#################################################++++++++##
+|......++#############################+..+++++++#############+++++###
+|.....+++#########################+..............+++##########+#######
+|.....++########################....................++################
+|....+++######################........................++###############
+|...+++#####################............................++#############
+|...++#####################................########......++############
+|..+++###################...............##############....++############
+|..+++##################..............++++++++##########....+###########
+|.+++##################.............#+++..+.++++#########....+##########
+|.++##################.............##++......+#############...+#########
+|+++#################.............++++........##############..++########
+|+++################.............+++..........##############+...+########
+|+++################............+++...........###############...+########
+|++################.............++............################...+#######
+|++###############.............++.............################....#######
+|+################............+.....#........+#################...+######
+|+###############.............+....###+....+++#################....######
+|+##############+..................########++###################...+#####
+|###############..................##############################....#####
+|##############+..................###..#########################....#####
+|##############...................############################+#....+####
+|##############...................############################+##....####
+|#############....................############################+++....####
+|#############...................+############################+++....####
+|#############....................############################+++....####
+|############.....................###########################..++....+##
+|############.....................###########################..++.....
+|############.....................###########################.........
+|############......................#########################..........
+|###########.......................#########################..........
+|###########........................#######################...........
+|###########........................#######################...........
+|###########.........................############++++#####............
+|###########..........................##########++++++###............#
+|###########...........................########++.....++.............
+|###########.............................#####++.....................
+row counts where dark pixels exist:
+0360: core42= 74 dark80= 80 opaque=113
+0361: core42= 74 dark80= 79 opaque=112
+0362: core42= 73 dark80= 78 opaque=112
+0363: core42= 72 dark80= 79 opaque=111
+0364: core42= 70 dark80= 77 opaque=110
+0365: core42= 69 dark80= 78 opaque=109
+0366: core42= 69 dark80= 77 opaque=108
+0367: core42= 69 dark80= 77 opaque=107
+0368: core42= 69 dark80= 76 opaque=106
+0369: core42= 70 dark80= 77 opaque=105
+0370: core42= 70 dark80= 77 opaque=104
+0371: core42= 70 dark80= 77 opaque=103
+0372: core42= 70 dark80= 79 opaque=102
+0373: core42= 69 dark80= 78 opaque=101
+0374: core42= 68 dark80= 78 opaque=100
+0375: core42= 68 dark80= 88 opaque= 99
+0376: core42= 73 dark80= 88 opaque= 97
+0377: core42= 76 dark80= 90 opaque= 96
+0378: core42= 77 dark80= 92 opaque= 95
+0379: core42= 80 dark80= 93 opaque= 94
+0380: core42= 80 dark80= 91 opaque= 93
+0381: core42= 82 dark80= 89 opaque= 92
+0382: core42= 71 dark80= 89 opaque= 91
+0383: core42= 72 dark80= 87 opaque= 90
+0384: core42= 72 dark80= 84 opaque= 89
+0385: core42= 69 dark80= 81 opaque= 87
+0386: core42= 69 dark80= 76 opaque= 86
+0387: core42= 66 dark80= 72 opaque= 83
+0388: core42= 55 dark80= 60 opaque= 71
+0389: core42= 54 dark80= 58 opaque= 70
+0390: core42= 53 dark80= 57 opaque= 69
+0391: core42= 53 dark80= 55 opaque= 68
+0392: core42= 53 dark80= 55 opaque= 67
+0393: core42= 52 dark80= 54 opaque= 66
+0394: core42= 52 dark80= 53 opaque= 65
+0395: core42= 51 dark80= 53 opaque= 64
+0396: core42= 51 dark80= 53 opaque= 63
+0397: core42= 51 dark80= 52 opaque= 62
+0398: core42= 51 dark80= 52 opaque= 61
+0399: core42= 51 dark80= 53 opaque= 61
+0400: core42= 51 dark80= 52 opaque= 60
+0401: core42= 50 dark80= 52 opaque= 59
+0402: core42= 49 dark80= 51 opaque= 58
+0403: core42= 49 dark80= 51 opaque= 57
+0404: core42= 50 dark80= 52 opaque= 57
+0405: core42= 49 dark80= 51 opaque= 56
+0406: core42= 49 dark80= 51 opaque= 55
+0407: core42= 50 dark80= 52 opaque= 55
+0408: core42= 50 dark80= 52 opaque= 54
+0409: core42= 50 dark80= 52 opaque= 53
+0410: core42= 49 dark80= 51 opaque= 52
+0411: core42= 49 dark80= 52 opaque= 52
+0412: core42= 70 dark80= 75 opaque= 75
+0413: core42= 58 dark80= 93 opaque= 93
+0414: core42= 54 dark80=104 opaque=104
+0415: core42= 57 dark80=112 opaque=112
+0416: core42= 58 dark80=121 opaque=121
+0417: core42= 60 dark80=129 opaque=129
+0418: core42= 61 dark80=135 opaque=135
+0419: core42= 62 dark80=141 opaque=141
+0420: core42= 62 dark80=122 opaque=146
+0421: core42= 62 dark80=120 opaque=152
+0422: core42= 63 dark80=119 opaque=157
+0423: core42= 66 dark80=121 opaque=162
+0424: core42= 69 dark80=124 opaque=168
+0425: core42= 51 dark80=125 opaque=173
+0426: core42= 45 dark80=133 opaque=184
+0427: core42= 41 dark80=139 opaque=192
+0428: core42= 39 dark80=143 opaque=199
+0429: core42= 38 dark80=150 opaque=207
+0430: core42= 34 dark80=153 opaque=211
+0431: core42= 34 dark80=160 opaque=218
+0432: core42= 33 dark80=162 opaque=224
+0433: core42= 32 dark80=160 opaque=229
+0434: core42= 28 dark80=160 opaque=235
+0435: core42= 26 dark80=155 opaque=239
+0436: core42= 28 dark80=143 opaque=243
+0437: core42= 33 dark80=141 opaque=248
+0438: core42= 31 dark80=139 opaque=252
+0439: core42= 32 dark80=145 opaque=256
+0440: core42= 34 dark80=145 opaque=260
+0441: core42= 37 dark80=162 opaque=265
+0442: core42= 35 dark80=166 opaque=268
+0443: core42= 34 dark80=184 opaque=271
+0444: core42= 36 dark80=189 opaque=275
+0445: core42= 36 dark80=197 opaque=278
+0446: core42= 36 dark80=200 opaque=281
+0447: core42= 38 dark80=208 opaque=285
+0448: core42= 43 dark80=213 opaque=288
+0449: core42= 76 dark80=221 opaque=291
+0450: core42= 82 dark80=226 opaque=293
+0451: core42=101 dark80=234 opaque=297
+0452: core42=112 dark80=241 opaque=300
+0453: core42=123 dark80=246 opaque=302
+0454: core42=130 dark80=253 opaque=305
+0455: core42=147 dark80=264 opaque=309
+0456: core42=155 dark80=270 opaque=310
+0457: core42=167 dark80=276 opaque=313
+0458: core42=173 dark80=275 opaque=315
+0459: core42=180 dark80=279 opaque=318
+0460: core42=190 dark80=280 opaque=321
+0461: core42=195 dark80=282 opaque=322
+0462: core42=200 dark80=285 opaque=325
+0463: core42=206 dark80=288 opaque=326
+0464: core42=213 dark80=287 opaque=327
+0465: core42=214 dark80=289 opaque=327
+0466: core42=217 dark80=290 opaque=328
+0467: core42=221 dark80=293 opaque=329
+0468: core42=222 dark80=294 opaque=329
+0469: core42=224 dark80=297 opaque=330
+0470: core42=225 dark80=297 opaque=331
+0471: core42=231 dark80=296 opaque=331
+0472: core42=232 dark80=299 opaque=332
+0473: core42=237 dark80=298 opaque=333
+0474: core42=239 dark80=298 opaque=333
+0475: core42=242 dark80=298 opaque=334
+0476: core42=245 dark80=300 opaque=334
+0477: core42=250 dark80=302 opaque=335
+0478: core42=252 dark80=304 opaque=336
+0479: core42=237 dark80=303 opaque=336
+0480: core42=222 dark80=305 opaque=337
+0481: core42=214 dark80=294 opaque=337
+0482: core42=206 dark80=274 opaque=338
+0483: core42=202 dark80=265 opaque=338
+0484: core42=199 dark80=255 opaque=339
+0485: core42=193 dark80=246 opaque=339
+0486: core42=191 dark80=239 opaque=340
+0487: core42=194 dark80=236 opaque=340
+0488: core42=199 dark80=230 opaque=341
+0489: core42=198 dark80=227 opaque=341
+0490: core42=195 dark80=226 opaque=342
+0491: core42=192 dark80=218 opaque=342
+0492: core42=189 dark80=215 opaque=343
+0493: core42=187 dark80=212 opaque=343
+0494: core42=186 dark80=209 opaque=344
+0495: core42=183 dark80=207 opaque=344
+0496: core42=178 dark80=203 opaque=344
+0497: core42=174 dark80=204 opaque=345
+0498: core42=174 dark80=198 opaque=345
+0499: core42=172 dark80=199 opaque=346
+0500: core42=169 dark80=196 opaque=346
+0501: core42=168 dark80=191 opaque=346
+0502: core42=167 dark80=189 opaque=347
+0503: core42=165 dark80=187 opaque=347
+0504: core42=163 dark80=184 opaque=347
+0505: core42=162 dark80=194 opaque=348
+0506: core42=184 dark80=208 opaque=348
+0507: core42=192 dark80=216 opaque=348
+0508: core42=201 dark80=222 opaque=349
+0509: core42=204 dark80=228 opaque=349
+0510: core42=209 dark80=230 opaque=349
+0511: core42=213 dark80=235 opaque=350
+0512: core42=215 dark80=238 opaque=350
+0513: core42=215 dark80=242 opaque=350
+0514: core42=203 dark80=245 opaque=351
+0515: core42=195 dark80=246 opaque=351
+0516: core42=189 dark80=248 opaque=351
+0517: core42=189 dark80=249 opaque=352
+0518: core42=188 dark80=251 opaque=352
+0519: core42=186 dark80=249 opaque=352
+0520: core42=181 dark80=246 opaque=352
+0521: core42=182 dark80=239 opaque=353
+0522: core42=181 dark80=236 opaque=353
+0523: core42=185 dark80=231 opaque=353
+0524: core42=187 dark80=226 opaque=353
+0525: core42=183 dark80=230 opaque=353
+0526: core42=195 dark80=229 opaque=354
+0527: core42=199 dark80=232 opaque=354
+0528: core42=200 dark80=229 opaque=354
+0529: core42=197 dark80=231 opaque=354
+0530: core42=196 dark80=229 opaque=354
+0531: core42=193 dark80=229 opaque=355
+0532: core42=190 dark80=228 opaque=355
+0533: core42=190 dark80=224 opaque=355
+0534: core42=189 dark80=220 opaque=355
+0535: core42=189 dark80=219 opaque=355
+0536: core42=190 dark80=219 opaque=356
+0537: core42=192 dark80=215 opaque=356
+0538: core42=190 dark80=219 opaque=356
+0539: core42=189 dark80=218 opaque=356
+0540: core42=187 dark80=218 opaque=356
+0541: core42=189 dark80=218 opaque=356
+0542: core42=185 dark80=216 opaque=356
+0543: core42=189 dark80=217 opaque=357
+0544: core42=189 dark80=215 opaque=357
+0545: core42=188 dark80=214 opaque=357
+0546: core42=186 dark80=213 opaque=357
+0547: core42=188 dark80=212 opaque=357
+0548: core42=187 dark80=210 opaque=357
+0549: core42=188 dark80=212 opaque=357
+0550: core42=187 dark80=209 opaque=357
+0551: core42=189 dark80=210 opaque=357
+0552: core42=184 dark80=210 opaque=357
+0553: core42=185 dark80=209 opaque=357
+0554: core42=187 dark80=209 opaque=357
+0555: core42=187 dark80=208 opaque=358
+0556: core42=187 dark80=210 opaque=358
+0557: core42=188 dark80=211 opaque=358
+0558: core42=191 dark80=213 opaque=358
+0559: core42=194 dark80=213 opaque=358
+0560: core42=194 dark80=217 opaque=358
+0561: core42=197 dark80=219 opaque=358
+0562: core42=201 dark80=221 opaque=358
+0563: core42=202 dark80=227 opaque=358
+0564: core42=204 dark80=228 opaque=358
+0565: core42=210 dark80=237 opaque=358
+0566: core42=217 dark80=248 opaque=358
+0567: core42=219 dark80=249 opaque=358
+0568: core42=229 dark80=247 opaque=358
+0569: core42=239 dark80=248 opaque=358
+0570: core42=238 dark80=247 opaque=358
+0571: core42=235 dark80=244 opaque=358
+0572: core42=231 dark80=241 opaque=358
+0573: core42=231 dark80=239 opaque=358
+0574: core42=232 dark80=236 opaque=358
+0575: core42=230 dark80=236 opaque=358
+0576: core42=230 dark80=235 opaque=358
+0577: core42=226 dark80=236 opaque=358
+0578: core42=219 dark80=235 opaque=358
+0579: core42=221 dark80=236 opaque=358
+0580: core42=222 dark80=237 opaque=358
+0581: core42=224 dark80=239 opaque=358
+0582: core42=228 dark80=244 opaque=358
+0583: core42=230 dark80=242 opaque=358
+0584: core42=227 dark80=242 opaque=358
+0585: core42=229 dark80=242 opaque=358
+0586: core42=230 dark80=241 opaque=358
+0587: core42=230 dark80=241 opaque=358
+0588: core42=228 dark80=239 opaque=358
+0589: core42=226 dark80=237 opaque=357
+0590: core42=225 dark80=236 opaque=357
+0591: core42=225 dark80=237 opaque=357
+0592: core42=223 dark80=237 opaque=357
+0593: core42=220 dark80=236 opaque=357
+0594: core42=220 dark80=236 opaque=357
+0595: core42=219 dark80=236 opaque=357
+0596: core42=218 dark80=233 opaque=356
+0597: core42=217 dark80=233 opaque=356
+0598: core42=215 dark80=232 opaque=356
+0599: core42=215 dark80=231 opaque=356
+0600: core42=215 dark80=230 opaque=356
+0601: core42=214 dark80=227 opaque=356
+0602: core42=213 dark80=224 opaque=355
+0603: core42=213 dark80=223 opaque=355
+0604: core42=212 dark80=221 opaque=355
+0605: core42=211 dark80=218 opaque=354
+0606: core42=204 dark80=212 opaque=349
+0607: core42=201 dark80=208 opaque=347
+0608: core42=199 dark80=205 opaque=346
+0609: core42=198 dark80=203 opaque=345
+0610: core42=197 dark80=203 opaque=345
+0611: core42=196 dark80=202 opaque=345
+0612: core42=195 dark80=200 opaque=345
+0613: core42=193 dark80=200 opaque=345
+0614: core42=193 dark80=196 opaque=345
+0615: core42=193 dark80=196 opaque=345
+0616: core42=192 dark80=195 opaque=345
+0617: core42=190 dark80=193 opaque=345
+0618: core42=190 dark80=193 opaque=345
+0619: core42=188 dark80=192 opaque=345
+0620: core42=186 dark80=189 opaque=344
+0621: core42=185 dark80=188 opaque=344
+0622: core42=184 dark80=187 opaque=344
+0623: core42=183 dark80=186 opaque=344
+0624: core42=183 dark80=185 opaque=344
+0625: core42=181 dark80=184 opaque=344
+0626: core42=180 dark80=180 opaque=343
+0627: core42=178 dark80=180 opaque=343
+0628: core42=178 dark80=179 opaque=343
+0629: core42=176 dark80=177 opaque=343
+0630: core42=175 dark80=176 opaque=343
+0631: core42=173 dark80=175 opaque=343
+0632: core42=172 dark80=175 opaque=343
+0633: core42=171 dark80=172 opaque=343
+0634: core42=170 dark80=170 opaque=343
+0635: core42=170 dark80=170 opaque=343
+0636: core42=167 dark80=167 opaque=342
+0637: core42=164 dark80=165 opaque=342
+0638: core42=162 dark80=164 opaque=342
+0639: core42=158 dark80=164 opaque=342
+0640: core42=144 dark80=162 opaque=342
+0641: core42=137 dark80=160 opaque=342
+0642: core42=131 dark80=156 opaque=341
+0643: core42=127 dark80=154 opaque=341
+0644: core42=123 dark80=153 opaque=341
+0645: core42=118 dark80=152 opaque=341
+0646: core42=115 dark80=150 opaque=341
+0647: core42=111 dark80=139 opaque=341
+0648: core42=107 dark80=128 opaque=340
+0649: core42=102 dark80=122 opaque=340
+0650: core42=100 dark80=117 opaque=340
+0651: core42= 96 dark80=112 opaque=340
+0652: core42= 93 dark80=107 opaque=340
+0653: core42= 90 dark80=102 opaque=339
+0654: core42= 87 dark80= 97 opaque=339
+0655: core42= 85 dark80= 96 opaque=339
+0656: core42= 84 dark80= 92 opaque=339
+0657: core42= 81 dark80= 89 opaque=339
+0658: core42= 79 dark80= 87 opaque=339
+0659: core42= 76 dark80= 85 opaque=339
+
+[right] roi=(760, 360, 1160, 660)
+largest dark connected components (threshold <=42):
+  area= 16521 bbox=(788, 470, 1124, 660)
+  area= 10762 bbox=(859, 555, 1027, 660)
+  area=    26 bbox=(1154, 360, 1160, 367)
+  area=    25 bbox=(1038, 491, 1062, 515)
+  area=    19 bbox=(909, 465, 928, 470)
+  area=    18 bbox=(1127, 539, 1142, 556)
+  area=    15 bbox=(795, 563, 803, 578)
+  area=    12 bbox=(1062, 516, 1071, 528)
+  area=     7 bbox=(789, 618, 793, 625)
+  area=     6 bbox=(1081, 547, 1084, 553)
+  area=     6 bbox=(852, 603, 856, 609)
+  area=     5 bbox=(783, 635, 785, 639)
+ascii map, 5 source pixels per character:
+|                                                                              ##
+|                                                                               #
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|                                  ##+++++++#
+|                             ##++++++++++++++++#
+|                           ###++++++++++.........+#
+|                        #####+++++++++++...........+#
+|                       #####++++++++++++.............#
+|                     #######++++++++++++++............+#
+|                    ########++++++++++++++++............#
+|                  ##########++++++++++++++++++...........#
+|                 #######################+++++++++.........#
+|                ##########################+++++++++........#
+|               #+############################+++++++++......#
+|              #++##############################++++++++++..++
+|             #+++###############################+++++++++++++#
+|            #+++##################################++++++++++++#
+|            +++##############+++++++##################+++++++++               #+
+|           #++##########+............++++################++++++#            +...
+|          #++#########..................+++################+++++           #....
+|          ++########......................+++##################+#         #.....
+|         ++#######..........................+++#################+        #.++...
+|        #++######.............##########......++################+#       +.++...
+|        ++######...........+###############....++#################      #+++....
+|       #+#####+...........##+++++###########+...++################      ++++....
+|       ######...........##+++..+++++##########....+################    #++++....
+|      #+####...........##++.....+##############....+################   #++++....
+|      #####+..........+++........###############....+####################++.....
+|      #####..........+++..........###############...++###################++.....
+|     #####..........++++..........################...++#################+++.....
+|     ####...........++............#################...+#################+++.....
+|     ####..........+.............+#################....+################+++.....
+|     ###..........++....#........+##################....+###############++......
+|      #...........+....##......++###################....+###############++......
+|      +................######+++#####################....+#############+++......
+|     #................###############################....+#############+++......
+|     +................###.###########################.....#############+++......
+|     .................###.########################++#.....+############++.......
+|    #................+############################++##....+############++.......
+|    .................#############################++++.....###########+++.......
+|   #.................#############################.+++.....+##########+++.......
+|   +.................#############################..++.....+##########+++.......
+|   ..................#############################.........+#######+##+++.......
+row counts where dark pixels exist:
+0360: core42=  6 dark80=  6 opaque=  6
+0361: core42=  5 dark80=  5 opaque=  5
+0362: core42=  5 dark80=  5 opaque=  5
+0363: core42=  4 dark80=  4 opaque=  4
+0364: core42=  3 dark80=  3 opaque=  3
+0365: core42=  2 dark80=  2 opaque=  2
+0366: core42=  1 dark80=  1 opaque=  1
+0463: core42=  8 dark80= 35 opaque= 35
+0464: core42=  7 dark80= 48 opaque= 48
+0465: core42=  6 dark80= 59 opaque= 59
+0466: core42=  7 dark80= 68 opaque= 68
+0467: core42=  5 dark80= 73 opaque= 76
+0468: core42=  5 dark80= 69 opaque= 83
+0469: core42=  5 dark80= 63 opaque= 89
+0470: core42=  4 dark80= 61 opaque= 95
+0471: core42=  4 dark80= 61 opaque=100
+0472: core42=  8 dark80= 63 opaque=106
+0473: core42=  8 dark80= 63 opaque=111
+0474: core42=  9 dark80= 65 opaque=116
+0475: core42= 13 dark80= 66 opaque=121
+0476: core42= 14 dark80= 68 opaque=125
+0477: core42= 15 dark80= 71 opaque=129
+0478: core42= 17 dark80= 73 opaque=133
+0479: core42= 19 dark80= 77 opaque=137
+0480: core42= 21 dark80= 80 opaque=141
+0481: core42= 20 dark80= 82 opaque=143
+0482: core42= 22 dark80= 85 opaque=148
+0483: core42= 23 dark80= 87 opaque=151
+0484: core42= 24 dark80= 90 opaque=154
+0485: core42= 26 dark80= 92 opaque=157
+0486: core42= 27 dark80= 96 opaque=160
+0487: core42= 28 dark80=100 opaque=163
+0488: core42= 29 dark80=106 opaque=167
+0489: core42= 32 dark80=108 opaque=169
+0490: core42= 32 dark80=112 opaque=172
+0491: core42= 34 dark80=117 opaque=175
+0492: core42= 34 dark80=119 opaque=177
+0493: core42= 37 dark80=124 opaque=180
+0494: core42= 39 dark80=125 opaque=182
+0495: core42= 42 dark80=131 opaque=185
+0496: core42= 42 dark80=133 opaque=188
+0497: core42= 43 dark80=136 opaque=190
+0498: core42= 45 dark80=138 opaque=192
+0499: core42= 51 dark80=142 opaque=195
+0500: core42= 84 dark80=147 opaque=197
+0501: core42= 92 dark80=151 opaque=199
+0502: core42=104 dark80=154 opaque=201
+0503: core42=110 dark80=159 opaque=203
+0504: core42=117 dark80=163 opaque=206
+0505: core42=120 dark80=168 opaque=208
+0506: core42=124 dark80=169 opaque=210
+0507: core42=126 dark80=174 opaque=212
+0508: core42=126 dark80=177 opaque=214
+0509: core42=130 dark80=179 opaque=216
+0510: core42=132 dark80=182 opaque=217
+0511: core42=135 dark80=187 opaque=219
+0512: core42=137 dark80=191 opaque=221
+0513: core42=140 dark80=197 opaque=223
+0514: core42=143 dark80=202 opaque=225
+0515: core42=144 dark80=204 opaque=226
+0516: core42=147 dark80=210 opaque=228
+0517: core42=148 dark80=215 opaque=230
+0518: core42=149 dark80=218 opaque=232
+0519: core42=152 dark80=225 opaque=233
+0520: core42=154 dark80=233 opaque=235
+0521: core42=157 dark80=237 opaque=237
+0522: core42=157 dark80=239 opaque=239
+0523: core42=161 dark80=240 opaque=240
+0524: core42=161 dark80=241 opaque=241
+0525: core42=164 dark80=243 opaque=243
+0526: core42=166 dark80=244 opaque=244
+0527: core42=168 dark80=246 opaque=246
+0528: core42=168 dark80=247 opaque=247
+0529: core42=172 dark80=248 opaque=248
+0530: core42=161 dark80=250 opaque=250
+0531: core42=144 dark80=251 opaque=251
+0532: core42=141 dark80=253 opaque=253
+0533: core42=139 dark80=224 opaque=254
+0534: core42=135 dark80=217 opaque=262
+0535: core42=136 dark80=210 opaque=268
+0536: core42=130 dark80=202 opaque=271
+0537: core42=129 dark80=193 opaque=274
+0538: core42=126 dark80=186 opaque=277
+0539: core42=128 dark80=184 opaque=281
+0540: core42=124 dark80=179 opaque=282
+0541: core42=124 dark80=176 opaque=286
+0542: core42=119 dark80=173 opaque=288
+0543: core42=120 dark80=171 opaque=290
+0544: core42=120 dark80=166 opaque=292
+0545: core42=121 dark80=164 opaque=295
+0546: core42=120 dark80=161 opaque=296
+0547: core42=126 dark80=158 opaque=298
+0548: core42=123 dark80=153 opaque=299
+0549: core42=123 dark80=151 opaque=302
+0550: core42=122 dark80=152 opaque=304
+0551: core42=121 dark80=152 opaque=305
+0552: core42=120 dark80=152 opaque=307
+0553: core42=117 dark80=152 opaque=308
+0554: core42=116 dark80=151 opaque=310
+0555: core42=131 dark80=169 opaque=312
+0556: core42=143 dark80=178 opaque=313
+0557: core42=152 dark80=187 opaque=315
+0558: core42=157 dark80=193 opaque=316
+0559: core42=166 dark80=199 opaque=318
+0560: core42=167 dark80=204 opaque=318
+0561: core42=176 dark80=213 opaque=321
+0562: core42=178 dark80=216 opaque=321
+0563: core42=171 dark80=220 opaque=323
+0564: core42=172 dark80=223 opaque=325
+0565: core42=173 dark80=225 opaque=326
+0566: core42=167 dark80=227 opaque=327
+0567: core42=160 dark80=228 opaque=329
+0568: core42=159 dark80=230 opaque=330
+0569: core42=153 dark80=231 opaque=331
+0570: core42=151 dark80=227 opaque=333
+0571: core42=151 dark80=224 opaque=333
+0572: core42=154 dark80=224 opaque=336
+0573: core42=156 dark80=229 opaque=337
+0574: core42=158 dark80=223 opaque=340
+0575: core42=166 dark80=219 opaque=341
+0576: core42=172 dark80=219 opaque=343
+0577: core42=176 dark80=218 opaque=345
+0578: core42=177 dark80=218 opaque=347
+0579: core42=179 dark80=219 opaque=350
+0580: core42=192 dark80=234 opaque=366
+0581: core42=190 dark80=231 opaque=367
+0582: core42=190 dark80=229 opaque=367
+0583: core42=190 dark80=227 opaque=368
+0584: core42=188 dark80=224 opaque=368
+0585: core42=187 dark80=220 opaque=368
+0586: core42=188 dark80=220 opaque=369
+0587: core42=187 dark80=220 opaque=369
+0588: core42=188 dark80=220 opaque=370
+0589: core42=187 dark80=222 opaque=370
+0590: core42=184 dark80=222 opaque=370
+0591: core42=185 dark80=223 opaque=371
+0592: core42=185 dark80=222 opaque=371
+0593: core42=186 dark80=224 opaque=372
+0594: core42=187 dark80=224 opaque=372
+0595: core42=185 dark80=220 opaque=372
+0596: core42=183 dark80=214 opaque=372
+0597: core42=182 dark80=214 opaque=372
+0598: core42=183 dark80=210 opaque=372
+0599: core42=182 dark80=207 opaque=372
+0600: core42=180 dark80=207 opaque=372
+0601: core42=182 dark80=204 opaque=372
+0602: core42=178 dark80=204 opaque=372
+0603: core42=179 dark80=205 opaque=372
+0604: core42=178 dark80=203 opaque=372
+0605: core42=176 dark80=203 opaque=372
+0606: core42=178 dark80=204 opaque=372
+0607: core42=177 dark80=207 opaque=372
+0608: core42=177 dark80=207 opaque=372
+0609: core42=178 dark80=208 opaque=371
+0610: core42=176 dark80=207 opaque=370
+0611: core42=178 dark80=209 opaque=369
+0612: core42=177 dark80=207 opaque=368
+0613: core42=176 dark80=209 opaque=367
+0614: core42=179 dark80=211 opaque=367
+0615: core42=181 dark80=213 opaque=367
+0616: core42=185 dark80=218 opaque=367
+0617: core42=191 dark80=225 opaque=367
+0618: core42=203 dark80=234 opaque=368
+0619: core42=205 dark80=236 opaque=369
+0620: core42=215 dark80=234 opaque=369
+0621: core42=216 dark80=235 opaque=370
+0622: core42=217 dark80=235 opaque=370
+0623: core42=213 dark80=232 opaque=371
+0624: core42=210 dark80=228 opaque=371
+0625: core42=208 dark80=227 opaque=371
+0626: core42=208 dark80=226 opaque=372
+0627: core42=205 dark80=225 opaque=372
+0628: core42=204 dark80=224 opaque=373
+0629: core42=204 dark80=227 opaque=374
+0630: core42=198 dark80=224 opaque=374
+0631: core42=198 dark80=227 opaque=374
+0632: core42=197 dark80=225 opaque=374
+0633: core42=200 dark80=229 opaque=375
+0634: core42=202 dark80=233 opaque=375
+0635: core42=201 dark80=236 opaque=376
+0636: core42=204 dark80=235 opaque=377
+0637: core42=204 dark80=234 opaque=377
+0638: core42=202 dark80=233 opaque=377
+0639: core42=201 dark80=233 opaque=377
+0640: core42=201 dark80=232 opaque=378
+0641: core42=199 dark80=231 opaque=378
+0642: core42=197 dark80=231 opaque=378
+0643: core42=197 dark80=232 opaque=379
+0644: core42=195 dark80=230 opaque=380
+0645: core42=195 dark80=228 opaque=380
+0646: core42=196 dark80=227 opaque=380
+0647: core42=195 dark80=225 opaque=380
+0648: core42=193 dark80=221 opaque=380
+0649: core42=194 dark80=222 opaque=381
+0650: core42=194 dark80=221 opaque=382
+0651: core42=191 dark80=219 opaque=382
+0652: core42=188 dark80=217 opaque=382
+0653: core42=185 dark80=216 opaque=382
+0654: core42=183 dark80=214 opaque=382
+0655: core42=184 dark80=213 opaque=383
+0656: core42=181 dark80=210 opaque=383
+0657: core42=180 dark80=209 opaque=383
+0658: core42=178 dark80=209 opaque=384
+0659: core42=177 dark80=209 opaque=384
+
