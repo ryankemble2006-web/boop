@@ -7,17 +7,18 @@ import org.junit.Test;
 
 public class BoopDevMenuIntentTest {
     @Test
-    public void exactSpokenDevMenuIsLocalIntent() {
-        assertTrue(BoopDevMenuIntent.matches("dev menu"));
-        assertTrue(BoopDevMenuIntent.matches("Dev menu."));
-        assertTrue(BoopDevMenuIntent.matches("  dev menu!  "));
+    public void exactSpokenDeveloperMenuIsLocalIntent() {
+        assertTrue(BoopDevMenuIntent.matches("developer menu"));
+        assertTrue(BoopDevMenuIntent.matches("Developer menu."));
+        assertTrue(BoopDevMenuIntent.matches("  developer menu!  "));
     }
 
     @Test
-    public void unrelatedSpeechDoesNotBecomeDevMenu() {
+    public void oldOrUnrelatedSpeechDoesNotBecomeDeveloperMenu() {
         assertFalse(BoopDevMenuIntent.matches(null));
         assertFalse(BoopDevMenuIntent.matches(""));
+        assertFalse(BoopDevMenuIntent.matches("dev menu"));
         assertFalse(BoopDevMenuIntent.matches("open settings"));
-        assertFalse(BoopDevMenuIntent.matches("open dev menu"));
+        assertFalse(BoopDevMenuIntent.matches("open developer menu"));
     }
 }
