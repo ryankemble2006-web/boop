@@ -29,16 +29,22 @@ public final class BoopNotificationSettingsActivity extends Activity {
             "No notification categories seen yet. When this app sends one, BOOP will learn the category here. It will not interrupt until you enable that category.";
     private static final String ANDROID_STILL_ALERTING =
             "Android is still alerting for this category. Make it silent there before BOOP uses his own sound.";
+    private static final String STATE_PENDING_MASTER_ENABLE = "pending_master_enable";
 
     private BoopNotificationSettingsStore store;
     private BoopNotificationSettingsState state;
     private LinearLayout content;
+    private boolean pendingMasterEnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         store = new BoopNotificationSettingsStore(this);
         state = store.load();
+        if (savedInstanceState != null) {
+            pendingMasterEnable = savedInstanceState.getBoolean(
+                    STATE_PENDING_MASTER_ENABLE, false);
+        }
 
         ScrollView scroll = new ScrollView(this);
         scroll.setBackgroundColor(Color.BLACK);
@@ -53,10 +59,23 @@ public final class BoopNotificationSettingsActivity extends Activity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(STATE_PENDING_MASTER_ENABLE, pendingMasterEnable);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         if (store != null && content != null) {
             state = store.load();
+            if (pendingMasterEnable) {
+                boolean granted = BoopNotificationPermissionState.hasListenerAccess(this);
+                pendingMasterEnable = false;
+                if (granted) {
+                    persist(state.withMasterEnabled(true), false);
+                }
+            }
             render();
         }
     }
@@ -68,8 +87,22 @@ public final class BoopNotificationSettingsActivity extends Activity {
 
         Switch master = switchRow("BOOP Notifications", state.masterEnabled());
         master.setContentDescription("BOOP Notifications master switch");
-        master.setOnCheckedChangeListener((button, checked) ->
-                persist(state.withMasterEnabled(checked), false));
+        master.setOnCheckedChangeListener((button, checked) -> {
+            BoopNotificationMasterToggle.Action action = BoopNotificationMasterToggle.action(
+                    checked,
+                    BoopNotificationPermissionState.hasListenerAccess(this));
+            if (action == BoopNotificationMasterToggle.Action.REQUEST_LISTENER_ACCESS) {
+                pendingMasterEnable = true;
+                button.setChecked(false);
+                launchNotificationAccess();
+                return;
+            }
+            pendingMasterEnable = false;
+            persist(
+                    state.withMasterEnabled(
+                            action == BoopNotificationMasterToggle.Action.ENABLE_NOW),
+                    false);
+        });
         addWithBottom(master, 22);
 
         TextView timeoutLabel = addText(timeoutLabel(), 19f, false, 4);
@@ -104,6 +137,18 @@ public final class BoopNotificationSettingsActivity extends Activity {
         done.setContentDescription("Close notification settings");
         done.setOnClickListener(v -> finish());
         addWithBottom(done, 0);
+    }
+
+    private void launchNotificationAccess() {
+        try {
+            startActivity(BoopNotificationPermissionState.notificationListenerSettingsIntent());
+        } catch (RuntimeException unavailable) {
+            pendingMasterEnable = false;
+            Toast.makeText(
+                    this,
+                    "Android can't open Notification Access right now.",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void addApp(BoopNotificationAppEntry app, List<BoopNotificationChannelInfo> channels) {
