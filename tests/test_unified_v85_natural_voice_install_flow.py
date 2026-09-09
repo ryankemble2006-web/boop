@@ -29,3 +29,20 @@ def test_v85_combines_tablet_routing_with_natural_voice_install_flow():
     )
     assert cancel_match, "Could not locate natural voice downloader cancel()"
     assert "finishCancelled(" not in cancel_match.group("body")
+
+
+def test_existing_current_natural_pack_restores_verified_backend_before_preview():
+    patch = Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
+    startup = re.search(
+        r"boolean naturalInstalled = naturalVoicePack\.isInstalled\(\);(?P<body>.*?)naturalSpeechBackend =",
+        patch,
+        re.DOTALL,
+    )
+    assert startup, "Could not locate natural voice startup reconciliation"
+    body = startup.group("body")
+
+    # isInstalled() already validates the active pack's required files and current
+    # manifest version. On a later app launch, restore the controller's verified
+    # state before any natural row can select a profile and call speak().
+    assert "if (naturalInstalled)" in body
+    assert "voiceController.onNaturalPackVerified(naturalVoiceManifest.version());" in body
