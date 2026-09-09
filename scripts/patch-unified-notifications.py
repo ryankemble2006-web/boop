@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import subprocess
+import sys
 
 path = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java")
 text = path.read_text(encoding="utf-8")
@@ -87,3 +89,6 @@ if changed:
     print("Notification settings and Wall presentation host materialized")
 else:
     print("Notification settings and Wall presentation host already materialized")
+
+asset_materializer = Path(__file__).with_name("materialize-boop-notification-assets.py")
+subprocess.run([sys.executable, str(asset_materializer)], check=True)
