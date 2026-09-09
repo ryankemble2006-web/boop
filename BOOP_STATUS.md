@@ -2,39 +2,62 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v68 hue wire fix
+## Current signed candidate: v69 internal dev menu
 
-Ryan physically reported that v67's hue control did not work. Root cause was a late legacy bitmap hue-cache patch being rerun from `scripts/patch-unified-shield-dashboard.py` after the procedural-eye stack had already installed its own hue setter.
+v69 adds one internal developer/demo surface reachable from Voice settings.
 
-v68 removes that late overwrite only. The finished v65 eye geometry/sclera stack is unchanged.
+Animations shelf:
+- Wake
+- Think
+- Berry
+- Shake
+- Sleep
+
+Notification demos shelf:
+- Unlocked
+- Locked
+- Bundle
+
+The animation controls invoke the existing BOOP face behaviors. Notification demos use the production `BoopNotificationPuppetView` with local-only fixtures. Locked demo content is privacy-redacted by the production presentation model. The dev activity is `exported=false` and does not call Android `NotificationManager`, the notification listener service, or `BoopNotificationRuntime`.
+
+v69 carries the v68 procedural hue-wire fix and the finished v65 procedural-eye/sclera stack forward unchanged. v68 was not physically accepted before v69 was built.
 
 Built source:
 
-`91e562754be31745a5ee76538ebef50e6c6a9b2d`
+`709c74eb39d28c0d894661e5bde66da18f9ea6cf`
 
 Release evidence:
 
-- version 68 / `1.2.22-unified-hue-wire-fix`;
-- workflow `34314023763` SUCCESS;
-- artifact `BOOP-Unified`, ID `10089480166`;
-- artifact digest `sha256:f1b546f52800260a878940db0b8f074b1a8a07fec9df4370b2843acfc59c1699`;
-- APK SHA-256 `571f0a501e5a3df921fc1e521ae235810860df3f493c223af491f974cd30e352`;
+- version 69 / `1.2.23-unified-dev-menu`;
+- main workflow `34317400589` SUCCESS;
+- separate Shield HOME routing workflow `34317400631` SUCCESS;
+- artifact `BOOP-Unified`, ID `10090644503`;
+- artifact digest `sha256:af14acccfa0ae730a1254f518f2210a46645d45fdcd6d2056f9aa4fb4b9449a9`;
+- APK SHA-256 `31da93c3fdfd7116b8bc9b083fd947dadc5952a77c5c67c5d3808b99f0c57f88`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
 - Shield focused tests 58/58, zero failures/errors/skips;
-- Unified focused tests 136/136, zero failures/errors/skips;
-- notification presenter/manifest, wake handoff, Launcher preservation, signed assembly, package/version/signer/integrity and artifact upload all PASS.
+- Unified focused tests 140/140, zero failures/errors/skips;
+- dev-menu/local-only preview plumbing, notification presenter/manifest, wake handoff, Launcher preservation, signed assembly, package/version/signer/integrity and artifact upload all PASS.
 
-Regression workflow `34313965830` failed before the production fix exactly because the late Shield dashboard pass still referenced the old hue-cache patch.
+The downloaded artifact was independently extracted and the APK re-hashed; it matched the CI receipt exactly.
 
-Detailed receipt: `docs/BOOP-V68-HUE-WIRE-FIX-RECEIPT.md`.
+Detailed receipt: `docs/BOOP-V69-DEV-MENU-RECEIPT.md`.
 
 ## Acceptance boundary
 
-**No visual acceptance was performed by GitHub.** v68 is CI/signer green only.
+**No visual acceptance was performed by GitHub.** v69 is CI/signer green only.
 
-Immediate physical check: move the existing eye hue slider across obvious colours and confirm the procedural iris updates live while sclera, pupils, catchlights and black lids remain unchanged. Confirm the finished v65 sclera/white blend is unchanged.
+Physical checks:
 
-Do not create or repoint a v68 rollback checkpoint until Ryan explicitly accepts this exact signed APK.
+1. Voice settings -> `Dev menu` opens BOOP Dev.
+2. Wake/Think/Berry/Shake/Sleep run correctly and look right on-device.
+3. Unlocked/Locked/Bundle demos use the intended BOOP notification puppet presentation.
+4. Locked demo exposes no title/body text.
+5. Demo previews do not create Android shade notifications.
+6. Recheck carried v68 hue: slider changes the procedural iris live while sclera, pupils, catchlights and black lids stay unchanged.
+7. Finished v65 sclera/white blend remains correct.
+
+Do not create or repoint a v69 rollback checkpoint until Ryan explicitly accepts this exact signed APK.
 
 ## Durable eye ordering
 
