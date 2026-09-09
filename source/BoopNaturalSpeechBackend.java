@@ -161,25 +161,30 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             if (offlineTts != null) return offlineTts;
             File root = pack.activeDirectory();
             File lexicon = new File(root, "lexicon-gb-en.txt");
-            OfflineTtsKokoroModelConfig kokoro = OfflineTtsKokoroModelConfig.builder()
-                    .setModel(new File(root, "model.onnx").getAbsolutePath())
-                    .setVoices(new File(root, "voices.bin").getAbsolutePath())
-                    .setTokens(new File(root, "tokens.txt").getAbsolutePath())
-                    .setDataDir(new File(root, "espeak-ng-data").getAbsolutePath())
-                    .setLexicon(lexicon.getAbsolutePath())
-                    .setLang("eng")
-                    .build();
-            OfflineTtsModelConfig model = OfflineTtsModelConfig.builder()
-                    .setKokoro(kokoro)
-                    .setNumThreads(2)
-                    .setDebug(false)
-                    .setProvider("cpu")
-                    .build();
-            OfflineTtsConfig config = OfflineTtsConfig.builder()
-                    .setModel(model)
-                    .setSilenceScale(SILENCE_SCALE)
-                    .build();
-            offlineTts = new OfflineTts(config);
+
+            // The Android AAR exposes Sherpa's Kotlin data classes to Java as
+            // no-arg objects with bean setters, not the desktop Java builders.
+            OfflineTtsKokoroModelConfig kokoro = new OfflineTtsKokoroModelConfig();
+            kokoro.setModel(new File(root, "model.onnx").getAbsolutePath());
+            kokoro.setVoices(new File(root, "voices.bin").getAbsolutePath());
+            kokoro.setTokens(new File(root, "tokens.txt").getAbsolutePath());
+            kokoro.setDataDir(new File(root, "espeak-ng-data").getAbsolutePath());
+            kokoro.setLexicon(lexicon.getAbsolutePath());
+            kokoro.setLang("eng");
+
+            OfflineTtsModelConfig model = new OfflineTtsModelConfig();
+            model.setKokoro(kokoro);
+            model.setNumThreads(2);
+            model.setDebug(false);
+            model.setProvider("cpu");
+
+            OfflineTtsConfig config = new OfflineTtsConfig();
+            config.setModel(model);
+            config.setSilenceScale(SILENCE_SCALE);
+
+            // A null AssetManager tells Sherpa to load the app-private absolute
+            // file paths above instead of looking in APK assets.
+            offlineTts = new OfflineTts(null, config);
             return offlineTts;
         }
     }
