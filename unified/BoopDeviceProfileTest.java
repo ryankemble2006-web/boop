@@ -24,4 +24,24 @@ public final class BoopDeviceProfileTest {
         assertEquals(BoopDeviceProfile.Mode.WALL,
                 BoopDeviceProfile.resolve(true, "SHIELD Android TV", "wall"));
     }
+
+    @Test public void androidTabletAt600DpDefaultsToWall() {
+        assertEquals(BoopDeviceProfile.Mode.WALL,
+                BoopDeviceProfile.resolve(false, "24018RPACC", null, 600));
+    }
+
+    @Test public void xiaomiPadWidthDefaultsToWall() {
+        assertEquals(BoopDeviceProfile.Mode.WALL,
+                BoopDeviceProfile.resolve(false, "24018RPACC", null, 800));
+    }
+
+    @Test public void phoneBelowTabletBoundaryStaysLauncher() {
+        assertEquals(BoopDeviceProfile.Mode.LAUNCHER,
+                BoopDeviceProfile.resolve(false, "Pixel 10 Pro XL", null, 599));
+    }
+
+    @Test public void televisionStillWinsAtTabletWidth() {
+        assertEquals(BoopDeviceProfile.Mode.SHIELD,
+                BoopDeviceProfile.resolve(true, "SHIELD Android TV", null, 800));
+    }
 }
