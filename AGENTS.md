@@ -32,7 +32,8 @@ request first. These rules are for BOOP work, not permission to do unrelated wor
 - Canonical package: `com.boop.alpha1`.
 - One APK contains the Wall, Launcher and Shield bodies.
 - Automatic profile contract: Android TV/Leanback -> Shield; Pixel 7 Pro -> Wall;
-  other handheld Android -> Launcher. Preserve the internal recovery override.
+  other non-TV Android devices with `smallestScreenWidthDp >= 600` -> Wall;
+  sub-600dp handheld Android -> Launcher. Preserve the internal recovery override.
 - Wall keeps the permanent BOOP signer/package identity for the cleanest update
   path. Old standalone Launcher (`com.boop.launcher`) and Shield
   (`com.boop.shieldoverlay`) package histories remain reference/rollback only.
