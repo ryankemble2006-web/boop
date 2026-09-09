@@ -1,7 +1,6 @@
 """Non-visual integrity and runtime-plumbing contracts for Ryan's approved BOOP eyes."""
 from pathlib import Path
 import hashlib
-import re
 
 ROOT_MASTER = Path("boopApprovedEyes.png")
 CANONICAL_MASTER = Path("unified/assets/boop-eyes/boopApprovedEyes.png")
@@ -76,12 +75,10 @@ def test_canonical_materialization_includes_finished_v65_procedural_eye_stack():
 def test_eye_colour_control_drives_procedural_iris_state_only():
     reading = Path("scripts/patch-unified-reading-eyes.py").read_text(encoding="utf-8")
     setter = _method_body(reading, "void setEyeHueDegrees(int hueDegrees)")
+    colourer = _method_body(reading, "private int irisColour(float saturation, float value)")
 
     assert "proceduralIrisHueDegrees = BoopEyeHueMath.clampHue(hueDegrees);" in setter
     assert "faceBitmap = recoloured" not in setter
     assert "setColorFilter(new" not in setter
-    assert "private int irisColour(float saturation, float value)" in reading
-    assert re.search(
-        r"Color\.HSVToColor\(new float\[\] \{\s*proceduralIrisHueDegrees, saturation, value\s*\}\)",
-        reading,
-    )
+    assert "android.graphics.Color.HSVToColor(new float[] {" in colourer
+    assert "proceduralIrisHueDegrees, saturation, value" in colourer
