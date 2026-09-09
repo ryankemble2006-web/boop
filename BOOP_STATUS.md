@@ -2,7 +2,7 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v70 horizontal developer lab
+## Current signed candidate: v70 pinned-face developer lab
 
 Release identity remains unchanged:
 
@@ -15,34 +15,34 @@ Ryan physically confirmed that the in-place exact spoken command `developer menu
 
 ### Current UI iteration
 
-The Dev Lab now has two horizontal right-to-left swipe shelves: `Animations` and `Notification doods`.
+The prior full-screen animation preview was rejected. The Dev Lab now keeps the real current BOOP face pinned and visible while selecting animations.
 
-Animation items open the real current BOOP animation full-screen. A bottom `Dismiss` button stops/resets the preview and returns to the selector. The animation shelf remembers its horizontal position while previewing. `Stop` is no longer shown as a shelf item because `Dismiss` is the stop/reset path; the STOP action remains in the internal model/dispatcher.
+There is no vertical Dev Lab page scroll. The `Animations` selector is horizontal right-to-left beneath the pinned face. Swiping changes animation buttons without moving BOOP off-screen. Tapping `Wake`, `Think`, `Stop`, `Berry 1`, `Berry 2`, `Berry 3`, `Shake`, or `Sleep` runs that real behavior directly on the same visible BOOP. There is no animation page replacement and no Dismiss hop.
 
-Notification doods also use a horizontal shelf and remember their selector position. Dev dood previews keep the real `BoopNotificationPuppetView` for the banner/card and exact approved hands, hide its duplicate internal face, and use a separate current `BoopFaceView` above the puppet/banner area. Production notification behavior/layout is otherwise unchanged.
+`Notification doods` remains a separate horizontal selector. Dood previews use a dedicated current BOOP face above the real `BoopNotificationPuppetView` banner/card and exact approved hands, with the puppet's duplicate internal face suppressed only for this dev composition. Production notification behavior/layout remains unchanged.
 
-Exact app/test head: `9510a2eac42b272f9fbc6becb991a4fbc16482d1`.
+Exact app/test head: `a9e4e6a8f6abf023bc9ba1779d0a51f698ee0c3f`.
 
-Exact workflow `34388440031` completed SUCCESS. Non-visual integration, materialization, new horizontal developer-lab contracts, notification/JUnit contracts, seamless wake handoff, Launcher lint, Shield functional tests, Unified wake/routing/lifecycle tests, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload all passed.
+Exact workflow `34391151333` completed SUCCESS. Non-visual integration, materialization, pinned-face/no-vertical-scroll developer-lab contracts, notification/JUnit contracts, seamless wake handoff, Launcher lint, Shield functional tests, Unified wake/routing/lifecycle tests, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload all passed.
 
 - Artifact: `BOOP-Unified`
-- Artifact ID: `10118781776`
-- Artifact size: `62,739,308` bytes
-- Artifact ZIP SHA-256: `9663ad3e648c54e026bfd15a14a44b89f45e4b3e13903b478a375839f4af44e1`
-- APK SHA-256: `76950071375a3ebf0bbd3f5a2c4725e93bcd76e4deacbdfe4481faa5903d7a27`
+- Artifact ID: `10119809751`
+- Artifact size: `62,740,109` bytes
+- Artifact ZIP SHA-256: `fa7d59bcdc105907a988fea1043895d21b060ad1ed97aaaef6e3d4f70f21fd91`
+- APK SHA-256: `b06d4c2dd5c6b6fa2dac969b7406c401195b01b961263e418eff5101b75b552e`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 - Shield focused functional tests: 58/58, zero failures/errors/skips
 - Unified focused functional tests: 144/144, zero failures/errors/skips
 
-RED evidence: head `4323684b838a5c3e80a249d234ced3b19c3c5e87`, workflow `34388180318`, failed at the developer-lab contract gate after successful materialization as expected.
+RED evidence: head `6ada374665a9cc6d504a7188f4df1b406fffdcc6`, workflow `34391024568`, failed at the developer-lab contract gate after successful materialization as expected.
 
-The exact GREEN artifact ZIP was independently downloaded and matched GitHub's digest; extracted APK/built-commit/signer receipts matched CI.
+The exact GREEN artifact ZIP was independently downloaded and matched GitHub's digest; extracted APK, built-commit and signer receipts matched CI.
 
 ## Acceptance boundary
 
-The in-place developer-menu entry has positive Pixel evidence. The new horizontal shelves, full-screen preview/Dismiss loop, scroll-position restore, and eye-above-banner notification composition remain **CI/signer green only** until Ryan checks the exact APK. GitHub performed no visual acceptance.
+The in-place developer-menu entry has positive Pixel evidence. The new pinned-face/no-vertical-scroll selector layout and direct animation reactions remain **CI/signer green only** until Ryan checks the exact APK. GitHub performed no visual acceptance.
 
-Current physical checks: swipe both shelves, open/dismiss animations, confirm return near the same selector position, inspect every notification dood for approved/current eyes visibly above the banner/hands, then confirm wake/microphone health after exit.
+Current physical checks: keep BOOP visible while swiping the animation selector horizontally, press several actions and confirm the same visible BOOP reacts immediately, with no up/down page scrolling or animation page transition. Then inspect notification doods for approved/current eyes visibly above the banner/hands and confirm wake/microphone health after exit.
 
 No v70 rollback checkpoint was created or repointed. Latest fully physically accepted rollback remains v59.
 
