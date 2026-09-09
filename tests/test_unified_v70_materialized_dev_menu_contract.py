@@ -79,17 +79,30 @@ def test_dev_lab_uses_horizontal_shelves_and_restores_shelf_positions() -> None:
     assert "scrollTo(savedScrollX, 0)" in source
 
 
-def test_tapping_animation_opens_fullscreen_preview_and_dismiss_returns_to_selector() -> None:
+def test_dev_lab_keeps_face_pinned_and_has_no_vertical_page_scroll() -> None:
     source = MAIN.read_text(encoding="utf-8")
-    start = source.index("private void showDeveloperAnimationPreview(")
-    end = source.index("private void runDeveloperAction(", start)
+    start = source.index("private void showDeveloperMenuContent()")
+    end = source.index("private void addDeveloperShelf(", start)
     block = source[start:end]
 
-    assert "developerMenuOverlay.removeAllViews();" in block
+    assert "new ScrollView(this)" not in block
     assert "developerMenuFace = new BoopFaceView(this);" in block
-    assert 'dismiss.setText("Dismiss");' in block
-    assert "stopDeveloperAnimation();" in block
-    assert "showDeveloperMenuContent();" in block
+    assert "column.addView(developerMenuFace" in block
+    assert "developerMenuOverlay.addView(column" in block
+    assert block.index("column.addView(developerMenuFace") < block.index("addDeveloperShelf(")
+
+
+def test_animation_selector_controls_pinned_face_in_place() -> None:
+    source = MAIN.read_text(encoding="utf-8")
+    start = source.index("private void addDeveloperShelf(")
+    end = source.index("private void addDeveloperSection(", start)
+    block = source[start:end]
+
+    assert "showDeveloperAnimationPreview(" not in block
+    assert "runDeveloperAction(action);" in block
+    assert "BoopDevMenuModel.Action.STOP" not in block
+    assert "developerMenuOverlay.removeAllViews();" not in block
+    assert "private void showDeveloperAnimationPreview(" not in source
 
 
 def test_dev_notification_preview_uses_one_separate_face_renderer_with_real_puppet() -> None:
