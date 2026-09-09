@@ -14,45 +14,52 @@ Updated 2026-09-09. Standalone branch `boop-shield-clean-launcher`.
 - +10% puppet size retained
 - Playback dance: physically reported **"looks awesome"**
 - Paused upset/sulk: implemented; explicit physical acceptance not separately recorded
-- Current candidate: code 22 / `0.10.7-puppet-bay`, exact approved eye master + top-only puppet blink
-- Exact APK source: `e28f073c8566803bb8553c9f6ad1f4a0fb302f69`
-- Workflow: `34297552148` SUCCESS
-- Artifact ID: `10083716832`
-- APK SHA-256: `d4e3fafa43d072b1a269aeb89c99d61754dc7e8bf35f306c0e864e1debaf8aa7`
-- Artifact ZIP SHA-256: `011abdd1723f4278a6801ee32bdfeb6f0997f0057e840f2da325dbcb2c812ba3`
+- Exact approved eye master: permanently locked, SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`
+- Latest physical report: layered blink otherwise good, but duplicate static upper eyelid visible from old headphones artwork
+- Current candidate: code 22 / `0.10.7-puppet-bay`, legacy headphone-lid arcs masked, approved master + top-only puppet blink unchanged
+- Exact APK source: `71828a49239fd41f2b7dd81fdfb6a758c4839d22`
+- Workflow: `34299712206` SUCCESS
+- Artifact ID: `10084479659`
+- APK SHA-256: `62886af8b7bac55bebb019555aba3f3b08bc0f060ae53780133b15b8a20f4bf0`
+- Artifact ZIP SHA-256: `be286e1161df93705d065b0ff8cd790b0997c1662effa79b7b3b6f8e963190d4`
 - Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
 - Functional/build/signer/package: GREEN
-- Visual checks: DISABLED by design; physical blink appearance pending Ryan
+- Visual checks: DISABLED by design; single-eyelid physical acceptance pending Ryan
 
 ## Permanent eye lock
 
-Ryan re-confirmed the exact 1774 x 887 approved PNG and locked it as BOOP forever, infinitely poseable.
+Ryan re-confirmed the exact 1774 x 887 approved PNG and locked it as BOOP forever, infinitely poseable. The build hash-checks the master before functional tests. The pair is rendered as one undistorted bitmap and its source spacing/offset must never be normalised or redrawn.
 
-Authority SHA-256: `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`.
+## Blink baseline
 
-The build packages that exact master as `boop_approved_eyes.png` and hash-checks it before tests. The entire pair is rendered as one undistorted bitmap so eye scale, level, spacing and the approved one-source-pixel-left offset cannot drift. Pose/animation can transform the puppet; source identity must not be redrawn or normalised. See `BOOP_EYES_MASTER.md`.
-
-## Puppet blink pass
-
-- Layer order: headphones -> approved eye master -> animated eyelid.
-- Top black curved lid only.
+- Layer order: headphones -> exact approved eye master -> animated eyelid.
+- Top black curved animated lid only.
 - No animated bottom lid.
-- Top lid reaches beyond the eye bottom at the existing minimum openness, guaranteeing complete clipped closure.
-- Animated lid is clipped per eye, so no black slab can render above/outside the eye.
 - Existing 183 ms blink curve retained.
 - Random interval remains 3-7 seconds.
 - Double-blink chance remains 18% with 110 ms gap.
 - Dance, paused upset motion, acknowledgement hop, +10% size, clipped bay, focus behavior and media plumbing unchanged.
 - Lifecycle/animator/Power Saver safeguards unchanged.
 
-Focused TDD finished with 81 functional tests passing on final source. The permanent eye hash gate, signed assembly, package/resource/manifest/service checks, signer check, archive integrity and artifact upload all passed.
+## Duplicate legacy eyelid correction
 
-## Fast CI rule
+Ryan's Shield video showed the second upper lid even when the blink was open. Root cause: the old `boop_headphones.png` raster already had upper eyelid/brow arcs baked into it.
 
-Ryan owns real-device visual acceptance. CI keeps `BOOP_SKIP_MANUAL_VISUAL_TESTS=1`; no screenshot, golden, emulator appearance, layout, focus-scale or animation visual acceptance runs. Functional logic, exact master bytes, signed assembly, package/version, manifest/service/resource presence, permanent signer, APK integrity and upload remain checked.
+Latest repair:
+- legacy headphones bytes retained unchanged as `boop_headphones_legacy.png`;
+- `boop_headphones` is now a wrapper drawable that black-masks only the two obsolete upper-lid arcs;
+- direct unmasked `boop_headphones.png` is no longer selectable;
+- approved eye master, animated top lid and all blink timing remain unchanged;
+- no launcher/media layout or behavior code changed.
+
+TDD RED workflow `34299420096`: 82 tests, exactly one expected failure for the missing mask resource; build/sign/upload skipped.
+
+GREEN source `71828a49239fd41f2b7dd81fdfb6a758c4839d22`, workflow `34299712206`: focused Shield HOME tests green with `BOOP_SKIP_MANUAL_VISUAL_TESTS=1`, exact master hash gate green, signed assembly green, package/version/manifest/service/resource/signer/archive checks green, artifact uploaded.
+
+Scope compare from pre-correction `c5a1bc620484238536a22fbdae8b304d23566b52` to green source shows only the headphones PNG rename, new masking drawable and one focused regression test.
 
 ## Next gate
 
-Install the signed candidate on the Shield and physically judge eyelid placement/closure. Confirm there is no upper slab, no bottom lid, and no regression to dance, upset state, clipping, album art, controls or remote navigation.
+Install the current signed candidate on the Shield and physically confirm exactly one approved upper lid per eye at rest/open, then confirm the existing top-only blink closes/reopens cleanly. Everything else was intentionally left alone.
 
 Real Shield behavior is visual authority. Do not merge into unified or expand into full Tegra/GPU puppetry until Ryan explicitly approves.
