@@ -80,10 +80,14 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > animation-lab-badging.txt
           grep -Fq "package: name='com.boop.animationlab'" animation-lab-badging.txt
+          grep -Fq "versionCode='3'" animation-lab-badging.txt
+          grep -Fq "versionName='0.3-animation-lab-pixel-decor-fix'" animation-lab-badging.txt
           grep -Fq "launchable-activity: name='com.boop.alpha1.BoopDevMenuActivity'" animation-lab-badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > animation-lab-manifest.txt
           ! grep -Fq "BoopNotificationListenerService" animation-lab-manifest.txt
           ! grep -Fq "BoopVoiceInteractionService" animation-lab-manifest.txt
+          ! grep -Fq "androidx.startup.InitializationProvider" animation-lab-manifest.txt
+          ! grep -Fq "androidx.profileinstaller.ProfileInstallReceiver" animation-lab-manifest.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > animation-lab-signer.txt
           sha256sum "$APK" | tee animation-lab-apk-sha256.txt
           git rev-parse HEAD | tee animation-lab-built-commit.txt
