@@ -2,23 +2,40 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer. Fresh `main` owns shared contracts. Always re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Current canonical candidate: v68 procedural hue wire fix
+## Current canonical candidate: v69 internal dev menu
 
-Ryan physically tested signed v67 and reported that the eye hue control did not work. v67 is not physically accepted.
+v69 adds one internal developer/demo surface reachable from the existing Voice settings screen.
 
-Root cause was materialization ordering, not the procedural colour math: after the v65 procedural-eye stack installed the correct procedural `setEyeHueDegrees()` implementation, `scripts/patch-unified-shield-dashboard.py` reran the legacy bitmap-era iris-cache patch and silently replaced that setter. The rendered iris is procedural, so the old bitmap setter could save/mutate hue state without changing the visible iris.
+The **Animations** shelf calls the existing BOOP face behaviors directly: Wake, Think, Berry, Shake and Sleep. It does not introduce a replacement animation renderer.
 
-v68 removes the stale late invocation only.
+The **Notification demos** shelf uses the production `BoopNotificationPuppetView` with local-only Unlocked, Locked and Bundle fixtures. `BoopDevNotificationPreview` is a pure presentation factory with no Android notification API or runtime dependency. Locked demo content flows through the production privacy-redaction model. The dev activity is declared `exported=false`.
 
-Built code head `91e562754be31745a5ee76538ebef50e6c6a9b2d`, version 68 / `1.2.22-unified-hue-wire-fix`, workflow `34314023763` SUCCESS, artifact ID `10089480166`, artifact digest `sha256:f1b546f52800260a878940db0b8f074b1a8a07fec9df4370b2843acfc59c1699`, APK SHA-256 `571f0a501e5a3df921fc1e521ae235810860df3f493c223af491f974cd30e352`, permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+v69 carries the v68 procedural hue-wire fix and the finished v65 procedural-eye/sclera stack forward unchanged. v68 had not yet been physically accepted when v69 was built.
 
-Fresh signed-artifact verification: Shield focused tests 58/58 and Unified focused tests 136/136 with zero failures/errors/skips. Non-visual integration contracts, canonical materialization, notification presenter/manifest contracts, seamless wake handoff, preserved Launcher checks, signed assembly, package/version/signer/archive integrity and artifact upload passed. The downloaded artifact was re-hashed after extraction and matched the CI APK receipt exactly.
+Built code head `709c74eb39d28c0d894661e5bde66da18f9ea6cf`, version 69 / `1.2.23-unified-dev-menu`, main workflow `34317400589` SUCCESS, separate Shield HOME routing workflow `34317400631` SUCCESS, artifact ID `10090644503`, artifact digest `sha256:af14acccfa0ae730a1254f518f2210a46645d45fdcd6d2056f9aa4fb4b9449a9`, APK SHA-256 `31da93c3fdfd7116b8bc9b083fd947dadc5952a77c5c67c5d3808b99f0c57f88`, permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Regression commit `8e4527e99f835acc4bf4000d2fa9a9c53a32e9d7` / workflow `34313965830` failed before the production fix exactly because the late Shield dashboard pass still referenced the legacy iris-cache patch.
+Fresh signed-artifact verification: Shield focused tests 58/58 and Unified focused tests 140/140 with zero failures/errors/skips. Non-visual integration contracts, canonical materialization, internal-only/local-only dev plumbing, notification presenter/manifest contracts, seamless wake handoff, Launcher preservation, signed assembly, package/version/signer/archive integrity and artifact upload passed. The downloaded artifact was independently extracted and re-hashed and matched the CI APK receipt exactly.
 
-**No visual acceptance was performed by GitHub.** Ryan owns screenshot/appearance/layout/animation/device judgment. v68 is CI/signer green, not physically accepted. Do not create or repoint a v68 rollback checkpoint until he explicitly accepts this exact signed APK.
+Test-first evidence:
 
-Detailed receipt: `docs/BOOP-V68-HUE-WIRE-FIX-RECEIPT.md`.
+- `3bb0aadb8bc15df283be93202853f273a432d467` / workflow `34316174381` failed because the new shelf test referenced missing `BoopDevMenuModel`;
+- `b32a328f09a7f5d4c347e48986b685da18afd072` / workflow `34316614087` failed because the preview tests referenced missing `BoopDevNotificationPreview`;
+- `f571345b1ac68980d7877dc028e597d884d74812` / workflow `34317008388` failed because `.BoopDevMenuActivity` had not yet been added to the materialized manifest;
+- final implementation `709c74eb39d28c0d894661e5bde66da18f9ea6cf` passed the complete canonical workflow.
+
+**No visual acceptance was performed by GitHub.** Ryan owns screenshot/appearance/layout/animation/device judgment. v69 is CI/signer green, not physically accepted. Do not create or repoint a v69 rollback checkpoint until he explicitly accepts this exact signed APK.
+
+Detailed receipt: `docs/BOOP-V69-DEV-MENU-RECEIPT.md`.
+
+## Durable dev-menu rule from v69
+
+BOOP Dev is an internal testing surface, not a user-facing authority expansion.
+
+- Keep `BoopDevMenuActivity` non-exported.
+- Animation demos should call the real existing BOOP face behaviors rather than duplicate/rebuild them.
+- Notification demos must remain local presentation fixtures. They must not create Android shade notifications or call the notification listener/runtime path.
+- Locked demo content must remain privacy-redacted through the same production presentation model.
+- The dev screen does not grant permissions, install anything, change package identity or alter the permanent signer.
 
 ## Durable finished-eye and hue rules
 
@@ -40,7 +57,7 @@ The user eye-colour control drives `proceduralIrisHueDegrees`. `irisColour()` co
 
 Ryan explicitly instructed that GitHub must not judge BOOP visuals. Keep CI to non-visual contracts, compilation/lint, functional tests, package/signature/integrity and security checks. Do not add screenshot comparisons, golden-image checks, visual diffing, pixel/geometry appearance assertions or animation judging. Exact locked-binary/hash identity checks are allowed because they verify source identity rather than appearance.
 
-Physical appearance of v68 remains Ryan's acceptance gate. The immediate check is live iris hue movement plus preservation of the finished v65 sclera/white blend.
+Physical appearance of v69 remains Ryan's acceptance gate. This includes the dev-menu animation demos, the carried v68 hue behavior and the finished v65 sclera/white blend.
 
 ## Durable notification contract
 
