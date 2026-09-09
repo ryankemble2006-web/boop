@@ -21,21 +21,23 @@ Existing headphones, five-digit yellow hands and puppetry are separate accessori
 - SHA-256: `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`.
 - Git blob: `f95375356b20297fa2b27ab8887f65d4cce5c7fd`.
 
-Exact byte-identical reference copies are intentionally kept beside current app/art lineages. Each copy must retain the same Git blob and checksum rather than being exported or re-saved:
+The canonical copy and every protected reference copy must resolve to that exact Git blob. Do not export, resave or re-encode a duplicate.
+
+## Protected source/reference locations
 
 - root `boopApprovedEyes.png`;
 - `unified/assets/boop-eyes/boopApprovedEyes.png`;
 - `shield-overlay/reference-assets/boop-eyes/boopApprovedEyes.png`;
 - `launcher/reference-assets/boop-eyes/boopApprovedEyes.png`;
-- animation-lab shared-assets copy on the current animation branch.
+- `animation-lab/shared-assets/boop-eyes/boopApprovedEyes.png` on the current animation branch.
 
-Each reference folder carries a `DO_NOT_TOUCH_BOOP_EYES.md` and `.sha256` receipt. These are source/reference locks. A copy's presence does not by itself prove that a runtime renderer is presenting the master unchanged.
+Each current source/reference folder carries `DO_NOT_TOUCH_BOOP_EYES.md` and a `.sha256` receipt. These copies exist to stop renderer/app work from drifting onto a different face.
 
 ## Current runtime boundary
 
 The master binary is present and locked in GitHub. Current renderer-uniformity work is separate. Some existing Wall/tablet materialization stages can procedurally redraw the iris at runtime, while the Shield presentation path is intended to consume the approved bitmap directly. Do not confuse source-image preservation with completion of the renderer-uniformity repair.
 
-The Shield/Wall uniform-eye mismatch reported on 2026-09-09 remains a separate implementation task. This asset-lock pass changes no renderer, app behavior, package, signer, permissions or build output.
+Ryan observed on 2026-09-09 that Shield can present flatter/cartoon-coloured eyes rather than the glossy default. That renderer mismatch remains a separate implementation task. This asset-lock pass changes no renderer, app behavior, package, signer, permissions or build output.
 
 ## Blink correction
 
