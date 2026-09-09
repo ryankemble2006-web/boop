@@ -7,6 +7,7 @@ MATERIALIZER = Path("scripts/materialize-unified.sh")
 MAIN = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java")
 ANDROID_MANIFEST = Path("boop-build/BOOP-Alpha1/app/src/main/AndroidManifest.xml")
 VOICE_CONTROLLER = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopVoiceController.java")
+ANDROID_BACKEND = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopAndroidSpeechBackend.java")
 NATURAL_BACKEND = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopNaturalSpeechBackend.java")
 PACK = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopNaturalVoicePack.java")
 DOWNLOADER = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopNaturalVoiceDownloader.java")
@@ -110,7 +111,10 @@ def test_speak_remains_single_lifecycle_entry_and_natural_failure_falls_back_sam
     assert "naturalSpeechBackend" in block
     assert "speakWithAndroidTts" in block
     assert "finishTtsUtterance()" in source
-    assert "tts.speak(text" in source
+
+    android = ANDROID_BACKEND.read_text(encoding="utf-8")
+    assert "tts.speak(text" in android
+    assert "UtteranceProgressListener" in android
 
 
 def test_natural_backend_uses_local_sherpa_and_existing_pitch_rate_controls() -> None:
