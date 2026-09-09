@@ -2,9 +2,42 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v70 pinned-face developer lab + emphasized notification pose
+## Current signed candidate: v70 pinned-face / raised-banner + Android tablet routing
 
 Release identity remains `versionCode 70`, `versionName 1.2.24-unified-dev-menu-doods`.
+
+### Android tablet / Xiaomi Pad 7 Pro compatibility
+
+The current V70 AIO now routes ordinary Android tablets directly into BOOP Wall instead of treating them as handheld Launcher devices.
+
+Device-profile order is intentionally preserved and extended only at the presentation-routing boundary:
+
+- an explicit stored profile override still wins first;
+- Android TV / Leanback devices still route to `SHIELD`;
+- the existing Pixel 7 Pro rule still routes to `WALL`;
+- any other non-TV Android device with `smallestScreenWidthDp >= 600` routes to `WALL`;
+- sub-600dp handhelds still route to `LAUNCHER`.
+
+This is generic Android tablet support, not a Xiaomi-model hardcode. The Xiaomi Pad 7 Pro is covered by the tablet-width path. The existing Wall face already sizes from the live view dimensions through `BoopEyeLayout`, with separate portrait and landscape handling, so no tablet-specific eye artwork, geometry fork, manifest route, HA behavior, notification behavior, permissions, package identity, version or signer change was introduced.
+
+Tablet-routing TDD lineage:
+
+- RED test-only branch commit `db747c3c3e95acbc3ecae773daa451e6bd3eedc3`: the four new width-aware routing tests failed to compile against the prior resolver because the four-argument route did not yet exist;
+- GREEN implementation branch head before rebase `cf4c6918956f9cdb79f9b97f479c8a0c0d1de45f`;
+- canonical rebased app/test head `bd878606809302de1b871e6c62d8ce905346e766`.
+
+Exact workflow `34395085823`: SUCCESS.
+
+Passed: non-visual integration contracts, materialization, notification/developer-lab contracts, seamless wake handoff, Launcher preservation/lint, Shield controls, Unified wake/name/routing/lifecycle/assistant-policy tests including the tablet profile contract, permanent signer preparation, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload.
+
+- Shield focused functional tests: 58/58, zero failures/errors/skips;
+- Unified focused functional tests: 148/148, zero failures/errors/skips;
+- artifact `BOOP-Unified`, ID `10121327367`, size `62,739,601` bytes;
+- artifact ZIP SHA-256 `6dda05bea0ebe78b2239026e813f76220c48405969a95a342820ef2b79ad2395`;
+- APK SHA-256 `0955dbb51ffab6707f11df02bf3966fc90ce3d73f204b74a349519d4937b4612`;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+The exact artifact ZIP was independently downloaded after CI. Its SHA-256 matched GitHub's artifact digest; the extracted APK matched `apk-sha256.txt`; `built-commit.txt` matched `bd878606809302de1b871e6c62d8ce905346e766`; `badging.txt` confirmed package `com.boop.alpha1`, versionCode `70`, versionName `1.2.24-unified-dev-menu-doods`; and `signer-sha256.txt` matched the permanent BOOP signer.
 
 ### Physical evidence already established
 
@@ -71,9 +104,9 @@ Pinned-face RED head `6ada374665a9cc6d504a7188f4df1b406fffdcc6`, workflow `34391
 
 ## Physical acceptance boundary
 
-The in-place developer-menu route and the pinned-face visibility behavior now have positive Pixel evidence. The **new emphasized-hands / raised-banner notification composition at app head `c68a7ab...` remains physically unaccepted** until Ryan tests this exact APK. GitHub performed no visual acceptance.
+The in-place developer-menu route and the pinned-face visibility behavior have positive Pixel evidence. The **emphasized-hands / raised-banner notification composition remains physically unaccepted**, and the **new Android tablet route at app head `bd878606...` is CI/signer green but physically unaccepted on the Xiaomi Pad 7 Pro** until Ryan tests this exact APK. GitHub performed no visual/device acceptance.
 
-Physical check: open `developer menu`, swipe through several `Notification doods`, and inspect whether the hands are clearly more obvious and whether the banner is now high enough while BOOP's eyes remain readable. If the position needs tuning, adjust the shared resting scale/lift rather than touching the locked PNG. Recheck real-notification behavior and wake/microphone health as appropriate.
+Pad physical check: install the exact `bd878606...` artifact on the Xiaomi Pad 7 Pro, launch BOOP normally, confirm it opens directly to BOOP Wall rather than the handheld Launcher/All Apps surface, rotate through portrait and landscape, then check tap-to-speak/wake microphone behavior, Voice Settings / developer menu, and one local HA command. The existing raised-banner check remains: swipe through several `Notification doods` and judge whether the hands read clearly enough and whether the banner is high enough while BOOP's eyes remain readable. If notification tuning is needed, adjust the shared resting scale/lift rather than touching the locked PNG.
 
 Do not create or repoint a v70 rollback checkpoint yet. Latest fully physically accepted rollback remains v59.
 
