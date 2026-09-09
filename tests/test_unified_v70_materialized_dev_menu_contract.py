@@ -16,7 +16,7 @@ def test_v70_scroll_repair_runs_before_later_unified_settings_patches() -> None:
     assert scroll < notifications < dev_menu
 
 
-def test_spoken_dev_menu_is_materialized_before_ha_and_chat_routing() -> None:
+def test_spoken_developer_menu_is_materialized_before_ha_and_chat_routing() -> None:
     source = MAIN.read_text(encoding="utf-8")
     voice_settings = source.index("BoopVoiceSettingsIntent.matches(transcript)")
     dev_menu = source.index("BoopDevMenuIntent.matches(transcript)")
@@ -25,19 +25,20 @@ def test_spoken_dev_menu_is_materialized_before_ha_and_chat_routing() -> None:
 
     assert voice_settings < dev_menu < voice_change < routed
     block = source[dev_menu:voice_change]
-    assert "openDevMenu();" in block
+    assert "showDeveloperMenu();" in block
     assert "return;" in block
 
 
-def test_dev_menu_launch_finishes_wake_processing_and_uses_explicit_activity() -> None:
+def test_developer_menu_stays_in_main_activity_instead_of_activity_hop() -> None:
     source = MAIN.read_text(encoding="utf-8")
-    start = source.index("private void openDevMenu()")
+    start = source.index("private void showDeveloperMenu()")
     end = source.index("private TextView voiceSettingLabel", start)
     block = source[start:end]
 
-    assert "wakeCoordinator.finishWakeProcessing();" in block
-    assert "new Intent(MainActivity.this, BoopDevMenuActivity.class)" in block
-    assert "interactionSurface.post(launch);" in block
+    assert "startActivity(" not in block
+    assert "BoopDevMenuActivity.class" not in block
+    assert "interactionSurface.addView(" in block
+    assert "developerMenuOverlay" in block
 
 
 def test_voice_settings_is_vertically_scrollable_to_dev_menu_and_done() -> None:
