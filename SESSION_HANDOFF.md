@@ -2,6 +2,30 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
+## Sidecar BOOP Animation Lab
+
+A standalone test-only Android APK now lives on `boop-animation-lab`. This branch is intentionally not the canonical AIO and does not change `boop-unified`, `main`, the v70 rollback state, or accepted checkpoints.
+
+Package `com.boop.animationlab`; versionCode `1`; versionName `0.1-animation-lab-v70`.
+
+Green implementation/build head:
+
+`5cb41240d53997cd222acc38d9b887dad9eceed8`
+
+Exact-head workflow `34381973605` is SUCCESS. Artifact `BOOP-Animation-Lab`, ID `10116256135`, was uploaded from that run. Artifact ZIP SHA-256 is `34915d14ab934f53d8078d23566c66472d8460857be8808d3cd172c746da853e`; APK SHA-256 is `454bd5323fce8ca9a56b061acdef35f8f2958249d8c76f10a3b208109e595cc3`; signer certificate SHA-256 is the permanent BOOP signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+The lab first materializes the exact current Unified v70 runtime and then strips full-app routing/bootstrap from the generated project. Its Android manifest exposes only `BoopDevMenuActivity` as the launcher and does not declare the normal BOOP assistant/listener/background app surface.
+
+Animation shelf: Wake, Idle Blink, Listening / Reading, Think, Stop / Reset, Berry 1, Berry 2, Berry 3, Shake, Sleep.
+
+Notification dood shelf retains the current v70 Facebook, WhatsApp, Gmail, X/Twitter, YouTube, Messenger, Instagram, Discord, Spotify, Reddit, Locked and Bundle previews using the same v70 presentation code and locked five-finger yellow-hand asset.
+
+TDD/debugging receipt: RED workflow `34381502070` failed 3/3 tests because the lab materializer intentionally did not yet exist. First implementation run `34381718790` passed contracts/materialization but exposed an unused `UnifiedApplication` dependency on Shield's crash recorder. `5cb41240d53997cd222acc38d9b887dad9eceed8` removed only those unused generated Unified bootstrap sources, and exact-head run `34381973605` passed contract tests, materialization, signing, APK build, standalone package/manifest verification, archive integrity and artifact upload.
+
+The green GitHub artifact was independently downloaded and extracted after the run; APK SHA and signer matched the CI receipts. Physical animation/dood/device acceptance remains pending and belongs to Ryan; GitHub performed no visual acceptance or physical-device launch.
+
+Detailed receipt: `docs/BOOP-ANIMATION-LAB-V01-RECEIPT.md`.
+
 ## Current signed candidate: v70 developer lab + notification doods
 
 v70 is `versionCode 70`, `versionName 1.2.24-unified-dev-menu-doods`.
