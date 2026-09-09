@@ -39,6 +39,11 @@ jobs:
         run: |
           bash scripts/materialize-unified.sh
           python3 scripts/materialize-animation-lab.py
+          test -s boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopShieldPreviewView.java
+          test -s boop-build/BOOP-Alpha1/app/src/main/java/com/boop/shieldoverlay/BoopShieldMotionBridge.java
+          test -s boop-build/BOOP-Alpha1/app/src/main/java/com/boop/shieldoverlay/MediaPuppetMotion.java
+          test -s boop-build/BOOP-Alpha1/app/src/main/java/com/boop/shieldoverlay/FullscreenPuppetMotion.java
+          test -s boop-build/BOOP-Alpha1/app/src/main/res/drawable-nodpi/boop_headphones.png
 
       - uses: android-actions/setup-android@v3
         with:
@@ -80,8 +85,8 @@ jobs:
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > animation-lab-badging.txt
           grep -Fq "package: name='com.boop.animationlab'" animation-lab-badging.txt
-          grep -Fq "versionCode='3'" animation-lab-badging.txt
-          grep -Fq "versionName='0.3-animation-lab-pixel-decor-fix'" animation-lab-badging.txt
+          grep -Fq "versionCode='4'" animation-lab-badging.txt
+          grep -Fq "versionName='0.4-animation-lab-all-motion'" animation-lab-badging.txt
           grep -Fq "launchable-activity: name='com.boop.alpha1.BoopDevMenuActivity'" animation-lab-badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > animation-lab-manifest.txt
           ! grep -Fq "BoopNotificationListenerService" animation-lab-manifest.txt
