@@ -1,0 +1,50 @@
+name: BOOP idle blink artifact inspection
+
+on:
+  push:
+    branches: ["animation-idle-blink-cleanup"]
+    paths:
+      - "animation-lab/idle-blink/assets/**"
+      - "animation-lab/idle-blink/tools/**"
+      - ".github/workflows/animation-idle-blink-inspect.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: boop-idle-blink-inspect-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out animation branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow
+        run: python -m pip install --disable-pip-version-check pillow
+
+      - name: Inspect exact Shield artwork
+        run: python animation-lab/idle-blink/tools/inspect_artifacts.py
+
+      - name: Commit text-only diagnostic report
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add animation-lab/idle-blink/analysis/artifact-map.txt
+          if git diff --cached --quiet; then
+            echo "Artifact map unchanged."
+            exit 0
+          fi
+          git commit -m "chore(animation): record eyelid artifact map"
+          git push
