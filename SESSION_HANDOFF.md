@@ -4,27 +4,99 @@ Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha
 
 ## Sidecar BOOP Animation Lab
 
-A standalone test-only Android APK now lives on `boop-animation-lab`. This branch is intentionally not the canonical AIO and does not change `boop-unified`, `main`, the v70 rollback state, or accepted checkpoints.
+A standalone test-only Android APK lives on `boop-animation-lab`. This branch is intentionally not the canonical AIO and does not change `boop-unified`, `main`, the v70 rollback state, or accepted checkpoints.
 
-Package `com.boop.animationlab`; versionCode `1`; versionName `0.1-animation-lab-v70`.
+Current physical test candidate: package `com.boop.animationlab`; versionCode `4`; versionName `0.4-animation-lab-all-motion`.
 
-Green implementation/build head:
+Exact green application/build head:
 
-`5cb41240d53997cd222acc38d9b887dad9eceed8`
+`f80d5a3653e37115cd262dbb60acc47c6a4519d9`
 
-Exact-head workflow `34381973605` is SUCCESS. Artifact `BOOP-Animation-Lab`, ID `10116256135`, was uploaded from that run. Artifact ZIP SHA-256 is `34915d14ab934f53d8078d23566c66472d8460857be8808d3cd172c746da853e`; APK SHA-256 is `454bd5323fce8ca9a56b061acdef35f8f2958249d8c76f10a3b208109e595cc3`; signer certificate SHA-256 is the permanent BOOP signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Exact-head workflow `34386396642` is SUCCESS. Artifact `BOOP-Animation-Lab`, ID `10117944176`, size `62,202,986` bytes, was uploaded from that run. Artifact ZIP SHA-256 is `da6d9844d9de117e01b6e5a057b2ee6c36e6d5ce99f55c7b30a5143c74aecc07`; APK SHA-256 is `783a03de3664496df8ba194119533eff5c99b391b94445d5c36bd89ac34f892c`; signer certificate SHA-256 is the permanent BOOP signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-The lab first materializes the exact current Unified v70 runtime and then strips full-app routing/bootstrap from the generated project. Its Android manifest exposes only `BoopDevMenuActivity` as the launcher and does not declare the normal BOOP assistant/listener/background app surface.
+The downloaded workflow artifact was independently extracted after the run. Its ZIP SHA matched GitHub metadata, the extracted APK SHA matched the CI receipt, and its signer report matched the permanent BOOP signer.
 
-Animation shelf: Wake, Idle Blink, Listening / Reading, Think, Stop / Reset, Berry 1, Berry 2, Berry 3, Shake, Sleep.
+### Pixel 10 launch repair
 
-Notification dood shelf retains the current v70 Facebook, WhatsApp, Gmail, X/Twitter, YouTube, Messenger, Instagram, Discord, Spotify, Reddit, Locked and Bundle previews using the same v70 presentation code and locked five-finger yellow-hand asset.
+v0.1 crashed immediately on Ryan's Pixel 10. v0.2's diagnostic launch guard exposed the real fault: `DecorView.getWindowInsetsController()` was being reached while the DecorView was still null because inherited `BoopDevMenuActivity.onCreate()` called immersive setup before `setContentView()`.
 
-TDD/debugging receipt: RED workflow `34381502070` failed 3/3 tests because the lab materializer intentionally did not yet exist. First implementation run `34381718790` passed contracts/materialization but exposed an unused `UnifiedApplication` dependency on Shield's crash recorder. `5cb41240d53997cd222acc38d9b887dad9eceed8` removed only those unused generated Unified bootstrap sources, and exact-head run `34381973605` passed contract tests, materialization, signing, APK build, standalone package/manifest verification, archive integrity and artifact upload.
+Current lab source fixes the lifecycle at the source rather than hiding the exception: content is attached and the menu is created first, immersive setup is posted through the attached root, and Android R+ uses the attached decor's nullable `WindowInsetsController`. The lab also sets `android:enableOnBackInvokedCallback="false"` so its existing preview-back behavior is retained on targetSdk 36 / Android 16.
 
-The green GitHub artifact was independently downloaded and extracted after the run; APK SHA and signer matched the CI receipts. Physical animation/dood/device acceptance remains pending and belongs to Ryan; GitHub performed no visual acceptance or physical-device launch.
+RED workflow `34385250721` failed the Pixel lifecycle contract before the fix.
 
-Detailed receipt: `docs/BOOP-ANIMATION-LAB-V01-RECEIPT.md`.
+### Wall / Unified animation shelf
+
+- Wake
+- Idle Blink
+- Listening / Reading
+- Think
+- Stop / Reset
+- Berry 1
+- Berry 2
+- Berry 3
+- Shake
+- Sleep
+
+The lab first materializes the finished Unified face stack, then exposes explicit one-shot test access to Blink and Listening/Reading without changing production Wall routing.
+
+### Current Shield runtime motion
+
+v0.4 copies only the current pure Shield motion source and headphones resource into the generated lab app; it does not merge the normal Shield service/library Android component surface.
+
+Current runtime preview buttons:
+
+- Shield Groove
+- Track Change
+- Pause Settle
+- Cinema Hand
+
+`MediaPuppetMotion.java` and `FullscreenPuppetMotion.java` are copied at materialization and called through the test-only `BoopShieldMotionBridge`. At this release they are byte-identical between `boop-animation-lab` and live `boop-unified`: blobs `92b3c3867f9ed99887b9c4b95958d0bf1e9dc72b` and `763aadcd69a337fa3b075b8d8bfbece2b1a81603` respectively.
+
+### Saved Shield WIP motion studies
+
+The saved 2.5D direction from the `animation-freddie-mercury` art workspace was not production app code. v0.4 therefore exposes it only as lab-only animated prototypes using the approved BOOP notification-hands drawable as independently moving left/right layers plus the current Shield headphones resource.
+
+WIP preview buttons:
+
+- Open Palms
+- Wave
+- Point
+- Grip
+- Earcup Adjust
+- One-Cup Listen
+- Gaze + Depth
+- Headphone Recoil
+
+Every WIP preview runs as a repeating animation loop; none is a static concept card. These previews do not modify or claim acceptance for production Shield behavior. Approved hand artwork remains the existing five-digit source and was not regenerated.
+
+### Notification dood shelf
+
+The current v70 local previews remain:
+
+- Facebook
+- WhatsApp
+- Gmail
+- X / Twitter
+- YouTube
+- Messenger
+- Instagram
+- Discord
+- Spotify
+- Reddit
+- Locked
+- Bundle
+
+They continue to use the current v70 notification-presentation path and approved five-digit notification hand asset.
+
+### CI / physical acceptance boundary
+
+The all-motion expansion used an explicit RED contract: workflow `34385909335` failed at contract tests because the Shield preview/bridge and complete action inventory did not yet exist. Exact-head workflow `34386396642` then passed contracts, Unified materialization, Shield source/resource materialization, Java/APK compilation, signing, package/version/manifest checks, archive integrity and artifact upload.
+
+GitHub is prohibited from judging appearance for the Animation Lab. The workflow contains no screenshot capture, golden-image comparison, pixel matching, renderer snapshot comparison, or automated appearance verdict. GitHub checks only structural/functional contracts, buildability, packaging, signing, manifest boundaries, hashes and archive integrity.
+
+Ryan owns physical appearance, timing feel, motion quality, five-digit hand appearance, dood appearance and device acceptance. v0.4 is a signed physical test candidate, not a visually accepted production animation set.
+
+Detailed receipt: `docs/BOOP-ANIMATION-LAB-V04-RECEIPT.md`.
 
 ## Current signed candidate: v70 developer lab + notification doods
 
@@ -65,7 +137,7 @@ Detailed receipt: `docs/BOOP-V70-DEV-MENU-DOODS-RECEIPT.md`.
 
 ## Test-first / debugging evidence
 
-The existing v70 RED commit `4c81770aa869a46352115572c0757ca0f9876847` produced workflow `34321173070`, which failed on the deliberately missing v70 intent/action/identity implementation. Production implementation `2f4a62150121b299a433674e971de1e058f6330f` then exposed one brittle materialized-router assertion in workflow `34321836150`; root cause was the already-approved Chat Mode materializer rewriting the later router boundary to the guarded two-argument form. `9c907d3497067eb88ea1308875084b8965413951` fixed the assertion only and workflow `34321947467` went fully green.
+The existing v70 RED commit `4c81770aa869a46352115572c0757ca0f9876847` produced workflow `34321173070`, which failed on the deliberately missing v70 intent/action/identity implementation. Production implementation `2f4a62150121b299a433674e971de1e058f6330f` then exposed one brittle materialized-router assertion in workflow `34321836150`; root cause was the already-approved Chat Mode materializer rewriting the later router boundary to the guarded two-argument form. `9c907d3497067eb88ea1308875084b8965413951` fixed that assertion only and workflow `34321947467` went fully green.
 
 The final release head additionally makes `unified/app-build.gradle` a Shield HOME workflow trigger. This prevents future Unified version bumps from silently missing the separate HOME routing gate. Final exact-head workflows `34322564398` and `34322564357` are both green.
 
