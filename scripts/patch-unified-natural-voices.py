@@ -248,29 +248,28 @@ helper = r'''    private void addNaturalVoiceSettings() {
         button.setTextColor(Color.WHITE);
         button.setBackgroundColor(Color.rgb(42, 42, 42));
         button.setVisibility(View.GONE);
-        button.setOnClickListener(v -> {
-            if (voiceController == null || !voiceController.selectNaturalVoice(key)) return;
-            naturalStatus.setText("Selected: " + button.getText());
-            previewNaturalVoice(preview);
-        });
+        button.setOnClickListener(v -> previewNaturalVoice(key, preview, naturalStatus, button));
     }
 
-    private void previewNaturalVoice(String text) {
+    private void previewNaturalVoice(String key, String text, TextView naturalStatus, Button button) {
         wakeFaceForInteraction();
         if (wakeCoordinator != null) {
             wakeCoordinator.onTtsStarting();
         }
+        BoopVoiceController.NaturalVoice voice = BoopVoiceController.findNaturalVoice(key);
         if (voiceController == null
-                || !voiceController.naturalBackendSelectedAndUsable()
-                || naturalSpeechBackend == null) {
+                || !voiceController.naturalPackReadyForPreview()
+                || naturalSpeechBackend == null
+                || voice == null) {
             finishTtsUtterance();
+            naturalStatus.setText("Natural voice isn't ready. Android voice kept.");
             android.widget.Toast.makeText(
                     this,
                     "Natural voice isn't ready.",
                     android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
-        BoopVoiceController.NaturalVoice voice = voiceController.selectedNaturalVoice();
+        naturalStatus.setText("Trying " + button.getText() + "…");
         boolean started = naturalSpeechBackend.speak(
                 text,
                 voice.sid(),
@@ -279,29 +278,43 @@ helper = r'''    private void addNaturalVoiceSettings() {
                 new BoopSpeechBackend.Callback() {
                     @Override
                     public void onDone() {
-                        runOnUiThread(() -> finishTtsUtterance());
+                        runOnUiThread(() -> {
+                            if (voiceController.selectNaturalVoice(key)) {
+                                voiceController.markNaturalPlaybackProven();
+                                naturalStatus.setText("Selected: " + button.getText());
+                            } else {
+                                naturalStatus.setText("Natural voice wasn't selected. Android voice kept.");
+                            }
+                            finishTtsUtterance();
+                        });
                     }
 
                     @Override
                     public void onError(Throwable error) {
                         android.util.Log.w(
                                 "BOOP-NaturalVoice",
-                                "Natural voice preview failed; not substituting Android TTS",
+                                "Natural voice preview failed; Android voice remains active",
                                 error);
                         runOnUiThread(() -> {
+                            String stage = "speech";
+                            if (error instanceof BoopNaturalSpeechBackend.NaturalSpeechException) {
+                                stage = ((BoopNaturalSpeechBackend.NaturalSpeechException) error).stage();
+                            }
                             finishTtsUtterance();
+                            naturalStatus.setText("Natural voice " + stage + " failed. Android voice kept.");
                             android.widget.Toast.makeText(
                                     MainActivity.this,
-                                    "Natural voice preview failed.",
+                                    "Natural voice " + stage + " failed.",
                                     android.widget.Toast.LENGTH_SHORT).show();
                         });
                     }
                 });
         if (!started) {
             finishTtsUtterance();
+            naturalStatus.setText("Natural voice couldn't start. Android voice kept.");
             android.widget.Toast.makeText(
                     this,
-                    "Natural voice preview failed.",
+                    "Natural voice couldn't start.",
                     android.widget.Toast.LENGTH_SHORT).show();
         }
     }
