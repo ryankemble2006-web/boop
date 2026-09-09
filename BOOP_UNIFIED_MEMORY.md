@@ -85,3 +85,20 @@ HA device names and Home controls are physically accepted and must not regress. 
 Assistant ownership remains explicit/reversible through supported Android routes. Shield remote assistant activation/audio remains separately unresolved. No overlay mic, competing recorder, Google-disable/default hacks, Button Mapper, privileged ADB ownership or direct OpenAI API dependency.
 
 GitHub performs focused non-visual tests, compilation/lint, package/signature/integrity checks and artifact upload. Ryan owns screenshots, appearance, animation, device and acoustic acceptance. Keep package `com.boop.alpha1`, permanent signer, credentials and private device data protected. No automatic installs/grants.
+
+## Planned future work: BOOP screensaver `What If?`
+
+Add an optional BOOP screensaver inspired by Ryan's recovered Silk Kodi home animation. This is queued future work, not part of the current v62 acceptance path.
+
+Locked intent:
+
+- User-facing name: `What If?`.
+- Default OFF so Wall users keep current idle behaviour unless they deliberately enable it.
+- Primary personal target is the Pixel C tablet / future BOOP Mirror body, but the setting may be available on other suitable BOOP displays.
+- Provide a simple screensaver selector: `Off` / `What If?`, plus a small idle-time choice.
+- On idle, BOOP fades away to a black full-screen field and the recovered Silk-style opposing pulse animation takes over.
+- Preserve the original visual language: two long pulse layers moving in opposite directions with slow dark/light modulation that creates the illusion of depth and motion.
+- Recreate/render the effect natively for the current display rather than depending forever on the original fixed Kodi-era texture dimensions.
+- BOOP's eyes disappear completely while `What If?` is active; the old animation owns the screen. BOOP returns immediately on touch, wake/voice activity, or other deliberate BOOP interaction.
+- Keep brightness/power handling appropriate for long-running tablet/OLED use and do not force always-on behaviour.
+- The recovered original skin/resource ZIPs are reference masters. Do not mutate them as implementation assets; work from copies and preserve the originals.
