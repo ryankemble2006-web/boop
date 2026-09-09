@@ -2,62 +2,63 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v70 in-place developer-menu hotfix
+## Current signed candidate: v70 horizontal developer lab
 
 Release identity remains `versionCode 70`, `versionName 1.2.24-unified-dev-menu-doods`.
 
-Ryan physically confirmed that the earlier activity-hop hotfix at `95224d95a04b6a79a8d8c4e9e5ac4c35cf64ca9a` still forced BOOP to close when he said `dev menu`. Treat that candidate as physically failed for this bug even though its CI was green. Its Voice Settings vertical-scroll repair remains retained.
+### Physical evidence already established
 
-The current repair removes the fragile developer-menu activity hop from both spoken entry and the Voice Settings button. The exact spoken trigger is now `developer menu`; old `dev menu` intentionally does not match. The local route remains before Home Assistant / command-router / chat fallback, releases wake PROCESSING state, and calls `showDeveloperMenu()` inside the existing `MainActivity`. BOOP Dev is rendered as a fullscreen overlay on the current `interactionSurface`; the spoken/settings route does not call `startActivity()` or reference `BoopDevMenuActivity.class`.
+Ryan physically confirmed on the Pixel that the current in-place `developer menu` route opens BOOP Dev without forcing the app to close. The older activity-hop candidate at `95224d95a04b6a79a8d8c4e9e5ac4c35cf64ca9a` remains physically failed for that bug. Preserve the current entry architecture: exact spoken trigger `developer menu`, old `dev menu` rejected, local routing before HA/chat fallback, and `showDeveloperMenu()` inside the existing `MainActivity` rather than an activity hop.
 
-The in-place developer lab preserves the current controls and local preview behavior: Wake, Think, Stop, Berry 1/2/3, Shake, Sleep, Facebook, WhatsApp, Gmail, X/Twitter, YouTube, Messenger, Instagram, Discord, Spotify, Reddit, Locked and Bundle. Notification demos remain local fixtures only and never post Android shade notifications or expand authority.
+Voice Settings remains vertically scrollable and its `Developer menu` row stays reachable.
 
-Voice Settings remains vertically scrollable. Its row is now labelled `Developer menu`, and `Done` remains reachable.
+### Current developer-lab iteration
 
-### Exact CI/signer-green app head
+Ryan approved a trial with two horizontal selector shelves:
 
-`c17e98d9a09471cf8f53f2bee171a77e3b3b1203`
+- `Animations`: horizontal right-to-left swipe selector. Tap a preview to open the real BOOP animation full-screen. A bottom `Dismiss` control stops/resets the preview and returns to the selector.
+- `Notification doods`: separate horizontal right-to-left swipe selector. Dood previews keep the real `BoopNotificationPuppetView` for the banner/card and exact approved hands, hide its duplicate internal face, and render a dedicated current `BoopFaceView` above the puppet/banner area.
+- Both shelves remember horizontal scroll position while a preview is open, so dismissal returns near the item just tested.
+- Production notification behavior/layout is otherwise unchanged. The face-visibility hook is package-private and used by the developer preview composition.
+- The visible `Stop` animation selector item is omitted because `Dismiss` is now the stop/reset/return path. The STOP action remains in the underlying model/dispatcher.
 
-Verification:
+No approved artwork was regenerated or reinterpreted. GitHub does not judge the resulting visual spacing; Ryan does that on-device.
 
-- Build BOOP Unified APK workflow `34385817960`: SUCCESS;
-- exact workflow head `c17e98d9a09471cf8f53f2bee171a77e3b3b1203`;
-- materialized developer-menu contract: PASS;
-- exact `developer menu` JUnit intent contract: PASS;
-- old `dev menu` rejection contract: PASS;
-- seamless wake-command handoff: PASS;
-- Launcher preservation/lint: PASS;
+### Test-first and exact build evidence
+
+RED contract head: `4323684b838a5c3e80a249d234ced3b19c3c5e87`. Workflow `34388180318` materialized successfully and then failed at the developer-lab contract gate because the new horizontal/full-screen behavior did not yet exist.
+
+Implementation:
+
+- `c74a79c268ccdab6cc147acb0f26ded45ded37e8` — dev-only face visibility hook on the reusable notification puppet;
+- `9510a2eac42b272f9fbc6becb991a4fbc16482d1` — horizontal shelves, full-screen animation preview, bottom Dismiss, scroll-position restore, and separate approved-eye area for notification dood previews.
+
+Exact GREEN workflow `34388440031`: SUCCESS at app/test head `9510a2eac42b272f9fbc6becb991a4fbc16482d1`.
+
+Passed: non-visual integration contracts, materialization, developer-lab/notification contracts, seamless wake handoff, Launcher preservation/lint, Shield controls, Unified wake/name/routing/lifecycle/assistant-policy tests, permanent signer preparation, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload.
+
 - Shield focused functional tests: 58/58, zero failures/errors/skips;
 - Unified focused functional tests: 144/144, zero failures/errors/skips;
-- signed APK assembly: PASS;
-- package/version/permanent-signer/archive verification: PASS;
-- artifact upload: PASS.
+- artifact `BOOP-Unified`, ID `10118781776`, size `62,739,308` bytes;
+- artifact ZIP SHA-256 `9663ad3e648c54e026bfd15a14a44b89f45e4b3e13903b478a375839f4af44e1`;
+- APK SHA-256 `76950071375a3ebf0bbd3f5a2c4725e93bcd76e4deacbdfe4481faa5903d7a27`;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Artifact `BOOP-Unified`: ID `10117795236`, size `62,741,119` bytes. GitHub artifact ZIP SHA-256 `5f11f925c097b67f1650fcb445918148e633071739b23245c54742d984c20faf`. APK SHA-256 `c45962533574b9a0ef5bd08ad3f785c94668e9ec793ed6377967d7cae5195a20`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-
-The artifact ZIP was independently downloaded and its digest matched GitHub. The extracted APK hash matched the included CI receipt and the signer receipt matched the permanent BOOP signer.
-
-Detailed receipt: `docs/BOOP-V70-DEVELOPER-MENU-IN-PLACE-HOTFIX-RECEIPT.md`.
+The exact artifact ZIP was independently downloaded and matched GitHub's digest. The extracted APK hash, built-commit receipt and signer receipt matched CI.
 
 ## Physical acceptance boundary
 
-**Current candidate is CI/signer green, not physically accepted.** GitHub performed no visual acceptance. Ryan owns the real-device result.
+The in-place `developer menu` entry itself has positive Pixel evidence. The **new horizontal shelves, full-screen preview/Dismiss loop, shelf-position restore, and eye-above-banner dood composition remain physically unaccepted** until Ryan tests this exact APK. GitHub performed no visual acceptance.
 
-Next physical test:
+Physical check: open `developer menu`, swipe both shelves right-to-left, tap several animations and confirm full-screen + bottom `Dismiss` + return near the previous selector position, then inspect every notification dood and confirm BOOP's approved/current eyes are clearly visible above the held banner/hands. Recheck wake/microphone health after leaving BOOP Dev.
 
-1. install the APK from workflow `34385817960`;
-2. say `developer menu` and confirm BOOP stays open and presents BOOP Dev;
-3. confirm `dev menu` no longer invokes the developer menu;
-4. open Voice Settings, scroll to `Developer menu`, open it, use `Done`, then repeat the spoken command;
-5. confirm wake/microphone behavior remains healthy after entering and leaving the in-place menu.
-
-Do not create or repoint a v70 rollback checkpoint until Ryan confirms the physical pass. Latest physically accepted rollback remains v59.
+Do not create or repoint a v70 rollback checkpoint yet. Latest fully physically accepted rollback remains v59.
 
 ## Original v70 developer-lab lineage
 
 Original v70 final production/build commit: `825593a16c004d9c0825720eb014c4f5cc8e58af`. Original app implementation: `2f4a62150121b299a433674e971de1e058f6330f`. Materialized-router assertion correction: `9c907d3497067eb88ea1308875084b8965413951`.
 
-The original separate `BoopDevMenuActivity` remains non-exported in the package for provenance/compatibility, but it is no longer the active spoken/settings route in the current hotfix. Do not reintroduce that hop without new physical evidence.
+The original separate `BoopDevMenuActivity` remains non-exported for provenance/compatibility, but it is no longer the active spoken/settings route. Do not reintroduce that activity hop without new physical evidence.
 
 ## Durable finished-eye ordering
 
@@ -77,7 +78,7 @@ Exact approved notification hands remain locked at `unified/assets/boop-notifica
 
 ## Physically accepted rollback state
 
-Latest physically accepted exact rollback remains v59:
+Latest fully physically accepted exact rollback remains v59:
 
 `checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`
 
