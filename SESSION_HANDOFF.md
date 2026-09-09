@@ -2,7 +2,7 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v70 horizontal developer lab
+## Current signed candidate: v70 pinned-face developer lab
 
 Release identity remains `versionCode 70`, `versionName 1.2.24-unified-dev-menu-doods`.
 
@@ -12,45 +12,47 @@ Ryan physically confirmed on the Pixel that the current in-place `developer menu
 
 Voice Settings remains vertically scrollable and its `Developer menu` row stays reachable.
 
-### Current developer-lab iteration
+### Current developer-lab behavior
 
-Ryan approved a trial with two horizontal selector shelves:
+Ryan rejected the prior full-screen animation-preview/Dismiss design. The required and current design is now:
 
-- `Animations`: horizontal right-to-left swipe selector. Tap a preview to open the real BOOP animation full-screen. A bottom `Dismiss` control stops/resets the preview and returns to the selector.
-- `Notification doods`: separate horizontal right-to-left swipe selector. Dood previews keep the real `BoopNotificationPuppetView` for the banner/card and exact approved hands, hide its duplicate internal face, and render a dedicated current `BoopFaceView` above the puppet/banner area.
-- Both shelves remember horizontal scroll position while a preview is open, so dismissal returns near the item just tested.
-- Production notification behavior/layout is otherwise unchanged. The face-visibility hook is package-private and used by the developer preview composition.
-- The visible `Stop` animation selector item is omitted because `Dismiss` is now the stop/reset/return path. The STOP action remains in the underlying model/dispatcher.
+- BOOP's real current `BoopFaceView` stays pinned and visible in the Dev Lab while choosing animations;
+- the Dev Lab page itself has no vertical `ScrollView` and does not scroll up/down;
+- `Animations` is a horizontal right-to-left selector below the pinned face;
+- swiping the selector changes which animation buttons are visible without moving BOOP off-screen;
+- tapping `Wake`, `Think`, `Stop`, `Berry 1`, `Berry 2`, `Berry 3`, `Shake`, or `Sleep` calls the real animation directly on that same pinned face;
+- animation selection does not clear/replace the Dev Lab, open a second animation page, or require a Dismiss step;
+- `Notification doods` remains a separate horizontal selector. Dood previews may temporarily replace the selector view, but they use a dedicated current BOOP face above the real notification puppet/banner and exact approved hands. Dismiss returns to the Dev Lab and restores the horizontal selector position;
+- production notification behavior/layout is otherwise unchanged.
 
-No approved artwork was regenerated or reinterpreted. GitHub does not judge the resulting visual spacing; Ryan does that on-device.
+No approved artwork was regenerated or reinterpreted. GitHub does not judge visual spacing or motion; Ryan does that on-device.
 
-### Test-first and exact build evidence
+### Test-first evidence
 
-RED contract head: `4323684b838a5c3e80a249d234ced3b19c3c5e87`. Workflow `34388180318` materialized successfully and then failed at the developer-lab contract gate because the new horizontal/full-screen behavior did not yet exist.
+RED contract head: `6ada374665a9cc6d504a7188f4df1b406fffdcc6`. Workflow `34391024568` materialized successfully and then failed at the developer-lab contract gate because the old full-screen animation replacement was still present.
 
-Implementation:
+GREEN app/test head:
 
-- `c74a79c268ccdab6cc147acb0f26ded45ded37e8` — dev-only face visibility hook on the reusable notification puppet;
-- `9510a2eac42b272f9fbc6becb991a4fbc16482d1` — horizontal shelves, full-screen animation preview, bottom Dismiss, scroll-position restore, and separate approved-eye area for notification dood previews.
+`a9e4e6a8f6abf023bc9ba1779d0a51f698ee0c3f`
 
-Exact GREEN workflow `34388440031`: SUCCESS at app/test head `9510a2eac42b272f9fbc6becb991a4fbc16482d1`.
+Exact workflow `34391151333`: SUCCESS.
 
-Passed: non-visual integration contracts, materialization, developer-lab/notification contracts, seamless wake handoff, Launcher preservation/lint, Shield controls, Unified wake/name/routing/lifecycle/assistant-policy tests, permanent signer preparation, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload.
+Passed: non-visual integration contracts, materialization, pinned-face/no-vertical-scroll developer-lab contracts, notification/JUnit contracts, seamless wake handoff, Launcher preservation/lint, Shield controls, Unified wake/name/routing/lifecycle/assistant-policy tests, permanent signer preparation, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload.
 
 - Shield focused functional tests: 58/58, zero failures/errors/skips;
 - Unified focused functional tests: 144/144, zero failures/errors/skips;
-- artifact `BOOP-Unified`, ID `10118781776`, size `62,739,308` bytes;
-- artifact ZIP SHA-256 `9663ad3e648c54e026bfd15a14a44b89f45e4b3e13903b478a375839f4af44e1`;
-- APK SHA-256 `76950071375a3ebf0bbd3f5a2c4725e93bcd76e4deacbdfe4481faa5903d7a27`;
+- artifact `BOOP-Unified`, ID `10119809751`, size `62,740,109` bytes;
+- artifact ZIP SHA-256 `fa7d59bcdc105907a988fea1043895d21b060ad1ed97aaaef6e3d4f70f21fd91`;
+- APK SHA-256 `b06d4c2dd5c6b6fa2dac969b7406c401195b01b961263e418eff5101b75b552e`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-The exact artifact ZIP was independently downloaded and matched GitHub's digest. The extracted APK hash, built-commit receipt and signer receipt matched CI.
+The exact artifact ZIP was independently downloaded and matched GitHub's digest. The extracted APK hash matched `apk-sha256.txt`, `built-commit.txt` matched `a9e4e6a8...`, and the signer receipt matched the permanent BOOP signer.
 
 ## Physical acceptance boundary
 
-The in-place `developer menu` entry itself has positive Pixel evidence. The **new horizontal shelves, full-screen preview/Dismiss loop, shelf-position restore, and eye-above-banner dood composition remain physically unaccepted** until Ryan tests this exact APK. GitHub performed no visual acceptance.
+The in-place `developer menu` entry itself already has positive Pixel evidence. The **new pinned-face/no-vertical-scroll selector layout and direct in-place animation reactions remain physically unaccepted** until Ryan tests this exact APK. GitHub performed no visual acceptance.
 
-Physical check: open `developer menu`, swipe both shelves right-to-left, tap several animations and confirm full-screen + bottom `Dismiss` + return near the previous selector position, then inspect every notification dood and confirm BOOP's approved/current eyes are clearly visible above the held banner/hands. Recheck wake/microphone health after leaving BOOP Dev.
+Physical check: open `developer menu`; keep BOOP visible while swiping the `Animations` shelf right-to-left; tap several animation buttons and confirm the same visible BOOP reacts immediately without a page change or vertical scrolling. Then inspect notification doods and confirm BOOP's approved/current eyes sit clearly above the held banner/hands. Recheck wake/microphone health after leaving BOOP Dev.
 
 Do not create or repoint a v70 rollback checkpoint yet. Latest fully physically accepted rollback remains v59.
 
