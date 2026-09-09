@@ -11,7 +11,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
@@ -21,6 +20,7 @@ public final class BoopNotificationLockActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean receiverRegistered;
     private boolean authenticationInProgress;
+    private BoopNotificationPuppetView puppetView;
 
     private final Runnable timeoutRunnable = this::dismissMirror;
 
@@ -89,6 +89,7 @@ public final class BoopNotificationLockActivity extends Activity {
     @Override
     protected void onDestroy() {
         authenticationInProgress = false;
+        puppetView = null;
         handler.removeCallbacks(timeoutRunnable);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onDestroy();
@@ -96,7 +97,7 @@ public final class BoopNotificationLockActivity extends Activity {
 
     private void renderLockedPresentation() {
         handler.removeCallbacks(timeoutRunnable);
-        BoopNotificationRuntime runtime;
+        final BoopNotificationRuntime runtime;
         try {
             runtime = BoopNotificationRuntime.get(this);
         } catch (RuntimeException unavailable) {
@@ -111,11 +112,30 @@ public final class BoopNotificationLockActivity extends Activity {
 
         BoopNotificationPresentation presentation = BoopNotificationPresentation.from(
                 bundle, BoopNotificationSurface.LOCKED, true);
-        View view = BoopNotificationInPlaceController.createPlainPresentationView(
-                this, presentation);
-        view.setOnClickListener(v -> handlePresentationTap());
-        BoopNotificationSwipeGesture.attach(view, this::dismissMirror);
-        setContentView(view);
+        if (puppetView == null) {
+            puppetView = new BoopNotificationPuppetView(
+                    this,
+                    presentation,
+                    new BoopNotificationPuppetView.Callback() {
+                        @Override
+                        public void onOpen(String notificationKey) {
+                            authenticateThen(() -> openSingle(runtime, notificationKey));
+                        }
+
+                        @Override
+                        public void onOpenBundle() {
+                            authenticateThen(() -> openInbox(runtime));
+                        }
+
+                        @Override
+                        public void onDismiss() {
+                            dismissMirror();
+                        }
+                    });
+            setContentView(puppetView);
+        } else {
+            puppetView.updatePresentation(presentation);
+        }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         handler.postDelayed(timeoutRunnable, Math.max(1L, runtime.settings().timeoutMs()));
     }
@@ -130,24 +150,8 @@ public final class BoopNotificationLockActivity extends Activity {
         finish();
     }
 
-    private void handlePresentationTap() {
-        if (authenticationInProgress) return;
-
-        final BoopNotificationRuntime runtime;
-        try {
-            runtime = BoopNotificationRuntime.get(this);
-        } catch (RuntimeException unavailable) {
-            return;
-        }
-        List<BoopNotificationEnvelope> bundle = runtime.visibleBundle();
-        if (bundle.isEmpty()) {
-            finish();
-            return;
-        }
-
-        Runnable afterAuthentication = bundle.size() == 1
-                ? () -> openSingle(runtime, bundle.get(0).key())
-                : () -> openInbox(runtime);
+    private void authenticateThen(Runnable afterAuthentication) {
+        if (authenticationInProgress || afterAuthentication == null) return;
 
         KeyguardManager keyguard = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
         if (keyguard == null || !keyguard.isKeyguardLocked()) {
