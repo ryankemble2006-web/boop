@@ -11,6 +11,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,8 +30,45 @@ final class BoopNaturalVoicePack {
     private static final String ARCHIVE_NAME = "natural-voices.tar.bz2.part";
     private static final String VERSION_MARKER = ".pack-version";
 
+    interface ProgressListener {
+        void onProgress(int percent);
+    }
+
     static final class VerificationException extends IOException {
         VerificationException(String message) { super(message); }
+    }
+
+    private static final class CountingInputStream extends FilterInputStream {
+        private long count;
+
+        CountingInputStream(InputStream input) {
+            super(input);
+        }
+
+        long count() {
+            return count;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int value = super.read();
+            if (value >= 0) count++;
+            return value;
+        }
+
+        @Override
+        public int read(byte[] buffer, int offset, int length) throws IOException {
+            int read = super.read(buffer, offset, length);
+            if (read > 0) count += read;
+            return read;
+        }
+
+        @Override
+        public long skip(long amount) throws IOException {
+            long skipped = super.skip(amount);
+            if (skipped > 0) count += skipped;
+            return skipped;
+        }
     }
 
     private final BoopNaturalVoiceManifest manifest;
@@ -80,25 +118,38 @@ final class BoopNaturalVoicePack {
         if (archive.exists()) archive.delete();
     }
 
+    /**
+     * Self-verifying path retained for focused tests/recovery callers. Production
+     * downloads use the overload below so the archive is not read twice.
+     */
     synchronized void installVerifiedArchive(File downloaded, BooleanSupplier cancelled) throws IOException {
-        if (downloaded == null || !downloaded.isFile()) {
+        validateArchiveFile(downloaded);
+        String digest = sha256(downloaded, cancelled);
+        installVerifiedArchive(downloaded, digest, cancelled, null);
+    }
+
+    /**
+     * Installs a download whose SHA-256 was accumulated over the exact bytes as
+     * they were written. This makes post-download verification an immediate
+     * receipt comparison, then reports the expensive bzip2/tar work as install.
+     */
+    synchronized void installVerifiedArchive(
+            File downloaded,
+            String observedSha256,
+            BooleanSupplier cancelled,
+            ProgressListener progress) throws IOException {
+        validateArchiveFile(downloaded);
+        if (observedSha256 == null || !manifest.sha256().equalsIgnoreCase(observedSha256)) {
             throw new VerificationException(VERIFY_ERROR);
         }
-        if (downloaded.length() != manifest.archiveSizeBytes()) {
-            throw new VerificationException(VERIFY_ERROR);
-        }
-        if (!manifest.sha256().equals(sha256(downloaded))) {
-            throw new VerificationException(VERIFY_ERROR);
-        }
-        if (cancelled != null && cancelled.getAsBoolean()) {
-            throw new IOException("Natural voice download cancelled");
-        }
+        throwIfCancelled(cancelled);
 
         deleteRecursively(staging);
         if (!staging.mkdirs() && !staging.isDirectory()) {
             throw new IOException("Could not prepare natural voice staging folder");
         }
-        extract(downloaded, cancelled);
+        extract(downloaded, cancelled, progress);
+        throwIfCancelled(cancelled);
         writeVersion(staging);
         if (!validateRequiredFiles(staging)) {
             deleteRecursively(staging);
@@ -112,6 +163,10 @@ final class BoopNaturalVoicePack {
     }
 
     static String sha256(File file) throws IOException {
+        return sha256(file, null);
+    }
+
+    private static String sha256(File file, BooleanSupplier cancelled) throws IOException {
         final MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-256");
@@ -122,6 +177,7 @@ final class BoopNaturalVoicePack {
             byte[] buffer = new byte[64 * 1024];
             int count;
             while ((count = input.read(buffer)) >= 0) {
+                throwIfCancelled(cancelled);
                 if (count > 0) digest.update(buffer, 0, count);
             }
         }
@@ -158,18 +214,25 @@ final class BoopNaturalVoicePack {
         return relative;
     }
 
-    private void extract(File downloaded, BooleanSupplier cancelled) throws IOException {
+    private void extract(
+            File downloaded,
+            BooleanSupplier cancelled,
+            ProgressListener progress) throws IOException {
         File stagingCanonical = staging.getCanonicalFile();
         String stagingPrefix = stagingCanonical.getPath() + File.separator;
-        try (InputStream file = new BufferedInputStream(new FileInputStream(downloaded));
+        long archiveBytes = Math.max(1L, downloaded.length());
+        int lastProgress = reportInstallProgress(progress, 0L, archiveBytes, -1);
+
+        try (CountingInputStream counted = new CountingInputStream(new FileInputStream(downloaded));
+             InputStream file = new BufferedInputStream(counted);
              BZip2CompressorInputStream bzip = new BZip2CompressorInputStream(file, true);
              TarArchiveInputStream tar = new TarArchiveInputStream(bzip)) {
             TarArchiveEntry entry;
             byte[] buffer = new byte[64 * 1024];
             while ((entry = tar.getNextTarEntry()) != null) {
-                if (cancelled != null && cancelled.getAsBoolean()) {
-                    throw new IOException("Natural voice download cancelled");
-                }
+                throwIfCancelled(cancelled);
+                lastProgress = reportInstallProgress(
+                        progress, counted.count(), archiveBytes, lastProgress);
                 if (entry.isSymbolicLink() || entry.isLink()) {
                     throw new IOException("Archive link rejected");
                 }
@@ -201,13 +264,43 @@ final class BoopNaturalVoicePack {
                 try (OutputStream output = new BufferedOutputStream(new FileOutputStream(target))) {
                     int count;
                     while ((count = tar.read(buffer)) >= 0) {
-                        if (cancelled != null && cancelled.getAsBoolean()) {
-                            throw new IOException("Natural voice download cancelled");
-                        }
+                        throwIfCancelled(cancelled);
                         if (count > 0) output.write(buffer, 0, count);
+                        lastProgress = reportInstallProgress(
+                                progress, counted.count(), archiveBytes, lastProgress);
                     }
                 }
             }
+        }
+        if (progress != null) progress.onProgress(100);
+    }
+
+    private static int reportInstallProgress(
+            ProgressListener progress,
+            long consumed,
+            long total,
+            int lastProgress) {
+        if (progress == null) return lastProgress;
+        int percent = (int) Math.min(99L, Math.max(0L, consumed) * 100L / Math.max(1L, total));
+        if (percent > lastProgress) {
+            progress.onProgress(percent);
+            return percent;
+        }
+        return lastProgress;
+    }
+
+    private void validateArchiveFile(File downloaded) throws VerificationException {
+        if (downloaded == null || !downloaded.isFile()) {
+            throw new VerificationException(VERIFY_ERROR);
+        }
+        if (downloaded.length() != manifest.archiveSizeBytes()) {
+            throw new VerificationException(VERIFY_ERROR);
+        }
+    }
+
+    private static void throwIfCancelled(BooleanSupplier cancelled) throws IOException {
+        if (cancelled != null && cancelled.getAsBoolean()) {
+            throw new IOException("Natural voice download cancelled");
         }
     }
 
