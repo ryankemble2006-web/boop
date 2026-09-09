@@ -11,10 +11,10 @@ def test_spoken_dev_menu_is_materialized_before_ha_and_chat_routing() -> None:
     voice_settings = source.index("BoopVoiceSettingsIntent.matches(transcript)")
     dev_menu = source.index("BoopDevMenuIntent.matches(transcript)")
     voice_change = source.index("voiceController.maybeChangeVoice(transcript)")
-    routed = source.index("commandRouter.process(transcript)")
+    routed = source.index("commandRouter.process(")
 
     assert voice_settings < dev_menu < voice_change < routed
-    block = source[dev_menu : voice_change]
+    block = source[dev_menu:voice_change]
     assert '"com.boop.alpha1.BoopDevMenuActivity"' in block
     assert "startActivity(new Intent().setClassName(" in block
     assert "return;" in block
