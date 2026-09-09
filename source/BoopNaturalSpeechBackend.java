@@ -170,7 +170,6 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             kokoro.setTokens(new File(root, "tokens.txt").getAbsolutePath());
             kokoro.setDataDir(new File(root, "espeak-ng-data").getAbsolutePath());
             kokoro.setLexicon(lexicon.getAbsolutePath());
-            kokoro.setLang("eng");
 
             OfflineTtsModelConfig model = new OfflineTtsModelConfig();
             model.setKokoro(kokoro);
