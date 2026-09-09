@@ -3,10 +3,10 @@ from pathlib import Path
 
 path = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java")
 text = path.read_text(encoding="utf-8")
-spoken_marker = "// BOOP_DEVELOPER_MENU_SPOKEN_ENTRY_V2"
-settings_marker = "// BOOP_DEVELOPER_MENU_SETTINGS_ENTRY_V2"
-fields_marker = "// BOOP_DEVELOPER_MENU_IN_PLACE_FIELDS_V2"
-methods_marker = "// BOOP_DEVELOPER_MENU_IN_PLACE_V2"
+spoken_marker = "// BOOP_DEVELOPER_MENU_SPOKEN_ENTRY_V3"
+settings_marker = "// BOOP_DEVELOPER_MENU_SETTINGS_ENTRY_V3"
+fields_marker = "// BOOP_DEVELOPER_MENU_IN_PLACE_FIELDS_V3"
+methods_marker = "// BOOP_DEVELOPER_MENU_IN_PLACE_V3"
 changed = False
 
 
@@ -17,12 +17,24 @@ def replace_once(source: str, old: str, new: str, label: str) -> str:
     return source.replace(old, new, 1)
 
 
+if "import android.widget.HorizontalScrollView;\n" not in text:
+    anchor = "import android.widget.FrameLayout;\n"
+    text = replace_once(
+        text,
+        anchor,
+        anchor + "import android.widget.HorizontalScrollView;\n",
+        "HorizontalScrollView import",
+    )
+    changed = True
+
 if fields_marker not in text:
     anchor = "    private LinearLayout voiceSettingsOverlay;\n"
-    block = '''    // BOOP_DEVELOPER_MENU_IN_PLACE_FIELDS_V2
+    block = '''    // BOOP_DEVELOPER_MENU_IN_PLACE_FIELDS_V3
     private FrameLayout developerMenuOverlay;
     private BoopFaceView developerMenuFace;
     private boolean developerMenuOpen = false;
+    private int developerAnimationScrollX = 0;
+    private int developerNotificationScrollX = 0;
 '''
     text = replace_once(text, anchor, anchor + block, "Voice Settings field")
     changed = True
@@ -34,7 +46,7 @@ if spoken_marker not in text:
         }
 
 '''
-    block = '''        // BOOP_DEVELOPER_MENU_SPOKEN_ENTRY_V2
+    block = '''        // BOOP_DEVELOPER_MENU_SPOKEN_ENTRY_V3
         if (BoopDevMenuIntent.matches(transcript)) {
             showDeveloperMenu();
             return;
@@ -46,7 +58,7 @@ if spoken_marker not in text:
 
 if settings_marker not in text:
     anchor = "        Button done = new Button(this);\n"
-    block = '''        // BOOP_DEVELOPER_MENU_SETTINGS_ENTRY_V2
+    block = '''        // BOOP_DEVELOPER_MENU_SETTINGS_ENTRY_V3
         Button devMenu = new Button(this);
         devMenu.setText("Developer menu");
         devMenu.setTextSize(19f);
@@ -69,7 +81,7 @@ if settings_marker not in text:
 
 if methods_marker not in text:
     anchor = "    private TextView voiceSettingLabel(String text, float sizeSp, boolean bold) {\n"
-    block = '''    // BOOP_DEVELOPER_MENU_IN_PLACE_V2
+    block = '''    // BOOP_DEVELOPER_MENU_IN_PLACE_V3
     private void showDeveloperMenu() {
         if (interactionSurface == null) {
             return;
@@ -97,18 +109,21 @@ if methods_marker not in text:
         if (!developerMenuOpen || developerMenuOverlay == null) {
             return;
         }
+        stopDeveloperAnimation();
+        developerMenuFace = null;
         developerMenuOverlay.removeAllViews();
 
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(true);
+        ScrollView page = new ScrollView(this);
+        page.setFillViewport(true);
+        page.setBackgroundColor(Color.BLACK);
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL);
         column.setGravity(Gravity.CENTER_HORIZONTAL);
-        column.setPadding(dp(28), dp(28), dp(28), dp(36));
-        scroll.addView(column, new FrameLayout.LayoutParams(
+        column.setPadding(dp(28), dp(24), dp(28), dp(30));
+        page.addView(column, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.WRAP_CONTENT));
-        developerMenuOverlay.addView(scroll, new FrameLayout.LayoutParams(
+        developerMenuOverlay.addView(page, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
 
@@ -116,52 +131,25 @@ if methods_marker not in text:
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        titleParams.setMargins(0, 0, 0, dp(8));
+        titleParams.setMargins(0, 0, 0, dp(4));
         column.addView(title, titleParams);
 
-        TextView subtitle = voiceSettingLabel("Local previews only", 16f, false);
+        TextView subtitle = voiceSettingLabel("Swipe a shelf, then tap a preview", 16f, false);
         subtitle.setTextColor(Color.LTGRAY);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        subtitleParams.setMargins(0, 0, 0, dp(16));
+        subtitleParams.setMargins(0, 0, 0, dp(14));
         column.addView(subtitle, subtitleParams);
 
-        developerMenuFace = new BoopFaceView(this);
-        LinearLayout.LayoutParams faceParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(230));
-        faceParams.setMargins(0, 0, 0, dp(18));
-        column.addView(developerMenuFace, faceParams);
-        developerMenuFace.post(() -> {
-            if (developerMenuFace == null || !developerMenuOpen) return;
-            developerMenuFace.showIdleBlackImmediately();
-            developerMenuFace.wakeFromIdle();
-        });
-
-        addDeveloperSection(column, "Animation");
-        addDeveloperActionButton(column, "Wake", BoopDevMenuModel.Action.WAKE);
-        addDeveloperActionButton(column, "Think", BoopDevMenuModel.Action.THINK);
-        addDeveloperActionButton(column, "Stop", BoopDevMenuModel.Action.STOP);
-        addDeveloperActionButton(column, "Berry 1", BoopDevMenuModel.Action.BERRY_1);
-        addDeveloperActionButton(column, "Berry 2", BoopDevMenuModel.Action.BERRY_2);
-        addDeveloperActionButton(column, "Berry 3", BoopDevMenuModel.Action.BERRY_3);
-        addDeveloperActionButton(column, "Shake", BoopDevMenuModel.Action.SHAKE);
-        addDeveloperActionButton(column, "Sleep", BoopDevMenuModel.Action.SLEEP);
-
-        addDeveloperSection(column, "Notification doods");
-        addDeveloperActionButton(column, "Facebook", BoopDevMenuModel.Action.NOTIFICATION_FACEBOOK);
-        addDeveloperActionButton(column, "WhatsApp", BoopDevMenuModel.Action.NOTIFICATION_WHATSAPP);
-        addDeveloperActionButton(column, "Gmail", BoopDevMenuModel.Action.NOTIFICATION_GMAIL);
-        addDeveloperActionButton(column, "X / Twitter", BoopDevMenuModel.Action.NOTIFICATION_X);
-        addDeveloperActionButton(column, "YouTube", BoopDevMenuModel.Action.NOTIFICATION_YOUTUBE);
-        addDeveloperActionButton(column, "Messenger", BoopDevMenuModel.Action.NOTIFICATION_MESSENGER);
-        addDeveloperActionButton(column, "Instagram", BoopDevMenuModel.Action.NOTIFICATION_INSTAGRAM);
-        addDeveloperActionButton(column, "Discord", BoopDevMenuModel.Action.NOTIFICATION_DISCORD);
-        addDeveloperActionButton(column, "Spotify", BoopDevMenuModel.Action.NOTIFICATION_SPOTIFY);
-        addDeveloperActionButton(column, "Reddit", BoopDevMenuModel.Action.NOTIFICATION_REDDIT);
-        addDeveloperActionButton(column, "Locked", BoopDevMenuModel.Action.NOTIFICATION_LOCKED);
-        addDeveloperActionButton(column, "Bundle", BoopDevMenuModel.Action.NOTIFICATION_BUNDLE);
+        for (BoopDevMenuModel.Shelf shelf : BoopDevMenuModel.shelves()) {
+            boolean animationShelf = "Animations".equals(shelf.title());
+            addDeveloperShelf(
+                    column,
+                    animationShelf ? "Animations" : "Notification doods",
+                    shelf,
+                    animationShelf);
+        }
 
         Button done = new Button(this);
         done.setText("Done");
@@ -172,8 +160,76 @@ if methods_marker not in text:
         LinearLayout.LayoutParams doneParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 dp(64));
-        doneParams.setMargins(0, dp(14), 0, 0);
+        doneParams.setMargins(0, dp(18), 0, 0);
         column.addView(done, doneParams);
+    }
+
+    private void addDeveloperShelf(
+            LinearLayout column,
+            String title,
+            BoopDevMenuModel.Shelf shelf,
+            boolean animationShelf) {
+        addDeveloperSection(column, title);
+
+        HorizontalScrollView shelfScroll = new HorizontalScrollView(this);
+        shelfScroll.setHorizontalScrollBarEnabled(false);
+        shelfScroll.setFillViewport(false);
+        shelfScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        shelfScroll.setContentDescription(title + " horizontal selector");
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, 0, dp(18), 0);
+
+        for (BoopDevMenuModel.Item item : shelf.items()) {
+            if (animationShelf && item.action() == BoopDevMenuModel.Action.STOP) {
+                continue;
+            }
+            final String label = item.label();
+            final BoopDevMenuModel.Action action = item.action();
+            Button button = new Button(this);
+            button.setText(label);
+            button.setTextSize(18f);
+            button.setTextColor(Color.WHITE);
+            button.setBackgroundColor(Color.rgb(42, 42, 42));
+            button.setAllCaps(false);
+            button.setContentDescription("Preview " + label);
+            button.setOnClickListener(v -> {
+                if (animationShelf) {
+                    showDeveloperAnimationPreview(action, label);
+                } else {
+                    showDeveloperNotificationPreview(action);
+                }
+            });
+            LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
+                    dp(152),
+                    dp(72));
+            itemParams.setMargins(0, 0, dp(12), 0);
+            row.addView(button, itemParams);
+        }
+
+        shelfScroll.addView(row, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT));
+
+        int savedScrollX = animationShelf
+                ? developerAnimationScrollX
+                : developerNotificationScrollX;
+        shelfScroll.setOnScrollChangeListener((view, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            if (animationShelf) {
+                developerAnimationScrollX = scrollX;
+            } else {
+                developerNotificationScrollX = scrollX;
+            }
+        });
+        shelfScroll.post(() -> shelfScroll.scrollTo(savedScrollX, 0));
+
+        LinearLayout.LayoutParams shelfParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(80));
+        shelfParams.setMargins(0, 0, 0, dp(12));
+        column.addView(shelfScroll, shelfParams);
     }
 
     private void addDeveloperSection(LinearLayout column, String text) {
@@ -182,23 +238,61 @@ if methods_marker not in text:
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dp(12), 0, dp(8));
+        params.setMargins(0, dp(10), 0, dp(8));
         column.addView(label, params);
     }
 
-    private void addDeveloperActionButton(
-            LinearLayout column, String label, BoopDevMenuModel.Action action) {
-        Button button = new Button(this);
-        button.setText(label);
-        button.setTextSize(18f);
-        button.setTextColor(Color.WHITE);
-        button.setBackgroundColor(Color.rgb(42, 42, 42));
-        button.setOnClickListener(v -> runDeveloperAction(action));
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(60));
-        params.setMargins(0, 0, 0, dp(8));
-        column.addView(button, params);
+    private void showDeveloperAnimationPreview(
+            BoopDevMenuModel.Action action, String label) {
+        if (developerMenuOverlay == null) {
+            return;
+        }
+        stopDeveloperAnimation();
+        developerMenuFace = null;
+        developerMenuOverlay.removeAllViews();
+
+        FrameLayout preview = new FrameLayout(this);
+        preview.setBackgroundColor(Color.BLACK);
+        preview.setContentDescription("BOOP animation preview " + label);
+        developerMenuOverlay.addView(preview, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+
+        developerMenuFace = new BoopFaceView(this);
+        preview.addView(developerMenuFace, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+
+        TextView previewLabel = voiceSettingLabel(label, 19f, true);
+        FrameLayout.LayoutParams labelParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        labelParams.topMargin = dp(22);
+        preview.addView(previewLabel, labelParams);
+
+        Button dismiss = new Button(this);
+        dismiss.setText("Dismiss");
+        dismiss.setTextSize(20f);
+        dismiss.setTextColor(Color.WHITE);
+        dismiss.setBackgroundColor(Color.rgb(42, 42, 42));
+        dismiss.setOnClickListener(v -> {
+            stopDeveloperAnimation();
+            showDeveloperMenuContent();
+        });
+        FrameLayout.LayoutParams dismissParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                dp(64),
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        dismissParams.setMargins(dp(28), 0, dp(28), dp(20));
+        preview.addView(dismiss, dismissParams);
+
+        developerMenuFace.post(() -> {
+            if (!developerMenuOpen || developerMenuFace == null) {
+                return;
+            }
+            runDeveloperAction(action);
+        });
     }
 
     private void runDeveloperAction(BoopDevMenuModel.Action action) {
@@ -270,6 +364,23 @@ if methods_marker not in text:
         stopDeveloperAnimation();
         developerMenuFace = null;
         developerMenuOverlay.removeAllViews();
+
+        LinearLayout preview = new LinearLayout(this);
+        preview.setOrientation(LinearLayout.VERTICAL);
+        preview.setGravity(Gravity.CENTER_HORIZONTAL);
+        preview.setBackgroundColor(Color.BLACK);
+        preview.setContentDescription("BOOP notification dood preview");
+        developerMenuOverlay.addView(preview, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT));
+
+        developerMenuFace = new BoopFaceView(this);
+        LinearLayout.LayoutParams faceParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1.0f);
+        preview.addView(developerMenuFace, faceParams);
+
         BoopNotificationPresentation presentation =
                 BoopDevNotificationPreview.presentation(action, System.currentTimeMillis());
         BoopNotificationPuppetView puppet = new BoopNotificationPuppetView(
@@ -286,20 +397,32 @@ if methods_marker not in text:
                         showDeveloperMenuContent();
                     }
                 });
-        developerMenuOverlay.addView(puppet, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
+        puppet.setFaceVisible(false);
+        LinearLayout.LayoutParams puppetParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1.0f);
+        preview.addView(puppet, puppetParams);
 
-        Button back = new Button(this);
-        back.setText("Back to developer menu");
-        back.setTextSize(18f);
-        back.setTextColor(Color.WHITE);
-        back.setBackgroundColor(Color.rgb(42, 42, 42));
-        back.setOnClickListener(v -> showDeveloperMenuContent());
-        FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(
-                dp(280), dp(60), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        backParams.bottomMargin = dp(22);
-        developerMenuOverlay.addView(back, backParams);
+        Button dismiss = new Button(this);
+        dismiss.setText("Dismiss");
+        dismiss.setTextSize(20f);
+        dismiss.setTextColor(Color.WHITE);
+        dismiss.setBackgroundColor(Color.rgb(42, 42, 42));
+        dismiss.setOnClickListener(v -> showDeveloperMenuContent());
+        LinearLayout.LayoutParams dismissParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(64));
+        dismissParams.setMargins(dp(28), dp(8), dp(28), dp(18));
+        preview.addView(dismiss, dismissParams);
+
+        developerMenuFace.post(() -> {
+            if (!developerMenuOpen || developerMenuFace == null) {
+                return;
+            }
+            developerMenuFace.showIdleBlackImmediately();
+            developerMenuFace.wakeFromIdle();
+        });
     }
 
     private void hideDeveloperMenu() {
@@ -310,6 +433,8 @@ if methods_marker not in text:
             interactionSurface.removeView(developerMenuOverlay);
         }
         developerMenuOverlay = null;
+        developerAnimationScrollX = 0;
+        developerNotificationScrollX = 0;
         wakeFaceForInteraction();
     }
 
@@ -319,6 +444,6 @@ if methods_marker not in text:
 
 if changed:
     path.write_text(text, encoding="utf-8")
-    print("In-place BOOP developer menu materialized")
+    print("Horizontal in-place BOOP developer menu materialized")
 else:
-    print("In-place BOOP developer menu already materialized")
+    print("Horizontal in-place BOOP developer menu already materialized")
