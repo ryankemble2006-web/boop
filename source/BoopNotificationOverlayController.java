@@ -22,10 +22,7 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
         this.context = context.getApplicationContext();
         this.runtime = runtime;
         this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        this.timeoutRunnable = () -> {
-            hide();
-            this.runtime.onPresentationDismissed();
-        };
+        this.timeoutRunnable = this::dismissPresentation;
     }
 
     @Override
@@ -61,6 +58,7 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
 
         View view = BoopNotificationInPlaceController.createPlainPresentationView(
                 context, presentation);
+        BoopNotificationSwipeGesture.attach(view, this::dismissPresentation);
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -81,5 +79,10 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
             currentView = null;
             runtime.onPresentationFailed(BoopNotificationSurface.OVERLAY);
         }
+    }
+
+    private void dismissPresentation() {
+        hide();
+        runtime.onPresentationDismissed();
     }
 }
