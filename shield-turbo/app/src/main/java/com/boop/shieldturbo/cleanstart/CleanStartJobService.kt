@@ -11,18 +11,13 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 /**
- * One-shot post-boot CLEAN START. It uses only an already-trusted local ADB key,
- * stops reviewed targets, records bounded results, and exits.
+ * Silent one-shot post-boot CLEAN START. It uses only an already-trusted local ADB key,
+ * stops reviewed targets, records bounded results, and exits without boot UI.
  */
 class CleanStartJobService : JobService() {
-    companion object {
-        private const val INDICATOR_PRESENT_TIMEOUT_MS = 500L
-    }
-
     private val executor = Executors.newSingleThreadExecutor()
     @Volatile private var task: Future<*>? = null
     @Volatile private var bridge: LocalBridge? = null
-    @Volatile private var activeIndicator: CleanStartIndicator? = null
 
     override fun onStartJob(params: JobParameters): Boolean {
         val attempt = params.extras.getInt(CleanStartScheduler.EXTRA_ATTEMPT, -1)
@@ -33,12 +28,7 @@ class CleanStartJobService : JobService() {
         if (!CleanStartScheduler.shouldSchedule(store.autoEnabled(), targets.size)) return false
 
         val jobStartedElapsed = SystemClock.elapsedRealtime()
-        val indicator = CleanStartIndicator(applicationContext)
-        activeIndicator = indicator
-        indicator.show()
-
         task = executor.submit {
-            var noticeMs = 0L
             var adbReadyMs = 0L
             var resumedQueryMs = 0L
             var stopsTotalMs = 0L
@@ -47,14 +37,6 @@ class CleanStartJobService : JobService() {
             var adbStartedElapsed = 0L
             var adbEntered = false
             try {
-                // Do not begin ADB/force-stop work merely because the window was requested.
-                // Wait briefly for a committed static frame, then fail open so presentation
-                // can never add several seconds to the physically proven cleanup path.
-                val presented = indicator.awaitPresented(INDICATOR_PRESENT_TIMEOUT_MS)
-                noticeMs = (SystemClock.elapsedRealtime() - jobStartedElapsed).coerceAtLeast(0L)
-                store.recordIndicatorDiagnostic(indicator.diagnostic(presented))
-                if (!presented) indicator.hide()
-
                 val localBridge = LocalBridge(applicationContext)
                 bridge = localBridge
                 val summary = try {
@@ -136,7 +118,7 @@ class CleanStartJobService : JobService() {
                     store.recordTimingDiagnostic(
                         CleanStartTimingDiagnostic(
                             timestampMillis = System.currentTimeMillis(),
-                            noticeMs = noticeMs,
+                            noticeMs = 0L,
                             adbReadyMs = adbReadyMs,
                             resumedQueryMs = resumedQueryMs,
                             stopsTotalMs = stopsTotalMs,
@@ -147,8 +129,6 @@ class CleanStartJobService : JobService() {
                     )
                 }
                 bridge = null
-                indicator.hide()
-                if (activeIndicator === indicator) activeIndicator = null
                 jobFinished(params, false)
             }
         }
@@ -156,8 +136,6 @@ class CleanStartJobService : JobService() {
     }
 
     override fun onStopJob(params: JobParameters): Boolean {
-        activeIndicator?.hide()
-        activeIndicator = null
         bridge?.cancel()
         task?.cancel(true)
         bridge = null
@@ -165,8 +143,6 @@ class CleanStartJobService : JobService() {
     }
 
     override fun onDestroy() {
-        activeIndicator?.hide()
-        activeIndicator = null
         bridge?.cancel()
         task?.cancel(true)
         executor.shutdownNow()

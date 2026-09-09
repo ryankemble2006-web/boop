@@ -24,24 +24,25 @@ class SilentCleanStartContractTest(unittest.TestCase):
             self.assertNotIn(forbidden, job)
 
     def test_first_install_warning_explains_silent_startup_and_brief_pause(self):
-        main = (SOURCE / "MainActivity.kt").read_text()
+        application_path = SOURCE / "TurboApplication.kt"
+        self.assertTrue(application_path.exists(), "missing first-run startup note host")
+        application = application_path.read_text()
         strings = STRINGS.read_text().lower()
-        self.assertIn("showFirstInstallStartupNote()", main)
-        self.assertIn("first_install_startup_note_shown", main)
-        self.assertIn("first_install_startup_title", main)
-        self.assertIn("first_install_startup_message", main)
+        manifest = (ROOT / "app/src/main/AndroidManifest.xml").read_text()
+        self.assertIn('android:name=".TurboApplication"', manifest)
+        self.assertIn("Application.ActivityLifecycleCallbacks", application)
+        self.assertIn("activity !is MainActivity", application)
+        self.assertIn("first_install_startup_note_shown", application)
+        self.assertIn("first_install_startup_title", application)
+        self.assertIn("first_install_startup_message", application)
         self.assertIn("starts silently", strings)
         self.assertIn("brief", strings)
         self.assertIn("startup", strings)
 
-    def test_startup_manager_no_longer_exposes_indicator_diagnostics(self):
-        startup = (SOURCE / "startup/StartupManagerActivity.kt").read_text()
-        store = (SOURCE / "cleanstart/CleanStartStore.kt").read_text()
-        self.assertNotIn("STARTUP NOTICE DIAGNOSTIC:", startup)
-        self.assertNotIn("lastIndicatorDiagnostic", startup)
-        self.assertNotIn("CleanStartIndicatorDiagnostic", store)
-        self.assertNotIn("recordIndicatorDiagnostic", store)
-        self.assertNotIn("lastIndicatorDiagnostic", store)
+    def test_old_boot_presentation_evidence_is_retired_on_app_start(self):
+        application = (SOURCE / "TurboApplication.kt").read_text()
+        self.assertIn('remove("last_indicator_diagnostic")', application)
+        self.assertNotIn("recordIndicatorDiagnostic", (SOURCE / "cleanstart/CleanStartJobService.kt").read_text())
 
     def test_silent_cleanup_keeps_existing_scheduler_and_timing_evidence(self):
         scheduler = (SOURCE / "cleanstart/CleanStartScheduler.kt").read_text()
@@ -51,6 +52,7 @@ class SilentCleanStartContractTest(unittest.TestCase):
         self.assertIn("120_000L", scheduler)
         self.assertIn("MAX_ATTEMPTS = 3", scheduler)
         self.assertIn("store.recordTimingDiagnostic", job)
+        self.assertIn("noticeMs = 0L", job)
         self.assertIn("LocalBridge(applicationContext)", job)
 
     def test_failed_boot_clean_start_still_surfaces_actual_adb_reason(self):

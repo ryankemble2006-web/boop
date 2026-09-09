@@ -12,7 +12,7 @@
     <!-- Required only while verified TURBO is active so Android thermal status remains watched. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- Android 13+ may hide TURBO/fallback notifications unless the user grants this normal runtime permission. -->
+    <!-- Thermal-watchdog foreground-service notification only. CLEAN START itself is silent. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Granted only by the user's explicit local ADB setup after Android RSA approval. -->
     <uses-permission
@@ -42,7 +42,7 @@
         </intent>
     </queries>
 
-    <application android:theme="@style/Theme.ShieldTurbo" android:label="@string/app_name" android:banner="@drawable/tv_banner" android:allowBackup="false" android:supportsRtl="true">
+    <application android:name=".TurboApplication" android:theme="@style/Theme.ShieldTurbo" android:label="@string/app_name" android:banner="@drawable/tv_banner" android:allowBackup="false" android:supportsRtl="true">
         <activity android:name=".MainActivity" android:screenOrientation="landscape" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

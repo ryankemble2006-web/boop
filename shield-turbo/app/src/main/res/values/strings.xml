@@ -4,6 +4,8 @@
     <string name="control_centre_tagline">Shield tools without the snake oil.</string>
     <string name="control_centre_intro">Choose a section with the remote. Back always returns here first.</string>
     <string name="control_centre_footer">ADVANCED has local ADB setup and power tools. Android debugging approval is required once.</string>
+    <string name="first_install_startup_title">SILENT STARTUP</string>
+    <string name="first_install_startup_message">SHIELD TURBO starts silently after reboot. If automatic CLEAN START or persistent TURBO is enabled, the Shield may briefly seem to hang while its saved startup work finishes. That small pause can be normal. No CLEAN START banner or startup pop-up is shown.</string>
     <string name="section_turbo">TURBO</string>
     <string name="section_picture">PICTURE</string>
     <string name="section_apps">APPS</string>
