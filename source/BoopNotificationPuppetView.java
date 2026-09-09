@@ -163,23 +163,20 @@ final class BoopNotificationPuppetView extends FrameLayout {
         });
 
         cardHost.setAlpha(0f);
-        cardHost.setTranslationY(dp(22));
+        cardHost.setTranslationY(-dp(16));
         cardHost.animate()
                 .alpha(1f)
                 .translationY(0f)
-                .setDuration(220L)
+                .setDuration(260L)
+                .setInterpolator(new OvershootInterpolator(0.7f))
                 .start();
 
-        handsView.setAlpha(0f);
-        handsView.setScaleX(0.94f);
-        handsView.setScaleY(0.94f);
+        handsView.setScaleX(0.96f);
+        handsView.setScaleY(0.96f);
         handsView.animate()
-                .alpha(1f)
                 .scaleX(1f)
                 .scaleY(1f)
-                .setStartDelay(100L)
-                .setDuration(260L)
-                .setInterpolator(new OvershootInterpolator(0.55f))
+                .setDuration(220L)
                 .start();
     }
 
