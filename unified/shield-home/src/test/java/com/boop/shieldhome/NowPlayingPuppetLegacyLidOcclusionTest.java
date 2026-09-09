@@ -1,48 +1,51 @@
 package com.boop.shieldhome;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import java.lang.reflect.Method;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
 import org.junit.Test;
 
 /** Non-visual regression contract for the duplicate legacy headphone eyelid seen on Shield. */
 public final class NowPlayingPuppetLegacyLidOcclusionTest {
-    @Test public void legacyCapExtendsAboveAndAcrossEachOldEyeSlot() throws Exception {
-        final Class<?> geometry;
-        try {
-            geometry = Class.forName("com.boop.shieldhome.NowPlayingPuppetLegacyLidOcclusion");
-        } catch (ClassNotFoundException missing) {
-            fail("legacy eyelid occlusion geometry is missing");
-            return;
-        }
+    private static final String CLEAN_HEADPHONES_SHA256 =
+            "0bb4712dde392056edf177ef299e656aec488fdf409111cbef11a92cdcbc3670";
 
-        Method left = geometry.getDeclaredMethod("leftCap");
-        Method right = geometry.getDeclaredMethod("rightCap");
-        left.setAccessible(true);
-        right.setAccessible(true);
-
-        assertCapCoversOldLid(left.invoke(null), 395f, 465f, 711f, 790f);
-        assertCapCoversOldLid(right.invoke(null), 757f, 515f, 1075f, 850f);
+    @Test public void headphonesRasterHasLegacyUpperLidsRemoved() throws Exception {
+        Path artwork = findHeadphonesArtwork();
+        assertNotNull("boop_headphones.png must be present in the standalone launcher", artwork);
+        assertEquals(CLEAN_HEADPHONES_SHA256, sha256(artwork));
     }
 
-    private static void assertCapCoversOldLid(
-            Object cap,
-            float oldLeft,
-            float oldTop,
-            float oldRight,
-            float oldBottom) throws Exception {
-        Class<?> box = cap.getClass();
-        float left = box.getDeclaredField("left").getFloat(cap);
-        float top = box.getDeclaredField("top").getFloat(cap);
-        float right = box.getDeclaredField("right").getFloat(cap);
-        float bottom = box.getDeclaredField("bottom").getFloat(cap);
-        float width = oldRight - oldLeft;
-        float height = oldBottom - oldTop;
+    private static Path findHeadphonesArtwork() {
+        Path cwd = Paths.get(System.getProperty("user.dir", ".")).toAbsolutePath().normalize();
+        Path[] candidates = {
+                cwd.resolve("app/src/main/res/drawable-nodpi/boop_headphones.png"),
+                cwd.resolve("shield-clean-launcher/app/src/main/res/drawable-nodpi/boop_headphones.png"),
+                cwd.getParent() == null ? cwd : cwd.getParent().resolve(
+                        "shield-clean-launcher/app/src/main/res/drawable-nodpi/boop_headphones.png")
+        };
+        for (Path candidate : candidates) {
+            if (Files.isRegularFile(candidate)) return candidate;
+        }
+        return null;
+    }
 
-        assertTrue("legacy cap must begin well above the old eye slot", top <= oldTop - height * 0.24f);
-        assertTrue("legacy cap must overlap the top of the old eye", bottom >= oldTop + height * 0.20f);
-        assertTrue("legacy cap must extend left of the old lid", left <= oldLeft - width * 0.08f);
-        assertTrue("legacy cap must extend right of the old lid", right >= oldRight + width * 0.08f);
+    private static String sha256(Path path) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream input = Files.newInputStream(path)) {
+            byte[] buffer = new byte[16 * 1024];
+            int read;
+            while ((read = input.read(buffer)) >= 0) {
+                if (read > 0) digest.update(buffer, 0, read);
+            }
+        }
+        StringBuilder out = new StringBuilder();
+        for (byte b : digest.digest()) out.append(String.format("%02x", b & 0xff));
+        return out.toString();
     }
 }
