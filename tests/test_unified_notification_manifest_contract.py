@@ -72,3 +72,30 @@ def test_notification_feature_adds_no_accessibility_or_device_admin_authority():
             for item in receiver.findall("meta-data")
         }
         assert "android.app.device_admin" not in metadata_names
+
+
+def test_dev_menu_is_internal_and_notification_demos_stay_local_only():
+    root = _root()
+    app = root.find("application")
+    assert app is not None
+    activities = {
+        item.get(ANDROID + "name"): item.get(ANDROID + "exported")
+        for item in app.findall("activity")
+    }
+    assert activities.get(".BoopDevMenuActivity") == "false"
+
+    source_root = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1")
+    dev_activity = (source_root / "BoopDevMenuActivity.java").read_text(encoding="utf-8")
+    main_activity = (source_root / "MainActivity.java").read_text(encoding="utf-8")
+
+    assert "BoopNotificationPuppetView" in dev_activity
+    assert "BoopDevNotificationPreview.presentation" in dev_activity
+    assert "BoopDevMenuActivity" in main_activity
+
+    for forbidden in (
+        "NotificationManager",
+        "StatusBarNotification",
+        "BoopNotificationRuntime",
+        "BoopNotificationListenerService",
+    ):
+        assert forbidden not in dev_activity
