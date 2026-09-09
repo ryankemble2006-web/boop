@@ -24,7 +24,10 @@ final class BoopNaturalVoiceDownloader {
     interface Listener {
         void onStatus(String status);
         void onProgress(long downloadedBytes, long totalBytes);
-        void onInstallProgress(int percent);
+        default void onInstallProgress(int percent) {
+            int safePercent = Math.max(0, Math.min(100, percent));
+            onStatus("Installing natural voices… " + safePercent + "%");
+        }
         void onReady();
         void onCancelled();
         void onError(String message);
