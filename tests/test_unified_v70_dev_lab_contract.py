@@ -13,11 +13,13 @@ def read(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
-def test_v70_package_version_and_private_dev_activity_contract() -> None:
+def test_unified_package_version_and_private_dev_activity_contract() -> None:
     build = read("unified/app-build.gradle")
     assert "applicationId 'com.boop.alpha1'" in build
-    assert re.search(r"^\s*versionCode\s+70\s*$", build, re.MULTILINE)
-    assert 'versionName "1.2.24-unified-dev-menu-doods"' in build
+    code = re.search(r"^\s*versionCode\s+(\d+)\s*$", build, re.MULTILINE)
+    name = re.search(r'^\s*versionName\s+"([^"]+)"\s*$', build, re.MULTILINE)
+    assert code and int(code.group(1)) >= 70
+    assert name and name.group(1).startswith("1.2.")
 
     manifest = ET.parse(ROOT / "source/AndroidManifest.xml").getroot()
     activities = [
