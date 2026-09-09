@@ -140,8 +140,10 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             generation.setSid(speakerId);
             generation.setSpeed(speed);
             generation.setSilenceScale(SILENCE_SCALE);
-            GeneratedAudio audio = tts.generateWithConfigAndCallback(text, generation, samples ->
-                    request.cancelled.get() ? 0 : 1);
+            // Sherpa-ONNX 1.13.7's Android callback JNI bridge can abort the
+            // process. Generate without that callback and honor cancellation
+            // immediately after synthesis instead.
+            GeneratedAudio audio = tts.generateWithConfig(text, generation);
             if (request.cancelled.get()) return;
             if (audio == null || audio.getSamples() == null || audio.getSamples().length == 0) {
                 throw new IllegalStateException("Natural speech produced no audio");
