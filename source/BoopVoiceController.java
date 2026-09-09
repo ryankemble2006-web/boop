@@ -40,6 +40,7 @@ final class BoopVoiceController {
     private static final String KEY_NATURAL_SPEAKER_KEY = "natural_speaker_key";
     private static final String KEY_NATURAL_PACK_VERSION = "natural_pack_version";
     private static final String KEY_NATURAL_VERIFICATION_STATE = "natural_verification_state";
+    private static final String KEY_NATURAL_RUNTIME_PROVEN_VERSION = "natural_runtime_proven_version";
 
     private static final NaturalVoice[] NATURAL_VOICES = {
             new NaturalVoice("Emma", "bf_emma", 21),
@@ -59,6 +60,7 @@ final class BoopVoiceController {
     private String naturalSpeakerKey;
     private String naturalPackVersion;
     private String naturalVerificationState;
+    private String naturalRuntimeProvenVersion;
     private boolean naturalPackUsable;
 
     BoopVoiceController(Context context) {
@@ -69,6 +71,7 @@ final class BoopVoiceController {
         naturalSpeakerKey = preferences.getString(KEY_NATURAL_SPEAKER_KEY, NATURAL_VOICES[0].key());
         naturalPackVersion = preferences.getString(KEY_NATURAL_PACK_VERSION, "");
         naturalVerificationState = preferences.getString(KEY_NATURAL_VERIFICATION_STATE, "");
+        naturalRuntimeProvenVersion = preferences.getString(KEY_NATURAL_RUNTIME_PROVEN_VERSION, "");
         if (!BACKEND_NATURAL.equals(selectedBackend)) selectedBackend = BACKEND_ANDROID;
         if (findNaturalVoice(naturalSpeakerKey) == null) naturalSpeakerKey = NATURAL_VOICES[0].key();
     }
@@ -159,17 +162,31 @@ final class BoopVoiceController {
                 .apply();
     }
 
-    boolean naturalBackendSelectedAndUsable() {
-        return BACKEND_NATURAL.equals(selectedBackend)
-                && naturalPackUsable
+    boolean naturalPackReadyForPreview() {
+        return naturalPackUsable
                 && NATURAL_STATE_VERIFIED.equals(naturalVerificationState)
                 && naturalPackVersion != null
                 && !naturalPackVersion.isEmpty();
     }
 
+    void markNaturalPlaybackProven() {
+        if (!naturalPackReadyForPreview()) return;
+        naturalRuntimeProvenVersion = naturalPackVersion;
+        preferences.edit()
+                .putString(KEY_NATURAL_RUNTIME_PROVEN_VERSION, naturalRuntimeProvenVersion)
+                .apply();
+    }
+
+    boolean naturalBackendSelectedAndUsable() {
+        return BACKEND_NATURAL.equals(selectedBackend)
+                && naturalPackReadyForPreview()
+                && naturalRuntimeProvenVersion != null
+                && naturalPackVersion.equals(naturalRuntimeProvenVersion);
+    }
+
     boolean selectNaturalVoice(String key) {
         NaturalVoice voice = findNaturalVoice(key);
-        if (voice == null || !naturalPackUsable) return false;
+        if (voice == null || !naturalPackReadyForPreview()) return false;
         selectedBackend = BACKEND_NATURAL;
         naturalSpeakerKey = voice.key();
         preferences.edit()
