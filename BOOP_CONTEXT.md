@@ -87,11 +87,20 @@ Exact live source heads fetched at integration time:
 The unified package is `com.boop.alpha1`, retaining Wall's permanent BOOP signer
 for the cleanest update path. Wall is the app core; latest Launcher and Shield
 sources are compiled as internal modules. One exported `UnifiedEntryActivity`
-selects the body automatically:
+selects the body automatically. The current profile contract is:
+- explicit persistent recovery/debug override first;
 - Android TV / Leanback / television UI mode -> Shield;
 - Pixel 7 Pro -> Wall;
-- other handheld Android, including Pixel 10 Pro XL -> Launcher.
-An internal persistent override exists for recovery/debugging.
+- other non-TV Android with `smallestScreenWidthDp >= 600` -> Wall;
+- sub-600dp handheld Android, including Pixel 10 Pro XL -> Launcher.
+
+The 600dp tablet rule was added on 2026-09-09 so the Xiaomi Pad 7 Pro takes the
+Wall path without a Xiaomi-specific model hardcode. The current responsive Wall
+renderer already derives eye presentation from live view dimensions and handles
+portrait vs landscape; tablet support must not fork or regenerate BOOP's approved
+eyes. Canonical tablet-compatible app/test head `bd878606809302de1b871e6c62d8ce905346e766`
+is CI/signer green from workflow `34395085823`, artifact `BOOP-Unified` ID
+`10121327367`; physical Xiaomi Pad acceptance remains pending.
 
 Wall-to-Launcher and Launcher-to-Wall are internal activity hops in one APK. The
 unified build reproduces Shield's own approved eye-artwork materialization before
@@ -143,6 +152,8 @@ accepted artifacts until unified BOOP is physically accepted.
   `boop-shield-media-puppetry`; the latest full-screen/friendly-access Shield input
   used by unified BOOP remains lineage-specific and requires physical verification.
 - Unified v41 is signed/CI-green but requires real Wall, handheld and Shield tests.
+- The current V70 Xiaomi Pad routing candidate is signed/CI-green but requires a
+  real Xiaomi Pad launch/orientation/voice/HA check before physical acceptance.
 
 CI-green, locally built, physically tested and design-only are different states.
 Record them separately. Never manufacture a physical checkpoint from a CI pass.
