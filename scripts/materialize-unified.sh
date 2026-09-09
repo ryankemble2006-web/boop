@@ -2,9 +2,6 @@
 set -euo pipefail
 
 bash scripts/materialize-android.sh
-# v70 physical regression repair: make Voice Settings scroll before later Unified
-# patches append Notifications and Dev menu buttons to that same content column.
-python3 scripts/patch-unified-v70-regressions.py
 python3 scripts/patch-unified-dock-mirror.py
 python3 scripts/patch-unified-wake-name.py
 python3 scripts/patch-unified-wake-arm.py
@@ -132,6 +129,11 @@ PY
 
 # Share the locked phone eyes/blink and complete the approved Shield Home wiring.
 python3 scripts/patch-unified-shield-presentation.py
+
+# Apply the v70 physical regression repair only after the older Wall patches have
+# consumed their established MainActivity anchors, but before more settings rows
+# are appended. This keeps the full Voice Settings column vertically reachable.
+python3 scripts/patch-unified-v70-regressions.py
 
 # Add phone notification controls after all current Wall source patches.
 python3 scripts/patch-unified-notifications.py
