@@ -22,14 +22,7 @@ public final class BoopNotificationLockActivity extends Activity {
     private boolean receiverRegistered;
     private boolean authenticationInProgress;
 
-    private final Runnable timeoutRunnable = () -> {
-        try {
-            BoopNotificationRuntime.get(this).onPresentationDismissed();
-        } catch (RuntimeException ignored) {
-            // Android's source notification remains untouched.
-        }
-        finish();
-    };
+    private final Runnable timeoutRunnable = this::dismissMirror;
 
     private final BroadcastReceiver userPresentReceiver = new BroadcastReceiver() {
         @Override
@@ -121,9 +114,20 @@ public final class BoopNotificationLockActivity extends Activity {
         View view = BoopNotificationInPlaceController.createPlainPresentationView(
                 this, presentation);
         view.setOnClickListener(v -> handlePresentationTap());
+        BoopNotificationSwipeGesture.attach(view, this::dismissMirror);
         setContentView(view);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         handler.postDelayed(timeoutRunnable, Math.max(1L, runtime.settings().timeoutMs()));
+    }
+
+    private void dismissMirror() {
+        handler.removeCallbacks(timeoutRunnable);
+        try {
+            BoopNotificationRuntime.get(this).onPresentationDismissed();
+        } catch (RuntimeException ignored) {
+            // Android's source notification remains untouched.
+        }
+        finish();
     }
 
     private void handlePresentationTap() {
