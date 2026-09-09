@@ -27,8 +27,8 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 def patch_build() -> None:
     text = BUILD.read_text(encoding="utf-8")
     text = replace_once(text, "applicationId 'com.boop.alpha1'", "applicationId 'com.boop.animationlab'", "application id")
-    text = replace_once(text, "versionCode 70", "versionCode 2", "version code")
-    text = replace_once(text, 'versionName "1.2.24-unified-dev-menu-doods"', 'versionName "0.2-animation-lab-pixel-launch"', "version name")
+    text = replace_once(text, "versionCode 70", "versionCode 3", "version code")
+    text = replace_once(text, 'versionName "1.2.24-unified-dev-menu-doods"', 'versionName "0.3-animation-lab-pixel-decor-fix"', "version name")
     text = text.replace("    implementation project(':launcher-lib')\n", "")
     text = text.replace("    implementation project(':shield-lib')\n", "")
     BUILD.write_text(text, encoding="utf-8")
@@ -55,6 +55,7 @@ def patch_manifest() -> None:
         <activity
             android:name=".BoopDevMenuActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:enableOnBackInvokedCallback="false"
             android:exported="true"
             android:launchMode="singleTask">
             <intent-filter>
@@ -180,45 +181,6 @@ def patch_activity() -> None:
         }
     }
 ''', "cancel")
-
-    # BOOP_ANIMATION_LAB_LAUNCH_GUARD_V2: Pixel/Android 16 launch must never die silently.
-    old_create = '''    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        applyImmersiveUi();
-        root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
-        setContentView(root);
-        showMenu();
-    }
-'''
-    new_create = '''    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
-        try {
-            applyImmersiveUi();
-            setContentView(root);
-            showMenu();
-        } catch (Throwable launchFailure) {
-            android.util.Log.e("BOOP-Animation-Lab", "BOOP_ANIMATION_LAB_LAUNCH_GUARD_V2", launchFailure);
-            root.removeAllViews();
-            TextView failure = new TextView(this);
-            failure.setTextColor(Color.WHITE);
-            failure.setTextSize(18f);
-            failure.setPadding(dp(24), dp(24), dp(24), dp(24));
-            failure.setText("BOOP Animation Lab launch fault\\n\\n"
-                    + launchFailure.getClass().getSimpleName() + ": "
-                    + String.valueOf(launchFailure.getMessage()));
-            root.addView(failure, new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
-            setContentView(root);
-        }
-    }
-'''
-    text = replace_once(text, old_create, new_create, "Pixel launch guard")
     ACTIVITY.write_text(text, encoding="utf-8")
 
 
@@ -229,13 +191,18 @@ def validate() -> None:
     activity = ACTIVITY.read_text(encoding="utf-8")
     face = FACE.read_text(encoding="utf-8")
     for token, body in (
-        ("com.boop.animationlab", build), ("BOOP Animation Lab", manifest),
+        ("com.boop.animationlab", build), ("0.3-animation-lab-pixel-decor-fix", build),
+        ("BOOP Animation Lab", manifest), ('android:enableOnBackInvokedCallback="false"', manifest),
         ("IDLE_BLINK", model), ("LISTENING", model), ("playSingleIdleBlink", face),
-        ("startListeningCue", activity), ("BOOP_ANIMATION_LAB_LAUNCH_GUARD_V2", activity),
-        ("androidx.startup.InitializationProvider", manifest), ("tools:node=\"remove\"", manifest),
+        ("startListeningCue", activity), ("androidx.startup.InitializationProvider", manifest),
+        ("tools:node=\"remove\"", manifest),
     ):
         if token not in body:
             raise SystemExit(f"animation lab validation missing {token}")
+    if "getWindow().getInsetsController()" in activity:
+        raise SystemExit("animation lab still uses pre-decor Window.getInsetsController")
+    if "decor.getWindowInsetsController()" not in activity:
+        raise SystemExit("animation lab missing attached-decor insets controller")
     for dood in EXPECTED_DOODS:
         if f'new Item("{dood}"' not in model:
             raise SystemExit(f"animation lab lost v70 dood: {dood}")
@@ -249,4 +216,4 @@ if __name__ == "__main__":
     patch_face()
     patch_activity()
     validate()
-    print("BOOP Animation Lab v0.2 materialized with Pixel launch guard")
+    print("BOOP Animation Lab v0.3 materialized with Pixel DecorView lifecycle fix")
