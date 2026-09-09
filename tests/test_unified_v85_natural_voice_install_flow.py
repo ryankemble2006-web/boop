@@ -8,8 +8,8 @@ def test_v85_combines_tablet_routing_with_natural_voice_install_flow():
     patch = Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
 
     # The combined candidate must retain the already-accepted generic tablet route.
-    assert "smallestScreenWidthDp" in profile
-    assert ">= 600" in profile
+    assert "TABLET_MIN_SMALLEST_WIDTH_DP = 600" in profile
+    assert "smallestScreenWidthDp >= TABLET_MIN_SMALLEST_WIDTH_DP" in profile
 
     # Post-download verification must not reread the full ~350 MB archive while
     # the UI sits on one static Verifying label. Digest the exact bytes as they
