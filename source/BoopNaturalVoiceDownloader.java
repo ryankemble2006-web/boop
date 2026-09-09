@@ -15,12 +15,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 final class BoopNaturalVoiceDownloader {
     interface Listener {
         void onStatus(String status);
         void onProgress(long downloadedBytes, long totalBytes);
+        void onInstallProgress(int percent);
         void onReady();
         void onCancelled();
         void onError(String message);
@@ -28,6 +32,16 @@ final class BoopNaturalVoiceDownloader {
 
     private static final String GENERIC_ERROR = "Natural voices didn't download. Try again.";
     private static final String SPACE_ERROR = "I need more free space for natural voices.";
+
+    private static final class DownloadReceipt {
+        final long downloadedBytes;
+        final String sha256;
+
+        DownloadReceipt(long downloadedBytes, String sha256) {
+            this.downloadedBytes = downloadedBytes;
+            this.sha256 = sha256;
+        }
+    }
 
     private final OkHttpClient client;
     private final BoopNaturalVoiceManifest manifest;
@@ -101,13 +115,32 @@ final class BoopNaturalVoiceDownloader {
                     ResponseBody body = response.body();
                     if (body == null) throw new IOException("Empty voice-pack response");
                     File destination = pack.archiveFile();
-                    downloadBody(body, destination, runCancelled, requestedListener);
+                    DownloadReceipt receipt = downloadBody(
+                            body, destination, runCancelled, requestedListener);
                     if (runCancelled.get()) {
                         finishCancelled(runCancelled, runTerminal, requestedListener);
                         return;
                     }
+
+                    // The exact downloaded bytes were hashed while they were written,
+                    // so this verification is immediate rather than a second 350 MB read.
                     requestedListener.onStatus("Verifying natural voices…");
-                    pack.installVerifiedArchive(destination, runCancelled::get);
+                    if (receipt.downloadedBytes != manifest.archiveSizeBytes()
+                            || !manifest.sha256().equals(receipt.sha256)) {
+                        throw new BoopNaturalVoicePack.VerificationException(
+                                BoopNaturalVoicePack.VERIFY_ERROR);
+                    }
+                    if (runCancelled.get()) {
+                        finishCancelled(runCancelled, runTerminal, requestedListener);
+                        return;
+                    }
+
+                    requestedListener.onStatus("Installing natural voices…");
+                    pack.installVerifiedArchive(
+                            destination,
+                            receipt.sha256,
+                            runCancelled::get,
+                            requestedListener::onInstallProgress);
                     if (runCancelled.get()) {
                         finishCancelled(runCancelled, runTerminal, requestedListener);
                         return;
@@ -124,7 +157,11 @@ final class BoopNaturalVoiceDownloader {
                         finishError(runCancelled, runTerminal, requestedListener, GENERIC_ERROR);
                     }
                 } catch (Throwable error) {
-                    finishError(runCancelled, runTerminal, requestedListener, GENERIC_ERROR);
+                    if (runCancelled.get()) {
+                        finishCancelled(runCancelled, runTerminal, requestedListener);
+                    } else {
+                        finishError(runCancelled, runTerminal, requestedListener, GENERIC_ERROR);
+                    }
                 }
             }
         });
@@ -133,21 +170,20 @@ final class BoopNaturalVoiceDownloader {
 
     void cancel() {
         AtomicBoolean runCancelled;
-        AtomicBoolean runTerminal;
         Listener runListener;
         Call call;
         synchronized (lock) {
             if (!running) return;
             runCancelled = cancelled;
-            runTerminal = terminal;
             runListener = listener;
             call = activeCall;
         }
         if (runCancelled != null) runCancelled.set(true);
+        if (runListener != null) runListener.onStatus("Cancelling natural voices…");
         if (call != null) call.cancel();
-        if (runListener != null && runTerminal != null) {
-            finishCancelled(runCancelled, runTerminal, runListener);
-        }
+        // Do not call pack cleanup here. During extraction the pack monitor is
+        // owned by the worker; synchronous cleanup would block the UI on Cancel.
+        // The worker observes runCancelled and performs terminal cleanup itself.
     }
 
     boolean isRunning() {
@@ -156,7 +192,7 @@ final class BoopNaturalVoiceDownloader {
         }
     }
 
-    private void downloadBody(
+    private DownloadReceipt downloadBody(
             ResponseBody body,
             File destination,
             AtomicBoolean runCancelled,
@@ -164,6 +200,7 @@ final class BoopNaturalVoiceDownloader {
         long total = body.contentLength() > 0 ? body.contentLength() : manifest.archiveSizeBytes();
         long downloaded = 0L;
         long lastReported = -1L;
+        MessageDigest digest = newSha256Digest();
         try (InputStream input = new BufferedInputStream(body.byteStream());
              OutputStream output = new BufferedOutputStream(new FileOutputStream(destination))) {
             byte[] buffer = new byte[64 * 1024];
@@ -172,6 +209,7 @@ final class BoopNaturalVoiceDownloader {
                 if (runCancelled.get()) throw new IOException("Natural voice download cancelled");
                 if (count == 0) continue;
                 output.write(buffer, 0, count);
+                digest.update(buffer, 0, count);
                 downloaded += count;
                 if (lastReported < 0 || downloaded - lastReported >= 1024 * 1024L) {
                     lastReported = downloaded;
@@ -180,10 +218,23 @@ final class BoopNaturalVoiceDownloader {
             }
         }
         runListener.onProgress(downloaded, total);
-        if (downloaded != manifest.archiveSizeBytes()) {
-            throw new BoopNaturalVoicePack.VerificationException(
-                    BoopNaturalVoicePack.VERIFY_ERROR);
+        return new DownloadReceipt(downloaded, hex(digest.digest()));
+    }
+
+    private static MessageDigest newSha256Digest() throws IOException {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IOException("SHA-256 unavailable", impossible);
         }
+    }
+
+    private static String hex(byte[] bytes) {
+        StringBuilder result = new StringBuilder(bytes.length * 2);
+        for (byte value : bytes) {
+            result.append(String.format(Locale.ROOT, "%02x", value & 0xff));
+        }
+        return result.toString();
     }
 
     private void finishReady(
