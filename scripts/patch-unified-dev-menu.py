@@ -3,17 +3,36 @@ from pathlib import Path
 
 path = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java")
 text = path.read_text(encoding="utf-8")
-marker = "// BOOP_DEV_MENU_SETTINGS_ENTRY_V1"
+spoken_marker = "// BOOP_DEV_MENU_SPOKEN_ENTRY_V1"
+settings_marker = "// BOOP_DEV_MENU_SETTINGS_ENTRY_V1"
+changed = False
 
-if marker in text:
-    print("Internal BOOP dev menu entry already materialized")
-    raise SystemExit(0)
+if spoken_marker not in text:
+    anchor = '''        if (BoopVoiceSettingsIntent.matches(transcript)) {
+            showVoiceSettings();
+            return;
+        }
 
-anchor = "        Button done = new Button(this);\n"
-if text.count(anchor) != 1:
-    raise SystemExit(f"Expected one Voice Done anchor, found {text.count(anchor)}")
+'''
+    if text.count(anchor) != 1:
+        raise SystemExit(f"Expected one local voice-settings speech anchor, found {text.count(anchor)}")
+    block = '''        // BOOP_DEV_MENU_SPOKEN_ENTRY_V1
+        if (BoopDevMenuIntent.matches(transcript)) {
+            startActivity(new Intent().setClassName(
+                    getPackageName(), "com.boop.alpha1.BoopDevMenuActivity"));
+            return;
+        }
 
-block = '''        // BOOP_DEV_MENU_SETTINGS_ENTRY_V1
+'''
+    text = text.replace(anchor, anchor + block, 1)
+    changed = True
+
+if settings_marker not in text:
+    anchor = "        Button done = new Button(this);\n"
+    if text.count(anchor) != 1:
+        raise SystemExit(f"Expected one Voice Done anchor, found {text.count(anchor)}")
+
+    block = '''        // BOOP_DEV_MENU_SETTINGS_ENTRY_V1
         Button devMenu = new Button(this);
         devMenu.setText("Dev menu");
         devMenu.setTextSize(19f);
@@ -32,6 +51,11 @@ block = '''        // BOOP_DEV_MENU_SETTINGS_ENTRY_V1
         voiceSettingsOverlay.addView(devMenu, devMenuParams);
 
 '''
+    text = text.replace(anchor, block + anchor, 1)
+    changed = True
 
-path.write_text(text.replace(anchor, block + anchor, 1), encoding="utf-8")
-print("Internal BOOP dev menu entry materialized")
+if changed:
+    path.write_text(text, encoding="utf-8")
+    print("Internal BOOP dev menu speech/settings entries materialized")
+else:
+    print("Internal BOOP dev menu speech/settings entries already materialized")

@@ -58,7 +58,7 @@ jobs:
       - name: Check non-visual integration contracts
         run: |
           python -m pip install pytest
-          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py tests/test_unified_notification_asset_integrity.py tests/test_unified_notification_puppet_contract.py
+          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py tests/test_unified_notification_asset_integrity.py tests/test_unified_notification_puppet_contract.py tests/test_unified_v70_dev_lab_contract.py
           python - <<'PY'
           from pathlib import Path
           heads = Path('unified/SOURCE_HEADS.md').read_text()
@@ -72,11 +72,11 @@ jobs:
       - name: Materialize one APK
         run: bash scripts/materialize-unified.sh
 
-      - name: Test notification presenter contracts
+      - name: Test notification and developer-lab contracts
         run: |
-          python -m pytest -q tests/test_unified_notification_manifest_contract.py
+          python -m pytest -q tests/test_unified_notification_manifest_contract.py tests/test_unified_v70_materialized_dev_menu_contract.py
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-            --tests '*BoopNotification*' --stacktrace
+            --tests '*BoopNotification*' --tests '*BoopDevMenuIntentTest' --stacktrace
 
       - name: Check seamless wake-command handoff
         run: python -m pytest -q tests/test_unified_wake_handoff_contract.py
@@ -120,7 +120,7 @@ jobs:
         run: |
           unset BOOP_RELAY_URL BOOP_RELAY_TOKEN
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-            --tests '*BoopNotification*' \
+            --tests '*BoopNotification*' --tests '*BoopDevMenuIntentTest' \
             --tests '*BoopWake*' --tests '*BoopSentencePiece*' --tests '*BoopCustomWake*' \
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
             --tests '*BoopVoice*' --tests '*BoopCommandRouterTest' \
@@ -163,7 +163,7 @@ jobs:
           grep -Fq "versionName='${BOOP_EXPECTED_VERSION_NAME}'" badging.txt
           grep -Fq "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
-          for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
+          for cls in com.boop.alpha1.MainActivity com.boop.alpha1.BoopDevMenuActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
             grep -Fq "$cls" manifest-tree.txt
           done
           grep -Fq "android.intent.category.HOME" manifest-tree.txt

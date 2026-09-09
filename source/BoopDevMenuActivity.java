@@ -2,11 +2,13 @@ package com.boop.alpha1;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.Gravity;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -15,18 +17,14 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 public final class BoopDevMenuActivity extends Activity {
-    private static final long THINKING_PREVIEW_MS = 3_500L;
-
-    private final Handler handler = new Handler(Looper.getMainLooper());
     private FrameLayout root;
     private BoopFaceView face;
-    private Runnable thinkingStop;
-    private int berryVariant;
     private boolean previewShowing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        applyImmersiveUi();
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
         setContentView(root);
@@ -34,9 +32,20 @@ public final class BoopDevMenuActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        applyImmersiveUi();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) applyImmersiveUi();
+    }
+
+    @Override
     protected void onDestroy() {
-        cancelThinking();
-        handler.removeCallbacksAndMessages(null);
+        cancelActiveAnimation();
         super.onDestroy();
     }
 
@@ -50,12 +59,13 @@ public final class BoopDevMenuActivity extends Activity {
     }
 
     private void showMenu() {
-        cancelThinking();
+        cancelActiveAnimation();
         previewShowing = false;
         root.removeAllViews();
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
+        scroll.setFocusable(true);
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL);
         column.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -68,7 +78,7 @@ public final class BoopDevMenuActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
         TextView title = new TextView(this);
-        title.setText("BOOP Dev");
+        title.setText("BOOP Dev Lab");
         title.setTextColor(Color.WHITE);
         title.setTextSize(28f);
         title.setGravity(Gravity.CENTER);
@@ -77,7 +87,7 @@ public final class BoopDevMenuActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("Local previews only");
+        subtitle.setText("Local previews only • no Android shade posts");
         subtitle.setTextColor(Color.LTGRAY);
         subtitle.setTextSize(15f);
         subtitle.setGravity(Gravity.CENTER);
@@ -91,13 +101,11 @@ public final class BoopDevMenuActivity extends Activity {
         face = menuFace;
         LinearLayout.LayoutParams faceParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(260));
+                dp(250));
         faceParams.setMargins(0, 0, 0, dp(18));
         column.addView(menuFace, faceParams);
         menuFace.post(() -> {
-            if (face != menuFace || previewShowing) {
-                return;
-            }
+            if (face != menuFace || previewShowing) return;
             menuFace.showIdleBlackImmediately();
             menuFace.wakeFromIdle();
         });
@@ -107,15 +115,11 @@ public final class BoopDevMenuActivity extends Activity {
         }
 
         Button done = new Button(this);
-        done.setAllCaps(false);
-        done.setText("Done");
-        done.setTextSize(18f);
-        done.setTextColor(Color.WHITE);
-        done.setBackgroundColor(Color.rgb(42, 42, 42));
+        styleButton(done, "Done");
         done.setOnClickListener(v -> finish());
         LinearLayout.LayoutParams doneParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(58));
+                dp(62));
         doneParams.setMargins(0, dp(10), 0, 0);
         column.addView(done, doneParams);
     }
@@ -133,6 +137,7 @@ public final class BoopDevMenuActivity extends Activity {
 
         HorizontalScrollView scroller = new HorizontalScrollView(this);
         scroller.setHorizontalScrollBarEnabled(false);
+        scroller.setFocusable(true);
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -142,15 +147,11 @@ public final class BoopDevMenuActivity extends Activity {
 
         for (BoopDevMenuModel.Item item : shelf.items()) {
             Button button = new Button(this);
-            button.setAllCaps(false);
-            button.setText(item.label());
-            button.setTextSize(17f);
-            button.setTextColor(Color.WHITE);
-            button.setBackgroundColor(Color.rgb(42, 42, 42));
+            styleButton(button, item.label());
             button.setContentDescription(item.label() + " demo");
             button.setOnClickListener(v -> runAction(item.action()));
             LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                    dp(146), dp(62));
+                    dp(164), dp(66));
             buttonParams.setMargins(0, 0, dp(10), 0);
             row.addView(button, buttonParams);
         }
@@ -165,34 +166,46 @@ public final class BoopDevMenuActivity extends Activity {
     private void runAction(BoopDevMenuModel.Action action) {
         switch (action) {
             case WAKE:
-                cancelThinking();
+                cancelActiveAnimation();
                 if (face != null) {
                     face.showIdleBlackImmediately();
                     face.wakeFromIdle();
                 }
                 return;
             case THINK:
-                playThinkingPreview();
+                cancelActiveAnimation();
+                if (face != null) face.startThinking();
                 return;
-            case BERRY:
-                cancelThinking();
-                if (face != null) {
-                    face.playMemberBerry(berryVariant++);
-                }
+            case STOP:
+                cancelActiveAnimation();
+                return;
+            case BERRY_1:
+                playBerry(0);
+                return;
+            case BERRY_2:
+                playBerry(1);
+                return;
+            case BERRY_3:
+                playBerry(2);
                 return;
             case SHAKE:
-                cancelThinking();
-                if (face != null) {
-                    face.playShakeMuppet(0.85f);
-                }
+                cancelActiveAnimation();
+                if (face != null) face.playShakeMuppet(0.85f);
                 return;
             case SLEEP:
-                cancelThinking();
-                if (face != null) {
-                    face.goIdleBlack();
-                }
+                cancelActiveAnimation();
+                if (face != null) face.goIdleBlack();
                 return;
-            case NOTIFICATION_UNLOCKED:
+            case NOTIFICATION_FACEBOOK:
+            case NOTIFICATION_WHATSAPP:
+            case NOTIFICATION_GMAIL:
+            case NOTIFICATION_X:
+            case NOTIFICATION_YOUTUBE:
+            case NOTIFICATION_MESSENGER:
+            case NOTIFICATION_INSTAGRAM:
+            case NOTIFICATION_DISCORD:
+            case NOTIFICATION_SPOTIFY:
+            case NOTIFICATION_REDDIT:
             case NOTIFICATION_LOCKED:
             case NOTIFICATION_BUNDLE:
                 showNotificationPreview(action);
@@ -202,24 +215,13 @@ public final class BoopDevMenuActivity extends Activity {
         }
     }
 
-    private void playThinkingPreview() {
-        cancelThinking();
-        BoopFaceView activeFace = face;
-        if (activeFace == null) {
-            return;
-        }
-        activeFace.startThinking();
-        thinkingStop = () -> {
-            if (face == activeFace) {
-                activeFace.stopThinking();
-            }
-            thinkingStop = null;
-        };
-        handler.postDelayed(thinkingStop, THINKING_PREVIEW_MS);
+    private void playBerry(int variant) {
+        cancelActiveAnimation();
+        if (face != null) face.playMemberBerry(variant);
     }
 
     private void showNotificationPreview(BoopDevMenuModel.Action action) {
-        cancelThinking();
+        cancelActiveAnimation();
         previewShowing = true;
         face = null;
         root.removeAllViews();
@@ -248,16 +250,51 @@ public final class BoopDevMenuActivity extends Activity {
         root.addView(puppet, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+
+        Button back = new Button(this);
+        styleButton(back, "Back to dev menu");
+        back.setOnClickListener(v -> showMenu());
+        FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(
+                dp(240),
+                dp(62),
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        backParams.bottomMargin = dp(22);
+        root.addView(back, backParams);
     }
 
-    private void cancelThinking() {
-        if (thinkingStop != null) {
-            handler.removeCallbacks(thinkingStop);
-            thinkingStop = null;
+    private void cancelActiveAnimation() {
+        if (face != null) face.stopThinking();
+    }
+
+    private void styleButton(Button button, String label) {
+        button.setAllCaps(false);
+        button.setText(label);
+        button.setTextSize(18f);
+        button.setTextColor(Color.WHITE);
+        button.setBackgroundColor(Color.rgb(42, 42, 42));
+        button.setFocusable(true);
+    }
+
+    private void applyImmersiveUi() {
+        getWindow().setStatusBarColor(Color.BLACK);
+        getWindow().setNavigationBarColor(Color.BLACK);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+            return;
         }
-        if (face != null) {
-            face.stopThinking();
-        }
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }
 
     private int dp(int value) {

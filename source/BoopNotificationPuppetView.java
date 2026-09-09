@@ -181,6 +181,11 @@ final class BoopNotificationPuppetView extends FrameLayout {
     }
 
     private Drawable loadAppIcon(String packageName) {
+        BoopDevNotificationIdentity.Spec devIdentity =
+                BoopDevNotificationIdentity.forPackage(packageName);
+        if (devIdentity != null) {
+            return new BoopDevNotificationIconDrawable(devIdentity);
+        }
         if (!empty(packageName)) {
             try {
                 return getContext().getPackageManager().getApplicationIcon(packageName);

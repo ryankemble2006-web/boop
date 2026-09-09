@@ -20,8 +20,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 69
-        versionName "1.2.23-unified-dev-menu"
+        versionCode 70
+        versionName "1.2.24-unified-dev-menu-doods"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }
