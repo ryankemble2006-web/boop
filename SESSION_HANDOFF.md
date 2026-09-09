@@ -2,145 +2,133 @@
 
 Updated 2026-09-10. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current canonical signed candidate: v87 Kokoro JNI crash fix
-
-Release identity:
-
-- versionCode `87`;
-- versionName `1.2.87-unified-kokoro-jni-crash-fix`;
-- package `com.boop.alpha1`;
-- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+## Current canonical signed candidate: v88 natural playback recovery
 
 Exact **app/test release head** before documentation-only follow-up commits:
 
-`c046309cece7a4f4abc7e742190c0adb262c1c44`
+`f5f086fc4f67712b5746be067aff852331299bb0`
 
-Canonical workflow `34416346339`: **SUCCESS**. Separate Shield HOME routing workflow `34416346368`: **SUCCESS**.
+Release identity:
 
-Verification receipt:
+- versionCode `88`;
+- versionName `1.2.88-unified-natural-playback-recovery`;
+- package `com.boop.alpha1`;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-- artifact `BOOP-Unified`;
-- artifact ID `10129329924`;
-- artifact size `63,993,437` bytes;
-- artifact ZIP SHA-256 `86077df44d1ee78582b5cac762458673545a2dec5cee71388fc71fea0308e420`;
-- APK SHA-256 `ae1aeb5f73341c0b4b68ea3ab019d107604b2dc82182b0857c0e74fb0f8e77d8`;
+Verification:
+
+- canonical full workflow `34418073143`: **SUCCESS**;
+- separate Shield HOME routing workflow `34418073200`: **SUCCESS**;
+- artifact `BOOP-Unified`, ID `10129945925`, size `63,993,353` bytes;
+- artifact ZIP SHA-256 `a3d52235115a6a1dc2a4781022cf9339843e615e7b79f85958312873cff9275e`;
+- APK SHA-256 `8fca19f2005b8a252488978e0efc7f7391711207d06ac1557088648a0402e108`;
+- natural/integration Python contracts `29/29`;
 - Shield focused functional tests `58/58`, zero failures/errors/skips;
 - Unified focused functional tests `155/155`, zero failures/errors/skips.
 
-The exact artifact ZIP was downloaded after CI. Its SHA-256 matched GitHub's artifact digest. `built-commit.txt` matched `c046309c...`; `badging.txt` confirmed package `com.boop.alpha1`, versionCode `87`, versionName `1.2.87-unified-kokoro-jni-crash-fix`; `apk-sha256.txt` matched the extracted APK; `signer-sha256.txt` matched the permanent BOOP signer.
+The exact artifact ZIP was downloaded after CI and independently checked. ZIP digest, APK digest, `built-commit.txt`, package/version and permanent signer all match the workflow receipts.
 
-## v86 physical failure: native Kokoro callback crash
+## Fresh physical evidence: v87 rejected
 
-Ryan physically rejected v86 after testing the exact canonical artifact. Symptoms:
+Ryan physically tested the exact v87 candidate and reported:
 
-- tapping Emma / Isabella / George / Fable could produce no sound and BOOP could crash/minimise;
-- after a natural voice had been selected, normal speech could die too;
-- specifically, spoken `lights on` still changed the lights through Home Assistant, but BOOP gave no reply and minimised when the acknowledgement should have played.
+- all four natural rows displayed `natural voice preview failed`;
+- Emma, Isabella, George and Fable all produced no natural speech;
+- BOOP remained mute for ordinary replies as well.
 
-This isolated the fault after successful command execution, inside speech output rather than HA routing.
+This supersedes v87's CI-only expectation that natural output might work. v87 is physically rejected for voice output.
 
-Root cause was Sherpa-ONNX 1.13.7's Android JNI callback generation path. BOOP v86 called `generateWithConfigAndCallback(...)`. That native callback bridge can abort the Android process, so Java's ordinary natural-to-Android-TTS fallback never gets a chance to run.
+The important architecture finding is that v87 could persist `selected_backend=natural` before the candidate voice had ever proven that it could synthesize and play on the device. A broken experimental natural backend could therefore become the normal BOOP mouth and suppress ordinary acknowledgements.
 
-Do **not** restore `generateWithConfigAndCallback(...)` for Android natural speech while BOOP is on Sherpa-ONNX 1.13.7.
+## v88 repair
 
-## v87 repair
+v88 separates **trying a natural voice** from **making it BOOP's normal voice**.
 
-`BoopNaturalSpeechBackend` now uses:
+Natural selection now follows this order:
+
+1. A voice row identifies the candidate speaker without selecting it.
+2. The downloaded/verified pack is allowed to preview.
+3. Kokoro synthesizes the candidate and BOOP attempts local playback.
+4. Only after the playback callback completes successfully does BOOP persist that natural speaker and mark the current pack version as runtime-proven.
+5. Until that proof exists, ordinary BOOP speech stays on Android TextToSpeech even if v87 left `selected_backend=natural` in preferences.
+
+Durable controller rule:
+
+- `naturalPackReadyForPreview()` means the current pack is installed/verified and may be tried;
+- `naturalBackendSelectedAndUsable()` additionally requires `natural_runtime_proven_version` to equal the current pack version;
+- `markNaturalPlaybackProven()` is written only after successful natural preview playback;
+- a stale v87 natural selection therefore cannot keep v88 mute.
+
+Durable preview rule:
+
+- preview never substitutes Android TTS and pretends it was the requested natural voice;
+- failure says either `Natural voice synthesis failed. Android voice kept.` or `Natural voice playback failed. Android voice kept.` when that stage is known;
+- failed preview does not select/persist that natural voice;
+- ordinary speech remains resilient through Android TTS.
+
+## v88 Android Kokoro playback path
+
+Keep Sherpa-ONNX 1.13.7 Android synthesis on:
 
 `tts.generateWithConfig(text, generation)`
 
-Cancellation is checked again immediately after synthesis before playback. This removes the crashing callback route without changing HA control, normal Android TTS, voice IDs, selection behavior, artwork, launcher behavior, package ID or signer.
+Do **not** restore `generateWithConfigAndCallback(...)`; v86 physical testing exposed that JNI callback route as process-crashing on Android.
 
-TDD / verification lineage:
+v88 also removes BOOP's float PCM + `PlaybackParams` layer from natural playback. Generated Sherpa floats are clamped/converted to signed PCM16 and played using `AudioFormat.ENCODING_PCM_16BIT`, matching Sherpa's conservative Android TTS output approach more closely.
 
-- `0c83d375...` added the regression contract; workflow `34416099991` failed RED exactly because the unsafe callback symbol was still present (`1 failed, 25 passed`);
-- `87041a002...` made the one functional production repair; relevant natural contracts, real Gradle natural tests and wake handoff were green in workflow `34416181606` before that run was superseded/cancelled by the release commit;
-- `c046309c...` bumped to v87; full workflow `34416346339` passed all stages;
-- Shield HOME routing workflow `34416346368` passed;
-- compare from the prior v86 documentation head `048af1c...` to v87 release contains only `source/BoopNaturalSpeechBackend.java`, `tests/test_unified_v85_natural_voice_install_flow.py`, and `unified/app-build.gradle`.
+Natural pitch adjustment is intentionally not applied in this PCM16 recovery candidate. Speech-rate still maps to Kokoro generation speed. Restore natural pitch only after the basic PCM16 path is physically proven.
 
-## Natural voice selector/demo behavior to preserve
+Exact natural voices remain:
 
-The v86 selector/demo repair remains correct and must be retained with the v87 safe backend:
+1. Emma `bf_emma`, speaker 21;
+2. Isabella `bf_isabella`, speaker 22;
+3. George `bm_george`, speaker 26;
+4. Fable `bm_fable`, speaker 25.
 
-- tapping Emma / Isabella / George / Fable selects that exact natural speaker;
-- Voice Settings shows `Selected: <name>` immediately;
-- the demo goes through a dedicated natural-only preview path;
-- the preview never substitutes Android TTS if Kokoro synthesis fails;
-- a failed or unavailable natural demo gives a short local failure message instead;
-- normal BOOP speech still retains Android TTS fallback for catchable natural failures;
-- startup reconciles a current installed pack with the controller's verified state before previews can run;
-- the invalid Kokoro `eng` language override remains removed while the explicit GB English lexicon path remains;
-- Android natural synthesis uses `generateWithConfig(...)`, not `generateWithConfigAndCallback(...)`.
+The explicit `lexicon-gb-en.txt` remains. Do not restore the rejected `kokoro.setLang("eng")` guess; exact Sherpa 1.13.7 source permits blank language with the configured lexicon.
 
-Natural voice order remains:
+## TDD / verification lineage
 
-1. Emma: `bf_emma`, speaker `21`;
-2. Isabella: `bf_isabella`, speaker `22`;
-3. George: `bm_george`, speaker `26`;
-4. Fable: `bm_fable`, speaker `25`.
+- v88 RED commit `0f80d8d4acb7c8cf991fbdb1284ec01929d778f5`, workflow `34417410560`: exactly 4 new failures and 25 passes, covering selection poisoning, runtime proof, PCM16 playback and staged failure reporting;
+- old `PlaybackParams` contract retired at `0a5959b630eebc587d5aa09616224827665fabee` before production change;
+- controller repair `dcb31c2c5b7df74d7d78cdf7dfc8474e8a2b7c27`;
+- PCM16 backend repair `f564e4333cbff5b7106314f750397c0cec652395`;
+- guarded preview/selection repair `d12267dd403a8236cd92913fa8f2bd95164739f7`;
+- pre-release full build `34417766406`: SUCCESS;
+- final v88 release head `f5f086fc4f67712b5746be067aff852331299bb0`, workflow `34418073143`: SUCCESS;
+- Shield HOME routing `34418073200`: SUCCESS.
 
-## Natural voice download/install flow from v85 remains protected
+The v88 functional diff is limited to the natural voice patch, natural backend, voice controller, two natural-voice contract files and release version metadata. Home Assistant routing, approved eyes, launcher source, package ID and signer were not changed.
 
-Preserve the v85 repair:
+## Physical acceptance boundary for v88
 
-- SHA-256 is calculated while download bytes are written;
-- post-download Verify is an immediate size/hash receipt check;
-- extraction is separately visible as `Installing natural voices… N%`;
-- Cancel is cooperative/non-blocking and does not synchronously enter pack cleanup from the UI thread;
-- worker owns terminal cleanup;
-- archive traversal/link rejection, required-file validation, app-private storage, safe activation and archive deletion remain intact.
+v88 is **CI/signer green, physical natural speech pending**. Do not call natural voices fixed until Ryan hears them on the real device.
 
-Natural voices remain optional and local/offline after the one-time in-app model download. Installing the pack does not silently select a natural voice.
+Test in this order:
 
-## Physical acceptance boundary for v87
+1. Install v88 over v87.
+2. **Before touching any natural voice row**, say `lights on`.
+   - HA should perform the action.
+   - BOOP should remain foreground.
+   - BOOP should speak the acknowledgement using Android TTS because v87's natural selection lacks v88 runtime proof.
+3. Open Voice Settings and tap Emma.
+   - if it works, Emma must audibly play first, then status becomes `Selected: Emma`;
+   - if it fails, record whether the UI says `synthesis failed` or `playback failed`; Android voice must remain selected for ordinary speech.
+4. Say `lights on` again after the natural attempt. BOOP must still speak regardless of whether the natural preview succeeded.
+5. If Emma works, repeat with George or Fable to prove speaker switching.
 
-v86 is physically rejected for the voice crash described above.
+No v88 rollback checkpoint exists. Do not create or repoint one until Ryan explicitly accepts the exact v88 artifact physically.
 
-v87 is **CI/signer green, physically pending**.
+## Protected contracts unchanged
 
-Primary check:
-
-1. Install v87 over the current BOOP build.
-2. Open Voice Settings with the natural pack already installed. It should not redownload.
-3. Tap Emma. Status should change to `Selected: Emma`, Emma should speak, and BOOP must remain foreground.
-4. Repeat with at least one male voice, ideally George or Fable, and confirm the timbre changes without a crash/minimise.
-5. Close/reopen BOOP and repeat one natural demo to prove installed-pack verification survives restart.
-6. With a natural voice selected, say `lights on`; HA should complete the action and BOOP should stay alive/foreground and speak its acknowledgement.
-7. Speak another ordinary BOOP response with the natural voice selected and confirm normal speech continues.
-8. If a natural demo fails, Android TTS must not impersonate it; ordinary BOOP speech may still use Android fallback for a catchable natural failure.
-
-Tablet check remains: Xiaomi Pad 7 Pro should route to Wall through the generic `smallestScreenWidthDp >= 600` rule, preserve touch/tap-to-speak, portrait/landscape handling and local HA control.
-
-Do **not** create or repoint a v87 rollback checkpoint until Ryan explicitly accepts the physical APK. Latest fully physically accepted rollback remains v59.
-
-## Durable Android tablet routing
-
-Preserve profile order:
-
-1. explicit persistent recovery/debug override;
-2. Android TV / Leanback / television mode -> `SHIELD`;
-3. Pixel 7 Pro -> `WALL`;
-4. other non-TV Android devices with `smallestScreenWidthDp >= 600` -> `WALL`;
-5. sub-600dp handheld Android -> `LAUNCHER`.
-
-This is generic tablet support, not a Xiaomi model hardcode.
-
-## Durable developer-menu / developer-lab state
-
-Preserve the accepted in-place `developer menu` route inside `MainActivity`; do not restore the rejected activity-hop route. Voice Settings stays vertically scrollable. Dev Lab pins the real current BOOP face and uses its horizontal animation selector. Notification dood previews remain local fixtures only and do not create shade notifications or new authority.
-
-## Durable protected state
-
-- Permanent approved eye master remains `unified/assets/boop-eyes/boopApprovedEyes.png`, SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`. Do not regenerate or destructively edit it.
-- Canonical procedural-eye order remains `patch-unified-reading-eyes.py` -> `patch-v64-procedural-sclera.py` -> `patch-v65-feathered-sclera.py`. No later legacy bitmap hue pass.
-- User eye hue remains iris-only; default cyan/blue remains 190 degrees.
-- Exact approved notification hands remain byte-locked; current shared pose remains `1.12x` with banner `36dp` upward pending physical visual acceptance.
-- Android's original notification remains authoritative; BOOP mirrors it without changing locked privacy/tap/dismiss semantics.
-- Preserve one 16 kHz microphone owner, accepted wake/name architecture, exact 100 ms wake bridge and uncensored-speech request.
-- Clean Nvidia Shield HOME remains standalone on `boop-shield-clean-launcher`, package `com.boop.shieldhome`, until Ryan explicitly approves a future merge.
-- GitHub performs functional/non-visual verification only. No screenshot/golden/pixel appearance tests. Ryan owns visual, device and acoustic acceptance.
-- No automatic installs, permission grants or signer/package changes.
+- Natural voice pack download/install remains the v85 verified app-private flow with streaming SHA, explicit extraction progress and cooperative cancellation.
+- Permanent approved eye master remains locked at SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`; do not regenerate or destructively edit it.
+- User eye hue remains procedural-iris-only; default 190 degrees.
+- Exact approved notification hands remain byte-locked.
+- Preserve one 16 kHz microphone owner, accepted wake/name architecture and exact 100 ms wake bridge.
+- Generic tablet routing remains TV -> Shield, Pixel 7 Pro -> Wall, non-TV >=600dp -> Wall, smaller handheld -> Launcher, after explicit recovery override.
+- Clean Nvidia Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a merge.
+- GitHub performs non-visual functional/build/signing verification only. Ryan owns physical, visual and acoustic acceptance.
 
 ## Physically accepted rollback state
 
@@ -148,8 +136,4 @@ Latest fully physically accepted exact rollback remains:
 
 `checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`
 
-Also preserve:
-
-- `checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`;
-- `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`;
-- `checkpoint-boop-unified-v65-procedural-eyes` as protected eye provenance.
+Also preserve v58 `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`, v48 `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`, and `checkpoint-boop-unified-v65-procedural-eyes`.
