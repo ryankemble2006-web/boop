@@ -2,9 +2,35 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer. Fresh `main` owns shared contracts. Always re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Current canonical candidate: v70 pinned-face developer lab + emphasized notification pose
+## Current canonical candidate: v70 pinned-face / raised-banner + Android tablet routing
 
 v70 remains versionCode `70`, versionName `1.2.24-unified-dev-menu-doods`.
+
+## Durable Android tablet routing
+
+As of canonical app/test head `bd878606809302de1b871e6c62d8ce905346e766`, Unified BOOP treats non-TV Android devices with `smallestScreenWidthDp >= 600` as Wall devices. Preserve the routing order:
+
+- explicit profile override first;
+- Android TV / Leanback / television mode -> `SHIELD`;
+- Pixel 7 Pro -> `WALL`;
+- other non-TV Android devices at 600dp or wider -> `WALL`;
+- sub-600dp handhelds -> `LAUNCHER`.
+
+The Xiaomi Pad 7 Pro therefore uses the Wall body without a Xiaomi-specific model hardcode. Existing `BoopFaceView` and `BoopEyeLayout` already calculate presentation from live view dimensions and distinguish portrait from landscape, so tablet support must not fork, regenerate or reinterpret BOOP's approved eyes or add tablet-specific visual assets.
+
+Test-first and signed-build receipt:
+
+- RED test-only commit `db747c3c3e95acbc3ecae773daa451e6bd3eedc3` failed because the previous resolver had no width-aware overload;
+- GREEN implementation before rebase `cf4c6918956f9cdb79f9b97f479c8a0c0d1de45f`;
+- canonical app/test head `bd878606809302de1b871e6c62d8ce905346e766`;
+- workflow `34395085823`: SUCCESS;
+- artifact `BOOP-Unified`, ID `10121327367`, size `62,739,601` bytes;
+- artifact ZIP SHA-256 `6dda05bea0ebe78b2239026e813f76220c48405969a95a342820ef2b79ad2395`;
+- APK SHA-256 `0955dbb51ffab6707f11df02bf3966fc90ce3d73f204b74a349519d4937b4612`;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
+- Shield focused tests 58/58 and Unified focused tests 148/148, zero failures/errors/skips.
+
+The exact artifact ZIP was independently downloaded and matched GitHub's digest; the extracted APK matched the workflow receipt. Tablet routing is CI/signer green only until Ryan launches this exact build on the Xiaomi Pad 7 Pro. No v70 rollback checkpoint exists yet; latest fully physically accepted rollback remains v59.
 
 Ryan physically confirmed the current in-place `developer menu` entry works on the Pixel without closing BOOP, and then confirmed the pinned-face concept with `Awesome now I can see him`. Preserve the Voice Settings vertical-scroll repair, in-place route, and pinned visible BOOP model while animation controls are browsed. The older activity-hop candidate `95224d95a04b6a79a8d8c4e9e5ac4c35cf64ca9a` remains physically failed for that bug.
 
