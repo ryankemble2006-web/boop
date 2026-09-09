@@ -140,22 +140,22 @@ helper = r'''    private void addNaturalVoiceSettings() {
 
         Button emma = new Button(this);
         emma.setText("Emma");
-        prepareNaturalVoiceButton(emma, "bf_emma", "Hello. I'm Emma.");
+        prepareNaturalVoiceButton(emma, "bf_emma", "Hello. I'm Emma.", naturalStatus);
         voiceSettingsOverlay.addView(emma, naturalVoiceButtonParams());
 
         Button isabella = new Button(this);
         isabella.setText("Isabella");
-        prepareNaturalVoiceButton(isabella, "bf_isabella", "Hello. I'm Isabella.");
+        prepareNaturalVoiceButton(isabella, "bf_isabella", "Hello. I'm Isabella.", naturalStatus);
         voiceSettingsOverlay.addView(isabella, naturalVoiceButtonParams());
 
         Button george = new Button(this);
         george.setText("George");
-        prepareNaturalVoiceButton(george, "bm_george", "Hello. I'm George.");
+        prepareNaturalVoiceButton(george, "bm_george", "Hello. I'm George.", naturalStatus);
         voiceSettingsOverlay.addView(george, naturalVoiceButtonParams());
 
         Button fable = new Button(this);
         fable.setText("Fable");
-        prepareNaturalVoiceButton(fable, "bm_fable", "Hello. I'm Fable.");
+        prepareNaturalVoiceButton(fable, "bm_fable", "Hello. I'm Fable.", naturalStatus);
         voiceSettingsOverlay.addView(fable, naturalVoiceButtonParams());
 
         Button[] naturalChoices = {emma, isabella, george, fable};
@@ -243,15 +243,67 @@ helper = r'''    private void addNaturalVoiceSettings() {
         return params;
     }
 
-    private void prepareNaturalVoiceButton(Button button, String key, String preview) {
+    private void prepareNaturalVoiceButton(Button button, String key, String preview, TextView naturalStatus) {
         button.setTextSize(18f);
         button.setTextColor(Color.WHITE);
         button.setBackgroundColor(Color.rgb(42, 42, 42));
         button.setVisibility(View.GONE);
         button.setOnClickListener(v -> {
             if (voiceController == null || !voiceController.selectNaturalVoice(key)) return;
-            speak(preview);
+            naturalStatus.setText("Selected: " + button.getText());
+            previewNaturalVoice(preview);
         });
+    }
+
+    private void previewNaturalVoice(String text) {
+        wakeFaceForInteraction();
+        if (wakeCoordinator != null) {
+            wakeCoordinator.onTtsStarting();
+        }
+        if (voiceController == null
+                || !voiceController.naturalBackendSelectedAndUsable()
+                || naturalSpeechBackend == null) {
+            finishTtsUtterance();
+            android.widget.Toast.makeText(
+                    this,
+                    "Natural voice isn't ready.",
+                    android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        BoopVoiceController.NaturalVoice voice = voiceController.selectedNaturalVoice();
+        boolean started = naturalSpeechBackend.speak(
+                text,
+                voice.sid(),
+                voiceController.pitch(),
+                voiceController.speechRate(),
+                new BoopSpeechBackend.Callback() {
+                    @Override
+                    public void onDone() {
+                        runOnUiThread(() -> finishTtsUtterance());
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        android.util.Log.w(
+                                "BOOP-NaturalVoice",
+                                "Natural voice preview failed; not substituting Android TTS",
+                                error);
+                        runOnUiThread(() -> {
+                            finishTtsUtterance();
+                            android.widget.Toast.makeText(
+                                    MainActivity.this,
+                                    "Natural voice preview failed.",
+                                    android.widget.Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+        if (!started) {
+            finishTtsUtterance();
+            android.widget.Toast.makeText(
+                    this,
+                    "Natural voice preview failed.",
+                    android.widget.Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setNaturalVoiceChoicesVisible(Button[] buttons, boolean visible) {
