@@ -132,3 +132,6 @@ python3 scripts/patch-unified-shield-presentation.py
 
 # Add phone notification controls after all current Wall source patches.
 python3 scripts/patch-unified-notifications.py
+
+# Add the internal developer demo shelf after notification settings are materialized.
+python3 scripts/patch-unified-dev-menu.py

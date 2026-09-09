@@ -65,6 +65,9 @@
         </activity>
 
         <activity
+            android:name=".BoopDevMenuActivity"
+            android:exported="false" />
+        <activity
             android:name=".BoopNotificationOnboardingActivity"
             android:exported="false"
             android:excludeFromRecents="true" />
