@@ -36,10 +36,29 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Read expected unified version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          text = Path('unified/app-build.gradle').read_text(encoding='utf-8')
+          code = re.search(r'^\s*versionCode\s+(\d+)\s*$', text, re.MULTILINE)
+          name = re.search(r'^\s*versionName\s+["\']([^"\']+)["\']\s*$', text, re.MULTILINE)
+          if not code or not name:
+              raise SystemExit('Could not derive unified version from unified/app-build.gradle')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
+              env.write(f'BOOP_EXPECTED_VERSION_CODE={code.group(1)}\n')
+              env.write(f'BOOP_EXPECTED_VERSION_NAME={name.group(1)}\n')
+          print(f'Expected unified version: code={code.group(1)} name={name.group(1)}')
+          PY
+
       - name: Check non-visual integration contracts
         run: |
           python -m pip install pytest
-          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py tests/test_unified_notification_manifest_contract.py tests/test_unified_notification_asset_integrity.py tests/test_unified_notification_puppet_contract.py
+          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py tests/test_unified_notification_asset_integrity.py tests/test_unified_notification_puppet_contract.py
           python - <<'PY'
           from pathlib import Path
           heads = Path('unified/SOURCE_HEADS.md').read_text()
@@ -55,6 +74,7 @@ jobs:
 
       - name: Test notification presenter contracts
         run: |
+          python -m pytest -q tests/test_unified_notification_manifest_contract.py
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
             --tests '*BoopNotification*' --stacktrace
 
@@ -100,6 +120,7 @@ jobs:
         run: |
           unset BOOP_RELAY_URL BOOP_RELAY_TOKEN
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
+            --tests '*BoopNotification*' \
             --tests '*BoopWake*' --tests '*BoopSentencePiece*' --tests '*BoopCustomWake*' \
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
             --tests '*BoopVoice*' --tests '*BoopCommandRouterTest' \
@@ -137,15 +158,15 @@ jobs:
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
           "$TOOLS/aapt" dump badging "$APK" > badging.txt
-          grep -q "package: name='com.boop.alpha1'" badging.txt
-          grep -q "versionCode='62'" badging.txt
-          grep -q "versionName='1.2.16-unified-single-layer-reading-eyes'" badging.txt
-          grep -q "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
+          grep -Fq "package: name='com.boop.alpha1'" badging.txt
+          grep -Fq "versionCode='${BOOP_EXPECTED_VERSION_CODE}'" badging.txt
+          grep -Fq "versionName='${BOOP_EXPECTED_VERSION_NAME}'" badging.txt
+          grep -Fq "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
           for cls in com.boop.alpha1.MainActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
-            grep -q "$cls" manifest-tree.txt
+            grep -Fq "$cls" manifest-tree.txt
           done
-          grep -q "android.intent.category.HOME" manifest-tree.txt
+          grep -Fq "android.intent.category.HOME" manifest-tree.txt
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
