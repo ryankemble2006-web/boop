@@ -76,6 +76,10 @@ final class BoopNotificationPuppetView extends FrameLayout {
         rebuildCard();
     }
 
+    void setFaceVisible(boolean visible) {
+        faceView.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
     private void openCurrentPresentation() {
         List<BoopNotificationEnvelope> cards = cards();
         if (cards.isEmpty()) return;
