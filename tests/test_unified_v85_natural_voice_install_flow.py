@@ -84,3 +84,12 @@ def test_kokoro_v1_multilang_uses_lexicon_frontend_without_invalid_eng_override(
     # value and can make synthesis fail before playback.
     assert 'kokoro.setLang("eng")' not in backend
     assert 'kokoro.setLexicon(lexicon.getAbsolutePath())' in backend
+
+
+def test_android_kokoro_avoids_sherpa_jni_callback_crash_path():
+    backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
+
+    # sherpa-onnx 1.13.7's Android JNI callback bridge captures thread-local JNI
+    # state. Kokoro can abort the whole Android process before Java fallback runs.
+    assert "generateWithConfigAndCallback" not in backend
+    assert "tts.generateWithConfig(text, generation)" in backend
