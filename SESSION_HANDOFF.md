@@ -1,6 +1,53 @@
 # BOOP unified handoff
 
-Updated 2026-09-08. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Always re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
+Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Always re-fetch live `boop-unified`, `boop-unified-notifications` and `main` before notification edits and preserve concurrent work.
+
+## In-progress notification presenter: branch is code-complete through Task 10, release BLOCKED by exact hand binary
+
+Active implementation branch: `boop-unified-notifications`.
+
+Reviewed code head before this handoff update: `b38f62b2316f5eeb0d00f5d6696fecb92b92d661`.
+
+The notification branch now contains the reviewed presenter/runtime work through Tasks 8-10 of `docs/superpowers/plans/2026-09-08-boop-notification-presenter.md`:
+
+- one reusable `BoopNotificationPuppetView` on in-place Wall, unlocked overlay and locked presentation surfaces;
+- locked presentation remains privacy-safe and only exposes app identity/icon/count before authentication;
+- tap preserves the source notification `PendingIntent`; successful `FLAG_AUTO_CANCEL` taps mirror cancellation only after the source send succeeds;
+- swipe/timeout dismiss BOOP's mirror only and leave Android's shade notification authoritative;
+- swipe contract is >=72dp on either dominant axis with strict >1.25x dominance;
+- approved entrance recipe is restored: card alpha/translation from -16dp over 260ms with `OvershootInterpolator(0.7f)`, hands scale 0.96 -> 1 over 220ms;
+- local deterministic 320ms BOOP notification cue + one `{0,35,55,28}` vibration waveform exists;
+- cue policy only permits BOOP sound/vibration for coordinator `playCue=true` on a channel whose native sound and vibration are both known-silent; unknown/noisy channels stay visual-only to avoid double alerts;
+- manifest contract now includes overlay/screen-on/vibrate authority while explicitly rejecting full-screen-intent, query-all, accessibility-service and device-admin authority;
+- canonical CI derives expected version code/name from `unified/app-build.gradle` instead of hardcoded v62 strings.
+
+Pure-Java local verification performed in chat after the above code changes: renderer/policy/swipe harness PASS. At 44.1 kHz the cue is exactly 14,112 samples, deterministic, peak 12,814; silent/noisy/unknown channel policy and horizontal/vertical/diagonal gesture cases all passed. This is not an Android build or physical/acoustic acceptance.
+
+### Exact blocker, do not bypass
+
+GitHub Actions run `34300985129` for code head `b38f62b2316f5eeb0d00f5d6696fecb92b92d661` correctly stops at `Check non-visual integration contracts` before materialization/build.
+
+`unified/assets/boop-notifications/boop-yellow-hands-approved.png` currently points to the wrong Git blob `7cb914516a829a0b824febd16957a1a1dd9c6a62`, recorded at 1,541,931 bytes. The similarly named root source on `animation-freddie-mercury` is the same wrong blob. Do not weaken/remove the hash guard to get a build.
+
+Two independent archived originals in Ryan's ChatGPT Library were materialized and hashed byte-for-byte. Both are 1,809,990 bytes and SHA-256:
+
+`26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`
+
+The exact approved file's Git blob SHA-1 is:
+
+`d47037271bf320f4f110e3f8416f59882062afac`
+
+The connected GitHub tool has no binary/file upload action, so it cannot move that 1.81 MB Library binary into the repository without an external byte-preserving upload. One manual replacement of the notification-branch asset is sufficient: once the exact blob exists in the repository object store, future GitHub-side repair can point the animation source branch at the same blob without another upload.
+
+Next continuation sequence:
+
+1. byte-for-byte replace `unified/assets/boop-notifications/boop-yellow-hands-approved.png` on `boop-unified-notifications` with the 1,809,990-byte approved original;
+2. re-fetch live branch and verify the path's Git blob SHA is exactly `d47037271bf320f4f110e3f8416f59882062afac` before trusting CI;
+3. repair `animation-freddie-mercury:boop-yellow-hands-approved.png` to that same existing Git blob;
+4. require the exact notification-branch GitHub Actions run to get through asset integrity, materialization, notification JUnit, manifest contract and signed APK build;
+5. fix any real Android compile/test failure found after the asset gate;
+6. only after full green, re-fetch canonical `boop-unified`/`main`, increment the live unified version exactly once, publish the reviewed release candidate, verify signer/artifact hashes, then record evidence in status/memory;
+7. Ryan owns the final Pixel visual/lock-screen/acoustic acceptance. Do not create a physical rollback checkpoint before that acceptance.
 
 ## Current signed candidate: v62 single-layer reading eyes
 

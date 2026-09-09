@@ -127,3 +127,6 @@ PY
 
 # Share the locked phone eyes/blink and complete the approved Shield Home wiring.
 python3 scripts/patch-unified-shield-presentation.py
+
+# Add phone notification controls after all current Wall source patches.
+python3 scripts/patch-unified-notifications.py

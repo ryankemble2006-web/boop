@@ -91,8 +91,10 @@ text = once(text,
 MAIN.write_text(text, encoding='utf-8')
 
 text = MANIFEST.read_text(encoding='utf-8')
-anchor = '    </application>\n</manifest>\n'
-components = '''        <activity
+assistant_marker = 'android:name=".BoopVoiceInteractionService"'
+if assistant_marker not in text:
+    app_close = '    </application>'
+    components = '''        <activity
             android:name=".BoopAssistantSetupActivity"
             android:exported="false"
             android:theme="@style/Theme.BOOP" />
@@ -111,10 +113,15 @@ components = '''        <activity
             android:name=".BoopVoiceInteractionSessionService"
             android:exported="true"
             android:permission="android.permission.BIND_VOICE_INTERACTION" />
-    </application>
-</manifest>
 '''
-text = once(text, anchor, components, 'assistant manifest components')
+    text = once(text, app_close, components + app_close, 'assistant application close')
+else:
+    for marker in (
+            'android:name=".BoopAssistantSetupActivity"',
+            'android:name=".BoopVoiceInteractionService"',
+            'android:name=".BoopVoiceInteractionSessionService"'):
+        if text.count(marker) != 1:
+            raise SystemExit(f'assistant manifest components: expected one {marker}, found {text.count(marker)}')
 MANIFEST.write_text(text, encoding='utf-8')
 
 xml = ROOT / 'app/src/main/res/xml/boop_voice_interaction_service.xml'
