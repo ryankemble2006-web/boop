@@ -22,14 +22,7 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
     BoopNotificationInPlaceController(FrameLayout parent) {
         if (parent == null) throw new IllegalArgumentException("parent required");
         this.parent = parent;
-        this.timeoutRunnable = () -> {
-            hide();
-            try {
-                BoopNotificationRuntime.get(this.parent.getContext()).onPresentationDismissed();
-            } catch (RuntimeException ignored) {
-                // Android's source notification remains authoritative.
-            }
-        };
+        this.timeoutRunnable = this::dismissPresentation;
     }
 
     @Override
@@ -55,10 +48,20 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
         hide();
         if (presentation == null || presentation.cards().isEmpty()) return;
         currentView = createPlainPresentationView(parent.getContext(), presentation);
+        BoopNotificationSwipeGesture.attach(currentView, this::dismissPresentation);
         parent.addView(currentView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         handler.postDelayed(timeoutRunnable, Math.max(1L, timeoutMs));
+    }
+
+    private void dismissPresentation() {
+        hide();
+        try {
+            BoopNotificationRuntime.get(parent.getContext()).onPresentationDismissed();
+        } catch (RuntimeException ignored) {
+            // Android's source notification remains authoritative.
+        }
     }
 
     static View createPlainPresentationView(
