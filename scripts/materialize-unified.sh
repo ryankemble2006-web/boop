@@ -2,6 +2,9 @@
 set -euo pipefail
 
 bash scripts/materialize-android.sh
+# v70 physical regression repair: make Voice Settings scroll before later Unified
+# patches append Notifications and Dev menu buttons to that same content column.
+python3 scripts/patch-unified-v70-regressions.py
 python3 scripts/patch-unified-dock-mirror.py
 python3 scripts/patch-unified-wake-name.py
 python3 scripts/patch-unified-wake-arm.py
