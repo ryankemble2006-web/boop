@@ -50,6 +50,7 @@ final class BoopNotificationRuntime {
     private final LinkedHashMap<String, RuntimeRecord> records = new LinkedHashMap<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final BoopNotificationOverlayController overlayController;
+    private final BoopNotificationCue cue;
 
     private BoopNotificationSettingsState settings;
     private BoopNotificationListenerService attachedListener;
@@ -62,6 +63,7 @@ final class BoopNotificationRuntime {
         this.settings = settingsStore.load();
         this.coordinator = new BoopNotificationCoordinator(BURST_WINDOW_MS);
         this.overlayController = new BoopNotificationOverlayController(application, this);
+        this.cue = new BoopNotificationCue(application);
     }
 
     static boolean shouldInitializeForMode(BoopDeviceProfile.Mode mode) {
@@ -144,6 +146,9 @@ final class BoopNotificationRuntime {
         BoopNotificationCoordinator.Decision decision = coordinator.onPosted(envelope, nowMs, settings);
         if (decision.kind() != BoopNotificationCoordinator.Kind.IGNORE) {
             schedulePresentation(decision.kind());
+            if (BoopNotificationCuePolicy.shouldPlay(decision.playCue(), record.channelInfo())) {
+                scheduleCue();
+            }
         }
         return decision;
     }
@@ -280,6 +285,10 @@ final class BoopNotificationRuntime {
 
     private void schedulePresentation(BoopNotificationCoordinator.Kind kind) {
         mainHandler.post(() -> presentVisibleBundle(kind));
+    }
+
+    private void scheduleCue() {
+        mainHandler.post(cue::play);
     }
 
     private void scheduleHideAllSurfaces() {
