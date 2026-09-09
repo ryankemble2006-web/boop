@@ -2,12 +2,45 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v70 pinned-face developer lab + emphasized notification pose
+## Current signed candidate: v70 pinned-face / raised-banner + Android tablet routing
 
 Release identity remains unchanged:
 
 - versionCode `70`;
 - versionName `1.2.24-unified-dev-menu-doods`.
+
+### Android tablet / Xiaomi Pad 7 Pro routing
+
+V70 now treats non-TV Android devices with `smallestScreenWidthDp >= 600` as BOOP Wall devices. The routing order remains deliberate:
+
+- explicit profile override first;
+- TV / Leanback -> `SHIELD`;
+- Pixel 7 Pro -> `WALL`;
+- other non-TV devices at 600dp or wider -> `WALL`;
+- sub-600dp handhelds -> `LAUNCHER`.
+
+The Xiaomi Pad 7 Pro therefore takes the Wall path without any Xiaomi-specific model hardcode. Existing `BoopFaceView` / `BoopEyeLayout` presentation already derives geometry from live view dimensions and handles portrait vs landscape, so this change does not fork the approved eyes or add tablet-specific visual assets.
+
+Tablet-routing test-first lineage:
+
+- RED test-only commit `db747c3c3e95acbc3ecae773daa451e6bd3eedc3` failed because the previous resolver had no width-aware overload;
+- GREEN implementation before rebase `cf4c6918956f9cdb79f9b97f479c8a0c0d1de45f`;
+- canonical app/test head `bd878606809302de1b871e6c62d8ce905346e766`.
+
+Exact workflow `34395085823`: SUCCESS.
+
+Passed: non-visual integration contracts, materialization, notification/developer-lab contracts, seamless wake handoff, Launcher preservation/lint, Shield functional tests, Unified wake/routing/lifecycle/assistant tests including the new tablet contract, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload.
+
+- Artifact: `BOOP-Unified`
+- Artifact ID: `10121327367`
+- Artifact size: `62,739,601` bytes
+- Artifact ZIP SHA-256: `6dda05bea0ebe78b2239026e813f76220c48405969a95a342820ef2b79ad2395`
+- APK SHA-256: `0955dbb51ffab6707f11df02bf3966fc90ce3d73f204b74a349519d4937b4612`
+- Permanent signer SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`
+- Shield focused functional tests: 58/58, zero failures/errors/skips
+- Unified focused functional tests: 148/148, zero failures/errors/skips
+
+The exact artifact ZIP was independently downloaded and matched GitHub's digest. Extracted `apk-sha256.txt`, `built-commit.txt`, `badging.txt` and `signer-sha256.txt` matched the APK, exact app head, package/version and permanent signer.
 
 ### Entry architecture and physical evidence
 
@@ -29,7 +62,7 @@ Ryan asked for more obvious hands and a higher held banner on all notification d
 
 This shared renderer feeds both Dev Lab notification doods and real notification surfaces. GitHub does not visually judge the result; Ryan owns the Pixel appearance decision.
 
-### Verification
+### Prior raised-banner verification
 
 RED evidence:
 
@@ -37,13 +70,11 @@ RED evidence:
 - workflow `34392830481`;
 - failed at the non-visual integration-contract gate before materialization/signing because the emphasized-pose semantic marker did not yet exist.
 
-Exact GREEN app/test head:
+Prior raised-banner GREEN app/test head:
 
 `c68a7aba8f0c9bcffa81ad0b517453cc8e50b12d`
 
 Exact workflow `34392969200`: SUCCESS.
-
-Passed: non-visual integration contracts, materialization, notification/developer-lab contracts, seamless wake handoff, Launcher preservation/lint, Shield functional tests, Unified wake/routing/lifecycle tests, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload.
 
 - Artifact: `BOOP-Unified`
 - Artifact ID: `10120505065`
@@ -54,13 +85,11 @@ Passed: non-visual integration contracts, materialization, notification/develope
 - Shield focused functional tests: 58/58, zero failures/errors/skips
 - Unified focused functional tests: 144/144, zero failures/errors/skips
 
-The artifact ZIP was independently downloaded and matched GitHub's digest. Extracted `apk-sha256.txt`, `built-commit.txt`, `badging.txt` and `signer-sha256.txt` matched the APK, exact app head, package/version and permanent signer.
-
 ## Acceptance boundary
 
-The in-place developer-menu entry and pinned-face visibility behavior have positive Pixel evidence. The new `1.12x` hands / `36dp` raised-banner notification composition remains **CI/signer green only** until Ryan checks this exact APK. GitHub performed no visual acceptance.
+The in-place developer-menu entry and pinned-face visibility behavior have positive Pixel evidence. The `1.12x` hands / `36dp` raised-banner notification composition remains **CI/signer green only** until Ryan checks it physically. The new Android tablet routing at app head `bd878606...` is also **CI/signer green only** until Ryan launches this exact build on the Xiaomi Pad 7 Pro. GitHub performed no visual/device acceptance.
 
-Current physical check: swipe through several notification doods and judge whether the hands read clearly enough and whether the banner is high enough while the approved/current BOOP eyes remain visible. If tuning is needed, adjust shared transform/translation only; do not alter the locked PNG.
+Current Pad physical check: install the exact signed candidate, launch BOOP normally, confirm it opens directly to BOOP Wall rather than the handheld Launcher/All Apps surface, rotate portrait/landscape, then check tap/wake microphone behavior, Voice Settings / developer menu, and one local HA command. The existing notification check remains: swipe through several notification doods and judge whether the hands read clearly enough and whether the banner is high enough while the approved/current BOOP eyes remain visible. If tuning is needed, adjust shared notification transform/translation only; do not alter the locked PNG.
 
 No v70 rollback checkpoint was created or repointed. Latest fully physically accepted rollback remains v59.
 
