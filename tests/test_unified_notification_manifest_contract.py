@@ -90,7 +90,13 @@ def test_dev_menu_is_internal_and_notification_demos_stay_local_only():
 
     assert "BoopNotificationPuppetView" in dev_activity
     assert "BoopDevNotificationPreview.presentation" in dev_activity
-    assert "BoopDevMenuActivity" in main_activity
+    assert "private void showDeveloperMenu()" in main_activity
+    assert "BoopDevNotificationPreview.presentation" in main_activity
+    developer_block = main_activity[
+        main_activity.index("private void showDeveloperMenu()"):
+        main_activity.index("private TextView voiceSettingLabel")
+    ]
+    assert "startActivity(" not in developer_block
 
     for forbidden in (
         "NotificationManager",
@@ -99,3 +105,4 @@ def test_dev_menu_is_internal_and_notification_demos_stay_local_only():
         "BoopNotificationListenerService",
     ):
         assert forbidden not in dev_activity
+        assert forbidden not in developer_block
