@@ -65,8 +65,8 @@ if scroll_marker not in text:
         voiceSettingsScroller.setFillViewport(true);
         voiceSettingsScroller.setVerticalScrollBarEnabled(true);
         voiceSettingsScroller.addView(voiceSettingsOverlay, new android.widget.ScrollView.LayoutParams(
-                android.widget.ScrollView.LayoutParams.MATCH_PARENT,
-                android.widget.ScrollView.LayoutParams.WRAP_CONTENT));
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT));
         interactionSurface.addView(voiceSettingsScroller, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
