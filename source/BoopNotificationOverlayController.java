@@ -5,8 +5,8 @@ import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 final class BoopNotificationOverlayController implements BoopNotificationHost {
     private final Context context;
@@ -14,7 +14,7 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
     private final WindowManager windowManager;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable timeoutRunnable;
-    private View currentView;
+    private BoopNotificationPuppetView currentView;
 
     BoopNotificationOverlayController(Context context, BoopNotificationRuntime runtime) {
         if (context == null) throw new IllegalArgumentException("context required");
@@ -27,12 +27,21 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
 
     @Override
     public void show(BoopNotificationPresentation presentation, long timeoutMs) {
-        render(presentation, timeoutMs);
+        renderNew(presentation, timeoutMs);
     }
 
     @Override
     public void update(BoopNotificationPresentation presentation, long timeoutMs) {
-        render(presentation, timeoutMs);
+        if (presentation == null || presentation.cards().isEmpty()) {
+            hide();
+            return;
+        }
+        if (currentView == null) {
+            renderNew(presentation, timeoutMs);
+            return;
+        }
+        currentView.updatePresentation(presentation);
+        resetTimeout(timeoutMs);
     }
 
     @Override
@@ -48,7 +57,7 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
         currentView = null;
     }
 
-    private void render(BoopNotificationPresentation presentation, long timeoutMs) {
+    private void renderNew(BoopNotificationPresentation presentation, long timeoutMs) {
         hide();
         if (presentation == null || presentation.cards().isEmpty()) return;
         if (windowManager == null || !Settings.canDrawOverlays(context)) {
@@ -56,9 +65,25 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
             return;
         }
 
-        View view = BoopNotificationInPlaceController.createPlainPresentationView(
-                context, presentation);
-        BoopNotificationSwipeGesture.attach(view, this::dismissPresentation);
+        BoopNotificationPuppetView view = new BoopNotificationPuppetView(
+                context,
+                presentation,
+                new BoopNotificationPuppetView.Callback() {
+                    @Override
+                    public void onOpen(String notificationKey) {
+                        openSingle(notificationKey);
+                    }
+
+                    @Override
+                    public void onOpenBundle() {
+                        openBundle();
+                    }
+
+                    @Override
+                    public void onDismiss() {
+                        dismissPresentation();
+                    }
+                });
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -69,7 +94,7 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
         try {
             windowManager.addView(view, params);
             currentView = view;
-            handler.postDelayed(timeoutRunnable, Math.max(1L, timeoutMs));
+            resetTimeout(timeoutMs);
         } catch (RuntimeException failure) {
             try {
                 windowManager.removeViewImmediate(view);
@@ -79,6 +104,23 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
             currentView = null;
             runtime.onPresentationFailed(BoopNotificationSurface.OVERLAY);
         }
+    }
+
+    private void openSingle(String notificationKey) {
+        BoopNotificationTapLauncher.Result result = runtime.openNotification(
+                context, notificationKey);
+        if (result == BoopNotificationTapLauncher.Result.OPENED) return;
+        Toast.makeText(context, "Can't open that right now.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void openBundle() {
+        if (runtime.openInbox(context)) return;
+        Toast.makeText(context, "Can't open that right now.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void resetTimeout(long timeoutMs) {
+        handler.removeCallbacks(timeoutRunnable);
+        handler.postDelayed(timeoutRunnable, Math.max(1L, timeoutMs));
     }
 
     private void dismissPresentation() {
