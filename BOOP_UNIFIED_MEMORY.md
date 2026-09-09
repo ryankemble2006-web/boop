@@ -2,7 +2,7 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer. Fresh `main` owns shared contracts. Always re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Current canonical candidate: v70 horizontal developer lab
+## Current canonical candidate: v70 pinned-face developer lab
 
 v70 remains versionCode `70`, versionName `1.2.24-unified-dev-menu-doods`.
 
@@ -21,34 +21,39 @@ The durable developer-menu entry contract remains:
 
 The original `BoopDevMenuActivity` remains non-exported and may remain packaged for provenance/compatibility, but it is not the active spoken/settings route. Do not restore that activity hop without new physical evidence.
 
-## Durable developer-lab selector and preview contract
+## Durable developer-lab selector contract
 
-Ryan approved the 2026-09-09 horizontal developer-lab trial:
+Ryan corrected the developer-lab design on 2026-09-09. Preserve this interaction unless he explicitly changes it:
 
-- the selector has two horizontal right-to-left swipe shelves: `Animations` and `Notification doods`;
-- animation selection opens the real current BOOP behavior full-screen rather than animating a small selector thumbnail;
-- a bottom `Dismiss` control stops/resets a full-screen animation preview and returns to the selector;
-- selector horizontal positions are retained while previewing, so dismissal returns near the item just tested;
-- `Stop` is omitted from the visible animation shelf because `Dismiss` now supplies stop/reset/return; the STOP model/dispatcher action remains for compatibility;
-- notification dood previews retain the real `BoopNotificationPuppetView` for banner/card + exact approved hands, suppress only its duplicate internal face in the dev composition, and supply a separate current `BoopFaceView` above the puppet/banner area;
-- the package-private `BoopNotificationPuppetView.setFaceVisible(...)` hook exists for this developer composition and does not alter production notification behavior unless explicitly called;
+- BOOP's real current `BoopFaceView` stays pinned and visible while animation controls are browsed;
+- the developer-lab page itself must not scroll vertically;
+- `Animations` is a horizontal right-to-left selector below the pinned face;
+- swiping the animation selector changes visible controls without moving BOOP off-screen;
+- tapping `Wake`, `Think`, `Stop`, `Berry 1`, `Berry 2`, `Berry 3`, `Shake`, or `Sleep` calls the real current behavior directly on that same pinned face;
+- animation selection must not clear the developer overlay, create another face, open a full-screen animation page, or require a Dismiss return step;
+- selector horizontal position may be retained as controls are browsed;
+- `Notification doods` remains a separate horizontal selector. A dood preview may replace the selector temporarily, but must use a dedicated current `BoopFaceView` above the real `BoopNotificationPuppetView` banner/card and exact approved hands;
+- `BoopNotificationPuppetView.setFaceVisible(false)` is a dev-composition hook to suppress only the duplicate internal face. Production notification behavior is unchanged unless explicitly called;
 - production notification privacy/tap/dismiss/cue semantics remain unchanged;
-- visual spacing and whether the approved/current eyes read clearly above the banner are physical acceptance questions for Ryan, not CI assertions.
+- visual spacing, motion and whether the approved/current eyes read clearly above the banner remain physical acceptance questions for Ryan, never CI appearance assertions.
+
+The prior full-screen animation preview + bottom Dismiss design is rejected and must not be restored accidentally.
 
 All notification doods remain local presentation fixtures. They must never create Android shade notifications, call `NotificationManager`, invoke notification listener/runtime paths or require listener access merely to preview. Locked preview remains privacy-redacted.
 
+### Current verification receipt
+
 Test-first evidence:
 
-- RED head `4323684b838a5c3e80a249d234ced3b19c3c5e87`, workflow `34388180318`: materialization passed, developer-lab contract gate failed as expected before implementation;
-- implementation hook `c74a79c268ccdab6cc147acb0f26ded45ded37e8`;
-- exact GREEN app/test head `9510a2eac42b272f9fbc6becb991a4fbc16482d1`;
-- workflow `34388440031`: SUCCESS.
+- RED head `6ada374665a9cc6d504a7188f4df1b406fffdcc6`, workflow `34391024568`: materialization passed, developer-lab contract gate failed as expected because the rejected full-screen animation behavior was still present;
+- exact GREEN app/test head `a9e4e6a8f6abf023bc9ba1779d0a51f698ee0c3f`;
+- workflow `34391151333`: SUCCESS.
 
-Current artifact receipt:
+Artifact receipt:
 
-- artifact `BOOP-Unified`, ID `10118781776`, size `62,739,308` bytes;
-- artifact ZIP SHA-256 `9663ad3e648c54e026bfd15a14a44b89f45e4b3e13903b478a375839f4af44e1`;
-- APK SHA-256 `76950071375a3ebf0bbd3f5a2c4725e93bcd76e4deacbdfe4481faa5903d7a27`;
+- artifact `BOOP-Unified`, ID `10119809751`, size `62,740,109` bytes;
+- artifact ZIP SHA-256 `fa7d59bcdc105907a988fea1043895d21b060ad1ed97aaaef6e3d4f70f21fd91`;
+- APK SHA-256 `b06d4c2dd5c6b6fa2dac969b7406c401195b01b961263e418eff5101b75b552e`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
 - Shield focused tests 58/58;
 - Unified focused tests 144/144;
@@ -56,7 +61,7 @@ Current artifact receipt:
 
 The exact artifact ZIP was independently downloaded and matched GitHub's digest; extracted APK, built-commit and signer receipts matched CI.
 
-The in-place developer-menu entry has positive Pixel evidence, but the horizontal shelves/full-screen preview/Dismiss loop/eye-above-banner composition remain physically pending. No v70 rollback checkpoint exists. Latest fully physically accepted rollback remains v59.
+The in-place developer-menu entry has positive Pixel evidence, but the pinned-face/no-vertical-scroll selector layout and direct animation reactions remain physically pending. No v70 rollback checkpoint exists. Latest fully physically accepted rollback remains v59.
 
 ## Original v70 developer-lab lineage
 
@@ -71,7 +76,7 @@ BOOP Dev is an internal testing surface, not a user-facing authority expansion.
 - Keep the current `developer menu` spoken route local and ahead of HA/chat fallback.
 - Keep current spoken/settings entry in-place inside `MainActivity` unless Ryan physically approves a different architecture.
 - Animation demos call real current BOOP behaviors rather than duplicate/rebuild them.
-- Infinite/continuous previews need an explicit stop/reset path; finite ones should be replayable.
+- Infinite/continuous animation needs an explicit `Stop` control; finite animations should be replayable.
 - Notification demos remain local presentation fixtures and must never create Android shade notifications, call `NotificationManager`, invoke notification listener/runtime paths or require listener access merely to preview.
 - Locked demo content remains privacy-redacted through the production presentation model.
 - Runtime doods use current procedural eyes and exact approved five-finger yellow hands. Concept sheets are reference/style direction only.
