@@ -10,7 +10,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Looper;
@@ -405,17 +404,26 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private static final class PuppetArtGeometry {
         static final float HEADPHONES_WIDTH = 1536f;
         static final float HEADPHONES_HEIGHT = 1024f;
-        static final RectF LEFT_SLOT = new RectF(395f, 465f, 711f, 790f);
-        static final RectF RIGHT_SLOT = new RectF(757f, 515f, 1075f, 850f);
-
-        // Exact connected-component bounds from the permanently approved 1774x887 PNG.
-        static final Rect LEFT_APPROVED = new Rect(102, 61, 825, 828);
-        static final Rect RIGHT_APPROVED = new Rect(947, 61, 1670, 828);
-        static final float APPROVED_EYE_ASPECT = 723f / 767f;
+        static final RectF LEFT_OLD_EYE_SLOT = new RectF(395f, 465f, 711f, 790f);
+        static final RectF RIGHT_OLD_EYE_SLOT = new RectF(757f, 515f, 1075f, 850f);
 
         private PuppetArtGeometry() { }
 
-        static RectF mapSlot(RectF source, int width, int height) {
+        static RectF mapRect(RectF source, int width, int height) {
+            return mapBox(source.left, source.top, source.right, source.bottom, width, height);
+        }
+
+        static RectF mapBox(NowPlayingPuppetEyePlacement.Box source, int width, int height) {
+            return mapBox(source.left, source.top, source.right, source.bottom, width, height);
+        }
+
+        private static RectF mapBox(
+                float sourceLeft,
+                float sourceTop,
+                float sourceRight,
+                float sourceBottom,
+                int width,
+                int height) {
             float sourceAspect = HEADPHONES_WIDTH / HEADPHONES_HEIGHT;
             float viewAspect = width / (float) height;
             float contentWidth;
@@ -432,26 +440,14 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             float scaleX = contentWidth / HEADPHONES_WIDTH;
             float scaleY = contentHeight / HEADPHONES_HEIGHT;
             return new RectF(
-                    left + source.left * scaleX,
-                    top + source.top * scaleY,
-                    left + source.right * scaleX,
-                    top + source.bottom * scaleY);
-        }
-
-        static RectF fitApprovedEye(RectF slot) {
-            float width = slot.width();
-            float height = width / APPROVED_EYE_ASPECT;
-            if (height > slot.height()) {
-                height = slot.height();
-                width = height * APPROVED_EYE_ASPECT;
-            }
-            float left = slot.centerX() - width / 2f;
-            float top = slot.centerY() - height / 2f;
-            return new RectF(left, top, left + width, top + height);
+                    left + sourceLeft * scaleX,
+                    top + sourceTop * scaleY,
+                    left + sourceRight * scaleX,
+                    top + sourceBottom * scaleY);
         }
     }
 
-    /** Draws the exact approved eye master over the old raster eye positions. */
+    /** Draws the exact approved pair as one undistorted layer over the legacy raster eyes. */
     private static final class ApprovedEyesLayer extends View {
         private final Bitmap approvedEyes;
         private final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
@@ -467,18 +463,19 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             if (approvedEyes == null || getWidth() <= 0 || getHeight() <= 0) return;
-            drawEye(canvas, PuppetArtGeometry.LEFT_APPROVED, PuppetArtGeometry.LEFT_SLOT);
-            drawEye(canvas, PuppetArtGeometry.RIGHT_APPROVED, PuppetArtGeometry.RIGHT_SLOT);
-        }
 
-        private void drawEye(Canvas canvas, Rect sourceEye, RectF sourceSlot) {
-            RectF slot = PuppetArtGeometry.mapSlot(sourceSlot, getWidth(), getHeight());
-            RectF destination = PuppetArtGeometry.fitApprovedEye(slot);
+            // The headphones raster predates the permanent eye master and still contains old eyes.
+            // Hide only those legacy eye ovals. The approved pair is then drawn once, as one unit.
+            canvas.drawOval(
+                    PuppetArtGeometry.mapRect(PuppetArtGeometry.LEFT_OLD_EYE_SLOT, getWidth(), getHeight()),
+                    oldEyeOcclusion);
+            canvas.drawOval(
+                    PuppetArtGeometry.mapRect(PuppetArtGeometry.RIGHT_OLD_EYE_SLOT, getWidth(), getHeight()),
+                    oldEyeOcclusion);
 
-            // The headphones raster predates the permanent eye master and still contains its
-            // old eye pixels. Hide only that eye oval, then place the immutable master above it.
-            canvas.drawOval(slot, oldEyeOcclusion);
-            canvas.drawBitmap(approvedEyes, sourceEye, destination, bitmapPaint);
+            RectF pair = PuppetArtGeometry.mapBox(
+                    NowPlayingPuppetEyePlacement.pairInHeadphoneSource(), getWidth(), getHeight());
+            canvas.drawBitmap(approvedEyes, null, pair, bitmapPaint);
         }
     }
 
@@ -506,13 +503,12 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             if (blinkOpenness >= 0.999f || getWidth() <= 0 || getHeight() <= 0) return;
-            drawTopLid(canvas, PuppetArtGeometry.LEFT_SLOT);
-            drawTopLid(canvas, PuppetArtGeometry.RIGHT_SLOT);
+            drawTopLid(canvas, NowPlayingPuppetEyePlacement.leftEyeInHeadphoneSource());
+            drawTopLid(canvas, NowPlayingPuppetEyePlacement.rightEyeInHeadphoneSource());
         }
 
-        private void drawTopLid(Canvas canvas, RectF sourceSlot) {
-            RectF slot = PuppetArtGeometry.mapSlot(sourceSlot, getWidth(), getHeight());
-            RectF eye = PuppetArtGeometry.fitApprovedEye(slot);
+        private void drawTopLid(Canvas canvas, NowPlayingPuppetEyePlacement.Box approvedEye) {
+            RectF eye = PuppetArtGeometry.mapBox(approvedEye, getWidth(), getHeight());
             float sideY = eye.top + eye.height() * NowPlayingPuppetLidTravel.sideEdge(blinkOpenness);
             float centreY = eye.top + eye.height() * NowPlayingPuppetLidTravel.centreEdge(blinkOpenness);
             float overhang = eye.width() * 0.12f;
