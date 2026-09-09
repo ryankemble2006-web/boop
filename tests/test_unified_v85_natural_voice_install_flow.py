@@ -46,3 +46,41 @@ def test_existing_current_natural_pack_restores_verified_backend_before_preview(
     # state before any natural row can select a profile and call speak().
     assert "if (naturalPackReady)" in body
     assert "voiceController.onNaturalPackVerified(naturalVoiceManifest.version());" in body
+
+
+def test_natural_preview_uses_kokoro_directly_and_never_masks_failure_with_android_tts():
+    patch = Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
+    handler = re.search(
+        r"private void prepareNaturalVoiceButton\(.*?\) \{(?P<body>.*?)\n    \}\n\n    private void setNaturalVoiceChoicesVisible",
+        patch,
+        re.DOTALL,
+    )
+    assert handler, "Could not locate natural voice row handler"
+    body = handler.group("body")
+
+    # A voice-name tap is both the selector and the demo. It must route through a
+    # dedicated natural preview path, never generic speak(), whose safety fallback
+    # is Android TTS and would make every demo sound like the Android selection.
+    assert "selectNaturalVoice(key)" in body
+    assert "previewNaturalVoice(preview)" in body
+    assert "speak(preview)" not in body
+    assert "Selected: " in body
+
+    preview = re.search(
+        r"private void previewNaturalVoice\(String text\) \{(?P<body>.*?)\n    \}\n\n    private void setNaturalVoiceChoicesVisible",
+        patch,
+        re.DOTALL,
+    )
+    assert preview, "Could not locate dedicated natural voice preview path"
+    assert "naturalSpeechBackend.speak(" in preview.group("body")
+    assert "speakWithAndroidTts" not in preview.group("body")
+
+
+def test_kokoro_v1_multilang_uses_lexicon_frontend_without_invalid_eng_override():
+    backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
+
+    # sherpa-onnx 1.13.7 Kokoro >=1.0 accepts ISO-style values such as `en`, or an
+    # empty lang when an explicit lexicon is supplied. `eng` is not a Kokoro lang
+    # value and can make synthesis fail before playback.
+    assert 'kokoro.setLang("eng")' not in backend
+    assert 'kokoro.setLexicon(lexicon.getAbsolutePath())' in backend
