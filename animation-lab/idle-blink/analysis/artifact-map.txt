@@ -7,7 +7,7 @@ image=1536x1024 RGBA
 alpha_bbox=(218, 120, 1300, 902)
 
 Legend: # = mostly <=42 RGB, + = mostly <=80 RGB, . = opaque brighter pixel, space = transparent.
-This is only a diagnostic map. No pixels are changed by this script.
+This is diagnostic evidence only. No source pixels are changed by this script.
 
 [left] roi=(360, 360, 760, 660)
 largest dark connected components (threshold <=42):
