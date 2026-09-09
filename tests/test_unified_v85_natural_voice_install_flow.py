@@ -41,55 +41,87 @@ def test_existing_current_natural_pack_restores_verified_backend_before_preview(
     assert startup, "Could not locate natural voice startup reconciliation"
     body = startup.group("body")
 
-    # isInstalled() already validates the active pack's required files and current
-    # manifest version. On a later app launch, restore the controller's verified
-    # state before any natural row can select a profile and call speak().
     assert "if (naturalPackReady)" in body
     assert "voiceController.onNaturalPackVerified(naturalVoiceManifest.version());" in body
 
 
-def test_natural_preview_uses_kokoro_directly_and_never_masks_failure_with_android_tts():
+def test_failed_preview_cannot_persist_a_dead_natural_backend_for_normal_speech():
     patch = Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
     handler = re.search(
-        r"private void prepareNaturalVoiceButton\(.*?\) \{(?P<body>.*?)\n    \}\n\n    private void setNaturalVoiceChoicesVisible",
+        r"private void prepareNaturalVoiceButton\(.*?\) \{(?P<body>.*?)\n    \}\n\n    private void previewNaturalVoice",
         patch,
         re.DOTALL,
     )
     assert handler, "Could not locate natural voice row handler"
     body = handler.group("body")
 
-    # A voice-name tap is both the selector and the demo. It must route through a
-    # dedicated natural preview path, never generic speak(), whose safety fallback
-    # is Android TTS and would make every demo sound like the Android selection.
-    assert "selectNaturalVoice(key)" in body
-    assert "previewNaturalVoice(preview)" in body
+    # Tapping asks to preview a candidate. Selection is committed only after the
+    # exact natural voice has successfully synthesized and played.
+    assert "previewNaturalVoice(key, preview, naturalStatus, button)" in body
+    assert "selectNaturalVoice(key)" not in body
     assert "speak(preview)" not in body
-    assert "Selected: " in body
 
     preview = re.search(
-        r"private void previewNaturalVoice\(String text\) \{(?P<body>.*?)\n    \}\n\n    private void setNaturalVoiceChoicesVisible",
+        r"private void previewNaturalVoice\(String key, String text, TextView naturalStatus, Button button\) \{(?P<body>.*?)\n    \}\n\n    private void setNaturalVoiceChoicesVisible",
         patch,
         re.DOTALL,
     )
-    assert preview, "Could not locate dedicated natural voice preview path"
-    assert "naturalSpeechBackend.speak(" in preview.group("body")
-    assert "speakWithAndroidTts" not in preview.group("body")
+    assert preview, "Could not locate guarded natural voice preview path"
+    preview_body = preview.group("body")
+    assert "BoopVoiceController.findNaturalVoice(key)" in preview_body
+    assert "voiceController.naturalPackReadyForPreview()" in preview_body
+    assert "naturalSpeechBackend.speak(" in preview_body
+    assert "voiceController.selectNaturalVoice(key)" in preview_body
+    assert "voiceController.markNaturalPlaybackProven()" in preview_body
+    assert 'naturalStatus.setText("Selected: " + button.getText())' in preview_body
+    assert "speakWithAndroidTts" not in preview_body
+    assert "Android voice kept" in preview_body
 
 
-def test_kokoro_v1_multilang_uses_lexicon_frontend_without_invalid_eng_override():
+def test_normal_natural_speech_requires_a_physically_proven_runtime_backend():
+    controller = Path("source/BoopVoiceController.java").read_text(encoding="utf-8")
+    assert '"natural_runtime_proven_version"' in controller
+    assert "boolean naturalPackReadyForPreview()" in controller
+    assert "void markNaturalPlaybackProven()" in controller
+
+    gate = re.search(
+        r"boolean naturalBackendSelectedAndUsable\(\) \{(?P<body>.*?)\n    \}",
+        controller,
+        re.DOTALL,
+    )
+    assert gate, "Could not locate natural backend runtime gate"
+    body = gate.group("body")
+    assert "naturalPackReadyForPreview()" in body
+    assert "naturalRuntimeProvenVersion" in body
+    assert "naturalPackVersion.equals(naturalRuntimeProvenVersion)" in body
+
+
+def test_kokoro_v1_multilang_keeps_valid_lexicon_frontend_configuration():
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
-
-    # sherpa-onnx 1.13.7 Kokoro >=1.0 accepts ISO-style values such as `en`, or an
-    # empty lang when an explicit lexicon is supplied. `eng` is not a Kokoro lang
-    # value and can make synthesis fail before playback.
-    assert 'kokoro.setLang("eng")' not in backend
     assert 'kokoro.setLexicon(lexicon.getAbsolutePath())' in backend
 
 
 def test_android_kokoro_avoids_sherpa_jni_callback_crash_path():
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
-
-    # sherpa-onnx 1.13.7's Android JNI callback bridge captures thread-local JNI
-    # state. Kokoro can abort the whole Android process before Java fallback runs.
     assert "generateWithConfigAndCallback" not in backend
     assert "tts.generateWithConfig(text, generation)" in backend
+
+
+def test_natural_playback_matches_sherpa_android_pcm16_path_without_playbackparams():
+    backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
+
+    # Sherpa's own Android TTS service feeds the platform signed 16-bit PCM.
+    # Keep BOOP on that conservative path instead of float PCM + PlaybackParams,
+    # which is the remaining device-specific layer after v87 removed JNI aborts.
+    assert "AudioFormat.ENCODING_PCM_16BIT" in backend
+    assert "toPcm16" in backend
+    assert "short[] pcm" in backend
+    assert "track.write(pcm" in backend
+    assert "AudioFormat.ENCODING_PCM_FLOAT" not in backend
+    assert "PlaybackParams" not in backend
+
+
+def test_natural_failure_reports_whether_synthesis_or_playback_failed():
+    backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
+    assert 'NaturalSpeechException("synthesis"' in backend
+    assert 'NaturalSpeechException("playback"' in backend
