@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import re
 
 path = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java")
 text = path.read_text(encoding="utf-8")
@@ -9,72 +10,83 @@ scroll_marker = "// BOOP_VOICE_SETTINGS_SCROLL_V70_FIX"
 launch_marker = "// BOOP_DEV_MENU_SAFE_LAUNCH_V70_FIX"
 changed = False
 
+
+def replace_once_literal(source: str, old: str, new: str, label: str) -> str:
+    count = source.count(old)
+    if count != 1:
+        raise SystemExit(f"{label}: expected one anchor, found {count}")
+    return source.replace(old, new, 1)
+
+
 if scroll_marker not in text:
-    import_anchor = "import android.widget.SeekBar;\n"
-    if text.count(import_anchor) != 1:
-        raise SystemExit(f"Expected one SeekBar import anchor, found {text.count(import_anchor)}")
-    text = text.replace(
-        import_anchor,
-        import_anchor + "import android.widget.ScrollView;\n",
-        1,
+    if "import android.widget.ScrollView;\n" not in text:
+        text = replace_once_literal(
+            text,
+            "import android.widget.SeekBar;\n",
+            "import android.widget.SeekBar;\nimport android.widget.ScrollView;\n",
+            "voice settings ScrollView import",
+        )
+
+    if "    private ScrollView voiceSettingsScroll;\n" not in text:
+        text = replace_once_literal(
+            text,
+            "    private LinearLayout voiceSettingsOverlay;\n",
+            "    private LinearLayout voiceSettingsOverlay;\n"
+            "    private ScrollView voiceSettingsScroll;\n",
+            "voice settings ScrollView field",
+        )
+
+    add_pattern = re.compile(
+        r"(?P<indent>[ \t]*)interactionSurface\.addView\(voiceSettingsOverlay,\s*"
+        r"new FrameLayout\.LayoutParams\(\s*"
+        r"FrameLayout\.LayoutParams\.MATCH_PARENT,\s*"
+        r"FrameLayout\.LayoutParams\.MATCH_PARENT\)\);\s*"
+        r"voiceSettingsOverlay\.bringToFront\(\);"
     )
-
-    field_anchor = "    private LinearLayout voiceSettingsOverlay;\n"
-    if text.count(field_anchor) != 1:
-        raise SystemExit(f"Expected one voice settings field anchor, found {text.count(field_anchor)}")
-    text = text.replace(
-        field_anchor,
-        field_anchor + "    private ScrollView voiceSettingsScroll;\n",
-        1,
+    add_matches = list(add_pattern.finditer(text))
+    if len(add_matches) != 1:
+        raise SystemExit(
+            f"voice settings ScrollView add block: expected one anchor, found {len(add_matches)}"
+        )
+    indent = add_matches[0].group("indent")
+    add_block = (
+        f'{indent}// BOOP_VOICE_SETTINGS_SCROLL_V70_FIX\n'
+        f'{indent}voiceSettingsScroll = new ScrollView(this);\n'
+        f'{indent}voiceSettingsScroll.setFillViewport(true);\n'
+        f'{indent}voiceSettingsScroll.setBackgroundColor(Color.argb(236, 0, 0, 0));\n'
+        f'{indent}voiceSettingsScroll.setContentDescription("Scrollable BOOP voice settings");\n'
+        f'{indent}voiceSettingsScroll.addView(voiceSettingsOverlay, new ScrollView.LayoutParams(\n'
+        f'{indent}        ScrollView.LayoutParams.MATCH_PARENT,\n'
+        f'{indent}        ScrollView.LayoutParams.WRAP_CONTENT));\n'
+        f'{indent}interactionSurface.addView(voiceSettingsScroll, new FrameLayout.LayoutParams(\n'
+        f'{indent}        FrameLayout.LayoutParams.MATCH_PARENT,\n'
+        f'{indent}        FrameLayout.LayoutParams.MATCH_PARENT));\n'
+        f'{indent}voiceSettingsScroll.bringToFront();'
     )
+    text = add_pattern.sub(add_block, text, count=1)
 
-    gravity_anchor = "        voiceSettingsOverlay.setGravity(Gravity.CENTER);\n"
-    if text.count(gravity_anchor) != 1:
-        raise SystemExit(f"Expected one voice settings gravity anchor, found {text.count(gravity_anchor)}")
-    text = text.replace(
-        gravity_anchor,
-        "        // BOOP_VOICE_SETTINGS_SCROLL_V70_FIX\n"
-        "        voiceSettingsOverlay.setGravity(Gravity.CENTER_HORIZONTAL);\n",
-        1,
+    hide_pattern = re.compile(
+        r"(?P<indent>[ \t]*)if \(interactionSurface != null && voiceSettingsOverlay != null\) \{\s*"
+        r"interactionSurface\.removeView\(voiceSettingsOverlay\);\s*"
+        r"\}\s*"
+        r"voiceSettingsOverlay = null;"
     )
-
-    add_anchor = '''        interactionSurface.addView(voiceSettingsOverlay, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
-        voiceSettingsOverlay.bringToFront();
-'''
-    if text.count(add_anchor) != 1:
-        raise SystemExit(f"Expected one voice settings add anchor, found {text.count(add_anchor)}")
-    add_block = '''        voiceSettingsScroll = new ScrollView(this);
-        voiceSettingsScroll.setFillViewport(true);
-        voiceSettingsScroll.setBackgroundColor(Color.argb(236, 0, 0, 0));
-        voiceSettingsScroll.setContentDescription("Scrollable BOOP voice settings");
-        voiceSettingsScroll.addView(voiceSettingsOverlay, new ScrollView.LayoutParams(
-                ScrollView.LayoutParams.MATCH_PARENT,
-                ScrollView.LayoutParams.WRAP_CONTENT));
-        interactionSurface.addView(voiceSettingsScroll, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
-        voiceSettingsScroll.bringToFront();
-'''
-    text = text.replace(add_anchor, add_block, 1)
-
-    hide_anchor = '''        if (interactionSurface != null && voiceSettingsOverlay != null) {
-            interactionSurface.removeView(voiceSettingsOverlay);
-        }
-        voiceSettingsOverlay = null;
-'''
-    if text.count(hide_anchor) != 1:
-        raise SystemExit(f"Expected one voice settings hide anchor, found {text.count(hide_anchor)}")
-    hide_block = '''        if (interactionSurface != null && voiceSettingsScroll != null) {
-            interactionSurface.removeView(voiceSettingsScroll);
-        } else if (interactionSurface != null && voiceSettingsOverlay != null) {
-            interactionSurface.removeView(voiceSettingsOverlay);
-        }
-        voiceSettingsScroll = null;
-        voiceSettingsOverlay = null;
-'''
-    text = text.replace(hide_anchor, hide_block, 1)
+    hide_matches = list(hide_pattern.finditer(text))
+    if len(hide_matches) != 1:
+        raise SystemExit(
+            f"voice settings ScrollView hide block: expected one anchor, found {len(hide_matches)}"
+        )
+    indent = hide_matches[0].group("indent")
+    hide_block = (
+        f'{indent}if (interactionSurface != null && voiceSettingsScroll != null) {{\n'
+        f'{indent}    interactionSurface.removeView(voiceSettingsScroll);\n'
+        f'{indent}}} else if (interactionSurface != null && voiceSettingsOverlay != null) {{\n'
+        f'{indent}    interactionSurface.removeView(voiceSettingsOverlay);\n'
+        f'{indent}}}\n'
+        f'{indent}voiceSettingsScroll = null;\n'
+        f'{indent}voiceSettingsOverlay = null;'
+    )
+    text = hide_pattern.sub(hide_block, text, count=1)
     changed = True
 
 if spoken_marker not in text:
@@ -84,8 +96,6 @@ if spoken_marker not in text:
         }
 
 '''
-    if text.count(anchor) != 1:
-        raise SystemExit(f"Expected one local voice-settings speech anchor, found {text.count(anchor)}")
     block = '''        // BOOP_DEV_MENU_SPOKEN_ENTRY_V1
         if (BoopDevMenuIntent.matches(transcript)) {
             openDevMenu();
@@ -93,14 +103,13 @@ if spoken_marker not in text:
         }
 
 '''
-    text = text.replace(anchor, anchor + block, 1)
+    text = replace_once_literal(
+        text, anchor, anchor + block, "local voice-settings speech"
+    )
     changed = True
 
 if settings_marker not in text:
     anchor = "        Button done = new Button(this);\n"
-    if text.count(anchor) != 1:
-        raise SystemExit(f"Expected one Voice Done anchor, found {text.count(anchor)}")
-
     block = '''        // BOOP_DEV_MENU_SETTINGS_ENTRY_V1
         Button devMenu = new Button(this);
         devMenu.setText("Dev menu");
@@ -119,17 +128,15 @@ if settings_marker not in text:
         voiceSettingsOverlay.addView(devMenu, devMenuParams);
 
 '''
-    text = text.replace(anchor, block + anchor, 1)
+    text = replace_once_literal(text, anchor, block + anchor, "Voice Done button")
     changed = True
 
 if launch_marker not in text:
     anchor = "    private TextView voiceSettingLabel(String text, float sizeSp, boolean bold) {\n"
-    if text.count(anchor) != 1:
-        raise SystemExit(f"Expected one voice label helper anchor, found {text.count(anchor)}")
     block = '''    // BOOP_DEV_MENU_SAFE_LAUNCH_V70_FIX
     private void openDevMenu() {
-        // A wake-command result is in PROCESSING at this point. Release that state before
-        // MainActivity pauses so the microphone/wake engine cannot be left half-owned.
+        // A wake-command result is in PROCESSING here. Release it before MainActivity
+        // pauses so the wake/microphone state is not left half-owned during the hop.
         if (wakeCoordinator != null) {
             wakeCoordinator.finishWakeProcessing();
         }
@@ -141,7 +148,7 @@ if launch_marker not in text:
                 wakeFaceForInteraction();
             }
         };
-        // Leave the SpeechRecognizer callback cleanly before switching activities.
+        // Leave the SpeechRecognizer callback before switching activities.
         if (interactionSurface != null) {
             interactionSurface.post(launch);
         } else {
@@ -150,7 +157,7 @@ if launch_marker not in text:
     }
 
 '''
-    text = text.replace(anchor, block + anchor, 1)
+    text = replace_once_literal(text, anchor, block + anchor, "voice label helper")
     changed = True
 
 if changed:
