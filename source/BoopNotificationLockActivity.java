@@ -1,6 +1,7 @@
 package com.boop.alpha1;
 
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,12 +13,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import java.util.List;
 
 public final class BoopNotificationLockActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean receiverRegistered;
+    private boolean authenticationInProgress;
 
     private final Runnable timeoutRunnable = () -> {
         try {
@@ -31,15 +34,19 @@ public final class BoopNotificationLockActivity extends Activity {
     private final BroadcastReceiver userPresentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (Intent.ACTION_USER_PRESENT.equals(intent == null ? null : intent.getAction())) {
-                try {
-                    BoopNotificationRuntime.get(BoopNotificationLockActivity.this)
-                            .transitionAfterUnlock();
-                } catch (RuntimeException ignored) {
-                    // Source notification remains in Android.
-                }
-                finish();
+            if (!Intent.ACTION_USER_PRESENT.equals(intent == null ? null : intent.getAction())) {
+                return;
             }
+            if (authenticationInProgress) {
+                return;
+            }
+            try {
+                BoopNotificationRuntime.get(BoopNotificationLockActivity.this)
+                        .transitionAfterUnlock();
+            } catch (RuntimeException ignored) {
+                // Source notification remains in Android.
+            }
+            finish();
         }
     };
 
@@ -88,6 +95,7 @@ public final class BoopNotificationLockActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        authenticationInProgress = false;
         handler.removeCallbacks(timeoutRunnable);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onDestroy();
@@ -112,8 +120,71 @@ public final class BoopNotificationLockActivity extends Activity {
                 bundle, BoopNotificationSurface.LOCKED, true);
         View view = BoopNotificationInPlaceController.createPlainPresentationView(
                 this, presentation);
+        view.setOnClickListener(v -> handlePresentationTap());
         setContentView(view);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         handler.postDelayed(timeoutRunnable, Math.max(1L, runtime.settings().timeoutMs()));
+    }
+
+    private void handlePresentationTap() {
+        if (authenticationInProgress) return;
+
+        final BoopNotificationRuntime runtime;
+        try {
+            runtime = BoopNotificationRuntime.get(this);
+        } catch (RuntimeException unavailable) {
+            return;
+        }
+        List<BoopNotificationEnvelope> bundle = runtime.visibleBundle();
+        if (bundle.isEmpty()) {
+            finish();
+            return;
+        }
+
+        Runnable afterAuthentication = bundle.size() == 1
+                ? () -> openSingle(runtime, bundle.get(0).key())
+                : () -> openInbox(runtime);
+
+        KeyguardManager keyguard = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        if (keyguard == null || !keyguard.isKeyguardLocked()) {
+            afterAuthentication.run();
+            return;
+        }
+
+        authenticationInProgress = true;
+        keyguard.requestDismissKeyguard(this, new KeyguardManager.KeyguardDismissCallback() {
+            @Override
+            public void onDismissSucceeded() {
+                authenticationInProgress = false;
+                afterAuthentication.run();
+            }
+
+            @Override
+            public void onDismissCancelled() {
+                authenticationInProgress = false;
+            }
+
+            @Override
+            public void onDismissError() {
+                authenticationInProgress = false;
+            }
+        });
+    }
+
+    private void openSingle(BoopNotificationRuntime runtime, String key) {
+        BoopNotificationTapLauncher.Result result = runtime.openNotification(this, key);
+        if (result == BoopNotificationTapLauncher.Result.OPENED) {
+            finish();
+            return;
+        }
+        Toast.makeText(this, "Can't open that right now.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void openInbox(BoopNotificationRuntime runtime) {
+        if (runtime.openInbox(this)) {
+            finish();
+            return;
+        }
+        Toast.makeText(this, "Can't open that right now.", Toast.LENGTH_SHORT).show();
     }
 }

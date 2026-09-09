@@ -1,10 +1,12 @@
 package com.boop.alpha1;
 
+import android.app.Activity;
 import android.app.Application;
 import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -223,6 +225,46 @@ final class BoopNotificationRuntime {
         }
         coordinator.onPresentationDismissed();
         scheduleHideAllSurfaces();
+    }
+
+    BoopNotificationTapLauncher.Result openNotification(Context context, String key) {
+        final RuntimeRecord current;
+        synchronized (this) {
+            current = key == null ? null : records.get(key);
+        }
+        if (current == null) {
+            return BoopNotificationTapLauncher.Result.CANCELLED;
+        }
+
+        BoopNotificationTapLauncher.Result result = BoopNotificationTapLauncher.send(
+                context,
+                current.contentIntent(),
+                Build.VERSION.SDK_INT);
+        if (result != BoopNotificationTapLauncher.Result.OPENED) {
+            return result;
+        }
+
+        if (BoopNotificationTapPolicy.shouldCancelAfterSuccessfulSend(
+                current.envelope().autoCancel(), true)) {
+            cancelAfterSuccessfulAutoCancelTap(current.envelope().key());
+        }
+        onPresentationDismissed();
+        return result;
+    }
+
+    boolean openInbox(Context context) {
+        if (context == null) return false;
+        Intent intent = new Intent(context, BoopNotificationInboxActivity.class);
+        if (!(context instanceof Activity)) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        try {
+            context.startActivity(intent);
+            onPresentationDismissed();
+            return true;
+        } catch (RuntimeException unavailable) {
+            return false;
+        }
     }
 
     synchronized void cancelAfterSuccessfulAutoCancelTap(String key) {
