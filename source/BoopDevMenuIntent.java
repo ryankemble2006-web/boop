@@ -10,6 +10,6 @@ final class BoopDevMenuIntent {
         String normalized = transcript.trim().toLowerCase(Locale.ROOT);
         normalized = normalized.replaceAll("[\\p{Punct}\\s]+$", "").trim();
         normalized = normalized.replaceAll("\\s+", " ");
-        return "dev menu".equals(normalized);
+        return "developer menu".equals(normalized);
     }
 }
