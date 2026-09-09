@@ -1,0 +1,41 @@
+name: Diagnose BOOP Natural Voice
+
+on:
+  push:
+    branches: [ "boop-unified" ]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out unified branch
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pytest
+        run: python -m pip install pytest
+
+      - name: Materialize unified app
+        run: bash scripts/materialize-unified.sh
+
+      - name: Python natural voice contracts
+        run: python -m pytest -q tests/test_unified_v70_natural_voices_contract.py tests/test_unified_v85_natural_voice_install_flow.py
+
+      - name: Gradle natural voice tests
+        run: |
+          gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
+            --tests '*BoopNaturalVoice*' --stacktrace
