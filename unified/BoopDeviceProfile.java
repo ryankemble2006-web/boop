@@ -14,6 +14,7 @@ final class BoopDeviceProfile {
 
     private static final String PREFS = "boop_unified";
     private static final String KEY_OVERRIDE = "device_profile_override";
+    private static final int TABLET_MIN_SMALLEST_WIDTH_DP = 600;
 
     private BoopDeviceProfile() { }
 
@@ -21,10 +22,15 @@ final class BoopDeviceProfile {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String override = prefs.getString(KEY_OVERRIDE, null);
         boolean tv = isTelevision(context);
-        return resolve(tv, Build.MODEL, override);
+        int smallestScreenWidthDp = context.getResources().getConfiguration().smallestScreenWidthDp;
+        return resolve(tv, Build.MODEL, override, smallestScreenWidthDp);
     }
 
     static Mode resolve(boolean television, String model, String override) {
+        return resolve(television, model, override, 0);
+    }
+
+    static Mode resolve(boolean television, String model, String override, int smallestScreenWidthDp) {
         Mode forced = parseOverride(override);
         if (forced != null) {
             return forced;
@@ -34,6 +40,9 @@ final class BoopDeviceProfile {
         }
         String normalized = model == null ? "" : model.trim().toLowerCase(Locale.ROOT);
         if (normalized.equals("pixel 7 pro")) {
+            return Mode.WALL;
+        }
+        if (smallestScreenWidthDp >= TABLET_MIN_SMALLEST_WIDTH_DP) {
             return Mode.WALL;
         }
         return Mode.LAUNCHER;
