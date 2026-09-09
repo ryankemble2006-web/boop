@@ -18,6 +18,12 @@ import java.util.List;
 import java.util.Set;
 
 final class BoopNotificationPuppetView extends FrameLayout {
+    // BOOP_NOTIFICATION_PUPPET_EMPHASIZED_POSE_V1
+    private static final float HANDS_REST_SCALE = 1.12f;
+    private static final float HANDS_ENTRANCE_SCALE = HANDS_REST_SCALE * 0.96f;
+    private static final int BANNER_REST_LIFT_DP = 36;
+    private static final int BANNER_ENTRANCE_OFFSET_DP = 16;
+
     interface Callback {
         void onOpen(String notificationKey);
         void onOpenBundle();
@@ -167,19 +173,19 @@ final class BoopNotificationPuppetView extends FrameLayout {
         });
 
         cardHost.setAlpha(0f);
-        cardHost.setTranslationY(-dp(16));
+        cardHost.setTranslationY(-dp(BANNER_REST_LIFT_DP + BANNER_ENTRANCE_OFFSET_DP));
         cardHost.animate()
                 .alpha(1f)
-                .translationY(0f)
+                .translationY(-dp(BANNER_REST_LIFT_DP))
                 .setDuration(260L)
                 .setInterpolator(new OvershootInterpolator(0.7f))
                 .start();
 
-        handsView.setScaleX(0.96f);
-        handsView.setScaleY(0.96f);
+        handsView.setScaleX(HANDS_ENTRANCE_SCALE);
+        handsView.setScaleY(HANDS_ENTRANCE_SCALE);
         handsView.animate()
-                .scaleX(1f)
-                .scaleY(1f)
+                .scaleX(HANDS_REST_SCALE)
+                .scaleY(HANDS_REST_SCALE)
                 .setDuration(220L)
                 .start();
     }
