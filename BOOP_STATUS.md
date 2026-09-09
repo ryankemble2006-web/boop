@@ -4,12 +4,26 @@ Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha
 
 ## Current signed candidate: v70 developer lab + app-specific notification doods
 
-Release identity:
+Release identity remains unchanged:
 
 - versionCode `70`;
-- versionName `1.2.24-unified-dev-menu-doods`;
-- final production/build commit `825593a16c004d9c0825720eb014c4f5cc8e58af`;
-- app implementation `2f4a62150121b299a433674e971de1e058f6330f`, materialized-router test correction `9c907d3497067eb88ea1308875084b8965413951`.
+- versionName `1.2.24-unified-dev-menu-doods`.
+
+### v70 physical dev-menu hotfix
+
+Ryan's first physical v70 pass found two regressions: saying `dev menu` made BOOP disappear instead of presenting BOOP Dev, and the `Dev menu` row in Voice Settings could sit below the reachable viewport because the settings column was not vertically scrollable.
+
+The current hotfix implementation is `95224d95a04b6a79a8d8c4e9e5ac4c35cf64ca9a`. Spoken `dev menu` now releases wake PROCESSING state before the activity hop and posts an explicit `BoopDevMenuActivity` launch through the interaction surface so the speech callback can unwind first. Voice Settings is now wrapped in a vertical `ScrollView`; the existing settings column, Notifications row, Dev menu row and Done button therefore remain reachable without moving the controls or changing their behavior.
+
+Exact hotfix build workflow `34381830799` completed SUCCESS. Canonical materialization, the new v70 developer-menu/scroll regression contracts, wake handoff, Launcher lint, Shield functional tests, wake/routing/lifecycle tests, signed APK assembly, package/version/permanent-signer/archive verification and artifact upload all passed. Fresh artifact `BOOP-Unified` is ID `10116298801`, size `62,739,475` bytes, GitHub artifact ZIP digest `sha256:8007675a308e3921fe6bde895c0d60bec7c5beb550a9ae31dac604f9112ed7ee`.
+
+Detailed hotfix receipt: `docs/BOOP-V70-DEV-MENU-PHYSICAL-HOTFIX-RECEIPT.md`.
+
+**Physical hotfix acceptance is still pending.** Ryan must confirm that spoken `dev menu` opens BOOP Dev, that Voice Settings scrolls far enough to tap `Dev menu` and `Done`, and that returning/repeating the command leaves wake/microphone behavior healthy. Latest physically accepted rollback remains v59.
+
+### Original v70 implementation
+
+The original v70 production/build commit was `825593a16c004d9c0825720eb014c4f5cc8e58af`; app implementation `2f4a62150121b299a433674e971de1e058f6330f`, materialized-router test correction `9c907d3497067eb88ea1308875084b8965413951`.
 
 v70 adds a local spoken `dev menu` command intercepted before HA/command-router/chat fallback. It opens non-exported `BoopDevMenuActivity` with no Chat Mode, OpenCode/ChatGPT Web or internet dependency.
 
@@ -19,37 +33,22 @@ Notification demos are local presentation fixtures for Facebook, WhatsApp, Gmail
 
 Locked preview remains privacy-redacted through the production presentation model: app identity/icon/count style only before authentication, with no message title/body leakage.
 
-## CI / artifact status
-
-Final exact-head evidence:
-
-- Build BOOP Unified APK workflow `34322564398`: SUCCESS;
-- Shield HOME routing workflow `34322564357`: SUCCESS;
-- artifact `BOOP-Unified`, ID `10092558111`, size `62,739,368` bytes;
-- artifact ZIP SHA-256 `3c68ba78f2fb36bf50d6bbaf0d85a50a8a51dc5d345349b2dc70c32ae45c00e1`;
-- APK SHA-256 `53c2956873e7a7268b829da5d9bd4f23d0f6ee20a0919051cb95bbd275f867a4`;
-- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
-- Shield focused functional tests 58/58;
-- Unified focused functional tests 144/144;
-- Shield HOME routing PASS;
-- materialization, notification/dev contracts, wake handoff, Launcher checks, signed assembly, package/version/signature/archive verification and artifact upload PASS.
-
-The exact final artifact ZIP was independently downloaded and SHA-256 checked against GitHub's artifact digest. Its APK was independently extracted and SHA-256 checked against the CI receipt. The APK v2 signing block was independently parsed and the embedded signer certificate digest matched the canonical permanent BOOP signer.
-
-Detailed receipt: `docs/BOOP-V70-DEV-MENU-DOODS-RECEIPT.md`.
+Original release receipt: `docs/BOOP-V70-DEV-MENU-DOODS-RECEIPT.md`.
 
 ## Acceptance boundary
 
 **GitHub performed NO visual acceptance. Physical v70 acceptance is pending and belongs to Ryan.** No screenshot tests, golden-image tests, pixel comparisons or automated visual judgments were used.
 
-Physical checks:
+Current physical checks:
 
-1. Say `dev menu` and confirm the lab opens locally before any HA/chat fallback.
-2. Confirm fullscreen/immersive behavior and clean exit/return.
-3. Exercise Wake, Think/Stop, Berry 1/2/3, Shake and Sleep repeatedly.
-4. Exercise all ten app-specific notification doods plus Locked and Bundle; judge service identity, current BOOP face and exact hands on-device.
-5. Confirm Locked exposes no title/body and previews add no real shade notification.
-6. Recheck carried v68 iris-only hue and finished v65 sclera/white blend.
+1. Install the hotfix artifact from workflow `34381830799` and say `dev menu`; confirm BOOP Dev opens rather than BOOP disappearing.
+2. Open Voice Settings, scroll to the bottom, and confirm `Dev menu` and `Done` are both reachable and tappable.
+3. Exit BOOP Dev back to BOOP, repeat the spoken command, and confirm wake/microphone behavior remains healthy.
+4. Confirm fullscreen/immersive behavior and clean exit/return.
+5. Exercise Wake, Think/Stop, Berry 1/2/3, Shake and Sleep repeatedly.
+6. Exercise all ten app-specific notification doods plus Locked and Bundle; judge service identity, current BOOP face and exact hands on-device.
+7. Confirm Locked exposes no title/body and previews add no real shade notification.
+8. Recheck carried v68 iris-only hue and finished v65 sclera/white blend.
 
 No v70 rollback checkpoint was created or repointed. Latest physically accepted rollback remains v59.
 
