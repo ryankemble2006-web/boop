@@ -2,11 +2,11 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer. Fresh `main` owns shared contracts. Always re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Current canonical candidate: v70 pinned-face developer lab
+## Current canonical candidate: v70 pinned-face developer lab + emphasized notification pose
 
 v70 remains versionCode `70`, versionName `1.2.24-unified-dev-menu-doods`.
 
-Ryan physically confirmed the current in-place `developer menu` entry works on the Pixel without closing BOOP. The older activity-hop candidate `95224d95a04b6a79a8d8c4e9e5ac4c35cf64ca9a` remains physically failed for that bug. Preserve the Voice Settings vertical-scroll repair and the in-place route.
+Ryan physically confirmed the current in-place `developer menu` entry works on the Pixel without closing BOOP, and then confirmed the pinned-face concept with `Awesome now I can see him`. Preserve the Voice Settings vertical-scroll repair, in-place route, and pinned visible BOOP model while animation controls are browsed. The older activity-hop candidate `95224d95a04b6a79a8d8c4e9e5ac4c35cf64ca9a` remains physically failed for that bug.
 
 The durable developer-menu entry contract remains:
 
@@ -33,35 +33,58 @@ Ryan corrected the developer-lab design on 2026-09-09. Preserve this interaction
 - animation selection must not clear the developer overlay, create another face, open a full-screen animation page, or require a Dismiss return step;
 - selector horizontal position may be retained as controls are browsed;
 - `Notification doods` remains a separate horizontal selector. A dood preview may replace the selector temporarily, but must use a dedicated current `BoopFaceView` above the real `BoopNotificationPuppetView` banner/card and exact approved hands;
-- `BoopNotificationPuppetView.setFaceVisible(false)` is a dev-composition hook to suppress only the duplicate internal face. Production notification behavior is unchanged unless explicitly called;
-- production notification privacy/tap/dismiss/cue semantics remain unchanged;
-- visual spacing, motion and whether the approved/current eyes read clearly above the banner remain physical acceptance questions for Ryan, never CI appearance assertions.
+- `BoopNotificationPuppetView.setFaceVisible(false)` is a dev-composition hook to suppress only the duplicate internal face;
+- notification privacy/tap/dismiss/cue semantics remain unchanged;
+- visual spacing, motion and whether the approved/current eyes read clearly remain physical acceptance questions for Ryan, never CI appearance assertions.
 
 The prior full-screen animation preview + bottom Dismiss design is rejected and must not be restored accidentally.
 
 All notification doods remain local presentation fixtures. They must never create Android shade notifications, call `NotificationManager`, invoke notification listener/runtime paths or require listener access merely to preview. Locked preview remains privacy-redacted.
 
+## Durable emphasized notification-puppet pose
+
+Ryan approved a shared notification-puppet layout trial on 2026-09-09 after asking for more obvious hands and a higher held banner on all notification doods.
+
+Preserve these exact implementation semantics until Ryan physically tunes or changes them:
+
+- the approved notification-hands PNG remains byte-for-byte unchanged;
+- shared `BoopNotificationPuppetView` uses a `1.12f` hands resting scale;
+- the banner/card rests `36dp` above its previous center position;
+- banner entrance retains the same relative `16dp` approach, so it starts `52dp` above the old center and settles at `36dp` above the old center over the existing `260ms` `OvershootInterpolator(0.7f)` animation;
+- hands entrance retains the same relative `0.96 -> 1` motion, now from `1.12 * 0.96` to `1.12` over the existing `220ms`;
+- this pose is shared by Dev Lab dood previews and real notification puppet surfaces because it lives in `source/BoopNotificationPuppetView.java`;
+- do not alter eyes, notification card content, privacy, tap/open, swipe/timeout dismiss, alert-cue decisions, package, permissions or signer as part of this pose;
+- physical visual acceptance remains Ryan's responsibility. CI may verify the semantic pose mode and locked asset identity, but must not judge pixels, visual geometry or aesthetics.
+
+The exact source marker for this mode is `BOOP_NOTIFICATION_PUPPET_EMPHASIZED_POSE_V1`.
+
 ### Current verification receipt
 
-Test-first evidence:
+Test-first evidence for the emphasized notification pose:
 
-- RED head `6ada374665a9cc6d504a7188f4df1b406fffdcc6`, workflow `34391024568`: materialization passed, developer-lab contract gate failed as expected because the rejected full-screen animation behavior was still present;
-- exact GREEN app/test head `a9e4e6a8f6abf023bc9ba1779d0a51f698ee0c3f`;
-- workflow `34391151333`: SUCCESS.
+- RED head `9ecf556de5545eef19a73e490ccf5a6989ca1e85`, workflow `34392830481`: failed at the non-visual integration-contract gate before materialization/signing because the new semantic pose marker did not yet exist;
+- exact GREEN app/test head `c68a7aba8f0c9bcffa81ad0b517453cc8e50b12d`;
+- workflow `34392969200`: SUCCESS.
 
 Artifact receipt:
 
-- artifact `BOOP-Unified`, ID `10119809751`, size `62,740,109` bytes;
-- artifact ZIP SHA-256 `fa7d59bcdc105907a988fea1043895d21b060ad1ed97aaaef6e3d4f70f21fd91`;
-- APK SHA-256 `b06d4c2dd5c6b6fa2dac969b7406c401195b01b961263e418eff5101b75b552e`;
+- artifact `BOOP-Unified`, ID `10120505065`, size `62,740,052` bytes;
+- artifact ZIP SHA-256 `de64be9f30d3aa54eb69b6d662e326f70ec56f55776efcf70c05502c4cef8608`;
+- APK SHA-256 `ab91846489799be9f6d7c8e38fb8c51925f6a983de2c6f2bb0cbdec676d14235`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
 - Shield focused tests 58/58;
 - Unified focused tests 144/144;
 - zero failures/errors/skips.
 
-The exact artifact ZIP was independently downloaded and matched GitHub's digest; extracted APK, built-commit and signer receipts matched CI.
+The exact artifact ZIP was independently downloaded and matched GitHub's digest. The extracted APK matched `apk-sha256.txt`; `built-commit.txt` matched `c68a7aba8f0c9bcffa81ad0b517453cc8e50b12d`; `badging.txt` confirmed `com.boop.alpha1`, versionCode 70, versionName `1.2.24-unified-dev-menu-doods`; signer receipt matched the permanent BOOP signer.
 
-The in-place developer-menu entry has positive Pixel evidence, but the pinned-face/no-vertical-scroll selector layout and direct animation reactions remain physically pending. No v70 rollback checkpoint exists. Latest fully physically accepted rollback remains v59.
+The in-place developer-menu and pinned-face visibility behaviors have positive Pixel evidence. The emphasized-hands / raised-banner notification pose remains physically pending. No v70 rollback checkpoint exists. Latest fully physically accepted rollback remains v59.
+
+### Prior pinned-face receipt
+
+- RED head `6ada374665a9cc6d504a7188f4df1b406fffdcc6`, workflow `34391024568`;
+- GREEN app/test head `a9e4e6a8f6abf023bc9ba1779d0a51f698ee0c3f`, workflow `34391151333` SUCCESS;
+- artifact ID `10119809751`, APK SHA-256 `b06d4c2dd5c6b6fa2dac969b7406c401195b01b961263e418eff5101b75b552e`.
 
 ## Original v70 developer-lab lineage
 
@@ -114,12 +137,12 @@ Android's original notification is authoritative. BOOP is a puppet mirror around
 - Successful `FLAG_AUTO_CANCEL` handling may remove BOOP's mirror only after source send succeeds.
 - Swipe and timeout dismiss BOOP's mirror only. They must not cancel the Android shade notification.
 - Swipe contract is >=72dp on a dominant horizontal or vertical axis with strict >1.25x directional dominance.
-- Entrance motion remains card alpha/translation from -16dp over 260ms with `OvershootInterpolator(0.7f)` plus hands scale 0.96 -> 1 over 220ms.
+- Current approved trial entrance semantics are: banner approaches from `16dp` above its raised resting position over `260ms` with `OvershootInterpolator(0.7f)`; hands animate from `0.96x` of their current resting scale to their current resting scale over `220ms`. The resting pose is currently hands `1.12x` and banner `36dp` upward, pending Ryan's physical acceptance.
 - Local cue is deterministic 320ms audio plus `{0,35,55,28}` vibration.
 - BOOP sound/vibration is allowed only when coordinator `playCue=true` and the native Android channel is known silent for both sound and vibration. Unknown/noisy channels stay visual-only to prevent double alerts.
 - Preserve overlay/screen-on/vibrate authority while rejecting full-screen-intent, query-all, accessibility-service and device-admin authority.
 
-Exact approved notification hands binary: `unified/assets/boop-notifications/boop-yellow-hands-approved.png`, size `1,809,990` bytes, SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`, Git blob `d47037271bf320f4f110e3f8416f59882062afac`. Do not regenerate, recompress, recolor/recolour, crop or weaken the hash guard.
+Exact approved notification hands binary: `unified/assets/boop-notifications/boop-yellow-hands-approved.png`, size `1,809,990` bytes, SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`, Git blob `d47037271bf320f4f110e3f8416f59882062afac`. Do not regenerate, recompress, recolor/recolour, crop or weaken the hash guard. Explicitly approved transforms/layout changes may pose this exact asset without modifying the binary.
 
 ## Durable wake architecture
 
