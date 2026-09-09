@@ -7,6 +7,9 @@ MAIN = Path(
 DEV_INTENT = Path(
     "boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopDevMenuIntent.java"
 )
+PUPPET = Path(
+    "boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopNotificationPuppetView.java"
+)
 MATERIALIZER = Path("scripts/materialize-unified.sh")
 
 
@@ -61,3 +64,43 @@ def test_voice_settings_is_vertically_scrollable_to_developer_menu_and_done() ->
     assert "interactionSurface.addView(voiceSettingsScroll" in source
     assert "interactionSurface.removeView(voiceSettingsScroll);" in source
     assert 'devMenu.setText("Developer menu");' in source
+
+
+def test_dev_lab_uses_horizontal_shelves_and_restores_shelf_positions() -> None:
+    source = MAIN.read_text(encoding="utf-8")
+
+    assert "import android.widget.HorizontalScrollView;" in source
+    assert "private int developerAnimationScrollX = 0;" in source
+    assert "private int developerNotificationScrollX = 0;" in source
+    assert "new HorizontalScrollView(this)" in source
+    assert "setHorizontalScrollBarEnabled(false)" in source
+    assert "developerAnimationScrollX = scrollX" in source
+    assert "developerNotificationScrollX = scrollX" in source
+    assert "scrollTo(savedScrollX, 0)" in source
+
+
+def test_tapping_animation_opens_fullscreen_preview_and_dismiss_returns_to_selector() -> None:
+    source = MAIN.read_text(encoding="utf-8")
+    start = source.index("private void showDeveloperAnimationPreview(")
+    end = source.index("private void runDeveloperAction(", start)
+    block = source[start:end]
+
+    assert "developerMenuOverlay.removeAllViews();" in block
+    assert "developerMenuFace = new BoopFaceView(this);" in block
+    assert 'dismiss.setText("Dismiss");' in block
+    assert "stopDeveloperAnimation();" in block
+    assert "showDeveloperMenuContent();" in block
+
+
+def test_dev_notification_preview_uses_one_separate_face_renderer_with_real_puppet() -> None:
+    source = MAIN.read_text(encoding="utf-8")
+    start = source.index("private void showDeveloperNotificationPreview(")
+    end = source.index("private void hideDeveloperMenu()", start)
+    block = source[start:end]
+
+    assert "developerMenuFace = new BoopFaceView(this);" in block
+    assert "new BoopNotificationPuppetView(" in block
+    assert "puppet.setFaceVisible(false);" in block
+
+    puppet = PUPPET.read_text(encoding="utf-8")
+    assert "void setFaceVisible(boolean visible)" in puppet
