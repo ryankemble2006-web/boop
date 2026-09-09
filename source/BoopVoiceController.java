@@ -12,10 +12,41 @@ import java.util.Locale;
 import java.util.Set;
 
 final class BoopVoiceController {
+    static final String BACKEND_ANDROID = "android";
+    static final String BACKEND_NATURAL = "natural";
+    static final String NATURAL_STATE_VERIFIED = "verified";
+
+    static final class NaturalVoice {
+        private final String name;
+        private final String key;
+        private final int sid;
+
+        NaturalVoice(String name, String key, int sid) {
+            this.name = name;
+            this.key = key;
+            this.sid = sid;
+        }
+
+        String name() { return name; }
+        String key() { return key; }
+        int sid() { return sid; }
+    }
+
     private static final String PREFS_NAME = "boop_voice";
     private static final String KEY_VOICE_NAME = "voice_name";
     private static final String KEY_PITCH = "pitch";
     private static final String KEY_SPEECH_RATE = "speech_rate";
+    private static final String KEY_SELECTED_BACKEND = "selected_backend";
+    private static final String KEY_NATURAL_SPEAKER_KEY = "natural_speaker_key";
+    private static final String KEY_NATURAL_PACK_VERSION = "natural_pack_version";
+    private static final String KEY_NATURAL_VERIFICATION_STATE = "natural_verification_state";
+
+    private static final NaturalVoice[] NATURAL_VOICES = {
+            new NaturalVoice("Emma", "bf_emma", 21),
+            new NaturalVoice("Isabella", "bf_isabella", 22),
+            new NaturalVoice("George", "bm_george", 26),
+            new NaturalVoice("Fable", "bm_fable", 25)
+    };
 
     private final SharedPreferences preferences;
     private final List<Voice> localEnglishVoices = new ArrayList<>();
@@ -24,11 +55,22 @@ final class BoopVoiceController {
     private int currentVoiceIndex = -1;
     private float currentPitch;
     private float currentSpeechRate;
+    private String selectedBackend;
+    private String naturalSpeakerKey;
+    private String naturalPackVersion;
+    private String naturalVerificationState;
+    private boolean naturalPackUsable;
 
     BoopVoiceController(Context context) {
         preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         currentPitch = preferences.getFloat(KEY_PITCH, BoopVoiceTuning.DEFAULT_PITCH);
         currentSpeechRate = preferences.getFloat(KEY_SPEECH_RATE, BoopVoiceTuning.DEFAULT_RATE);
+        selectedBackend = preferences.getString(KEY_SELECTED_BACKEND, BACKEND_ANDROID);
+        naturalSpeakerKey = preferences.getString(KEY_NATURAL_SPEAKER_KEY, NATURAL_VOICES[0].key());
+        naturalPackVersion = preferences.getString(KEY_NATURAL_PACK_VERSION, "");
+        naturalVerificationState = preferences.getString(KEY_NATURAL_VERIFICATION_STATE, "");
+        if (!BACKEND_NATURAL.equals(selectedBackend)) selectedBackend = BACKEND_ANDROID;
+        if (findNaturalVoice(naturalSpeakerKey) == null) naturalSpeakerKey = NATURAL_VOICES[0].key();
     }
 
     void initialize(TextToSpeech tts, Locale preferredLocale) {
@@ -51,6 +93,13 @@ final class BoopVoiceController {
     String maybeChangeVoice(String text) {
         if (!BoopVoiceIntent.matches(text)) {
             return null;
+        }
+
+        if (naturalBackendSelectedAndUsable()) {
+            int current = indexOfNaturalVoice(naturalSpeakerKey);
+            int next = (current < 0 ? 0 : (current + 1) % NATURAL_VOICES.length);
+            selectNaturalVoice(NATURAL_VOICES[next].key());
+            return "This one?";
         }
 
         if (tts == null || localEnglishVoices.size() <= 1) {
@@ -94,6 +143,68 @@ final class BoopVoiceController {
 
     float speechRate() {
         return currentSpeechRate;
+    }
+
+    void setNaturalPackUsable(boolean usable) {
+        naturalPackUsable = usable;
+    }
+
+    void onNaturalPackVerified(String version) {
+        naturalPackVersion = version == null ? "" : version;
+        naturalVerificationState = NATURAL_STATE_VERIFIED;
+        naturalPackUsable = !naturalPackVersion.isEmpty();
+        preferences.edit()
+                .putString(KEY_NATURAL_PACK_VERSION, naturalPackVersion)
+                .putString(KEY_NATURAL_VERIFICATION_STATE, naturalVerificationState)
+                .apply();
+    }
+
+    boolean naturalBackendSelectedAndUsable() {
+        return BACKEND_NATURAL.equals(selectedBackend)
+                && naturalPackUsable
+                && NATURAL_STATE_VERIFIED.equals(naturalVerificationState)
+                && naturalPackVersion != null
+                && !naturalPackVersion.isEmpty();
+    }
+
+    boolean selectNaturalVoice(String key) {
+        NaturalVoice voice = findNaturalVoice(key);
+        if (voice == null || !naturalPackUsable) return false;
+        selectedBackend = BACKEND_NATURAL;
+        naturalSpeakerKey = voice.key();
+        preferences.edit()
+                .putString(KEY_SELECTED_BACKEND, selectedBackend)
+                .putString(KEY_NATURAL_SPEAKER_KEY, naturalSpeakerKey)
+                .apply();
+        return true;
+    }
+
+    NaturalVoice selectedNaturalVoice() {
+        NaturalVoice voice = findNaturalVoice(naturalSpeakerKey);
+        return voice == null ? NATURAL_VOICES[0] : voice;
+    }
+
+    String naturalPackVersion() {
+        return naturalPackVersion;
+    }
+
+    static NaturalVoice[] naturalVoices() {
+        return NATURAL_VOICES.clone();
+    }
+
+    static NaturalVoice findNaturalVoice(String key) {
+        if (key == null) return null;
+        for (NaturalVoice voice : NATURAL_VOICES) {
+            if (key.equals(voice.key())) return voice;
+        }
+        return null;
+    }
+
+    private static int indexOfNaturalVoice(String key) {
+        for (int i = 0; i < NATURAL_VOICES.length; i++) {
+            if (NATURAL_VOICES[i].key().equals(key)) return i;
+        }
+        return -1;
     }
 
     private void refreshVoices(Locale preferredLocale) {
