@@ -1,0 +1,107 @@
+name: Build BOOP Animation Lab APK
+
+on:
+  push:
+    branches: [ "boop-animation-lab" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boop-animation-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Contract tests
+        run: |
+          python -m pip install pytest
+          python -m pytest -q tests/test_animation_lab_contract.py
+
+      - name: Materialize exact Unified runtime
+        run: |
+          bash scripts/materialize-unified.sh
+          python3 scripts/materialize-animation-lab.py
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: false
+
+      - name: Prepare BOOP signer
+        shell: bash
+        env:
+          BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
+          chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
+          keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
+          echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed lab APK
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+
+      - name: Verify standalone lab package and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
+          "$TOOLS/aapt" dump badging "$APK" > animation-lab-badging.txt
+          grep -Fq "package: name='com.boop.animationlab'" animation-lab-badging.txt
+          grep -Fq "launchable-activity: name='com.boop.alpha1.BoopDevMenuActivity'" animation-lab-badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > animation-lab-manifest.txt
+          ! grep -Fq "BoopNotificationListenerService" animation-lab-manifest.txt
+          ! grep -Fq "BoopVoiceInteractionService" animation-lab-manifest.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > animation-lab-signer.txt
+          sha256sum "$APK" | tee animation-lab-apk-sha256.txt
+          git rev-parse HEAD | tee animation-lab-built-commit.txt
+          unzip -tq "$APK"
+
+      - name: Upload BOOP Animation Lab
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Animation-Lab
+          path: |
+            boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+            animation-lab-apk-sha256.txt
+            animation-lab-built-commit.txt
+            animation-lab-badging.txt
+            animation-lab-manifest.txt
+            animation-lab-signer.txt
+          if-no-files-found: error
+
+      - name: Remove temporary signer
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/boop-dev.jks"
