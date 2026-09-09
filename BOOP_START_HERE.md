@@ -1,6 +1,6 @@
 # BOOP — start here
 
-Updated 2026-09-08. Repository: [ryankemble2006-web/boop](https://github.com/ryankemble2006-web/boop).
+Updated 2026-09-09. Repository: [ryankemble2006-web/boop](https://github.com/ryankemble2006-web/boop).
 
 ## Canonical app branch and explicit standalone exception
 
@@ -22,8 +22,9 @@ One AIO package, `com.boop.alpha1`, contains the established unified bodies:
 
 - Android TV / Leanback / television mode -> existing Shield BOOP body.
 - Pixel 7 Pro -> Wall body.
-- Other handheld Android devices, including Pixel 10 Pro XL -> Launcher body.
-- An internal persistent override exists for recovery/debugging; normal use is automatic.
+- Other non-TV Android devices with `smallestScreenWidthDp >= 600` -> Wall body, including the Xiaomi Pad 7 Pro target.
+- Sub-600dp handheld Android devices, including Pixel 10 Pro XL -> Launcher body.
+- An internal persistent override exists for recovery/debugging; normal use is automatic and the explicit override wins first.
 
 The standalone clean Shield HOME is **not** an internal AIO route at this stage. Current unified `ShieldEntryRoute` keeps Shield HOME and ordinary Shield launches on `com.boop.shieldoverlay.MainActivity`. The standalone package becomes a HOME candidate only when separately installed and explicitly selected through Android's supported HOME chooser.
 
@@ -34,6 +35,8 @@ Initial unified build receipt:
 - GitHub Actions run `34104002238`;
 - artifact `BOOP-Unified`, ID `10011710184`;
 - APK SHA-256 `62ccac0b767fc7005bfeb0eae013f0bad42ad7db7eeeecf054ad42da949f9aba`.
+
+Current V70 Android-tablet-compatible app/test head is `bd878606809302de1b871e6c62d8ce905346e766`; workflow `34395085823` is SUCCESS and artifact `BOOP-Unified` ID `10121327367` is CI/signer green. Physical Xiaomi Pad acceptance remains manual.
 
 CI/signer green is not physical green. Do not mark unified BOOP or the standalone Shield launcher physically accepted until Ryan tests the relevant real device.
 
