@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
     <uses-permission
         android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation" />
@@ -60,5 +62,30 @@
                 <data android:scheme="boop" android:host="shield-pair-return" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".BoopNotificationOnboardingActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
+        <activity
+            android:name=".BoopNotificationSettingsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".BoopNotificationLockActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".BoopNotificationInboxActivity"
+            android:exported="false" />
+
+        <service
+            android:name=".BoopNotificationListenerService"
+            android:exported="false"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>
