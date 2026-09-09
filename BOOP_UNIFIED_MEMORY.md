@@ -2,47 +2,54 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer. Fresh `main` owns shared contracts. Always re-fetch live `boop-unified` and `main` before edits; preserve concurrent work.
 
-## Current canonical candidate: v70 developer lab + notification doods
+## Current canonical candidate: v70 in-place developer-menu hotfix
 
-v70 is versionCode `70`, versionName `1.2.24-unified-dev-menu-doods`. Final production/build commit is `825593a16c004d9c0825720eb014c4f5cc8e58af`. The app implementation landed at `2f4a62150121b299a433674e971de1e058f6330f`; `9c907d3497067eb88ea1308875084b8965413951` corrected only a brittle materialized-router test assertion. The final workflow-only commits make Unified release version bumps trigger the separate Shield HOME routing workflow.
+v70 remains versionCode `70`, versionName `1.2.24-unified-dev-menu-doods`.
 
-v70 extends the internal dev surface from v69 into a real local BOOP test lab:
+Ryan physically confirmed that the earlier activity-hop hotfix at `95224d95a04b6a79a8d8c4e9e5ac4c35cf64ca9a` still forced BOOP to close when he said `dev menu`. Treat that candidate as physically failed for this bug despite its green CI. Preserve only its successful Voice Settings vertical-scroll repair.
 
-- spoken `dev menu` is recognized by `BoopDevMenuIntent` and intercepted in the local speech path before Home Assistant / command-router / chat fallback;
-- no Chat Mode setup, OpenCode/ChatGPT Web or internet dependency is required to open it;
-- `BoopDevMenuActivity` stays `exported=false`;
-- BOOP Dev uses immersive/fullscreen black presentation with large scrollable/remote-friendly controls;
-- animation actions are Wake, Think, Stop, Berry 1, Berry 2, Berry 3, Shake and Sleep, wired to the real current BOOP animation methods;
-- notification demos are Facebook, WhatsApp, Gmail, X/Twitter, YouTube, Messenger, Instagram, Discord, Spotify, Reddit, Locked and Bundle;
-- notification demos are local presentation models only, never real shade posts and never notification-runtime/listener calls;
-- the real `BoopNotificationPuppetView` remains the renderer, using current procedural BOOP eyes and the exact locked five-finger yellow hands;
-- dev-only service identity/icon treatment supplies recognizable app identity without baking the old concept-sheet face/hands into runtime art;
-- Locked preview uses the production privacy-redaction model and exposes no message title/body before authentication;
-- finite animations can be replayed; Think has an explicit Stop/reset path; returning from a dood returns cleanly to BOOP Dev.
+The durable developer-menu entry contract is now:
 
-The ChatGPT Library concept sheet `Glossy Boop App Icon Collection.png` was consulted as service identity/style direction only. The runtime renderer remains authoritative for BOOP's current eyes and hands.
+- exact spoken trigger: `developer menu`;
+- former `dev menu` phrase intentionally does not match;
+- spoken trigger remains local and ahead of Home Assistant / command-router / chat fallback;
+- active spoken/settings route stays inside the existing `MainActivity` and calls `showDeveloperMenu()`;
+- the route must not call `startActivity()` or reference `BoopDevMenuActivity.class`;
+- BOOP Dev is a fullscreen overlay on the existing `interactionSurface`;
+- Voice Settings remains vertically scrollable and its row is labelled `Developer menu`;
+- exiting the overlay returns to BOOP without changing package, permissions, signer or authority.
 
-Final release evidence: main workflow `34322564398` SUCCESS; Shield HOME routing workflow `34322564357` SUCCESS; artifact ID `10092558111`; artifact size `62,739,368` bytes; artifact ZIP SHA-256 `3c68ba78f2fb36bf50d6bbaf0d85a50a8a51dc5d345349b2dc70c32ae45c00e1`; APK SHA-256 `53c2956873e7a7268b829da5d9bd4f23d0f6ee20a0919051cb95bbd275f867a4`; permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Shield focused tests are 58/58 and Unified focused tests are 144/144, zero failures/errors/skips. Shield HOME routing passed.
+The original `BoopDevMenuActivity` remains non-exported and may remain packaged for provenance/compatibility, but it is no longer the current spoken/settings route. Do not restore that activity hop without new physical evidence.
 
-The exact final artifact ZIP was independently downloaded and SHA-256 hashed and matched GitHub's artifact digest. The APK was independently extracted and SHA-256 hashed and matched the CI receipt. The APK v2 signing block was independently parsed; its embedded signer certificate SHA-256 matched both the CI signer receipt and the canonical permanent BOOP signer.
+The in-place developer lab preserves the v70 behavior: Wake, Think, Stop, Berry 1/2/3, Shake, Sleep and local notification previews for Facebook, WhatsApp, Gmail, X/Twitter, YouTube, Messenger, Instagram, Discord, Spotify, Reddit, Locked and Bundle. Previews use the production-style puppet presentation locally, never post Android shade notifications, never call the notification runtime/listener path and never require listener access merely to preview. Locked preview remains privacy-redacted.
 
-Test-first evidence: RED head `4c81770aa869a46352115572c0757ca0f9876847` / workflow `34321173070` failed on the deliberately missing v70 intent/action/identity classes. Implementation `2f4a62150121b299a433674e971de1e058f6330f` / workflow `34321836150` then exposed a test-only mismatch because the approved Chat Mode materializer rewrites the later router boundary to the guarded two-argument form. `9c907d3497067eb88ea1308875084b8965413951` corrected that assertion and workflow `34321947467` went green. Final exact-head workflows `34322564398` and `34322564357` are green.
+Exact CI/signer-green app/test head: `c17e98d9a09471cf8f53f2bee171a77e3b3b1203`.
 
-**GitHub performed NO visual acceptance. Physical v70 acceptance is pending and belongs to Ryan.** No screenshot tests, golden-image tests, pixel comparisons or automated visual judgments were used. No v70 rollback checkpoint was created or repointed.
+Workflow `34385817960` completed SUCCESS. Developer-menu materialization and JUnit phrase contracts passed, as did seamless wake handoff, Launcher preservation/lint, Shield controls, wake/routing/lifecycle/assistant policy, signed APK assembly and package/permanent-signer/archive verification. Shield focused tests: 58/58; Unified focused tests: 144/144; zero failures/errors/skips.
 
-Detailed receipt: `docs/BOOP-V70-DEV-MENU-DOODS-RECEIPT.md`.
+Artifact `BOOP-Unified` ID `10117795236`, size `62,741,119` bytes, artifact ZIP SHA-256 `5f11f925c097b67f1650fcb445918148e633071739b23245c54742d984c20faf`, APK SHA-256 `c45962533574b9a0ef5bd08ad3f785c94668e9ec793ed6377967d7cae5195a20`, permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. The artifact ZIP was independently downloaded and matched GitHub's digest; the extracted APK and signer receipts matched CI.
+
+Detailed receipt: `docs/BOOP-V70-DEVELOPER-MENU-IN-PLACE-HOTFIX-RECEIPT.md`.
+
+**Physical acceptance remains pending and belongs to Ryan.** Next real-device check is exact phrase `developer menu`, Voice Settings -> `Developer menu`, exit/re-enter, and wake/microphone health. No v70 rollback checkpoint exists. Latest physically accepted rollback remains v59.
+
+## Original v70 developer-lab lineage
+
+Original v70 final production/build commit: `825593a16c004d9c0825720eb014c4f5cc8e58af`. Original app implementation: `2f4a62150121b299a433674e971de1e058f6330f`. Materialized-router assertion correction: `9c907d3497067eb88ea1308875084b8965413951`.
+
+The concept sheet `Glossy Boop App Icon Collection.png` was service identity/style direction only. Runtime doods remain authoritative to current procedural BOOP eyes and the exact approved five-finger yellow hands.
 
 ## Durable developer-lab rule
 
 BOOP Dev is an internal testing surface, not a user-facing authority expansion.
 
-- Keep `BoopDevMenuActivity` non-exported.
-- Keep spoken `dev menu` local and ahead of HA/chat fallback.
-- Animation demos should call real current BOOP behaviors rather than duplicate/rebuild them.
+- Keep the current `developer menu` spoken route local and ahead of HA/chat fallback.
+- Keep current spoken/settings entry in-place inside `MainActivity` unless Ryan physically approves a different architecture.
+- Animation demos call real current BOOP behaviors rather than duplicate/rebuild them.
 - Infinite/continuous previews need an explicit stop/reset path; finite ones should be replayable.
-- Notification demos must remain local presentation fixtures. They must never create Android shade notifications, call `NotificationManager`, invoke the notification listener/runtime path, or require listener access merely to preview.
-- Locked demo content must remain privacy-redacted through the production presentation model.
-- Runtime doods must use the current procedural eyes and exact approved five-finger yellow hands. Concept sheets are reference/style direction only.
+- Notification demos remain local presentation fixtures and must never create Android shade notifications, call `NotificationManager`, invoke notification listener/runtime paths or require listener access merely to preview.
+- Locked demo content remains privacy-redacted through the production presentation model.
+- Runtime doods use current procedural eyes and exact approved five-finger yellow hands. Concept sheets are reference/style direction only.
 - The dev screen does not grant permissions, install anything, change package identity or alter the permanent signer.
 
 ## Durable finished-eye and hue rules
@@ -55,9 +62,9 @@ Ryan confirmed the v65 procedural-eye pass as the finished default-eye state whe
 
 The approved black-lidded PNG remains the source for eye bodies/lids and must not be regenerated. The active renderer draws exactly one procedural iris/pupil/catchlight set per eye. Never restore a shifted PNG iris patch or stack a moving iris over a stationary iris.
 
-Durable materialization guard from v68: after the procedural-eye stages run, **no later patch may rerun the legacy bitmap hue-cache setter**. In particular, `scripts/patch-unified-shield-dashboard.py` must never invoke `scripts/patch-unified-iris-cache.py` after procedural eyes are installed. Shield dashboard wiring and Wall hue rendering are separate concerns.
+After the procedural-eye stages run, no later patch may rerun the legacy bitmap hue-cache setter. In particular, `scripts/patch-unified-shield-dashboard.py` must never invoke `scripts/patch-unified-iris-cache.py` after procedural eyes are installed.
 
-The user eye-colour control drives `proceduralIrisHueDegrees`; `irisColour()` consumes that hue. Default remains BOOP cyan/blue at 190 degrees. User-selected hue affects the procedural iris only. Sclera/whites, pupils, catchlights, black eyelids/accents and the rest of the approved artwork must not be tinted. Do not reintroduce whole-bitmap `ColorFilter` tinting or bitmap-wide recolouring for the active procedural renderer. Preserve the existing voice/slider UX and stored hue behavior unless Ryan asks to redesign it.
+The user eye-colour control drives `proceduralIrisHueDegrees`; `irisColour()` consumes that hue. Default remains BOOP cyan/blue at 190 degrees. User-selected hue affects the procedural iris only. Sclera/whites, pupils, catchlights, black eyelids/accents and the rest of the approved artwork must not be tinted. Preserve the existing voice/slider UX and stored hue behavior unless Ryan asks to redesign it.
 
 `checkpoint-boop-unified-v65-procedural-eyes` remains protected/reference eye provenance. Never repoint it.
 
@@ -65,7 +72,7 @@ The user eye-colour control drives `proceduralIrisHueDegrees`; `irisColour()` co
 
 Ryan explicitly instructed that GitHub must not judge BOOP visuals. Keep CI to non-visual contracts, compilation/lint, functional tests, package/signature/integrity and security checks. Do not add screenshot comparisons, golden-image checks, visual diffing, pixel/geometry appearance assertions or animation judging. Exact locked-binary/hash identity checks are allowed because they verify source identity rather than appearance.
 
-Physical appearance of v70 remains Ryan's acceptance gate, including fullscreen presentation, animation motion, app-specific dood identity, current eyes/hands, the carried v68 hue behavior and finished v65 sclera/white blend.
+Physical appearance, animation, device and acoustic acceptance remain Ryan's gate.
 
 ## Durable notification contract
 
@@ -82,7 +89,7 @@ Android's original notification is authoritative. BOOP is a puppet mirror around
 - BOOP sound/vibration is allowed only when coordinator `playCue=true` and the native Android channel is known silent for both sound and vibration. Unknown/noisy channels stay visual-only to prevent double alerts.
 - Preserve overlay/screen-on/vibrate authority while rejecting full-screen-intent, query-all, accessibility-service and device-admin authority.
 
-The exact approved notification hands binary is locked: path `unified/assets/boop-notifications/boop-yellow-hands-approved.png`, size `1,809,990` bytes, SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`, Git blob `d47037271bf320f4f110e3f8416f59882062afac`. Do not regenerate, recompress, recolor/recolour, crop or weaken the hash guard.
+Exact approved notification hands binary: `unified/assets/boop-notifications/boop-yellow-hands-approved.png`, size `1,809,990` bytes, SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`, Git blob `d47037271bf320f4f110e3f8416f59882062afac`. Do not regenerate, recompress, recolor/recolour, crop or weaken the hash guard.
 
 ## Durable wake architecture
 
@@ -104,7 +111,7 @@ Protected rollback checkpoints:
 - `checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`;
 - `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`.
 
-Never repoint them. Latest physically accepted rollback remains v59. No v70 rollback checkpoint exists.
+Never repoint them. Latest physically accepted rollback remains v59.
 
 ## Durable uncensored-speech rule from v59
 
@@ -114,7 +121,7 @@ Both ordinary tap-to-talk and post-wake command recognition request `RecognizerI
 
 The clean Nvidia Shield HOME replacement remains standalone on `boop-shield-clean-launcher`, package `com.boop.shieldhome`. Do not merge it into Unified until Ryan explicitly approves later.
 
-The Unified CI contract now also runs the separate Shield HOME routing workflow whenever `unified/app-build.gradle` changes, so release version bumps cannot silently skip that gate.
+The Unified CI contract also runs the separate Shield HOME routing workflow whenever `unified/app-build.gradle` changes, so release version bumps cannot silently skip that gate.
 
 ## Permanent Home and assistant contracts
 
