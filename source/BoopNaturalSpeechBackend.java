@@ -4,7 +4,6 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.media.PlaybackParams;
 
 import com.k2fsa.sherpa.onnx.GeneratedAudio;
 import com.k2fsa.sherpa.onnx.GenerationConfig;
@@ -20,6 +19,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
     private static final float SILENCE_SCALE = 0.2f;
+
+    static final class NaturalSpeechException extends RuntimeException {
+        private final String stage;
+
+        NaturalSpeechException(String stage, Throwable cause) {
+            super("Natural voice " + stage + " failed", cause);
+            this.stage = stage;
+        }
+
+        String stage() {
+            return stage;
+        }
+    }
 
     private static final class RequestState {
         final Callback callback;
@@ -77,7 +89,6 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
                     request,
                     text,
                     speakerId,
-                    pitchForPlayback(pitch),
                     speedForRate(rate)));
             return true;
         } catch (RuntimeException rejected) {
@@ -122,16 +133,27 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         return BoopVoiceTuning.clampRate(rate);
     }
 
+    // Retained for source/API compatibility with existing focused tests. Natural
+    // pitch is not applied until the Android playback path is physically proven.
     static float pitchForPlayback(float pitch) {
         return BoopVoiceTuning.clampPitch(pitch);
+    }
+
+    static short[] toPcm16(float[] samples) {
+        short[] pcm = new short[samples.length];
+        for (int i = 0; i < samples.length; i++) {
+            float clipped = Math.max(-1.0f, Math.min(1.0f, samples[i]));
+            pcm[i] = (short) Math.round(clipped * 32767.0f);
+        }
+        return pcm;
     }
 
     private void synthesizeAndPlay(
             RequestState request,
             String text,
             int speakerId,
-            float pitch,
             float speed) {
+        GeneratedAudio audio;
         try {
             OfflineTts tts = ensureTts();
             if (request.cancelled.get()) return;
@@ -143,16 +165,25 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             // Sherpa-ONNX 1.13.7's Android callback JNI bridge can abort the
             // process. Generate without that callback and honor cancellation
             // immediately after synthesis instead.
-            GeneratedAudio audio = tts.generateWithConfig(text, generation);
+            audio = tts.generateWithConfig(text, generation);
             if (request.cancelled.get()) return;
             if (audio == null || audio.getSamples() == null || audio.getSamples().length == 0) {
                 throw new IllegalStateException("Natural speech produced no audio");
             }
-            play(request, audio.getSamples(), audio.getSampleRate(), pitch);
         } catch (Throwable error) {
             if (!request.cancelled.get()) {
                 clearIfActive(request);
-                request.error(error);
+                request.error(new NaturalSpeechException("synthesis", error));
+            }
+            return;
+        }
+
+        try {
+            play(request, audio.getSamples(), audio.getSampleRate());
+        } catch (Throwable error) {
+            if (!request.cancelled.get()) {
+                clearIfActive(request);
+                request.error(new NaturalSpeechException("playback", error));
             }
         }
     }
@@ -190,20 +221,21 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         }
     }
 
-    private void play(RequestState request, float[] samples, int sampleRate, float pitch)
+    private void play(RequestState request, float[] samples, int sampleRate)
             throws InterruptedException {
+        short[] pcm = toPcm16(samples);
         int minimumBytes = AudioTrack.getMinBufferSize(
                 sampleRate,
                 AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_FLOAT);
-        int bufferBytes = Math.max(samples.length * 4, Math.max(4096, minimumBytes));
+                AudioFormat.ENCODING_PCM_16BIT);
+        int bufferBytes = Math.max(pcm.length * 2, Math.max(4096, minimumBytes));
         AudioTrack track = new AudioTrack.Builder()
                 .setAudioAttributes(new AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build())
                 .setAudioFormat(new AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                         .setSampleRate(sampleRate)
                         .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                         .build())
@@ -224,20 +256,15 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             activeTrack = track;
         }
 
-        int written = track.write(samples, 0, samples.length, AudioTrack.WRITE_BLOCKING);
-        if (written != samples.length) {
+        int written = track.write(pcm, 0, pcm.length, AudioTrack.WRITE_BLOCKING);
+        if (written != pcm.length) {
             throw new IllegalStateException("Natural speech audio output was incomplete");
         }
-        PlaybackParams playback = new PlaybackParams()
-                .allowDefaults()
-                .setPitch(pitch)
-                .setSpeed(1.0f);
-        track.setPlaybackParams(playback);
         track.play();
 
         while (!request.cancelled.get()
                 && track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING
-                && Integer.toUnsignedLong(track.getPlaybackHeadPosition()) < samples.length) {
+                && Integer.toUnsignedLong(track.getPlaybackHeadPosition()) < pcm.length) {
             Thread.sleep(20L);
         }
         if (!request.cancelled.get()) {
