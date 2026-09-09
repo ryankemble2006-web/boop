@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Turn the already-materialized BOOP Unified v70 tree into a standalone test APK.
-
-This runs only after scripts/materialize-unified.sh. It deliberately reuses the
-finished BOOP face, animation and notification-preview implementation, then gives
-that generated app a separate package and one launcher activity: BOOP Animation Lab.
-"""
+"""Turn the already-materialized BOOP Unified v70 tree into a standalone test APK."""
 from pathlib import Path
 
 ROOT = Path("boop-build/BOOP-Alpha1")
@@ -17,18 +12,8 @@ ACTIVITY = JAVA / "BoopDevMenuActivity.java"
 FACE = JAVA / "BoopFaceView.java"
 
 EXPECTED_DOODS = (
-    "Facebook",
-    "WhatsApp",
-    "Gmail",
-    "X / Twitter",
-    "YouTube",
-    "Messenger",
-    "Instagram",
-    "Discord",
-    "Spotify",
-    "Reddit",
-    "Locked",
-    "Bundle",
+    "Facebook", "WhatsApp", "Gmail", "X / Twitter", "YouTube", "Messenger",
+    "Instagram", "Discord", "Spotify", "Reddit", "Locked", "Bundle",
 )
 
 
@@ -41,30 +26,15 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 def patch_build() -> None:
     text = BUILD.read_text(encoding="utf-8")
-    text = replace_once(
-        text,
-        "applicationId 'com.boop.alpha1'",
-        "applicationId 'com.boop.animationlab'",
-        "animation lab application id",
-    )
-    text = replace_once(text, "versionCode 70", "versionCode 1", "animation lab version code")
-    text = replace_once(
-        text,
-        'versionName "1.2.24-unified-dev-menu-doods"',
-        'versionName "0.1-animation-lab-v70"',
-        "animation lab version name",
-    )
-
-    # The standalone lab needs the Wall classes/resources only. Dropping the two
-    # embedded app libraries also prevents their Android components being merged.
+    text = replace_once(text, "applicationId 'com.boop.alpha1'", "applicationId 'com.boop.animationlab'", "application id")
+    text = replace_once(text, "versionCode 70", "versionCode 2", "version code")
+    text = replace_once(text, 'versionName "1.2.24-unified-dev-menu-doods"', 'versionName "0.2-animation-lab-pixel-launch"', "version name")
     text = text.replace("    implementation project(':launcher-lib')\n", "")
     text = text.replace("    implementation project(':shield-lib')\n", "")
     BUILD.write_text(text, encoding="utf-8")
 
 
 def remove_unneeded_unified_entries() -> None:
-    # These files only route the full AIO package and are not declared by the lab.
-    # One also deliberately depends on the Shield library, which the lab excludes.
     for name in ("UnifiedApplication.java", "UnifiedEntryActivity.java"):
         path = JAVA / name
         if path.exists():
@@ -74,7 +44,8 @@ def remove_unneeded_unified_entries() -> None:
 def patch_manifest() -> None:
     MANIFEST.write_text(
         '''<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application
         android:allowBackup="false"
         android:icon="@drawable/boop_eyes"
@@ -91,25 +62,24 @@ def patch_manifest() -> None:
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove" />
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            tools:node="remove" />
     </application>
 </manifest>
-''',
-        encoding="utf-8",
-    )
+''', encoding="utf-8")
 
 
 def patch_model() -> None:
     text = MODEL.read_text(encoding="utf-8")
     for dood in EXPECTED_DOODS:
         if f'new Item("{dood}"' not in text:
-            raise SystemExit(f"animation lab: v70 dood missing before materialization: {dood}")
-
-    text = replace_once(
-        text,
-        "        WAKE,\n        THINK,",
-        "        WAKE,\n        IDLE_BLINK,\n        LISTENING,\n        THINK,",
-        "animation action enum",
-    )
+            raise SystemExit(f"v70 dood missing: {dood}")
+    text = replace_once(text, "        WAKE,\n        THINK,", "        WAKE,\n        IDLE_BLINK,\n        LISTENING,\n        THINK,", "action enum")
     text = replace_once(
         text,
         '                    new Item("Wake", Action.WAKE),\n                    new Item("Think", Action.THINK),',
@@ -117,19 +87,17 @@ def patch_model() -> None:
         '                    new Item("Idle Blink", Action.IDLE_BLINK),\n'
         '                    new Item("Listening / Reading", Action.LISTENING),\n'
         '                    new Item("Think", Action.THINK),',
-        "animation shelf items",
+        "animation shelf",
     )
     MODEL.write_text(text, encoding="utf-8")
 
 
 def patch_face() -> None:
     text = FACE.read_text(encoding="utf-8")
-    if "BOOP_ANIMATION_LAB_SINGLE_BLINK_V1" in text:
-        return
-    if "void startListeningCue()" not in text or "BoopIdleBlink.DURATION_MS" not in text:
-        raise SystemExit("animation lab requires the finished Unified listening/blink face")
-
-    method = '''    // BOOP_ANIMATION_LAB_SINGLE_BLINK_V1: explicit one-shot access to the real blink geometry.
+    if "BOOP_ANIMATION_LAB_SINGLE_BLINK_V1" not in text:
+        if "void startListeningCue()" not in text or "BoopIdleBlink.DURATION_MS" not in text:
+            raise SystemExit("finished Unified listening/blink face missing")
+        method = '''    // BOOP_ANIMATION_LAB_SINGLE_BLINK_V1
     void playSingleIdleBlink() {
         stopListeningCue();
         stopThinking();
@@ -157,26 +125,16 @@ def patch_face() -> None:
     }
 
 '''
-    text = replace_once(
-        text,
-        "    void showIdleBlackImmediately() {\n",
-        method + "    void showIdleBlackImmediately() {\n",
-        "single idle blink insertion",
-    )
+        text = replace_once(text, "    void showIdleBlackImmediately() {\n", method + "    void showIdleBlackImmediately() {\n", "single blink")
     FACE.write_text(text, encoding="utf-8")
 
 
 def patch_activity() -> None:
     text = ACTIVITY.read_text(encoding="utf-8")
-    text = replace_once(text, 'title.setText("BOOP Dev Lab");', 'title.setText("BOOP Animation Lab");', "lab title")
-    text = replace_once(
-        text,
-        'subtitle.setText("Local previews only • no Android shade posts");',
-        'subtitle.setText("Real v70 animations + notification doods • local only");',
-        "lab subtitle",
-    )
+    text = replace_once(text, 'title.setText("BOOP Dev Lab");', 'title.setText("BOOP Animation Lab");', "title")
+    text = replace_once(text, 'subtitle.setText("Local previews only • no Android shade posts");', 'subtitle.setText("Real v70 animations + notification doods • local only");', "subtitle")
 
-    wake_block = '''            case WAKE:
+    wake = '''            case WAKE:
                 cancelActiveAnimation();
                 if (face != null) {
                     face.showIdleBlackImmediately();
@@ -184,14 +142,12 @@ def patch_activity() -> None:
                 }
                 return;
 '''
-    expanded = wake_block + '''            case IDLE_BLINK: {
+    expanded = wake + '''            case IDLE_BLINK: {
                 cancelActiveAnimation();
                 BoopFaceView activeFace = face;
                 if (activeFace != null) {
                     activeFace.wakeFromIdle();
-                    activeFace.postDelayed(() -> {
-                        if (face == activeFace) activeFace.playSingleIdleBlink();
-                    }, 430L);
+                    activeFace.postDelayed(() -> { if (face == activeFace) activeFace.playSingleIdleBlink(); }, 430L);
                 }
                 return;
             }
@@ -200,43 +156,69 @@ def patch_activity() -> None:
                 BoopFaceView activeFace = face;
                 if (activeFace != null) {
                     activeFace.wakeFromIdle();
-                    activeFace.postDelayed(() -> {
-                        if (face == activeFace) activeFace.startListeningCue();
-                    }, 430L);
+                    activeFace.postDelayed(() -> { if (face == activeFace) activeFace.startListeningCue(); }, 430L);
                 }
                 return;
             }
 '''
-    text = replace_once(text, wake_block, expanded, "animation lab dispatch")
-
-    text = replace_once(
-        text,
-        '''            case STOP:
+    text = replace_once(text, wake, expanded, "dispatch")
+    text = replace_once(text, '''            case STOP:
                 cancelActiveAnimation();
                 return;
-''',
-        '''            case STOP:
+''', '''            case STOP:
                 cancelActiveAnimation();
                 if (face != null) face.wakeFromIdle();
                 return;
-''',
-        "stop reset action",
-    )
-    text = replace_once(
-        text,
-        '''    private void cancelActiveAnimation() {
+''', "stop")
+    text = replace_once(text, '''    private void cancelActiveAnimation() {
         if (face != null) face.stopThinking();
     }
-''',
-        '''    private void cancelActiveAnimation() {
+''', '''    private void cancelActiveAnimation() {
         if (face != null) {
             face.stopListeningCue();
             face.stopThinking();
         }
     }
-''',
-        "lab animation cancellation",
-    )
+''', "cancel")
+
+    # BOOP_ANIMATION_LAB_LAUNCH_GUARD_V2: Pixel/Android 16 launch must never die silently.
+    old_create = '''    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        applyImmersiveUi();
+        root = new FrameLayout(this);
+        root.setBackgroundColor(Color.BLACK);
+        setContentView(root);
+        showMenu();
+    }
+'''
+    new_create = '''    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        root = new FrameLayout(this);
+        root.setBackgroundColor(Color.BLACK);
+        try {
+            applyImmersiveUi();
+            setContentView(root);
+            showMenu();
+        } catch (Throwable launchFailure) {
+            android.util.Log.e("BOOP-Animation-Lab", "BOOP_ANIMATION_LAB_LAUNCH_GUARD_V2", launchFailure);
+            root.removeAllViews();
+            TextView failure = new TextView(this);
+            failure.setTextColor(Color.WHITE);
+            failure.setTextSize(18f);
+            failure.setPadding(dp(24), dp(24), dp(24), dp(24));
+            failure.setText("BOOP Animation Lab launch fault\\n\\n"
+                    + launchFailure.getClass().getSimpleName() + ": "
+                    + String.valueOf(launchFailure.getMessage()));
+            root.addView(failure, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+            setContentView(root);
+        }
+    }
+'''
+    text = replace_once(text, old_create, new_create, "Pixel launch guard")
     ACTIVITY.write_text(text, encoding="utf-8")
 
 
@@ -246,18 +228,13 @@ def validate() -> None:
     model = MODEL.read_text(encoding="utf-8")
     activity = ACTIVITY.read_text(encoding="utf-8")
     face = FACE.read_text(encoding="utf-8")
-
-    required = (
-        ("com.boop.animationlab", build),
-        ("BOOP Animation Lab", manifest),
-        ("IDLE_BLINK", model),
-        ("LISTENING", model),
-        ("playSingleIdleBlink", face),
-        ("startListeningCue", activity),
-        ("BoopDevMenuActivity", manifest),
-    )
-    for token, text in required:
-        if token not in text:
+    for token, body in (
+        ("com.boop.animationlab", build), ("BOOP Animation Lab", manifest),
+        ("IDLE_BLINK", model), ("LISTENING", model), ("playSingleIdleBlink", face),
+        ("startListeningCue", activity), ("BOOP_ANIMATION_LAB_LAUNCH_GUARD_V2", activity),
+        ("androidx.startup.InitializationProvider", manifest), ("tools:node=\"remove\"", manifest),
+    ):
+        if token not in body:
             raise SystemExit(f"animation lab validation missing {token}")
     for dood in EXPECTED_DOODS:
         if f'new Item("{dood}"' not in model:
@@ -272,4 +249,4 @@ if __name__ == "__main__":
     patch_face()
     patch_activity()
     validate()
-    print("BOOP Animation Lab materialized from the finished Unified v70 runtime")
+    print("BOOP Animation Lab v0.2 materialized with Pixel launch guard")
