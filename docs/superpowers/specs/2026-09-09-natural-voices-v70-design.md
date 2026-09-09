@@ -16,10 +16,10 @@ Add the previously selected BOOP natural voice pack as an optional local/offline
 
 The user-facing voice set is exactly four British English voices:
 
-- Female: `bf_emma`
-- Female: `bf_isabella`
-- Male: `bm_george`
-- Male: `bm_fable`
+- Female: Emma — `bf_emma`
+- Female: Isabella — `bf_isabella`
+- Male: George — `bm_george`
+- Male: Fable — `bm_fable`
 
 These are existing Kokoro speaker identities. The app does not rename their gender or accent heuristically.
 
@@ -38,10 +38,10 @@ Before the pack is installed:
 
 After the pack is installed:
 
-- show the four fixed voice choices by friendly name and gender: Emma, Isabella, George, Fable;
+- show the four fixed voice choices: Emma, Isabella, George, Fable;
 - tapping a voice selects it and BOOP remembers the choice;
 - provide a short preview action for each voice using BOOP's own speech pipeline;
-- existing pitch/rate controls continue to affect BOOP speech. Where the natural engine's speed control differs from Android TTS, map the existing speech-rate value into the supported natural-speed range rather than adding a second speed control;
+- existing pitch/rate controls continue to affect BOOP speech. Where Kokoro's speed control differs from Android TTS, map the existing speech-rate value into the supported natural-speed range rather than adding a second speed control;
 - the existing spoken `change voice` behavior cycles through the four natural voices when the natural pack is active;
 - if the pack is absent or unusable, `change voice` continues to use the current Android offline voice behavior.
 
@@ -51,24 +51,37 @@ There is no API key, account, subscription, cloud synthesis, browser download, o
 
 Use Sherpa-ONNX's offline Kokoro support because v70 already carries Sherpa-ONNX for the wake system, avoiding a second native inference stack.
 
-Use an English Kokoro package compatible with the Sherpa-ONNX version already materialized by v70. The pack must contain the required Kokoro model, voices data, tokens and espeak-ng data. Only the four approved British speakers are exposed in BOOP UI even if the underlying pack contains additional speaker IDs.
+Pin the upstream Sherpa-ONNX pack:
+
+`https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_0.tar.bz2`
+
+This is the pack previously discussed: approximately 310 MB `model.onnx` plus approximately 26 MB `voices.bin`, with supporting tokens, lexicons and espeak-ng data. It contains the four required British speakers.
+
+Required speaker IDs for this pack:
+
+- `bf_emma` -> 21
+- `bf_isabella` -> 22
+- `bm_fable` -> 25
+- `bm_george` -> 26
+
+Only those four approved British speakers are exposed in BOOP UI even though the underlying pack contains additional speakers/languages.
 
 The app stores the pack in app-private storage. Model payloads are not committed to this public repository or bundled into the APK.
 
 A small checked-in manifest defines:
 
-- model-pack version;
-- download URL(s) from the upstream project release;
-- expected archive SHA-256;
+- model-pack version `kokoro-multi-lang-v1_0`;
+- the pinned public upstream download URL;
+- expected archive SHA-256, captured from the exact release artifact before implementation is declared green;
 - expected extracted required files;
-- speaker ID mapping for `bf_emma`, `bf_isabella`, `bm_fable`, `bm_george`;
+- the four speaker ID mappings above;
 - minimum free-space requirement.
 
 The runtime must verify the archive checksum before activation, extract into a temporary app-private directory, validate the expected files, then atomically promote that directory to the active pack. A partial or mismatched pack is deleted or quarantined and never selected for speech.
 
 ## Runtime architecture
 
-Keep `BoopVoiceController` as the product-level voice owner. Split synthesis behind a small internal interface so the rest of MainActivity does not learn about model files.
+Keep `BoopVoiceController` as the product-level voice owner. Split synthesis behind a small internal interface so the rest of `MainActivity` does not learn about model files.
 
 Two backends:
 
@@ -130,7 +143,7 @@ No failure is allowed to wedge BOOP's wake state or leave `onTtsStarting()` unma
 The repository is public.
 
 - Do not commit model binaries, downloaded archives, private URLs, tokens, signing material or device paths.
-- Upstream voice pack URLs must be public release URLs.
+- Upstream voice pack URL is the public Sherpa-ONNX release URL pinned above.
 - Hashes and speaker mappings are safe to commit.
 - Extraction must reject absolute paths and `..` traversal.
 - Model files stay under app-private storage.
@@ -141,7 +154,8 @@ Use TDD.
 
 Non-visual contract/unit tests should cover:
 
-- exact four approved voice IDs and labels;
+- exact four approved voice IDs, labels and speaker IDs;
+- exact pinned pack identity/URL;
 - natural pack absent -> Android fallback;
 - selected natural voice persistence;
 - `change voice` cycles exactly the four natural voices when active;
@@ -172,7 +186,7 @@ After CI/signer-green APK exists, Ryan checks on the phone:
 7. ordinary local replies and chat replies use the selected natural voice;
 8. wake -> command -> reply -> wake re-arm still behaves normally;
 9. pitch/rate controls remain useful;
-10. disabling/removing access to the natural pack or forcing a synthesis failure leaves Android TTS usable.
+10. forcing a natural synthesis/load failure leaves Android TTS usable.
 
 CI/signer green is not physical/acoustic green. Do not create or repoint an accepted rollback checkpoint until Ryan explicitly accepts the build.
 
@@ -183,7 +197,7 @@ CI/signer green is not physical/acoustic green. Do not create or repoint an acce
 - voice cloning;
 - user-imported models;
 - arbitrary voice marketplace/catalogue;
-- extra languages;
+- extra languages exposed in UI;
 - automatic model updates;
 - background downloads without a user press;
 - redesigning BOOP eyes, animations, notification doods, launcher, Shield HOME, HA behavior or wake-word recognition.
