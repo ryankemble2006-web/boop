@@ -32,3 +32,8 @@ def test_all_notification_surfaces_share_one_puppet_view():
     assert "R.drawable.boop_notification_hands" in puppet
     for surface in SURFACES:
         assert "BoopNotificationPuppetView" in surface.read_text(encoding="utf-8")
+
+
+def test_shared_puppet_declares_emphasized_hands_raised_banner_pose():
+    puppet = PUPPET.read_text(encoding="utf-8")
+    assert "BOOP_NOTIFICATION_PUPPET_EMPHASIZED_POSE_V1" in puppet
