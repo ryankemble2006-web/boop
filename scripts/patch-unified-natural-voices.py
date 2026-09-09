@@ -53,7 +53,11 @@ text = replace_once(
             naturalVoiceManifest = BoopNaturalVoiceManifest.load(this);
             naturalVoicePack = new BoopNaturalVoicePack(this, naturalVoiceManifest);
             boolean naturalPackReady = naturalVoicePack.isInstalled();
-            voiceController.setNaturalPackUsable(naturalPackReady);
+            if (naturalPackReady) {
+                voiceController.onNaturalPackVerified(naturalVoiceManifest.version());
+            } else {
+                voiceController.setNaturalPackUsable(false);
+            }
             naturalSpeechBackend = new BoopNaturalSpeechBackend(naturalVoicePack);
             naturalVoiceDownloader = new BoopNaturalVoiceDownloader(
                     new okhttp3.OkHttpClient.Builder().build(),
