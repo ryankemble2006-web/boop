@@ -62,6 +62,15 @@ def patch_build() -> None:
     BUILD.write_text(text, encoding="utf-8")
 
 
+def remove_unneeded_unified_entries() -> None:
+    # These files only route the full AIO package and are not declared by the lab.
+    # One also deliberately depends on the Shield library, which the lab excludes.
+    for name in ("UnifiedApplication.java", "UnifiedEntryActivity.java"):
+        path = JAVA / name
+        if path.exists():
+            path.unlink()
+
+
 def patch_manifest() -> None:
     MANIFEST.write_text(
         '''<?xml version="1.0" encoding="utf-8"?>
@@ -257,6 +266,7 @@ def validate() -> None:
 
 if __name__ == "__main__":
     patch_build()
+    remove_unneeded_unified_entries()
     patch_manifest()
     patch_model()
     patch_face()
