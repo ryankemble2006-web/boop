@@ -4,6 +4,16 @@ from pathlib import Path
 MAIN = Path(
     "boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java"
 )
+MATERIALIZER = Path("scripts/materialize-unified.sh")
+
+
+def test_v70_scroll_repair_runs_before_later_unified_settings_patches() -> None:
+    source = MATERIALIZER.read_text(encoding="utf-8")
+    scroll = source.index("patch-unified-v70-regressions.py")
+    notifications = source.index("patch-unified-notifications.py")
+    dev_menu = source.index("patch-unified-dev-menu.py")
+
+    assert scroll < notifications < dev_menu
 
 
 def test_spoken_dev_menu_is_materialized_before_ha_and_chat_routing() -> None:
