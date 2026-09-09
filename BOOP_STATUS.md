@@ -2,79 +2,64 @@
 
 Updated 2026-09-09. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current signed candidate: v67 finished eyes + repaired hue
+## Current signed candidate: v68 hue wire fix
+
+Ryan physically reported that v67's hue control did not work. Root cause was a late legacy bitmap hue-cache patch being rerun from `scripts/patch-unified-shield-dashboard.py` after the procedural-eye stack had already installed its own hue setter.
+
+v68 removes that late overwrite only. The finished v65 eye geometry/sclera stack is unchanged.
 
 Built source:
 
-`63bb80283af7424bc1012fe71444552d8b942a74`
-
-Production eye transplant:
-
-`c35b57a44ec0e7fb8f06cb49a4f0ab10915dbf5d`
+`91e562754be31745a5ee76538ebef50e6c6a9b2d`
 
 Release evidence:
 
-- version 67 / `1.2.21-unified-finished-eyes-hue`;
-- workflow `34312779359` SUCCESS;
-- separate Shield HOME routing workflow `34312684627` SUCCESS on the production code;
-- artifact `BOOP-Unified`, ID `10089043590`;
-- artifact digest `sha256:c0a291a324b0e96a81c4726ad187efa5f65f0ba63dc41d428d7aaae1bc001000`;
-- APK SHA-256 `13c51f8a56e109a9dc57bc37cba3175ce5290b210f65b2692ce575d76194b55b`;
+- version 68 / `1.2.22-unified-hue-wire-fix`;
+- workflow `34314023763` SUCCESS;
+- artifact `BOOP-Unified`, ID `10089480166`;
+- artifact digest `sha256:f1b546f52800260a878940db0b8f074b1a8a07fec9df4370b2843acfc59c1699`;
+- APK SHA-256 `571f0a501e5a3df921fc1e521ae235810860df3f493c223af491f974cd30e352`;
 - permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
-- non-visual integration contracts 12/12;
 - Shield focused tests 58/58, zero failures/errors/skips;
 - Unified focused tests 136/136, zero failures/errors/skips;
 - notification presenter/manifest, wake handoff, Launcher preservation, signed assembly, package/version/signer/integrity and artifact upload all PASS.
 
-Detailed receipt: `docs/BOOP-V67-FINISHED-EYES-HUE-RECEIPT.md`.
+Regression workflow `34313965830` failed before the production fix exactly because the late Shield dashboard pass still referenced the old hue-cache patch.
 
-## Eye state now canonical
+Detailed receipt: `docs/BOOP-V68-HUE-WIRE-FIX-RECEIPT.md`.
 
-v67 surgically brings the finished v65 procedural eye stack into the current notification lineage:
+## Acceptance boundary
 
-- procedural Canvas iris/pupil/catchlight renderer;
-- v64 widened neutral sclera cleanup across the complete reading-motion envelope;
-- v65 feathering into the approved original grey sclera shading;
-- colour changer repaired to drive `proceduralIrisHueDegrees` directly;
-- user hue remains iris-only and must not tint sclera, pupil, highlights, lids or other eye artwork;
-- no shifted PNG iris patch is stacked over a stationary iris.
+**No visual acceptance was performed by GitHub.** v68 is CI/signer green only.
 
-The v63 notification behavior and exact notification-hands hash contract remain preserved.
+Immediate physical check: move the existing eye hue slider across obvious colours and confirm the procedural iris updates live while sclera, pupils, catchlights and black lids remain unchanged. Confirm the finished v65 sclera/white blend is unchanged.
 
-## Visual/device acceptance
+Do not create or repoint a v68 rollback checkpoint until Ryan explicitly accepts this exact signed APK.
 
-**No visual acceptance was performed by GitHub.** No screenshot, golden-image, appearance/layout/animation comparison or pixel-judging CI was added or run. Ryan owns the real-device judgment.
+## Durable eye ordering
 
-CI/signer green. Physical acceptance of v67 is pending. Required physical checks include the finished v65 sclera/whites appearance, live iris-only colour changes, default cyan, reading motion with no ghost/socket crescent, blink, notification presentation, and existing wake/Home behavior.
+The canonical procedural eye stages remain:
 
-Do not create or repoint a v67 rollback checkpoint until Ryan explicitly accepts this exact signed build.
+1. `patch-unified-reading-eyes.py`;
+2. `patch-v64-procedural-sclera.py`;
+3. `patch-v65-feathered-sclera.py`.
 
-## Preserved notification contract
+No later materialization stage may rerun the legacy bitmap hue setter after those stages. The Shield dashboard pass must remain unrelated to Wall iris tinting.
 
-Android's original notification remains authoritative. Locked BOOP presentation remains privacy-safe; tap preserves the source `PendingIntent`; swipe/timeout must not destructively cancel the shade notification; duplicate-alert prevention remains in force.
+## Preserved contracts
 
-Exact approved notification hands remain:
+Android's original notification remains authoritative; BOOP mirrors it. Locked notification presentation stays privacy-safe. Exact notification hands remain locked. Preserve procedural iris-only hue, finished sclera feathering, approved black-lidded eye master, blink, notifications, headphones/puppetry, one microphone owner, wake/name architecture, exact 100 ms bridge, uncensored speech request, HA names/Home controls, room isolation and Shield scaling.
 
-- 1,809,990 bytes;
-- SHA-256 `26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1`;
-- Git blob `d47037271bf320f4f110e3f8416f59882062afac`.
+The clean Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a later merge. No automatic installs/grants or signer/package changes.
 
 ## Physically accepted rollback
 
-v59 remains the latest exact physically accepted rollback for the functional wake/name path:
+Latest exact physically accepted rollback remains v59:
 
 `checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`
 
-v58 natural-wake rollback remains:
-
-`checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`
+v58 natural-wake rollback remains `checkpoint-boop-unified-v58-natural-boop-wake` -> `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`.
 
 Older wake-arm rollback remains `checkpoint-boop-unified-v48-wake-arm` -> `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`.
 
-`checkpoint-boop-unified-v65-procedural-eyes` remains protected/reference eye provenance. Never repoint protected/accepted checkpoints.
-
-## Protected AIO state
-
-Preserve approved black-lidded eye master, procedural iris-only hue, feathered sclera cleanup, blink, notifications, headphones/puppetry, one microphone owner, wake/name architecture, exact 100 ms bridge, uncensored speech request, HA names/Home controls, room isolation and Shield scaling.
-
-The clean Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a later merge. Ryan owns visual/device/acoustic acceptance. No automatic installs/grants or signer/package changes.
+`checkpoint-boop-unified-v65-procedural-eyes` remains protected eye provenance. Never repoint protected/accepted checkpoints.
