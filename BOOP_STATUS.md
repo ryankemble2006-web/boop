@@ -1,3 +1,16 @@
+## v105 installed: Shield assistant role assigned successfully
+
+Ryan approved exact v105 installation and assignment. APK hash verified, install
+succeeded and version105 confirmed. Before role change, live package queries
+showed no VoiceInteractionService and one DEFAULT ASSIST BoopAssistantActivity.
+Role assignment succeeded without the v104 system restart. Live assistant setting
+is com.boop.alpha1/.BoopAssistantActivity, voice interaction setting is empty and
+the original KatnissRecognitionService remains selected. Opened UnifiedEntry/Home.
+This verifies physical installation and role configuration only. Ryan must press
+the real remote microphone button to establish activation and audio routing.
+No microphone permission was granted by these operations. Existing local use_boop
+opt-in was retained. Original assistant was Google Katniss for rollback.
+
 ## v105 signed: emulator assistant assignment and entry verified
 
 Branch boop-canonical-rebuild; source af66eccd56dda7b12e8fa86d1c1f53d07678f49d.
@@ -28,10 +41,9 @@ and CI pass. Historical voice-service sources are unregistered, retained only as
 reference. Android keeps its default recognizer, no new provider or microphone loop.
 
 Delivered BOOP-v105-activity-assistant.apk. Build monitor paused after delivery.
-Shield remains v104 with Google selected; do not retry its crashing role command.
-Next: obtain approval for exact v105 physical install and assistant assignment,
-then ask Ryan to press the physical mic button. Remote audio, command routing and
-physical acceptance remain pending. Preserve original Katniss settings for rollback.
+Shield now runs v105 with its activity assistant assigned, as recorded above.
+Next: physical remote microphone press. Audio, command routing and user acceptance
+remain pending. Preserve original Katniss settings for rollback.
 
 ## Shield assistant assignment trial failed: Android system restart
 
