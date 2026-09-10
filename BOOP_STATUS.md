@@ -40,11 +40,21 @@ Local media fixture `com.boop.testmedia` supplied metadata only (no audio/provid
 
 Review findings (room identity, ambiguity, lifecycle ownership, navigation and stale room callback) were resolved; final read-only review confirmed no outstanding findings. Manual screenshots and fixture sources remain local scratch under the dated task's `work/`, not in the repository.
 
+## Latest physical report and music investigation (2026-09-10)
+
+After receiving v94, Ryan reports HA commands working, basic music commands working, and Natural Voice on conversational and HA replies. These are positive scoped physical results; they are not blanket acceptance of artist search, playback targeting or the whole candidate.
+
+Remaining reported failure: saying `play Britney Spears` produces `I can't find that`. During a separate/unclear interaction BOOP asked which device; Ryan observed a nearby Google Home speaker activate, then turn off. Exact initiating command, answer and tested device have been requested. Do not infer that BOOP launched Google Assistant or selected that speaker without evidence.
+
+Reproduced locally against exact v94 MediaRequest source: bare `play Britney Spears` -> NOT_HANDLED_LOCALLY; `play Britney Spears on Deezer` -> DEEZER_SEARCH with query `Britney Spears`; `pause music` -> PAUSE. The local parser currently requires the explicit `on Deezer` suffix. Bare artist search continues into the HA path; HA NO_VALID_TARGETS maps to the reported `I can't find that` wording. This establishes the routing gap, not the actual remote response or provider capability.
+
+Next diagnostic requested: on the same device say `play Britney Spears on Deezer` and report whether it opens/plays, returns the Deezer unsupported-search message, or still returns missing-target wording. Confirm device/target before choosing default routing. No application code, playback target, voice behavior or permissions changed during this diagnosis. Preserve the working HA/basic transport and Natural Voice paths. v94 remains a candidate with artist-search/targeting unresolved.
+
 ## Physical baseline and next action
 
 Ryan physically confirmed v91 natural voices installed, selectable, demos speaking and a normal selected-voice BOOP reply. Accepted source: `11650313221ae5bf997dbb93b6a905bfdc7da1ed`; protected branch `checkpoint-boop-unified-v91-natural-voices-accepted`. APK SHA256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`. Preserve the exact v91 Desktop/server TEST APK and v88 rollback `f5f086fc4f67712b5746be067aff852331299bb0`. Canonical app source remains v91; canonical acceptance documentation was synchronized separately at `771b68a00ac95b40ed6e17cffac60af77528a934`.
 
-Next: Ryan tests the signed v94 on his device with existing voices, a real HA room/new exposed device, actual Deezer playback/transport, remote microphone and Back navigation. Actual HA authentication/room reassignment, provider search support, real-device acoustics and appearance remain pending. Emulator success is not physical acceptance. Eyes transplant remains separately owned. Do not merge or replace the physical baseline by implication.
+Next: continue the artist-search and device-target diagnosis above. HA/basic transport and Natural Voice have positive scoped physical results; new-room reassignment/new exposed-device discovery, provider artist search, remote microphone and broader appearance/Back acceptance remain pending. Emulator success is not physical acceptance. Eyes transplant remains separately owned. Do not merge or replace the physical baseline by implication.
 
 ## Continuity caution
 
