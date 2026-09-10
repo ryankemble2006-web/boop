@@ -1,4 +1,9 @@
-# Notification sign show — lab-only v10 closed grip
+# Notification sign show — lab-only v11 felt grip
+
+V11 feathers only the derived finger roots into a narrow original-palm-material
+overlap around each board edge. This hides the protruding arrow point and softens
+the joins while retaining felt texture. The exact source remains unmodified;
+thumbs remain at rear depth, four fingers closed at front depth.
 
 Ryan approved the roadside-costume sign-holder concept: lift an app sign with
 both five-digit hands, wobble it enthusiastically, glance toward it and blink.

@@ -24,7 +24,7 @@ Neutral samples the master directly. Placement/scaling fits the view once and
 does not animate the character rectangle. The displayed pupil/iris moves by
 deforming the existing eye texture within a stationary support region.
 
-The existing Animation Lab package is the v10 test host (permanent signer).
+The existing Animation Lab package is the v11 test host (permanent signer).
 This focused lab shelf covers eyes and the new SIGN_SHOW.md notification demo;
 old v0.4 accessory/notification shelves
 remain preserved in the reference APK/source archive and are not claimed ported.

@@ -1,5 +1,20 @@
 # Canonical eye library verification — 2026-09-10
 
+## v11 felt joins and hidden arrow tip
+
+Built source 348daff76367ccab892e8feaa56cc3e8e3e0b816; Actions 34442085173
+success. APK SHA-256
+1797b653908c1cac92a79d138a5fe303a28dbae61864c7f1a414a68856691f25 matches
+the downloaded receipt. Permanent signer and exact eye/hand source intact.
+Existing 30,636 eye-state and 53,508 sign-state checks pass; CI compilation,
+package and integrity checks pass. Static review found no drawing-state issue.
+Signed APK installed and cold-launched on dedicated emulator5558. Fixed pose
+captured, sign performance recorded, renderer-ready logged without renderer or
+fatal errors. Local evidence: animation-work/sign-spinner/evidence-v11 and
+record-grip-v11.ps1. Root-only alpha feather and original-palm overlap soften
+joins and hide the tip; no whole-hand blur or source repaint. Ryan owns final
+appearance and 55-inch testing. No production install or physical acceptance.
+
 ## v10 closed fingers
 
 Final built source 0da499aea8907a6a73976ab186f62454937f95b5; signed Actions

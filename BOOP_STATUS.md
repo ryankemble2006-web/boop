@@ -1,6 +1,12 @@
 # BOOP Status
 
-## Latest: closed notification grip — lab v10
+## Latest: felt-grip polish — lab v11
+
+Original-art palm overlap hides the small arrow-tip gap and feathered finger
+roots soften the hand joins. Same closed pose, eyes and choreography. Runtime
+receipt: animation-lab/canonical-eyes/VERIFICATION.md. No physical TV acceptance.
+
+## Previous: closed notification grip — lab v10
 
 Final requested refinement: close the four front fingers into a compact grip.
 Same source art, rear thumbs, eyes and choreography. V9 was close; Ryan asked

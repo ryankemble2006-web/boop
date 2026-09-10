@@ -1,6 +1,15 @@
 # BOOP animation workshop handoff — 2026-09-10
 
-## Active: closed notification grip, lab v10
+## Active: felt-grip polish, lab v11
+
+Ryan liked v10 and plans large-screen polish, then requested the tiny exposed
+arrow tip be hidden and finger roots blend like a felt puppet. V11 feathers only
+derived finger roots into an original-palm-texture overlap at the board edge.
+Thumbs stay behind; four fingers remain closed; eyes and timing are unchanged.
+See canonical-eyes/VERIFICATION.md for exact build/runtime receipts. This is
+still the separate lab; no production install or large-screen test is claimed.
+
+## Previous: closed notification grip, lab v10
 
 Ryan requested one final refinement after v9: close the fingers. V10 tightens
 spacing and foreshortening, with a shared right knuckle line so the arrow slope

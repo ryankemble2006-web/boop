@@ -1,6 +1,13 @@
 # Animation memory — 2026-09-10
 
-Latest continuation: v10 closes the finger spacing and shortens their projected
+Latest continuation: v11 felt-puppet polish. Ryan requested the tiny arrow point
+not show through the hand and softer finger-to-hand transitions. Only derived
+finger roots receive an alpha feather, blended over original palm material at
+front edge depth. Do not blur the whole hand or regenerate felt artwork. Closed
+finger pose, rear thumbs and eye/show timing remain unchanged. Large-screen
+polish is planned by Ryan, not a completed physical test.
+
+Previous continuation: v10 closes the finger spacing and shortens their projected
 reach. Keep one right-hand knuckle line instead of following the arrow slope
 per finger, which spread the grip. This is Ryan's final requested refinement to
 v9; do not infer physical acceptance from "and we are done" before his preview.
