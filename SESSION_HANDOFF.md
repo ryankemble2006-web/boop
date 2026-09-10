@@ -1,36 +1,42 @@
-## v104 also repairs the Shield room shortcut
+## v104 signed room/device fixes: ready for Shield installation
 
-During the physical room audit, Ryan confirmed the previously saved room was an
-earlier test and requested Living Room. The profile screen's room-name Save failed:
-it required the separate Wall connection despite a working Shield HA session.
-No credentials were copied. The existing Shield HA controls Settings > Room picker
-successfully restored Living Room, verified with canonical ID living_room.
-Home returned afterward; no playback transport command or permission change.
+Branch boop-canonical-rebuild. Final combined build source
+36651387ee2c30e7e3fda0b97e2142168659a3f9; GitHub run 34474767283 SUCCESS;
+artifact 10151147276. 207 Unified +58 Shield functional tests, zero failures,
+errors or skips, plus shared/Home/close-gate checks. Scoped reviews found no
+important defects. Four resolver regressions reproduced RED then passed locally.
+Version 104 / 1.2.104-device-name-matching; package com.boop.alpha1;
+entry com.boop.alpha1.UnifiedEntryActivity. Local aapt/apksigner checks passed.
+APK SHA256 dcb8d4bf39cdd8084015550b1c405d9dcef3877cc63f5d313c6439d947682477.
+ZIP SHA256 9b6f68f4c87183e5ce962476829566a371378348c3b598e307a7dab55bf9ab84.
+Permanent signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
 
-The Shield profile shortcut now opens that existing authenticated picker after
-its normal pairing gate, consuming a one-shot intent extra. Existing room remains
-saved until the user chooses another. Wall/phone room entry stays unchanged.
-This is a small route repair, not a new authentication system. Manual physical
-reproduction supplies the failure evidence; final candidate shortcut check pending.
-The first name-only v104 run 34474085300 at 5ea30080169ef155e6e3f843dedbe6a0a213a6d5
-succeeded but was not delivered or installed; the combined build supersedes it.
+Device matching uses nonempty Unicode whole-word phrases, preventing lamp/clamp
+and blank/non-Latin collisions while retaining ordinary phrase matches. Exposure,
+availability, room filtering, ambiguity and HA Assist fallback stay unchanged.
+Shield profile room shortcut reuses existing HA picker after its normal pairing
+gate instead of incorrectly requiring the separate Wall connection. Current room
+is retained until selection. Back cancels. On activity recreation after the one-shot
+extra is consumed, HA Home may reopen instead of the picker; saved room is retained.
 
-## v104 room/device follow-up: resolver repair, build pending
+Manual owned-emulator check: v104 installed; settings/profile route opened Shield
+HA pairing flow (emulator is unpaired), Back returned to profile settings. No
+credentials or permissions added. WALL restored and verified, app stopped and
+temporary device files removed. No GitHub visual tests. Authenticated shortcut
+operation and live device-command matching require physical checks.
 
-Ryan reported v103 close player worked perfectly, instantly and almost invisibly,
-then asked to continue the approved room/device roster. Record that as user
-acceptance of the close action he exercised; the exact native/Cast route was not
-specified. Do not invent additional active Cast instrumentation from that feedback.
+Physical Shield stays v103. Ryan reported close player perfect, instant and nearly
+invisible; exact native/Cast route was not specified. Existing v101 Home/reboot and
+v91 voice checkpoints remain protected. During room audit, Ryan confirmed an earlier
+test room and requested Living Room. The v103 shortcut failure was reproduced;
+existing Shield HA Settings > Room picker restored Living Room and canonical
+living_room was verified. Home returned, music transport was not changed.
+Broader cross-room command and profile acceptance remain pending.
 
-Audit found generic device matching used raw substrings: lamp could select Desk
-Clamp. Empty names/requests also matched everything, and ASCII normalization
-collapsed distinct non-Latin names. An actual local Java probe reproduced all four
-failures. Whole-word phrase matching, empty guards, and Unicode letter/mark/number
-normalization now pass the probe; Office Desk Lamp still matches desk lamp.
-Four focused JUnit regressions added. No change to HA exposure, room isolation,
-ambiguity handling, local Assist fallback, media controls or device configuration.
-Version 104 / 1.2.104-device-name-matching. CI/signing pending. Broader physical
-room changes and cross-room command acceptance remain pending. Shield stays v103.
+Delivered locally as BOOP-v104-room-device-fixes.apk. Monitor paused after delivery.
+Next: obtain approval to install this exact combined v104 on Shield and verify its
+authenticated room shortcut, Back/cancel preservation, and current-room controls.
+The earlier name-only v104 run34474085300 was not delivered or installed.
 
 ## v103 installed: native cleanup physically tested; Cast check pending
 
