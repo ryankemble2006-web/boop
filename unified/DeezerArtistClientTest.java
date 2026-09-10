@@ -8,7 +8,7 @@ import java.io.IOException;
 public class DeezerArtistClientTest {
     private static final BoopRoom ROOM=new BoopRoom("lounge","Lounge");
     private static final String BASE="http://ha.invalid";
-    private static final String TOKEN="test-only-token";
+    private static final String TOKEN="test-token";
     static final class Rig implements DeezerArtistClient.Http {
         Rig() throws Exception { }
         JSONArray targets=new JSONArray().put(new JSONObject().put("media","media_player.screen").put("remote","remote.screen"));
@@ -20,12 +20,14 @@ public class DeezerArtistClientTest {
         int catalogueCalls=0;
         BoopRoom room=ROOM;
         boolean changeRoomAfterOpen;
+        DeezerNativeTest.Rig nativeRig;
         public String request(String url,String token,JSONObject body) throws Exception {
             if(url.startsWith("https://api.deezer.com/")) {
                 assertNull("HA token must never reach catalogue",token); catalogueCalls++;
                 return new JSONObject().put("data",artists).toString();
             }
             assertEquals(TOKEN,token);
+            if(nativeRig!=null && (url.endsWith("/api/states/media_player.adb") || url.endsWith("/api/services/androidtv/adb_command"))) return nativeRig.request(url,token,body);
             if(url.endsWith("/api/template")) return targets.toString();
             if(url.endsWith("/api/states/media_player.screen"))
                 return new JSONObject().put("state",state).put("attributes",new JSONObject().put("friendly_name","Screen")).toString();
@@ -52,14 +54,27 @@ public class DeezerArtistClientTest {
             catch(Exception e) { throw new AssertionError(e); }
         }
     }
-    @Test public void bareArtistRoutesOnlyToPairedRemote() throws Exception {
+    @Test public void verifiedNativeRouteReceivesArtist() throws Exception {
+        Rig r=new Rig(); r.nativeRig=new DeezerNativeTest.Rig();
+        r.nativeRig.title="Britney Spears"; r.nativeRig.label="Play top tracks";
+        r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerNativeTest.MAC));
+        assertEquals("Requested Britney Spears on Screen.",LocalReply.forOutcome(r.run("play Britney Spears")));
+        assertEquals(1,r.nativeRig.taps()); assertTrue(r.effects.isEmpty());
+    }
+    @Test public void bareMusicUsesNativeFlowWithoutCatalogue() throws Exception {
+        Rig r=new Rig(); r.nativeRig=new DeezerNativeTest.Rig();
+        r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerNativeTest.MAC));
+        assertEquals("Requested Deezer Flow on Screen.",LocalReply.forOutcome(r.run("play music")));
+        assertEquals(0,r.catalogueCalls); assertEquals(1,r.nativeRig.taps());
+    }
+    @Test public void bareArtistRequiresVerifiedNativeControl() throws Exception {
         Rig r=new Rig(); CommandOutcome outcome=r.run("play Britney Spears");
-        assertEquals(Arrays.asList("remote/turn_on","media_player/media_pause","remote/send_command"),r.effects);
+        assertTrue(r.effects.isEmpty());
         assertEquals(CommandOutcome.Status.LOCAL_REPLY,outcome.status());
-        assertEquals("Requested Britney Spears on Screen.",LocalReply.forOutcome(outcome));
+        assertTrue(LocalReply.forOutcome(outcome).contains("Android Debug Bridge"));
     }
     @Test public void explicitDeezerUsesSameRoute() throws Exception {
-        Rig r=new Rig(); r.run("play Britney Spears on Deezer"); assertEquals(3,r.effects.size());
+        Rig r=new Rig(); r.run("play Britney Spears on Deezer"); assertTrue(r.effects.isEmpty());
     }
     @Test public void unknownArtistHasNoDeviceEffects() throws Exception {
         Rig r=new Rig(); r.run("play an unknown artist"); assertTrue(r.effects.isEmpty());
@@ -76,18 +91,6 @@ public class DeezerArtistClientTest {
         Rig r=new Rig(); r.targets.put(new JSONObject().put("media","media_player.other").put("remote","remote.other"));
         r.allowed.add("media_player.other"); r.run("play Britney Spears");
         assertTrue(r.effects.isEmpty());
-    }
-    @Test public void inactiveDeezerNeverReceivesSelect() throws Exception {
-        Rig r=new Rig(); r.active="org.example.otherapp"; r.run("play Britney Spears");
-        assertEquals(Collections.singletonList("remote/turn_on"),r.effects);
-    }
-    @Test public void failedPauseNeverToggles() throws Exception {
-        Rig r=new Rig(); r.failure="media_player/media_pause"; r.run("play Britney Spears");
-        assertEquals(Arrays.asList("remote/turn_on","media_player/media_pause"),r.effects);
-    }
-    @Test public void changedRoomCancelsRemainingActions() throws Exception {
-        Rig r=new Rig(); r.changeRoomAfterOpen=true; r.run("play Britney Spears");
-        assertEquals(Collections.singletonList("remote/turn_on"),r.effects);
     }
     @Test public void unavailableTvHasNoEffects() throws Exception {
         Rig r=new Rig(); r.state="unavailable"; r.run("play Britney Spears"); assertTrue(r.effects.isEmpty());

@@ -36,3 +36,13 @@ Use failing focused JVM tests before production behavior changes. GitHub perform
 Selected implementation, review, signed CI and manual emulator checks completed for source e683b26e04a3bc2bb8ba5a94ee23eeb2380d1ec0 (v94). GitHub run 34437732145 passed 170 Unified and 58 Shield tests. See SESSION_HANDOFF.md for exact receipts, manual checks and pending physical/provider acceptance. Candidate remains unmerged; eyes transplant is separate.
 
 Physical follow-up: Pixel 7 commands the remote Shield. The v94 same-device Deezer search route is insufficient; item 7 is reopened for remote artist playback. Preserve the accepted HA transport and Natural Voice results while verifying the Shield integration and playback capabilities. See the latest handoff.
+
+## v96 follow-up: native artists, tracks and Flow
+
+Approved by Ryan: repair repeat/switch artist requests, exact songs and default
+play music to native Deezer Flow; add HA ADB integration. Resolve metadata,
+verify the selected exposed TV against ADB hardware, restart Deezer, then read
+semantic native focus before one remote selection. Preserve transport and voices.
+The installed launcher reconnect bug required a scoped compatibility fix on its
+existing branch, reviewed/built/signed and explicitly approved for installation.
+No new app lineage, permission, eye work or visual CI. See current handoff for receipts.

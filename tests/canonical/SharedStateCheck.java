@@ -1,6 +1,7 @@
 import com.boop.shared.BoopState;
 import com.boop.shared.MediaRequest;
 import com.boop.shared.DeezerPlaybackSequence;
+import com.boop.shared.DeezerScreen;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +37,17 @@ public final class SharedStateCheck {
         check(MediaRequest.parse("pause music").kind == MediaRequest.Kind.PAUSE, "pause preserved");
         check(MediaRequest.parse("turn the fan on") == null, "not a media command");
         check(MediaRequest.parse("play Britney Spears").query.equals("Britney Spears"), "bare artist request");
-        check(MediaRequest.parse("play music") == null, "generic playback stays with transport routing");
+        check(MediaRequest.parse("play music") != null && MediaRequest.parse("play music").kind.name().equals("DEEZER_FLOW"), "play music defaults to Deezer Flow");
+        try {
+            String card="<node package='deezer.android.app' enabled='true' clickable='true' bounds='[240,200][600,400]'><node package='deezer.android.app' text='Flow' /></node>";
+            DeezerScreen screen=DeezerScreen.parse("<hierarchy>"+card+"</hierarchy>");
+            check(screen.target("Flow").x==420 && screen.target("Flow").y==300, "semantic card bounds");
+            check(screen.target("Queen")==null, "never select an unmatched label");
+            check(DeezerScreen.parse("<hierarchy>"+card+card.replace("240,200","700,200").replace("600,400","900,400")+"</hierarchy>").target("Flow")==null, "ambiguous controls fail closed");
+            check(!DeezerScreen.parse("<hierarchy><node package='com.other.app' text='Flow'/></hierarchy>").isDeezer(), "other app rejected");
+            try { DeezerScreen.parse("<!DOCTYPE hierarchy [<!ENTITY x SYSTEM 'file:///never'>]><hierarchy/>"); throw new AssertionError("doctype accepted"); }
+            catch(java.io.IOException expected) { }
+        } catch(Exception e) { throw new AssertionError(e); }
         try {
             PlaybackProbe probe = new PlaybackProbe();
             check(DeezerPlaybackSequence.request(probe), "native artist playback requested");

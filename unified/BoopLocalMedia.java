@@ -9,7 +9,7 @@ final class BoopLocalMedia {
         MediaRequest request = MediaRequest.parse(text);
         if (request == null) return false;
         // Artist requests belong to the authenticated HA room/TV route, not this phone.
-        if (request.kind == MediaRequest.Kind.DEEZER_SEARCH) return false;
+        if (request.kind == MediaRequest.Kind.DEEZER_SEARCH || request.kind == MediaRequest.Kind.DEEZER_FLOW) return false;
         return com.boop.shieldhome.ShieldNowPlayingManager.get(activity).requestTransport(request.kind);
     }
 }

@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 /** Transport commands and artist requests; provider resolution validates artist names. */
 public final class MediaRequest {
-    public enum Kind { DEEZER_SEARCH, PAUSE, RESUME, NEXT, PREVIOUS }
+    public enum Kind { DEEZER_SEARCH, DEEZER_FLOW, PAUSE, RESUME, NEXT, PREVIOUS }
     private static final Pattern DEEZER = Pattern.compile("^play\\s+(.+?)\\s+on\\s+deezer[.!?]*$", Pattern.CASE_INSENSITIVE);
     public final Kind kind;
     public final String query;
@@ -20,8 +20,10 @@ public final class MediaRequest {
         String value = text.trim().replaceAll("\\s+", " ");
         Matcher matcher = DEEZER.matcher(value);
         if (matcher.matches() && !matcher.group(1).trim().isEmpty())
-            return new MediaRequest(Kind.DEEZER_SEARCH, matcher.group(1).trim(),true);
+            return new MediaRequest(flow(matcher.group(1)) ? Kind.DEEZER_FLOW : Kind.DEEZER_SEARCH, matcher.group(1).trim(),true);
         switch(value.toLowerCase(Locale.ROOT).replaceAll("[.!?]+$", "")) {
+            case "play music": case "play the music": case "play flow": case "play my flow": case "play deezer flow":
+                return new MediaRequest(Kind.DEEZER_FLOW, "",true);
             case "pause": case "pause music": case "pause the music": return new MediaRequest(Kind.PAUSE, "");
             case "resume": case "resume music": case "continue music": return new MediaRequest(Kind.RESUME, "");
             case "next": case "next track": case "skip track": return new MediaRequest(Kind.NEXT, "");
@@ -34,5 +36,9 @@ public final class MediaRequest {
                         || lower.equals("the music") || lower.equals("something")) return null;
                 return new MediaRequest(Kind.DEEZER_SEARCH, query);
         }
+    }
+    private static boolean flow(String query) {
+        String value=query.trim().toLowerCase(Locale.ROOT);
+        return value.equals("music") || value.equals("the music") || value.equals("flow") || value.equals("my flow");
     }
 }

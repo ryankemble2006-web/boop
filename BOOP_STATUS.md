@@ -1,3 +1,45 @@
+## v96 native music candidate - implementation in progress
+
+Updated 2026-09-10. Owning branch remains boop-canonical-rebuild, based on v95
+source 61d7604e1f923c1789aba94afb0d76831bed073d and receipt 14b9f4a.
+Ryan physically reported v95 worked on the first artist request, but repeat/switch
+attempts only blipped and did not change music. v95 is not accepted for that path.
+
+v96 adds exact song-title lookup (optionally "by artist") through public Deezer
+metadata, native album-row selection, and "play music" -> native Deezer Flow.
+No Music Assistant streaming or alternate-speaker fallback. Public catalogue
+calls carry no HA credential. Flow and existing transport need no public lookup.
+A matching artist takes precedence; the first exact playable song result is used
+otherwise, and the spoken request includes its artist. User testing remains needed.
+
+The selected exposed Android TV must have one ADB candidate in the same room.
+Read-only hardware MAC matching verifies it is the same physical TV before control.
+Ryan explicitly approved adding HA Android Debug Bridge; configured and placed in
+Living Room. Existing Assist exposure was retained. Device addresses remain private.
+Each request cleanly restarts Deezer to discard stale intents. Fresh nonce-tagged
+ADB responses, unique temporary screen files, exact text/accessibility labels,
+focused remote controls and a second check after pause gate one DPAD_CENTER.
+No fixed song-row numbers or coordinate taps. Room changes/interruption cancel.
+Screen hierarchies are transient local control data, never sent to conversation.
+HA itself stores adb_response as documented; raw hierarchies stay out of Git.
+
+Live investigation found Android's uiautomator dump reconnects accessibility.
+The installed standalone launcher brought Home forward on every reconnect.
+A narrow once-per-boot compatibility fix was reviewed and published on the existing
+boop-shield-clean-launcher branch: ccb10658bded07dbf2a91ee8234509999f960a49.
+Run 34446163444 succeeded; artifact 10139755652; signed v23 APK SHA256
+6bcc46633c38f61f4c7c5b4b0a49a4d3eec7b05818a25ef29abd4d36e82f411e.
+Ryan explicitly approved installation; installed successfully after saving the exact
+old APK privately for rollback. Repeated screen reads now keep Deezer foreground.
+The same small fix is included in unified source. No artwork/permission changes.
+Reboot and single/double Home acceptance remain pending; no new physical checkpoint.
+
+Local shared-state harness and 29 music tests pass. Exact controller through the
+existing ADB shell selected Bohemian Rhapsody with native playing indication and
+then Flow with native playing indication. This is component/device evidence, not
+end-to-end Pixel v96 acceptance. Full signed v96 build and emulator check pending.
+GitHub visual tests remain disabled. Eyes work is untouched.
+
 # Scoped canonical rebuild - v95 signed candidate handoff
 
 Updated 2026-09-10. Owning branch: `boop-canonical-rebuild`. Local source: `C:/Users/ryank/Documents/Codex/BOOP/.worktrees/boop-canonical-rebuild`. Base: `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`.

@@ -4,6 +4,8 @@ import android.accessibilityservice.AccessibilityService;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.SystemClock;
+import android.provider.Settings;
+import android.content.SharedPreferences;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
@@ -17,11 +19,15 @@ public final class ShieldHomeOverrideService extends AccessibilityService {
     @Override protected void onServiceConnected() {
         super.onServiceConnected();
 
-        // Shield can present stock Home before Accessibility finishes binding after reboot.
-        // Re-arm BOOP as soon as Android reconnects this already-enabled service, then let
-        // the normal foreground-window path handle future Home presses.
-        lastLaunchElapsed = SystemClock.elapsedRealtime();
-        bringBoopToFront();
+        // Screen inspection can reconnect enabled accessibility services. Rearm once per
+        // boot, not on every reconnect, so an unrelated foreground app keeps its place.
+        int boot = Settings.Global.getInt(getContentResolver(), Settings.Global.BOOT_COUNT, -1);
+        SharedPreferences prefs = getSharedPreferences("home-rearm", MODE_PRIVATE);
+        if (HomeOverridePolicy.shouldRearmOnConnect(boot, prefs.getInt("boot", -1))) {
+            prefs.edit().putInt("boot", boot).apply();
+            lastLaunchElapsed = SystemClock.elapsedRealtime();
+            bringBoopToFront();
+        }
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
