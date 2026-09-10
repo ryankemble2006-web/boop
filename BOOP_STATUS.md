@@ -1,3 +1,14 @@
+## v101 post-reboot Cast recheck
+
+Ryan initiated Deezer casting after the accepted Home/reboot test. Read-only
+physical inspection confirmed the Cast receiver foreground and playing session;
+native Deezer was paused. Agent manually viewed one upper-right headphones corner,
+clear of artwork and track text. No playback or screen-navigation commands sent;
+music left running and temporary device screenshot removed. This closes the
+agent-observed v101 post-reboot Cast regression check. Ryan's Home/reboot acceptance
+remains scoped; no blanket release or protected-checkpoint replacement implied.
+Source be20d50ed3ee72ec7183215ade63e6253e929653; signed run 34461331633.
+
 ## v101 Home routing physically accepted
 
 Ryan reports that the physical Home button opens the new unified Home and that
