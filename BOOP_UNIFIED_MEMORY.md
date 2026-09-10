@@ -1,8 +1,26 @@
-# Scoped canonical rebuild - v95 development handoff
+# Scoped canonical rebuild - v95 signed candidate handoff
 
 Updated 2026-09-10. Owning branch: `boop-canonical-rebuild`. Local source: `C:/Users/ryank/Documents/Codex/BOOP/.worktrees/boop-canonical-rebuild`. Base: `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`.
 
-## Last built candidate (v94)
+## Signed v95 candidate
+
+Application source/build commit: `61d7604e1f923c1789aba94afb0d76831bed073d` on `boop-canonical-rebuild`. Version 95 / `1.2.95-native-deezer-artist`, package `com.boop.alpha1`.
+
+- GitHub run `34442138007`: SUCCESS; artifact `10138398012`.
+- ZIP SHA256: `2d306febc06ca26d67cf5d3ecc27f8d83737f0fa89ae1e45de596d78b7989e5f`.
+- APK SHA256: `539824affb7e3d750558fd5104941de57326576e24abe5863c23c0cff64b039b`.
+- Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+- 184 Unified and 58 Shield focused functional tests passed, zero failures/errors/skips. GitHub performed no visual tests.
+- Downloaded ZIP digest, APK digest, source receipt, package/version/entry activity and permanent signature independently verified locally.
+- Signed deliverable: `C:/Users/ryank/Documents/Codex/2026-09-10/the-x20/outputs/BOOP-v95-native-deezer-candidate.apk`.
+
+First v95 run `34441802763` failed compiling the new test fixture because checked JSON exceptions were undeclared; application source compiled. Commit `61d7604` fixes the declarations, and the rerun above passes.
+
+Exact signed v95 updated the Pixel_7_Pro_API_36 emulator successfully. Manual screenshot inspection confirmed the readable Voice screen, scrolling and device/room settings navigation. Profile was opened through its visible button; direct ADB launch correctly refused the non-exported activity. Back was exercised; no AndroidRuntime error appeared in the inspected log. No HA credentials or natural voice packs were installed for this check. BOOP was stopped afterward; v95 remains installed with the prior Wall profile. Other emulators and the eyes task were untouched.
+
+Physical acceptance: Ryan confirmed the native Britney diagnostic route, and v94 HA/basic transport/Natural Voice worked. The v95 Pixel-to-Shield application route is still pending physical testing: cold Deezer launch, repeat the same artist, then switch artist. Fixed page/pause waits remain best-effort. No merge to canonical or replacement of protected v91 TEST artifacts.
+
+## Previous built candidate (v94)
 
 Application source/build commit: `e683b26e04a3bc2bb8ba5a94ee23eeb2380d1ec0`. Later documentation commits do not change this APK. Resolve the current branch documentation HEAD with live `git ls-remote`; do not confuse it with the built source.
 
@@ -46,7 +64,7 @@ After receiving v94, Ryan reports HA commands working, basic music commands work
 
 Remaining reported failure: saying `play Britney Spears` produces `I can't find that`. During a separate/unclear interaction BOOP asked which device; Ryan observed a nearby Google Home speaker activate, then turn off. Exact initiating command, answer and tested device have been requested. Do not infer that BOOP launched Google Assistant or selected that speaker without evidence.
 
-Reproduced locally against exact v94 MediaRequest source: bare `play Britney Spears` -> NOT_HANDLED_LOCALLY; `play Britney Spears on Deezer` -> DEEZER_SEARCH with query `Britney Spears`; `pause music` -> PAUSE. The local parser currently requires the explicit `on Deezer` suffix. Bare artist search continues into the HA path; HA NO_VALID_TARGETS maps to the reported `I can't find that` wording. This establishes the routing gap, not the actual remote response or provider capability.
+Reproduced locally against exact v94 MediaRequest source: bare `play Britney Spears` -> NOT_HANDLED_LOCALLY; `play Britney Spears on Deezer` -> DEEZER_SEARCH with query `Britney Spears`; `pause music` -> PAUSE. The v94 local parser required the explicit `on Deezer` suffix. Bare artist search continues into the HA path; HA NO_VALID_TARGETS maps to the reported `I can't find that` wording. This establishes the routing gap, not the actual remote response or provider capability.
 
 Follow-up: the explicit Deezer phrase returned BOOP's `Deezer cannot play searches on this device. Open Deezer and choose the music there` message. Ryan clarified BOOP runs on the Pixel 7 and commands the Shield. This changes the diagnosis: BoopLocalMedia invokes Activity.startActivity on the Pixel, while the intended playback target is the remote Shield. The caught RuntimeException does not establish whether Deezer supports artist search on the Shield, or even distinguish a missing Pixel app from an unsupported intent. The previously implemented same-device Deezer search does not satisfy this remote use case.
 
@@ -70,12 +88,12 @@ v95 implementation in this branch: bare play requests resolve an exact unique De
 
 Known limitation: Android TV Remote reports the current app but not artist-page focus or completed pause. The 3-second page and 500-ms pause waits are best-effort, not visual/state confirmation. Cold app launch, repeated same artist, switching artist and Pixel end-to-end behavior must pass physical tests before accepting this candidate. A slow/error page or manual navigation during the sequence can still defeat UI-based playback; do not promote request dispatch to physical success. Item 7 stays open until those tests are accepted.
 
-Local shared-state/media behavioral harness and materialization passed. Added offline HTTP/JSON tests for credential separation, paired targets, ambiguity, exposure, app changes, pause failures, room changes and conversation preservation; GitHub CI/build/signing and candidate emulator/physical tests are pending. Review found bare-play conversation capture; fixed by validating bare artist requests before consuming them. No v95 signed artifact or new accepted rollback checkpoint exists yet.
+Local shared-state/media behavioral harness and materialization passed. Added offline HTTP/JSON tests for credential separation, paired targets, ambiguity, exposure, app changes, pause failures, room changes and conversation preservation; GitHub CI/build/signing and manual emulator checks are now complete as recorded above; physical candidate tests remain pending. Review found bare-play conversation capture; fixed by validating bare artist requests before consuming them. The signed v95 artifact is recorded above; no new physically accepted rollback checkpoint exists.
 ## Physical baseline and next action
 
 Ryan physically confirmed v91 natural voices installed, selectable, demos speaking and a normal selected-voice BOOP reply. Accepted source: `11650313221ae5bf997dbb93b6a905bfdc7da1ed`; protected branch `checkpoint-boop-unified-v91-natural-voices-accepted`. APK SHA256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`. Preserve the exact v91 Desktop/server TEST APK and v88 rollback `f5f086fc4f67712b5746be067aff852331299bb0`. Canonical app source remains v91; canonical acceptance documentation was synchronized separately at `771b68a00ac95b40ed6e17cffac60af77528a934`.
 
-Next: continue the artist-search and device-target diagnosis above. HA/basic transport and Natural Voice have positive scoped physical results; new-room reassignment/new exposed-device discovery, provider artist search, remote microphone and broader appearance/Back acceptance remain pending. Emulator success is not physical acceptance. Eyes transplant remains separately owned. Do not merge or replace the physical baseline by implication.
+Next: install signed v95 on the Pixel, select Living Room, and test native artist playback on the Shield, including cold launch, repeat and switching artist. HA/basic transport and Natural Voice have positive scoped physical results; new-room reassignment/new exposed-device discovery, provider artist search, remote microphone and broader appearance/Back acceptance remain pending. Emulator success is not physical acceptance. Eyes transplant remains separately owned. Do not merge or replace the physical baseline by implication.
 
 ## Continuity caution
 
