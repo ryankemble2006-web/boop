@@ -1,3 +1,16 @@
+## v111 artifact verified; installation and physical test pending
+
+Source 5204d128b42e7469fda4d974a9831180167b52b4; GitHub run 34501224903
+SUCCESS; artifact 10162105090. 217 Unified + 68 Shield functional tests passed,
+zero failures/errors/skips. No GitHub visual tests. Independent local verification:
+com.boop.alpha1 version111 / 1.2.111-responsive-room-controls; permanent signer
+f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+APK SHA256 5485e0f047263d80f76dcebcf58e7399c4b5f90b90e54e2f0795842db5e50f90.
+ZIP SHA256 cb78fcad4300d2821a0b40d374f54640626c9f95473756405d7d4406ce6a2c67.
+Delivered BOOP-v111-responsive-room-controls.apk locally. v110 remains installed;
+rapid-click improvement and final-state correctness are not physically accepted.
+Next: approval for exact v111 APK, installation, rapid candle presses and settled
+label check. Preserve v108 functional rollback and default Android voice.
 ## v111 candidate: reusable room controls while state catches up
 
 Ryan approved allowing another click after service acknowledgement; status may lag,
