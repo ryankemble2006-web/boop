@@ -16,6 +16,24 @@ import org.json.JSONObject;
 import org.junit.Test;
 
 public final class BinaryActionTest {
+    @Test public void publishesObservedStateBeforeSlowServiceReplyWithoutClaimingSuccess() {
+        RecordingPorts ports = new RecordingPorts();
+        AtomicReference<EntityCard> observed = new AtomicReference<>();
+        AtomicBoolean completed = new AtomicBoolean();
+        new HomeAssistantRepository(ports, ports).toggleBinary(
+                card("light.sofa", "living_room", "Sofa lamp", "off"),
+                new HomeAssistantRepository.BinaryActionCallback() {
+                    @Override public void onObservedState(EntityCard card) { observed.set(card); }
+                    @Override public void onResult(boolean ok, EntityCard card, String error) { completed.set(true); }
+                });
+        ports.ackSubscription();
+        ports.emit("light.sofa", "on");
+        assertNotNull(observed.get());
+        assertEquals("on", observed.get().state());
+        assertFalse(completed.get());
+        ports.commands.get(0).callback.onResult(true, null, null);
+        assertTrue(completed.get());
+    }
     @Test
     public void repositoryExposesStateChangeConfirmationPort() throws Exception {
         Class<?> stateChangePort = null;

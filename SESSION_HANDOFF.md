@@ -1,3 +1,28 @@
+## v109 candidate: release room controls on observed HA state
+
+Ryan confirmed HA controls navigation and room buttons work. Candle hardware reacts
+immediately, but its dashboard button stays locked until its label changes; voice
+commands can be repeated promptly. Existing code is event-driven, not a fixed poll:
+it waits for both expected state event and call_service acknowledgement, blocking
+all dashboard actions meanwhile. Actual event/reply timings have not been measured.
+
+v109 separates observed state from service completion. The expected target state
+event updates and unlocks the dashboard immediately; final service success still
+requires acknowledgement plus state. Generation checks prevent an older command
+reply from overwriting a newer press. Terminal guards ignore late observations after
+failure; a failure after observed state retains that state and displays the error.
+No optimistic On/Off labels, new permissions, voice or artwork changes. Default
+Android voice remains baseline, natural voice last. Existing timeout retained.
+
+Two initial regressions observed RED then GREEN. Review caught a callback-order
+race; terminal guard and two more ordering/error tests added. 17 real repository/
+controller JUnit tests pass locally with only the WebSocket callback interface
+stubbed. Full CI/build/signing and physical responsiveness remain pending.
+Version109 / 1.2.109-live-room-controls. v108 remains installed and accepted for
+candle voice on/off, artist/track/Flow, transport, Now Playing metadata/art/buttons,
+and Close player. User confirmed Home-to-HA room controls route. Stock launcher
+nerf and natural voice are deferred. No physical state changes during this work.
+
 ## v108 physical acceptance: remote media transport
 
 Ryan confirmed pause and resume through the Shield remote. Skip/next track was

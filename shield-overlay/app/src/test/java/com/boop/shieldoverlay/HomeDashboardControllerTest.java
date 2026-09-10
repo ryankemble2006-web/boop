@@ -14,6 +14,55 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class HomeDashboardControllerTest {
+    @Test public void failedResultBeforeObservationCannotBeErasedByLateEvent() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set).start();
+        rendered.get().toggle(lamp);
+        HomeAssistantRepository.BinaryActionCallback pending = repository.pendingToggle;
+        pending.onResult(false, null, "Timed out");
+        pending.onObservedState(lamp.withState("on"));
+        assertTrue(rendered.get().stale());
+        assertEquals("Timed out", rendered.get().message());
+        assertEquals("off", rendered.get().cards().get(0).state());
+    }
+
+    @Test public void observedStateSurvivesFailedAcknowledgementWithErrorVisible() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set).start();
+        rendered.get().toggle(lamp);
+        repository.pendingToggle.onObservedState(lamp.withState("on"));
+        repository.completeToggle(false, null, "Acknowledgement failed");
+        assertEquals("on", rendered.get().cards().get(0).state());
+        assertTrue(rendered.get().actionsEnabled());
+        assertEquals("Acknowledgement failed", rendered.get().message());
+    }
+    @Test public void observedStateUnlocksAndLateReplyCannotOverwriteNewPress() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        HomeDashboardController controller = new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set);
+        controller.start();
+        rendered.get().toggle(lamp);
+        HomeAssistantRepository.BinaryActionCallback first = repository.pendingToggle;
+        first.onObservedState(lamp.withState("on"));
+        assertEquals("on", rendered.get().cards().get(0).state());
+        assertTrue(rendered.get().actionsEnabled());
+        rendered.get().toggle(rendered.get().cards().get(0));
+        assertEquals(2, repository.toggleCalls.get());
+        first.onResult(false, null, "Late failure");
+        assertFalse(rendered.get().stale());
+        assertFalse(rendered.get().actionsEnabled());
+        repository.completeToggle(true, lamp.withState("off"), null);
+        first.onResult(true, lamp.withState("on"), null);
+        assertEquals("off", rendered.get().cards().get(0).state());
+    }
     private static final AreaInfo LOUNGE = new AreaInfo("living_room", "Living Room");
 
     @Test public void liveLoadPublishesRoomDevicesWithoutFavouriteSemantics() {

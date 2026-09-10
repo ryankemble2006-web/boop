@@ -34,6 +34,7 @@ public final class HomeDashboardController {
 
     private final AreaInfo room; private final RepositoryPort repository; private final CachePort cache; private final Listener listener;
     private List<EntityCard> cards = Collections.emptyList(); private Status status = Status.STALE; private boolean toggleInFlight; private String message;
+    private long actionGeneration;
 
     public HomeDashboardController(AreaInfo room, RepositoryPort repository, CachePort cache, Listener listener) {
         if (room == null) throw new IllegalArgumentException("room is required");
@@ -44,6 +45,7 @@ public final class HomeDashboardController {
     }
 
     public void start() {
+        actionGeneration++;
         repository.loadDashboard(room, (snapshot, error) -> {
             if (error != null || snapshot == null) {
                 cards = Collections.emptyList(); status = Status.STALE; toggleInFlight = false;
@@ -64,19 +66,46 @@ public final class HomeDashboardController {
 
     /** Legacy call retained for old callers; there is no favourite to toggle now. */
     public void toggleFavourite() { }
-    public void markOffline(String reason) { status = Status.STALE; toggleInFlight = false; message = plainError(reason, "Home Assistant is offline."); emit(); }
+    public synchronized void markOffline(String reason) { actionGeneration++; status = Status.STALE; toggleInFlight = false; message = plainError(reason, "Home Assistant is offline."); emit(); }
 
-    private void toggleCard(EntityCard requested) {
+    private synchronized void toggleCard(EntityCard requested) {
         if (status != Status.LIVE || requested == null || toggleInFlight) return;
         EntityCard current = findCard(requested.entityId());
         if (current == null || !RoomScopedEntities.belongsTo(room, current)) return;
+        final long generation = ++actionGeneration;
         toggleInFlight = true; emit();
-        repository.toggleBinary(current, (success, confirmed, error) -> {
-            toggleInFlight = false;
-            if (!success || confirmed == null || !RoomScopedEntities.belongsTo(room, confirmed)) {
-                status = Status.STALE; message = plainError(error, "Home Assistant didn't confirm that room control."); emit(); return;
+        repository.toggleBinary(current, new HomeAssistantRepository.BinaryActionCallback() {
+            private boolean observed;
+            private boolean completed;
+            @Override public void onObservedState(EntityCard confirmed) {
+                synchronized (HomeDashboardController.this) {
+                    if (generation != actionGeneration || completed || !valid(confirmed)) return;
+                    observed = true;
+                    replaceCard(confirmed); toggleInFlight = false; message = null; emit();
+                }
             }
-            replaceCard(confirmed); status = Status.LIVE; message = null; emit();
+            @Override public void onResult(boolean success, EntityCard confirmed, String error) {
+                synchronized (HomeDashboardController.this) {
+                    if (generation != actionGeneration) return;
+                    if (completed) return;
+                    completed = true;
+                    toggleInFlight = false;
+                    if (observed) {
+                        // The actual state is known even if the separate command reply failed.
+                        message = success ? null : plainError(error, "Home Assistant didn't acknowledge that command.");
+                        emit(); return;
+                    }
+                    if (!success || !valid(confirmed)) {
+                        status = Status.STALE; message = plainError(error, "Home Assistant didn't confirm that room control."); emit(); return;
+                    }
+                    replaceCard(confirmed); status = Status.LIVE; message = null; emit();
+                }
+            }
+            private boolean valid(EntityCard confirmed) {
+                return confirmed != null && current.entityId().equals(confirmed.entityId())
+                        && RoomScopedEntities.belongsTo(room, confirmed)
+                        && ("on".equals(confirmed.state()) || "off".equals(confirmed.state()));
+            }
         });
     }
 

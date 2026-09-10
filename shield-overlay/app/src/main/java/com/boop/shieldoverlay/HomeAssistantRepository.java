@@ -37,7 +37,10 @@ public final class HomeAssistantRepository {
     }
 
     public interface AreasCallback { void onResult(List<AreaInfo> areas, String error); }
-    public interface BinaryActionCallback { void onResult(boolean success, EntityCard card, String error); }
+    public interface BinaryActionCallback {
+        void onResult(boolean success, EntityCard card, String error);
+        default void onObservedState(EntityCard card) { }
+    }
     public interface DashboardCallback { void onResult(DashboardSnapshot snapshot, String error); }
 
     private final CommandPort commandPort;
@@ -326,10 +329,11 @@ public final class HomeAssistantRepository {
             if (!original.entityId().equals(clean(entityId)) || !expectedState.equals(clean(state))) return;
             boolean finish;
             synchronized (this) {
-                if (done) return;
+                if (done || subscription == null || expectedStateSeen) return;
                 expectedStateSeen = true;
                 finish = serviceSucceeded;
             }
+            callback.onObservedState(original.withState(expectedState));
             if (finish) complete(true, null);
         }
 
