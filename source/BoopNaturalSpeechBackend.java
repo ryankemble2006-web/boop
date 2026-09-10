@@ -24,9 +24,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             "model.onnx",
             "voices.bin",
             "tokens.txt",
-            "lexicon-gb-en.txt",
-            "inno/nif_model.onnx",
-            "inno/possible_tokens.txt"
+            "lexicon-gb-en.txt"
     };
 
     static final class NaturalSpeechException extends RuntimeException {
