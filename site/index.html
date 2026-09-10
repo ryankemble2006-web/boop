@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f2">
+  <meta name="description" content="BOOP is a local-first smart-home and media puppet: useful machinery, visible strings, one BOOP across different bodies.">
+  <title>BOOP | Works FOR you</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to BOOP</a>
+
+  <header class="site-header" id="top">
+    <a class="wordmark" href="#top" aria-label="BOOP home">BOOP<span>.</span></a>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a href="#bodies">Bodies</a>
+      <a href="#does">What it does</a>
+      <a href="#works-for-boop">Works FOR BOOP</a>
+      <a href="#future">Future</a>
+      <a href="#workshop">Workshop</a>
+    </nav>
+    <a class="source-pill" href="https://github.com/ryankemble2006-web/boop" rel="noreferrer">Source ↗</a>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Local first. Human in charge.</p>
+        <h1 id="hero-title" aria-label="BOOP works FOR you.">BOOP works <em>FOR</em> you.</h1>
+        <p class="lede">A smart-home and media puppet that lives in the human world with us. BOOP turns useful machinery into something you can look at, talk to and understand, without pretending the puppet is a person.</p>
+        <div class="hero-actions">
+          <a class="button button-dark" href="#meet">Meet BOOP</a>
+          <a class="button button-light" href="#workshop">See the workshop</a>
+        </div>
+        <p class="microcopy">No account here. No tracking here. No cookie theatre.</p>
+      </div>
+
+      <div class="hero-puppet" aria-label="BOOP's approved eyes">
+        <div class="eyes-orbit" data-eye-stage>
+          <img class="approved-eyes" data-eyes src="assets/boop-eyes.png" width="1774" height="887" alt="BOOP's glossy blue eyes">
+        </div>
+        <p class="puppet-note">The actual BOOP eyes. No website redesign.</p>
+      </div>
+    </section>
+
+    <section class="ticker" aria-label="BOOP principles">
+      <div>USEFUL MACHINERY</div>
+      <div>VISIBLE STRINGS</div>
+      <div>LOCAL HOME CONTROL</div>
+      <div>ONE BOOP, MANY BODIES</div>
+    </section>
+
+    <section class="section split" id="meet" aria-labelledby="meet-title">
+      <div>
+        <p class="section-kicker">01 · Meet BOOP</p>
+        <h2 id="meet-title">A puppet, not a fake person.</h2>
+      </div>
+      <div class="copy-stack">
+        <p class="big-copy">BOOP is the visible performance of useful machinery. The eyes show attention. The voice gives the house a mouth. The hands let the puppet point at the world.</p>
+        <p>That leaves room for charm without lying about what is underneath. Home Assistant remains the local smart-home authority. BOOP adds a friendlier way to reach it, plus media control, conversation and puppetry where those make sense.</p>
+        <blockquote>“Show the performance first. Show the strings when they are useful.”</blockquote>
+      </div>
+    </section>
+
+    <section class="section" id="bodies" aria-labelledby="bodies-title">
+      <div class="section-heading">
+        <p class="section-kicker">02 · One BOOP, different bodies</p>
+        <h2 id="bodies-title">The body is where BOOP meets you.</h2>
+        <p>Today those bodies are prototypes built from hardware that already exists. Same project, different room.</p>
+      </div>
+
+      <div class="body-grid">
+        <article class="body-card body-card-wall">
+          <div class="status-chip">Current prototype</div>
+          <div class="device device-wall" aria-hidden="true">
+            <div class="device-camera"></div>
+            <div class="device-screen"><img src="assets/boop-eyes.png" alt=""></div>
+          </div>
+          <h3>Wall / tablet</h3>
+          <p>A room-facing BOOP body for voice, glanceable information and local Home Assistant control.</p>
+          <p class="fineprint">Prototyped on Android phone and tablet hardware.</p>
+        </article>
+
+        <article class="body-card body-card-phone">
+          <div class="status-chip">Current prototype</div>
+          <div class="device device-phone" aria-hidden="true">
+            <div class="device-camera"></div>
+            <div class="device-screen"><img src="assets/boop-eyes.png" alt=""></div>
+          </div>
+          <h3>Phone</h3>
+          <p>BOOP can live on a normal handset, including a minimal launcher body and notification presentation.</p>
+          <p class="fineprint">The phone is a useful body, not a tiny prison for the project.</p>
+        </article>
+
+        <article class="body-card body-card-tv">
+          <div class="status-chip">Current prototype</div>
+          <div class="device device-tv" aria-hidden="true">
+            <div class="device-screen"><img src="assets/boop-eyes.png" alt=""></div>
+            <div class="tv-foot"></div>
+          </div>
+          <h3>TV / Nvidia Shield</h3>
+          <p>A sofa-friendly BOOP body with remote-first controls, media puppetry and smart-home access.</p>
+          <p class="fineprint">Big targets. D-pad friendly. No touch screen required.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section capabilities" id="does" aria-labelledby="does-title">
+      <div class="section-heading narrow">
+        <p class="section-kicker">03 · What BOOP does</p>
+        <h2 id="does-title">Less “AI dashboard”. More “tell the room what you want”.</h2>
+      </div>
+
+      <div class="capability-grid">
+        <article>
+          <span class="cap-number">01</span>
+          <h3>Controls the home locally</h3>
+          <p>BOOP uses devices exposed through Home Assistant instead of building a second smart-home database. Basic house control is designed to stay useful without cloud chat.</p>
+        </article>
+        <article>
+          <span class="cap-number">02</span>
+          <h3>Understands the room</h3>
+          <p>Room-aware control is a safety feature as much as a convenience. BOOP should not silently grab a same-named device somewhere else.</p>
+        </article>
+        <article>
+          <span class="cap-number">03</span>
+          <h3>Handles media</h3>
+          <p>Current TV work explores playback control, now-playing presentation and BOOP puppetry without turning the living room into another settings maze.</p>
+        </article>
+        <article>
+          <span class="cap-number">04</span>
+          <h3>Speaks and listens</h3>
+          <p>Voice and wake-name work are part of the real prototypes. Experimental local natural voices are still being hardware-tested, so this site does not call them finished.</p>
+        </article>
+        <article>
+          <span class="cap-number">05</span>
+          <h3>Presents notifications</h3>
+          <p>BOOP can mirror notification cues while Android remains the authority for the original notification and its tap/dismiss behaviour.</p>
+        </article>
+        <article>
+          <span class="cap-number">06</span>
+          <h3>Stays a puppet</h3>
+          <p>The eyes, hands, movement and timing are there to make machinery readable and enjoyable, not to manufacture emotional dependence.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="media-stage" aria-labelledby="media-title">
+      <div class="media-copy">
+        <p class="section-kicker section-kicker-light">BOOP + media</p>
+        <h2 id="media-title">Sometimes the interface should just put its headphones on.</h2>
+        <p>The Shield work treats media as a place for puppetry: BOOP can react to playback and occupy the screen without needing to become the thing you are watching.</p>
+      </div>
+      <img src="assets/boop-headphones.png" width="1536" height="1024" alt="BOOP eyes wearing black headphones">
+    </section>
+
+    <section class="section works" id="works-for-boop" aria-labelledby="works-title">
+      <div class="works-badge" aria-hidden="true">
+        <span>Works</span>
+        <strong>FOR</strong>
+        <span>BOOP</span>
+      </div>
+      <div class="works-copy">
+        <p class="section-kicker">04 · Open compatibility</p>
+        <h2 id="works-title">Works FOR BOOP.</h2>
+        <p class="big-copy">Not “Made for a walled garden.” Not “buy the matching light bulb.” If Home Assistant exposes a device to BOOP, the ambition is that BOOP can work with it.</p>
+        <p><strong>Works FOR BOOP</strong> is a compatibility idea for normal devices, makers and accessories. It is not a claim that any company shown elsewhere has partnered with BOOP.</p>
+      </div>
+    </section>
+
+    <section class="privacy-band" id="privacy" aria-labelledby="privacy-title">
+      <div>
+        <p class="section-kicker section-kicker-light">05 · Privacy with visible strings</p>
+        <h2 id="privacy-title">The useful bits should not disappear when the internet sulks.</h2>
+      </div>
+      <div class="privacy-points">
+        <article>
+          <h3>Local authority</h3>
+          <p>Home Assistant remains the house brain for local control. BOOP does not need to duplicate your rooms and devices into another proprietary cloud.</p>
+        </article>
+        <article>
+          <h3>One microphone owner</h3>
+          <p>The current Android architecture deliberately keeps one controller-owned microphone stream rather than stacking competing listeners.</p>
+        </article>
+        <article>
+          <h3>Physical cues matter</h3>
+          <p>Longer-term BOOP hardware explores deliberately obvious privacy controls: things you can see, hear and physically understand.</p>
+        </article>
+      </div>
+      <a class="text-link light-link" href="privacy.html">Read the plain-English privacy page →</a>
+    </section>
+
+    <section class="section accessibility" id="accessibility" aria-labelledby="accessibility-title">
+      <div class="hands-wrap" aria-hidden="true">
+        <img src="assets/boop-yellow-hands.png" width="1774" height="887" alt="">
+      </div>
+      <div class="access-copy">
+        <p class="section-kicker">06 · Built for the human world</p>
+        <h2 id="accessibility-title">Accessibility is normal product quality.</h2>
+        <p class="big-copy">Big controls. Clear focus. Remote navigation. Plain English. BOOP should meet people where they are instead of inventing an “easy mode” and quietly making it worse.</p>
+        <p>The yellow hands also point toward a bigger ambition: first-class sign-language interaction, including BSL and ASL, using an interface that can show where attention is and whether the puppet can actually see the signer.</p>
+        <p class="fineprint">Sign-language interaction is a design ambition, not a finished shipping feature.</p>
+      </div>
+    </section>
+
+    <section class="section future" id="future" aria-labelledby="future-title">
+      <div class="section-heading">
+        <p class="section-kicker">07 · Future bodies</p>
+        <h2 id="future-title">The software prototypes are rehearsal rooms.</h2>
+        <p>These are <strong>Concept</strong> directions, not products for sale. They exist to keep the physical BOOP destination visible while the useful bits are proved on real devices.</p>
+      </div>
+
+      <div class="concept-grid">
+        <article class="concept-card concept-wall">
+          <span class="concept-label">Concept</span>
+          <div class="concept-shape wall-shape"><span></span><span></span></div>
+          <h3>BOOP Wall</h3>
+          <p>A dedicated room body: non-touch-first, glanceable and expressive, with the eyes doing the social work.</p>
+        </article>
+        <article class="concept-card concept-speaker">
+          <span class="concept-label">Concept</span>
+          <div class="concept-shape speaker-shape"><span></span><span></span></div>
+          <h3>BOOP Speaker</h3>
+          <p>A small portable speaker body with visible privacy theatre and a face that can survive the human world.</p>
+        </article>
+        <article class="concept-card concept-robot">
+          <span class="concept-label">Concept</span>
+          <div class="concept-shape robot-shape"><span class="robot-eye"></span><span class="robot-eye"></span><i></i></div>
+          <h3>BOOP Robot</h3>
+          <p>The original destination: a cute, ownable, rolling smart speaker with physical manners and repairable hardware.</p>
+        </article>
+        <article class="concept-card concept-open">
+          <span class="concept-label">Concept</span>
+          <div class="open-mark">+</div>
+          <h3>Open accessories</h3>
+          <p>Room for brands, small makers, kids and tinkerers to add things without BOOP demanding ownership of the entire ecosystem.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="workshop" id="workshop" aria-labelledby="workshop-title">
+      <div class="workshop-title-wrap">
+        <p class="section-kicker">08 · The workshop</p>
+        <h2 id="workshop-title">Have a go. Write it down. Repeat.</h2>
+      </div>
+      <div class="workshop-copy">
+        <p>BOOP is being built in public through prototypes, source code, physical device tests and a slightly unreasonable number of experiments. Green automated tests are useful. A real device still gets the final vote.</p>
+        <div class="workshop-cards">
+          <div><strong>Current</strong><span>Android / Wall / tablet / TV prototypes</span></div>
+          <div><strong>Local spine</strong><span>Home Assistant</span></div>
+          <div><strong>Project rule</strong><span>Preserve what works. Test what changes.</span></div>
+        </div>
+        <a class="button button-dark" href="https://github.com/ryankemble2006-web/boop" rel="noreferrer">Open the GitHub workshop ↗</a>
+        <p class="fineprint">No automatic “latest APK” button here. A build can be CI-green and still be waiting for physical acceptance.</p>
+      </div>
+    </section>
+
+    <section class="last-look" aria-label="BOOP closing message">
+      <div class="last-eyes"><img src="assets/boop-eyes.png" width="1774" height="887" alt="BOOP looking over the bottom of the page"></div>
+      <p>Useful. Open. Ownable.<br><strong>Still BOOP.</strong></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="wordmark footer-wordmark" href="#top">BOOP<span>.</span></a>
+    <p>BOOP is an independent prototype project.</p>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/ryankemble2006-web/boop" rel="noreferrer">Source ↗</a>
+    </div>
+  </footer>
+</body>
+</html>
