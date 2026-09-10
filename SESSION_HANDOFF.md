@@ -1,3 +1,18 @@
+## v107 signed and locally verified; physical install pending
+
+Source2c9429e469781a21a177ab4a853e5da6a20322f6; GitHub run34486358015 SUCCESS,
+artifact10155974086. 217 Unified +58 Shield tests passed, zero failures/errors/skips.
+Local apksigner/aapt/hash verification confirms com.boop.alpha1, version107 /
+1.2.107-shield-voice-connection and permanent signer
+f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+APK SHA256 2f8c9905374e1757ed47a06c880bf7e964622b065485ac06ea54a74c5a958b7b.
+ZIP SHA256 3e2c76e96ce8f45eb0d2bf90c87a53f9286197a087d6f2a38d8a707c728e3dd5.
+Delivered BOOP-v107-shield-voice-connection.apk. Not installed or physically tested.
+Shield remains v106; successful remote commands remain unverified. Review's stale
+pairing return issue was fixed by finishing voice after opening Shield dashboard.
+Next: approved exact-artifact installation and coordinated remote-command test.
+No GitHub visual tests. Build monitor paused after artifact verification/delivery.
+
 ## v107 candidate: Shield remote voice reuses existing house pairing
 
 Ryan reported v106 opens microphone/BOOP but play Elton John and turn on candle
