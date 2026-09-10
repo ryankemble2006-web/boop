@@ -151,3 +151,4 @@ python3 scripts/patch-unified-dev-menu.py
 
 python3 scripts/patch-canonical-integration.py
 python3 scripts/patch-canonical-room.py
+python3 scripts/build-deezer-bridge.py

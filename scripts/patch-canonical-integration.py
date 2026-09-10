@@ -32,7 +32,7 @@ text=once(text,'            String colour = LightColourCommandParser.parseColour
 
             String colour = LightColourCommandParser.parseColour(text);''')
 ha_client.write_text(text)
-for test in ['DeezerArtistClientTest.java','DeezerNativeTest.java']:
+for test in ['DeezerArtistClientTest.java','DeezerNativeTest.java','DeezerDirectTest.java']:
     shutil.copy2('unified/'+test,ROOT/'app/src/test/java/com/boop/alpha1'/test)
 
 manifest=ROOT/'app/src/main/AndroidManifest.xml'

@@ -20,7 +20,7 @@ public class DeezerArtistClientTest {
         int catalogueCalls=0;
         BoopRoom room=ROOM;
         boolean changeRoomAfterOpen;
-        DeezerNativeTest.Rig nativeRig;
+        DeezerDirectTest.Rig nativeRig;
         public String request(String url,String token,JSONObject body) throws Exception {
             if(url.startsWith("https://api.deezer.com/")) {
                 assertNull("HA token must never reach catalogue",token); catalogueCalls++;
@@ -55,17 +55,16 @@ public class DeezerArtistClientTest {
         }
     }
     @Test public void verifiedNativeRouteReceivesArtist() throws Exception {
-        Rig r=new Rig(); r.nativeRig=new DeezerNativeTest.Rig();
-        r.nativeRig.title="Britney Spears"; r.nativeRig.label="Play top tracks";
-        r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerNativeTest.MAC));
+        Rig r=new Rig(); r.nativeRig=new DeezerDirectTest.Rig();
+        r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerDirectTest.MAC));
         assertEquals("Requested Britney Spears on Screen.",LocalReply.forOutcome(r.run("play Britney Spears")));
-        assertEquals(1,r.nativeRig.taps()); assertTrue(r.effects.isEmpty());
+        assertEquals(1,r.nativeRig.requests()); assertTrue(r.effects.isEmpty());
     }
     @Test public void bareMusicUsesNativeFlowWithoutCatalogue() throws Exception {
-        Rig r=new Rig(); r.nativeRig=new DeezerNativeTest.Rig();
-        r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerNativeTest.MAC));
+        Rig r=new Rig(); r.nativeRig=new DeezerDirectTest.Rig();
+        r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerDirectTest.MAC));
         assertEquals("Requested Deezer Flow on Screen.",LocalReply.forOutcome(r.run("play music")));
-        assertEquals(0,r.catalogueCalls); assertEquals(1,r.nativeRig.taps());
+        assertEquals(0,r.catalogueCalls); assertEquals(1,r.nativeRig.requests());
     }
     @Test public void bareArtistRequiresVerifiedNativeControl() throws Exception {
         Rig r=new Rig(); CommandOutcome outcome=r.run("play Britney Spears");

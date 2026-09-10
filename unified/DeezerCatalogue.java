@@ -37,19 +37,11 @@ final class DeezerCatalogue {
         for(int i=0;i<tracks.length();i++) {
             JSONObject song=tracks.optJSONObject(i);
             if(song==null || song.optLong("id")<=0 || !song.optBoolean("readable",true) || !normal(title).equals(normal(song.optString("title")))) continue;
-            JSONObject performer=song.optJSONObject("artist"), album=song.optJSONObject("album");
-            if(performer==null || album==null || album.optLong("id")<=0) continue;
+            JSONObject performer=song.optJSONObject("artist");
+            if(performer==null) continue;
             String artistName=performer.optString("name");
             if(artistName.isEmpty() || (!requestedArtist.isEmpty() && !normal(requestedArtist).equals(normal(artistName)))) continue;
-            JSONObject detail=get(http,"album/"+album.getLong("id"));
-            JSONObject trackList=detail.optJSONObject("tracks");
-            JSONArray rows=trackList==null?null:trackList.optJSONArray("data");
-            if(rows==null || detail.optString("title").isEmpty()) continue;
-            for(int j=0;j<rows.length();j++) {
-                JSONObject row=rows.optJSONObject(j);
-                if(row!=null && row.optLong("id")==song.getLong("id") && !row.optString("title").isEmpty())
-                    return new Selection(song.getString("title")+" by "+artistName,"https://www.deezer.com/album/"+album.getLong("id"),detail.getString("title"),row.getString("title"),false,true);
-            }
+            return new Selection(song.getString("title")+" by "+artistName,"https://www.deezer.com/track/"+song.getLong("id"),"",song.getString("title"),false,true);
         }
         return null;
     }

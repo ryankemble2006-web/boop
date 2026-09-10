@@ -1,8 +1,70 @@
-# BOOP canonical rebuild - signed v96 candidate
+# BOOP canonical rebuild - v97 direct Deezer candidate
 
-Updated 2026-09-10. Owning branch: `boop-canonical-rebuild`.
-Worktree: `C:/Users/ryank/Documents/Codex/BOOP/.worktrees/boop-canonical-rebuild`.
-Canonical accepted branch remains `boop-unified`; this candidate is not merged.
+Updated 2026-09-10. Branch `boop-canonical-rebuild`; canonical `boop-unified`
+and the protected v91 voice checkpoint remain unchanged. Candidate is unmerged.
+
+## Current v97 state
+
+Version 97 / `1.2.97-direct-deezer-playback`, package `com.boop.alpha1`.
+Implemented and locally tested; signed GitHub build and exact APK acceptance pending.
+Use the live application commit containing this entry; final source/run/artifact
+receipt will follow the signed build. Do not deliver v96 as this fix.
+
+Ryan reports v96 commands work, but force-closing/reopening Deezer and its delay
+are too clumsy. He explicitly said keeping music playing during navigation feels
+acceptable. This feedback does not create a blanket v96 physical checkpoint.
+
+v97 replaces UI navigation with Deezer's native MediaController Play-from-URI.
+Public catalogue resolution supplies an official artist or exact track ID;
+`play music` uses `https://www.deezer.com/flow` without a catalogue request.
+There is no force-stop, pre-pause, hierarchy dump, album scrolling or fixed
+startup sleep in the music command path. Existing basic transport and voices stay.
+
+The same configured-room/exposed-TV/unique-ADB/exact-MAC checks precede control.
+A small Java helper is compiled to DEX from repository source during materialization.
+Its generated payload is sent through the already-authorized local HA ADB action,
+written to a unique private temporary shell file, SHA256 checked, made read-only,
+executed under the actual com.android.shell context, then deleted by an exit trap.
+No installed app/service, provider secrets, account changes, root, permission grants,
+new microphone or permanent device configuration. No private provider APIs.
+
+The helper selects exactly one native Deezer media session and requires advertised
+Play-from-URI support. It reports requested, not acoustically verified. Cold preparation
+can launch Deezer only if its session is absent and polls boundedly for URI readiness;
+it never plays. The host rechecks room/epoch after preparation before separate playback.
+Unsupported controls, ambiguous sessions, stale output or changed room fail closed.
+Newer Android needs process-local media-framework initialization, verified on API36;
+this changes no system setting and does not suppress accessibility services.
+
+## v97 verification so far
+
+- 25 focused local music JVM tests pass after observed RED-to-GREEN regressions.
+- Source-built helper compiles/D8-dexes. Actual generated payload executes on the
+  owned API36 Pixel emulator, returns needs-prepare with Deezer absent, and its
+  temporary file is confirmed removed. Initial media-framework bootstrap failure
+  was diagnosed and fixed, then this probe passed.
+- Read-only code review found two cold-path issues; both were repaired and reviewed.
+- Authorized live Shield capability probes used the genuine shell context and
+  standard MediaController transport: native Flow selected Bryan Kearney, direct
+  Britney artist selected ...Baby One More Time, and exact track URI selected
+  Bohemian Rhapsody. The Deezer process stayed alive. These prove the native control
+  capability, not the final v97 Pixel-to-HA APK end-to-end or timing acceptance.
+- Earlier warm browsing-only experiments were superseded: they retained music but
+  could hang Home on repeat Flow. They are not the shipped design.
+- Controls were explicitly returned to Ryan, temporary Shield probes removed,
+  visible Queen page restored and Bohemian Rhapsody left playing. Do not resume
+  audible device tests without coordinating an uninterrupted window.
+
+Next: complete signed nonvisual GitHub build, verify exact APK/source/hash/signer,
+inspect the owned emulator manually, deliver v97 for Ryan's Pixel test. No GitHub
+visual tests, automatic Pixel install, canonical merge or new physical checkpoint.
+
+Reference for process-local media initialization:
+https://android.googlesource.com/platform/frameworks/base/+/master/media/java/android/media/MediaFrameworkPlatformInitializer.java
+
+## Previous v96 build and preserved provenance
+
+The following receipts describe the prior candidate, not the v97 implementation.
 
 ## Exact signed artifact
 
@@ -119,11 +181,9 @@ checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted`, APK SHA256
 Preserve exact v91 Desktop/server TEST artifacts and v88 rollback
 `f5f086fc4f67712b5746be067aff852331299bb0`. No canonical merge or checkpoint replacement.
 
-Next: Ryan installs the signed v96 candidate on the Pixel, retains Living Room and
-tests `play Britney Spears`, `play Queen`, repeat/switch, `play Bohemian Rhapsody`,
-then `play music`. Give each request time to finish. Pixel-to-HA execution, acoustic
-acceptance, new-room/device discovery, remote microphone and broader physical checks
-remain pending. A signed build or manual emulator pass is not physical acceptance.
+Ryan subsequently reported v96 commands working but rejected the restart/delay;
+see the current v97 entry above. Broader room/device, microphone and physical
+acceptance remain pending. No prior protected checkpoint was replaced.
 
 Fetch explicit owning-branch and main refspecs before continuing; this repository's
 fetch configuration omits some branches. Live main at verification was

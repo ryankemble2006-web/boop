@@ -69,6 +69,15 @@ jobs:
           print('Pinned source provenance retained. Visual acceptance is manual.')
           PY
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+
+      - name: Install Android build tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
       - name: Materialize one APK
         run: bash scripts/materialize-unified.sh
 
@@ -83,15 +92,6 @@ jobs:
 
       - name: Check seamless wake-command handoff
         run: python -m pytest -q tests/test_unified_wake_handoff_contract.py
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools'
-          log-accepted-android-sdk-licenses: false
-
-      - name: Install Android build tools
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4

@@ -51,3 +51,16 @@ Final v96 source 8a6c2bdb4a01149f86ce464505b2d354d1dde60f passed run34447810258
 (200 Unified, 58 Shield tests); signed APK and manual Pixel emulator checks complete.
 Native track/Flow/artist component checks observed playing indicators on the Shield.
 Pixel end-to-end and acoustic acceptance remain pending; candidate stays unmerged.
+
+
+## v97 supersedes v96 screen navigation
+
+Ryan reports working v96 commands but unacceptable force-close/restart delay.
+He accepts navigation while existing music keeps playing. Standard Deezer native
+MediaController Play-from-URI was physically observed for Flow, artist and exact
+song links without killing the process. Replace screen walking with the short-lived
+source-built ADB media helper; keep identity/room/exposure/nonce/epoch guards.
+Cold preparation never plays; recheck the request before dispatch. No provider
+secrets, installed daemon, new permissions, changed eyes or visual CI. Local focused
+tests and generated-helper emulator probe passed; signed build/APK acceptance pending.
+See current handoff for exact verification levels and preserved artifacts.
