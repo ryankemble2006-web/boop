@@ -1,5 +1,9 @@
 # BOOP idle blink cleanup status
 
+Current successor: ../canonical-eyes/ contains the shared 26-motion code library
+and signed/emulator-tested lab v5. Read its VERIFICATION.md. The notes below
+describe the preserved earlier blink workshop, not the latest runtime status.
+
 - Branch: `animation-idle-blink-cleanup`.
 - Workspace: `animation-lab/idle-blink/` only, plus its dedicated GitHub Actions workflow.
 - Source art is copied unchanged from Git blob `b2112ec156668cc165747d8778a8e564e268b184`.

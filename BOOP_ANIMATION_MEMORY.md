@@ -22,10 +22,18 @@ Shield occlusion regions; it does not reconstruct hidden pixels. Ryan must
 review edges. If wanted artwork is cut, obtain original editable layers rather
 than painting replacements. Never mutate the eye master to solve accessories.
 
-Runtime evidence applies to preserved Animation Lab v0.4 only. New candidate
-has not been installed, physically tested, or accepted. Source/previews/checksums
-are engineering deliverables, not visual approval. Media pure Java motion is
-reusable; other family source packages still need canonical-rig/Android adapters.
+Current runtime evidence: shared code library in animation-lab/canonical-eyes,
+26 lid/gaze clips, signed lab v5 source 73dfa160649d9462839db7e47cbef939f8ec894f.
+Actions 34435432070/artifact 10135991882; APK SHA-256
+7841fb99b4fc42449d361c849e3368030b35af3350ef3008708e4cce34271f69.
+Installed and exercised on Android TV API36 emulator only. No physical test or
+visual acceptance. Ryan liked the prior v3 MP4; this does not accept the new rig.
+Smooth interpolated lid lookup and fractional shader coverage replace the old
+integer-edge deformation. Runtime uses original texture material, not PNG frame
+playback or whole-image jiggle. All eye clips share one renderer/controller.
+Accessories and production Unified integration remain outside this pass.
+New recovery/checkpoints live under animation-work/library-v1; the earlier full
+workshop archive remains intact and contains the historical references.
 
 Local recovery root: C:/Users/ryank/Documents/Codex/BOOP/animation-work.
 Detailed receipts: notes/RECOVERY.md, reference-apks/INDEX.json,

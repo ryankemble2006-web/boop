@@ -9,8 +9,11 @@ with brand-new animations allowed, explicitly "code not jiggle a png".
 
 `animation-lab/canonical-eyes/` now contains the shared four-channel state engine,
 26-clip catalogue, source-texture GLES2 shader and existing Animation Lab v5 host.
-Local state tests passed 30,636 checks. Android compile/shader/device evidence is
-pending until the focused build/test receipts are recorded. No new artwork or
+Local state tests passed 30,636 checks. Source `73dfa160649d9462839db7e47cbef939f8ec894f`
+built/signed in Actions run 34435432070 (artifact 10135991882). All 26 clips ran
+in the Android TV API36 emulator, with 18 extra state switches and Back/Home
+resume; renderer initialized without a logged failure. See canonical-eyes/VERIFICATION.md.
+No new artwork or
 production app change. The concurrently owned canonical rebuild checkout is
 untouched. See canonical-eyes/DESIGN.md and README.md.
 
@@ -40,7 +43,7 @@ cold start, Back/reopen, 12 blink triggers and Wake/Listening/Think/Stop complet
 with the same process PID. This does not test the new blink inside Android.
 Logs/video stay local; no automated visual acceptance or physical test occurred.
 
-Next: Ryan reviews v3 face motion and headphone alpha cuts; refine if requested,
+Next: Ryan reviews the 26-motion runtime MP4 and headphone alpha cuts; refine if requested,
 then integrate through the approved canonical app/lab path and test that exact
 candidate. Existing full canonical rebuild remains separately gated on natural
 voice acceptance. Latest usable physical rollback is v88

@@ -4,10 +4,12 @@
 
 Owning branch: `animation-idle-blink-cleanup`; canonical application remains
 `boop-unified`. Read SESSION_HANDOFF.md and BOOP_ANIMATION_MEMORY.md.
-Canonical source recovered; blink v3 and headphone alpha cleanup are review
-candidates. Fourteen animation-family source exports and nine reference APKs
-are preserved locally. Existing Animation Lab emulator smoke passed; new blink
-is not yet integrated into an APK. Ryan visual acceptance remains pending.
+Canonical source recovered; 26 shared code-driven eye motions now run in the
+signed Animation Lab v5 APK, built from 73dfa160649d9462839db7e47cbef939f8ec894f.
+State tests and local Android TV runtime checks passed; see
+animation-lab/canonical-eyes/VERIFICATION.md. Ryan visual acceptance remains
+pending. Unified is untouched. Fourteen historical family exports, nine reference
+APKs, v2/v3 blink checkpoints and headphone alpha cleanup remain preserved locally.
 The old cross-project map below is historical, not current routing authority.
 
 ## Current cross-project status — 2026-09-06
