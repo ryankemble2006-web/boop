@@ -72,6 +72,11 @@ public final class BoopProfileActivity extends Activity {
         startActivity(new Intent(this,UnifiedEntryActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK)); finish();
     }
     private void room() {
+        if (BoopDeviceProfile.resolve(this) == BoopDeviceProfile.Mode.SHIELD) {
+            startActivity(new Intent().setClassName(getPackageName(),"com.boop.shieldoverlay.BoopHomeActivity")
+                    .putExtra("boop_choose_room",true));
+            return;
+        }
         SharedPreferences prefs = getSharedPreferences("boop_unified",MODE_PRIVATE);
         EditText name = new EditText(this); name.setSingleLine(true); name.setText(prefs.getString("room_name","Living Room"));
         new AlertDialog.Builder(this).setTitle("Room name in Home Assistant").setView(name)

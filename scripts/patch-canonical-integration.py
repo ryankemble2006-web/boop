@@ -78,6 +78,9 @@ wall.write_text(text)
 ha=SHIELD/'BoopHomeActivity.java'
 text=ha.read_text()
 text=once(text,'        BoopOverlayController.show(this);','        // Canonical media ownership decides whether a corner is visible.')
+text=once(text,'        boolean hasRoom = preferences != null && preferences.hasSelectedRoom();','''        boolean chooseRoom = getIntent().getBooleanExtra("boop_choose_room",false);
+        getIntent().removeExtra("boop_choose_room");
+        boolean hasRoom = !chooseRoom && preferences != null && preferences.hasSelectedRoom();''')
 ha.write_text(text)
 
 # Phone launcher gets an always available hardware MENU and long-Back-free settings entry.

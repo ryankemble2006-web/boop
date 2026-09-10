@@ -1,3 +1,20 @@
+## v104 also repairs the Shield room shortcut
+
+During the physical room audit, Ryan confirmed the previously saved room was an
+earlier test and requested Living Room. The profile screen's room-name Save failed:
+it required the separate Wall connection despite a working Shield HA session.
+No credentials were copied. The existing Shield HA controls Settings > Room picker
+successfully restored Living Room, verified with canonical ID living_room.
+Home returned afterward; no playback transport command or permission change.
+
+The Shield profile shortcut now opens that existing authenticated picker after
+its normal pairing gate, consuming a one-shot intent extra. Existing room remains
+saved until the user chooses another. Wall/phone room entry stays unchanged.
+This is a small route repair, not a new authentication system. Manual physical
+reproduction supplies the failure evidence; final candidate shortcut check pending.
+The first name-only v104 run 34474085300 at 5ea30080169ef155e6e3f843dedbe6a0a213a6d5
+succeeded but was not delivered or installed; the combined build supersedes it.
+
 ## v104 room/device follow-up: resolver repair, build pending
 
 Ryan reported v103 close player worked perfectly, instantly and almost invisibly,
