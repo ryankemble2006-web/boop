@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f2">
+  <meta name="description" content="Plain-English privacy notes for the BOOP public website and prototype project.">
+  <title>Privacy | BOOP</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="plain-page">
+  <header class="site-header">
+    <a class="wordmark" href="index.html">BOOP<span>.</span></a>
+    <a class="source-pill" href="index.html">← Home</a>
+  </header>
+
+  <main class="plain-main">
+    <p class="section-kicker">Privacy</p>
+    <h1>Plain English, please.</h1>
+    <p class="lede">This little website does not need an account, analytics package, advertising tracker or cookie banner because it does not install any of those things.</p>
+
+    <section class="plain-block">
+      <h2>This website</h2>
+      <p>The site itself is static HTML, CSS, JavaScript and images. It does not contain sign-in, forms, analytics, advertising scripts or third-party embedded content. Your web host may still keep normal server logs such as IP address, requested path, browser details and timestamps for security and operations. Those logs are controlled by the hosting provider, not by code on this page.</p>
+    </section>
+
+    <section class="plain-block">
+      <h2>The BOOP prototypes</h2>
+      <p>BOOP's current product direction is local-first. Home Assistant remains the local authority for exposed smart-home devices, rooms and automations. Basic home control is not supposed to depend on a cloud conversation service.</p>
+      <p>Voice, notification and conversation features can require Android permissions or configured services. The project deliberately keeps those permissions scoped to the feature that needs them and avoids inventing extra authority just because it would be convenient.</p>
+    </section>
+
+    <section class="plain-block">
+      <h2>Natural voice work</h2>
+      <p>BOOP is experimenting with an optional local natural-voice pack. The design downloads a pinned model package once, verifies it, stores it in app-private storage and can use it offline afterwards. That playback path is still under physical hardware testing, so it is described as experimental rather than finished.</p>
+    </section>
+
+    <section class="plain-block">
+      <h2>Physical privacy direction</h2>
+      <p>Future BOOP hardware explores privacy controls that are physically obvious: shutters, covers and cues you can see or hear rather than a tiny software indicator buried three menus deep. Those are design directions, not promises about hardware currently for sale.</p>
+    </section>
+
+    <p class="plain-end"><a class="button button-dark" href="index.html">Back to BOOP</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <a class="wordmark footer-wordmark" href="index.html">BOOP<span>.</span></a>
+    <p>No cookie banner was harmed in the making of this page.</p>
+    <div class="footer-links"><a href="https://github.com/ryankemble2006-web/boop" rel="noreferrer">Source ↗</a></div>
+  </footer>
+</body>
+</html>
