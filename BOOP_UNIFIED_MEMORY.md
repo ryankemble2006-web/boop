@@ -1,3 +1,9 @@
+## v110 installed with approval; private timing test pending
+
+User approved the verified v110 APK. SHA256 matched the artifact receipt;
+adb install -r succeeded and installed version110 / 1.2.110-control-timing was
+verified. No new permissions or assistant-role changes. Physical button-response
+acceptance remains pending. v108 functional rollback remains preserved.
 ## v110 artifact verified; timing test pending
 
 Source 13a54218808811871845537057a8c3b819712e6f; GitHub run 34498269821
