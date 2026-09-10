@@ -58,7 +58,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
     private void select(String id){
         freeze=-1;EyeMotion.Clip c=EyeCatalogue.find(id);
         controller.select(c,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
-        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v5 • Ryan review");
+        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v6 • Ryan review");
         Log.i("BOOPEyes","clip="+c.id+" time="+(long)clock);
     }
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);readIntent(intent);}

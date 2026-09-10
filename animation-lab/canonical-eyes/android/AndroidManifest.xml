@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.boop.animationlab" android:versionCode="5" android:versionName="0.5-canonical-eye-code">
+    package="com.boop.animationlab" android:versionCode="6" android:versionName="0.6-lid-corner-repair">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <application android:label="BOOP Animation Lab" android:allowBackup="false"

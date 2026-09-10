@@ -50,9 +50,9 @@ jobs:
         run: bash animation-lab/canonical-eyes/tools/build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Canonical-Eye-Lab-v5
+          name: BOOP-Canonical-Eye-Lab-v6
           path: |
-            work/canonical-eyes-build/BOOP-Animation-Lab-v5.apk
+            work/canonical-eyes-build/BOOP-Animation-Lab-v6.apk
             work/canonical-eyes-build/apk-sha256.txt
             work/canonical-eyes-build/built-commit.txt
             work/canonical-eyes-build/badging.txt
