@@ -1,3 +1,25 @@
+## v101 unified Home workaround candidate
+
+Ryan approved wiring the existing Home hack into Unified after the stock HOME
+preference was ignored by Shield firmware. Version 101 registers a distinct optional
+BOOP unified Home button accessibility service, reusing the imported implementation
+and minimal window-state-only configuration. No content retrieval, key interception,
+gestures, microphone, automatic grant, or stock-launcher disabling is added.
+
+The app adapter checks the current profile before reconnect, events and launch, and
+routes through UnifiedEntryActivity HOME so profile/media initialization is retained.
+The once-per-boot reconnect guard and 350ms foreground debounce remain. Only stock
+TV/Leanback Home triggers replacement; native Deezer and Cast windows do not.
+Shield profile settings provides Home button setup explaining how to turn off the
+old override before enabling the unified one, retaining Cast visibility.
+
+Registration regression failed before implementation and passes afterward. Shared
+state and Home policy checks pass locally, including inactive profile, same-boot
+reconnect, next boot, unknown boot, stock Home, other apps and own package.
+Signed GitHub build and exact-APK emulator verification remain pending. No physical
+install or accessibility migration has occurred. Existing v100 Cast result and v23
+recovery remain unchanged; physical unified Home and authenticated HA Back pending.
+
 ## Approved physical Home preference test: firmware override
 
 Ryan explicitly approved switching Shield Home to unified BOOP while retaining v23.

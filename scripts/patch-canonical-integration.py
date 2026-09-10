@@ -22,7 +22,7 @@ shutil.copytree('unified/shield-home/src/main/res',home/'src/main/res',dirs_exis
 shutil.copy2('unified/shield-home-lib.gradle',home/'build.gradle')
 shutil.copy2('unified/shield-home-manifest.xml',home/'src/main/AndroidManifest.xml')
 with (ROOT/'settings.gradle').open('a') as file: file.write("\ninclude ':shield-home-lib'\n")
-for filename in ['BoopProfileActivity.java','BoopLocalMedia.java','DeezerArtistClient.java','DeezerCatalogue.java','DeezerNativeController.java']:
+for filename in ['BoopHomeOverrideService.java','BoopProfileActivity.java','BoopLocalMedia.java','DeezerArtistClient.java','DeezerCatalogue.java','DeezerNativeController.java']:
     shutil.copy2(Path('unified')/filename,MAIN/filename)
 
 ha_client=MAIN/'HomeAssistantClient.java'

@@ -17,5 +17,10 @@
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/boop_cast_visibility" />
         </service>
+        <service android:name="com.boop.alpha1.BoopHomeOverrideService" android:label="@string/boop_unified_home_label"
+            android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/boop_home_override_service" />
+        </service>
     </application>
 </manifest>

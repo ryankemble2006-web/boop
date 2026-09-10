@@ -7,6 +7,14 @@ final class HomeOverridePolicy {
 
     private HomeOverridePolicy() {}
 
+    static boolean shouldRearmOnConnect(boolean shieldProfile, int currentBoot, int lastRearmedBoot) {
+        return shieldProfile && shouldRearmOnConnect(currentBoot, lastRearmedBoot);
+    }
+
+    static boolean shouldReplaceForeground(boolean shieldProfile, String foregroundPackage, String ownPackage) {
+        return shieldProfile && shouldReplaceForeground(foregroundPackage, ownPackage);
+    }
+
     static boolean shouldRearmOnConnect(int currentBoot, int lastRearmedBoot) {
         return currentBoot >= 0 && currentBoot != lastRearmedBoot;
     }
