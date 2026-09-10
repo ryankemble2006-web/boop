@@ -1,3 +1,37 @@
+## Shield assistant assignment trial failed: Android system restart
+
+Ryan confirmed turn off the candle succeeded through Pixel. This verifies that
+Pixel command route only; it does not validate Shield remote microphone capture.
+Ryan approved assigning BOOP to the Shield microphone button for a trial.
+Initial assistant/interactor was Google Katniss; recognizer also Katniss.
+Standard VOICE_INPUT_SETTINGS could not resolve. BOOP's existing chooser saved
+Use BOOP, but Android RequestRoleActivity rejected ASSISTANT as not requestable.
+
+Then adb cmd role add-role-holder --user 0 android.app.role.ASSISTANT com.boop.alpha1
+triggered a fatal exception in Android system_server at 13:58:47 device local time:
+NullPointerException: class name is null, ComponentName constructor, followed by
+VoiceInteractionManagerService RoleObserver.onRoleHoldersChanged. Android/ADB
+restarted; Ryan saw the Android startup screen then Home. Do not repeat this command
+against v104. This was not a BOOP application-process crash or successful mapping.
+
+Root-cause evidence: generated boop_voice_interaction_service.xml declares a session
+service but no android:recognitionService. Android 11 AOSP RoleObserver constructs
+ComponentName(pkg, voiceInteractionServiceInfo.getRecognitionService()) without a
+null guard. The installed BOOP voice-interaction service is discoverable. A genuine
+valid recognizer integration is needed before retrying the role assignment; do not
+fill in a dummy or cross-package class merely to suppress the crash.
+Reference: aosp-mirror/platform_frameworks_base android-11.0.0_r1,
+services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionManagerService.java
+lines1564-1565. Source fetched read-only; raw logs retained privately, not published.
+
+Recovery verified: sys.boot_completed=1, ASSISTANT role and both assistant/interactor
+settings remain Google Katniss. Home override, Cast visibility, Button Mapper and
+EastEnders accessibility entries remain enabled. BOOP's local Use BOOP preference
+is selected, but that does not mean Android assigned it. No app build or permission
+grant occurred. Installed v104 and accepted close/room behavior remain separate.
+Next: repair and validate assistant recognition metadata/provider routing before a
+new explicitly coordinated physical assignment test. Remote capture is unverified.
+
 ## v104 installed: authenticated room shortcut and Back physically checked
 
 Ryan explicitly approved v104 installation and room/Back checks. Exact signed APK
