@@ -1,0 +1,18 @@
+BOOP site asset provenance
+==========================
+
+site/assets/boop-eyes.png
+  Source: boop-unified/unified/assets/boop-eyes/boopApprovedEyes.png
+  Git blob: f95375356b20297fa2b27ab8887f65d4cce5c7fd
+  SHA-256: ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22
+
+site/assets/boop-yellow-hands.png
+  Source: boop-unified/unified/assets/boop-notifications/boop-yellow-hands-approved.png
+  Git blob: d47037271bf320f4f110e3f8416f59882062afac
+  SHA-256: 26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1
+
+site/assets/boop-headphones.png
+  Source: boop-unified/shield-overlay/app/src/main/res/drawable-nodpi/boop_headphones.png
+  Git blob: b2112ec156668cc165747d8778a8e564e268b184
+
+The site must reuse these blobs without image regeneration or re-encoding.
