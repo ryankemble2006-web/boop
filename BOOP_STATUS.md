@@ -1,9 +1,30 @@
-## v102 Close player candidate: published, full build running
+## v102 Close player: signed and locally inspected, Shield install pending
 
-Source c9da55f44345733729344fef799d0b4af52204c5 is published and live-head verified
-on boop-canonical-rebuild. GitHub run 34466946285 is building the signed v102
-candidate with nonvisual checks only. The existing build monitor checks every ten
-minutes while needed. Source remains separate from subsequent documentation HEAD.
+Owning branch boop-canonical-rebuild. Final build source
+1979b6d8ddc298d068c34fa01427efac20ca4dbc; GitHub run 34467435056 SUCCESS,
+artifact 10148228337. 202 Unified +58 Shield functional tests, zero failures,
+errors or skips, plus shared/Home/close-gate checks. Review and re-review complete.
+First run 34466946285 at c9da55f44345733729344fef799d0b4af52204c5 omitted the
+five new client tests from its filter; the final source corrects that omission.
+
+Version 102 / 1.2.102-unified-close-player; package com.boop.alpha1.
+APK SHA256: 210ddb3e2be904329f4febfe0f7f6a28a8b826927045bb3ebc87b3e668700ff5.
+Final ZIP SHA256: db08932d9c74bac3465152f002152ee812e86e98a3e158f1580539ed30fb4188.
+Permanent signer: f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+Downloaded source, version, package, entry, signer and artifact hashes verified.
+Final APK is byte-identical to the first v102 APK manually inspected on the owned
+Pixel 7 Pro API36 emulator. Voice/settings and Shield Home launch were viewed.
+The emulator has no HA pairing/active media session, so Close button operation and
+Cast corner appearance are NOT validated there. Attempted private activity start
+through run-as/am was rejected by Android caller-package validation, without
+exercising the activity. No permissions were granted. WALL profile restored and
+verified, app stopped, temporary device files removed. Other emulator untouched.
+
+Delivered locally as BOOP-v102-unified-close-player.apk. Build monitor paused.
+Physical Shield still runs v101; Home/reboot acceptance and Deezer exemption remain.
+Next: obtain exact v102 install approval, then test native Deezer close, Deezer
+Beta Cast corner/close, and YouTube close on hardware with agreed playback window.
+Do not infer acceptance of the new button from the successful earlier shell probe.
 
 Ryan approved replacing the Now Playing Open player button with Close player:
 terminate native Deezer or the active Cast source, including YouTube, because
@@ -46,10 +67,10 @@ Android reported zero sessions; receiver logs confirmed app stopped, audio focus
 abandoned and all resources released. This is physical capability evidence, not
 acceptance of the new BOOP button. Temporary probe removed, music controls returned
 to Ryan. Close client tests cover unique hardware, wrong/ambiguous hardware, stale
-receipts and selection change. Full app compilation/CI and v102 emulator/device
-checks remain pending. Review identified and corrected delayed Back cancellation
+receipts and selection change. Compilation/CI and scoped emulator launch checks
+passed; physical v102 checks remain pending. Review corrected delayed Back cancellation
 and false success from lost session observation; re-review found both addressed
-and no further important defects. Full CI test execution remains pending.
+and no further important defects. Final CI results are recorded above.
 Ryan controls music outside explicitly agreed short tests; ask before interrupting.
 
 ## Deezer exemption: paused native session survives Cast interval
