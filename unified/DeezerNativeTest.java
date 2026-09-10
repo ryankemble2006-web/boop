@@ -72,13 +72,19 @@ public class DeezerNativeTest {
     @Test public void exactTrackUsesVerifiedAlbumAndNoCredentials() throws Exception {
         DeezerCatalogue.Selection s=DeezerCatalogue.resolve((url,token,body)->{
             assertNull(token); assertNull(body);
-            if(url.contains("search/artist")) return "{\"data\":[]}";
+            if(url.contains("search/artist")) return "{\"data\":[{\"id\":279863,\"name\":\"Bohemian Rhapsody\"}]}";
             if(url.contains("search/track")) return "{\"data\":[{\"id\":7,\"title\":\"Bohemian Rhapsody\",\"artist\":{\"name\":\"Queen\"},\"album\":{\"id\":9}}]}";
             return "{\"title\":\"A Night At The Opera\",\"tracks\":{\"data\":[{\"id\":7,\"title\":\"Bohemian Rhapsody\"}]}}";
-        },MediaRequest.parse("play Bohemian Rhapsody by Queen"));
+        },MediaRequest.parse("play Bohemian Rhapsody"));
         assertNotNull(s); assertEquals("https://www.deezer.com/album/9",s.url); assertEquals("Bohemian Rhapsody by Queen",s.name);
     }
     @Test public void flowDoesNotNeedPublicCatalogue() throws Exception {
         assertTrue(DeezerCatalogue.resolve((u,t,b)->{throw new AssertionError("Flow is local");},MediaRequest.parse("play music")).flow);
+    }
+    @Test public void rankedTrackArtistDisambiguatesDuplicateArtistNames() throws Exception {
+        DeezerCatalogue.Selection s=DeezerCatalogue.resolve((u,t,b)->u.contains("search/artist")
+            ? "{\"data\":[{\"id\":1,\"name\":\"Queen\"},{\"id\":2,\"name\":\"Queen\"}]}"
+            : "{\"data\":[{\"id\":7,\"title\":\"Bohemian Rhapsody\",\"artist\":{\"id\":412,\"name\":\"Queen\"}}]}",MediaRequest.parse("play Queen"));
+        assertEquals("https://www.deezer.com/artist/412",s.url);
     }
 }

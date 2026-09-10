@@ -19,11 +19,19 @@ final class DeezerCatalogue {
         String query=request.query;
         JSONObject artists=get(http,"search/artist?q="+URLEncoder.encode(query,"UTF-8")+"&limit=25");
         JSONObject artist=DeezerArtistClient.exactArtist(artists.optJSONArray("data"),query);
-        if(artist!=null) return new Selection(artist.getString("name"),"https://www.deezer.com/artist/"+artist.getLong("id"),artist.getString("name"),"Play top tracks",false,false);
         String title=query, requestedArtist="";
         int by=query.toLowerCase(Locale.ROOT).lastIndexOf(" by ");
         if(by>0) { title=query.substring(0,by).trim(); requestedArtist=query.substring(by+4).trim(); }
         JSONArray tracks=get(http,"search/track?q="+URLEncoder.encode(query,"UTF-8")+"&limit=25").optJSONArray("data");
+        JSONObject first=tracks==null?null:tracks.optJSONObject(0);
+        JSONObject rankedArtist=first==null?null:first.optJSONObject("artist");
+        if(first!=null && !normal(title).equals(normal(first.optString("title")))
+                && rankedArtist!=null && rankedArtist.optLong("id")>0
+                && normal(query).equals(normal(rankedArtist.optString("name")))) artist=rankedArtist;
+        // A real artist can share a famous song's title. Deezer's first ranked exact
+        // song result wins that ambiguity; an artist-name search normally ranks its songs.
+        if(artist!=null && (first==null || !normal(title).equals(normal(first.optString("title")))))
+            return new Selection(artist.getString("name"),"https://www.deezer.com/artist/"+artist.getLong("id"),artist.getString("name"),"Play top tracks",false,false);
         if(tracks==null) return null;
         // Deezer's top exact title match is the default; "by <artist>" disambiguates covers.
         for(int i=0;i<tracks.length();i++) {

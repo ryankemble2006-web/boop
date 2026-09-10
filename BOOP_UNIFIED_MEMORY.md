@@ -9,8 +9,12 @@ v96 adds exact song-title lookup (optionally "by artist") through public Deezer
 metadata, native album-row selection, and "play music" -> native Deezer Flow.
 No Music Assistant streaming or alternate-speaker fallback. Public catalogue
 calls carry no HA credential. Flow and existing transport need no public lookup.
-A matching artist takes precedence; the first exact playable song result is used
-otherwise, and the spoken request includes its artist. User testing remains needed.
+Deezer's top-ranked track distinguishes an exact song title from its artist name;
+this handles the separate artist named Bohemian Rhapsody and multiple artists named
+Queen. Otherwise an exact unique artist is used, then an exact playable song. The
+spoken song request includes its artist. Live metadata resolved Bohemian Rhapsody
+to Queen's original album, Britney Spears and Queen to their expected artists,
+and play music to Flow. User end-to-end testing remains needed.
 
 The selected exposed Android TV must have one ADB candidate in the same room.
 Read-only hardware MAC matching verifies it is the same physical TV before control.
@@ -34,7 +38,7 @@ old APK privately for rollback. Repeated screen reads now keep Deezer foreground
 The same small fix is included in unified source. No artwork/permission changes.
 Reboot and single/double Home acceptance remain pending; no new physical checkpoint.
 
-Local shared-state harness and 29 music tests pass. Exact controller through the
+Local shared-state harness and 30 music tests pass. Exact controller through the
 existing ADB shell selected Bohemian Rhapsody with native playing indication and
 then Flow with native playing indication. This is component/device evidence, not
 end-to-end Pixel v96 acceptance. Full signed v96 build and emulator check pending.
