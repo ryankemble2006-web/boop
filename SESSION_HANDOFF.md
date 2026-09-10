@@ -1,3 +1,18 @@
+## v108 physical acceptance: remote media transport
+
+Ryan confirmed pause and resume through the Shield remote. Skip/next track was
+recognized during a single-track Britney selection without advancement; he then
+switched to Flow and confirmed "yup it works". This accepts actual next-track
+advancement with a Flow queue, in addition to pause/resume. The single-track result
+is not evidence of a transport failure. No code, install or device changes made.
+
+Accepted v108 source500f839ef2a2db5bd25737cb8124211ac81bdc0d, APK SHA256
+ a6ca21e716e5389946d4972c9ee85898210665776d74532040646b352740b506.
+Remote-tested scope: candle on/off, default music -> Flow, Elton artist request,
+Bohemian Rhapsody/Britney track requests, audible Android Done, pause/resume and
+Flow track advancement. Default Android voice remains the test baseline; natural
+voice last. Broader stability, other media providers and other devices not implied.
+
 ## v108 remote music acceptance and next transport check
 
 Ryan confirmed Elton John playback with an audible Done in Android voice, then
