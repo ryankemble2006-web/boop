@@ -18,7 +18,17 @@ regression reproduced and protected that collision. All 27 focused JVM music
 tests pass. Live public-catalogue probes select John Lennon artist 226, John Lennon
 by SCH track 112736672, Bohemian Rhapsody by Queen track 4091937401, Queen artist
 412, Britney Spears artist 483, and local Flow. No live device playback performed.
-Done/Failed wording from v98 remains. Signed v99 CI/APK and physical test pending.
+Done/Failed wording from v98 remains.
+
+Signed v99 source `b39142a3da44251a334ac5237161aa01c80bfdfb`.
+GitHub run `34454191785` SUCCESS; artifact `10142921248`.
+197 Unified + 58 Shield tests passed with zero failures/errors/skips.
+APK SHA256: `99f628ca5e68b505265f1d1da1b49577d3b5126c025fcd6cdbf9c57c83e6e522`.
+ZIP SHA256: `1ffbd1af1e31c89332f354543fec4d1e356e3f17b2f907ed7a1d7ae70fc12289`.
+Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Downloaded hashes, signer, version 99, com.boop.alpha1 package and UnifiedEntryActivity
+independently verified. No GitHub visual tests or new device controls performed.
+Exact v99 physical acceptance remains pending; v97 emulator evidence is not v99 acceptance.
 No UI changes or GitHub visual tests. Protected v91 and canonical remain unchanged.
 
 # BOOP v98 short music replies candidate
@@ -26,7 +36,8 @@ No UI changes or GitHub visual tests. Protected v91 and canonical remain unchang
 Branch `boop-canonical-rebuild`. Ryan requested music confirmations say only
 "Done" or "Failed". v98 changes the native Deezer route wording accordingly;
 "Done" means the request was dispatched, not acoustically verified playback.
-Version 98 / `1.2.98-short-music-replies`. Signed build pending.
+Version 98 / `1.2.98-short-music-replies`. Run `34453509576` succeeded;
+superseded for delivery by v99 because of the known catalogue collision.
 All v97 native routing and physical acceptance limitations below still apply.
 No canonical merge or replacement of the protected v91 checkpoint.
 

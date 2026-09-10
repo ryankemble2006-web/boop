@@ -74,4 +74,5 @@ Physical feedback: John Lennon chose SCH; Flow and Bohemian Rhapsody worked.
 Compare exact artist performer prevalence against exact title matches, preserving
 explicit by-performer requests and song-default ties. Two observed RED-to-GREEN
 regressions, 27 focused tests and six read-only catalogue requests passed.
-Signed build and exact APK device acceptance remain pending; see handoff.
+Signed v99 run `34454191785` succeeded (197 Unified + 58 Shield tests).
+Downloaded APK identity/hash/signer verified; exact device acceptance pending.
