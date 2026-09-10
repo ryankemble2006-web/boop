@@ -1,3 +1,15 @@
+## v101 Home routing physically accepted
+
+Ryan reports that the physical Home button opens the new unified Home and that
+reboot also returns to the new launcher. This is physical acceptance of v101 Home
+routing and reboot behavior, source be20d50ed3ee72ec7183215ade63e6253e929653,
+run 34461331633, artifact 10145803647, APK SHA256
+255832a013383b9e964f66fb398056f05765b748bc9f9acd7baab94353f1730d.
+It does not imply blanket acceptance of other features. Preserve v23 rollback.
+Post-reboot read-only inspection found native Deezer playing and foreground;
+no Cast session. Asked Ryan to initiate casting for the remaining v101 corner
+regression check. No playback or foreground command sent during this follow-up.
+
 ## v101 approved Shield installation and Home migration
 
 Ryan explicitly approved v101 installation and replacement of the old Home override.
