@@ -4,37 +4,86 @@ Updated 2026-09-10. Canonical AIO branch `boop-unified`; package `com.boop.alpha
 
 ## Current physically usable checkpoint: v88
 
-Protected checkpoint:
-
 `checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
 
-Ryan physically accepted this exact v88 release as the usable rollback because ordinary Android TextToSpeech speaks again and a failed Natural Voice attempt no longer poisons ordinary BOOP speech. This does **not** mean Kokoro works. Never repoint the checkpoint and do not weaken the v88 runtime-proof isolation.
+Ryan physically accepted exact v88 as the usable rollback because ordinary Android TextToSpeech speaks again and failed Natural Voice attempts no longer poison normal BOOP speech. This does **not** mean Kokoro works. Never repoint the checkpoint or weaken the runtime-proof isolation.
 
-## Current signed but unaccepted candidate: v90
+## Current signed but physically unaccepted candidate: v91
 
-Exact app/test build head:
+Exact canonical source/build head:
 
-`97688d1606e7ac1665a8626a00fed9111f062135`
+`11650313221ae5bf997dbb93b6a905bfdc7da1ed`
 
 Release:
 
-- versionCode `90`;
-- versionName `1.2.90-unified-kokoro-preflight-fix`;
-- canonical workflow `34426014943`: SUCCESS;
-- Shield HOME routing `34426014914`: SUCCESS;
-- artifact ID `10132764611`;
-- artifact ZIP SHA-256 `e9cda859f89198fdc9cbc87b56c9c4322ec4d6d1fa51f2e04e6f8f6fb99544ae`;
-- APK SHA-256 `94b63c350d50029d875e40bd4e18b839addad020155de231c918de8bbc3e8275`;
+- versionCode `91`;
+- versionName `1.2.91-unified-static-track-state-fix`;
+- canonical Unified workflow `34433115316`: SUCCESS;
+- canonical Shield HOME routing `34433115318`: SUCCESS;
+- artifact ID `10135283428`;
+- artifact ZIP SHA-256 `e4f2fb47e2a3b5db2d338512b44ebdbfa840a42b03acc99a5bce02243f8c820c`;
+- APK SHA-256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`;
 - signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
 - Shield focused tests `58/58`;
 - Unified focused tests `157/157`;
 - package/version/entry activity/signer/archive verification green.
 
-The exact artifact was downloaded and independently verified against its receipts. v90 is awaiting physical Natural Voice evidence.
+The canonical artifact was downloaded after CI and independently checked against its receipts. v91 still needs physical Natural Voice evidence.
+
+## Durable v90 -> v91 lesson
+
+Ryan's v90 physical test moved past the former false E890 and produced:
+
+`BOOP DEV E893`
+
+with detail:
+
+`IllegalStateException: Natural speech audio output unavailable`
+
+That result is strong evidence, not a generic voice failure. It proves:
+
+1. BOOP's real runtime files passed preflight;
+2. Sherpa/Kokoro `OfflineTts` initialized successfully;
+3. synthesis returned generated audio;
+4. the failure occurred in Android playback before generated PCM was written.
+
+The precise v90 bug was the `AudioTrack` state gate. BOOP builds the generated utterance as signed PCM16 in `MODE_STATIC`. A successfully initialized Android static track can report `STATE_NO_STATIC_DATA` until sample data is written. v90 incorrectly required `STATE_INITIALIZED` **before** `write(...)`, so it could reject a healthy track as unavailable.
+
+Permanent engineering rule for this implementation:
+
+- a newly created `MODE_STATIC` natural-speech track must not be rejected merely because its pre-write state is `STATE_NO_STATIC_DATA`;
+- reject `STATE_UNINITIALIZED` as the construction failure state;
+- do not switch to streaming or redesign the playback transport unless later physical evidence actually requires it.
+
+v91 implements only that state correction. It keeps `MODE_STATIC`, signed PCM16, the same generated samples, whole-utterance buffer/write/play flow, AudioAttributes, sample rate, session handling and fallback architecture.
+
+Production repair commit:
+
+`cd75e7b6e6344bf8122e30c2e4a025529be60cab`
+
+## v91 TDD evidence
+
+Work was isolated on `boop-natural-v91-audiotrack-stream`. The branch name records the first hypothesis, not the chosen production design.
+
+RED:
+
+- workflow `34432449031`, job `102730608219`;
+- exactly `1 failed, 31 passed`;
+- the only failure was the new static-track state-contract regression against v90 behaviour.
+
+GREEN:
+
+- one production condition changed at `cd75e7b6e6344bf8122e30c2e4a025529be60cab`;
+- natural/wake stages were green on superseded run `34432516657` before its version-stamp push cancelled later unrelated stages;
+- full isolated v91 workflow `34432642013`: SUCCESS;
+- canonical promoted Unified workflow `34433115316`: SUCCESS;
+- canonical Shield routing `34433115318`: SUCCESS.
+
+No Kokoro model config, pack contents, natural voice SIDs, HA routing, wake architecture, launcher behaviour, approved eyes, package identity or signer changed.
 
 ## Natural voice identity and safety contract
 
-Natural voices are optional local/offline voices after one in-app model download. No paid/cloud TTS API is used.
+Natural voices are optional local/offline voices after one in-app model download. No paid/cloud TTS API is required for this subsystem.
 
 Pinned pack: `kokoro-multi-lang-v1_0`.
 
@@ -47,7 +96,7 @@ Exact voices:
 
 Mandatory selection semantics:
 
-1. Pressing a natural row means **preview candidate**, not select it.
+1. Pressing a Natural Voice row means **preview candidate**, not blindly select it.
 2. Current installed pack must be verified before preview.
 3. Dedicated natural synthesis/playback must actually complete.
 4. Only then persist the requested speaker.
@@ -61,7 +110,7 @@ Keep Sherpa synthesis on:
 
 Never restore `generateWithConfigAndCallback(...)` with Sherpa 1.13.7; v86 physically exposed its Android JNI process-abort path.
 
-Natural playback remains conservative signed PCM16. Do not restore float PCM or `PlaybackParams` while basic natural playback remains unresolved. Natural pitch stays deferred; Android TTS pitch remains available. Keep explicit `lexicon-gb-en.txt`; do not force `lang="eng"` without new evidence.
+Natural playback remains signed PCM16. Do not restore float PCM or `PlaybackParams` while basic natural playback is unresolved. Natural pitch stays deferred until basic natural speech is physically proven. Keep explicit `lexicon-gb-en.txt`; do not force `lang="eng"` without new evidence.
 
 Pack installation remains app-private and pinned: exact HTTPS archive, size/SHA verification, streaming digest, explicit extraction progress, cooperative cancellation, traversal/link rejection, required-file validation and safe activation.
 
@@ -69,100 +118,68 @@ Pack installation remains app-private and pinned: exact HTTPS archive, size/SHA 
 
 ### v85
 
-Rows appeared to work but actually spoke Android TTS. Fallback disguised Natural Voice failure.
+Natural rows appeared to work but actually spoke Android TTS. Fallback disguised Natural Voice failure.
 
 ### v86
 
-Natural-only preview entered Sherpa callback JNI. Ryan reported no sound plus crash/minimise after a successful HA command. Root cause: Sherpa 1.13.7 Android callback bridge can abort the process. Callback generation is permanently banned for this version.
+Natural-only preview entered Sherpa callback JNI. Physical test produced no sound plus process crash/minimise after an otherwise successful HA command. `generateWithConfigAndCallback(...)` is permanently banned while using Sherpa 1.13.7.
 
 ### v87
 
-Non-callback synthesis stopped the hard callback crash, but all four natural previews failed. Persisting a natural selection before successful playback also left ordinary speech mute.
+Non-callback synthesis stopped the hard callback crash, but Natural Voice still failed and premature natural selection could leave ordinary speech mute.
 
 ### v88
 
-Runtime-proof gating and Android fallback isolation restored normal BOOP speech. Ryan physically accepted v88 as the usable rollback. Natural preview still failed.
+Runtime-proof gating and Android fallback isolation restored normal BOOP speech. Physically accepted as usable rollback. Natural preview still not accepted.
 
 ### v89
 
-v89 introduced photographable debug-only stage codes to locate the remaining natural failure. Ryan physically reported:
+Added photographable debug-only stage codes. Physical result: HA worked, Android BOOP spoke, Emma produced E890 / `Natural voice runtime files incomplete`.
 
-- `lights off` succeeded;
-- Android voice replied normally;
-- Emma preview -> `BOOP DEV E890`;
-- detail -> `IllegalStateException: Natural voice runtime files incomplete`.
+Investigation proved v89's own preflight invented `inno/nif_model.onnx` and `inno/possible_tokens.txt`, which are not required by BOOP's pinned Kokoro v1 runtime. The downloaded pack was not proven corrupt.
 
-This proved Android fallback still worked and the Natural Voice path failed **before OfflineTts initialization**.
+### v90
 
-### v90 root cause and repair
+Removed only the bogus `inno/...` requirements. Physical test progressed to E893 / `Natural speech audio output unavailable`, proving file preflight, model initialization and synthesis passed. This exposed the Android static-track state bug fixed in v91.
 
-v89's new preflight itself was wrong. It required two invented files:
+### v91
 
-- `inno/nif_model.onnx`;
-- `inno/possible_tokens.txt`.
-
-Those are not part of BOOP's pinned `natural-voices/manifest.json` requirements for the official Kokoro v1 runtime path. The valid preflight inputs are:
-
-- `model.onnx`;
-- `voices.bin`;
-- `tokens.txt`;
-- `lexicon-gb-en.txt`;
-- readable, non-empty `espeak-ng-data/`.
-
-Therefore the v89 E890 was a **false BOOP diagnostic failure**, not evidence that Ryan's downloaded model pack was corrupt.
-
-TDD proof:
-
-- isolated branch `boop-natural-v90-runtime-files` from then-live `boop-unified@beef30882c617cf1cffddd893e3ef4022813c216`;
-- RED workflow `34425786847`, job `102710598737`: exactly `1 failed, 9 passed`; the failure listed only the two bogus `inno/...` extras;
-- minimal production fix `86970a634565b7ed9a3efcaa7fd8433dc61af797` removed only those two requirements;
-- focused GREEN workflow `34425864351`: SUCCESS;
-- `BoopNaturalVoiceRuntimeFilesTest` now verifies the real official runtime-file shape passes preflight and a genuinely missing required input still fails;
-- full v90 workflow `34426014943`: SUCCESS.
-
-Do not redownload the pack just because v89 showed E890. First test v90 against the existing installed verified pack.
+CI/build/signing verified. Physical acceptance pending.
 
 ## Durable diagnostic ladder
-
-v90 retains the v89 debug-only full-screen codes:
 
 | Code | Meaning |
 | --- | --- |
 | `BOOP DEV E890` | A real required runtime file/directory is incomplete or unreadable. |
 | `BOOP DEV E891` | Sherpa/Kokoro `OfflineTts` initialization or runtime metadata failed. |
 | `BOOP DEV E892` | Model initialized but `generateWithConfig(...)` failed or returned no audio. |
-| `BOOP DEV E893` | Synthesis returned audio but Android PCM16 playback failed. |
+| `BOOP DEV E893` | Synthesis returned audio but Android PCM16 playback failed. Use the short detail to distinguish track creation, write and play/output faults. |
 | `BOOP DEV E899` | Unknown natural failure stage. |
 
 DEV diagnostics remain debug-only, photographable and sanitized. They must never expose credentials, private addresses, signing material or personal data.
 
-## Required next physical evidence
+## Required v91 physical evidence
 
-1. Install exact v90 over v89; do not redownload the voice pack unless BOOP explicitly says it is absent.
-2. Say `lights off` or `lights on`; HA should act and Android BOOP should speak.
+1. Install exact v91 over v90. Do not redownload the Natural Voice pack unless BOOP explicitly says it is absent.
+2. Issue `lights off` or `lights on`; HA should act and ordinary Android BOOP speech must still work.
 3. Tap Emma once.
-4. Record the new `E###` + short detail, or report if Emma speaks.
-5. Issue another light command; Android BOOP must still speak if natural preview failed.
+4. If Emma speaks, tap one second Natural Voice such as George or Isabella.
+5. Issue a normal BOOP/HA command and verify the reply uses the selected Natural Voice.
+6. If a preview fails, record the giant E### plus short detail, then verify ordinary Android speech still works with another light command.
 
-Engineering branches based on that evidence:
-
-- E890 again -> identify the exact real file/directory that is unreadable.
-- E891 -> focus only on Sherpa native/model initialization/config/path/runtime metadata.
-- E892 -> focus only on Kokoro generation/frontend/text/speaker input.
-- E893 -> focus only on Android PCM16 playback.
-- Emma speaks -> test another speaker plus normal Natural Voice routing before calling the subsystem finished.
+Do not declare Natural Voices finished from one successful preview alone. Require at least two speaker previews plus normal routed Natural Voice speech.
 
 ## Canonical rebuild gate
 
 Ryan supplied and approved the full `BOOP CANONICAL REBUILD / FULL AUTONOMOUS GITHUB DEVELOPMENT RUN` prompt. Target architecture: **BOOP is one logical puppet; state is data; every surface renders that same puppet rather than independently implementing him.**
 
-The prompt explicitly assumes Natural Voices are finished before the rebuild branch begins. They are not yet physically proven. Therefore:
+The prompt assumes Natural Voices are finished before the rebuild begins. Therefore:
 
-1. finish Natural Voices on `boop-unified` while protecting v88;
-2. physically verify natural speech;
-3. fetch live `boop-unified` and `main`;
-4. create `boop-canonical-rebuild` from that exact verified voice-working head;
-5. execute the approved phases there without routine approval stops.
+1. physically verify v91, or continue narrowly if v91 produces a new diagnostic;
+2. once Natural Voices are genuinely accepted, fetch live `boop-unified` and `main`;
+3. create `boop-canonical-rebuild` from that exact physically verified voice-working head;
+4. execute the approved rebuild phases there without routine approval stops;
+5. inspect already-landed media-control improvements before adding more so working media code is not duplicated or redesigned.
 
 Do not create the canonical rebuild branch early. Ryan is the only visual QA. Never regenerate BOOP's canonical eyes/blink. If visual authority is missing or uncertain during the later rebuild, request `canonical-idle-blink-v1.zip`.
 
@@ -171,7 +188,7 @@ Do not create the canonical rebuild branch early. Ryan is the only visual QA. Ne
 - Home Assistant remains local authority; basic control must not depend on cloud chat.
 - Permanent approved eye master: `unified/assets/boop-eyes/boopApprovedEyes.png`, SHA-256 `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`; never regenerate/destructively edit it.
 - Eye hue remains procedural iris-only, default 190 degrees.
-- Approved five-digit notification hands remain byte-locked. Android notification remains authoritative.
+- Approved notification hands remain byte-locked. Android notification remains authoritative.
 - Preserve one controller-owned 16 kHz microphone stream, permanent BOOP wake name, additive custom name and exact 1,600-sample / 100 ms wake-command bridge.
 - Developer menu remains the accepted in-place `MainActivity` route with exact spoken trigger `developer menu`.
 - Unified routing remains recovery override -> TV/Leanback Shield -> Pixel 7 Pro Wall -> other non-TV >=600dp Wall -> smaller handheld Launcher.
