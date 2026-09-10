@@ -124,9 +124,28 @@ Durable UX:
 - footer is `PHOTOGRAPH THIS • BACK TO CLOSE`;
 - the report is allowed to scroll only if the physical Shield exposes more evidence than fits.
 
-Probe scope is read-only only: CPU online/current/max/governor; GPU devfreq current/max/min/governor/frequency list; memory/EMC readable clues; thermal zones/cooling devices/fan-related properties; `nv_power_mode` and other surfaced NVIDIA/processor/performance/fan/power/EMC settings. It must contain no `settings put`, `setprop`, chmod, root, sysfs writes, overclock, voltage, or thermal bypass.
+Probe scope is read-only only: CPU online/current/max/governor; GPU devfreq current/max/min/governor/frequency list; memory/EMC readable clues; thermal zones/cooling devices/fan-related properties; `nv_power_mode` and other surfaced NVIDIA/processor/performance/fan/power/EMC settings. It contains no `settings put`, `setprop`, chmod, root, sysfs writes, overclock, voltage, or thermal bypass.
 
-TDD RED commit: `4d1fe343c9865b084642169975ddb5396065f556`; run `34422694164`, job `102701343392`; existing JVM tests passed and the new source contract failed because the feature was absent. v0.6.2 / code 23 implementation is pending full CI verification and physical Shield evidence.
+TDD RED commit: `4d1fe343c9865b084642169975ddb5396065f556`; run `34422694164`, job `102701343392`; existing JVM tests passed and the new source contract failed because the feature was absent.
+
+Machine-green source: `cb1a29fdf808f522b3089a325b2329b46ca1adc5`.
+Version: **v0.6.2 / code 23**.
+GREEN run `34423280461`, job `102703106376`: success.
+
+Verification receipt:
+
+- 101 JVM tests passed, 0 failures/errors/skips;
+- 60 source/API/security contracts passed, including the four Headroom contracts;
+- Android lint passed with warnings only;
+- signed release build and APK integrity passed;
+- package `com.boop.shieldturbo`, versionCode 23, versionName 0.6.2;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`;
+- APK SHA-256 `ad357dbfae8579bd5748b1463c11ce75b35ce6adcc721a8cc428da0da1523e99`;
+- signed artifact ID `10131769734`, ZIP SHA-256 `33cd6b41b0de11286965920ab1bbc0359bb96b9b1c362a28a5d9b2b66db0ac16`;
+- test artifact ID `10131801514`, ZIP SHA-256 `c251260ce2c109d487a5f47afc15025ed795c259c815f6b97994d7be7b43cfb8`;
+- emulator API 30 install passed, cold launch `1806ms`, process remained alive with PID `2237`, second launch stayed alive, and no package fatal exception was found.
+
+v0.6.2 is machine-green only until Ryan runs it on the real Shield. The physical photograph is the authority for deciding whether any additional genuine stock-envelope actuator is worth proving.
 
 ## Future performance expansion
 
