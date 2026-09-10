@@ -25,7 +25,7 @@ Ryan physically verified the full normal operating loop on the real Shield:
 
 1. Starting from NVIDIA Processor Mode Optimized, pressing `TURBO MODE: OFF` enabled TURBO and the Shield settings changed to Max performance.
 2. The TURBO panel reported `TURBO MODE: ON`, `Processor mode: Max performance verified`, `Thermal state: NONE`, and `Watchdog: ON`.
-3. After reboot, without manually enabling TURBO again, the panel still reported TURBO ON and `Last change: TURBO retained after reboot`; therefore the saved state, boot receiver, foreground watchdog service, thermal pre-check, trusted local ADB path, and retain/reapply path all executed successfully on hardware.
+3. After reboot, without manually enabling TURBO again, the panel still reported TURBO ON and `Last change: TURBO retained after reboot`; therefore the saved state, boot receiver, foreground watchdog service, thermal pre-check, trusted local ADB path, and boot retain/reapply path all executed successfully on hardware.
 4. Pressing TURBO OFF restored NVIDIA Processor Mode to Optimized on the real Shield.
 
 This is physical acceptance of persistent TURBO's normal enable, reboot persistence/watchdog startup, and manual NORMAL restore path.
@@ -60,6 +60,21 @@ Machine verification run `34418790720`, job `102689465660`, conclusion success:
 
 v0.6.1 is **machine verified but not yet physically accepted** on the real Shield.
 
+## v0.6.2 TURBO+ HEADROOM candidate
+
+Implementation is in progress on top of the v0.6.1 candidate. The approved UX is intentionally simple:
+
+- the TURBO panel exposes a chunky `TURBO+ HEADROOM TEST` control beside the normal TURBO button;
+- pressing it opens a dedicated full-screen black read-only report;
+- the test reads CPU online/frequency/governor state, GPU devfreq state, memory/EMC clues, cooling/thermal clues, and extra NVIDIA stock-performance settings;
+- no performance values are written by the headroom probe;
+- each section reports large `FOUND` or `BLOCKED` evidence;
+- ADB/setup failures use a full-screen `TURBO+ • STOP` page with a giant `ADB NOT READY` or failure message so Ryan can photograph it;
+- footer says `PHOTOGRAPH THIS • BACK TO CLOSE`;
+- v0.6.0 remains the physical rollback point and v0.6.1 remains the latest completed machine-green candidate until v0.6.2 CI is fully green.
+
+TDD RED receipt: commit `4d1fe343c9865b084642169975ddb5396065f556`, workflow run `34422694164`, job `102701343392`. Existing JVM unit tests passed; the new Headroom source contract then failed because the approved probe/activity/button did not yet exist.
+
 ## Thermal fallback boundary
 
 The Android thermal watchdog logic is machine-tested to restore NORMAL at `SEVERE` or higher and require manual re-arm. This path has NOT been physically validated by intentionally overheating the Shield, and it should not be. Any further physical validation should use a safe injected/test mechanism rather than heat stress.
@@ -67,7 +82,8 @@ The Android thermal watchdog logic is machine-tested to restore NORMAL at `SEVER
 ## Current state
 
 - v0.6.0 / code 21 remains the current physically accepted rollback checkpoint for TURBO performance behaviour.
-- v0.6.1 / code 22 is the newest machine-verified candidate and changes startup presentation only: one first-launch explanation, then silent CLEAN START boot execution.
+- v0.6.1 / code 22 is the newest completed machine-verified candidate and changes startup presentation only.
+- v0.6.2 / code 23 is the active TURBO+ HEADROOM candidate pending full CI verification.
 - Future performance work must stay inside the stock envelope unless a completely new design is explicitly approved.
 
 At the start of this session, live `main` was `5179f95961c9c43b4939dd1ea4349a32eb7f99d1`.
