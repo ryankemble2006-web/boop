@@ -33,7 +33,11 @@ def value(pts,x):
     i=next(i for i in range(len(pts)-1) if x<=pts[i+1][0]);a,b=pts[i:i+2]
     h=b[0]-a[0];t=(x-a[0])/h
     return (2*t**3-3*t*t+1)*a[1]+(t**3-2*t*t+t)*h*tangent[i]+(-2*t**3+3*t*t)*b[1]+(t**3-t*t)*h*tangent[i+1]
-rig=Image.new('RGBA',(1774,1));rig.putdata([(int(round((value(points[0 if x<887 else 1],x)-24)*32))>>8,int(round((value(points[0 if x<887 else 1],x)-24)*32))&255,0,255) for x in range(1774)])
+# The source trace ends on the original cap; it remains the material sampler.
+# A separate destination trace continues its incoming tangent past that cap.
+# Do not stretch skin alpha outside the original face or sample invented skin.
+contours=[points[0][:-1]+[(825,449),(887,546)],[(887,546),(947,449)]+points[1][1:]]
+rig=Image.new('RGBA',(1774,2));rig.putdata([(int(round((value(trace[0 if x<887 else 1],x)-24)*32))>>8,int(round((value(trace[0 if x<887 else 1],x)-24)*32))&255,0,255) for trace in [points,contours] for x in range(1774)])
 rig.save(assets/'lid-rig.png')
-(out/'rig.json').write_text(json.dumps({'manual_lid_trace':points,'inset':24,'skin_band':64,'closure_destination':887,'feather_source_pixels':1.5,'interpolation':'monotone cubic; packed fixed-point 1/32px'},indent=2)+'\n')
+(out/'rig.json').write_text(json.dumps({'manual_lid_trace':points,'destination_contour':contours,'texture_rows':['source skin edge','continued destination edge'],'inset':24,'skin_band':64,'closure_destination':887,'feather_source_pixels':1.5,'interpolation':'monotone cubic; packed fixed-point 1/32px'},indent=2)+'\n')
 print(f'Prepared {len(entries)} clips; master hash verified. No visual acceptance.')
