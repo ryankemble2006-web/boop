@@ -6,7 +6,7 @@ Updated 2026-09-10. Website work lives on dedicated branch `boop-site` and must 
 
 Runtime source before this documentation-only handoff commit:
 
-`0752e137ca64ff5680ee37de5260fca605ccc316`
+`5baab626273b18d170cdee1185b8784590517979`
 
 The first deployment target is `pnalgn.xyz`. The public identity/copy is intentionally portable to `boop.com` if that domain is acquired later.
 
@@ -18,7 +18,7 @@ User-facing package name:
 
 SHA-256:
 
-`c4ee76156aa61be5b913d24891543bf12d1ff8ca30c634c7c9726a03f17a3f69`
+`27732056dc5c45415f1d0962d14dba82de4749d7ff94f9f6ff46cc49f8f635e5`
 
 The ZIP is deliberately root-ready. `index.html`, `.htaccess`, `styles.css`, `site.js`, pages and `assets/` live at archive root with no enclosing `site/` or project directory. Repository tests and planning documents are excluded.
 
@@ -36,7 +36,7 @@ Do not optimise, re-encode, crop, recolour or regenerate protected BOOP artwork 
 
 ## Public claims boundary
 
-The site deliberately distinguishes current prototypes from future concepts. Experimental local natural voice playback is described as still under hardware testing. There is no automatic latest-APK download link because CI-green and physical acceptance are separate BOOP states.
+The site deliberately distinguishes current prototypes from future concepts. Natural voice playback remains unresolved after physical hardware testing; ordinary Android speech is usable. The natural path is therefore described as experimental rather than finished. There is no automatic latest-APK download link because CI-green and physical acceptance are separate BOOP states.
 
 `Works FOR BOOP` is presented as an open compatibility direction, not as a claim of partnerships with named companies.
 
@@ -50,10 +50,10 @@ Local static contract command:
 
 `python site/tests/test_site.py -v`
 
-Pre-package source run: 8 active checks PASS, one ZIP-only check SKIP.
-
 Final package run with `BOOP_SITE_ZIP=/mnt/data/BOOP-site-root-ready.zip`: 9/9 PASS, zero failures and zero skips.
 
-Protected website asset hashes were independently checked from the staged files. JavaScript syntax passed `node --check`. Archive inspection confirmed top-level `index.html`, no enclosing `site/` directory and no repository test files.
+Protected website asset hashes were independently checked from the staged files and again from inside the final ZIP. JavaScript syntax passed `node --check`. Archive inspection confirmed top-level `index.html`, no enclosing `site/` directory, no path traversal and no repository test files.
+
+The site contract includes the current natural-voice truth so stale copy cannot quietly describe the unresolved path as a finished feature.
 
 Visual appearance remains Ryan's manual acceptance boundary. These checks do not certify layout, artwork appearance or animation aesthetics.
