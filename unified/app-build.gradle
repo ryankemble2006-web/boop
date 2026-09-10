@@ -20,16 +20,13 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 116
-        versionName "1.2.116-home-charcoal"
+        versionCode 117
+        versionName "1.2.117-startup-manager"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }
 
-    buildFeatures {
-        buildConfig true
-    }
-
+    buildFeatures { buildConfig true }
     signingConfigs {
         boopDev {
             if (boopKeystorePath) {
@@ -40,17 +37,8 @@ android {
             }
         }
     }
-
-    buildTypes {
-        debug {
-            signingConfig signingConfigs.boopDev
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
+    buildTypes { debug { signingConfig signingConfigs.boopDev } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 
 dependencies {
