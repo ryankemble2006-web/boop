@@ -434,7 +434,7 @@ public final class ShieldHomeView extends LinearLayout {
     }
 
     private GradientDrawable actionBackground(boolean focused) {
-        return FocusChrome.filled(getContext(), Color.rgb(13, 27, 43), 10, focused);
+        return FocusChrome.filled(getContext(), Color.rgb(34, 34, 34), 10, focused);
     }
 
     private LayoutParams wrap() {

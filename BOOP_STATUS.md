@@ -1,4 +1,14 @@
-## v115 signed and installed; user visual judgement pending
+## v116 charcoal correction, 2026-09-10
+
+Ryan physically approved v115 spacing, icons and cyan accent, but rejected the dark-blue
+fills. v116 restores neutral charcoal, slightly darker than the preceding grey palette.
+Shared selection outlines are now 4dp, matching the actual Shield framework progress
+line (android:dimen/progress_bar_height_material resolved on device as 4.0dip).
+The approved spacing, icons and cyan remain unchanged. No layout or callback changes.
+Build/install/agent visual inspection pending. This is not whole-build physical acceptance.
+Recipes still await Pad/provider testing tomorrow; other deferred work remains deferred.
+
+## v115 installation receipt (visual feedback superseded above)
 
 Source e743591ae987aa78acc381f3f15242a7ec1b9016, version115 / 1.2.115-home-polish.
 Run34516201140 completed/success; artifact10167926878.

@@ -7,7 +7,7 @@ import android.util.TypedValue;
 
 /** Shared TV focus chrome so the Now Playing progress fill and focus outline use one accent. */
 final class FocusChrome {
-    static final int BORDER_DP = 3;
+    static final int BORDER_DP = 4;
 
     private FocusChrome() { }
 
