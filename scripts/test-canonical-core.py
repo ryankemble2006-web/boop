@@ -13,3 +13,7 @@ with tempfile.TemporaryDirectory() as output:
         str(root/'unified/shield-home/src/main/java/com/boop/shieldhome/HomeOverridePolicy.java'),
         str(root/'tests/canonical/HomeOverrideCheck.java')], check=True)
     subprocess.run([java, '-cp', output, 'com.boop.shieldhome.HomeOverrideCheck'], check=True)
+    subprocess.run([javac, '-d', output,
+        str(root/'unified/LocalPlayerCloseGate.java'),
+        str(root/'tests/canonical/CloseGateCheck.java')], check=True)
+    subprocess.run([java, '-cp', output, 'com.boop.alpha1.CloseGateCheck'], check=True)

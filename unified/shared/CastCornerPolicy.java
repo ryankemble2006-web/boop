@@ -9,7 +9,8 @@ public final class CastCornerPolicy {
                 ? RECEIVER : "";
     }
     public static boolean allowed(String visiblePackage,String playerPackage,String castApp) {
+        String name = castApp == null ? "" : castApp.trim();
         return RECEIVER.equals(visiblePackage) && RECEIVER.equals(playerPackage)
-                && "Deezer".equalsIgnoreCase(castApp == null ? "" : castApp.trim());
+                && ("Deezer".equalsIgnoreCase(name) || "Deezer - Beta".equalsIgnoreCase(name));
     }
 }

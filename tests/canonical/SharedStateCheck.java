@@ -12,6 +12,10 @@ public final class SharedStateCheck {
         unknown.media("native-deezer",true,1);
         check(unknown.snapshot().owner == BoopState.Owner.NONE,"unknown/native playback must not create a corner");
         check(com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","com.google.android.apps.mediashell","Deezer"),"Deezer Cast allowed");
+        check(com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","com.google.android.apps.mediashell","Deezer - Beta"),"observed Deezer Beta Cast allowed");
+        check(!com.boop.shared.CastCornerPolicy.allowed("deezer.android.app","com.google.android.apps.mediashell","Deezer - Beta"),"Beta cannot enable native UI corner");
+        check(!com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","deezer.android.app","Deezer - Beta"),"Beta cannot enable native playback corner");
+        check(!com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","com.google.android.apps.mediashell","Deezer unofficial"),"unknown Deezer suffix excluded");
         check(!com.boop.shared.CastCornerPolicy.allowed("deezer.android.app","com.google.android.apps.mediashell","Deezer"),"native UI always hides Cast corner");
         check(!com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","deezer.android.app","Deezer"),"native playback is not Cast");
         check(!com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","com.google.android.apps.mediashell","YouTube"),"other Cast apps excluded");

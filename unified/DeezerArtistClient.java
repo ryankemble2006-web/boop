@@ -100,7 +100,7 @@ final class DeezerArtistClient {
                 + "{% if players|count==1 %}{% set ns.rows=ns.rows+[{'remote':id,'media':players[0],'macs':hw.macs,'adb':ns.adb}] %}{% endif %}"
                 + "{% endif %}{% endfor %}{{ ns.rows | to_json }}";
     }
-    private static String request(String url,String token,JSONObject payload) throws Exception {
+    static String request(String url,String token,JSONObject payload) throws Exception {
         HttpURLConnection connection=(HttpURLConnection)new URL(url).openConnection();
         try {
             connection.setInstanceFollowRedirects(false);

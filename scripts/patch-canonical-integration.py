@@ -22,7 +22,7 @@ shutil.copytree('unified/shield-home/src/main/res',home/'src/main/res',dirs_exis
 shutil.copy2('unified/shield-home-lib.gradle',home/'build.gradle')
 shutil.copy2('unified/shield-home-manifest.xml',home/'src/main/AndroidManifest.xml')
 with (ROOT/'settings.gradle').open('a') as file: file.write("\ninclude ':shield-home-lib'\n")
-for filename in ['BoopHomeOverrideService.java','BoopProfileActivity.java','BoopLocalMedia.java','DeezerArtistClient.java','DeezerCatalogue.java','DeezerNativeController.java']:
+for filename in ['BoopClosePlayerActivity.java','LocalPlayerCloseGate.java','LocalPlayerCloseClient.java','BoopHomeOverrideService.java','BoopProfileActivity.java','BoopLocalMedia.java','DeezerArtistClient.java','DeezerCatalogue.java','DeezerNativeController.java']:
     shutil.copy2(Path('unified')/filename,MAIN/filename)
 
 ha_client=MAIN/'HomeAssistantClient.java'
@@ -33,7 +33,7 @@ text=once(text,'            String colour = LightColourCommandParser.parseColour
 
             String colour = LightColourCommandParser.parseColour(text);''')
 ha_client.write_text(text)
-for test in ['DeezerArtistClientTest.java','DeezerNativeTest.java','DeezerDirectTest.java']:
+for test in ['LocalPlayerCloseClientTest.java','DeezerArtistClientTest.java','DeezerNativeTest.java','DeezerDirectTest.java']:
     shutil.copy2('unified/'+test,ROOT/'app/src/test/java/com/boop/alpha1'/test)
 
 manifest=ROOT/'app/src/main/AndroidManifest.xml'
@@ -42,6 +42,7 @@ text=manifest.read_text()
 text=once(text,'android:allowBackup="false"','android:allowBackup="false" android:enableOnBackInvokedCallback="false"')
 text=once(text,'    <application', '    <queries><package android:name="deezer.android.app" /></queries>\n    <application')
 text=once(text,'        <activity\n            android:name=".UnifiedEntryActivity"', '        <activity android:name=".BoopProfileActivity" android:exported="false" android:theme="@style/Theme.BOOP" />\n        <activity\n            android:name=".UnifiedEntryActivity"')
+text=once(text,'        <activity android:name=".BoopProfileActivity"', '        <activity android:name=".BoopClosePlayerActivity" android:exported="false" android:theme="@style/Theme.BOOP" />\n        <activity android:name=".BoopProfileActivity"')
 manifest.write_text(text)
 
 wall=MAIN/'MainActivity.java'

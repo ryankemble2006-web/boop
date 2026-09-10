@@ -1,3 +1,51 @@
+## v102 Close player candidate: implemented, full build pending
+
+Ryan approved replacing the Now Playing Open player button with Close player:
+terminate native Deezer or the active Cast source, including YouTube, because
+paused sources can still compete for Shield audio. Preserve artwork's separate
+open-source action. Do not label pause or unverified transport STOP as a completed
+receiver shutdown. Candidate v102 implements a non-exported close activity, separate
+button callback, same-session validation, Back cancellation and fresh Android token
+absence verification. Native Deezer/YouTube use the existing HA ADB route with an
+app-private random marker proving this local Shield before force-stop. Cast uses
+the selected receiver's advertised STOP action. Unsupported/failed actions say
+Failed; no shared receiver package force-stop. Artwork still opens its source.
+
+Repeated user Cast -> Home test captured: YouTube TV abandoned audio focus and
+destroyed its media session about one second after Home, then Cast reported
+STOP_BY_APP and released that receiver session. BOOP remained foreground; paused
+native Deezer remained the only media session. No BOOP fatal exception appeared
+in the captured interval. This explains the brief YouTube card without proving
+why YouTube ended playback. Landscape artwork rendering remains unverified.
+A prior later task-manager removal by Ryan is separate from this clean repeat.
+
+Current installed app remains signed v101, source
+be20d50ed3ee72ec7183215ade63e6253e929653; Home/reboot acceptance is unchanged.
+Ryan confirmed native Now Playing had data and was visible after the earlier
+Deezer Cast/native transition with the exemption enabled. Longer-term reliability
+remains open; the Deezer-only exemption remains enabled.
+
+Close capability notes: app-private temporary files are accessible through ADB
+run-as on this installed debuggable build; the attempted external-file probe was
+denied. No capability should be assumed on a non-debuggable build. Temporary
+private file was removed. The first STOP probe refused an absent Cast session.
+Ryan then reported phone Cast stuck locally; during the approved test window,
+force-stopping native Deezer and YouTube cleared both sessions. Ryan reconnected
+and confirmed Cast loading. The live receiver identified itself as Deezer - Beta,
+explaining the missing corner: the old policy matched only Deezer. v102 permits
+that exact additional name while still excluding native UI/player and other Cast
+apps. Regression reproduced RED, then shared/Home/close-gate checks passed locally.
+
+The source-built STOP probe then dispatched to the exact Deezer Beta Cast session.
+Android reported zero sessions; receiver logs confirmed app stopped, audio focus
+abandoned and all resources released. This is physical capability evidence, not
+acceptance of the new BOOP button. Temporary probe removed, music controls returned
+to Ryan. Close client tests cover unique hardware, wrong/ambiguous hardware, stale
+receipts and selection change. Full app compilation/CI and v102 emulator/device
+checks remain pending. Review identified and corrected delayed Back cancellation
+and false success from lost session observation; re-review pending.
+Ryan controls music outside explicitly agreed short tests; ask before interrupting.
+
 ## Deezer exemption: paused native session survives Cast interval
 
 Ryan started casting for the transition test. Cast receiver reported playing while
@@ -6,8 +54,8 @@ background (no isForeground flag) with the Deezer-only exemption enabled. Repeat
 read-only checks showed the same native paused session surviving beyond 150 seconds
 since its pause, unlike the earlier idle-service termination. No playback commands
 sent during this observation. This strengthens the exemption hypothesis but is not
-full transition acceptance. Asked Ryan to stop Cast from phone, start native music
-and press Home; final return-to-native/bar check remains pending his transition.
+full long-term acceptance. Ryan subsequently confirmed that the native return had
+Now Playing data and was visible; see the current Close player entry above.
 No app source or further OS settings changed. Exemption remains enabled for testing.
 
 ## Deezer-only exemption experiment: initial native Home survival

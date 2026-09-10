@@ -202,6 +202,45 @@ public final class ShieldNowPlayingManager {
         runTransport(NowPlayingSnapshot::canNext, controls -> controls.skipToNext());
     }
 
+    public MediaSession.Token sessionToken(long id) {
+        if(Looper.myLooper()!=Looper.getMainLooper()) throw new IllegalStateException("Main thread required");
+        for(Binding binding:bindings.values()) if(binding.id==id) return binding.controller.getSessionToken();
+        return null;
+    }
+
+    /** Fresh Android query: losing our observation must never count as a close receipt. */
+    public boolean confirmsSessionGone(MediaSession.Token token) {
+        if(token==null || !isAccessGranted() || mediaSessionManager==null) return false;
+        try {
+            List<MediaController> active=mediaSessionManager.getActiveSessions(listenerComponent);
+            if(active==null) return false;
+            for(MediaController controller:active) if(token.equals(controller.getSessionToken())) return false;
+            return true;
+        } catch(RuntimeException unavailable) { return false; }
+    }
+
+    public boolean stopSelectedCast(long expectedId) {
+        if(Looper.myLooper()!=Looper.getMainLooper()) return false;
+        NowPlayingSnapshot snapshot=state.current();
+        if(snapshot==null || snapshot.sessionId()!=expectedId || selectedController==null
+                || !"com.google.android.apps.mediashell".equals(snapshot.packageName())) return false;
+        PlaybackState playback=selectedController.getPlaybackState();
+        if(playback==null || (playback.getActions() & PlaybackState.ACTION_STOP)==0) return false;
+        try { selectedController.getTransportControls().stop(); return true; }
+        catch(RuntimeException unavailable) { return false; }
+    }
+
+    public boolean closeSource(Activity activity) {
+        NowPlayingSnapshot snapshot=state.current();
+        if(activity==null || snapshot==null) return false;
+        try {
+            activity.startActivity(new Intent().setClassName(activity.getPackageName(),
+                    "com.boop.alpha1.BoopClosePlayerActivity")
+                    .putExtra("session",snapshot.sessionId()).putExtra("player",snapshot.packageName()));
+            return true;
+        } catch(ActivityNotFoundException | SecurityException unavailable) { return false; }
+    }
+
     /** Reopens the package that owns the currently selected media session, when launchable. */
     public boolean openSource(Activity activity) {
         if (activity == null) {

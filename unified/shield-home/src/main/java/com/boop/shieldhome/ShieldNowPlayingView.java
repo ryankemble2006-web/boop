@@ -116,9 +116,9 @@ public final class ShieldNowPlayingView extends FrameLayout {
         subtitleParams.topMargin = dp(2);
         textStack.addView(subtitle, subtitleParams);
 
-        sourceButton = actionButton("Open player");
+        sourceButton = actionButton("Close player");
         sourceButton.setOnClickListener(v -> {
-            if (callbacks != null) callbacks.onOpenNowPlayingSource();
+            if (callbacks != null) callbacks.onCloseNowPlayingSource();
         });
         LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(130), dp(44));
         sourceParams.leftMargin = dp(12);
