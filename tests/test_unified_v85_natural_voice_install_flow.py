@@ -129,7 +129,8 @@ def test_natural_failure_reports_whether_synthesis_or_playback_failed():
 
 def test_v89_natural_runtime_diagnostics_split_failure_before_another_fix():
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
-    patch = Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
+    diagnostics = Path("scripts/patch-v89-natural-diagnostics.py").read_text(encoding="utf-8")
+    materialize = Path("scripts/materialize-unified.sh").read_text(encoding="utf-8")
 
     # v88 proved Android TTS isolation but did not tell physical testing where
     # Kokoro dies. The next build must distinguish file/runtime preparation,
@@ -139,15 +140,16 @@ def test_v89_natural_runtime_diagnostics_split_failure_before_another_fix():
     assert 'NaturalSpeechException("synthesis"' in backend
     assert 'NaturalSpeechException("playback"' in backend
     assert "runtimeFilesReadyForSherpa" in backend
-    assert "tts.sampleRate()" in backend
-    assert "tts.numSpeakers()" in backend
+    assert "candidate.sampleRate()" in backend
+    assert "candidate.numSpeakers()" in backend
 
     # Debug APKs should give Ryan one photographable failure with a stable code,
     # while release behaviour still keeps Android speech as the safe fallback.
-    assert '"BOOP DEV E890"' in patch
-    assert '"BOOP DEV E891"' in patch
-    assert '"BOOP DEV E892"' in patch
-    assert '"BOOP DEV E893"' in patch
-    assert "showNaturalVoiceDevDiagnostic" in patch
-    assert "BuildConfig.DEBUG" in patch
-    assert "Android voice kept" in patch
+    assert '"BOOP DEV E890"' in diagnostics
+    assert '"BOOP DEV E891"' in diagnostics
+    assert '"BOOP DEV E892"' in diagnostics
+    assert '"BOOP DEV E893"' in diagnostics
+    assert "showNaturalVoiceDevDiagnostic" in diagnostics
+    assert "BuildConfig.DEBUG" in diagnostics
+    assert "Android voice kept" in Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
+    assert "python3 scripts/patch-v89-natural-diagnostics.py" in materialize
