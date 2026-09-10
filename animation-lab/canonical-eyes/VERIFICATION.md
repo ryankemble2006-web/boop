@@ -1,5 +1,28 @@
 # Canonical eye library verification — 2026-09-10
 
+## v12 Freddie — built, runtime preview BLOCKED
+
+Built source 1ff0d40351e0b9798d5cb5bbfb05e0555ee1d8b4; signed Actions
+34443411468 succeeded. Downloaded APK SHA-256
+6e465e19e85b3b2eab20e8f9073ec22d8dc3255fb44b9fdb3ee33af51cc7d3a1 matches
+the receipt. 4,008 Freddie state checks passed after an observed failing
+Entrance completed assertion; 30,636 eye and 53,508 sign checks also pass.
+Static review found no functional defect; package/signer/source integrity pass.
+
+NOT visually/runtime accepted: dedicated emulator5558 installed and cold-launched
+the APK but then stopped answering capture, shell and console commands. Only its
+precisely identified processes were stopped. A software-graphics restart booted
+and cold-launched Freddie, then exited before capture. Windows Application Error
+1000 records qemu-system-x86_64-headless.exe exception 0xc0000005 (unknown module).
+This is host-emulator failure evidence, not proof that Freddie drawing is correct
+or that app code caused the crash. No usable Freddie screenshot/video was obtained.
+Local emulator logs/receipts: animation-work/sign-spinner. Other devices untouched.
+
+Next: recover a stable dedicated emulator or explicitly authorized test device,
+inspect all five digits and grips, record performance, check return to signs/eyes.
+V11 remains the latest visually accepted sign-holder preview. No Queen trigger,
+production integration, Armin implementation or physical-device acceptance.
+
 ## v11 felt joins and hidden arrow tip
 
 Built source 348daff76367ccab892e8feaa56cc3e8e3e0b816; Actions 34442085173

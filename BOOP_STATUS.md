@@ -1,6 +1,16 @@
 # BOOP Status
 
-## Latest: felt-grip polish — lab v11
+## Latest: Freddie cameo — lab v12
+
+Signed source 1ff0d40351e0b9798d5cb5bbfb05e0555ee1d8b4 / Actions34443411468.
+Runtime capture blocked by dedicated emulator hang/exit; NOT visually accepted.
+V11 is the last accepted sign-holder preview. See VERIFICATION.md for failures.
+
+Code-driven moustache/half-mic performance, original eyes and five-digit hands.
+See canonical-eyes/FREDDIE.md. Sign-holder v11 accepted in chat; Freddie runtime
+review is separate. No Queen metadata trigger, production or physical TV test.
+
+## Previous: felt-grip polish — lab v11
 
 Original-art palm overlap hides the small arrow-tip gap and feathered finger
 roots soften the hand joins. Same closed pose, eyes and choreography. Runtime

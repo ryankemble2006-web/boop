@@ -1,6 +1,23 @@
 # Animation memory — 2026-09-10
 
-Latest continuation: v11 felt-puppet polish. Ryan requested the tiny arrow point
+Armin clarification: Blah Blah Blah's live crowd cue, described by Ryan as
+"if you know this get your hand puppets out". Hands imitate chattering mouths:
+four fingers open/close toward one thumb in the blah-blah rhythm. No literal
+sock puppets and not the generic DJ earcup/hands-up suggestion. This is the next
+concept; not implemented. User-described cue is not an independently verified
+lyric/transcript and is not sign-language animation.
+
+Freddie v12 is signed but runtime capture blocked by emulator failures; see
+VERIFICATION.md. Do not upgrade built/installed into visually accepted.
+
+Latest: Freddie v12. Strict FOUR fingers plus ONE thumb per hand, including
+gripped poses. Future ASL/BSL is a reason to preserve anatomy, not proof of
+linguistic accuracy. Approved concept has moustache/half mic/floating hands and
+no jacket; runtime samples original art and draws props in code. The generated
+concept is not a runtime sprite. Queen-track trigger is not wired; Armin next.
+Ryan accepted v11 sign-holder visually in chat; large-screen testing still ahead.
+
+Previous continuation: v11 felt-puppet polish. Ryan requested the tiny arrow point
 not show through the hand and softer finger-to-hand transitions. Only derived
 finger roots receive an alpha feather, blended over original palm material at
 front edge depth. Do not blur the whole hand or regenerate felt artwork. Closed

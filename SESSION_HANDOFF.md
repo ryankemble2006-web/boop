@@ -1,6 +1,27 @@
 # BOOP animation workshop handoff — 2026-09-10
 
-## Active: felt-grip polish, lab v11
+## Active: Freddie cameo, lab v12
+
+STATUS: signed build complete; visual/runtime verification BLOCKED by dedicated
+emulator hang/exit. Source 1ff0d40351e0b9798d5cb5bbfb05e0555ee1d8b4,
+Actions 34443411468. Read VERIFICATION.md before describing v12 as working.
+
+Ryan approved the Freddie concept: moustache, half mic stand, floating felt hands,
+no jacket/torso. STRICT five digits each (four fingers plus one thumb), with
+future ASL/BSL aspirations but no claim these grips are sign-language poses.
+The implementation reuses the exact original eyes/hands, not the generated
+concept PNG. See canonical-eyes/FREDDIE.md and VERIFICATION.md. Queen-track
+detection and production transplant remain unimplemented. Armin is next.
+V11 sign-holder appearance is accepted in chat; no 55-inch physical acceptance.
+
+Armin reference clarified by Ryan: Blah Blah Blah, the crowd cue he quotes as
+"if you know this get your hand puppets out". The audience makes talking-mouth
+gestures with their hands for the blah-blah refrain. NOT sock puppets, generic
+earcup/hands-up DJ staging, or mixing gestures. Four fingers close toward the
+opposing thumb, then open as a chattering mouth. Five-digit felt hands retained.
+This is user-described performance context, not a verified transcript or ASL/BSL.
+
+## Previous: felt-grip polish, lab v11
 
 Ryan liked v10 and plans large-screen polish, then requested the tiny exposed
 arrow tip be hidden and finger roots blend like a felt puppet. V11 feathers only
