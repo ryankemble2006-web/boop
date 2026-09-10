@@ -1,3 +1,12 @@
+## v106 installed with user approval; remote retest pending
+
+Ryan approved the exact delivered v106 installation. APK SHA256 matched the signed
+receipt, adb install -r succeeded, and device versionCode106 was verified.
+User-granted RECORD_AUDIO remains granted. Assistant remains BoopAssistantActivity
+and recognition remains KatnissRecognitionService. UnifiedEntry opened for the
+coordinated remote-button test. No additional permissions or role changes made.
+Installation is verified; no physical crash-fix or command acceptance claimed yet.
+
 ## v106 signed artifact verified; physical retest pending
 
 Source 0a83c69b5eaac0eb683b468bc4fb1e5c294db4f0 on boop-canonical-rebuild.
