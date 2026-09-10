@@ -1,3 +1,15 @@
+## Deezer exemption: paused native session survives Cast interval
+
+Ryan started casting for the transition test. Cast receiver reported playing while
+native Deezer retained a paused session. DeezerSdkMediaService remained started in
+background (no isForeground flag) with the Deezer-only exemption enabled. Repeated
+read-only checks showed the same native paused session surviving beyond 150 seconds
+since its pause, unlike the earlier idle-service termination. No playback commands
+sent during this observation. This strengthens the exemption hypothesis but is not
+full transition acceptance. Asked Ryan to stop Cast from phone, start native music
+and press Home; final return-to-native/bar check remains pending his transition.
+No app source or further OS settings changed. Exemption remains enabled for testing.
+
 ## Deezer-only exemption experiment: initial native Home survival
 
 Ryan approved exempting only Deezer from battery optimization and one restart.
