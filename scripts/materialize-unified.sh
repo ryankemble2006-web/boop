@@ -56,6 +56,7 @@ TEST="$APP/src/test/java/com/boop/alpha1"
 cp unified/BoopDeviceProfile.java "$MAIN/BoopDeviceProfile.java"
 cp unified/ShieldEntryRoute.java "$MAIN/ShieldEntryRoute.java"
 cp unified/UnifiedEntryActivity.java "$MAIN/UnifiedEntryActivity.java"
+cp -R unified/tv-banners/res/. "$APP/src/main/res/"
 cp unified/UnifiedApplication.java "$MAIN/UnifiedApplication.java"
 cp unified/BoopDeviceProfileTest.java "$TEST/BoopDeviceProfileTest.java"
 cp unified/ShieldEntryRouteTest.java "$TEST/ShieldEntryRouteTest.java"
@@ -119,7 +120,7 @@ old_filter = '''            <intent-filter>\n                <action android:nam
 if text.count(old_filter) != 1:
     raise SystemExit(f'Expected one Wall launcher filter, found {text.count(old_filter)}')
 text = text.replace(old_filter, '', 1)
-entry = '''        <activity\n            android:name=".UnifiedEntryActivity"\n            android:exported="true"\n            android:launchMode="singleTask"\n            android:theme="@style/Theme.BOOP">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />\n            </intent-filter>\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.HOME" />\n                <category android:name="android.intent.category.DEFAULT" />\n            </intent-filter>\n        </activity>\n'''
+entry = '''        <activity\n            android:name=".UnifiedEntryActivity"\n            android:banner="@drawable/boop_tv_banner"\n            android:exported="true"\n            android:launchMode="singleTask"\n            android:theme="@style/Theme.BOOP">\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.LAUNCHER" />\n                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />\n            </intent-filter>\n            <intent-filter>\n                <action android:name="android.intent.action.MAIN" />\n                <category android:name="android.intent.category.HOME" />\n                <category android:name="android.intent.category.DEFAULT" />\n            </intent-filter>\n        </activity>\n'''
 main_anchor = '        <activity\n            android:name=".MainActivity"'
 if text.count(main_anchor) != 1:
     raise SystemExit('Could not find Wall MainActivity manifest anchor')

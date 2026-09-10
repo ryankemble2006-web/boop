@@ -1,3 +1,13 @@
+## v113 TV banner candidate
+
+Ryan requested new TV banners for BOOP and BOOP Shield Home; Animation Lab is
+explicitly excluded. This branch changes only its own banner resources/manifest
+and version. Dark 320x180 banner, unchanged approved eye bitmap, vector app label.
+No animations, permissions, launcher routing or media behaviour changed. Android
+resource compilation and XML parsing pass locally; signed build and on-TV visual
+acceptance pending. Preserve installed rollback. Canonical v113 also retains v112
+album browsing, which still needs integrated physical acceptance.
+
 ## v112 candidate: artwork opens the current Deezer album for browsing
 
 Ryan approved clicking Now Playing artwork to browse the current album, preserving

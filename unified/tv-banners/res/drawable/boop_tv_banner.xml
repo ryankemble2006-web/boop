@@ -1,0 +1,5 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape android:shape="rectangle"><size android:width="320dp" android:height="180dp"/><solid android:color="#0B1422"/><corners android:radius="12dp"/><stroke android:width="2dp" android:color="#24465C"/></shape></item>
+    <item android:width="240dp" android:height="120dp" android:gravity="top|center_horizontal" android:top="5dp"><bitmap android:src="@drawable/boop_tv_banner_eyes" android:gravity="fill" android:filter="true"/></item>
+    <item android:drawable="@drawable/boop_tv_banner_label"/>
+</layer-list>
