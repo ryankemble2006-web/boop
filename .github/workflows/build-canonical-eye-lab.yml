@@ -28,6 +28,8 @@ jobs:
           java -cp work/state-tests MotionTest
           javac -d work/state-tests animation-lab/canonical-eyes/java/com/boop/eyes/EyeMotion.java animation-lab/canonical-eyes/java/com/boop/eyes/SignMotion.java animation-lab/canonical-eyes/tests/SignMotionTest.java
           java -cp work/state-tests SignMotionTest
+          javac -d work/state-tests animation-lab/canonical-eyes/java/com/boop/eyes/EyeMotion.java animation-lab/canonical-eyes/java/com/boop/eyes/SignMotion.java animation-lab/canonical-eyes/java/com/boop/eyes/FreddieMotion.java animation-lab/canonical-eyes/tests/FreddieMotionTest.java
+          java -cp work/state-tests FreddieMotionTest
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
@@ -52,9 +54,9 @@ jobs:
         run: bash animation-lab/canonical-eyes/tools/build.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Canonical-Eye-Lab-v11
+          name: BOOP-Canonical-Eye-Lab-v12
           path: |
-            work/canonical-eyes-build/BOOP-Animation-Lab-v11.apk
+            work/canonical-eyes-build/BOOP-Animation-Lab-v12.apk
             work/canonical-eyes-build/apk-sha256.txt
             work/canonical-eyes-build/built-commit.txt
             work/canonical-eyes-build/badging.txt

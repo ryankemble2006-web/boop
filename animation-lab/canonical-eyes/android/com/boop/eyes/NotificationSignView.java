@@ -10,9 +10,11 @@ public final class NotificationSignView extends View {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
     private final Bitmap hands;
     private final Bitmap[][] fingers=new Bitmap[2][4];
+    private final Bitmap[] thumbs=new Bitmap[2];
     private final float[] mesh=new float[9*17*2];
     private SignMotion.Pose pose=SignMotion.sample(0,0);
     private int style;
+    private boolean freddie;
     private static final String[] NAMES={"WHATSAPP","GMAIL","FACEBOOK","X"};
     private static final String[] WORDS={"MESSAGE!","MAIL'S HERE!","OVER HERE!","SOMETHING NEW!"};
     private static final int[] COLOURS={0xff16a66c,0xffd84a40,0xff2875df,0xff323b52};
@@ -28,8 +30,10 @@ public final class NotificationSignView extends View {
                 {317,527,139,474,173},{313,637,169,682,143}};
         for(int side=0;side<2;side++)for(int digit=0;digit<4;digit++)
             fingers[side][digit]=sampleFinger(digits[digit],side==1);
+        for(int side=0;side<2;side++)thumbs[side]=sampleFinger(new float[]{696,425,769,282,174},side==1);
     }
-    public void show(SignMotion.Pose pose,int style){this.pose=pose;this.style=Math.floorMod(style,4);invalidate();}
+    public void show(SignMotion.Pose pose,int style){this.pose=pose;this.style=Math.floorMod(style,4);freddie=false;invalidate();}
+    public void showFreddie(SignMotion.Pose pose){this.pose=pose;freddie=true;invalidate();}
     private void text(Canvas c,String value,float x,float y,float size,int colour){
         paint.setShader(null);paint.setColor(colour);paint.setTextSize(size);paint.setTypeface(Typeface.create("sans-serif-black",Typeface.BOLD));paint.setTextAlign(Paint.Align.CENTER);c.drawText(value,x,y,paint);
     }
@@ -102,6 +106,7 @@ public final class NotificationSignView extends View {
     @Override protected void onDraw(Canvas c){
         super.onDraw(c);float scale=Math.min(getWidth()/1000f,getHeight()/680f);
         c.save();c.translate(getWidth()/2f,(getHeight()-680*scale)/2f);c.scale(scale,scale);
+        if(freddie){drawFreddie(c);c.restore();return;}
         c.translate(pose.sway,510+250*(1-pose.lift)+pose.bob);c.rotate(pose.angle);
         // The prop and wrists share the same parent transform: grips cannot drift.
         rearHand(c,true);rearHand(c,false);
@@ -116,6 +121,58 @@ public final class NotificationSignView extends View {
         // Four individually sampled, foreshortened digits wrap across the front surface.
         handBridge(c,true);handBridge(c,false);
         frontFingers(c,true);frontFingers(c,false);
+        c.restore();
+    }
+    private void micHand(Canvas c,boolean left,float y,boolean front){
+        c.save();c.translate(0,y);c.scale(.82f,.82f);
+        if(!front){
+            c.save();c.translate(left?292:-335,0);rearHand(c,left);c.restore();
+            // The fifth digit opposes the four front fingers, behind the shaft.
+            c.save();c.translate(left?26:-26,9);c.rotate(left?23:-23);
+            paint.setShader(null);paint.setColor(Color.WHITE);
+            c.drawBitmap(thumbs[left?0:1],null,new RectF(-16,-32,16,38),paint);c.restore();
+            c.restore();return;
+        }
+        c.translate(left?292:-335,0);
+        handBridge(c,left);frontFingers(c,left);
+        c.restore();
+    }
+    private void moustache(Canvas c){
+        c.save();c.translate(pose.sway*.3f,405+pose.bob*.25f);c.rotate(pose.angle*.12f);
+        c.scale(1,pose.lift);
+        for(int side=0;side<2;side++){
+            c.save();if(side==1)c.scale(-1,1);
+            Path p=new Path();p.moveTo(0,1);p.cubicTo(30,-25,56,-21,83,0);
+            p.cubicTo(110,20,132,13,150,2);p.cubicTo(128,47,85,48,53,36);
+            p.cubicTo(26,31,8,17,0,1);p.close();
+            paint.setShader(new LinearGradient(0,-20,0,48,0xff51483f,0xff080808,Shader.TileMode.CLAMP));c.drawPath(p,paint);
+            paint.setShader(null);c.save();c.clipPath(p);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(.85f);
+            for(int i=0;i<52;i++){
+                float x=i*3;Path hair=new Path();hair.moveTo(x,-12+(i%7));
+                hair.cubicTo(x+11,3,x+7,25,x+32,40);
+                paint.setColor(i%3==0?0xff605249:0xff292520);c.drawPath(hair,paint);
+            }
+            paint.setStyle(Paint.Style.FILL);c.restore();c.restore();
+        }
+        c.restore();
+    }
+    private void drawFreddie(Canvas c){
+        moustache(c);
+        c.save();c.translate(-160+pose.sway,455+120*(1-pose.lift)+pose.bob);
+        c.rotate(-54+pose.angle);
+        micHand(c,true,0,false);micHand(c,false,235,false);
+        paint.setShader(new LinearGradient(-10,0,10,0,new int[]{0xff343d44,0xfff1f5f7,0xff77838c,0xff202a32},null,Shader.TileMode.CLAMP));
+        c.drawRoundRect(new RectF(-10,-50,10,330),8,8,paint);paint.setShader(null);
+        paint.setColor(0xff0b1015);c.drawRoundRect(new RectF(-17,-95,17,54),12,12,paint);
+        paint.setColor(0xff76818b);c.drawRect(-16,-90,16,-80,paint);
+        RectF head=new RectF(-35,-162,35,-87);
+        paint.setShader(new RadialGradient(-12,-142,64,new int[]{0xfff0ede5,0xff9c9c97,0xff252c31},null,Shader.TileMode.CLAMP));
+        c.drawOval(head,paint);paint.setShader(null);
+        c.save();Path meshHead=new Path();meshHead.addOval(head,Path.Direction.CW);c.clipPath(meshHead);
+        paint.setStrokeWidth(1.1f);paint.setColor(0xff202a31);
+        for(int i=-72;i<90;i+=6){c.drawLine(-40,-162+i,40,-82+i,paint);c.drawLine(-40,-82-i,40,-162-i,paint);}
+        c.restore();paint.setColor(0xffc0c4c3);c.drawRoundRect(new RectF(-32,-110,32,-103),3,3,paint);
+        micHand(c,true,0,true);micHand(c,false,235,true);
         c.restore();
     }
 }

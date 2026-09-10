@@ -60,7 +60,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         Button motion=button("Pause motion");motion.setOnClickListener(v->{motionOff=!motionOff;motion.setText(motionOff?"Resume motion":"Pause motion");});controls.addView(motion);
         root.addView(controls);
         HorizontalScrollView signScroll=new HorizontalScrollView(this);LinearLayout signButtons=new LinearLayout(this);
-        String[] signNames={"WhatsApp sign","Gmail sign","Facebook sign","X sign"};
+        String[] signNames={"WhatsApp sign","Gmail sign","Facebook sign","X sign","Freddie"};
         for(int i=0;i<signNames.length;i++){final int style=i;Button b=button(signNames[i]);b.setOnClickListener(v->showSign(style));signButtons.addView(b,new LinearLayout.LayoutParams(dp(200),dp(54)));}
         signScroll.addView(signButtons);root.addView(signScroll);setContentView(root);
         // Content is attached before applying immersive flags (v0.4 lifecycle lesson).
@@ -73,7 +73,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         signActive=false;if(sign!=null){sign.setVisibility(View.GONE);resizeEyes();}
         freeze=-1;EyeMotion.Clip c=EyeCatalogue.find(id);
         controller.select(c,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
-        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v11 • Ryan review");
+        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v12 • Ryan review");
         Log.i("BOOPEyes","clip="+c.id+" time="+(long)clock);
     }
     private void resizeEyes(){
@@ -81,9 +81,9 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         if(surface.getLayoutParams().height!=h){FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(-1,h);surface.setLayoutParams(p);}
     }
     private void showSign(int style){
-        signStyle=Math.floorMod(style,4);signStart=clock;signActive=true;freeze=-1;
+        signStyle=Math.floorMod(style,5);signStart=clock;signActive=true;freeze=-1;
         sign.setVisibility(View.VISIBLE);resizeEyes();
-        label.setText("BOOP • Sign show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X"}[signStyle]+" • v11 • Demo only");
+        label.setText("BOOP • Puppet show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X","Freddie"}[signStyle]+" • v12 • Demo only");
         Log.i("BOOPEyes","sign="+signStyle+" time="+(long)clock);
     }
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);readIntent(intent);}
@@ -109,8 +109,9 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         lastFrame=time;
         EyeMotion.Clip clip=controller.clip();
         if(signActive){
-            SignMotion.Pose p=SignMotion.sample(freeze>=0?freeze:reducedMotion?9000:clock-signStart,signStyle);
-            renderer.pose=p.eyes;sign.show(p,signStyle);
+            double elapsed=freeze>=0?freeze:reducedMotion?10000:clock-signStart;
+            SignMotion.Pose p=signStyle==4?FreddieMotion.sample(elapsed):SignMotion.sample(elapsed,signStyle);
+            renderer.pose=p.eyes;if(signStyle==4)sign.showFreddie(p);else sign.show(p,signStyle);
         }else renderer.pose=freeze>=0?clip.sample(freeze):reducedMotion?clip.sample(clip.loop?0:clip.duration):controller.sample((long)clock);
         surface.requestRender();Choreographer.getInstance().postFrameCallback(this);
     }
