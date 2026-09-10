@@ -63,6 +63,109 @@ public final class HomeDashboardControllerTest {
         first.onResult(true, lamp.withState("on"), null);
         assertEquals("off", rendered.get().cards().get(0).state());
     }
+
+    @Test public void acknowledgementUnlocksWithoutInventingStateAndRepeatedPressReversesIntent() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set).start();
+        rendered.get().toggle(lamp);
+        HomeAssistantRepository.BinaryActionCallback first = repository.pendingToggle;
+        first.onAccepted(lamp.withState("on"));
+        assertTrue(rendered.get().actionsEnabled());
+        assertEquals("off", rendered.get().cards().get(0).state());
+        rendered.get().toggle(lamp);
+        assertEquals(2, repository.toggleCalls.get());
+        assertEquals("on", repository.lastRequested.state()); // repository will send turn_off
+        HomeAssistantRepository.BinaryActionCallback second = repository.pendingToggle;
+        second.onAccepted(lamp.withState("off"));
+        first.onObservedState(lamp.withState("on"));
+        first.onResult(true, lamp.withState("on"), null);
+        assertEquals("off", rendered.get().cards().get(0).state());
+        second.onResult(false, null, "No state event"); // returned to original; HA emitted nothing
+        assertFalse(rendered.get().stale());
+        assertTrue(rendered.get().actionsEnabled());
+        assertEquals("off", rendered.get().cards().get(0).state());
+    }
+    @Test public void anotherDevicePressDoesNotDiscardFirstDevicesConfirmation() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        EntityCard fan = card("fan.desk", "Fan", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Arrays.asList(lamp, fan));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set).start();
+        rendered.get().toggle(lamp);
+        HomeAssistantRepository.BinaryActionCallback first = repository.pendingToggle;
+        first.onAccepted(lamp.withState("on"));
+        rendered.get().toggle(fan);
+        HomeAssistantRepository.BinaryActionCallback second = repository.pendingToggle;
+        first.onObservedState(lamp.withState("on"));
+        assertFalse(rendered.get().actionsEnabled()); // fan still awaiting acknowledgement
+        assertEquals("on", rendered.get().cards().get(0).state());
+        second.onAccepted(fan.withState("on"));
+        second.onResult(true, fan.withState("on"), null);
+        first.onResult(true, lamp.withState("on"), null);
+        assertEquals("on", rendered.get().cards().get(0).state());
+        assertEquals("on", rendered.get().cards().get(1).state());
+    }
+    @Test public void delayedRecheckCannotOverwriteANewerRequest() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set).start();
+        rendered.get().toggle(lamp);
+        repository.pendingToggle.onAccepted(lamp.withState("on"));
+        repository.deferLoad = true;
+        repository.completeToggle(false, null, "No event");
+        HomeAssistantRepository.DashboardCallback recheck = repository.pendingLoad;
+        assertNotNull(recheck);
+        rendered.get().toggle(lamp);
+        assertEquals("on", repository.lastRequested.state());
+        repository.pendingToggle.onAccepted(lamp.withState("off"));
+        recheck.onResult(new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp.withState("on"))), null);
+        assertEquals("off", rendered.get().cards().get(0).state());
+        repository.completeToggle(true, lamp.withState("off"), null);
+        assertTrue(rendered.get().actionsEnabled());
+    }
+    @Test public void finalRecheckCorrectsOlderMatchingEventWithoutLockingButtons() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        AtomicReference<Runnable> settle = new AtomicReference<>();
+        new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set,
+            task -> { settle.set(task); return () -> {}; }).start();
+        for (int i = 0; i < 3; i++) {
+            rendered.get().toggle(lamp);
+            repository.pendingToggle.onAccepted(lamp.withState(i % 2 == 0 ? "on" : "off"));
+        }
+        repository.pendingToggle.onObservedState(lamp.withState("on")); // earlier matching event
+        repository.completeToggle(true, lamp.withState("on"), null);
+        assertTrue(rendered.get().actionsEnabled());
+        assertEquals("on", rendered.get().cards().get(0).state());
+        settle.get().run(); // HA's authoritative final state is still off
+        assertEquals("off", rendered.get().cards().get(0).state());
+        assertTrue(rendered.get().actionsEnabled());
+    }
+    @Test public void acceptanceAfterConcurrentCompletionStillSchedulesFinalRecheck() {
+        EntityCard lamp = card("light.floor_lamp", "Floor lamp", "off");
+        FakeRepository repository = new FakeRepository();
+        repository.snapshot = new DashboardSnapshot(LOUNGE, Collections.singletonList(lamp));
+        AtomicReference<HomeDashboardController.ViewState> rendered = new AtomicReference<>();
+        AtomicReference<Runnable> settle = new AtomicReference<>();
+        new HomeDashboardController(LOUNGE, repository, new FakeCache(), rendered::set,
+            task -> { settle.set(task); return () -> {}; }).start();
+        rendered.get().toggle(lamp);
+        HomeAssistantRepository.BinaryActionCallback callback = repository.pendingToggle;
+        callback.onObservedState(lamp.withState("on"));
+        callback.onResult(true, lamp.withState("on"), null);
+        callback.onAccepted(lamp.withState("on"));
+        assertNotNull(settle.get());
+        settle.get().run();
+        assertEquals("off", rendered.get().cards().get(0).state());
+    }
     private static final AreaInfo LOUNGE = new AreaInfo("living_room", "Living Room");
 
     @Test public void liveLoadPublishesRoomDevicesWithoutFavouriteSemantics() {
@@ -159,9 +262,9 @@ public final class HomeDashboardControllerTest {
 
     private static EntityCard card(String entityId, String name, String state) { return new EntityCard(entityId, "living_room", name, state, false, null); }
     private static final class FakeRepository implements HomeDashboardController.RepositoryPort {
-        private DashboardSnapshot snapshot; private String loadError; private HomeAssistantRepository.BinaryActionCallback pendingToggle; private final AtomicInteger toggleCalls = new AtomicInteger();
-        @Override public void loadDashboard(AreaInfo room, HomeAssistantRepository.DashboardCallback callback) { callback.onResult(snapshot, loadError); }
-        @Override public void toggleBinary(EntityCard card, HomeAssistantRepository.BinaryActionCallback callback) { toggleCalls.incrementAndGet(); pendingToggle = callback; }
+        private boolean deferLoad; private HomeAssistantRepository.DashboardCallback pendingLoad; private EntityCard lastRequested; private DashboardSnapshot snapshot; private String loadError; private HomeAssistantRepository.BinaryActionCallback pendingToggle; private final AtomicInteger toggleCalls = new AtomicInteger();
+        @Override public void loadDashboard(AreaInfo room, HomeAssistantRepository.DashboardCallback callback) { if (deferLoad) pendingLoad = callback; else callback.onResult(snapshot, loadError); }
+        @Override public void toggleBinary(EntityCard card, HomeAssistantRepository.BinaryActionCallback callback) { toggleCalls.incrementAndGet(); lastRequested = card; pendingToggle = callback; }
         private void completeToggle(boolean success, EntityCard card, String error) { HomeAssistantRepository.BinaryActionCallback callback = pendingToggle; pendingToggle = null; callback.onResult(success, card, error); }
     }
     private static final class FakeCache implements HomeDashboardController.CachePort {

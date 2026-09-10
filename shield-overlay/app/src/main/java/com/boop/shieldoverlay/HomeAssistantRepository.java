@@ -40,6 +40,7 @@ public final class HomeAssistantRepository {
     public interface BinaryActionCallback {
         void onResult(boolean success, EntityCard card, String error);
         default void onObservedState(EntityCard card) { }
+        default void onAccepted(EntityCard requestedState) { }
     }
     public interface DashboardCallback { void onResult(DashboardSnapshot snapshot, String error); }
 
@@ -356,9 +357,11 @@ public final class HomeAssistantRepository {
             boolean finish;
             synchronized (this) {
                 if (done) return;
+                if (serviceSucceeded) return;
                 serviceSucceeded = true;
                 finish = expectedStateSeen;
             }
+            callback.onAccepted(original.withState(expectedState));
             if (finish) complete(true, null);
         }
 

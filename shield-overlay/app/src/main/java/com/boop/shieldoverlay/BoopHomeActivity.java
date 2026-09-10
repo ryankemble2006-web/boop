@@ -154,6 +154,7 @@ public final class BoopHomeActivity extends Activity {
         }
         closeRoutinesController();
         closeHomeSocket();
+        if (dashboardController != null) dashboardController.stop();
         dashboardController = null;
         dashboardState = null;
         homeView = null;
@@ -502,6 +503,7 @@ public final class BoopHomeActivity extends Activity {
         roomPickerView = null;
         homeShellVisible = true;
         navigationModel = new TvNavigationModel();
+        if (dashboardController != null) dashboardController.stop();
         dashboardController = null;
         dashboardState = null;
         routinesState = RoutinesController.ViewState.loading();
@@ -1038,6 +1040,7 @@ public final class BoopHomeActivity extends Activity {
             mainHandler.removeCallbacks(dashboardReconnectRunnable);
         }
         dashboardReconnectAttempt = 0;
+        if (dashboardController != null) dashboardController.stop();
         dashboardController = null;
         dashboardState = null;
         homeView = null;

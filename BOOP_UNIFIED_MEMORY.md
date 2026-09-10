@@ -1,3 +1,26 @@
+## v111 candidate: reusable room controls while state catches up
+
+Ryan approved allowing another click after service acknowledgement; status may lag,
+but the final displayed state must reflect HA. v110 physical test still had a
+lockout. Diagnostics are private; source diagnosis separates acknowledgement from
+later state confirmation rather than assuming a rendering delay.
+
+v111 adds a separate acceptance callback, keeps latest requested state per device
+for reversing rapid presses, and retains confirmed labels. Per-device generations
+reject superseded callbacks without discarding another device's confirmation.
+A cancellable HA state recheck after the latest acknowledgement reconciles labels,
+including old matching events and returning to an unchanged state with no event.
+It does not lock input. Pending rechecks are invalidated on controller teardown.
+This is an HA snapshot check, not proof of eventual physical convergence.
+
+23 focused Java repository/controller tests pass locally. Regressions cover early
+acknowledgement, repeated reversal, multiple devices, stale rechecks and concurrent
+completion-before-acceptance. Review found and corrected the old matching-event
+and callback-ordering cases. Full GitHub build/signing and physical acceptance
+pending. Version111 / 1.2.111-responsive-room-controls. v110 remains installed;
+v108 accepted functional rollback preserved. Default Android voice remains in use.
+Next: verify signed artifact, obtain exact APK install approval, then rapid candle
+presses and settled-label acceptance. No GitHub visual tests or unrelated changes.
 ## v110 installed with approval; private timing test pending
 
 User approved the verified v110 APK. SHA256 matched the artifact receipt;

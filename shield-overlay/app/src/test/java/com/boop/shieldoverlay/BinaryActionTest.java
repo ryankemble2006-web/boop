@@ -16,6 +16,24 @@ import org.json.JSONObject;
 import org.junit.Test;
 
 public final class BinaryActionTest {
+    @Test public void reportsAcceptanceBeforeStateWithoutClaimingConfirmation() {
+        RecordingPorts ports = new RecordingPorts();
+        AtomicReference<EntityCard> accepted = new AtomicReference<>();
+        AtomicBoolean completed = new AtomicBoolean();
+        new HomeAssistantRepository(ports, ports).toggleBinary(
+            card("light.sofa", "living_room", "Sofa", "off"),
+            new HomeAssistantRepository.BinaryActionCallback() {
+                public void onAccepted(EntityCard card) { accepted.set(card); }
+                public void onResult(boolean ok, EntityCard card, String error) { completed.set(true); }
+            });
+        ports.ackSubscription();
+        ports.commands.get(0).callback.onResult(true, null, null);
+        assertNotNull(accepted.get());
+        assertEquals("on", accepted.get().state());
+        assertFalse(completed.get());
+        ports.emit("light.sofa", "on");
+        assertTrue(completed.get());
+    }
     @Test public void publishesObservedStateBeforeSlowServiceReplyWithoutClaimingSuccess() {
         RecordingPorts ports = new RecordingPorts();
         AtomicReference<EntityCard> observed = new AtomicReference<>();
