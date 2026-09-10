@@ -1,3 +1,33 @@
+## v114 signed candidate; v113 album browsing checked locally
+
+Recipe source `a20dbf333fd0bdf13d6146d1fd20729cdebbee2f`, version114 / `1.2.114-tablet-recipes`.
+GitHub run34514678324 completed/success; artifact10167369904.
+ZIP SHA256 b0c255545942eb6bd7b97a90e7d83196fc39f8ef9fca3e20eb0ebaacd0acd5db.
+APK SHA256 4519694ba8f7c4ca0adcb8f16d5cd9d294af3c9f6534e3569976f885ba459639.
+Downloaded source/package/version/hash and permanent signer independently verified.
+Pure Java recipe/shared-state/media/album checks and final local Android Java compilation
+passed. GitHub materialization, functional checks, signed build and package integrity
+passed. No GitHub visual tests. Superseded run34514392635 was cancelled; use34514678324.
+
+v114 is not installed or physically accepted on the Pad. Actual provider generation,
+large-text readability and hands-free microphone/acoustic behavior remain unverified.
+Existing loaded-step navigation is local; generation uses selected OpenCode or Native Chat.
+External Free Chat cannot return structured recipes into the app, so recipe generation
+explains that the existing BOOP conversation service must be selected. No new subscription.
+Ingredient lists wait for “that's everything” / “find a recipe”; each addition uses normal
+intentional BOOP listening. Ingredients detours preserve the cooking cursor. Existing
+sleep/dismissal commands close cooking. No separate continuously running microphone.
+The app's existing Wall awake policy is restored on exit; this feature does not change it.
+
+Installed Shield remains v113 / standalone Home v24. On v113, an agent-controlled artwork
+click opened native Deezer's exact Greatest Hits album by Fleetwood Mac. MediaSession
+retained Little Lies, queue item24 and playing state3; position advanced154030 to164052ms.
+This is scoped physical-device observation, not Ryan's visual/acoustic acceptance.
+An earlier coordinate attempt opened iPlayer because input uses1920x1080 while captures
+are3840x2160; no playback was changed, BOOP was restored, then correct mapping was used.
+Private captures/raw diagnostics remain local. No track-selection/play command was sent.
+Deezer's album page was left open. Last user-accepted checkpoint remains scoped v111.
+
 ## v113 verified and installed; tablet recipes active, 2026-09-10
 
 Banner source 5e043eaa46e2bac7706780ded50ee020a9fb8ceb; run34508703082 completed/success;
@@ -8,9 +38,9 @@ Android apksigner verified permanent signer f5af40378ef06445b43f6001ae602fc18ce1
 matching the actual installed v111 APK, privately preserved before installation.
 Approved adb update succeeded; Android independently reports v113. Agent opened Home
 and inspected current metadata/artwork. No new permissions or roles. No GitHub visual tests.
-Ryan's v111 scoped room/HA/media/cancellation acceptance remains the latest recorded
-physical acceptance. v113 visual acceptance and integrated artwork-to-album acceptance
-remain pending; component Deezer browsing evidence does not prove the integrated click.
+Ryan's v111 scoped room/HA/media/cancellation acceptance remains the latest user-recorded
+physical acceptance. v113 has the scoped agent-observed integrated album result above;
+Ryan's visual/acoustic acceptance remains pending.
 Standalone v24 was also verified/installed on its owning branch; heartbeat is paused.
 
 Ryan explicitly approved tablet recipes NOW, superseding the local September17 parking note.
@@ -19,8 +49,8 @@ Existing selected conversation provider generates the recipe; local cooking navi
 precedes media handling on tablets only. Ingredient additions/corrections are collected
 until explicit readiness. No new microphone, provider or subscription. Pad7 on a magnetic
 keyboard stand is the target; other profile routing remains unchanged.
-Functional JVM checks pass locally. Android compilation/signing and real Pad/provider
-verification are still pending at this implementation receipt. No v114 install authorized
+Functional JVM checks, local Android compilation and signed GitHub build pass; see the
+exact v114 receipt above. Real Pad/provider verification remains pending. No v114 install authorized
 by the banner approval. Existing untracked boop-build belongs to prior work and is preserved.
 
 ### Retained work, not complete
