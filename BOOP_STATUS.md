@@ -1,12 +1,18 @@
-## v24 TV banner candidate
+## v24 verified and installed, 2026-09-10
 
-Ryan requested new TV banners for BOOP and BOOP Shield Home; Animation Lab is
-explicitly excluded. This branch changes only its own banner resources/manifest
-and version. Dark 320x180 banner, unchanged approved eye bitmap, vector app label.
-No animations, permissions, launcher routing or media behaviour changed. Android
-resource compilation and XML parsing pass locally; signed build and on-TV visual
-acceptance pending. Preserve installed rollback. Canonical v113 also retains v112
-album browsing, which still needs integrated physical acceptance.
+Approved source f78b613efd1b51075ac2a0ebb0a8f809012dac3d; corrected run
+34509147383 completed/success; artifact 10165087553. Do not use failed run 34508716460.
+Independent downloaded ZIP SHA256 8bf37b3cea8ba86d2474aa1b3b9303599f137a82579fa4f2b10f53323db82a4b.
+APK SHA256 7bd9d5a755bfc016644a4efeb1de833fc86dc096315637bece64812ad5b05304.
+Package com.boop.shieldhome, version24 / 0.10.9-tv-banner; embedded source receipt matches.
+Android apksigner verified permanent certificate f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde,
+also matching the actual installed v23 APK preserved privately before update.
+Approved adb update succeeded; Android independently reports v24. Agent inspected
+the new BOOP HOME banner on the physical Shield's canonical Home. The square drawer
+icon remains the existing Android placeholder; a TV banner change does not replace it.
+Ryan's visual acceptance remains pending. No permission, role, NVIDIA mode or animation change.
+Heartbeat finish-boop-v98-build is paused because this task completed the approved installs.
+Private APK rollback, screenshots and diagnostics stay outside the public repository.
 
 ## 2026-09-10 Deezer compatibility patch, v23 candidate
 
