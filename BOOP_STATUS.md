@@ -1,48 +1,58 @@
 # BOOP Status
 
-Updated 2026-09-10. `main` is the shared context/contract hub; normal BOOP application work is on `boop-unified` unless the startup map names an explicit exception.
+Updated 2026-09-10. `main` is the shared context/contract hub. `boop-unified` is the accepted Unified baseline; the currently selected overhaul work is on `boop-canonical-rebuild`.
 
 ## Shared continuity status
 
 Ryan approved an exhaustive two-file continuity transfer for Codex/Boop:
 
-- `BOOP_PERSONALITY.md` now carries the durable collaboration style, shorthand and reference meanings.
-- `BOOP_CONTEXT.md` now carries the broad BOOP/project mental model and adjacent vocabulary.
+- `BOOP_PERSONALITY.md` carries the durable collaboration style, shorthand and reference meanings.
+- `BOOP_CONTEXT.md` carries the broad BOOP/project mental model and adjacent vocabulary.
 
 This is documentation-only. No application source, package, signer, permission, build or deployment state is changed by the continuity transfer.
 
-The corrected `canary` meaning is now recorded as a deliberately narrow/sacrificial proof used to expose a risky assumption before applying the change to the real target. The prior skin-only/unknown note is superseded.
+The corrected `canary` meaning is recorded as a deliberately narrow/sacrificial proof used to expose a risky assumption before applying the change to the real target. The prior skin-only/unknown note is superseded.
 
-## Current canonical app pointer
+## Reconciled live app state
 
-Observed live `boop-unified` branch HEAD during this update:
+A concurrent Codex session advanced the owning app docs while the first continuity commit was being published. Shared context was reconciled to the fresher state.
 
-`99474d141e7affad17cdbe854e94dd3986076980`
+Current observed `boop-unified` documentation HEAD:
 
-Latest signed candidate recorded by `boop-unified`:
+`771b68a00ac95b40ed6e17cffac60af77528a934`
+
+Physically accepted Natural Voice baseline:
 
 - versionCode `91`;
 - versionName `1.2.91-unified-static-track-state-fix`;
 - app source/build head `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
 - canonical Unified workflow `34433115316`: SUCCESS;
 - artifact ID `10135283428`;
-- v91 remains **not physically accepted**.
+- protected checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` -> `11650313221ae5bf997dbb93b6a905bfdc7da1ed`.
 
-## Current physical rollback
+Ryan physically confirmed Natural Voices are installed/selectable, demos speak and normal BOOP speech used the selected Natural Voice. That is voice-specific acceptance, not blanket physical acceptance of unrelated behaviour.
+
+Historical rollback remains preserved:
 
 `checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
 
-Ryan physically accepted v88 as the usable Android-speech rollback. This does not prove Natural Voices work.
+## Active selected canonical rebuild
 
-## Immediate app gate
+Owning branch:
 
-Physical-test v91 Natural Voices. The required finish condition remains more than one speaker preview plus normal routed Natural Voice speech while ordinary Android TTS fallback remains safe.
+`boop-canonical-rebuild`
 
-Only after Natural Voices are physically accepted should the already-approved canonical rebuild be started from the exact voice-working Unified head.
+Observed candidate HEAD during reconciliation:
 
-## Explicit exception
+`a3eb768641e339ed59a6e2e86cb74f64bccf5979`
 
-Clean Nvidia Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a merge. Do not infer otherwise from Unified's canonical status.
+Base:
+
+`boop-unified@99474d141e7affad17cdbe854e94dd3986076980`
+
+Candidate version 92. Selected scope is items 1, 3, 6, 7, 8 and 10: shared speech/room/media state; dynamic configured-room and generic exposed HA discovery; one media corner/Home Now Playing owner; Deezer/local session transport; HA Back escape; manual/automatic profiles.
+
+Eyes/blink are handled separately for later transplant. Turbo redesign is outside this branch. The candidate was not merged or physically accepted at this snapshot. Re-fetch its live handoff/status/memory before continuing.
 
 ## Acceptance rule
 

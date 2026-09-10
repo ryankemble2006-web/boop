@@ -14,32 +14,42 @@ This repository is public. Keep shared context technically useful without publis
 
 ## Freshness snapshot at this update
 
-Live shared branch before this documentation commit:
+A concurrent Codex session advanced the application docs while this continuity transfer was being published. The shared context was deliberately reconciled rather than pretending the earlier snapshot was still current.
 
-- `main`: `79b1025f94ea55407ea72866d77b19cccb85aab7`.
+Live shared `main` before this reconciliation commit:
 
-Live canonical Unified branch observed during this continuity update:
+- `8f168f94f602982214b843d6aa33809d2f3eab0c` (`docs: expand BOOP continuity for Codex transfer`).
 
-- `boop-unified`: `99474d141e7affad17cdbe854e94dd3986076980`.
+Live canonical Unified documentation HEAD observed during reconciliation:
 
-Latest signed Unified test candidate recorded by the owning branch:
+- `boop-unified`: `771b68a00ac95b40ed6e17cffac60af77528a934` (`docs: accept v91 voices and point to scoped rebuild`).
 
-- source/build head `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
+Physically accepted Natural Voice baseline:
+
+- app source/build head `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
 - versionCode `91`;
 - versionName `1.2.91-unified-static-track-state-fix`;
 - package `com.boop.alpha1`;
 - permanent signer unchanged;
 - canonical Unified workflow `34433115316`: SUCCESS;
 - artifact ID `10135283428`;
-- v91 is **CI/build verified but not physically accepted**.
+- protected checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` -> `11650313221ae5bf997dbb93b6a905bfdc7da1ed`.
 
-Current protected usable physical rollback:
+Ryan confirmed Natural Voices are installed/selectable, demos speak, and a normal BOOP reply used the selected Natural Voice. This is **voice-specific physical acceptance**, not blanket acceptance of every visual, HA-room, microphone or future-build behaviour.
+
+Historical usable rollback remains preserved:
 
 - `checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`.
 
-Ryan physically confirmed v88 keeps ordinary Android speech usable after failed Natural Voice attempts. Natural Voices are not considered finished at v88.
+Active selected rebuild:
 
-Do not treat these numbers as timeless. Re-fetch the branch before engineering work.
+- branch `boop-canonical-rebuild`;
+- base `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`;
+- candidate HEAD observed here `a3eb768641e339ed59a6e2e86cb74f64bccf5979`;
+- candidate version 92;
+- not merged or physically accepted at this snapshot.
+
+Do not treat these numbers as timeless. Re-fetch live branches before engineering work.
 
 # 1. Product identity
 
@@ -81,7 +91,7 @@ Donations are acceptable. Selling the assistant/personality as a locked service 
 
 # 2. The one-puppet mental model
 
-The architectural direction approved for the later canonical rebuild is:
+The architectural direction approved for the canonical rebuild is:
 
 > **BOOP is one logical puppet; state is data; every surface renders that same puppet rather than independently implementing him.**
 
@@ -93,18 +103,20 @@ This does not mean all platform code must literally be identical. It means share
 
 ## Canonical Unified app
 
-Normal BOOP app development uses:
+The physically accepted voice baseline and normal pre-rebuild app lineage is:
 
 - branch `boop-unified`;
 - package `com.boop.alpha1`;
 - permanent BOOP signer;
 - one APK containing the established Wall, phone Launcher and Shield bodies.
 
-The separate historical Wall/Launcher/Shield branches remain rollback/reference lineages. They are not the default place to add new shared features.
+The separate historical Wall/Launcher/Shield branches remain rollback/reference lineages.
+
+The **active selected overhaul work** now belongs to `boop-canonical-rebuild`. Do not put new rebuild changes onto `boop-unified` merely because Unified remains the accepted baseline.
 
 ## Unified profile routing
 
-Preserve the routing order unless Ryan explicitly changes it:
+Preserve the established routing order unless the owning rebuild explicitly and safely evolves it:
 
 1. explicit persistent recovery/debug override wins first;
 2. Android TV / Leanback / television mode -> Shield body;
@@ -116,26 +128,24 @@ The tablet route is intentionally generic, not a Xiaomi-only model hack.
 
 ## Standalone clean Shield HOME exception
 
-A separate clean Nvidia Shield HOME replacement remains deliberately standalone:
+A separate clean Nvidia Shield HOME replacement remains preserved on:
 
 - branch `boop-shield-clean-launcher`;
 - package `com.boop.shieldhome`.
 
-It must **not** be silently merged into Unified merely because Unified is canonical. Ryan wants Shield hardware testing and recovery confidence before any later merge decision.
+The scoped canonical rebuild is allowed to reuse established Shield Home/Now Playing source internally under its approved scope, but that does **not** silently erase or repoint the standalone source lineage/package. Keep recovery provenance intact.
 
-Stock launcher recovery is part of that experiment's safety boundary.
+# 4. Natural Voice baseline is now physically accepted
 
-# 4. Current Natural Voice work
-
-Natural Voices are the active narrow engineering gate before the larger canonical rebuild.
+Natural Voices were the narrow engineering gate before the selected canonical rebuild. That gate is now satisfied for the v91 baseline.
 
 ## Intended user experience
 
-BOOP should offer optional natural local/offline voices after a one-time in-app model download, while preserving ordinary Android TextToSpeech as a reliable fallback.
+BOOP offers optional natural local/offline voices after a one-time in-app model download, while preserving ordinary Android TextToSpeech as a reliable fallback.
 
 No OpenAI voice API or paid TTS subscription is required for this subsystem.
 
-Pinned current voices:
+Pinned accepted voices:
 
 - Emma: `bf_emma`, SID 21;
 - Isabella: `bf_isabella`, SID 22;
@@ -158,9 +168,9 @@ The durable rule is:
 6. a failed natural preview must leave Android TTS usable;
 7. never secretly substitute Android TTS while pretending a Natural Voice preview succeeded.
 
-## Why v91 exists
+## Why the v91 baseline matters
 
-The physical diagnostic progression matters because it demonstrates the preferred debugging style.
+The physical diagnostic progression demonstrates the preferred debugging style.
 
 ### v85
 
@@ -176,35 +186,29 @@ Non-callback synthesis removed the hard callback crash, but natural selection/fa
 
 ### v88
 
-Runtime-proof gating restored ordinary Android speech even after failed Natural Voice attempts. Ryan physically accepted this as the current usable rollback, not as proof that Kokoro itself works.
+Runtime-proof gating restored ordinary Android speech even after failed Natural Voice attempts. Ryan physically accepted this as a usable rollback, not yet as proof Kokoro worked.
 
 ### v89
 
-Photographable diagnostics produced `BOOP DEV E890` / runtime files incomplete. Investigation found BOOP's own new preflight had invented two bogus required files. The pack itself was not proven corrupt.
+Photographable diagnostics produced `BOOP DEV E890` / runtime files incomplete. Investigation found BOOP's own preflight had invented two bogus required files. The pack itself was not proven corrupt.
 
 ### v90
 
 Removing only those bogus requirements progressed physical testing to `BOOP DEV E893` with `Natural speech audio output unavailable`.
 
-That was useful evidence: file preflight passed, Sherpa/Kokoro initialised, synthesis returned audio, and the remaining failure was Android playback.
+That evidence proved file preflight passed, Sherpa/Kokoro initialised, synthesis returned audio, and the remaining failure was Android playback.
 
 ### v91
 
-The specific repair keeps signed PCM16 and `AudioTrack` `MODE_STATIC` but accepts the valid pre-write `STATE_NO_STATIC_DATA` condition, rejecting only `STATE_UNINITIALIZED` at that stage.
+The repair keeps signed PCM16 and `AudioTrack` `MODE_STATIC` but accepts the valid pre-write `STATE_NO_STATIC_DATA` condition, rejecting only `STATE_UNINITIALIZED` at that stage.
+
+Ryan subsequently confirmed Natural Voice demos and normal routed Natural Voice speech physically. The accepted checkpoint is now `checkpoint-boop-unified-v91-natural-voices-accepted`.
 
 Do not redesign playback transport unless new physical evidence requires it.
 
-## Required physical proof before calling Natural Voices finished
+## Acceptance scope
 
-The owning branch currently requires:
-
-- ordinary HA command still acts and Android BOOP still speaks;
-- Emma preview speaks naturally;
-- at least one second Natural Voice such as George or Isabella speaks;
-- a normal BOOP/HA reply uses the selected Natural Voice;
-- failures remain photographable and Android fallback survives.
-
-One successful Emma preview alone is not enough.
+The v91 physical result proves the Natural Voice path sufficiently for the selected rebuild baseline. It does not certify unrelated visual/room/microphone behaviour and does not automatically bless later candidates.
 
 # 5. Home Assistant relationship
 
@@ -233,6 +237,8 @@ Room inference is desirable because users should be able to say “turn on the f
 When room identity is ambiguous, the product may ask “Which room?” rather than controlling a similarly named device somewhere else.
 
 Room-scoped behaviour should fail closed. Convenience must not become cross-room surprise.
+
+The active canonical rebuild explicitly includes dynamic configured-room state and exposed generic HA discovery, so read its live branch docs before altering this area.
 
 ## Dynamic devices
 
@@ -295,9 +301,11 @@ Default remains cyan/blue at 190 degrees. Do not hue-shift sclera, pupil, highli
 
 ## Blink
 
-The blink should animate the canonical eyes, not replace them with regenerated frames. If the canonical idle blink authority is missing or uncertain during later rebuild work, recover/request the approved animation source rather than inventing it.
+The blink should animate the canonical eyes, not replace them with regenerated frames. If canonical idle-blink authority is missing or uncertain, recover/request the approved animation source rather than inventing it.
 
 Ryan has explicitly used real video/physical viewing to judge blink quality. Visual acceptance belongs to him.
+
+The current scoped canonical rebuild explicitly leaves eyes/blink to another task for later transplant. Do not independently redesign them inside the rebuild branch.
 
 ## Yellow hands
 
@@ -421,9 +429,9 @@ Important direction:
 - BOOP can pause music immediately;
 - natural requests such as play/pause/skip should feel appliance-fast;
 - media artwork/Now Playing presentation can become part of the puppet surface;
-- previously landed media-control improvements must be inspected before the later canonical rebuild adds more, so working functionality is not duplicated or redesigned.
+- already-landed media-control improvements should be reused rather than independently reimplemented.
 
-The current canonical rebuild prompt explicitly defers additional media work until existing landed media behaviour is audited.
+The active scoped canonical rebuild explicitly includes one media corner/Home Now Playing owner, Deezer/local transport and reuse of established Shield Home/Now Playing code as an internal library. Read that branch's live plan/handoff before adding media behaviour.
 
 # 13. Developer lab / testing UX
 
@@ -460,7 +468,7 @@ A non-visual emulator/process smoke can prove “it launches without this crash�
 
 # 15. Release and rollback discipline
 
-One canonical BOOP APK lineage is the normal rule.
+One canonical BOOP APK lineage is the normal destination, even when a scoped rebuild branch is temporarily isolated.
 
 Prefer one intentional functional change per version when practical. Avoid bundling unrelated tweaks merely because a build pipeline is already open.
 
@@ -477,29 +485,49 @@ Git history/artifacts are the archive. A random local downloads folder is not th
 
 CI green, signer green and physical green are separate states.
 
-# 16. The canonical rebuild
+# 16. Active scoped canonical rebuild
 
-Ryan has already approved a larger later **BOOP CANONICAL REBUILD / FULL AUTONOMOUS GITHUB DEVELOPMENT RUN**.
+The previously queued **BOOP CANONICAL REBUILD** is now underway in deliberately selected scope after v91 Natural Voice acceptance.
 
-It is intentionally gated behind Natural Voice physical acceptance.
+Owning branch at this snapshot:
 
-Do not create/start that rebuild early simply because its plan exists.
+`boop-canonical-rebuild`
 
-Once voices are physically accepted:
+Observed candidate HEAD:
 
-1. fetch live `boop-unified` and `main`;
-2. branch from the exact physically verified voice-working Unified head;
-3. follow the approved rebuild phases;
-4. preserve one-logical-puppet architecture;
-5. inspect already-landed media work before changing media;
-6. preserve exact canonical visual assets;
-7. keep Ryan as visual/device/acoustic acceptance authority.
+`a3eb768641e339ed59a6e2e86cb74f64bccf5979`
 
-The rebuild is meant to consolidate accumulated functionality without losing the character or silently resetting working behaviour.
+Base:
+
+`boop-unified@99474d141e7affad17cdbe854e94dd3986076980`
+
+Ryan selected overhaul items **1, 3, 6, 7, 8 and 10**.
+
+Current scoped themes recorded by the owning branch:
+
+- shared speech/room/media state;
+- dynamic configured room and exposed generic HA discovery;
+- one media corner/Home Now Playing owner;
+- explicit Deezer and local session transport;
+- HA Back escape;
+- manual/automatic device profiles;
+- reuse established Shield Home/Now Playing source internally where appropriate.
+
+Explicit exclusions/boundaries at this snapshot:
+
+- eyes/blink are handled by another task for later transplant;
+- no Turbo redesign in this branch;
+- no new microphone pipeline;
+- no provider secrets;
+- no automatic OS HOME/accessibility/notification-access changes;
+- no visual GitHub tests;
+- no merge/physical acceptance merely because a candidate builds.
+
+The owning branch reports a candidate version 92. At the moment this shared context was reconciled, Java behavioural/source materialisation checks had passed while Android build, signed CI, emulator/runtime inspection and physical acceptance were still pending. Re-fetch because this branch is actively moving.
 
 # 17. Shield Turbo is adjacent, not the same app
 
-SHIELD TURBO is a separate BOOP-repository project aimed at safe Nvidia Shield tuning/maintenance. Do not confuse its permissions/performance experiments with Unified app contracts.
+SHIELD TURBO is a separate BOOP-repository project aimed at safe Nvidia Shield tuning/maintenance. Do not confuse its permissions/performance experiments with Unified/rebuild app contracts.
 
 Durable Turbo direction from prior work includes:
 
@@ -511,7 +539,7 @@ Durable Turbo direction from prior work includes:
 - photographable full-screen diagnostics for unsupported/failed actions;
 - a startup note can explain that silent optimisation may briefly appear to hang rather than adding unreliable notification attempts.
 
-Turbo may later be visually/operationally integrated with other Shield tooling, but that is not permission to merge packages or permissions casually.
+Turbo may later be visually/operationally integrated with other Shield tooling, but that is not permission to merge packages or permissions casually. The active canonical rebuild currently excludes Turbo redesign.
 
 # 18. Shield HOME / launcher thinking
 
@@ -526,7 +554,7 @@ General desired qualities:
 - avoid disabling platform dependencies without proof;
 - accessibility-based enable/swap experiments must preserve an escape route.
 
-A separate clean HOME branch/package exists specifically because replacing HOME can make a Shield awkward to recover. Respect that boundary.
+The standalone clean HOME branch/package remains preserved even while the canonical rebuild reuses selected established source internally.
 
 # 19. Phone/tablet launcher direction
 
@@ -629,7 +657,7 @@ What transfers into BOOP is the engineering behaviour:
 - prefer reversible mods;
 - use existing hardware creatively;
 - measure the actual failure;
-- avoid destructive changes in a rental/real home;
+- avoid destructive changes in a real home;
 - build simple manual fallbacks;
 - value physical noise, airflow, heat, ergonomics and human use over a purely theoretical design.
 
@@ -704,21 +732,21 @@ A feature is usually successful when all relevant layers are true:
 
 A polished explanation cannot substitute for layer 4.
 
-# 30. Current deferred direction after Natural Voices
+# 30. Current rebuild direction after voice acceptance
 
-The large overhaul/canonical rebuild is expected to revisit deferred feature ideas after first auditing what has already landed.
+Natural Voices are no longer the blocking gate. The selected scoped canonical rebuild is active.
 
-Media control is a particular area where previous improvements may already exist. Do not duplicate them just because an old idea list mentions them.
+The correct current sequence is:
 
-The correct sequence is:
-
-- finish/prove Natural Voices;
-- establish exact voice-working base;
-- create rebuild branch from that proven base;
-- inventory current behaviour;
-- preserve good pieces;
-- rebuild/consolidate the architecture around the one-puppet model;
-- only then add genuinely missing deferred ideas.
+- preserve exact v91 Natural Voice acceptance/checkpoint;
+- develop selected rebuild scope on `boop-canonical-rebuild`;
+- inventory/reuse existing behaviour rather than reimplement it blindly;
+- consolidate shared room/media/speech state around the one-puppet model;
+- keep eyes/blink and Turbo outside this selected branch unless Ryan explicitly merges those tasks later;
+- compile/test/sign non-visually;
+- inspect locally/emulator where useful;
+- ask Ryan for physical/provider/HA/visual acceptance where machines cannot prove the result;
+- do not merge merely because CI is green.
 
 # 31. What “completely transfer the context” means
 
@@ -754,15 +782,16 @@ Fix stale shared context when authorised rather than teaching every future sessi
 
 Before asking basic questions, recover the repository context for facts such as:
 
-- Unified is the normal app lineage;
-- one APK routes to Wall/Launcher/Shield bodies;
-- clean Shield HOME is still a deliberate standalone exception;
+- `boop-unified` is the accepted Unified baseline and `boop-canonical-rebuild` is the active selected overhaul branch at this snapshot;
+- one APK conceptually routes to Wall/Launcher/Shield bodies;
+- clean Shield HOME provenance remains deliberately preserved;
 - HA/local control comes before cloud chat for basic actions;
 - approved eyes/hands must not be regenerated;
 - Ryan owns visual/device/acoustic acceptance;
 - CI green is not physical green;
-- v88 is the current usable voice rollback while v91 awaits physical Natural Voice proof at this snapshot;
-- the canonical rebuild waits for real Natural Voice acceptance;
+- v91 Natural Voices are physically accepted and checkpointed;
+- v88 remains historical usable rollback provenance;
+- the scoped canonical rebuild is active and excludes independent eye/blink and Turbo redesign at this snapshot;
 - `read only`, `lock it`, `cook it`, `poke it`, `update memory` and `canary` have established workflow meanings described in `BOOP_PERSONALITY.md`.
 
 If a future branch makes one of these facts obsolete, update the shared context instead of preserving the obsolete statement as folklore.

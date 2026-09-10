@@ -9,7 +9,7 @@ Ryan approved a documentation-only experiment to make a fresh Codex/Boop recover
 The transfer is deliberately split across two main-owned files:
 
 - `BOOP_PERSONALITY.md` = **how to work with Ryan as Boop**: conversational voice, shorthand, humour/pace, evidence habits, read-only/locked/go/cook/poke/update-memory semantics, canary meaning, frustration handling, visual-authority behaviour and cross-session etiquette.
-- `BOOP_CONTEXT.md` = **what Boop understands**: product philosophy, Unified/device topology, current Natural Voice gate, Home Assistant/local-first model, protected eyes/hands, privacy/accessibility, product-family concepts, media/launcher/Turbo boundaries, adjacent Kodi/Forki vocabulary, rollback philosophy and continuity precedence.
+- `BOOP_CONTEXT.md` = **what Boop understands**: product philosophy, Unified/device topology, Natural Voice history/current acceptance, Home Assistant/local-first model, protected eyes/hands, privacy/accessibility, product-family concepts, media/launcher/Turbo boundaries, adjacent Kodi/Forki vocabulary, rollback philosophy and continuity precedence.
 
 The old personality note saying `canary` was an unrecovered skin-only joke was corrected. Ryan explicitly confirmed on 2026-09-10 that the useful shared meaning is the broader narrow/sacrificial proof before risking the real target.
 
@@ -17,26 +17,30 @@ Public-repository privacy remains in force: the expanded continuity captures dur
 
 This change is documentation only. It does not alter app code, permissions, signing, builds, deployment or physical acceptance.
 
-## Current engineering pointer at handoff time
+## Concurrent reconciliation during publication
 
-Normal app development still belongs on `boop-unified`.
+While the first continuity commit was being published, another Codex session advanced `boop-unified` from `99474d141e7affad17cdbe854e94dd3986076980` to `771b68a00ac95b40ed6e17cffac60af77528a934` with `docs: accept v91 voices and point to scoped rebuild`.
 
-Observed live `boop-unified` branch HEAD during this update:
+The shared context was therefore reread/reconciled before completion rather than leaving the first snapshot stale.
 
-`99474d141e7affad17cdbe854e94dd3986076980`
+Fresh accepted baseline from the owning branch:
 
-Latest signed Unified candidate recorded by the owning branch:
+- v91 app source `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
+- Ryan physically confirmed Natural Voices installed/selectable, demos speaking and normal routed Natural Voice reply;
+- protected checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` -> exact v91 source;
+- v88 checkpoint remains preserved as historical usable Android-TTS rollback.
 
-- v91 / versionCode 91;
-- app source/build head `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
-- canonical Unified workflow `34433115316`: SUCCESS;
-- v91 CI/build verified, **not physically accepted**.
+Active selected overhaul now belongs to:
 
-Current protected usable physical rollback remains:
+- branch `boop-canonical-rebuild`;
+- base `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`;
+- candidate HEAD observed during reconciliation `a3eb768641e339ed59a6e2e86cb74f64bccf5979`;
+- candidate version 92;
+- selected scope includes shared room/speech/media state, dynamic exposed HA discovery, one Now Playing owner, Deezer/local transport, HA Back escape and device profiles;
+- eyes/blink are being handled separately for later transplant and Turbo redesign is outside this selected branch;
+- candidate was not yet merged/physically accepted at this snapshot.
 
-`checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
-
-Natural Voice physical proof remains the next narrow gate before the approved canonical rebuild.
+Re-fetch that branch before continuing because it is actively moving.
 
 ## Startup rule for future sessions
 
