@@ -1,3 +1,11 @@
+## v111 installed with approval; rapid-click acceptance pending
+
+User approved the exact verified v111 APK. APK hash matched the signed receipt;
+installation succeeded and version111 / 1.2.111-responsive-room-controls was
+verified. BOOP Home opened through its normal entry. No new permissions or role
+changes. Next: user rapid candle presses, then allow the label to settle and verify
+it matches the device. Physical responsiveness/final-state acceptance pending;
+v108 functional rollback remains preserved and default Android voice retained.
 ## v111 artifact verified; installation and physical test pending
 
 Source 5204d128b42e7469fda4d974a9831180167b52b4; GitHub run 34501224903
