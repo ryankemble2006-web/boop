@@ -1,4 +1,4 @@
-## v103 Close media apps: signed and manually inspected, Shield test pending
+## v103 installed: native cleanup physically tested; Cast check pending
 
 Branch boop-canonical-rebuild. Build source b075370d56eb7fcc209e2ab078682ce05878a7c7.
 GitHub run 34471952390 SUCCESS; artifact 10149989572. 203 Unified +58 Shield
@@ -26,9 +26,17 @@ pending authorization. Fresh Android session queries verify cleanup; Done/Failed
 is shown. Missing notification access or unsupported Cast STOP fails closed.
 No shared Cast receiver force-stop, new permission, or default-home change.
 Scoped review found no important defects. Build monitor paused after delivery.
-Next: obtain a v103 physical install/test window. Ryan currently controls music.
-Physical Shield remains v102; its test scope follows. User's v101 Home/reboot
-acceptance remains the protected acceptance checkpoint.
+Ryan approved installation and a short physical test. Signed v103 installed on
+Shield and version verified. Opened native Deezer and YouTube; both processes and
+two inactive media sessions were confirmed while Home had no Now Playing card.
+Pressed the actual persistent Close media apps button. Android logs confirmed
+force-stop of both packages; both processes disappeared, media sessions became
+zero, and Home resumed. App-private close markers were removed. This is an agent
+physical pass for both native targets without a Now Playing card, not user acceptance.
+Existing accessibility services (including the separate EastEnders service), Deezer
+device-idle exemption, Home settings and rollback packages were preserved.
+New button's active Cast path remains pending; requested a user-started Cast session.
+User's v101 Home/reboot acceptance remains the protected acceptance checkpoint.
 
 ## v102 physical checks: native Deezer and regular Deezer Cast pass
 
