@@ -1,29 +1,43 @@
-# SHIELD TURBO v0.1
+# SHIELD TURBO
 
-Independent read-only NVIDIA Shield / Android TV analyser. Package `com.boop.shieldturbo`, developed through connected GitHub in chat; GitHub Actions builds and signs it. Work mode is not required.
+Remote-first NVIDIA Shield utility for read-only diagnostics, reversible startup cleanup, stock processor-mode control, picture brightness, local ADB setup, and safe power tools.
 
-## Use
+## Current development state
 
-Open SHIELD TURBO from the TV app launcher. Press **ANALYSE SHIELD**, then use the remote to move through the readings. Centre opens reading details. **ACCESS DETAILS** explains the privilege boundary; it grants nothing. No computer is needed for this release.
+- Package: `com.boop.shieldturbo`
+- Branch: `shield-turbo-v01`
+- v0.6.0 / code 21 remains the physically accepted persistent TURBO rollback point.
+- v0.6.1 / code 22 is machine-green for the one-time SILENT STARTUP note and silent CLEAN START boot behaviour.
+- v0.6.2 / code 23 adds the read-only TURBO+ HEADROOM physical discovery screen and is pending full CI/physical acceptance.
 
-One on-demand snapshot reports device/Android identity, available and total RAM, internal storage, exposed CPU 0 frequency, a readable thermal zone, network transport/validation and this app's capability tier. Reads run off the UI thread and stop on leaving the app. There is no background service, continuous polling or keep-screen-on flag.
+## TURBO
 
-## Honest boundaries
+Persistent TURBO uses NVIDIA's physically proven stock Processor Mode actuator only: `system:nv_power_mode`, with `1=Optimized` and `0=Max performance`. The downstream NVIDIA CPU/GPU/FRT properties are evidence only and are never direct write targets. The app saves the exact pre-TURBO setting, verifies Max after enabling, restores the saved stock setting on disable, and uses an Android thermal watchdog to fall back to NORMAL at SEVERE or higher.
 
-- `STANDARD`: normal app authority. Expected on a normal installation, even if an unrelated root manager exists.
-- `ADB TURBO`: only actual elevated diagnostic permission evidence qualifies. v0.1 does not request that permission or implement an ADB helper/setup. Usage access and enabled network debugging are not shell authority.
-- `ROOT`: actual UID 0 authority in the app process, not a guessed root state from a file. No `su` command or root-manager request is made.
+No root, custom kernel, bootloader, boot image, voltage changes, above-stock clocks, arbitrary sysfs writes, or thermal-limit bypass are part of TURBO.
 
-One-time ADB setup remains the approved future direction, subject to real Shield capability testing. Persistent permission grants and a live shell/helper connection are different things. This build does not promise that a shell helper survives reboot or that disabling debugging retains shell commands.
+## TURBO+ HEADROOM
 
-Temperature uses the Linux thermal-zone millidegree Celsius ABI. The source path is shown; a zone is not labelled CPU or GPU without sensor-identity evidence. CPU frequency is not CPU load. Internet validation is not throughput measurement. Available RAM is not wasted RAM. Restricted/missing readings do not diagnose a broken Shield.
+TURBO+ HEADROOM is deliberately read-only. From the TURBO page, move Right from the normal TURBO button to `TURBO+ HEADROOM TEST` and press OK once. It opens a full-screen black result designed to be photographed from the TV.
 
-v0.1 does not overclock, alter governors, kill apps, clear data, apply settings or communicate with BOOP. Only `ACCESS_NETWORK_STATE` is requested; there is no internet permission, microphone, camera, service or boot receiver.
+It checks readable evidence for:
 
-## Build and verification
+- CPU online state, current/max frequency and governor;
+- GPU devfreq current/max/min frequency, governor and available frequencies;
+- memory/EMC clock or devfreq clues;
+- thermal zones, cooling devices and fan/thermal/cooling properties;
+- `nv_power_mode` plus any other surfaced NVIDIA/processor/performance/fan/power/EMC setting names.
 
-The dedicated workflow is `.github/workflows/shield-turbo.yml`. It runs Kotlin unit tests, source safety guards, Android lint, signed release assembly, package/certificate/archive checks and installed-release remote-input smoke tests. It uses AGP 9.4.0, Gradle 9.6.0, Java 17, SDK 36 and minSdk 28, matching the repository's observed working build tooling rather than the original plan's SDK 35 draft. Groovy build files use the plugin's built-in Kotlin support.
+Each section says `FOUND` or `BLOCKED`. ADB/setup failures use a large `TURBO+ • STOP` page with `ADB NOT READY` and the recovery path. The footer is `PHOTOGRAPH THIS • BACK TO CLOSE`.
 
-The existing secret-backed `boop-dev` signer is used, without copying private keys into source. Expected public certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Discovery does not promote a newly visible setting into a Turbo write target. Any candidate must be separately proven with save, change, read-back and restore before it can join persistent TURBO.
 
-The emulator uses Android API 30 with a handheld hardware profile and D-pad input. It is an app/remote-input smoke test, not a physical Shield or Tegra telemetry test. Read `SESSION_HANDOFF.md` for actual build and physical-verification status.
+## CLEAN START
+
+Automatic CLEAN START is opt-in, bounded and silent after reboot. The old boot banner/overlay was removed. A one-time first-real-launch note explains that saved startup work is silent and may cause a brief apparent startup pause.
+
+CLEAN START only force-stops user-selected eligible apps and verifies the result. It does not uninstall apps, clear data/logins, chase arbitrary free-RAM scores, or touch NVIDIA/BOOP core packages.
+
+## Evidence rules
+
+Machine-green, signed and physically accepted are separate states. Physical Shield evidence wins over generic Tegra assumptions. See `SESSION_HANDOFF.md`, `STATUS.md`, and `MEMORY.md` for exact receipts and current boundaries.
