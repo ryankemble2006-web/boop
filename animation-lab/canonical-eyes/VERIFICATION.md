@@ -1,5 +1,32 @@
 # Canonical eye library verification — 2026-09-10
 
+## v8 five-digit notification sign show
+
+Source 3a7feea9f4e1706fb873e21a3fd7675ebe16197b; Actions 34439276646 success;
+artifact 10137328681; package com.boop.animationlab versionCode 8. APK SHA-256
+210e960b9bca468d4476cd05b741f7b2bd57b2e99dfdafee35c51843a0580bec.
+Permanent signer unchanged. Exact eyes and hands checked inside the APK.
+53,508 sign-state checks passed after an observed failing lift assertion;
+30,636 existing eye-state checks passed. No automated visual assertions.
+Read-only code review found no important functional issue.
+
+Runtime evidence belongs to a dedicated BOOP_Sign_Show_API36 TV emulator on
+port5558, not the other tasks' devices. The initial default AVD had GPU disabled;
+this new profile was corrected to the working TV graphics setting. Existing
+TV/phone profiles were not changed. The signed v8 cold launch succeeded and
+the first fixed sign pose was captured.
+
+All four sign performances were then recorded in the actual Android runtime.
+Approximate video chapter starts: WhatsApp 0s, Gmail 14.5s, Facebook 28.6s,
+X 44.5s. Home/return, Back/reopen, replay and returning to the normal Thinking
+eye clip completed. The renderer initialized and no renderer/fatal error was
+logged for the tested process. Exact script, RESULT, recording, screenshots
+and package receipts remain local under animation-work/sign-spinner.
+This short test is not a frame-rate/long-soak/memory-leak guarantee.
+
+No physical installation, notification access, production integration or v8
+visual acceptance. Ryan accepted the earlier v7 corner preview only.
+
 ## v7 inner-corner correction
 
 Built source: `31735d1395ab1c5167bd5bdbcb0c48c6f77a752c`.

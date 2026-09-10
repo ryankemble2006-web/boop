@@ -6,8 +6,12 @@ Ryan accepted the v7 corner preview as "absolutely perfect", then approved new
 notification routines based on the five-finger sign-holder concept. The existing
 lab gains four local app-sign fixtures with separate original hand layers, vector
 arrow props and unchanged v7 eyes. See canonical-eyes/SIGN_SHOW.md. Pure Java
-sign tests failed first on missing lift, then passed 53,508 checks. Build/runtime
-evidence will be recorded after the focused signed build. No real notifications
+sign tests failed first on missing lift, then passed 53,508 checks. Actions
+34439276646 succeeded, artifact 10137328681. The signed APK ran on dedicated
+TV emulator5558: all four signs recorded; Home/Back/replay/eye-mode return
+completed. No renderer failure logged. See VERIFICATION.md and local workshop
+animation-work/sign-spinner (exclude its emulator data from portable archives).
+No real notifications
 or production app changes; no appearance acceptance for the new sign show yet.
 
 ## Latest: inner-corner repair, lab v7

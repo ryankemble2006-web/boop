@@ -1,5 +1,16 @@
 # Animation memory — 2026-09-10
 
+Latest continuation: Ryan accepted the v7 corner preview ("absolutely perfect")
+and approved a five-finger notification sign-holder routine. v8 source
+3a7feea9f4e1706fb873e21a3fd7675ebe16197b adds four local arrow-sign fixtures,
+independent original hand layers, wrist motion and coordinated existing eyes.
+No new finger rig or live notification wiring. Exact hand master SHA-256
+26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1 is checked
+in prepare and APK integrity. V7 shader/art/timing catalogue are unchanged.
+SignMotion's finite show settles after eight seconds; existing logical clock
+handles pause/focus/reduced motion. See canonical-eyes/SIGN_SHOW.md and
+VERIFICATION.md. New sign appearance remains pending Ryan's review.
+
 Latest repair: lab v7, source 31735d1395ab1c5167bd5bdbcb0c48c6f77a752c,
 Actions 34437977312 / artifact 10136874223. Ryan's circled inner-corner shelf
 was reproduced at Thinking 1100ms. v6 alpha-only did not fix it and was reverted.

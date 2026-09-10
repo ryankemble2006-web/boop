@@ -1,5 +1,13 @@
 # BOOP Status
 
+## Latest: notification sign show — lab v8
+
+Four local sign-holder performances from the approved five-digit hands and
+unchanged v7 eyes. Built source 3a7feea9f4e1706fb873e21a3fd7675ebe16197b;
+Actions 34439276646 succeeded, artifact 10137328681. No live notifications or
+production integration. See canonical-eyes/VERIFICATION.md for runtime scope.
+Ryan accepted the preceding v7 corner preview; v8 appearance is not yet accepted.
+
 ## Latest eye correction — lab v7
 
 31735d1395ab1c5167bd5bdbcb0c48c6f77a752c repairs the inner moving-lid contour.
