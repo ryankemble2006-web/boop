@@ -1,3 +1,31 @@
+## v99 Home/media-corner verification, 2026-09-10
+
+Ryan reports music replies feel more comfortable and play Everytime by Britney
+returned a result. This is scoped user evidence; no blanket physical checkpoint.
+
+Exact signed v99 installed on owned API36 Pixel emulator. With explicit approval,
+media notification access and overlay access were temporarily enabled and the
+profile temporarily set to Shield. A bounded silent shell MediaSession supplied
+playing/paused/stopped states; it produced no audio and installed no helper app.
+Manual inspection: Home showed one Now Playing puppet; leaving Home for the stock
+launcher showed one media corner; pause removed the corner; resuming and returning
+Home showed one Home puppet without a duplicate; stopping removed the Home media
+card/puppet. Existing shared ownership behavioral checks passed locally.
+Android Settings suppresses non-system overlays; its absence there is not a failure.
+Forced Shield-on-phone layout changed scale after portrait/landscape transitions;
+TV-shaped verification remains pending, so this is not blanket layout acceptance.
+The probe was released, temporary files removed, original WALL profile restored,
+notification-listener grant revoked and overlay app-op restored to default.
+The initial private probe used unsupported Files.readString; corrected to readAllBytes.
+That was a probe failure, not an application crash or app-source change.
+
+Read-only Shield package check: Unified com.boop.alpha1 is still v47 and standalone
+com.boop.shieldhome is v23. Thus current Shield Home cannot physically verify the
+v99 unified ownership integration. No live playback, Home, install or permissions
+changed on the Shield. Next is an explicitly approved v99 Shield candidate install
+and test window, preserving standalone v23 and existing rollback provenance.
+No app code changed in this check; v99 source remains b39142a3da44251a334ac5237161aa01c80bfdfb.
+
 # BOOP v99 artist-name matching candidate
 
 Branch `boop-canonical-rebuild`; version 99 / `1.2.99-artist-name-matching`.
