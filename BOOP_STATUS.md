@@ -1,3 +1,18 @@
+## v106 signed artifact verified; physical retest pending
+
+Source 0a83c69b5eaac0eb683b468bc4fb1e5c294db4f0 on boop-canonical-rebuild.
+GitHub run34482554547 SUCCESS, artifact10154388761. 211 Unified plus58 Shield
+functional tests passed with zero failures/errors/skips, and lifecycle regression
+passed. No GitHub visual tests. Local apksigner/aapt/hash checks independently
+confirmed package com.boop.alpha1, version106 / 1.2.106-assistant-lifecycle and
+permanent signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+APK SHA256 c6b3883d332c000e79c75356ef6462969e1cfe7defc26761b53a02ed55546a55.
+ZIP SHA256 2089754dfe4b7442ac786bf44b2b116db40423c101f92be55c651bc91b31723e.
+Delivered BOOP-v106-assistant-lifecycle.apk. Not installed or physically accepted;
+Shield remains v105 with user-approved microphone permission. Next: coordinated
+v106 install and remote test after approval of the ready artifact. Full Shield
+voice/HA routing remains unverified. Build monitor paused after artifact delivery.
+
 ## v106 lifecycle repair candidate; v105 remote test found a BOOP crash
 
 Ryan approved microphone permission in Android's prompt, saw BOOP and heard the
