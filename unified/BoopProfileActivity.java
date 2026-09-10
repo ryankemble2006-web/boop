@@ -15,6 +15,8 @@ import android.widget.TextView;
 /** Explicit profile selection. Never changes Android's default HOME or grants access. */
 public final class BoopProfileActivity extends Activity {
     private Button mediaAccess;
+    private final java.util.concurrent.ExecutorService roomExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private long roomRequest;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         ScrollView scroll = new ScrollView(this);
@@ -65,8 +67,32 @@ public final class BoopProfileActivity extends Activity {
             .setNegativeButton("Cancel",null).setPositiveButton("Save",(d,w) -> {
                 String value=name.getText().toString().trim();
                 if(value.isEmpty()) return;
-                prefs.edit().putString("room_id","").putString("room_name",value).apply();
-                com.boop.shared.BoopState.INSTANCE.room("",value);
+                resolveRoom(value);
             }).show();
     }
+    private void resolveRoom(String name) {
+        SecureTokenStore tokens = new SecureTokenStore(this);
+        if (!tokens.hasConnection()) {
+            new AlertDialog.Builder(this).setMessage("Connect BOOP to Home Assistant first, then choose this device's room.")
+                    .setPositiveButton("OK",null).show(); return;
+        }
+        final long request = ++roomRequest;
+        android.widget.Toast.makeText(this,"Checking the room with Home Assistant...",android.widget.Toast.LENGTH_SHORT).show();
+        roomExecutor.execute(() -> {
+            BoopRoom resolved = null;
+            String error = "I couldn't find that room in Home Assistant. Check its name.";
+            try { resolved = HomeAssistantRoomLookup.find(tokens.getBaseUrl(),new HomeAssistantAuth(this,tokens).freshAccessToken(),name); }
+            catch(Exception unavailable) { error = "I couldn't check the room. Check the Home Assistant connection and try again."; }
+            final BoopRoom result = resolved; final String message = error;
+            runOnUiThread(() -> {
+                if(isFinishing() || isDestroyed() || request != roomRequest) return;
+                if(result == null) { new AlertDialog.Builder(this).setMessage(message).setPositiveButton("OK",null).show(); return; }
+                getSharedPreferences("boop_unified",MODE_PRIVATE).edit().putString("room_id",result.id()).putString("room_name",result.name()).apply();
+                com.boop.shared.BoopState.INSTANCE.room(result.id(),result.name());
+                android.widget.Toast.makeText(this,"Room set to "+result.name(),android.widget.Toast.LENGTH_LONG).show();
+            });
+        });
+    }
+    @Override protected void onPause() { ++roomRequest; super.onPause(); }
+    @Override protected void onDestroy() { ++roomRequest; roomExecutor.shutdownNow(); super.onDestroy(); }
 }
