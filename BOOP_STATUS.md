@@ -1,3 +1,12 @@
+## v108 cancellation test: native playback recovered
+
+User confirmed rapid remote microphone/Back cycles paused native Deezer playback
+and it resumed each time. This is acceptance of recovery in that native-app test,
+not uninterrupted playback or blanket stability acceptance. Earlier Cast playback
+loss remains unresolved; memory stability also remains an investigation item.
+Do not mark Cast preservation passed. Default Android voice remains the baseline.
+User approved publishing this brief outcome only; diagnostic details are omitted.
+
 ## v109 candidate: release room controls on observed HA state
 
 Ryan confirmed HA controls navigation and room buttons work. Candle hardware reacts
