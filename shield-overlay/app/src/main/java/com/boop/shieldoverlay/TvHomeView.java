@@ -63,6 +63,7 @@ public final class TvHomeView extends ScrollView {
     public View firstFocusable() { return roomCard; }
 
     public void render(HomeDashboardController.ViewState state) {
+        android.util.Log.i("BOOP-Control", "render enabled=" + (state != null && state.actionsEnabled()));
         currentState = state;
         List<EntityCard> cards = state == null ? Collections.emptyList() : state.cards();
         List<String> wanted = new ArrayList<>();

@@ -279,6 +279,11 @@ public final class HomeAssistantRepository {
     }
 
     private final class BinaryConfirmation {
+        private final long startedNanos = System.nanoTime();
+        private void trace(String stage) {
+            System.out.println("BOOP-Control action=" + startedNanos + " stage=" + stage
+                    + " elapsedMs=" + (System.nanoTime() - startedNanos) / 1_000_000L);
+        }
         private final EntityCard original;
         private final String expectedState;
         private final JSONObject serviceBody;
@@ -297,6 +302,7 @@ public final class HomeAssistantRepository {
         }
 
         void start() {
+            trace("subscribe-start");
             try {
                 stateChangePort.subscribe(this::onStateChanged, this::onSubscribed);
             } catch (RuntimeException couldNotSubscribe) {
@@ -305,6 +311,7 @@ public final class HomeAssistantRepository {
         }
 
         private void onSubscribed(StateChangePort.Subscription active, String error) {
+            trace("subscription-reply");
             if (active == null || error != null) {
                 if (active != null) active.cancel();
                 complete(false, plainError(error, "I couldn't listen for the new Home Assistant state."));
@@ -320,6 +327,7 @@ public final class HomeAssistantRepository {
             }
             try {
                 commandPort.send("call_service", serviceBody, this::onServiceResult);
+                trace("service-sent");
             } catch (RuntimeException couldNotSend) {
                 complete(false, "Home Assistant didn't do that.");
             }
@@ -327,6 +335,7 @@ public final class HomeAssistantRepository {
 
         private void onStateChanged(String entityId, String state) {
             if (!original.entityId().equals(clean(entityId)) || !expectedState.equals(clean(state))) return;
+            trace("expected-state-event");
             boolean finish;
             synchronized (this) {
                 if (done || subscription == null || expectedStateSeen) return;
@@ -334,10 +343,12 @@ public final class HomeAssistantRepository {
                 finish = serviceSucceeded;
             }
             callback.onObservedState(original.withState(expectedState));
+            trace("observed-state-delivered");
             if (finish) complete(true, null);
         }
 
         private void onServiceResult(boolean success, Object result, String error) {
+            trace(success ? "service-success" : "service-failure");
             if (!success) {
                 complete(false, plainError(error, "Home Assistant didn't do that."));
                 return;
@@ -363,6 +374,7 @@ public final class HomeAssistantRepository {
                 timeout = null;
             }
             if (timeoutToCancel != null) timeoutToCancel.cancel(false);
+            trace(success ? "complete-success" : "complete-failure");
             if (toCancel != null) toCancel.cancel();
             callback.onResult(
                     success,

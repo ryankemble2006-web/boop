@@ -1,3 +1,19 @@
+## v110 diagnostic candidate: measure room-button delay
+
+User reports v109 still makes the room button wait; physical speed improvement is
+not accepted. Do not claim delayed service acknowledgement was established as the
+cause. Current build lacks timing evidence separating HA state and service reply.
+
+v110 adds timing-only trace stages for subscription, service send/reply, expected
+state event, observation delivery, completion and UI render. Logs contain anonymous
+operation markers/durations and enabled flag, not entity names, credentials or
+spoken text. Runtime diagnostics remain private. No control/confirmation behavior
+changed. 17 focused repository/controller tests pass locally. Version110 /
+1.2.110-control-timing. Full build/signing/install and timed physical test pending.
+Next: verify artifact, approved install, capture one candle on/off sequence to find
+the actual delayed boundary. Preserve default Android voice and accepted v108
+rollback; v109 remains installed. Do not conflate this with Cast/memory investigation.
+
 ## v109 installed with approval; candle-button speed test pending
 
 User approved the exact verified v109 APK. Hash matched its signed receipt,
