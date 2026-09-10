@@ -1,23 +1,51 @@
-# Scoped canonical rebuild status
+# Scoped canonical rebuild - v94 handoff
 
-Updated 2026-09-10. Owning branch/worktree: `boop-canonical-rebuild` at `C:/Users/ryank/Documents/Codex/BOOP/.worktrees/boop-canonical-rebuild`. Base `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`. Canonical `boop-unified` is unchanged; no merge/physical acceptance of this candidate. Current candidate commit is the commit containing this document (resolve with git and verify live remote).
+Updated 2026-09-10. Owning branch: `boop-canonical-rebuild`. Local source: `C:/Users/ryank/Documents/Codex/BOOP/.worktrees/boop-canonical-rebuild`. Base: `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`.
 
-## Accepted physical baseline
+## Current candidate
 
-Ryan confirmed v91 natural voices are selectable, demos speak, and a normal BOOP reply speaks with the selected voice on 2026-09-10. This lifts the Natural Voices gate for the selected rebuild. Exact APK source `11650313221ae5bf997dbb93b6a905bfdc7da1ed`; version 91; package `com.boop.alpha1`. APK SHA256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`; permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Successful source workflow `34433115316`, artifact `10135283428`. This acceptance covers voices, not every previous appearance/remote-mic concern. Protected voice checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` points to the exact v91 source. Preserve v88 checkpoint `f5f086fc4f67712b5746be067aff852331299bb0` as historical rollback too.
+Application source/build commit: `e683b26e04a3bc2bb8ba5a94ee23eeb2380d1ec0`. Later documentation commits do not change this APK. Resolve the current branch documentation HEAD with live `git ls-remote`; do not confuse it with the built source.
 
-## Requested scope and current implementation
+- Version 94 / `1.2.94-canonical-room-selection`; package `com.boop.alpha1`.
+- GitHub run `34437732145`: SUCCESS. Artifact `10136874068`.
+- ZIP SHA256: `cf15bf9852dec1a9f223ee53c1611b80e310e0a89062f697bde7e7d23e91507b`.
+- APK SHA256: `f4bc6f1032f3b2fb324ac415086a9163caf403cfe603465771108179b4ebea16`.
+- Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+- Signed local deliverable: `C:/Users/ryank/Documents/Codex/2026-09-10/the-x20/outputs/BOOP-v94-canonical-candidate.apk`.
+- 170 Unified and 58 Shield focused functional tests passed, zero failures/errors/skips. Shared-state/media JVM harness also passed locally. Source adapters materialized successfully. ZIP, APK, built-commit receipt and permanent signer independently verified after download.
+- No GitHub visual/appearance tests ran. No merge into `boop-unified`; candidate awaits Ryan's device/provider acceptance.
 
-Items 1, 3, 6, 7, 8 and 10 only: shared speech/room/media state; current-room exposed generic HA discovery; one media corner/Home owner; explicit Deezer and session transport; HA Back escape; manual/automatic profiles. Eyes are being handled in another task for later transplant. No eye/blink mechanics or Turbo work is authorized in this branch.
+## Implemented selected scope
 
-Candidate version 93 uses the existing permanent signer/package. Existing Shield Home/Now Playing sources are integrated as an internal library under the approved rebuild; the standalone source branch remains preserved. No OS default-HOME or permission is changed automatically.
+Ryan selected items 1, 3, 6, 7, 8 and 10. Eyes are owned by another task for later transplant; no eye/blink mechanics or Turbo redesign is included.
 
-## Verification and next action
+- **Item 1:** Shared speech, room and media snapshots; synchronous release-before-acquire ownership, reentrant-safe publication and shared playback epoch.
+- **Item 3:** Configurable current room across Wall/Shield; actual HA registry ID resolution before saving; discovery of enabled, visible, explicitly conversation-exposed lights/fans/switches. Named ambiguity asks for clarification. Group/unsupported requests preserve local HA Assist. Room reassignment invalidates stale identity and late results; failed selection preserves the prior room.
+- **Item 6:** Existing clean Shield Home/Now Playing source integrated as an internal library. A single media corner appears outside Home during playback; Home acquires the puppet in its Now Playing card. Pause/stop removes it. This is same-device presentation handoff, not cross-device playback transfer.
+- **Item 7:** Explicit Deezer search/play intent and active-session pause/resume/next/previous, with existing HA media fallback. Unsupported Deezer search reports failure; no Google detour or fabricated playback success.
+- **Item 8:** HA Back returns to its caller without fullscreen puppet takeover. Short TV Back returns to Home; long Back opens Android settings. Fresh entry resets old Launcher Settings to Home. Android16 legacy Back compatibility explicitly retained.
+- **Item 10:** First-run automatic/manual profile selection and later device/room settings from Launcher, Wall voice settings and Shield settings. Explicit overlay-access settings route; application does not grant access or change default HOME automatically.
 
-Initial candidate v92 source `a3eb768641e339ed59a6e2e86cb74f64bccf5979` passed GitHub run `34436377162`: 168 Unified and 58 Shield focused tests, package/signature/archive validation. Artifact `10136361414`; ZIP SHA256 `fcc418dc2244e48d84e82c26e82525e8f2189a1db9fffc2f27615f192026e76c`; APK SHA256 `6d8d5a797b8b9aba862f2bc0e5903e7d5e2260e94b6a1e88d75b613a6559cc38`. Download independently verified; installed on local API36 TV and Pixel emulators.
+Preserved: natural-voice subsystem, controller-owned microphone, local-first HA control, package/permanent signer, original temporary eye assets and standalone Shield Home provenance. See `unified/SOURCE_HEADS.md` and `docs/superpowers/plans/2026-09-10-scoped-canonical-rebuild.md`.
 
-Manual TV inspection confirmed first-run automatic Shield routing, readable Home/settings, Back from unpaired HA returning to caller, and a simulated media session producing one corner over its player then one puppet inside Home Now Playing. The fixture provides metadata only, no real audio/provider acceptance. Review fixes include room identity reassignment, ambiguous-name clarification, group-command preservation, shared dashboard room settings, and lifecycle-gated Home ownership.
+## Manual emulator evidence
 
-Manual inspection also found fresh-entry reopening old Settings and Android16 bypassing legacy Back handlers. v93 fixes fresh entry to Home and uses documented `enableOnBackInvokedCallback=false` compatibility for existing Back/long-Back handling; adds explicit media-overlay permission settings and foreground permission recheck. v93 build and final emulator checks are pending. No GitHub visual tests. Candidate physical/real Deezer/HA acceptance remains pending.
+Exact signed v94 installed on local API36 TV and Pixel AVDs. Inspection used ADB input and screenshots viewed by the agent, not scripted visual assertions.
 
-Plan: `docs/superpowers/plans/2026-09-10-scoped-canonical-rebuild.md`. Source provenance: `unified/SOURCE_HEADS.md`. Historical v89/v90 failures and v91 repair evidence remain in git history of the canonical handoffs.
+TV: readable Home/settings and profile screen; simulated session Play and Next reached its MediaSession and track 2 appeared; one puppet in Home Now Playing, one corner over its player, and one Home puppet after re-entry. Short Back from settings returned Home, fresh entry reset settings, HA unpaired Back returned Launcher Settings, long Back opened Android settings. Overlay button opened Android's display-over-apps page. Stop/release removed the corner. No AndroidRuntime error appeared in the inspected logs.
+
+Phone: automatic routing selected Launcher for the AVD's generic reported model; its empty workspace is intentionally black. Menu opened device settings. Manual Wall selection reached MainActivity's existing idle-black surface. Voice-settings intent opened the scrollable Voice screen; its device/room link returned to Profile and Back returned to Wall. Room Save while unconnected showed the connection-first message. No natural-pack download or acoustic acceptance was claimed. An emulator System UI ANR appeared during boot, was dismissed with Wait, and subsequent controls responded; no BOOP crash was observed.
+
+Local media fixture `com.boop.testmedia` supplied metadata only (no audio/provider), then was uninstalled. Temporary TV notification-listener grant was removed; preexisting TV recommendations listener preserved. Overlay app-op restored to `default`. BOOP stopped on both emulators; signed v94 remains installed. The other task's Animation Lab app/files were untouched; the shared TV AVD was left running. Phone app profile remains Wall from the manual test.
+
+Review findings (room identity, ambiguity, lifecycle ownership, navigation and stale room callback) were resolved; final read-only review confirmed no outstanding findings. Manual screenshots and fixture sources remain local scratch under the dated task's `work/`, not in the repository.
+
+## Physical baseline and next action
+
+Ryan physically confirmed v91 natural voices installed, selectable, demos speaking and a normal selected-voice BOOP reply. Accepted source: `11650313221ae5bf997dbb93b6a905bfdc7da1ed`; protected branch `checkpoint-boop-unified-v91-natural-voices-accepted`. APK SHA256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`. Preserve the exact v91 Desktop/server TEST APK and v88 rollback `f5f086fc4f67712b5746be067aff852331299bb0`. Canonical app source remains v91; canonical acceptance documentation was synchronized separately at `771b68a00ac95b40ed6e17cffac60af77528a934`.
+
+Next: Ryan tests the signed v94 on his device with existing voices, a real HA room/new exposed device, actual Deezer playback/transport, remote microphone and Back navigation. Actual HA authentication/room reassignment, provider search support, real-device acoustics and appearance remain pending. Emulator success is not physical acceptance. Eyes transplant remains separately owned. Do not merge or replace the physical baseline by implication.
+
+## Continuity caution
+
+This checkout has a limited `remote.origin.fetch` list that omits unified/rebuild branches. A bare `git fetch origin boop-unified` may update FETCH_HEAD while leaving `origin/boop-unified` stale. Fetch explicit source:destination refs and compare live `git ls-remote` before using cached tracking refs. At this handoff, live main was `8d29d2bada1b8710ec030debce52c1976c990e56`; its personality continuity/canary clarification was reread. No new durable personality fact required an edit.

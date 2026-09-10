@@ -15,13 +15,13 @@ Base: boop-unified 99474d141e7affad17cdbe854e94dd3986076980; v91 APK source 1165
 
 ## Ordered implementation
 
-- [ ] Shared state: immutable snapshots, immediate subscriptions, reentrant-safe publication, speech/room/media updates, one owner at a time; behavioral JVM tests. Wire lifecycle and speech adapters.
-- [ ] Room and discovery: current room store, user configuration, generic exposed HA domain/name/room resolver for lights/fans/switches; ambiguity fails closed; preserve Assist for unsupported requests. Behavioral tests for newly appearing entity, ambiguous names, offline/hidden devices and room isolation.
-- [ ] Now Playing: import the exact existing Shield Home sources, retain original assets unchanged as temporary renderers; share media state between Now Playing and corner owner. Home releases corner before acquiring its own view; leaving Home reclaims corner only during playback; stop removes it. No new notification access or overlay permissions granted automatically.
-- [ ] Media commands: reuse Android media sessions and HA direct controls; explicit Deezer search/play intent to the installed provider, never Google fallback or false success. Preserve pause/resume. Test parsing and deterministic routing/failure behavior.
-- [ ] Back and profiles: first run/manual profile UI, TV HOME route to Shield launcher, HA controls back to preceding Home without starting headphones fullscreen. Test route matrix and escape policy.
-- [ ] Integration: enable existing non-visual signed GitHub workflow for rebuild branch, version candidate, run focused tests, inspect logs, reuse signed artifact for local phone/TV emulator inspection. Keep exact user device acceptance separate.
-- [ ] Review scoped diff and reconcile/publish handoff/status/memory; verify live branch SHA. No merge into boop-unified until the candidate is reviewed/tested.
+- [x] Shared state: immutable snapshots, immediate subscriptions, reentrant-safe publication, speech/room/media updates, one owner at a time; behavioral JVM tests. Wire lifecycle and speech adapters.
+- [x] Room and discovery: current room store, user configuration, generic exposed HA domain/name/room resolver for lights/fans/switches; ambiguity fails closed; preserve Assist for unsupported requests. Behavioral tests for newly appearing entity, ambiguous names, offline/hidden devices and room isolation.
+- [x] Now Playing: import the exact existing Shield Home sources, retain original assets unchanged as temporary renderers; share media state between Now Playing and corner owner. Home releases corner before acquiring its own view; leaving Home reclaims corner only during playback; stop removes it. No new notification access or overlay permissions granted automatically.
+- [x] Media commands: reuse Android media sessions and HA direct controls; explicit Deezer search/play intent to the installed provider, never Google fallback or false success. Preserve pause/resume. Test parsing and deterministic routing/failure behavior.
+- [x] Back and profiles: first run/manual profile UI, TV HOME route to Shield launcher, HA controls back to preceding Home without starting headphones fullscreen. Test route matrix and escape policy.
+- [x] Integration: enable existing non-visual signed GitHub workflow for rebuild branch, version candidate, run focused tests, inspect logs, reuse signed artifact for local phone/TV emulator inspection. Keep exact user device acceptance separate.
+- [x] Review scoped diff and reconcile/publish handoff/status/memory; verify live branch SHA. No merge into boop-unified until the candidate is reviewed/tested.
 
 ## Constraints
 
@@ -30,3 +30,7 @@ Package com.boop.alpha1; permanent signer unchanged. Basic control local-first. 
 ## Test execution
 
 Use failing focused JVM tests before production behavior changes. GitHub performs compilation, functional tests and signing. Manual emulator inspection checks navigation and visible UI; Ryan owns device/acoustic acceptance. Missing provider capabilities must produce a plain-English failure rather than inventing playback.
+
+## Completion evidence
+
+Selected implementation, review, signed CI and manual emulator checks completed for source e683b26e04a3bc2bb8ba5a94ee23eeb2380d1ec0 (v94). GitHub run 34437732145 passed 170 Unified and 58 Shield tests. See SESSION_HANDOFF.md for exact receipts, manual checks and pending physical/provider acceptance. Candidate remains unmerged; eyes transplant is separate.
