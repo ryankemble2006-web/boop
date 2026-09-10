@@ -12,20 +12,13 @@ Updated 2026-09-09. Repository: [ryankemble2006-web/boop](https://github.com/rya
 
 Ryan chose one APK/one canonical app lineage after separate Wall, Launcher and Shield app builds became operationally confusing. Unified keeps package `com.boop.alpha1` and the permanent BOOP signer.
 
-Current canonical app/test head before documentation-only follow-up commits:
+## Current voice baseline and scoped rebuild
 
-`b7a4b4d035419e4ef7e62b474da3a0fc039a08eb`
+Canonical `boop-unified` retains v91 app source `11650313221ae5bf997dbb93b6a905bfdc7da1ed` and the permanent signer/package. Ryan physically accepted natural voice selection, demos and a normal selected-voice reply on 2026-09-10. Checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` preserves that source. Unified run `34433115316` succeeded; artifact `10135283428`; APK SHA256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`. Voice acceptance does not imply blanket visual/HA/remote-microphone acceptance. Detailed receipts are on canonical handoff/status/memory.
 
-Current release:
+Ryan selected overhaul items **1, 3, 6, 7, 8 and 10** on dedicated **`boop-canonical-rebuild`**: shared state, configured room and generic exposed HA discovery, one media corner/Home owner, local/Deezer transport, HA Back escape, device profiles. Read that branch's live `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` and scoped plan. It is a candidate, not a replacement for accepted canonical. Eyes are owned by another task for later transplant; eyes/blink and Turbo redesign are outside this selected scope.
 
-- versionCode `85`;
-- versionName `1.2.85-unified-natural-voices-tablet`;
-- canonical workflow `34409371052`: SUCCESS;
-- artifact `BOOP-Unified`, ID `10126738984`;
-- APK SHA-256 `a6257ab2a8540633649276e676da2a3bcbd46be375382ed9d3cd437b00de3c40`;
-- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-
-CI/signer green is not physical acceptance. Ryan still owns the exact-device, visual and acoustic acceptance gate.
+GitHub performs nonvisual builds/functional checks/signing. No GitHub appearance/visual tests. Manual local emulator inspection and Ryan's device/provider acceptance remain separate.
 
 For Unified work always read the live branch copies of:
 
@@ -62,16 +55,9 @@ The pack is downloaded from the pinned HTTPS Sherpa release asset inside BOOP, v
 
 Ryan physically found the v70 download reaching Verify and appearing stuck. v85 fixes the post-download flow by hashing bytes during download, making Verify an immediate receipt check, exposing archive extraction separately as `Installing natural voices… N%`, and making Cancel cooperative/non-blocking. Focused RED -> GREEN and the full canonical signed build are recorded in `BOOP_UNIFIED_MEMORY.md`.
 
-## Explicit standalone exception: clean Nvidia Shield HOME
+## Shield Home integration scope
 
-The clean Nvidia Shield HOME replacement is deliberately still standalone:
-
-- branch `boop-shield-clean-launcher`;
-- package `com.boop.shieldhome`.
-
-Do **not** merge this standalone clean HOME into `com.boop.alpha1` merely because v85 is canonical. Ryan must explicitly approve that later after Shield hardware testing. Stock launcher recovery remains part of that experiment's safety model.
-
-The v85 canonical merge discussed here is the natural-voice + tablet integration only, not the clean Shield HOME experiment.
+`boop-shield-clean-launcher` and standalone package `com.boop.shieldhome` remain preserved. Ryan's 2026-09-10 scoped rebuild approval now permits reusing its existing Home/Now Playing source as an internal library in `boop-canonical-rebuild` (`com.boop.alpha1`). This supersedes the older blanket separation rule only for this candidate. Do not merge into canonical, change default Android HOME, grant accessibility/notification access, or alter standalone rollback state by implication. Read the rebuild handoff for verified integration state.
 
 ## Shared protected contracts
 
@@ -89,7 +75,7 @@ Latest fully physically accepted Unified rollback remains:
 
 `checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`
 
-Also preserve v58, v48 and `checkpoint-boop-unified-v65-procedural-eyes`. Do not create or repoint a v85 checkpoint until Ryan explicitly accepts the exact canonical APK physically.
+Also preserve v58, v48 and `checkpoint-boop-unified-v65-procedural-eyes`. The v91 voice checkpoint and v88 Android-voice checkpoint are additionally protected; v91 acceptance is scoped to the natural-voice result.
 
 Historical Wall/Launcher/Shield branches and older v70 iteration receipts remain in Git for provenance and rollback. They are not the normal starting point for new app work.
 
@@ -98,7 +84,7 @@ Historical Wall/Launcher/Shield branches and older v70 iteration receipts remain
 1. Read live `main/AGENTS.md`, `main/BOOP_CONTEXT.md`, `main/BOOP_START_HERE.md` and `main/BOOP_RULES.md`.
 2. Fetch/check the live intended app branch and `main`; do not trust cached refs or the primary checkout.
 3. For normal AIO work use `boop-unified` and read its handoff/status/memory/source-head files.
-4. For the clean Shield HOME exception use `boop-shield-clean-launcher` and keep `com.boop.shieldhome` separate until Ryan explicitly approves a merge.
+4. For the selected rebuild use `boop-canonical-rebuild`; preserve the standalone clean Shield HOME branch/package as provenance.
 5. Preserve dirty/concurrent work. No reset/force push or silent lineage overwrite.
 6. Current user instructions and fresh physical-device evidence beat stale dated notes.
 7. CI-green, signer-green and physically accepted are separate states.

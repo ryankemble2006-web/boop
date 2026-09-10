@@ -28,7 +28,9 @@ request first. These rules are for BOOP work, not permission to do unrelated wor
 
 ## Unified BOOP contract
 
-- Canonical branch: `boop-unified`.
+- Canonical branch: `boop-unified`. Ryan's selected 2026-09-10 overhaul is owned by
+  `boop-canonical-rebuild`; use its live handoff for that scope. Eyes are separate
+  work for later transplant. Preserve canonical and standalone rollback state.
 - Canonical package: `com.boop.alpha1`.
 - One APK contains the Wall, Launcher and Shield bodies.
 - Automatic profile contract: Android TV/Leanback -> Shield; Pixel 7 Pro -> Wall;
