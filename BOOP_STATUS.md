@@ -5,9 +5,22 @@ APK SHA256 `dc12df6fdd03e2bc3f80d31818f6c4ece829ae501b8b0b063f908583813f1963`.
 ZIP SHA256 `acde0565e7e4af7c6b8209fc02b8f71a58050228e5a4af4a9f6495f24c330a76`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 Downloaded hashes, signer, package com.boop.alpha1, version 100 and entry verified.
-APK delivered as BOOP-v100-cast-only-corner.apk. Install and new optional Cast
-visibility accessibility permission approval remain pending. Physical transition
-verification remains pending. User saying looks done is not installed-v100 evidence.
+APK delivered as BOOP-v100-cast-only-corner.apk. Ryan explicitly approved installation
+and the optional BOOP Cast corner accessibility listener. Installation succeeded;
+package reports 100 / 1.2.100-cast-only-corner. Listener enabled while preserving
+existing services. Existing overlay and notification access reused.
+
+Agent manually inspected physical Shield screenshots: native Deezer playback had
+no corner; Deezer Chromecast playback showed one upper-right headphones puppet;
+opening native Deezer while Cast remained playing hid the corner; reopening the
+existing Cast session via its launch PendingIntent restored one corner. Cast
+reported playing before and after. No pause, force-stop, restart, or track-selection
+commands were sent during that transition. Temporary device probe files removed.
+Controls returned to Ryan. This is agent-observed hardware verification, not Ryan's
+physical acceptance of v100. Exact v100 emulator checks remain unperformed.
+Standalone v23 remains the Home-button destination. The earlier intermittent native
+Deezer missing-media-session issue is not resolved by this visibility change.
+Protected physical checkpoints remain unchanged; v91 remains accepted for voices.
 
 # v100 corrected Cast-only corner policy
 
@@ -34,9 +47,10 @@ Version 100 / 1.2.100-cast-only-corner. Observed failing regression reproduced
 native playback incorrectly owning the corner, then shared-state/policy tests passed.
 Review found no serious blocker; positive window evidence additionally requires
 the observed CastWebContentsActivity class, not receiver dialogs. Shared tests
-passed after this tightening. Signed nonvisual build complete; exact receipt follows. Exact APK manual
-emulator and physical Cast/native transition checks remain pending. v99 stays the
-installed candidate until separately approved; protected checkpoints unchanged.
+passed after this tightening. Signed nonvisual build complete. Approved v100 is now
+installed; physical Cast/native transitions were manually inspected as recorded above.
+Exact v100 emulator checks and Ryan's physical acceptance remain pending. Protected
+checkpoints unchanged.
 
 ## v99 installed Shield handoff check, 2026-09-10
 
