@@ -1,3 +1,12 @@
+## v108 installed with approval; remote command result pending
+
+Ryan approved exact v108 installation. Delivered APK SHA256 matched the signed
+receipt; adb install -r succeeded and versionCode108 was verified. RECORD_AUDIO
+remains user-granted, assistant remains BoopAssistantActivity and recognition
+remains KatnissRecognitionService. UnifiedEntry opened for the remote test.
+No new permissions or role changes. Full command success and physical acceptance
+remain pending; earlier accepted checkpoints and current settings preserved.
+
 ## v108 signed and verified; physical install pending
 
 Source500f839ef2a2db5bd25737cb8124211ac81bdc0d; GitHub run34488083152 SUCCESS,
