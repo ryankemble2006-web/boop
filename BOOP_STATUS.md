@@ -1,4 +1,37 @@
-## v102 Close player: signed and locally inspected, Shield install pending
+## v103 Close media apps: implemented, build pending
+
+Ryan approved a separate Home action that remains available without Now Playing.
+It stops active Cast through advertised transport STOP and closes native Deezer
+and YouTube through the existing authenticated HA ADB route. A random app-private
+marker proves the local Shield and is rechecked between native stops. Back revokes
+pending authorization. Fresh Android session queries verify cleanup; Done/Failed
+is shown. Missing notification access or unsupported Cast STOP fails closed.
+No shared Cast receiver force-stop, new permission, or default-home change.
+
+Version 103 / 1.2.103-unified-close-media-apps. Scoped review found no important
+defects. Local shared/Home/close-gate checks pass. New client regression awaits CI.
+Next: build on GitHub, verify signed artifact, manually inspect owned emulator,
+then obtain a v103 physical install/test window. Ryan currently controls music.
+
+## v102 physical checks: native Deezer and regular Deezer Cast pass
+
+Installed signed v102 with Ryan's approval. Actual Home Close player button
+force-stopped native Deezer, removed its process and media session, returned Home,
+and removed its private marker. Regular Deezer Cast displayed one corner BOOP;
+Home showed current metadata. Close player left zero media sessions and receiver
+logs confirmed app stopped, audio focus abandoned, and all resources released.
+These are agent physical checks, not a new blanket user acceptance checkpoint.
+The regular receiver was Deezer; v102 Deezer - Beta corner remains unobserved.
+
+YouTube played before Home. Home destroyed its media session and released its
+Cast resources but left the native YouTube process running. The Now Playing card
+therefore disappeared before its Close player button could be used. This is the
+reason for the approved persistent v103 action, not a passing YouTube button test.
+Leftover YouTube and temporary device files were cleaned up after testing.
+Existing Home/reboot acceptance, Deezer exemption, accessibility services including
+the separate EastEnders service, and rollback packages were preserved.
+
+## v102 signed artifact receipt
 
 Owning branch boop-canonical-rebuild. Final build source
 1979b6d8ddc298d068c34fa01427efac20ca4dbc; GitHub run 34467435056 SUCCESS,
@@ -21,10 +54,8 @@ exercising the activity. No permissions were granted. WALL profile restored and
 verified, app stopped, temporary device files removed. Other emulator untouched.
 
 Delivered locally as BOOP-v102-unified-close-player.apk. Build monitor paused.
-Physical Shield still runs v101; Home/reboot acceptance and Deezer exemption remain.
-Next: obtain exact v102 install approval, then test native Deezer close, Deezer
-Beta Cast corner/close, and YouTube close on hardware with agreed playback window.
-Do not infer acceptance of the new button from the successful earlier shell probe.
+Physical Shield now runs v102; physical scope is recorded above.
+Home/reboot acceptance and Deezer exemption remain unchanged.
 
 Ryan approved replacing the Now Playing Open player button with Close player:
 terminate native Deezer or the active Cast source, including YouTube, because
@@ -45,7 +76,7 @@ in the captured interval. This explains the brief YouTube card without proving
 why YouTube ended playback. Landscape artwork rendering remains unverified.
 A prior later task-manager removal by Ryan is separate from this clean repeat.
 
-Current installed app remains signed v101, source
+Prior accepted Home/reboot checkpoint was signed v101, source
 be20d50ed3ee72ec7183215ade63e6253e929653; Home/reboot acceptance is unchanged.
 Ryan confirmed native Now Playing had data and was visible after the earlier
 Deezer Cast/native transition with the exemption enabled. Longer-term reliability
@@ -68,7 +99,7 @@ abandoned and all resources released. This is physical capability evidence, not
 acceptance of the new BOOP button. Temporary probe removed, music controls returned
 to Ryan. Close client tests cover unique hardware, wrong/ambiguous hardware, stale
 receipts and selection change. Compilation/CI and scoped emulator launch checks
-passed; physical v102 checks remain pending. Review corrected delayed Back cancellation
+passed; physical v102 results are recorded above. Review corrected delayed Back cancellation
 and false success from lost session observation; re-review found both addressed
 and no further important defects. Final CI results are recorded above.
 Ryan controls music outside explicitly agreed short tests; ask before interrupting.

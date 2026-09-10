@@ -34,6 +34,7 @@ public final class ShieldHomeView extends LinearLayout {
         default void onNowPlayingNext() { }
         default void onOpenNowPlayingSource() { }
         default void onCloseNowPlayingSource() { }
+        default void onCloseMediaApps() { }
     }
 
     private FavouriteGrabSession grabSession;
@@ -227,6 +228,11 @@ public final class ShieldHomeView extends LinearLayout {
         LayoutParams homeRowsParams = new LayoutParams(dp(220), dp(60));
         homeRowsParams.leftMargin = dp(12);
         row.addView(homeRows, homeRowsParams);
+        TextView closeMedia = actionButton("Close media apps");
+        closeMedia.setOnClickListener(v -> callbacks.onCloseMediaApps());
+        LayoutParams closeMediaParams = new LayoutParams(dp(220), dp(60));
+        closeMediaParams.leftMargin = dp(12);
+        row.addView(closeMedia, closeMediaParams);
 
         View spacer = new View(getContext());
         row.addView(spacer, new LayoutParams(0, 1, 1f));

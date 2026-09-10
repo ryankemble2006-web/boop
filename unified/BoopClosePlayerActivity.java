@@ -29,6 +29,7 @@ public final class BoopClosePlayerActivity extends Activity {
     private volatile boolean cancelled;
     private long sessionId;
     private String player;
+    private boolean allMediaApps;
     private android.media.session.MediaSession.Token originalToken;
     @Override protected void onCreate(Bundle saved) {
         super.onCreate(saved);
@@ -36,28 +37,35 @@ public final class BoopClosePlayerActivity extends Activity {
             finish(); return;
         }
         manager=ShieldNowPlayingManager.get(this);
+        allMediaApps=getIntent().getBooleanExtra("all_media_apps",false);
         sessionId=getIntent().getLongExtra("session",0);
         player=getIntent().getStringExtra("player");
         if(!current()) { result(false); return; }
-        originalToken=manager.sessionToken(sessionId);
-        if(originalToken==null) { result(false); return; }
+        if(!allMediaApps) {
+            originalToken=manager.sessionToken(sessionId);
+            if(originalToken==null) { result(false); return; }
+        }
         TextView status=new TextView(this);
-        status.setText("Closing player…\nPress Back to cancel"); status.setTextSize(24);
+        status.setText((allMediaApps ? "Closing media apps…" : "Closing player…")
+                +"\nPress Back to cancel"); status.setTextSize(24);
         status.setGravity(Gravity.CENTER); setContentView(status);
         handler.postDelayed(() -> result(false),40000);
-        if("com.google.android.apps.mediashell".equals(player)) {
+        if(allMediaApps && !manager.stopCastForCleanup()) { result(false); return; }
+        if(!allMediaApps && "com.google.android.apps.mediashell".equals(player)) {
             if(!manager.stopSelectedCast(sessionId)) { result(false); return; }
             awaitRemoved(30);
             return;
         }
         try {
-            gate=new LocalPlayerCloseGate(sessionId,player,UUID.randomUUID().toString().replace("-",""));
+            String nonce=UUID.randomUUID().toString().replace("-","");
+            gate=allMediaApps ? LocalPlayerCloseGate.allMediaApps(nonce)
+                    : new LocalPlayerCloseGate(sessionId,player,nonce);
             marker=new File(getFilesDir(),gate.filename());
             try(FileOutputStream out=new FileOutputStream(marker)) {
                 out.write(gate.nonce.getBytes(StandardCharsets.US_ASCII));
             }
         } catch(Exception unavailable) { result(false); return; }
-        unsubscribe=manager.state().subscribe(selected -> {
+        if(!allMediaApps) unsubscribe=manager.state().subscribe(selected -> {
             if(!current()) {
                 gate.cancel();
                 marker.delete();
@@ -76,13 +84,16 @@ public final class BoopClosePlayerActivity extends Activity {
     }
     private boolean current() {
         if(cancelled || manager==null) return false;
+        if(allMediaApps) return BoopDeviceProfile.resolve(this)==BoopDeviceProfile.Mode.SHIELD;
         NowPlayingSnapshot selected=manager.state().current();
         return selected!=null && selected.sessionId()==sessionId && player!=null
                 && player.equals(selected.packageName());
     }
     private void awaitRemoved(int attempts) {
         if(cancelled || isFinishing()) return;
-        if(manager.confirmsSessionGone(originalToken)) { result(true); return; }
+        if(allMediaApps ? manager.confirmsMediaCleanup() : manager.confirmsSessionGone(originalToken)) {
+            result(true); return;
+        }
         if(attempts<=0) { result(false); return; }
         handler.postDelayed(() -> awaitRemoved(attempts-1),100);
     }

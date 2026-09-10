@@ -241,6 +241,47 @@ public final class ShieldNowPlayingManager {
         } catch(ActivityNotFoundException | SecurityException unavailable) { return false; }
     }
 
+    public boolean closeMediaApps(Activity activity) {
+        if(activity==null) return false;
+        try {
+            activity.startActivity(new Intent().setClassName(activity.getPackageName(),
+                    "com.boop.alpha1.BoopClosePlayerActivity").putExtra("all_media_apps",true));
+            return true;
+        } catch(ActivityNotFoundException | SecurityException unavailable) { return false; }
+    }
+
+    /** Explicit whole-media cleanup only; never force-stops the shared Cast receiver. */
+    public boolean stopCastForCleanup() {
+        if(Looper.myLooper()!=Looper.getMainLooper() || !isAccessGranted() || mediaSessionManager==null) return false;
+        try {
+            List<MediaController> active=mediaSessionManager.getActiveSessions(listenerComponent);
+            if(active==null) return false;
+            List<MediaController> casts=new ArrayList<>();
+            for(MediaController controller:active) {
+                if(!"com.google.android.apps.mediashell".equals(controller.getPackageName())) continue;
+                PlaybackState playback=controller.getPlaybackState();
+                if(playback==null || (playback.getActions() & PlaybackState.ACTION_STOP)==0) return false;
+                casts.add(controller);
+            }
+            for(MediaController controller:casts) controller.getTransportControls().stop();
+            return true;
+        } catch(RuntimeException unavailable) { return false; }
+    }
+
+    public boolean confirmsMediaCleanup() {
+        if(!isAccessGranted() || mediaSessionManager==null) return false;
+        try {
+            List<MediaController> active=mediaSessionManager.getActiveSessions(listenerComponent);
+            if(active==null) return false;
+            for(MediaController controller:active) {
+                String name=controller.getPackageName();
+                if("deezer.android.app".equals(name) || "com.google.android.youtube.tv".equals(name)
+                        || "com.google.android.apps.mediashell".equals(name)) return false;
+            }
+            return true;
+        } catch(RuntimeException unavailable) { return false; }
+    }
+
     /** Reopens the package that owns the currently selected media session, when launchable. */
     public boolean openSource(Activity activity) {
         if (activity == null) {

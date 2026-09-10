@@ -312,6 +312,10 @@ public final class ShieldLauncherActivity extends Activity {
                 if(nowPlayingManager==null || !nowPlayingManager.closeSource(ShieldLauncherActivity.this))
                     android.widget.Toast.makeText(ShieldLauncherActivity.this,"Failed",android.widget.Toast.LENGTH_SHORT).show();
             }
+            @Override public void onCloseMediaApps() {
+                if(nowPlayingManager==null || !nowPlayingManager.closeMediaApps(ShieldLauncherActivity.this))
+                    android.widget.Toast.makeText(ShieldLauncherActivity.this,"Failed",android.widget.Toast.LENGTH_SHORT).show();
+            }
         };
     }
 

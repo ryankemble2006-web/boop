@@ -23,6 +23,14 @@ public final class CloseGateCheck {
         catch (IllegalArgumentException expected) { }
         LocalPlayerCloseGate youtube = new LocalPlayerCloseGate(9, "com.google.android.youtube.tv", nonce);
         check(youtube.closeCommand().contains("am force-stop com.google.android.youtube.tv"));
+        LocalPlayerCloseGate all=LocalPlayerCloseGate.allMediaApps(nonce);
+        check(all.closeCommand().contains("am force-stop deezer.android.app"));
+        check(all.closeCommand().contains("am force-stop com.google.android.youtube.tv"));
+        check(!all.closeCommand().contains("am force-stop com.google.android.apps.mediashell"));
+        check(!all.matches(1,"deezer.android.app"));
+        all.cancel();
+        try { all.closeCommand(); throw new AssertionError(); }
+        catch (IllegalStateException expected) { }
         System.out.println("Close gate checks passed: selection, cancellation, marker guard, package allowlist");
     }
 }

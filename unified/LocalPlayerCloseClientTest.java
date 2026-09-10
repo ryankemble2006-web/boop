@@ -8,6 +8,7 @@ public final class LocalPlayerCloseClientTest {
     private static final String NONCE="0123456789abcdef0123456789abcdef";
     private static final class Fake implements DeezerArtistClient.Http {
         String response="";
+        String closeCommand="";
         boolean stale, cancelAfterIdentity, valid=true;
         int closes;
         Set<String> matching=new HashSet<>();
@@ -16,7 +17,7 @@ public final class LocalPlayerCloseClientTest {
             if(url.endsWith("/adb_command")) {
                 String cmd=body.getString("command");
                 String receipt=cmd.substring(5,cmd.indexOf(';'));
-                if(cmd.contains("am force-stop")) { closes++; response=receipt+"\nCLOSED_"+NONCE; }
+                if(cmd.contains("am force-stop")) { closes++; closeCommand=cmd; response=receipt+"\nCLOSED_"+NONCE; }
                 else {
                     response=receipt+"\n"+(matching.contains(body.getString("entity_id"))?NONCE:"");
                     if(cancelAfterIdentity) valid=false;
@@ -32,6 +33,15 @@ public final class LocalPlayerCloseClientTest {
     }
     @Test public void exactLocalMarkerRequired() throws Exception {
         Fake f=new Fake(); f.matching.add("media_player.b"); run(f); assertEquals(1,f.closes);
+    }
+    @Test public void cleanupTargetsOnlyBothNativeAppsAfterLocalIdentityMatch() throws Exception {
+        Fake f=new Fake(); f.matching.add("media_player.b");
+        new LocalPlayerCloseClient(f).close("http://test.invalid","test-token",
+                LocalPlayerCloseGate.allMediaApps(NONCE),()->f.valid);
+        assertEquals(1,f.closes);
+        assertTrue(f.closeCommand.contains("am force-stop deezer.android.app"));
+        assertTrue(f.closeCommand.contains("am force-stop com.google.android.youtube.tv"));
+        assertFalse(f.closeCommand.contains("am force-stop com.google.android.apps.mediashell"));
     }
     @Test public void wrongHardwareNeverCloses() throws Exception {
         Fake f=new Fake(); try { run(f); fail(); } catch(java.io.IOException expected) { }
