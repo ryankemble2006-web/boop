@@ -1,4 +1,22 @@
-## v103 Close media apps: implemented, build pending
+## v103 Close media apps: signed and manually inspected, Shield test pending
+
+Branch boop-canonical-rebuild. Build source b075370d56eb7fcc209e2ab078682ce05878a7c7.
+GitHub run 34471952390 SUCCESS; artifact 10149989572. 203 Unified +58 Shield
+functional tests, zero failures/errors/skips, plus shared/Home/close-gate checks.
+Version 103 / 1.2.103-unified-close-media-apps; package com.boop.alpha1;
+entry com.boop.alpha1.UnifiedEntryActivity. Source and identity verified locally.
+APK SHA256: d44a9b01ae7a930dcf57e81d7c864528e71831d2b575490a50cf70c25d280b01.
+ZIP SHA256: 495b121a8b043c825f19f75fc8fdc5f0d8bb2edfc976d8cd8a8047ca8945d136.
+Permanent signer: f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+Local apksigner and aapt verification passed after sandbox execution retry.
+
+Manually inspected on owned Pixel 7 Pro API36 emulator: persistent Close media
+apps button is readable on Shield Home without Now Playing. Actual button opened
+BoopClosePlayerActivity and showed Failed as expected without media-listener access.
+This does not prove successful physical cleanup. No permissions granted. Restored
+and verified WALL profile, stopped app, removed temporary device files. Other
+emulator and physical Shield were untouched during v103 verification.
+No GitHub visual tests. Signed APK delivered as BOOP-v103-unified-close-media-apps.apk.
 
 Ryan approved a separate Home action that remains available without Now Playing.
 It stops active Cast through advertised transport STOP and closes native Deezer
@@ -7,11 +25,10 @@ marker proves the local Shield and is rechecked between native stops. Back revok
 pending authorization. Fresh Android session queries verify cleanup; Done/Failed
 is shown. Missing notification access or unsupported Cast STOP fails closed.
 No shared Cast receiver force-stop, new permission, or default-home change.
-
-Version 103 / 1.2.103-unified-close-media-apps. Scoped review found no important
-defects. Local shared/Home/close-gate checks pass. New client regression awaits CI.
-Next: build on GitHub, verify signed artifact, manually inspect owned emulator,
-then obtain a v103 physical install/test window. Ryan currently controls music.
+Scoped review found no important defects. Build monitor paused after delivery.
+Next: obtain a v103 physical install/test window. Ryan currently controls music.
+Physical Shield remains v102; its test scope follows. User's v101 Home/reboot
+acceptance remains the protected acceptance checkpoint.
 
 ## v102 physical checks: native Deezer and regular Deezer Cast pass
 
