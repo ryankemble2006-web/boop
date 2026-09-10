@@ -1,3 +1,13 @@
+## v107 installed with approval; physical command result pending
+
+Ryan approved the exact v107 deployment. Delivered APK hash matched
+2f8c9905374e1757ed47a06c880bf7e964622b065485ac06ea54a74c5a958b7b;
+adb install -r succeeded and versionCode107 was verified. RECORD_AUDIO remains
+user-granted, assistant remains BoopAssistantActivity, recognizer remains Katniss.
+UnifiedEntry opened for the coordinated remote test. No new permission/role changes.
+Successful Shield speech/house/media control remains unverified; next is one real
+remote command and inspection of its result. Earlier accepted checkpoints preserved.
+
 ## v107 signed and locally verified; physical install pending
 
 Source2c9429e469781a21a177ab4a853e5da6a20322f6; GitHub run34486358015 SUCCESS,
