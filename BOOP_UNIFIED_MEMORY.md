@@ -2,11 +2,15 @@
 
 Updated 2026-09-10. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Fresh `main` owns shared product contracts. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
-## Current canonical candidate: v88 natural playback recovery
+## Current physically usable checkpoint: v88 Android voice restored
 
-Exact app/test release head before documentation-only follow-up commits:
+Exact app/test release head:
 
 `f5f086fc4f67712b5746be067aff852331299bb0`
+
+Protected checkpoint branch:
+
+`checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
 
 Release identity and receipts:
 
@@ -25,7 +29,9 @@ Release identity and receipts:
 
 The exact release artifact was downloaded and independently matched its GitHub ZIP digest, APK digest, release commit, package/version and signer receipts.
 
-v88 is CI/signer green only. Natural audio is not physically accepted until Ryan hears it on the real device. No v88 rollback checkpoint exists. Latest fully physically accepted rollback remains v59.
+Ryan physically confirmed this exact v88 build is back to a **usable BOOP baseline** and explicitly approved it as a checkpoint. Android TextToSpeech is restored and ordinary BOOP replies speak again. The natural voice attempt still fails. Therefore the checkpoint means **usable Android speech restored**, not **natural speech fixed**.
+
+The v88 checkpoint is pinned to the exact tested release commit, not later documentation commits. Do not repoint it.
 
 ## Durable natural voice identity
 
@@ -60,11 +66,17 @@ Removing the JNI callback stopped the hard-crash route, but Ryan physically repo
 
 The second architecture defect was selection poisoning: pressing a natural row persisted `selected_backend=natural` before that natural backend had ever proven it could synthesize and play on the device. Therefore an experimental broken mouth could take over ordinary BOOP speech.
 
+### v88
+
+v88 physically restored the Android voice path. Natural voice still failed, but that failure no longer poisoned ordinary BOOP speech. Ryan explicitly accepted v88 as the new usable rollback checkpoint.
+
+This physical result validates the **isolation architecture**, not Kokoro synthesis/playback itself.
+
 ## Durable v88 natural voice safety contract
 
 A natural voice does **not** become BOOP's normal mouth merely because its button was pressed.
 
-Selection order is now mandatory:
+Selection order is mandatory:
 
 1. Resolve the candidate voice/SID without selecting it.
 2. Require the installed current pack to be verified and ready for preview.
@@ -78,8 +90,6 @@ Controller concepts:
 - `naturalPackReadyForPreview()` = current installed/verified pack may be tried;
 - `markNaturalPlaybackProven()` = persist `natural_runtime_proven_version` after successful preview playback only;
 - `naturalBackendSelectedAndUsable()` = selected natural + preview-ready pack + matching runtime-proven version.
-
-This is also the v87 migration repair: v87 can leave `selected_backend=natural`, but it cannot contain the new v88 runtime-proof key. After upgrading, ordinary BOOP speech therefore stays on Android TTS until a natural preview succeeds.
 
 A failed preview must never persist/select that candidate and must never poison later ordinary speech. Preview itself must not substitute Android TTS and impersonate the requested natural voice. Ordinary speech retains Android TTS resilience.
 
@@ -96,7 +106,7 @@ Sherpa synthesis:
 
 Never restore `generateWithConfigAndCallback(...)` while BOOP ships Sherpa-ONNX 1.13.7 on Android.
 
-Natural playback now follows a conservative PCM16 path:
+Natural playback follows a conservative PCM16 path:
 
 - clamp generated float samples to [-1, 1];
 - convert to signed 16-bit PCM;
@@ -104,7 +114,7 @@ Natural playback now follows a conservative PCM16 path:
 - mono `AudioTrack`;
 - static playback buffer;
 - no `AudioFormat.ENCODING_PCM_FLOAT`;
-- no natural `PlaybackParams` pitch manipulation in this recovery candidate.
+- no natural `PlaybackParams` pitch manipulation in this recovery baseline.
 
 Speech rate still maps to Kokoro generation speed. Natural pitch is deliberately deferred until basic natural playback is physically proven.
 
@@ -123,15 +133,13 @@ Keep the explicit `lexicon-gb-en.txt`. Do not restore `kokoro.setLang("eng")`. E
 
 The functional v88 diff is restricted to natural voice patch/backend/controller, two natural voice contracts and release metadata. Do not attribute Home Assistant, approved eyes, launcher, package or signer changes to v88.
 
-## Physical v88 acceptance sequence
+## Next natural voice repair boundary
 
-1. Install exact v88 over v87.
-2. Do not press a natural row yet. Say `lights on` first. HA should act, BOOP should remain foreground, and ordinary acknowledgement should use Android TTS because the stale v87 natural selection has no v88 runtime proof.
-3. Tap Emma. Success requires audible Emma playback before `Selected: Emma` appears. Failure should identify synthesis or playback and confirm Android voice was kept.
-4. Say `lights on` again. BOOP must still speak whether the natural preview succeeded or failed.
-5. If Emma succeeds, try George or Fable and confirm a different natural speaker.
+Start from the current live `boop-unified` lineage only after re-fetching the branch and `main`; preserve `checkpoint-boop-unified-v88-android-voice-restored` exactly.
 
-Do not call natural speech fixed or create/repoint a v88 checkpoint before this real-device evidence.
+Use systematic root-cause debugging before another production tweak. The v88 physical evidence proves the Android fallback isolation is valuable and must remain untouched while Kokoro is investigated.
+
+Ryan wants the next natural-voice repair to also incorporate a new prompt/plan developed with the other BOOP assistant. The exact new prompt is not stored here yet. Do not invent it or substitute the older four-voice plan. Once the exact prompt becomes available in conversation/repository context, merge those requirements into the next root-cause pass before implementation.
 
 ## Other durable Unified contracts remain unchanged
 
@@ -147,12 +155,15 @@ Do not call natural speech fixed or create/repoint a v88 checkpoint before this 
 
 ## Protected rollback checkpoints
 
-Latest fully physically accepted rollback:
+Current usable rollback:
 
-`checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`
+`checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
+
+Meaning: Android BOOP voice is physically restored and usable; natural voice remains failed/unaccepted.
 
 Also preserve:
 
+- `checkpoint-boop-unified-v59-uncensored-speech` -> `136b56e6faac8ce450b957ac3057a379c68c7b7b`;
 - v58 `2d8fa4762298e6f0704dd502a6b04d1cb8e7e082`;
 - v48 `64745e5ea6b5d89d08cb3b90a17ff28130685ad9`;
 - `checkpoint-boop-unified-v65-procedural-eyes`.
