@@ -135,10 +135,10 @@ def test_v89_natural_runtime_diagnostics_split_failure_before_another_fix():
     # v88 proved Android TTS isolation but did not tell physical testing where
     # Kokoro dies. The next build must distinguish file/runtime preparation,
     # native/model construction, synthesis and playback before another repair.
-    assert 'NaturalSpeechException("files"' in backend
-    assert 'NaturalSpeechException("initialization"' in backend
-    assert 'NaturalSpeechException("synthesis"' in backend
-    assert 'NaturalSpeechException("playback"' in backend
+    assert re.search(r'NaturalSpeechException\s*\(\s*"files"', backend)
+    assert re.search(r'NaturalSpeechException\s*\(\s*"initialization"', backend)
+    assert re.search(r'NaturalSpeechException\s*\(\s*"synthesis"', backend)
+    assert re.search(r'NaturalSpeechException\s*\(\s*"playback"', backend)
     assert "runtimeFilesReadyForSherpa" in backend
     assert "candidate.sampleRate()" in backend
     assert "candidate.numSpeakers()" in backend
