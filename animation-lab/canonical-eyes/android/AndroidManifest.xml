@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.boop.animationlab" android:versionCode="9" android:versionName="0.9-notification-grip">
+    package="com.boop.animationlab" android:versionCode="10" android:versionName="0.10-closed-grip">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
     <application android:label="BOOP Animation Lab" android:allowBackup="false"

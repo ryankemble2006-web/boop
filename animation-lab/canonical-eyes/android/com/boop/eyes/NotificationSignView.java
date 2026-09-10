@@ -58,18 +58,19 @@ public final class NotificationSignView extends View {
         float[] lengths={69,80,76,61};
         float direction=left?1:-1;
         for(int digit=0;digit<4;digit++){
-            float y=-57+digit*38;
+            // Closed grip: neighbouring fingers meet instead of fanning apart.
+            float y=-42+digit*28;
             float edge=left?-292:357-Math.abs(y)*128/124;
             float root=edge-direction*16;
             float curl=.85f+.15f*pose.lift;
-            float reach=lengths[digit]*(1-.12f*curl);
+            float reach=lengths[digit]*(1-.32f*curl);
             int at=0;
             for(int row=0;row<=16;row++){
                 float t=1-row/16f; // Source cap -> fingertip; source root -> board edge.
                 float bend=(float)Math.sin(t*Math.PI);
                 float x=root+direction*(reach*t+7*bend);
-                float centre=y+3*curl*bend;
-                float thickness=(digit==3?29:33)*(1+.12f*bend);
+                float centre=y+5*curl*bend;
+                float thickness=(digit==3?35:38)*(1+.12f*bend);
                 for(int col=0;col<=8;col++){
                     mesh[at++]=x;
                     mesh[at++]=centre+(col/8f-.5f)*thickness;
