@@ -21,8 +21,10 @@ public final class RecipeCheck {
         check(s.handle("done that").contains("Cook"));
         check(s.handle("carry on").contains("last step"));
         check(s.handle("what was the last bit").contains("Beat"));
+        s.handle("next step");
         check(s.handle("read me the ingredients").contains("2 eggs"));
         check(s.handle("repeat that").contains("2 eggs"));
+        check(s.handle("continue cooking").contains("Cook"));
         check(s.handle("next track") == null);
         check(s.handle("turn off the fan") == null);
         check(s.handle("stop cooking") != null && !s.active());
@@ -36,6 +38,10 @@ public final class RecipeCheck {
         s.handle("give me an easy egg recipe");
         check(s.accept(s.ticket(), "ASK|Do you have eggs?"));
         check(s.collecting());
+        check(s.handle("go to sleep") == null);
+        check(!s.active());
+        s.handle("give me an easy egg recipe");
+        s.accept(s.ticket(), "ASK|Do you have eggs?");
         s.handle("no");
         s.handle("find a recipe");
         check(s.prompt().contains("Do you have eggs?") && s.prompt().contains("\nno"));

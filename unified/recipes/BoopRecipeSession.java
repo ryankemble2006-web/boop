@@ -10,7 +10,7 @@ final class BoopRecipeSession {
     private final List<String> ingredients = new ArrayList<>();
     private final List<String> steps = new ArrayList<>();
     private String title = "Recipes", message = "", pending;
-    private boolean collecting, active, clarification;
+    private boolean collecting, active, clarification, showingIngredients;
     private int step = -1;
     private long ticket;
 
@@ -29,14 +29,17 @@ final class BoopRecipeSession {
         }
         if (active && !steps.isEmpty()) {
             if (is(s, "next", "what's next", "what is next", "done that", "carry on", "next step", "continue cooking", "start cooking")) {
+                if (showingIngredients && step >= 0) { showingIngredients = false; return message = content(); }
+                showingIngredients = false;
                 if (step == steps.size() - 1) return "That's the last step. Say finish cooking when you're ready.";
                 step++; return message = content();
             }
             if (is(s, "back", "go back", "previous step", "what was the last bit", "last step")) {
+                showingIngredients = false;
                 step = Math.max(0, step - 1); return message = content();
             }
             if (is(s, "ingredients", "what do i need", "show ingredients", "read me the ingredients")) {
-                step = -1; return message = content();
+                showingIngredients = true; return message = content();
             }
             if (is(s, "repeat", "say that again", "repeat that", "what do i do here")) return content();
         }
@@ -46,6 +49,7 @@ final class BoopRecipeSession {
         if (collecting && is(s, "that's everything", "that is everything", "that's all", "that is all", "ready", "suggest a dish", "find a recipe")) {
             generate(); return message = "I'll suggest a dish from what you've told me.";
         }
+        if (active && BoopConversationExitIntent.replyFor(raw) != null) { close(); return null; }
         boolean request = s.matches(".*\\brecipe\\b.*") && !s.startsWith("close ");
         boolean inventory = s.startsWith("i've got ") || s.startsWith("i have got ")
                 || s.startsWith("i have ") && s.matches(".*\\b(eggs?|cheese|tomatoes|ingredients|chicken|rice|pasta)\\b.*");
@@ -108,7 +112,7 @@ final class BoopRecipeSession {
         }
         if (nextTitle == null || nextIngredients.isEmpty() || nextIngredients.size() > 16 || nextSteps.isEmpty() || nextSteps.size() > 24) return false;
         title = nextTitle; ingredients.clear(); ingredients.addAll(nextIngredients);
-        steps.clear(); steps.addAll(nextSteps); step = -1; message = content(); return true;
+        steps.clear(); steps.addAll(nextSteps); step = -1; showingIngredients = true; message = content(); return true;
     }
     void failed(String reason) { pending = null; collecting = true; message = reason; }
     void cancelPending() { if (pending != null) { ticket++; pending = null; collecting = true; message = "Recipe request paused. Say that's everything to try again."; } }
@@ -116,6 +120,6 @@ final class BoopRecipeSession {
     boolean active() { return active; }
     boolean collecting() { return collecting; }
     String title() { return title; }
-    String content() { return steps.isEmpty() ? message : step < 0 ? "Ingredients\n" + String.join("\n", ingredients) : "Step " + (step + 1) + " of " + steps.size() + "\n" + steps.get(step); }
+    String content() { return steps.isEmpty() ? message : showingIngredients || step < 0 ? "Ingredients\n" + String.join("\n", ingredients) : "Step " + (step + 1) + " of " + steps.size() + "\n" + steps.get(step); }
     String reply() { return message; }
 }

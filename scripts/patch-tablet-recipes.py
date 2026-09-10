@@ -38,7 +38,10 @@ once('    private void handleDeviceSetupFailure(', '''    private boolean handle
         if (getResources().getConfiguration().smallestScreenWidthDp < 600
                 || BoopDeviceProfile.resolve(this) != BoopDeviceProfile.Mode.WALL) return false;
         String reply = recipeSession.handle(transcript);
-        if (reply == null) return false;
+        if (reply == null) {
+            if (!recipeSession.active() && recipePanel != null) recipePanel.close();
+            return false;
+        }
         if (recipePanel == null) recipePanel = new BoopRecipePanel(this, interactionSurface, this::handleRecognizedSpeech);
         recipePanel.render(recipeSession);
         String prompt = recipeSession.prompt();
