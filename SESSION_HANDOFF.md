@@ -1,28 +1,37 @@
-## v105 assistant repair: activity-based route, build/test pending
+## v105 signed: emulator assistant assignment and entry verified
 
-Ryan asked to continue after the failed role assignment. Repair uses Android's
-supported activity-based assistant branch, leaving the existing system recognizer
-selected rather than introducing a new recognition provider. The malformed legacy
-voice-interaction service registrations are removed from the generated manifest;
-historical implementation files remain as source only. New BoopAssistantActivity
-declares ASSIST/VOICE_ASSIST with DEFAULT, requires explicit BOOP opt-in and actual
-assistant-role ownership, rejects recreation/unrelated actions, then forwards to
-the existing one-shot MainActivity listener with the input-device ID when supplied.
-No persistent microphone, provider change, secrets migration or new permissions.
+Branch boop-canonical-rebuild; source af66eccd56dda7b12e8fa86d1c1f53d07678f49d.
+GitHub run34480607501 SUCCESS, artifact10153558430. 211 Unified +58 Shield tests,
+zero failures/errors/skips, plus shared/Home/close-gate checks. Version105 /
+1.2.105-activity-assistant, package com.boop.alpha1, entry UnifiedEntryActivity.
+Local package/version/source/hash/permanent-signer checks passed.
+APK SHA256 deda81432440dbe9de0a9f91728acc6e3136bfc51e95aa913529cac9e4ce926c.
+ZIP SHA256 8a60c930c0439bf2847fb49d9f41ebc1c882356820821a52f8ec032b95682b32.
+Signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
 
-This supersedes the earlier voice-interaction-service architecture for candidate
-v105. Android 11 AOSP RoleObserver's activity branch sets ASSISTANT to the activity,
-clears VOICE_INTERACTION_SERVICE and selects its default recognizer; no null service
-class construction. Local launch-policy matrix passes after observed RED. Four
-JUnit cases added, and signed workflow verifies absence of legacy voice service.
-Version105 / 1.2.105-activity-assistant. CI, signed APK and emulator role assignment
-checks pending. Do not retry assistant assignment on physical v104.
+Actual owned Pixel7Pro/API36 emulator install and role-manager assignment passed:
+ASSISTANT holder=com.boop.alpha1, assistant=.BoopAssistantActivity,
+VOICE_INTERACTION_SERVICE empty, original GoogleTTSRecognitionService unchanged.
+No system restart observed. A temporary emulator-only use_boop preference fixture
+enabled real activity entry. ACTION_ASSIST forwarded one-shot into MainActivity;
+BOOP-Assist log preserved synthetic inputDeviceId=123 and face was manually viewed.
+This proves forwarding, not remote audio capture or successful house commands.
+No HA credentials or microphone permissions were granted. App stopped; fixture
+removed (originally absent); Google role, original assistant/interactor/recognizer
+restored and verified. WALL profile unchanged; temporary screenshot removed.
+No GitHub visual tests. Other emulator and physical Shield untouched by this test.
 
-Shield remains v104 with Google assistant/recognizer restored after its system
-restart. BOOP opt-in preference remains use_boop. Next: build and validate role
-assignment/restoration on owned emulator, inspect actual one-shot launch, then
-coordinate exact v105 install and physical mic test. Physical mic capture and
-Shield voice-command routing are not yet proven. Pixel candle command passed.
+Activity-based assistant supersedes malformed voice-service registration for v105.
+Review found one inherited receiver replay risk; MainActivity now consumes the
+one-shot extra and skips accepting it during recreation. Local entry-policy matrix
+and CI pass. Historical voice-service sources are unregistered, retained only as
+reference. Android keeps its default recognizer, no new provider or microphone loop.
+
+Delivered BOOP-v105-activity-assistant.apk. Build monitor paused after delivery.
+Shield remains v104 with Google selected; do not retry its crashing role command.
+Next: obtain approval for exact v105 physical install and assistant assignment,
+then ask Ryan to press the physical mic button. Remote audio, command routing and
+physical acceptance remain pending. Preserve original Katniss settings for rollback.
 
 ## Shield assistant assignment trial failed: Android system restart
 
