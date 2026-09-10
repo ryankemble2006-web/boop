@@ -19,16 +19,16 @@ with zipfile.ZipFile(out/'unsigned.apk','a',zipfile.ZIP_DEFLATED) as z:
     for dex in (out/'dex').glob('*.dex'):z.write(dex,dex.name)
 PY
 "$TOOLS/zipalign" -f -p 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
-"$TOOLS/apksigner" sign --ks "$BOOP_SIGNING_STORE_FILE" --ks-key-alias boop-dev --ks-pass env:BOOP_DEV_STORE_PASSWORD --key-pass env:BOOP_DEV_KEY_PASSWORD --out "$OUT/BOOP-Animation-Lab-v10.apk" "$OUT/aligned.apk"
-"$TOOLS/apksigner" verify --print-certs "$OUT/BOOP-Animation-Lab-v10.apk" > "$OUT/signer.txt"
+"$TOOLS/apksigner" sign --ks "$BOOP_SIGNING_STORE_FILE" --ks-key-alias boop-dev --ks-pass env:BOOP_DEV_STORE_PASSWORD --key-pass env:BOOP_DEV_KEY_PASSWORD --out "$OUT/BOOP-Animation-Lab-v11.apk" "$OUT/aligned.apk"
+"$TOOLS/apksigner" verify --print-certs "$OUT/BOOP-Animation-Lab-v11.apk" > "$OUT/signer.txt"
 grep -Fq 'f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde' "$OUT/signer.txt"
-"$TOOLS/aapt" dump badging "$OUT/BOOP-Animation-Lab-v10.apk" > "$OUT/badging.txt"
-grep -Fq "package: name='com.boop.animationlab' versionCode='10'" "$OUT/badging.txt"
+"$TOOLS/aapt" dump badging "$OUT/BOOP-Animation-Lab-v11.apk" > "$OUT/badging.txt"
+grep -Fq "package: name='com.boop.animationlab' versionCode='11'" "$OUT/badging.txt"
 grep -Fq "launchable-activity: name='com.boop.alpha1.BoopDevMenuActivity'" "$OUT/badging.txt"
 if grep -q '^uses-permission:' "$OUT/badging.txt"; then echo 'Unexpected permission' >&2; exit 1; fi
 git rev-parse HEAD > "$OUT/built-commit.txt"
-sha256sum "$OUT/BOOP-Animation-Lab-v10.apk" > "$OUT/apk-sha256.txt"
-python - "$OUT/BOOP-Animation-Lab-v10.apk" <<'PY'
+sha256sum "$OUT/BOOP-Animation-Lab-v11.apk" > "$OUT/apk-sha256.txt"
+python - "$OUT/BOOP-Animation-Lab-v11.apk" <<'PY'
 import hashlib,sys,zipfile
 with zipfile.ZipFile(sys.argv[1]) as z:
     assert z.testzip() is None

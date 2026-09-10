@@ -73,7 +73,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         signActive=false;if(sign!=null){sign.setVisibility(View.GONE);resizeEyes();}
         freeze=-1;EyeMotion.Clip c=EyeCatalogue.find(id);
         controller.select(c,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
-        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v10 • Ryan review");
+        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v11 • Ryan review");
         Log.i("BOOPEyes","clip="+c.id+" time="+(long)clock);
     }
     private void resizeEyes(){
@@ -83,7 +83,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
     private void showSign(int style){
         signStyle=Math.floorMod(style,4);signStart=clock;signActive=true;freeze=-1;
         sign.setVisibility(View.VISIBLE);resizeEyes();
-        label.setText("BOOP • Sign show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X"}[signStyle]+" • v10 • Demo only");
+        label.setText("BOOP • Sign show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X"}[signStyle]+" • v11 • Demo only");
         Log.i("BOOPEyes","sign="+signStyle+" time="+(long)clock);
     }
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);readIntent(intent);}

@@ -43,7 +43,13 @@ public final class NotificationSignView extends View {
         if(mirror)for(int i=0;i<source.length;i+=2)source[i]=1774-source[i];
         Matrix map=new Matrix();map.setPolyToPoly(source,0,new float[]{0,0,128,0,0,256},0,3);
         Bitmap strip=Bitmap.createBitmap(128,256,Bitmap.Config.ARGB_8888);
-        new Canvas(strip).drawBitmap(hands,map,paint);
+        Canvas stripCanvas=new Canvas(strip);
+        stripCanvas.drawBitmap(hands,map,paint);
+        // Only the root fades: retain the original felt detail and fingertip silhouette.
+        Paint feather=new Paint(Paint.ANTI_ALIAS_FLAG);
+        feather.setShader(new LinearGradient(0,205,0,256,Color.WHITE,Color.TRANSPARENT,Shader.TileMode.CLAMP));
+        feather.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        stripCanvas.drawRect(0,0,128,256,feather);
         return strip;
     }
     private void rearHand(Canvas c,boolean left){
@@ -53,6 +59,18 @@ public final class NotificationSignView extends View {
         c.clipPath(silhouette);paint.setShader(null);paint.setColor(Color.WHITE);
         Rect source=left?new Rect(310,380,760,770):new Rect(1014,380,1464,770);
         c.drawBitmap(hands,source,new RectF(-47,-78,47,78),paint);c.restore();
+    }
+    private void handBridge(Canvas c,boolean left){
+        // Original palm material wraps around the board edge, beneath the finger roots.
+        // The inward feather joins the depths while the outer side hides the arrow tip.
+        float centre=left?-291:326;
+        int layer=c.saveLayer(centre-48,-79,centre+48,79,null);
+        rearHand(c,left);
+        paint.setShader(new LinearGradient(left?-308:327,0,left?-283:351,0,
+                left?Color.WHITE:Color.TRANSPARENT,left?Color.TRANSPARENT:Color.WHITE,Shader.TileMode.CLAMP));
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+        c.drawRect(centre-48,-79,centre+48,79,paint);
+        paint.setXfermode(null);paint.setShader(null);c.restoreToCount(layer);
     }
     private void frontFingers(Canvas c,boolean left){
         float[] lengths={69,80,76,61};
@@ -96,6 +114,7 @@ public final class NotificationSignView extends View {
         text(c,NAMES[style],70,-22,25,COLOURS[style]);
         text(c,WORDS[style],70,27,style==3?24:31,0xff13202d);
         // Four individually sampled, foreshortened digits wrap across the front surface.
+        handBridge(c,true);handBridge(c,false);
         frontFingers(c,true);frontFingers(c,false);
         c.restore();
     }
