@@ -1,4 +1,4 @@
-# Notification sign show — lab-only v9 grip candidate
+# Notification sign show — lab-only v10 closed grip
 
 Ryan approved the roadside-costume sign-holder concept: lift an app sign with
 both five-digit hands, wobble it enthusiastically, glance toward it and blink.
@@ -15,8 +15,10 @@ front depth. The full source is unmodified. Each strip is foreshortened through
 a small Canvas mesh, four fingers per hand facing the viewer. Palm/thumb material
 is behind the sign. This is a restrained 2D grip, not newly generated artwork or
 a full 3D hand. All layers travel with the sign's transform to keep contact.
-Ryan rejected v8's flat open hands drawn on top of the board. That screenshot is
-the manual visual failure reproduction; v9 needs Ryan's appearance review.
+Ryan rejected v8's flat open hands drawn on top of the board. V9 established the
+two-depth grip; v10 closes the fingers at his request. Its tighter spacing and
+shorter reach keep four visible digits together; the right hand uses a single
+knuckle line rather than fanning out along the arrow. Ryan owns final review.
 The original v7 eye shader/master are unchanged and use separate state poses.
 
 SignMotion supplies a finite eight-second performance: anticipation/lift,

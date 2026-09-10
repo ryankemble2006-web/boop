@@ -1,5 +1,21 @@
 # Canonical eye library verification — 2026-09-10
 
+## v10 closed fingers
+
+Final built source 0da499aea8907a6a73976ab186f62454937f95b5; signed Actions
+34441436283 success. APK SHA-256
+304449f94066aa99e14a57611cfecc3913b86f554fb8226d9939fe8cdd7c24ca matches
+the downloaded receipt. Same permanent signer and immutable source art.
+30,636 eye-state and 53,508 sign-state tests pass; build/integrity checks pass.
+Scoped static review found no functional issue in the initial closing change.
+Manual inspection then tightened the right knuckle line; final build cold
+launched on dedicated emulator5558, fixed pose captured, show recorded, and
+renderer-ready logged without a renderer/fatal error. Local evidence is under
+animation-work/sign-spinner/evidence-v10 with record-grip-v10.ps1. The earlier
+db9f589 v10 build is superseded by this exact source, not a second final APK.
+No physical-device test or production integration. Ryan requested this final
+refinement; appearance acceptance remains his. V7 eye acceptance is unchanged.
+
 ## v9 original-art grip candidate
 
 Built source d220933572ed6ea91db4841ae03f512c138860ec; Actions 34440698857

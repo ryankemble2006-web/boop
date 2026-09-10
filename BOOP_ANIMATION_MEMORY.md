@@ -1,6 +1,12 @@
 # Animation memory — 2026-09-10
 
-Latest continuation: v9 grip candidate, source
+Latest continuation: v10 closes the finger spacing and shortens their projected
+reach. Keep one right-hand knuckle line instead of following the arrow slope
+per finger, which spread the grip. This is Ryan's final requested refinement to
+v9; do not infer physical acceptance from "and we are done" before his preview.
+V7 eyes/artwork/choreography remain unchanged. See VERIFICATION.md for receipts.
+
+Previous continuation: v9 grip candidate, source
 d220933572ed6ea91db4841ae03f512c138860ec, Actions 34440698857 success.
 Ryan explicitly wants thumbs BEHIND the sign and FOUR fingers facing us,
 bent from the supplied open hands. Do not return to v8's full open-hand overlay.

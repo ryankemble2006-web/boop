@@ -1,6 +1,14 @@
 # BOOP animation workshop handoff — 2026-09-10
 
-## Active: notification grip candidate, lab v9
+## Active: closed notification grip, lab v10
+
+Ryan requested one final refinement after v9: close the fingers. V10 tightens
+spacing and foreshortening, with a shared right knuckle line so the arrow slope
+does not fan that hand apart. Thumbs remain behind, four fingers face us. Exact
+artwork, eyes and show timing are unchanged. See VERIFICATION.md for final build
+and runtime receipts; no production integration or physical-device acceptance.
+
+## Previous: notification grip candidate, lab v9
 
 Built source d220933572ed6ea91db4841ae03f512c138860ec; signed Actions
 34440698857 succeeded. Ryan rejected v8's open hands pasted over the sign and

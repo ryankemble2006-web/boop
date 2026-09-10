@@ -1,6 +1,13 @@
 # BOOP Status
 
-## Latest: notification grip candidate — lab v9
+## Latest: closed notification grip — lab v10
+
+Final requested refinement: close the four front fingers into a compact grip.
+Same source art, rear thumbs, eyes and choreography. V9 was close; Ryan asked
+for tighter fingers before finishing. Final v10 review remains separate from
+physical acceptance. Build/runtime receipt: canonical-eyes/VERIFICATION.md.
+
+## Previous: notification grip candidate — lab v9
 
 Built source d220933572ed6ea91db4841ae03f512c138860ec; signed Actions
 34440698857 succeeded. Original-art finger meshes now cross the board front;
