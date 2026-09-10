@@ -1,3 +1,28 @@
+## v100 emulator Home and Back follow-up
+
+Exact signed v100 installed on the owned Pixel 7 Pro API36 emulator. Agent used
+Voice > Device and room settings > Shield / TV Home, then Launcher Settings >
+Home Assistant controls. Unpaired HA showed its pairing screen. Hardware Back
+returned to Launcher Settings; another Back returned to Home, with no fullscreen
+headphones puppet. Screens manually inspected; no GitHub visual tests.
+This verifies the unpaired navigation path only, not authenticated HA control or
+the physical Shield Home button. No permissions or HA credentials added. Wall
+profile restored and checked, app stopped, temporary device files removed.
+
+Ryan said "you did awesome.. next" after the Cast verification. Retain that positive
+feedback without expanding it into blanket acceptance. Next physical Home-routing
+change needs explicit approval: the real Home button still opens standalone v23.
+Unified currently does not declare the imported HomeOverride service; do not simply
+enable a nonexistent component or enable competing Home overrides. Inspect the
+actual Home routing and prepare a reversible migration before changing it.
+Read-only Shield check: Android resolves HOME to stock com.google.android.tvlauncher/.MainActivity;
+standalone v23 HomeOverride and Button Mapper are enabled. UnifiedEntryActivity is
+an available HOME candidate. Proposed approved test: select Unified as HOME and
+disable only the standalone HomeOverride, retaining Cast visibility and Button Mapper.
+If firmware refuses the preference, stop and restore; do not disable stock launcher.
+Rollback restores stock HOME and the exact prior accessibility list. No routing
+change has been made. Physical remote Home and authenticated HA Back remain pending.
+
 Signed v100 source `75516b12ccef4de9faadec139778326897cf0518`.
 Run `34458283236` SUCCESS; artifact `10144534569`.
 197 Unified + 58 Shield functional tests passed; no GitHub visual tests.
@@ -17,7 +42,7 @@ existing Cast session via its launch PendingIntent restored one corner. Cast
 reported playing before and after. No pause, force-stop, restart, or track-selection
 commands were sent during that transition. Temporary device probe files removed.
 Controls returned to Ryan. This is agent-observed hardware verification, not Ryan's
-physical acceptance of v100. Exact v100 emulator checks remain unperformed.
+physical acceptance of v100. Focused v100 emulator navigation was subsequently checked below.
 Standalone v23 remains the Home-button destination. The earlier intermittent native
 Deezer missing-media-session issue is not resolved by this visibility change.
 Protected physical checkpoints remain unchanged; v91 remains accepted for voices.
@@ -49,7 +74,7 @@ Review found no serious blocker; positive window evidence additionally requires
 the observed CastWebContentsActivity class, not receiver dialogs. Shared tests
 passed after this tightening. Signed nonvisual build complete. Approved v100 is now
 installed; physical Cast/native transitions were manually inspected as recorded above.
-Exact v100 emulator checks and Ryan's physical acceptance remain pending. Protected
+Broader v100 emulator checks and Ryan's physical acceptance remain pending. Protected
 checkpoints unchanged.
 
 ## v99 installed Shield handoff check, 2026-09-10
