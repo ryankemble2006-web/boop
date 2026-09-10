@@ -22,7 +22,7 @@ public final class BoopState {
         }
     }
     private final Set<Listener> listeners = new LinkedHashSet<>();
-    private boolean listening, speaking, playing, home;
+    private boolean listening, speaking, playing, home, cornerAllowed;
     private String roomId = "", roomName = "", mediaId = "";
     private long mediaStartedMs, revision;
     private Snapshot current = new Snapshot(this, Owner.NONE);
@@ -51,8 +51,12 @@ public final class BoopState {
         if (home == visible) return;
         home = visible; publish();
     }
+    public synchronized void cornerAllowed(boolean allowed) {
+        if(cornerAllowed == allowed) return;
+        cornerAllowed = allowed; publish();
+    }
     private void publish() {
-        Owner next = !playing ? Owner.NONE : home ? Owner.HOME_NOW_PLAYING : Owner.MEDIA_CORNER;
+        Owner next = !playing ? Owner.NONE : home ? Owner.HOME_NOW_PLAYING : cornerAllowed ? Owner.MEDIA_CORNER : Owner.NONE;
         if (current.owner != Owner.NONE && current.owner != next) {
             Snapshot released = new Snapshot(this, Owner.NONE);
             deliver(released);

@@ -496,7 +496,8 @@ public final class ShieldNowPlayingManager {
                 duration,
                 speed,
                 updateTime,
-                resolvedArtwork);
+                resolvedArtwork,
+                metadataText(metadata,"com.google.android.apps.mediashell.CAST_APP_NAME"));
     }
 
     private static String metadataText(MediaMetadata metadata, String key) {

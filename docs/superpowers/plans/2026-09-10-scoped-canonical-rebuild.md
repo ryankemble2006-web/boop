@@ -17,7 +17,7 @@ Base: boop-unified 99474d141e7affad17cdbe854e94dd3986076980; v91 APK source 1165
 
 - [x] Shared state: immutable snapshots, immediate subscriptions, reentrant-safe publication, speech/room/media updates, one owner at a time; behavioral JVM tests. Wire lifecycle and speech adapters.
 - [x] Room and discovery: current room store, user configuration, generic exposed HA domain/name/room resolver for lights/fans/switches; ambiguity fails closed; preserve Assist for unsupported requests. Behavioral tests for newly appearing entity, ambiguous names, offline/hidden devices and room isolation.
-- [x] Now Playing: import the exact existing Shield Home sources, retain original assets unchanged as temporary renderers; share media state between Now Playing and corner owner. Home releases corner before acquiring its own view; leaving Home reclaims corner only during playback; stop removes it. No new notification access or overlay permissions granted automatically.
+- [x] Now Playing: import the exact existing Shield Home sources, retain original assets unchanged as temporary renderers; share media state between Now Playing and corner owner. Home releases corner before acquiring its own view; leaving Home may reclaim corner only for confirmed Deezer casting with the Cast receiver visible; native Deezer always hides it; stop removes it. No new notification access or overlay permissions granted automatically.
 - [ ] Media commands: reuse Android media sessions and HA direct controls; explicit Deezer search/play intent to the installed provider, never Google fallback or false success. Preserve pause/resume. Test parsing and deterministic routing/failure behavior.
 - [x] Back and profiles: first run/manual profile UI, TV HOME route to Shield launcher, HA controls back to preceding Home without starting headphones fullscreen. Test route matrix and escape policy.
 - [x] Integration: enable existing non-visual signed GitHub workflow for rebuild branch, version candidate, run focused tests, inspect logs, reuse signed artifact for local phone/TV emulator inspection. Keep exact user device acceptance separate.
@@ -76,3 +76,11 @@ explicit by-performer requests and song-default ties. Two observed RED-to-GREEN
 regressions, 27 focused tests and six read-only catalogue requests passed.
 Signed v99 run `34454191785` succeeded (197 Unified + 58 Shield tests).
 Downloaded APK identity/hash/signer verified; exact device acceptance pending.
+
+## v100 corrected corner scope
+
+Ryan explicitly rejected corner BOOP over native Deezer because layouts mutate.
+Use receiver foreground plus Deezer Cast metadata; preserve Home Now Playing.
+Missing visibility access hides the corner. Optional window-event-only listener
+requires separate permission approval. No content inspection, new mic or playback
+changes. See current handoff for source, tests, build and pending device checks.

@@ -18,6 +18,7 @@ for path in Path('unified/shared').glob('*.java'): shutil.copy2(path,shared/path
 home=ROOT/'shield-home-lib'
 shutil.copytree('unified/shield-home/src/main/java',home/'src/main/java',dirs_exist_ok=True)
 shutil.copytree('shield-clean-launcher/app/src/main/res',home/'src/main/res',dirs_exist_ok=True)
+shutil.copytree('unified/shield-home/src/main/res',home/'src/main/res',dirs_exist_ok=True)
 shutil.copy2('unified/shield-home-lib.gradle',home/'build.gradle')
 shutil.copy2('unified/shield-home-manifest.xml',home/'src/main/AndroidManifest.xml')
 with (ROOT/'settings.gradle').open('a') as file: file.write("\ninclude ':shield-home-lib'\n")

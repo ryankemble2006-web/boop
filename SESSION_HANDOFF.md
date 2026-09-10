@@ -1,3 +1,32 @@
+# v100 corrected Cast-only corner policy
+
+Ryan corrected the intended rule: show the corner during Deezer Chromecast music,
+NEVER over Deezer's native UI. Its changing screen layout makes collisions unavoidable.
+The previous v99 native-Deezer corner demonstrations were the wrong product rule,
+not physical acceptance. Home retains its own Now Playing presentation.
+
+Observed live cast evidence: media-session package com.google.android.apps.mediashell,
+CAST_APP_NAME metadata Deezer, visible CastWebContentsActivity in that receiver.
+Native Deezer session stayed paused. Metadata type was not a usable music signal;
+source identity is required instead. No title-based or artwork-position guesses.
+
+v100 gates corner ownership on the visible Cast receiver AND selected receiver
+session with Deezer source metadata. Unknown foreground, native Deezer, other apps,
+other Cast sources, pause/stop, and unavailable visibility access hide the corner.
+Home ownership remains independent. New BOOP Cast corner accessibility service
+observes only window-state package events, with no content retrieval, gestures,
+Home replacement, playback commands or microphone. Service reconnect starts unknown;
+a subsequent receiver window event is needed. Disable/unbind/destroy clears visibility.
+Settings offers the optional accessibility setup. No automatic grants or installs.
+
+Version 100 / 1.2.100-cast-only-corner. Observed failing regression reproduced
+native playback incorrectly owning the corner, then shared-state/policy tests passed.
+Review found no serious blocker; positive window evidence additionally requires
+the observed CastWebContentsActivity class, not receiver dialogs. Shared tests
+passed after this tightening. Signed nonvisual build pending. Exact APK manual
+emulator and physical Cast/native transition checks remain pending. v99 stays the
+installed candidate until separately approved; protected checkpoints unchanged.
+
 ## v99 installed Shield handoff check, 2026-09-10
 
 Ryan explicitly approved installing signed v99 on the Shield, then separately

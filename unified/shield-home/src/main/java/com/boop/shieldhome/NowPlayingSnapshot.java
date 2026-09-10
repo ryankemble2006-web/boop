@@ -9,6 +9,7 @@ import java.util.Objects;
 public final class NowPlayingSnapshot {
     private final long sessionId;
     private final String packageName;
+    private final String castAppName;
     private final String title;
     private final String subtitle;
     private final int playbackState;
@@ -31,6 +32,13 @@ public final class NowPlayingSnapshot {
             float playbackSpeed,
             long updateTimeMs,
             Bitmap artwork) {
+        this(sessionId,packageName,title,subtitle,playbackState,actions,positionMs,
+                durationMs,playbackSpeed,updateTimeMs,artwork,"");
+    }
+    public NowPlayingSnapshot(long sessionId,String packageName,String title,String subtitle,
+            int playbackState,long actions,long positionMs,long durationMs,float playbackSpeed,
+            long updateTimeMs,Bitmap artwork,String castAppName) {
+        this.castAppName = clean(castAppName);
         this.sessionId = sessionId;
         this.packageName = clean(packageName);
         this.title = clean(title);
@@ -46,6 +54,7 @@ public final class NowPlayingSnapshot {
 
     public long sessionId() { return sessionId; }
     public String packageName() { return packageName; }
+    public String castAppName() { return castAppName; }
     public String title() { return title; }
     public String subtitle() { return subtitle; }
     public int playbackState() { return playbackState; }
@@ -99,6 +108,7 @@ public final class NowPlayingSnapshot {
                 && durationMs == that.durationMs
                 && Float.compare(playbackSpeed, that.playbackSpeed) == 0
                 && updateTimeMs == that.updateTimeMs
+                && castAppName.equals(that.castAppName)
                 && packageName.equals(that.packageName)
                 && title.equals(that.title)
                 && subtitle.equals(that.subtitle)
@@ -117,7 +127,7 @@ public final class NowPlayingSnapshot {
                 durationMs,
                 playbackSpeed,
                 updateTimeMs,
-                artwork);
+                artwork,castAppName);
     }
 
     private static String clean(String value) {

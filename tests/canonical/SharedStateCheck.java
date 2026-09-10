@@ -8,7 +8,18 @@ import java.util.List;
 public final class SharedStateCheck {
     static void check(boolean value, String message) { if (!value) throw new AssertionError(message); }
     public static void main(String[] args) {
+        BoopState unknown = new BoopState();
+        unknown.media("native-deezer",true,1);
+        check(unknown.snapshot().owner == BoopState.Owner.NONE,"unknown/native playback must not create a corner");
+        check(com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","com.google.android.apps.mediashell","Deezer"),"Deezer Cast allowed");
+        check(!com.boop.shared.CastCornerPolicy.allowed("deezer.android.app","com.google.android.apps.mediashell","Deezer"),"native UI always hides Cast corner");
+        check(!com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","deezer.android.app","Deezer"),"native playback is not Cast");
+        check(!com.boop.shared.CastCornerPolicy.allowed("com.google.android.apps.mediashell","com.google.android.apps.mediashell","YouTube"),"other Cast apps excluded");
+        check(!com.boop.shared.CastCornerPolicy.allowed(null,"com.google.android.apps.mediashell","Deezer"),"unknown foreground hides");
+        check(com.boop.shared.CastCornerPolicy.foreground("com.google.android.apps.mediashell","android.app.Dialog").isEmpty(),"receiver dialogs cannot prove Cast screen");
+        check(com.boop.shared.CastCornerPolicy.foreground("com.google.android.apps.mediashell","org.chromium.chromecast.shell.CastWebContentsActivity").equals("com.google.android.apps.mediashell"),"observed receiver activity confirms foreground");
         BoopState state = new BoopState();
+        state.cornerAllowed(true);
         check(state.snapshot().owner == BoopState.Owner.NONE, "idle owns no media renderer");
         List<BoopState.Owner> owners = new ArrayList<>();
         Runnable unsubscribe = state.subscribe(s -> owners.add(s.owner));
@@ -27,7 +38,14 @@ public final class SharedStateCheck {
         check(state.snapshot().owner == BoopState.Owner.NONE, "stop releases owner");
         int count = owners.size(); unsubscribe.run(); state.homeVisible(true);
         check(owners.size() == count, "unsubscribe");
-        BoopState nested = new BoopState();
+        BoopState visibility = new BoopState();
+        visibility.media("cast",true,30); visibility.cornerAllowed(true);
+        check(visibility.snapshot().owner == BoopState.Owner.MEDIA_CORNER,"confirmed Cast acquires");
+        visibility.cornerAllowed(false);
+        check(visibility.snapshot().owner == BoopState.Owner.NONE,"native foreground immediately releases");
+        visibility.homeVisible(true);
+        check(visibility.snapshot().owner == BoopState.Owner.HOME_NOW_PLAYING,"Home remains independent of Cast gate");
+        BoopState nested = new BoopState(); nested.cornerAllowed(true);
         nested.subscribe(s -> { if(s.owner == BoopState.Owner.MEDIA_CORNER) nested.media("",false,0); });
         List<BoopState.Owner> nestedSeen = new ArrayList<>();
         nested.subscribe(s -> nestedSeen.add(s.owner)); nested.media("b",true,12);

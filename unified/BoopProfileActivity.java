@@ -33,6 +33,10 @@ public final class BoopProfileActivity extends Activity {
         add(column,"Home Assistant controls", () -> startActivity(new Intent().setClassName(getPackageName(),"com.boop.shieldoverlay.BoopHomeActivity")));
         add(column,"Voice settings", () -> { startActivity(new Intent(this,MainActivity.class).putExtra("boop_open_voice_settings",true)); });
         if (BoopDeviceProfile.resolve(this) == BoopDeviceProfile.Mode.SHIELD) {
+            add(column,"Cast corner visibility", () -> {
+                try { startActivity(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
+                catch(RuntimeException unavailable) { new AlertDialog.Builder(this).setMessage("Open Android Accessibility settings and enable BOOP Cast corner.").setPositiveButton("OK",null).show(); }
+            });
             mediaAccess = add(column,"Allow BOOP over media apps", () -> {
                 try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                         android.net.Uri.parse("package:"+getPackageName()))); }
