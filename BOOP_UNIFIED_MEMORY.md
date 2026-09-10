@@ -1,3 +1,28 @@
+## v106 lifecycle repair candidate; v105 remote test found a BOOP crash
+
+Ryan approved microphone permission in Android's prompt, saw BOOP and heard the
+microphone beep, then saw the assistant disappear. Live Katniss logs show BOOP's
+recognition request opened the microphone, detected speech and returned a result.
+This does not establish accurate transcription or successful Shield house control.
+At 14:21:45 on 2026-09-10, BOOP crashed with WindowManager.BadTokenException:
+MainActivity.showConnectPrompt tried to show an AlertDialog on a finished activity
+from a queued Home Assistant discovery callback. This was a BOOP process crash.
+The preceding reported amp/display restarts correlated with repeated HDMI plug
+changes; system_server retained its PID and no new system crash was recorded.
+
+v106 candidate adds finishing/destroyed guards at the actual dialog entry point.
+The nonvisual Java harness executes that source method with a window-lifetime fake:
+RED reproduced a closed-window assertion before the fix; GREEN passed active,
+finishing, destroyed, duplicate and already-connected cases afterward. CI runs it.
+Version 106 / 1.2.106-assistant-lifecycle. Build/signing/install/device retest pending.
+No further physical install, role change, permission grant or UI test performed.
+
+Scope limit: the crash is repaired in source, not physically accepted. The one-shot
+ends before discovery completes, and Shield's existing HA connection versus Wall's
+voice connection still needs investigation. Do not treat this narrow guard as proof
+of complete remote speech/control integration. Preserve v105 receipts below and
+all earlier physical close-player/room/voice checkpoints. Eyes remain separate.
+
 ## v105 installed: Shield assistant role assigned successfully
 
 Ryan approved exact v105 installation and assignment. APK hash verified, install

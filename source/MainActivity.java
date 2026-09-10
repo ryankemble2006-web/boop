@@ -974,7 +974,9 @@ public final class MainActivity extends Activity implements RecognitionListener,
     }
 
     private void showConnectPrompt(String displayName, String baseUrl) {
-        if (connectPromptShowing || tokenStore.hasConnection()) {
+        // NSD resolution may already be queued when the one-shot activity finishes.
+        // Stopping discovery does not retract that callback from the main queue.
+        if (isFinishing() || isDestroyed() || connectPromptShowing || tokenStore.hasConnection()) {
             return;
         }
         connectPromptShowing = true;
