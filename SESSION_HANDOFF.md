@@ -1,3 +1,30 @@
+## v115 signed and installed; user visual judgement pending
+
+Source e743591ae987aa78acc381f3f15242a7ec1b9016, version115 / 1.2.115-home-polish.
+Run34516201140 completed/success; artifact10167926878.
+ZIP SHA256 4f9bd54c28d7c59d945f1e608cbf082b1d63de50ac711e38a82b403dc63dd171.
+APK SHA256 c81243239e9b01d30a88c92190280a78f86ec4f5ceb5b857faf7ff0ca7fc15e4.
+Downloaded source, package com.boop.alpha1, version and permanent signer independently
+verified. Signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+217 Unified +68 Shield functional tests passed, plus local core checks and Android
+resource/Java compilation. No GitHub visual tests. Read-only source review found
+no important callback/focusability/media/mascot-placement regression.
+
+Ryan explicitly made the Shield available for this test. Exact installed v113 APK was
+privately pulled first and matched4fb4285b3f3f06ba0669f8cb6580a82dbe778aca2998fb0104dc732f5621b300.
+v115 update succeeded; Android reports version115. No permission/role/settings grants.
+Agent inspected the actual Shield Home: all four icons and captions visible, blue focus
+outline visible, dark-blue card/actions present, existing mascot bay retained. Remote
+Up/Left focused Apps; Right/OK opened existing Launcher Settings; Back returned Home.
+No playback-control action was sent. User now has control on Home to judge the result.
+These are scoped agent observations, not Ryan's acceptance. Latest user-accepted baseline
+remains scoped v111. Both emulators, standalone v24 and EastEnders task left untouched.
+
+Recipe physical/provider testing remains scheduled by Ryan for tomorrow11September;
+v114 recipe source is retained in v115 but has not been Pad-tested. Animation transplant,
+natural voice tuning and Startup Manager implementation remain deferred/unimplemented.
+Private screenshots/diagnostics/rollback APK are local only and not published.
+
 ## v115 Home polish candidate, 2026-09-10
 
 Ryan moved recipe physical testing to tomorrow (11 September), then requested the
@@ -12,11 +39,11 @@ BOOP's reserved mascot bay, artwork, animation and placement code remain unchang
 Standalone Shield Home v24 and the separately owned EastEnders shortcut are untouched.
 
 Local Android resource/Java compilation and existing recipe/shared-state/media/album
-functional checks pass. Signed build and visual/device acceptance are pending.
+functional checks pass. Signed build and agent device checks passed as recorded above; user acceptance remains pending.
 No GitHub visual tests added or run. The TV emulator was showing the other task's
 EastEnders shortcut and was left untouched. Ryan explicitly made the physical Shield
 available to test this candidate; verify the signed artifact before installation.
-Installed baseline remains v113 until that update, with scoped v111 user acceptance.
+Installed version is now v115, with scoped v111 user acceptance still preserved.
 
 ## v114 signed candidate; v113 album browsing checked locally
 
