@@ -1,3 +1,22 @@
+## Approved physical Home preference test: firmware override
+
+Ryan explicitly approved switching Shield Home to unified BOOP while retaining v23.
+Android's set-home-activity for com.boop.alpha1/.UnifiedEntryActivity returned
+Success, but an immediate resolve-activity still selected stock TV launcher with
+priority 2. Therefore the preference did not establish unified Home ownership.
+Followed the prepared stop/restore condition: restored stock Home preference and
+verified resolution. Existing accessibility list was unchanged throughout: Button
+Mapper, standalone v23 HomeOverride, and unified Cast visibility. No stock launcher
+was disabled, no competing override enabled, and no playback command sent.
+
+Physical unified Home-button and authenticated HA Back remain unverified. Existing
+v100 Cast evidence and protected acceptance are unchanged. Next engineering step is
+to expose the already imported HomeOverride capability in unified, review its
+profile/lifecycle gates and setup, then build/test a candidate before migrating the
+single active override. Do not retry the ineffective preference as if it succeeded.
+This approval covered the attempted Home switch; it is not blanket install/access
+approval for a new build.
+
 ## v100 emulator Home and Back follow-up
 
 Exact signed v100 installed on the owned Pixel 7 Pro API36 emulator. Agent used
@@ -11,7 +30,7 @@ profile restored and checked, app stopped, temporary device files removed.
 
 Ryan said "you did awesome.. next" after the Cast verification. Retain that positive
 feedback without expanding it into blanket acceptance. Next physical Home-routing
-change needs explicit approval: the real Home button still opens standalone v23.
+change was subsequently approved and attempted; see the firmware result above.
 Unified currently does not declare the imported HomeOverride service; do not simply
 enable a nonexistent component or enable competing Home overrides. Inspect the
 actual Home routing and prepare a reversible migration before changing it.
