@@ -99,7 +99,7 @@ public final class ShieldHomeView extends LinearLayout {
         setNowPlaying(snapshot);
 
         addView(sectionTitle("Favourite apps"), wrap());
-        addSpacer(dp(10));
+        addSpacer(dp(16));
 
         if (safeFavourites.isEmpty()) {
             TextView add = actionButton("Add favourites");
@@ -112,9 +112,9 @@ public final class ShieldHomeView extends LinearLayout {
 
         for (HomeRow row : safeOptionalRows) {
             if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
-            addSpacer(dp(22));
+            addSpacer(dp(16));
             addView(sectionTitle(row.title()), wrap());
-            addSpacer(dp(8));
+            addSpacer(dp(16));
             addView(contentRow(row.cards(), callbacks), new LayoutParams(
                     LayoutParams.MATCH_PARENT, dp(150)));
         }
@@ -217,31 +217,31 @@ public final class ShieldHomeView extends LinearLayout {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setTranslationY(dp(8));
+        row.setClipChildren(false);
+        row.setClipToPadding(false);
 
-        TextView apps = actionButton("Apps");
+        TextView apps = navButton("Apps", "Apps", R.drawable.boop_home_apps);
         apps.setOnClickListener(v -> callbacks.onOpenApps());
-        row.addView(apps, new LayoutParams(dp(150), dp(60)));
+        row.addView(apps, new LayoutParams(dp(144), dp(60)));
 
-        TextView homeRows = actionButton(ShieldHomeSettingsView.launcherSettingsLabel());
-        homeRows.setSingleLine(true);
+        TextView homeRows = navButton("Home settings", ShieldHomeSettingsView.launcherSettingsLabel(),
+                R.drawable.boop_home_sliders);
         homeRows.setOnClickListener(v -> callbacks.onOpenHomeRows());
-        LayoutParams homeRowsParams = new LayoutParams(dp(220), dp(60));
-        homeRowsParams.leftMargin = dp(12);
+        LayoutParams homeRowsParams = new LayoutParams(dp(144), dp(60));
+        homeRowsParams.leftMargin = dp(16);
         row.addView(homeRows, homeRowsParams);
-        TextView closeMedia = actionButton("Close media apps");
+        TextView closeMedia = navButton("Close media", "Close media apps", R.drawable.boop_home_close_media);
         closeMedia.setOnClickListener(v -> callbacks.onCloseMediaApps());
-        LayoutParams closeMediaParams = new LayoutParams(dp(220), dp(60));
-        closeMediaParams.leftMargin = dp(12);
+        LayoutParams closeMediaParams = new LayoutParams(dp(144), dp(60));
+        closeMediaParams.leftMargin = dp(16);
         row.addView(closeMedia, closeMediaParams);
 
         View spacer = new View(getContext());
         row.addView(spacer, new LayoutParams(0, 1, 1f));
 
-        TextView settings = actionButton("Settings");
-        settings.setContentDescription("Shield settings");
+        TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
         settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
-        row.addView(settings, new LayoutParams(dp(170), dp(60)));
+        row.addView(settings, new LayoutParams(dp(144), dp(60)));
         return row;
     }
 
@@ -275,7 +275,7 @@ public final class ShieldHomeView extends LinearLayout {
                 return true;
             });
             LayoutParams params = new LayoutParams(dp(240), dp(185));
-            params.rightMargin = dp(6);
+            params.rightMargin = dp(16);
             favouriteRow.addView(card, params);
 
             if (grabbedComponent != null && grabbedComponent.equals(entry.component())) {
@@ -418,8 +418,23 @@ public final class ShieldHomeView extends LinearLayout {
         return view;
     }
 
+    private TextView navButton(String caption, String description, int iconResource) {
+        TextView view = actionButton(caption);
+        view.setContentDescription(description);
+        view.setTooltipText(description);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        view.setSingleLine(true);
+        view.setIncludeFontPadding(false);
+        view.setPadding(dp(8), dp(6), dp(8), dp(6));
+        android.graphics.drawable.Drawable icon = getContext().getDrawable(iconResource).mutate();
+        icon.setBounds(0, 0, dp(26), dp(26));
+        view.setCompoundDrawables(null, icon, null, null);
+        view.setCompoundDrawablePadding(dp(3));
+        return view;
+    }
+
     private GradientDrawable actionBackground(boolean focused) {
-        return FocusChrome.filled(getContext(), Color.rgb(42, 42, 42), 10, focused);
+        return FocusChrome.filled(getContext(), Color.rgb(13, 27, 43), 10, focused);
     }
 
     private LayoutParams wrap() {

@@ -12,23 +12,8 @@ final class FocusChrome {
     private FocusChrome() { }
 
     static int accentColor(Context context) {
-        TypedValue value = new TypedValue();
-        if (context != null
-                && context.getTheme().resolveAttribute(
-                        android.R.attr.colorControlActivated, value, true)) {
-            if (value.resourceId != 0) {
-                try {
-                    return context.getResources().getColor(value.resourceId, context.getTheme());
-                } catch (RuntimeException ignored) {
-                    // Fall through to the resolved literal/fallback colour.
-                }
-            }
-            if (value.type >= TypedValue.TYPE_FIRST_COLOR_INT
-                    && value.type <= TypedValue.TYPE_LAST_COLOR_INT) {
-                return value.data;
-            }
-        }
-        return Color.rgb(72, 210, 220);
+        // Home uses BOOP blue consistently, independent of the firmware's default accent.
+        return Color.rgb(77, 184, 255);
     }
 
     static GradientDrawable filled(

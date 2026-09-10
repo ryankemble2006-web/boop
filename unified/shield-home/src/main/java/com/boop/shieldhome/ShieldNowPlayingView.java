@@ -300,14 +300,14 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
     private GradientDrawable cardBackground() {
         GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.rgb(20, 20, 20));
+        background.setColor(Color.rgb(8, 16, 26));
         background.setCornerRadius(dp(14));
-        background.setStroke(dp(1), Color.rgb(56, 56, 56));
+        background.setStroke(dp(1), Color.rgb(32, 57, 80));
         return background;
     }
 
     private GradientDrawable buttonBackground(boolean focused) {
-        return FocusChrome.filled(getContext(), Color.rgb(44, 44, 44), 9, focused);
+        return FocusChrome.filled(getContext(), Color.rgb(13, 27, 43), 9, focused);
     }
 
     private String stateText(int state) {

@@ -1,3 +1,23 @@
+## v115 Home polish candidate, 2026-09-10
+
+Ryan moved recipe physical testing to tomorrow (11 September), then requested the
+next accepted item. v114 remains signed but not Pad-tested/accepted. v115 retains it.
+
+This candidate makes the canonical Home top controls equal-sized icon buttons with
+short readable captions and full accessibility descriptions. Apps, Home settings,
+Close media and Shield settings keep their existing callbacks. Section/favourite
+spacing uses16dp; the old top-row vertical offset is removed. Home card/button fills
+are dark blue; shared Home focus/progress uses BOOP blue instead of firmware teal.
+BOOP's reserved mascot bay, artwork, animation and placement code remain unchanged.
+Standalone Shield Home v24 and the separately owned EastEnders shortcut are untouched.
+
+Local Android resource/Java compilation and existing recipe/shared-state/media/album
+functional checks pass. Signed build and visual/device acceptance are pending.
+No GitHub visual tests added or run. The TV emulator was showing the other task's
+EastEnders shortcut and was left untouched. Ryan explicitly made the physical Shield
+available to test this candidate; verify the signed artifact before installation.
+Installed baseline remains v113 until that update, with scoped v111 user acceptance.
+
 ## v114 signed candidate; v113 album browsing checked locally
 
 Recipe source `a20dbf333fd0bdf13d6146d1fd20729cdebbee2f`, version114 / `1.2.114-tablet-recipes`.
