@@ -21,7 +21,7 @@ for path in ADDON.rglob('*.xml'):
 assert ET.parse(ADDON/'addon.xml').getroot().attrib['id']=='script.boop.blockparty'
 assert hashlib.sha256((ADDON/'resources/media/boopApprovedEyes.png').read_bytes()).hexdigest()=='ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22'
 
-archive=OUT/'script.boop.blockparty-1.0.0.zip'
+archive=OUT/'script.boop.blockparty-1.0.1.zip'
 with ZipFile(archive,'w',ZIP_DEFLATED) as z:
     for path in sorted(ADDON.rglob('*')):
         if include(path):

@@ -23,3 +23,7 @@
 - No GitHub CI workflow was added or triggered for appearance testing. Checks were local.
 
 The first hidden-window screenshot was black; visible-window inspection was used instead. Initial drawing was moved out of Kodi's window-initialisation callback. Title, pause and game-over cards use pre-rendered text and native state-driven visibility after dynamic labels failed to display reliably. The revised pause card was checked in a fresh Kodi run. Runtime smoke screenshots are not screenshot-comparison or automated visual acceptance tests.
+
+## 1.0.1 Down hold update
+
+Down tap nudges; a repeat-confirmed hold of at least 450 ms hard-drops one piece and latches until release. Natural locking also protects the next piece. Focused controller tests cover tap, hold, release/rearm, pause and natural-lock safety. Full suite: 27 tests passed. The previous 1.0.0 Kodi runtime checks remain historical; the updated hold timing still needs Ryan's physical remote test.

@@ -8,7 +8,7 @@ Classic 10 x 20 gameplay with pre-rendered 3D cube faces (2.5D). This is not a v
 
 ## Install in Kodi
 
-1. Copy `script.boop.blockparty-1.0.0.zip` somewhere Kodi can browse (Downloads, USB or your usual file source).
+1. Copy `script.boop.blockparty-1.0.1.zip` somewhere Kodi can browse (Downloads, USB or your usual file source).
 2. Open **Add-ons > Install from zip file** and choose it. If Kodi asks, enable **Unknown sources** for this local add-on installation.
 3. Open **Add-ons > Program add-ons > BOOP - Block Party**.
 4. Press **Enter / OK** to begin.
@@ -29,7 +29,7 @@ You can also open its context menu and **Add to favourites**.
 | --- | --- |
 | Enter / remote OK | Rotate clockwise; start / replay / resume |
 | Left / Right | Move |
-| Down | Fall faster; one row per action/repeat |
+| Down | Tap to nudge down; hold briefly to drop instantly |
 | Up | Drop to the landing guide immediately |
 | Back / Escape | Pause; press Back again to leave |
 | Play/Pause | Pause / resume |
@@ -55,3 +55,5 @@ python -m unittest discover -s tests -v
 The approved eye image is shipped byte-for-byte unchanged. Its SHA-256 is `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`. Runtime scaling/blinking does not edit it. BOOP artwork remains under its owner's rights; code is MIT-licensed. This is an independent falling-block game, not an official Tetris product.
 
 See `VERIFICATION.md` for the exact checks performed. Target-device/remote and appearance acceptance belong to Ryan.
+
+Version 1.0.1: Down uses Kodi repeat events to recognise a roughly half-second hold. One hold drops one piece; release before dropping the next. Kodi Python provides no key-up event, so release is inferred from a 300 ms repeat gap (700 ms allowed before the first repeat). Remotes that do not send repeats can still use Up for instant drop.
