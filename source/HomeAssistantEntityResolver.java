@@ -22,6 +22,7 @@ final class HomeAssistantEntityResolver {
         int bestScore = 0;
         boolean tie = false;
         String wanted = normalize(command.target());
+        if (wanted.isEmpty()) return new Result(Kind.NONE, null);
         for (HomeAssistantEntity entity : entities) {
             if (!entity.exposed() || entity.hidden() || entity.disabled()
                     || "unavailable".equalsIgnoreCase(entity.state())
@@ -29,7 +30,8 @@ final class HomeAssistantEntityResolver {
             String domain = entity.entityId().contains(".") ? entity.entityId().substring(0, entity.entityId().indexOf('.')) : "";
             if (!("light".equals(domain) || "fan".equals(domain) || "switch".equals(domain))) continue;
             String name = normalize(entity.name());
-            int score = name.equals(wanted) ? 100 : (name.contains(wanted) || wanted.contains(name) ? 50 : 0);
+            if (name.isEmpty()) continue;
+            int score = name.equals(wanted) ? 100 : (containsPhrase(name, wanted) || containsPhrase(wanted, name) ? 50 : 0);
             if (wanted.equals(domain) || wanted.equals(domain + "s")) score = 25;
             if (score > bestScore) { best = entity; bestScore = score; tie = false; }
             else if (score > 0 && score == bestScore) tie = true;
@@ -39,6 +41,10 @@ final class HomeAssistantEntityResolver {
     }
 
     private static String normalize(String value) {
-        return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", " ").trim();
+        return value == null ? "" : value.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{M}\\p{N}]+", " ").trim();
+    }
+
+    private static boolean containsPhrase(String text, String phrase) {
+        return (" " + text + " ").contains(" " + phrase + " ");
     }
 }

@@ -1,3 +1,20 @@
+## v104 room/device follow-up: resolver repair, build pending
+
+Ryan reported v103 close player worked perfectly, instantly and almost invisibly,
+then asked to continue the approved room/device roster. Record that as user
+acceptance of the close action he exercised; the exact native/Cast route was not
+specified. Do not invent additional active Cast instrumentation from that feedback.
+
+Audit found generic device matching used raw substrings: lamp could select Desk
+Clamp. Empty names/requests also matched everything, and ASCII normalization
+collapsed distinct non-Latin names. An actual local Java probe reproduced all four
+failures. Whole-word phrase matching, empty guards, and Unicode letter/mark/number
+normalization now pass the probe; Office Desk Lamp still matches desk lamp.
+Four focused JUnit regressions added. No change to HA exposure, room isolation,
+ambiguity handling, local Assist fallback, media controls or device configuration.
+Version 104 / 1.2.104-device-name-matching. CI/signing pending. Broader physical
+room changes and cross-room command acceptance remain pending. Shield stays v103.
+
 ## v103 installed: native cleanup physically tested; Cast check pending
 
 Branch boop-canonical-rebuild. Build source b075370d56eb7fcc209e2ab078682ce05878a7c7.
