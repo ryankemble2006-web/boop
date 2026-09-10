@@ -1,3 +1,24 @@
+## Deezer-only exemption experiment: initial native Home survival
+
+Ryan approved exempting only Deezer from battery optimization and one restart.
+Added deezer.android.app to the user device-idle allowlist and verified membership.
+One force-stop/relaunch restored an empty native media session. Normal play key did
+not load a track; announced and started native Flow through the established
+MediaController playFromUri helper, then returned to Home. No BOOP code changed.
+
+Across approximately three minutes in background, Deezer retained its media session,
+reported state PLAYING and updated metadata. Its DeezerSdkMediaService was present
+and isForeground=true. Agent visually confirmed the Now Playing bar with current
+track/artwork, controls and one puppet after the prior roughly 150-second idle
+interval. Temporary helper and screenshots removed from device. Music left running.
+
+This is recovery plus initial survival evidence, NOT proof the exemption caused the
+survival: restart and native playback also restored a foreground service. The prior
+failure followed a Cast/native transition; that transition still needs reproduction
+with the exemption before declaring a durable fix. Exemption remains enabled for
+this approved experiment. Remove only this added exemption if ineffective. v101
+Home/reboot acceptance remains unchanged; missing-session reliability is still open.
+
 ## Missing-session cause isolated to Android stopping Deezer service
 
 Further read-only logs identify the concrete failure boundary: ActivityManager
