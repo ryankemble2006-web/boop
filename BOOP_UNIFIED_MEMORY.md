@@ -1,3 +1,29 @@
+## v101 signed artifact and emulator receipt
+
+Source be20d50ed3ee72ec7183215ade63e6253e929653, version 101 /
+1.2.101-unified-home-button. GitHub run 34461331633 SUCCESS; artifact 10145803647.
+197 Unified +58 Shield functional tests, zero failures/errors/skips. New Home
+registration and shared/Home policy checks passed. No GitHub visual tests.
+APK SHA256: 255832a013383b9e964f66fb398056f05765b748bc9f9acd7baab94353f1730d.
+Artifact ZIP SHA256: 4706fe391d7da228583d2dc29abc96b86f1b1fb364c2f7965d0c91655a178b46.
+Permanent signer: f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+Downloaded source/hash/version/package/entry/signer independently verified.
+
+Exact signed APK installed on owned Pixel 7 Pro API36 emulator. Manual inspection:
+Voice > Device and room settings > Shield Home > Launcher Settings > Device and
+room settings > Home button setup reaches its explanatory dialog and Android
+Accessibility settings. Android lists BOOP unified Home button OFF alongside Cast
+corner OFF. No access granted. Back returns to BOOP. Wall profile restored and
+verified, app stopped, temporary device files removed. Phone profile-transition
+capture briefly clipped dialog action text; settled tree exposed full actionable
+Open settings button and it opened correctly. TV layout remains a physical check.
+
+APK delivered locally as BOOP-v101-unified-home-button.apk. Build monitor paused.
+Shield remains on v100 with v23 Home override; its Cast evidence remains unchanged.
+Pending explicit v101 physical install plus single-override migration approval,
+then physical Home, reconnect, authenticated HA Back and Cast regression checks.
+No canonical merge or protected checkpoint replacement.
+
 ## v101 unified Home workaround candidate
 
 Ryan approved wiring the existing Home hack into Unified after the stock HOME
