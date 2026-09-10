@@ -1,3 +1,14 @@
+## Missing-session recovery test: native pause/resume did not recover
+
+Ryan approved a brief pause/resume diagnostic. Android media keys did not restore
+sessions. Opened native current-track UI via sidebar, verified focused pause button
+visually, and used native remote controls. Auto-hiding controls required another
+navigation step to complete resume. Audio diagnostics confirmed player paused then
+started again; Android media_session still had zero sessions after resume.
+Returned to unified Home, music running, controls released, temporary device files
+removed. No force-stop or app restart. Missing Now Playing remains unresolved;
+pause/resume is not a recovery. Do not promote this into a fixed checkpoint.
+
 ## Open regression: audible native Deezer without Android media session
 
 Ryan reports Home from Deezer has no Now Playing box and confirms music remains
