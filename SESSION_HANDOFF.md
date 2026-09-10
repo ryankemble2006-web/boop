@@ -1,3 +1,26 @@
+## Missing-session cause isolated to Android stopping Deezer service
+
+Further read-only logs identify the concrete failure boundary: ActivityManager
+stopped DeezerSdkMediaService due to app idle; 19 milliseconds later system media
+listeners reported zero controllers and the system Now Playing card was cancelled.
+Deezer audio subsequently continued without that service. This explains why reopening
+and native pause/resume did not restore metadata. It is not a BOOP rendering failure.
+
+Shield API30; display on and deviceidle ACTIVE, so this is background-service idle
+limiting rather than whole-device Doze. Deezer RUN_IN_BACKGROUND and
+RUN_ANY_IN_BACKGROUND use default allow; current standby bucket active. Deezer has
+no device-idle exemption. No OS settings changed. Do not claim these current values
+prove its earlier state or why Deezer failed to recover its service.
+
+Next proposed bounded diagnostic: with explicit approval, exempt only Deezer from
+battery optimization, perform one announced Deezer restart to restore its destroyed
+session, then reproduce native playback -> Home and Cast/native transitions and
+observe beyond the previous idle interval. The exemption is a hypothesis to verify,
+not a proven fix; remove it if ineffective. No global power changes or automatic
+force-stop added to BOOP. Preserve the existing Now Playing design and checkpoints.
+Android background-service limits reference:
+https://developer.android.com/about/versions/oreo/background
+
 ## Missing-session recovery test: native pause/resume did not recover
 
 Ryan approved a brief pause/resume diagnostic. Android media keys did not restore
