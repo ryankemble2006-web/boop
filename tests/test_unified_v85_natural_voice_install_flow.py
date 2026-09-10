@@ -178,7 +178,7 @@ def test_v90_preflight_accepts_exact_official_kokoro_runtime_inputs_only():
     assert not any(path.startswith("inno/") for path in actual_files)
 
 
-def test_v91_generated_natural_speech_uses_streaming_audiotrack():
+def test_v91_static_track_accepts_android_no_static_data_state_before_write():
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
     play = re.search(
         r"private void play\(RequestState request, float\[\] samples, int sampleRate\).*?\{(?P<body>.*?)\n    \}\n\n    private void stopLocked",
@@ -188,11 +188,9 @@ def test_v91_generated_natural_speech_uses_streaming_audiotrack():
     assert play, "Could not locate natural playback method"
     body = play.group("body")
 
-    # v90 physically reached E893 with generated audio present, then AudioTrack
-    # stayed uninitialized. Generated utterances must use a streaming track,
-    # not a whole-utterance static buffer. Start playback before blocking writes
-    # so the stream can drain while the remaining PCM is written.
-    assert ".setTransferMode(AudioTrack.MODE_STREAM)" in body
-    assert ".setTransferMode(AudioTrack.MODE_STATIC)" not in body
-    assert "Math.max(pcm.length * 2" not in body
-    assert body.index("track.play();") < body.index("track.write(")
+    # Android documents STATE_NO_STATIC_DATA as the successful pre-write state
+    # for MODE_STATIC. v90 incorrectly required STATE_INITIALIZED before write(),
+    # guaranteeing E893 even when AudioTrack construction had actually succeeded.
+    assert ".setTransferMode(AudioTrack.MODE_STATIC)" in body
+    assert "track.getState() == AudioTrack.STATE_UNINITIALIZED" in body
+    assert "track.getState() != AudioTrack.STATE_INITIALIZED" not in body
