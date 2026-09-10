@@ -11,6 +11,9 @@ by documentation-only `625257e7f0706c42286e2632bb5b8ac7c1be3d40`; main
 were preserved. App source/packages/signing/permissions were not changed.
 
 Read `animation-lab/idle-blink/WORKSHOP_20260910.md` and `BOOP_ANIMATION_MEMORY.md`.
+Sealed recovery: `animation-work/archive/BOOP-animation-work-recovery-20260910-0441.zip`
+(295 files, SHA-256 `00f51509463ccdbfdf1226237f405e25c0c864916d0df7bfd298e21d1fb7ba88`).
+It captures published recipe commit `f9a384fb8402aae5c2842f7d569a949113cef1e6`.
 Exact canonical ZIP/master recovered and hash verified. Blink v2 and v3 have
 25 PNG states, GIF/MP4, recipes, timing and checksums locally; v3 is a review
 candidate, not visually accepted. Separate headphones alpha-cleanup candidate
