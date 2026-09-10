@@ -2,6 +2,17 @@
 
 Updated 2026-09-10. Canonical AIO branch `boop-unified`; package `com.boop.alpha1`; permanent signer unchanged. Re-fetch live `boop-unified` and `main` before edits and preserve concurrent work.
 
+## Local continuation and emulator inspection (2026-09-10)
+
+Ryan requested continuing the language/Natural Voice work locally, reusing GitHub for suitable non-visual checks to reduce credit use, and using local emulator inspection or asking Ryan for visual evidence. No GitHub visual tests are authorized.
+
+- Recovered the canonical worktree at `C:/Users/ryank/Documents/Codex/BOOP/.worktrees/boop-unified` from live GitHub `625257e7f0706c42286e2632bb5b8ac7c1be3d40`; main checked at `5179f95961c9c43b4939dd1ea4349a32eb7f99d1`.
+- Reused existing successful GitHub run `34433115316` and artifact `10135283428`; independently downloaded and matched the exact ZIP and APK SHA-256 receipts above. No application code or new build was needed for this recovery.
+- Installed exact v91 into the local `Pixel_7_Pro_API_36` emulator. BOOP launched; the optional notification setup was skipped. The emulator reports a generic model and initially routes to Launcher, so Wall `com.boop.alpha1/.MainActivity` was opened explicitly for this inspection.
+- Direct manual inspection showed the Wall idle-black state and BOOP eyes appearing after a tap. This is limited emulator launch/render/interaction evidence, not acceptance of all appearance or voice behavior. No app crash appeared in the inspected AndroidRuntime log.
+- Natural Voice settings/previews, second speaker, normal routed natural reply, and real-device HA/acoustic behavior remain unverified in this continuation. Ryan confirmed he had not received the APK, so no v91 physical result exists yet; supplied the exact candidate locally as requested. Do not infer acceptance from emulator launch.
+- v88 remains the protected usable physical rollback. The canonical rebuild remains gated on physical Natural Voice acceptance.
+
 ## Immediate next action
 
 Physical-test **BOOP Unified v91** on the device that produced v90 E893. Do not begin the queued Canonical Rebuild until Natural Voices are physically proven.
