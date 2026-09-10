@@ -1,3 +1,11 @@
+## v111 explicit-room voice targeting accepted
+
+Ryan tested two fans in different rooms: an explicit bedroom fan off request
+received Done and the intended device responded. This accepts that duplicate-name
+cross-room case on installed v111, source5204d128b42e7469fda4d974a9831180167b52b4.
+It does not imply every room/device or ambiguous request is verified.
+Next: omit the room and verify the saved Living Room default targets only its fan.
+Default Android voice retained; no app or device changes in this receipt.
 ## v111 physical acceptance: corrective room presses
 
 Ryan accepted the installed v111 corrective-click response and confirmed it settled
