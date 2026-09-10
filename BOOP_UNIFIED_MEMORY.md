@@ -1,3 +1,32 @@
+## v99 installed Shield handoff check, 2026-09-10
+
+Ryan explicitly approved installing signed v99 on the Shield, then separately
+approved the new unified ShieldNowPlayingListenerService notification access.
+Install succeeded; package reports 99 / 1.2.99-artist-name-matching. Automatic TV
+profile selected. Existing overlay permission reused; standalone v23 remains.
+No default-HOME or accessibility remapping changed.
+
+Initial real-device blocker: Deezer displayed playing and Ryan confirmed audible
+Queen, but Android media_session reported zero sessions. BOOP therefore had no
+playback metadata/ownership. One announced diagnostic Deezer restart restored its
+native session; Queen artist URI resumed Don't Stop Me Now. This is recovery,
+not a fixed root cause and not an automatic restart in BOOP's command path.
+Session-loss recurrence remains unresolved and should not be described as fixed.
+
+Manual physical screenshots and Android state confirmed: one corner over Deezer;
+direct v99 Home acquired one Now Playing puppet with correct Queen title/artwork;
+pause removed the puppet while retaining paused metadata/transport controls;
+leaving Home while paused showed no corner; resume returned state 3. Music left
+playing in Deezer, controls explicitly released, temporary probe/screenshot files
+removed. No further device controls without coordinating a new test window.
+
+This is agent-observed physical testing, not Ryan's blanket visual acceptance.
+Remote Home still routes through standalone v23; direct activity testing does not
+prove that cross-package route. Next: explicitly choose whether to switch Home
+routing to unified v99, then verify Home-button transitions and HA Back. Preserve
+v23 recovery and all protected checkpoints. No application source changed here.
+App source b39142a3da44251a334ac5237161aa01c80bfdfb; exact signed receipts below.
+
 ## v99 Home/media-corner verification, 2026-09-10
 
 Ryan reports music replies feel more comfortable and play Everytime by Britney
