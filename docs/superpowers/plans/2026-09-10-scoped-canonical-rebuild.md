@@ -62,5 +62,8 @@ song links without killing the process. Replace screen walking with the short-li
 source-built ADB media helper; keep identity/room/exposure/nonce/epoch guards.
 Cold preparation never plays; recheck the request before dispatch. No provider
 secrets, installed daemon, new permissions, changed eyes or visual CI. Local focused
-tests and generated-helper emulator probe passed; signed build/APK acceptance pending.
+tests and generated-helper emulator probe passed. Signed source
+`dd8a2389750968f6eefc90d356c2578bffb2063a` passed run `34452461627`
+(195 Unified + 58 Shield tests). Exact APK hashes/signer verified and Voice UI
+manually inspected on owned API36 emulator. Pixel-to-Shield physical acceptance pending.
 See current handoff for exact verification levels and preserved artifacts.

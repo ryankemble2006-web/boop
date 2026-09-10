@@ -29,7 +29,7 @@ final class DeezerArtistClient {
         MediaRequest request = MediaRequest.parse(text);
         if (request == null || (request.kind != MediaRequest.Kind.DEEZER_SEARCH && request.kind != MediaRequest.Kind.DEEZER_FLOW)) return null;
         if (request.query.length() > 160) return request.explicitProvider
-                ? reply("Say an artist or song name to play on Deezer.") : null;
+                ? reply("Failed") : null;
         DeezerCatalogue.Selection resolved=null;
         if(!request.explicitProvider) {
             // "Play a game" and other conversation must retain the existing routing.
@@ -51,28 +51,26 @@ final class DeezerArtistClient {
                 if(media.startsWith("media_player.") && remote.startsWith("remote.")
                         && allowed.contains(media) && seen.add(remote)) targets.add(row);
             }
-            if(targets.isEmpty()) return reply("I can't find an exposed Android TV in " + room.name() + ".");
-            if(targets.size()!=1) return reply("More than one Android TV is in " + room.name() + ". Choose a room with one TV first.");
+            if(targets.isEmpty()) return reply("Failed");
+            if(targets.size()!=1) return reply("Failed");
             JSONObject target=targets.get(0);
             String media=target.getString("media"), remote=target.getString("remote");
             JSONObject state=new JSONObject(http.request(base+"/api/states/"+media, token, null));
-            if(unavailable(state)) return reply("The TV in " + room.name() + " is unavailable.");
-            JSONObject attrs=state.optJSONObject("attributes");
-            String name=attrs==null ? "TV" : attrs.optString("friendly_name","TV");
+            if(unavailable(state)) return reply("Failed");
 
             DeezerCatalogue.Selection selection=resolved==null ? DeezerCatalogue.resolve(http,request) : resolved;
-            if(selection==null) return reply("I couldn't find a matching Deezer artist or song for " + request.query + ". Try the song title and artist.");
+            if(selection==null) return reply("Failed");
             JSONArray adb=target.optJSONArray("adb");
             if(adb==null || adb.length()!=1 || !adb.optString(0).matches("media_player[.][a-z0-9_]+"))
-                return reply("Set up Android Debug Bridge for this TV in Home Assistant and put it in " + room.name() + " so I can select Deezer music.");
+                return reply("Failed");
             String adbEntity=adb.getString(0);
             JSONObject adbState=new JSONObject(http.request(base+"/api/states/"+adbEntity,token,null));
-            if(unavailable(adbState)) return reply("The TV's music controls are unavailable. Check its Android Debug Bridge connection.");
+            if(unavailable(adbState)) return reply("Failed");
             new DeezerNativeController(base,token,adbEntity,http,delay,room,rooms).play(target.optJSONArray("macs"),selection);
-            return reply("Requested " + selection.name + " on " + name + ".");
+            return reply("Done");
         } catch(HomeAssistantAuth.AuthRejectedException e) { throw e;
-        } catch(InterruptedException e) { Thread.currentThread().interrupt(); return reply("Music request cancelled.");
-        } catch(Exception e) { return reply("I couldn't send that Deezer request. Check the TV and try again."); }
+        } catch(InterruptedException e) { Thread.currentThread().interrupt(); return reply("Failed");
+        } catch(Exception e) { return reply("Failed"); }
     }
 
     static JSONObject exactArtist(JSONArray values,String query) {

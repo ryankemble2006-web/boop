@@ -57,20 +57,20 @@ public class DeezerArtistClientTest {
     @Test public void verifiedNativeRouteReceivesArtist() throws Exception {
         Rig r=new Rig(); r.nativeRig=new DeezerDirectTest.Rig();
         r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerDirectTest.MAC));
-        assertEquals("Requested Britney Spears on Screen.",LocalReply.forOutcome(r.run("play Britney Spears")));
+        assertEquals("Done",LocalReply.forOutcome(r.run("play Britney Spears")));
         assertEquals(1,r.nativeRig.requests()); assertTrue(r.effects.isEmpty());
     }
     @Test public void bareMusicUsesNativeFlowWithoutCatalogue() throws Exception {
         Rig r=new Rig(); r.nativeRig=new DeezerDirectTest.Rig();
         r.targets.getJSONObject(0).put("adb",new JSONArray().put("media_player.adb")).put("macs",new JSONArray().put(DeezerDirectTest.MAC));
-        assertEquals("Requested Deezer Flow on Screen.",LocalReply.forOutcome(r.run("play music")));
+        assertEquals("Done",LocalReply.forOutcome(r.run("play music")));
         assertEquals(0,r.catalogueCalls); assertEquals(1,r.nativeRig.requests());
     }
     @Test public void bareArtistRequiresVerifiedNativeControl() throws Exception {
         Rig r=new Rig(); CommandOutcome outcome=r.run("play Britney Spears");
         assertTrue(r.effects.isEmpty());
         assertEquals(CommandOutcome.Status.LOCAL_REPLY,outcome.status());
-        assertTrue(LocalReply.forOutcome(outcome).contains("Android Debug Bridge"));
+        assertEquals("Failed",LocalReply.forOutcome(outcome));
     }
     @Test public void explicitDeezerUsesSameRoute() throws Exception {
         Rig r=new Rig(); r.run("play Britney Spears on Deezer"); assertTrue(r.effects.isEmpty());

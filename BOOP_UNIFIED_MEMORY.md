@@ -1,3 +1,12 @@
+# BOOP v98 short music replies candidate
+
+Branch `boop-canonical-rebuild`. Ryan requested music confirmations say only
+"Done" or "Failed". v98 changes the native Deezer route wording accordingly;
+"Done" means the request was dispatched, not acoustically verified playback.
+Version 98 / `1.2.98-short-music-replies`. Signed build pending.
+All v97 native routing and physical acceptance limitations below still apply.
+No canonical merge or replacement of the protected v91 checkpoint.
+
 # BOOP canonical rebuild - v97 direct Deezer candidate
 
 Updated 2026-09-10. Branch `boop-canonical-rebuild`; canonical `boop-unified`
@@ -6,9 +15,18 @@ and the protected v91 voice checkpoint remain unchanged. Candidate is unmerged.
 ## Current v97 state
 
 Version 97 / `1.2.97-direct-deezer-playback`, package `com.boop.alpha1`.
-Implemented and locally tested; signed GitHub build and exact APK acceptance pending.
-Use the live application commit containing this entry; final source/run/artifact
-receipt will follow the signed build. Do not deliver v96 as this fix.
+Signed source `dd8a2389750968f6eefc90d356c2578bffb2063a`.
+GitHub run `34452461627` SUCCESS; artifact `10142207674` (BOOP-Unified).
+195 Unified + 58 Shield functional tests passed; no GitHub visual tests ran.
+APK SHA256: `7525043a0cf5c39b7af876bb3933d26a02fab6ec4224fb94549c53b287b6b2d0`.
+ZIP SHA256: `bad3672db549d77dee817db301133a5c9e45b4ec540fa00e87baf5422596440e`.
+Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Downloaded ZIP/APK hashes, signer, package, version and entry independently checked.
+Exact signed APK installed on owned API36 Pixel emulator; settled Voice settings
+screen manually inspected and readable. No AndroidRuntime exception observed.
+Emulator app stopped and temporary screenshot removed after inspection.
+This is a launch/UI smoke check, not Pixel-to-Shield voice or acoustic acceptance.
+Delivered `BOOP-v97-direct-deezer-candidate.apk` in the current task outputs.
 
 Ryan reports v96 commands work, but force-closing/reopening Deezer and its delay
 are too clumsy. He explicitly said keeping music playing during navigation feels
@@ -55,9 +73,10 @@ this changes no system setting and does not suppress accessibility services.
   visible Queen page restored and Bohemian Rhapsody left playing. Do not resume
   audible device tests without coordinating an uninterrupted window.
 
-Next: complete signed nonvisual GitHub build, verify exact APK/source/hash/signer,
-inspect the owned emulator manually, deliver v97 for Ryan's Pixel test. No GitHub
-visual tests, automatic Pixel install, canonical merge or new physical checkpoint.
+Next: Ryan tests the exact v97 APK on Pixel through HA to Shield: repeat/switch
+artists, Bohemian Rhapsody, and play music (Flow). Final physical acceptance and
+voice-to-playback latency remain pending. No automatic Pixel install, canonical
+merge or new physical checkpoint. Protected v91 voice acceptance remains intact.
 
 Reference for process-local media initialization:
 https://android.googlesource.com/platform/frameworks/base/+/master/media/java/android/media/MediaFrameworkPlatformInitializer.java
