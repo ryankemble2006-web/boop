@@ -21,6 +21,7 @@
     <application
         android:allowBackup="false"
         android:label="BOOP Shield Home"
+        android:banner="@drawable/boop_tv_banner"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <service
             android:name=".ShieldHomeOverrideService"
