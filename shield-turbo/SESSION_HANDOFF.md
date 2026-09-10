@@ -141,7 +141,12 @@ TDD / CI receipt:
 
 Ryan approved a deliberately simple physical-discovery flow: from the TURBO page press Right to the chunky `TURBO+ HEADROOM TEST` control, press OK once, then photograph the result.
 
-v0.6.2 / code 23 implementation is read-only and probes:
+Exact machine-green source:
+`cb1a29fdf808f522b3089a325b2329b46ca1adc5`
+
+Version: **v0.6.2 / versionCode 23**.
+
+The implementation is read-only and probes:
 
 - CPU online state plus current/max/governor clues;
 - GPU devfreq current/max/min/governor/frequency clues;
@@ -151,11 +156,28 @@ v0.6.2 / code 23 implementation is read-only and probes:
 
 The dedicated result screen is black/full-screen, uses large photo-friendly text, labels each section `FOUND` or `BLOCKED`, and ends with `PHOTOGRAPH THIS • BACK TO CLOSE`. ADB/setup failures become a full-screen `TURBO+ • STOP` page with `ADB NOT READY` and the useful recovery instruction. A ScrollView exists only as overflow insurance if the physical Shield exposes more evidence than fits.
 
-The headroom probe must remain read-only: no `settings put`, `setprop`, chmod, root, sysfs writes, voltage changes, above-stock clock requests or thermal bypass.
+The headroom probe remains read-only: no `settings put`, `setprop`, chmod, root, sysfs writes, voltage changes, above-stock clock requests or thermal bypass.
 
-TDD RED receipt: source-contract commit `4d1fe343c9865b084642169975ddb5396065f556`; workflow run `34422694164`, job `102701343392`; existing JVM tests passed and source contracts failed because HeadroomProbe/HeadroomActivity/button/manifest registration did not yet exist.
+TDD / CI receipt:
 
-GREEN source is being published after documentation-only WIP commits; do not call v0.6.2 machine-green until its post-source workflow fully passes. Do not call it physically accepted until Ryan photographs/runs it on the real Shield.
+- RED source-contract commit `4d1fe343c9865b084642169975ddb5396065f556`;
+- RED run `34422694164`, job `102701343392`: existing JVM tests passed and the new Headroom contract failed because the feature did not exist yet;
+- GREEN source commit `cb1a29fdf808f522b3089a325b2329b46ca1adc5`;
+- GREEN run `34423280461`, job `102703106376`, conclusion success;
+- 101 JVM tests passed with 0 failures/errors/skips;
+- 60 source/API/security contracts passed, including all four TURBO+ Headroom contracts;
+- Android lint completed successfully with warnings only;
+- signed release build passed for package `com.boop.shieldturbo`, versionCode 23, versionName 0.6.2;
+- permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, DN `CN=BOOP Development, O=BOOP`;
+- APK ZIP integrity passed;
+- APK SHA-256 `ad357dbfae8579bd5748b1463c11ce75b35ce6adcc721a8cc428da0da1523e99`;
+- signed artifact `SHIELD-TURBO`: ID `10131769734`, ZIP SHA-256 `33cd6b41b0de11286965920ab1bbc0359bb96b9b1c362a28a5d9b2b66db0ac16`;
+- test artifact `SHIELD-TURBO-TESTS`: ID `10131801514`, ZIP SHA-256 `c251260ce2c109d487a5f47afc15025ed795c259c815f6b97994d7be7b43cfb8`;
+- emulator API 30 install succeeded;
+- cold launch `1806ms`, process remained alive with PID `2237`, second launch remained alive, and no package `FATAL EXCEPTION` was found;
+- no screenshot, golden-image, UI hierarchy, or visual acceptance automation ran.
+
+**v0.6.2 is machine verified only. It is not physically accepted until Ryan runs the Headroom test on the real Shield and supplies the photo/result.**
 
 ## Thermal fallback boundary
 
@@ -173,11 +195,12 @@ Never direct-write `persist.vendor.sys.phs.cpufreq.boost`, `gpufreq.boost`, `frt
 
 Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the physical rollback checkpoint.
 
-After v0.6.2 builds successfully, physical acceptance should be:
+Physical test for v0.6.2:
 
-1. install/open the candidate and confirm the large TURBO+ button is reachable with one Right press from TURBO MODE;
-2. press TURBO+ once;
-3. photograph the full-screen result or any full-screen STOP page;
-4. use that evidence to decide whether another genuine stock-envelope actuator exists. Do not write any newly discovered control until it gets its own save/change/read-back/restore proof.
+1. install/open v0.6.2;
+2. open TURBO, then press Right once to `TURBO+ HEADROOM TEST`;
+3. press OK once;
+4. photograph the full-screen RESULT or STOP page and return it to the development chat;
+5. use that evidence to decide whether another genuine stock-envelope actuator exists. Do not write any newly discovered control until it gets its own save/change/read-back/restore proof.
 
 At the start of this session, live `main` was `5179f95961c9c43b4939dd1ea4349a32eb7f99d1`.
