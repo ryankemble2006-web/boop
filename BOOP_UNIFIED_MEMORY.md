@@ -1,3 +1,18 @@
+## v108 signed and verified; physical install pending
+
+Source500f839ef2a2db5bd25737cb8124211ac81bdc0d; GitHub run34488083152 SUCCESS,
+artifact10156723766. 217 Unified +58 Shield tests passed, zero failures/errors/skips.
+Local signature/package/version/hash checks passed: com.boop.alpha1, version108 /
+1.2.108-shield-auth-compatibility, permanent signer
+f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+APK SHA256 a6ca21e716e5389946d4972c9ee85898210665776d74532040646b352740b506.
+ZIP SHA256 b253badd8cf41ad603aca094cbeba2479322e5eb0043b900a73cb21734dd03ce.
+Delivered BOOP-v108-shield-auth-compatibility.apk. v107 remains installed and its
+remote voice route is known to crash. v108 has not been installed or physically
+accepted. The earlier synthetic encoding probe passed on Shield Android11; this
+is not full voice command acceptance. Next: approval of exact APK installation,
+then one coordinated real remote command. No GitHub visuals. Monitor paused.
+
 Actual Shield runtime probe: compiled the repaired auth/tuple code to dex and ran
 synthetic OAuth encoding checks through app_process; passed. No real credentials,
 network request, BOOP install or media action involved. This verifies this method
