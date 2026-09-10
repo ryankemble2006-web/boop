@@ -60,6 +60,7 @@ class BoopSiteContract(unittest.TestCase):
             "assets/boop-eyes.png",
             "assets/boop-yellow-hands.png",
             "assets/boop-headphones.png",
+            "Natural voice remains unresolved",
         ):
             self.assertIn(phrase, html)
 
