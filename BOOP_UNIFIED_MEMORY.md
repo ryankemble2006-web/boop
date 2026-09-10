@@ -1,3 +1,18 @@
+## v108 remote music acceptance and next transport check
+
+Ryan confirmed Elton John playback with an audible Done in Android voice, then
+Bohemian Rhapsody and a Britney track through the Shield remote. Together with
+prior candle on/off and play music -> Flow, this accepts those specific remote
+house/artist/track/default-music routes on source500f839ef2a2db5bd25737cb8124211ac81bdc0d.
+APK SHA256 a6ca21e716e5389946d4972c9ee85898210665776d74532040646b352740b506.
+
+Explicit testing order: keep default Android voice while finishing controls.
+Natural voice comes last to isolate bugs and avoid repeating Pixel roadblocks.
+Do not switch voices or alter the natural subsystem now. Eyes remain separate.
+Next unfinished media verification: real remote pause, resume and next-track,
+including return to Home/Now Playing. Existing transport implementation is present;
+verify it before adding code. No new device operations during this documentation.
+
 ## v108 physical acceptance extended: remote play music launches Deezer Flow
 
 Ryan confirmed "play music launched flow! :)" through the Shield remote after
