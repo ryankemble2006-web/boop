@@ -1,3 +1,29 @@
+## v105 assistant repair: activity-based route, build/test pending
+
+Ryan asked to continue after the failed role assignment. Repair uses Android's
+supported activity-based assistant branch, leaving the existing system recognizer
+selected rather than introducing a new recognition provider. The malformed legacy
+voice-interaction service registrations are removed from the generated manifest;
+historical implementation files remain as source only. New BoopAssistantActivity
+declares ASSIST/VOICE_ASSIST with DEFAULT, requires explicit BOOP opt-in and actual
+assistant-role ownership, rejects recreation/unrelated actions, then forwards to
+the existing one-shot MainActivity listener with the input-device ID when supplied.
+No persistent microphone, provider change, secrets migration or new permissions.
+
+This supersedes the earlier voice-interaction-service architecture for candidate
+v105. Android 11 AOSP RoleObserver's activity branch sets ASSISTANT to the activity,
+clears VOICE_INTERACTION_SERVICE and selects its default recognizer; no null service
+class construction. Local launch-policy matrix passes after observed RED. Four
+JUnit cases added, and signed workflow verifies absence of legacy voice service.
+Version105 / 1.2.105-activity-assistant. CI, signed APK and emulator role assignment
+checks pending. Do not retry assistant assignment on physical v104.
+
+Shield remains v104 with Google assistant/recognizer restored after its system
+restart. BOOP opt-in preference remains use_boop. Next: build and validate role
+assignment/restoration on owned emulator, inspect actual one-shot launch, then
+coordinate exact v105 install and physical mic test. Physical mic capture and
+Shield voice-command routing are not yet proven. Pixel candle command passed.
+
 ## Shield assistant assignment trial failed: Android system restart
 
 Ryan confirmed turn off the candle succeeded through Pixel. This verifies that

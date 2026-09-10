@@ -168,10 +168,14 @@ jobs:
           grep -Fq "versionName='${BOOP_EXPECTED_VERSION_NAME}'" badging.txt
           grep -Fq "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > manifest-tree.txt
-          for cls in com.boop.alpha1.MainActivity com.boop.alpha1.BoopDevMenuActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopVoiceInteractionService com.boop.alpha1.BoopVoiceInteractionSessionService; do
+          for cls in com.boop.alpha1.MainActivity com.boop.alpha1.BoopDevMenuActivity com.boop.launcher.MainActivity com.boop.shieldoverlay.MainActivity com.boop.shieldoverlay.BoopOverlayService com.boop.shieldoverlay.DeezerMediaListenerService com.boop.alpha1.BoopAssistantActivity; do
             grep -Fq "$cls" manifest-tree.txt
           done
           grep -Fq "android.intent.category.HOME" manifest-tree.txt
+          grep -Fq "android.intent.action.ASSIST" manifest-tree.txt
+          if grep -Fq 'android.service.voice.VoiceInteractionService' manifest-tree.txt; then
+            echo 'Malformed legacy assistant service must not be registered'; exit 1
+          fi
           "$TOOLS/apksigner" verify --print-certs "$APK" > signer.txt
           ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"

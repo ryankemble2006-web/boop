@@ -24,7 +24,7 @@ text = once(text,
 text = once(text,
     '        handleAuthIntent(getIntent());\n    }\n',
     '        handleAuthIntent(getIntent());\n'
-    '        acceptAssistantIntent(getIntent());\n'
+    '        if (savedInstanceState == null) acceptAssistantIntent(getIntent());\n'
     '    }\n',
     'assistant initial intent')
 text = once(text,
@@ -50,6 +50,7 @@ text = once(text,
                 BoopVoiceInteractionSession.EXTRA_ONE_SHOT_ASSIST, false)) {
             return;
         }
+        intent.removeExtra(BoopVoiceInteractionSession.EXTRA_ONE_SHOT_ASSIST);
         assistantOneShot = true;
         assistantOneShotStarted = false;
         int inputDeviceId = intent.getIntExtra(Intent.EXTRA_ASSIST_INPUT_DEVICE_ID, -1);
@@ -91,48 +92,32 @@ text = once(text,
 MAIN.write_text(text, encoding='utf-8')
 
 text = MANIFEST.read_text(encoding='utf-8')
-assistant_marker = 'android:name=".BoopVoiceInteractionService"'
+assistant_marker = 'android:name=".BoopAssistantActivity"'
 if assistant_marker not in text:
     app_close = '    </application>'
     components = '''        <activity
             android:name=".BoopAssistantSetupActivity"
             android:exported="false"
             android:theme="@style/Theme.BOOP" />
-        <service
-            android:name=".BoopVoiceInteractionService"
+        <activity
+            android:name=".BoopAssistantActivity"
             android:exported="true"
-            android:permission="android.permission.BIND_VOICE_INTERACTION">
+            android:theme="@style/Theme.BOOP">
             <intent-filter>
-                <action android:name="android.service.voice.VoiceInteractionService" />
+                <action android:name="android.intent.action.ASSIST" />
+                <action android:name="android.intent.action.VOICE_ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            <meta-data
-                android:name="android.voice_interaction"
-                android:resource="@xml/boop_voice_interaction_service" />
-        </service>
-        <service
-            android:name=".BoopVoiceInteractionSessionService"
-            android:exported="true"
-            android:permission="android.permission.BIND_VOICE_INTERACTION" />
+        </activity>
 '''
     text = once(text, app_close, components + app_close, 'assistant application close')
 else:
     for marker in (
             'android:name=".BoopAssistantSetupActivity"',
-            'android:name=".BoopVoiceInteractionService"',
-            'android:name=".BoopVoiceInteractionSessionService"'):
+            'android:name=".BoopAssistantActivity"'):
         if text.count(marker) != 1:
             raise SystemExit(f'assistant manifest components: expected one {marker}, found {text.count(marker)}')
 MANIFEST.write_text(text, encoding='utf-8')
-
-xml = ROOT / 'app/src/main/res/xml/boop_voice_interaction_service.xml'
-xml.parent.mkdir(parents=True, exist_ok=True)
-xml.write_text('''<?xml version="1.0" encoding="utf-8"?>
-<voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
-    android:sessionService="com.boop.alpha1.BoopVoiceInteractionSessionService"
-    android:supportsAssist="true"
-    android:supportsLaunchVoiceAssistFromKeyguard="false"
-    android:supportsLocalInteraction="true" />
-''', encoding='utf-8')
 
 text = SETTINGS.read_text(encoding='utf-8')
 text = once(text, 'import android.content.Context;\n', 'import android.content.Context;\nimport android.content.Intent;\n', 'settings Intent import')
@@ -141,4 +126,4 @@ new = old + '        SettingCard micButton=card("Shield microphone button","Choo
 text = once(text, old, new, 'reversible assistant setting')
 SETTINGS.write_text(text, encoding='utf-8')
 
-print('Official Android assistant role/session integration materialized; no device or visual checks run')
+print('Activity-based Android assistant integration materialized; system recognition retained, no device or visual checks run')
