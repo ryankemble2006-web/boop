@@ -2,7 +2,7 @@ package com.boop.alpha1;
 
 final class ShieldEntryRoute {
     enum Target {
-        SHIELD_PUPPET("com.boop.shieldoverlay.MainActivity", true),
+        SHIELD_PUPPET("com.boop.shieldhome.ShieldLauncherActivity", true),
         WALL("com.boop.alpha1.MainActivity", true),
         HANDHELD_LAUNCHER("com.boop.launcher.MainActivity", true);
 

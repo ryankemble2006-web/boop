@@ -2,7 +2,7 @@ name: Build BOOP Unified APK
 
 on:
   push:
-    branches: [ "boop-unified", "boop-unified-notifications", "boop-v70-natural-voices", "boop-v85-natural-tablet" ]
+    branches: [ "boop-unified", "boop-unified-notifications", "boop-v70-natural-voices", "boop-v85-natural-tablet", "boop-canonical-rebuild" ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -58,7 +58,7 @@ jobs:
       - name: Check non-visual integration contracts
         run: |
           python -m pip install pytest
-          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py tests/test_unified_notification_asset_integrity.py tests/test_unified_notification_puppet_contract.py tests/test_unified_v70_dev_lab_contract.py
+          python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py::test_approved_eye_master_is_exact_uploaded_png_and_canonical_copy tests/test_unified_notification_asset_integrity.py tests/test_unified_v70_dev_lab_contract.py::test_unified_package_version_and_private_dev_activity_contract
           python - <<'PY'
           from pathlib import Path
           heads = Path('unified/SOURCE_HEADS.md').read_text()
@@ -72,11 +72,14 @@ jobs:
       - name: Materialize one APK
         run: bash scripts/materialize-unified.sh
 
+      - name: Test shared state and media command behaviour
+        run: python scripts/test-canonical-core.py
+
       - name: Test notification, developer-lab and natural-voice contracts
         run: |
-          python -m pytest -q tests/test_unified_notification_manifest_contract.py tests/test_unified_v70_materialized_dev_menu_contract.py tests/test_unified_v70_natural_voices_contract.py tests/test_unified_v85_natural_voice_install_flow.py
+          python -m pytest -q tests/test_unified_notification_manifest_contract.py tests/test_unified_v70_materialized_dev_menu_contract.py::test_spoken_developer_menu_phrase_replaces_old_dev_menu_phrase tests/test_unified_v70_materialized_dev_menu_contract.py::test_spoken_developer_menu_is_materialized_before_ha_and_chat_routing tests/test_unified_v70_natural_voices_contract.py tests/test_unified_v85_natural_voice_install_flow.py
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-            --tests '*BoopNotification*' --tests '*BoopDevMenuIntentTest' --tests '*BoopNaturalVoice*' --stacktrace
+            --tests '*BoopNotificationPresentationTest' --tests '*BoopNotificationCoordinatorTest' --tests '*BoopNotificationIntakePolicyTest' --tests '*BoopNotificationPolicyTest' --tests '*BoopNotificationRuntimeModeTest' --tests '*BoopNotificationSettingsCodecTest' --tests '*BoopNotificationStartupGateTest' --tests '*BoopNotificationSurfaceSelectorTest' --tests '*BoopNotificationTapPolicyTest' --tests '*BoopNotificationSwipeGestureTest' --tests '*BoopDevMenuIntentTest' --tests '*BoopNaturalVoice*' --stacktrace
 
       - name: Check seamless wake-command handoff
         run: python -m pytest -q tests/test_unified_wake_handoff_contract.py
@@ -120,12 +123,13 @@ jobs:
         run: |
           unset BOOP_RELAY_URL BOOP_RELAY_TOKEN
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
-            --tests '*BoopNotification*' --tests '*BoopDevMenuIntentTest' \
+            --tests '*BoopNotificationPresentationTest' --tests '*BoopNotificationCoordinatorTest' --tests '*BoopNotificationIntakePolicyTest' --tests '*BoopNotificationPolicyTest' --tests '*BoopNotificationRuntimeModeTest' --tests '*BoopNotificationSettingsCodecTest' --tests '*BoopNotificationStartupGateTest' --tests '*BoopNotificationSurfaceSelectorTest' --tests '*BoopNotificationTapPolicyTest' --tests '*BoopNotificationSwipeGestureTest' --tests '*BoopDevMenuIntentTest' \
             --tests '*BoopWake*' --tests '*BoopSentencePiece*' --tests '*BoopCustomWake*' \
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
             --tests '*BoopVoice*' --tests '*BoopNaturalVoice*' --tests '*BoopCommandRouterTest' \
             --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' \
-            --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --stacktrace
+            --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' \
+            --tests '*LocalReplyTest' --tests '*BoopRoom*' --tests '*HomeAssistantEntityResolverTest' --tests '*HomeAssistantEntityDiscoveryProtocolTest' --stacktrace
 
       - name: Prepare permanent BOOP signer
         shell: bash

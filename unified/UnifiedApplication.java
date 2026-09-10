@@ -12,10 +12,14 @@ public final class UnifiedApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        stopService(new android.content.Intent(this,com.boop.shieldoverlay.BoopOverlayService.class));
         BoopDeviceProfile.Mode mode = BoopDeviceProfile.resolve(this);
+        com.boop.shieldhome.BoopMediaBridge.configure(this, mode == BoopDeviceProfile.Mode.SHIELD);
+        new com.boop.shieldoverlay.BoopPreferences(this); // migrate existing dashboard room first
+        BoopRoom room = new BoopRoomPreferences(this).currentRoom();
+        com.boop.shared.BoopState.INSTANCE.room(room.id(), room.name());
         if (BoopNotificationRuntime.shouldInitializeForMode(mode)) {
             BoopNotificationRuntime.initialize(this);
-            return;
         }
 
         Resources applicationResources = getResources();
@@ -30,11 +34,13 @@ public final class UnifiedApplication extends Application {
             public void onActivityPreCreated(Activity activity, Bundle savedInstanceState) {
                 Resources resources = activity.getResources();
                 Configuration current = resources.getConfiguration();
-                if (current.densityDpi == shieldDensity) {
+                int targetDensity = BoopDeviceProfile.resolve(activity) == BoopDeviceProfile.Mode.SHIELD
+                        ? shieldDensity : baseDensity;
+                if (current.densityDpi == targetDensity) {
                     return;
                 }
                 Configuration scaled = new Configuration(current);
-                scaled.densityDpi = shieldDensity;
+                scaled.densityDpi = targetDensity;
                 resources.updateConfiguration(scaled, resources.getDisplayMetrics());
             }
 

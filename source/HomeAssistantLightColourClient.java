@@ -16,10 +16,14 @@ import java.util.List;
 final class HomeAssistantLightColourClient {
     private static final int TIMEOUT_MS = 5000;
 
-    private final String homeArea;
+    private final BoopRoomSource roomSource;
 
     HomeAssistantLightColourClient(String homeArea) {
-        this.homeArea = homeArea;
+        this(BoopRoomSource.fixed(homeArea));
+    }
+
+    HomeAssistantLightColourClient(BoopRoomSource roomSource) {
+        this.roomSource = roomSource;
     }
 
     CommandOutcome setColour(String baseUrl, String accessToken, String colour) throws Exception {
@@ -45,7 +49,7 @@ final class HomeAssistantLightColourClient {
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 
-            String escapedArea = homeArea
+            String escapedArea = roomSource.currentRoom().name()
                     .replace("\\", "\\\\")
                     .replace("'", "\\'");
             String template = "{{ area_entities('" + escapedArea + "') | list | to_json }}";

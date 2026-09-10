@@ -8,6 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class BoopCommandRouterTest {
+    @Test public void ambiguousLocalTargetNeverFallsThroughToAssistant() {
+        Counter assistantCalls = new Counter();
+        BoopCommandRouter router = new BoopCommandRouter(
+                text -> CommandOutcome.ambiguousTarget(),
+                text -> { assistantCalls.value++; return CommandOutcome.assistantReply("guessed"); });
+        assertEquals(CommandOutcome.Status.AMBIGUOUS_TARGET,
+                router.process("turn off lamp").status());
+        assertEquals(0, assistantCalls.value);
+    }
+
     @Test public void onlyNoMatchFallsThroughToAssistant() {
         for (CommandOutcome.Status status : new CommandOutcome.Status[]{
                 CommandOutcome.Status.SUCCESS,

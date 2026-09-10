@@ -6,15 +6,15 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public final class ShieldEntryRouteTest {
-    @Test public void shieldHomeIntentStaysOnExistingAioShieldBody() {
+    @Test public void shieldHomeIntentUsesIntegratedHome() {
         ShieldEntryRoute.Target target = ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.SHIELD, true);
-        assertEquals("com.boop.shieldoverlay.MainActivity", target.className());
+        assertEquals("com.boop.shieldhome.ShieldLauncherActivity", target.className());
         assertTrue(target.suppressEntryTransition());
     }
 
-    @Test public void ordinaryShieldLaunchStillUsesPuppet() {
+    @Test public void ordinaryShieldLaunchUsesSameHome() {
         ShieldEntryRoute.Target target = ShieldEntryRoute.resolve(BoopDeviceProfile.Mode.SHIELD, false);
-        assertEquals("com.boop.shieldoverlay.MainActivity", target.className());
+        assertEquals("com.boop.shieldhome.ShieldLauncherActivity", target.className());
         assertTrue(target.suppressEntryTransition());
     }
 

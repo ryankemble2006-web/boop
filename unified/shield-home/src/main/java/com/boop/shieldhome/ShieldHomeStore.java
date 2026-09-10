@@ -15,6 +15,7 @@ public final class ShieldHomeStore {
     private static final String PREFS = "boop_shield_home_v1";
     private static final String KEY_INITIALISED = "favourites_initialised";
     private static final String KEY_FAVOURITES = "favourites_json";
+    private static final String KEY_NOW_PLAYING_PLAYER = "now_playing_player_package_v1";
 
     public interface Preferences {
         String getString(String key, String fallback);
@@ -86,6 +87,17 @@ public final class ShieldHomeStore {
 
     public void setRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
         preferences.putBoolean(key.preferenceKey(), enabled);
+    }
+
+    public String nowPlayingPlayerPackage() {
+        String value = preferences.getString(KEY_NOW_PLAYING_PLAYER, "");
+        return value == null ? "" : value.trim();
+    }
+
+    public void setNowPlayingPlayerPackage(String packageName) {
+        preferences.putString(
+                KEY_NOW_PLAYING_PLAYER,
+                packageName == null ? "" : packageName.trim());
     }
 
     public static String encodeComponents(List<String> components) {

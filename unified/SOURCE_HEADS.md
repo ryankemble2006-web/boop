@@ -7,3 +7,9 @@ Initial all-in-one merge inputs, fetched live on 2026-09-07:
 - Shield puppet: `boop-shield-fullscreen-deezer-wip@1a487a4aaecd098d6854905ee64d60253ad6b4b7` (v3 friendly Deezer access/full-screen puppet lineage)
 
 The unified app keeps `com.boop.alpha1` and the existing permanent BOOP signer so current Wall installs have the cleanest upgrade path. Launcher and Shield packages remain preserved on their historical branches for rollback/reference; the unified APK contains their latest source as internal modules.
+
+## Scoped canonical rebuild, 2026-09-10
+
+Ryan selected overhaul items 1, 3, 6, 7, 8 and 10. The dedicated candidate branch is `boop-canonical-rebuild`, based on canonical `99474d141e7affad17cdbe854e94dd3986076980`.
+
+Shield Home/Now Playing source and resource input: `boop-shield-clean-launcher@9888fbef444d1e0647fdd8ae90acb7197acfb813`. Its metadata, artwork, browsing and controls are reused as an internal library. The standalone package/branch remains untouched. Existing renderers are temporary; eyes/blink and Turbo changes are excluded and owned by other work. No automatic default-HOME, accessibility or notification-access grants are introduced.

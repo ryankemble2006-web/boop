@@ -148,3 +148,6 @@ python3 scripts/patch-unified-notifications.py
 
 # Add the internal developer demo shelf after notification settings are materialized.
 python3 scripts/patch-unified-dev-menu.py
+
+python3 scripts/patch-canonical-integration.py
+python3 scripts/patch-canonical-room.py

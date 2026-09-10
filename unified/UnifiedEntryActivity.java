@@ -5,10 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 
 public final class UnifiedEntryActivity extends Activity {
-    private static final int REQ_ASSISTANT_FIRST_RUN = 2400;
     private static final int REQ_NOTIFICATION_FIRST_RUN = 2402;
 
-    private boolean waitingForAssistantChoice;
     private boolean waitingForNotificationSetup;
 
     @Override
@@ -32,14 +30,18 @@ public final class UnifiedEntryActivity extends Activity {
             route();
             return;
         }
-        if (requestCode == REQ_ASSISTANT_FIRST_RUN) {
-            waitingForAssistantChoice = false;
-            route();
-        }
+
     }
 
     private void route() {
+        if (!getSharedPreferences("boop_unified", MODE_PRIVATE).getBoolean("profile_choice_seen", false)) {
+            startActivity(new Intent(this, BoopProfileActivity.class)); finish(); return;
+        }
         BoopDeviceProfile.Mode mode = BoopDeviceProfile.resolve(this);
+        com.boop.shieldhome.BoopMediaBridge.configure(this, mode == BoopDeviceProfile.Mode.SHIELD);
+        if (BoopNotificationRuntime.shouldInitializeForMode(mode)) {
+            BoopNotificationRuntime.initialize(getApplication());
+        }
 
         if (BoopNotificationStartupGate.resolve(
                 mode,
@@ -59,18 +61,6 @@ public final class UnifiedEntryActivity extends Activity {
         boolean homeIntent = getIntent() != null
                 && getIntent().hasCategory(Intent.CATEGORY_HOME);
         ShieldEntryRoute.Target destination = ShieldEntryRoute.resolve(mode, homeIntent);
-
-        if (destination == ShieldEntryRoute.Target.SHIELD_PUPPET
-                && BoopAssistantPreference.load(this) == null) {
-            if (!waitingForAssistantChoice) {
-                waitingForAssistantChoice = true;
-                startActivityForResult(
-                        new Intent().setClassName(getPackageName(),
-                                "com.boop.alpha1.BoopAssistantSetupActivity"),
-                        REQ_ASSISTANT_FIRST_RUN);
-            }
-            return;
-        }
 
         Intent targetIntent = new Intent(Intent.ACTION_MAIN)
                 .setClassName(getPackageName(), destination.className())

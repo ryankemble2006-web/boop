@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="boop_home_override_description">When Android TV Home appears, immediately return to BOOP Shield Home. This service does not read screen content, notification text, type text, perform gestures, or intercept remote keys.</string>
+</resources>

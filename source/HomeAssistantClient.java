@@ -18,16 +18,21 @@ final class HomeAssistantClient {
 
     private final SecureTokenStore tokenStore;
     private final HomeAssistantAuth auth;
-    private final String homeArea;
+    private final BoopRoomSource roomSource;
     private final HomeAssistantLightColourClient lightColour;
     private final HomeAssistantDirectMediaClient directMedia;
+    private final GenericHomeAssistantClient genericHome = new GenericHomeAssistantClient();
 
     HomeAssistantClient(SecureTokenStore tokenStore, HomeAssistantAuth auth, String homeArea) {
+        this(tokenStore, auth, BoopRoomSource.fixed(homeArea));
+    }
+
+    HomeAssistantClient(SecureTokenStore tokenStore, HomeAssistantAuth auth, BoopRoomSource roomSource) {
         this.tokenStore = tokenStore;
         this.auth = auth;
-        this.homeArea = homeArea;
-        this.lightColour = new HomeAssistantLightColourClient(homeArea);
-        this.directMedia = new HomeAssistantDirectMediaClient(homeArea);
+        this.roomSource = roomSource;
+        this.lightColour = new HomeAssistantLightColourClient(roomSource);
+        this.directMedia = new HomeAssistantDirectMediaClient(roomSource);
     }
 
     CommandOutcome process(String text) {
@@ -43,14 +48,25 @@ final class HomeAssistantClient {
 
         try {
             String accessToken = auth.freshAccessToken();
+            BoopRoom room = roomSource.currentRoom();
+            boolean directRoomCommand = !BoopRoomCommandParser.namesOtherRoom(
+                    text, room.id(), room.name());
 
             String colour = LightColourCommandParser.parseColour(text);
-            if (colour != null) {
+            if (directRoomCommand && colour != null) {
                 return lightColour.setColour(baseUrl, accessToken, colour);
             }
 
-            CommandOutcome directMediaOutcome =
-                    directMedia.processIfMedia(baseUrl, accessToken, text);
+            CommandOutcome genericOutcome = directRoomCommand
+                    ? genericHome.process(baseUrl, accessToken, text, room)
+                    : null;
+            if (genericOutcome != null) {
+                return genericOutcome;
+            }
+
+            CommandOutcome directMediaOutcome = directRoomCommand
+                    ? directMedia.processIfMedia(baseUrl, accessToken, text)
+                    : null;
             if (directMediaOutcome != null) {
                 return directMediaOutcome;
             }
@@ -70,7 +86,7 @@ final class HomeAssistantClient {
                                 && isUnavailable(baseUrl, accessToken, failed.id())) {
                             return CommandOutcome.targetOffline(
                                     failed.name().isEmpty() ? "device" : failed.name(),
-                                    homeArea);
+                                    room.name());
                         }
                     }
                     return CommandOutcome.failed();

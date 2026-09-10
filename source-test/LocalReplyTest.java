@@ -4,6 +4,11 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 public final class LocalReplyTest {
+    @Test public void asksForFullNameWhenGenericTargetIsAmbiguous() {
+        assertEquals("More than one device matches. Say the full device name.",
+                LocalReply.forOutcome(CommandOutcome.ambiguousTarget()));
+    }
+
     @Test public void successIsPlain() {
         assertEquals("Done.", LocalReply.forOutcome(CommandOutcome.success("Fan")));
     }

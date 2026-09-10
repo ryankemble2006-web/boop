@@ -1,18 +1,30 @@
 package com.boop.shieldhome;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.role.RoleManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.FrameLayout;
 
 import java.net.URISyntaxException;
@@ -25,9 +37,12 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Internal Shield launcher surface. UnifiedEntryActivity remains the exported HOME entry. */
+/** Standalone Shield launcher surface. */
 public final class ShieldLauncherActivity extends Activity {
     public static final long PAGE_TRANSITION_MS = 140L;
+    private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
+    private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown_v2";
+    private static final String KEY_HOME_OVERRIDE_PROMPT_SHOWN = "home_override_prompt_shown_v1";
 
     public enum FavouriteEdit {
         MOVE_LEFT,
@@ -43,6 +58,9 @@ public final class ShieldLauncherActivity extends Activity {
 
     private TvAppRepository repository;
     private ShieldHomeStore store;
+    private ShieldNowPlayingManager nowPlayingManager;
+    private Runnable unsubscribeNowPlaying;
+    private NowPlayingSnapshot nowPlayingSnapshot;
     private ExecutorService executor;
     private FrameLayout root;
     private View currentView;
@@ -54,10 +72,26 @@ public final class ShieldLauncherActivity extends Activity {
     private BroadcastReceiver packageReceiver;
     private boolean receiverRegistered;
     private boolean destroyed;
+    private boolean resumed;
     private int optionalGeneration;
+
+    private final BackPressGesture backPressGesture = new BackPressGesture();
+    private Handler inputHandler;
+    private Runnable backHoldRunnable;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+
+        inputHandler = new Handler(Looper.getMainLooper());
+        backHoldRunnable = () -> {
+            if (destroyed || !backPressGesture.onHoldTriggered()) {
+                return;
+            }
+            if (currentView instanceof ShieldHomeView) {
+                ((ShieldHomeView) currentView).resetToFirstFavourite();
+            }
+            openSystemSettings();
+        };
 
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -67,11 +101,39 @@ public final class ShieldLauncherActivity extends Activity {
 
         repository = new TvAppRepository(this);
         store = new ShieldHomeStore(this);
+        nowPlayingManager = ShieldNowPlayingManager.get(this);
+        unsubscribeNowPlaying = nowPlayingManager.state().subscribe(this::onNowPlayingChanged);
+        nowPlayingManager.refreshAccess();
         executor = Executors.newSingleThreadExecutor();
 
         registerPackageReceiver();
         showHome();
         reloadApps();
+        // Unified profile selection does not request accessibility or replace Android HOME.
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        resumed = true;
+        com.boop.shared.BoopState.INSTANCE.homeVisible(currentPage == Page.HOME);
+        if (nowPlayingManager != null) {
+            nowPlayingManager.refreshAccess();
+        }
+        if (root != null && store != null && currentPage == Page.SETTINGS) {
+            showSettings();
+        }
+    }
+
+    private void onNowPlayingChanged(NowPlayingSnapshot snapshot) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            runOnUiThread(() -> onNowPlayingChanged(snapshot));
+            return;
+        }
+        nowPlayingSnapshot = snapshot;
+        if (destroyed || currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) {
+            return;
+        }
+        ((ShieldHomeView) currentView).setNowPlaying(snapshot);
     }
 
     private void reloadApps() {
@@ -121,14 +183,22 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showHome() {
+        showHome(false);
+    }
+
+    private void showHome(boolean focusFirstFavourite) {
         currentPage = Page.HOME;
+        com.boop.shared.BoopState.INSTANCE.homeVisible(resumed);
         int generation = ++optionalGeneration;
         List<TvAppEntry> favourites = favouriteEntries();
 
         ShieldHomeView view = new ShieldHomeView(this);
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
-        view.render(favourites, List.of(), callbacks);
+        view.render(favourites, List.of(), nowPlayingSnapshot, callbacks);
         transitionTo(view);
+        if (focusFirstFavourite) {
+            view.post(view::resetToFirstFavourite);
+        }
 
         List<HomeRowProvider> providers;
         try {
@@ -171,7 +241,10 @@ public final class ShieldLauncherActivity extends Activity {
                         || currentView != view) {
                     return;
                 }
-                view.render(favouriteEntries(), readyRows, homeCallbacks());
+                view.render(favouriteEntries(), readyRows, nowPlayingSnapshot, homeCallbacks());
+                if (focusFirstFavourite) {
+                    view.post(view::resetToFirstFavourite);
+                }
             });
         });
     }
@@ -182,26 +255,59 @@ public final class ShieldLauncherActivity extends Activity {
                 launchApp(entry);
             }
 
-            @Override public void onFavouriteLongPressed(TvAppEntry entry) {
-                showFavouriteActions(entry);
+            @Override public void onFavouriteOrderCommitted(List<String> components) {
+                List<String> stable = components == null ? List.of() : List.copyOf(components);
+                if (!stable.equals(favouriteComponents)) {
+                    saveFavouriteEdit(stable);
+                    showHome();
+                }
             }
 
             @Override public void onOpenApps() {
                 showApps();
             }
 
-            @Override public void onOpenSettings() {
+            @Override public void onOpenHomeRows() {
                 showSettings();
+            }
+
+            @Override public void onOpenSystemSettings() {
+                openSystemSettings();
             }
 
             @Override public void onContentSelected(HomeContentCard card) {
                 launchContent(card);
+            }
+
+            @Override public void onNowPlayingPrevious() {
+                if (nowPlayingManager != null) nowPlayingManager.previous();
+            }
+
+            @Override public void onNowPlayingRewind() {
+                if (nowPlayingManager != null) nowPlayingManager.rewind();
+            }
+
+            @Override public void onNowPlayingPlayPause() {
+                if (nowPlayingManager != null) nowPlayingManager.togglePlayPause();
+            }
+
+            @Override public void onNowPlayingFastForward() {
+                if (nowPlayingManager != null) nowPlayingManager.fastForward();
+            }
+
+            @Override public void onNowPlayingNext() {
+                if (nowPlayingManager != null) nowPlayingManager.next();
+            }
+
+            @Override public void onOpenNowPlayingSource() {
+                if (nowPlayingManager != null) nowPlayingManager.openSource(ShieldLauncherActivity.this);
             }
         };
     }
 
     private void showApps() {
         currentPage = Page.APPS;
+        com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
 
         ShieldAppsView view = new ShieldAppsView(this);
@@ -219,26 +325,125 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void showSettings() {
         currentPage = Page.SETTINGS;
+        com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
 
         boolean playNext = store.rowEnabled(OptionalRowRegistry.Key.PLAY_NEXT);
         boolean appChannels = store.rowEnabled(OptionalRowRegistry.Key.APP_CHANNELS);
+        boolean homeOverrideEnabled = isHomeOverrideEnabled();
+        boolean nowPlayingAccess = nowPlayingManager != null && nowPlayingManager.hasAccess();
+        String preferredPlayer = store.nowPlayingPlayerPackage();
+        String playerLabel = nowPlayingPlayerLabel(preferredPlayer);
         ShieldHomeSettingsView view = new ShieldHomeSettingsView(this);
-        view.render(playNext, appChannels, new ShieldHomeSettingsView.Callbacks() {
+        view.render(
+                playNext,
+                appChannels,
+                homeOverrideEnabled,
+                nowPlayingAccess,
+                playerLabel,
+                new ShieldHomeSettingsView.Callbacks() {
             @Override public void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
                 store.setRowEnabled(key, enabled);
                 showSettings();
             }
 
             @Override public void onChooseHomeApp() {
-                openHomeSettings();
+                openAccessibilitySettings();
+            }
+
+            @Override public void onMakeBoopHome() {
+                openAccessibilitySettings();
+            }
+
+            @Override public void onEnableHomeOverride() {
+                startActivity(new Intent().setClassName(getPackageName(),"com.boop.alpha1.BoopProfileActivity"));
+            }
+
+            @Override public void onRetireStockHome() {
+                startActivity(new Intent().setClassName(getPackageName(),"com.boop.shieldoverlay.BoopHomeActivity"));
+            }
+
+            @Override public void onRestoreStockHome() {
+                openSystemSettings();
+            }
+
+            @Override public void onOpenNowPlayingAccess() {
+                if (nowPlayingManager == null
+                        || !nowPlayingManager.openAccessSettings(ShieldLauncherActivity.this)) {
+                    openSystemSettings();
+                }
+            }
+
+            @Override public void onChooseNowPlayingPlayer() {
+                showNowPlayingPlayerChooser();
             }
 
             @Override public void onBackHome() {
                 showHome();
             }
         });
-        transitionTo(view);
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.addView(view);
+        transitionTo(scroll);
+    }
+
+    private String nowPlayingPlayerLabel(String packageName) {
+        String cleaned = packageName == null ? "" : packageName.trim();
+        if (cleaned.isEmpty()) {
+            return "Automatic";
+        }
+        for (TvAppEntry entry : installedApps) {
+            if (entry == null || !cleaned.equals(entry.packageName())) {
+                continue;
+            }
+            String label = entry.label() == null ? "" : entry.label().trim();
+            return label.isEmpty() ? cleaned : label;
+        }
+        return cleaned;
+    }
+
+    private void showNowPlayingPlayerChooser() {
+        ArrayList<String> packages = new ArrayList<>();
+        ArrayList<String> labels = new ArrayList<>();
+        HashSet<String> seenPackages = new HashSet<>();
+
+        packages.add("");
+        labels.add("Automatic");
+        for (TvAppEntry entry : installedApps) {
+            if (entry == null) {
+                continue;
+            }
+            String packageName = entry.packageName() == null ? "" : entry.packageName().trim();
+            if (packageName.isEmpty() || !seenPackages.add(packageName)) {
+                continue;
+            }
+            String label = entry.label() == null ? "" : entry.label().trim();
+            packages.add(packageName);
+            labels.add(label.isEmpty() ? packageName : label);
+        }
+
+        String current = store.nowPlayingPlayerPackage();
+        int checked = packages.indexOf(current);
+        if (checked < 0) checked = 0;
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Now Playing player")
+                .setSingleChoiceItems(labels.toArray(new String[0]), checked, null)
+                .setNegativeButton("Cancel", null)
+                .create();
+        dialog.setOnShowListener(ignored -> dialog.getListView().setOnItemClickListener(
+                (parent, view, position, id) -> {
+                    String selectedPackage = packages.get(position);
+                    if (nowPlayingManager != null) {
+                        nowPlayingManager.setPreferredPackage(selectedPackage);
+                    } else {
+                        store.setNowPlayingPlayerPackage(selectedPackage);
+                    }
+                    dialog.dismiss();
+                    showSettings();
+                }));
+        dialog.show();
     }
 
     private void toggleFavourite(TvAppEntry entry) {
@@ -250,33 +455,6 @@ public final class ShieldLauncherActivity extends Activity {
                 : FavouriteOrder.add(favouriteComponents, entry.component());
         saveFavouriteEdit(next);
         showApps();
-    }
-
-    private void showFavouriteActions(TvAppEntry entry) {
-        if (entry == null || entry.component().isEmpty()) {
-            return;
-        }
-        String[] actions = {"Move left", "Move right", "Remove from favourites"};
-        new AlertDialog.Builder(this)
-                .setTitle(entry.label())
-                .setItems(actions, (dialog, which) -> {
-                    FavouriteEdit edit;
-                    if (which == 0) {
-                        edit = FavouriteEdit.MOVE_LEFT;
-                    } else if (which == 1) {
-                        edit = FavouriteEdit.MOVE_RIGHT;
-                    } else {
-                        edit = FavouriteEdit.REMOVE;
-                    }
-                    List<String> next = applyFavouriteEdit(
-                            favouriteComponents, entry.component(), edit);
-                    if (next.equals(favouriteComponents)) {
-                        return;
-                    }
-                    saveFavouriteEdit(next);
-                    showHome();
-                })
-                .show();
     }
 
     static List<String> applyFavouriteEdit(
@@ -362,18 +540,225 @@ public final class ShieldLauncherActivity extends Activity {
         }
     }
 
+    static String systemSettingsAction() {
+        return Settings.ACTION_SETTINGS;
+    }
+
+    static String homePromptKey() {
+        return KEY_HOME_PROMPT_SHOWN;
+    }
+
+    static String preferredHomeChooserAction() {
+        return Settings.ACTION_HOME_SETTINGS;
+    }
+
+    static String homeOverrideSettingsAction() {
+        return Settings.ACTION_ACCESSIBILITY_SETTINGS;
+    }
+
+    private void openSystemSettings() {
+        try {
+            startActivity(new Intent(systemSettingsAction()));
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            // System Settings is OS-owned. HOME remains usable if firmware omits the route.
+        }
+    }
+
+    private void maybePromptForHomeOverride() {
+        if (isHomeOverrideEnabled()) {
+            return;
+        }
+        SharedPreferences prefs = getSharedPreferences(SETUP_PREFS, MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_HOME_OVERRIDE_PROMPT_SHOWN, false)) {
+            return;
+        }
+        prefs.edit().putBoolean(KEY_HOME_OVERRIDE_PROMPT_SHOWN, true).apply();
+        new AlertDialog.Builder(this)
+                .setTitle("Use BOOP as Shield Home")
+                .setMessage("Shield keeps Android TV Home locked. Turn on BOOP Home Override once. BOOP only watches for the stock Home screen and does not read screen content or intercept remote keys.")
+                .setPositiveButton("Open Accessibility", (dialog, which) -> openAccessibilitySettings())
+                .setNegativeButton("Not now", null)
+                .show();
+    }
+
+    private void openAccessibilitySettings() {
+        try {
+            startActivity(new Intent(homeOverrideSettingsAction()));
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            openSystemSettings();
+        }
+    }
+
+    private boolean isHomeOverrideEnabled() {
+        AccessibilityManager manager =
+                (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
+        if (manager == null) {
+            return false;
+        }
+        List<AccessibilityServiceInfo> enabled;
+        try {
+            enabled = manager.getEnabledAccessibilityServiceList(
+                    AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+        if (enabled == null) {
+            return false;
+        }
+        String serviceName = ShieldHomeOverrideService.class.getName();
+        for (AccessibilityServiceInfo info : enabled) {
+            ResolveInfo resolveInfo = info == null ? null : info.getResolveInfo();
+            if (resolveInfo == null || resolveInfo.serviceInfo == null) {
+                continue;
+            }
+            if (getPackageName().equals(resolveInfo.serviceInfo.packageName)
+                    && serviceName.equals(resolveInfo.serviceInfo.name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void maybePromptForHomeRole() {
+        SharedPreferences prefs = getSharedPreferences(SETUP_PREFS, MODE_PRIVATE);
+        boolean alreadyShown = prefs.getBoolean(KEY_HOME_PROMPT_SHOWN, false);
+        if (!HomeReplacementPolicy.shouldAutoPrompt(isBoopDefaultHome(), alreadyShown)) {
+            return;
+        }
+        prefs.edit().putBoolean(KEY_HOME_PROMPT_SHOWN, true).apply();
+        requestHomeRole();
+    }
+
+    private void requestHomeRole() {
+        if (isBoopDefaultHome()) {
+            return;
+        }
+
+        try {
+            startActivity(new Intent(preferredHomeChooserAction()));
+            return;
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            // Fall through to the platform HOME role request if Shield omits the chooser.
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roles = getSystemService(RoleManager.class);
+            if (roles != null && roles.isRoleAvailable(RoleManager.ROLE_HOME)) {
+                try {
+                    startActivity(roles.createRequestRoleIntent(RoleManager.ROLE_HOME));
+                    return;
+                } catch (ActivityNotFoundException | SecurityException ignored) {
+                    // Fall through to general Settings.
+                }
+            }
+        }
+        openSystemSettings();
+    }
+
+    private boolean isBoopDefaultHome() {
+        return HomeReplacementPolicy.isOwnResolvedHome(
+                resolvedHomePackage(), getPackageName());
+    }
+
+    private String resolvedHomePackage() {
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        ResolveInfo resolved;
+        try {
+            resolved = getPackageManager().resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+        return resolved != null && resolved.activityInfo != null
+                ? resolved.activityInfo.packageName
+                : null;
+    }
+
+    private String findStockHomePackage() {
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        List<ResolveInfo> resolved;
+        try {
+            resolved = getPackageManager().queryIntentActivities(
+                    home, PackageManager.MATCH_DISABLED_COMPONENTS);
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+
+        ArrayList<HomeReplacementPolicy.Candidate> candidates = new ArrayList<>();
+        for (ResolveInfo info : resolved) {
+            if (info == null || info.activityInfo == null || info.activityInfo.applicationInfo == null) {
+                continue;
+            }
+            ApplicationInfo app = info.activityInfo.applicationInfo;
+            boolean system = (app.flags
+                    & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+            boolean enabled = app.enabled && info.activityInfo.enabled;
+            candidates.add(new HomeReplacementPolicy.Candidate(
+                    info.activityInfo.packageName, system, enabled));
+        }
+        return HomeReplacementPolicy.selectStockHome(
+                candidates, getPackageName(), resolvedHomePackage());
+    }
+
+    private void openStockHomeAppInfo() {
+        String stockPackage = findStockHomePackage();
+        if (stockPackage == null) {
+            openHomeSettings();
+            return;
+        }
+        openPackageDetails(stockPackage);
+    }
+
+    private void restoreStockHome() {
+        String stockPackage = findStockHomePackage();
+        if (stockPackage == null) {
+            openHomeSettings();
+            return;
+        }
+        if (isPackageDisabled(stockPackage)) {
+            openPackageDetails(stockPackage);
+            return;
+        }
+        openHomeSettings();
+    }
+
+    private boolean isPackageDisabled(String packageName) {
+        PackageManager pm = getPackageManager();
+        try {
+            int state = pm.getApplicationEnabledSetting(packageName);
+            if (state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                    || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
+                    || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED) {
+                return true;
+            }
+            if (state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) {
+                return false;
+            }
+            ApplicationInfo app = pm.getApplicationInfo(
+                    packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
+            return !app.enabled;
+        } catch (PackageManager.NameNotFoundException | IllegalArgumentException ignored) {
+            return false;
+        }
+    }
+
+    private void openPackageDetails(String packageName) {
+        try {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    .setData(Uri.fromParts("package", packageName, null));
+            startActivity(intent);
+        } catch (ActivityNotFoundException | SecurityException ignored) {
+            openSystemSettings();
+        }
+    }
+
     private void openHomeSettings() {
         try {
-            startActivity(new Intent(Settings.ACTION_HOME_SETTINGS));
+            startActivity(new Intent(preferredHomeChooserAction()));
             return;
         } catch (ActivityNotFoundException | SecurityException ignored) {
             // Fall through to general settings on firmware without a HOME chooser surface.
         }
-        try {
-            startActivity(new Intent(Settings.ACTION_SETTINGS));
-        } catch (ActivityNotFoundException | SecurityException ignored) {
-            // Settings remains non-destructive and optional.
-        }
+        openSystemSettings();
     }
 
     private void registerPackageReceiver() {
@@ -405,6 +790,11 @@ public final class ShieldLauncherActivity extends Activity {
             return;
         }
         View previous = currentView;
+        // Detach the old presentation before attaching another Home puppet.
+        if (previous != null && previous != next) {
+            previous.animate().cancel();
+            root.removeView(previous);
+        }
         currentView = next;
 
         next.setAlpha(0f);
@@ -418,7 +808,7 @@ public final class ShieldLauncherActivity extends Activity {
                 .setDuration(PAGE_TRANSITION_MS)
                 .start();
 
-        if (previous != null && previous != next) {
+        if (previous != null && previous != next && previous.getParent() == root) {
             previous.animate()
                     .alpha(0f)
                     .translationX(-dp(24))
@@ -432,19 +822,64 @@ public final class ShieldLauncherActivity extends Activity {
         }
     }
 
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (event.getRepeatCount() == 0) {
+                    backPressGesture.onDown();
+                    if (inputHandler != null && backHoldRunnable != null) {
+                        inputHandler.removeCallbacks(backHoldRunnable);
+                        inputHandler.postDelayed(
+                                backHoldRunnable,
+                                ViewConfiguration.getLongPressTimeout());
+                    }
+                }
+                return true;
+            }
+
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                if (inputHandler != null && backHoldRunnable != null) {
+                    inputHandler.removeCallbacks(backHoldRunnable);
+                }
+                if (event.isCanceled()) {
+                    backPressGesture.cancel();
+                } else if (backPressGesture.onUpShouldRunShortBack()) {
+                    handleShortBack();
+                }
+                return true;
+            }
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    private void handleShortBack() {
+        if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
+            ((ShieldHomeView) currentView).resetToFirstFavourite();
+            return;
+        }
+        showHome(true);
+    }
+
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     @Override public void onBackPressed() {
-        if (currentPage != Page.HOME) {
-            showHome();
-        }
+        handleShortBack();
     }
 
     @Override protected void onDestroy() {
         destroyed = true;
         ++optionalGeneration;
+        if (unsubscribeNowPlaying != null) {
+            unsubscribeNowPlaying.run();
+            unsubscribeNowPlaying = null;
+        }
+        if (inputHandler != null && backHoldRunnable != null) {
+            inputHandler.removeCallbacks(backHoldRunnable);
+        }
+        backPressGesture.cancel();
         if (receiverRegistered && packageReceiver != null) {
             try {
                 unregisterReceiver(packageReceiver);
@@ -457,5 +892,11 @@ public final class ShieldLauncherActivity extends Activity {
             executor.shutdownNow();
         }
         super.onDestroy();
+    }
+
+    @Override protected void onPause() {
+        resumed = false;
+        com.boop.shared.BoopState.INSTANCE.homeVisible(false);
+        super.onPause();
     }
 }

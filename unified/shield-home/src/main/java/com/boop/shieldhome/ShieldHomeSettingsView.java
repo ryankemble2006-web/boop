@@ -10,11 +10,17 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** Presentation-only launcher settings; platform actions are owned by the activity. */
+/** Presentation-only launcher controls; platform actions are owned by the activity. */
 public final class ShieldHomeSettingsView extends LinearLayout {
     public interface Callbacks {
         void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled);
         void onChooseHomeApp();
+        default void onMakeBoopHome() { onChooseHomeApp(); }
+        default void onRetireStockHome() { }
+        default void onRestoreStockHome() { onChooseHomeApp(); }
+        default void onEnableHomeOverride() { onChooseHomeApp(); }
+        default void onOpenNowPlayingAccess() { }
+        default void onChooseNowPlayingPlayer() { }
         void onBackHome();
     }
 
@@ -27,21 +33,92 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         setOrientation(VERTICAL);
         setGravity(Gravity.CENTER_VERTICAL);
         setBackgroundColor(Color.BLACK);
-        setPadding(dp(52), dp(38), dp(52), dp(36));
+        setPadding(dp(52), dp(30), dp(52), dp(28));
         setClipChildren(false);
         setClipToPadding(false);
     }
 
+    public static String launcherSettingsLabel() {
+        return "Launcher Settings";
+    }
+
     public void render(boolean playNext, boolean appChannels, Callbacks callbacks) {
+        render(playNext, appChannels, false, false, "Automatic", callbacks);
+    }
+
+    public void render(
+            boolean playNext,
+            boolean appChannels,
+            boolean homeOverrideEnabled,
+            Callbacks callbacks) {
+        render(playNext, appChannels, homeOverrideEnabled, false, "Automatic", callbacks);
+    }
+
+    public void render(
+            boolean playNext,
+            boolean appChannels,
+            boolean homeOverrideEnabled,
+            boolean nowPlayingAccess,
+            String nowPlayingPlayerLabel,
+            Callbacks callbacks) {
         removeAllViews();
 
-        TextView title = text("Launcher settings", 28);
+        TextView title = text(launcherSettingsLabel(), 28);
         addView(title, wrap());
-        addSpacer(dp(26));
+        addSpacer(dp(18));
 
-        TextView section = text("Optional Home Rows", 20);
+        TextView homeSection = text("Shield Home", 20);
+        addView(homeSection, wrap());
+        addSpacer(dp(10));
+
+        TextView overrideHome = action(
+                "BOOP device and room settings");
+        overrideHome.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onEnableHomeOverride();
+        });
+        addView(overrideHome, rowParams());
+        addSpacer(dp(10));
+
+        TextView stockInfo = action("Home Assistant controls");
+        stockInfo.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onRetireStockHome();
+        });
+        addView(stockInfo, rowParams());
+        addSpacer(dp(10));
+
+        TextView restoreHome = action("Android settings");
+        restoreHome.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onRestoreStockHome();
+        });
+        addView(restoreHome, rowParams());
+
+        addSpacer(dp(20));
+
+        TextView nowPlayingSection = text("Now Playing", 20);
+        addView(nowPlayingSection, wrap());
+        addSpacer(dp(10));
+
+        TextView access = action("Media access: " + (nowPlayingAccess ? "ON" : "OFF"));
+        access.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onOpenNowPlayingAccess();
+        });
+        addView(access, rowParams());
+        addSpacer(dp(10));
+
+        String playerLabel = nowPlayingPlayerLabel == null || nowPlayingPlayerLabel.trim().isEmpty()
+                ? "Automatic"
+                : nowPlayingPlayerLabel.trim();
+        TextView player = action("Player: " + playerLabel);
+        player.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onChooseNowPlayingPlayer();
+        });
+        addView(player, rowParams());
+
+        addSpacer(dp(20));
+
+        TextView section = text("Optional rows", 20);
         addView(section, wrap());
-        addSpacer(dp(12));
+        addSpacer(dp(10));
 
         TextView playNextRow = action("Play Next: " + (playNext ? "ON" : "OFF"));
         playNextRow.setOnClickListener(v -> {
@@ -50,7 +127,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
             }
         });
         addView(playNextRow, rowParams());
-        addSpacer(dp(12));
+        addSpacer(dp(10));
 
         TextView channelsRow = action("App content rows: " + (appChannels ? "ON" : "OFF"));
         channelsRow.setOnClickListener(v -> {
@@ -60,14 +137,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         });
         addView(channelsRow, rowParams());
 
-        addSpacer(dp(30));
-
-        TextView chooseHome = action("Choose Home app");
-        chooseHome.setOnClickListener(v -> {
-            if (callbacks != null) callbacks.onChooseHomeApp();
-        });
-        addView(chooseHome, rowParams());
-        addSpacer(dp(12));
+        addSpacer(dp(20));
 
         TextView back = action("Back to Home");
         back.setOnClickListener(v -> {
@@ -89,25 +159,25 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         view.setGravity(Gravity.CENTER_VERTICAL);
         view.setFocusable(true);
         view.setClickable(true);
-        view.setPadding(dp(20), dp(12), dp(20), dp(12));
-        view.setBackground(actionBackground());
-        view.setOnFocusChangeListener((v, focused) -> v.animate()
-                .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
-                .scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
-                .setDuration(TvAppCardView.FOCUS_DURATION_MS)
-                .start());
+        view.setPadding(dp(20), dp(10), dp(20), dp(10));
+        view.setBackground(actionBackground(false));
+        view.setOnFocusChangeListener((v, focused) -> {
+            v.setBackground(actionBackground(focused));
+            v.animate()
+                    .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS)
+                    .start();
+        });
         return view;
     }
 
-    private GradientDrawable actionBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.rgb(42, 42, 42));
-        background.setCornerRadius(dp(10));
-        return background;
+    private GradientDrawable actionBackground(boolean focused) {
+        return FocusChrome.filled(getContext(), Color.rgb(42, 42, 42), 10, focused);
     }
 
     private LayoutParams rowParams() {
-        return new LayoutParams(dp(420), dp(68));
+        return new LayoutParams(dp(440), dp(62));
     }
 
     private LayoutParams wrap() {

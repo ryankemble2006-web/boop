@@ -38,16 +38,21 @@ final class HomeAssistantDeviceSetup {
     private static final int TIMEOUT_MS = 5000;
     private static final long WEBHOOK_READY_TIMEOUT_MS = 5000L;
     private static final long WEBHOOK_RETRY_MS = 250L;
-    private static final String HOME_AREA = "Living Room";
     private static final String AREA_LIST_OPERATION = "config/area_registry/list";
     private static final String DEVICE_UPDATE_OPERATION = "config/device_registry/update";
 
     private final SecureTokenStore tokenStore;
     private final HomeAssistantAuth auth;
+    private final BoopRoomSource roomSource;
 
     HomeAssistantDeviceSetup(SecureTokenStore tokenStore, HomeAssistantAuth auth) {
+        this(tokenStore, auth, BoopRoomSource.fixed(BoopRoom.DEFAULT_NAME));
+    }
+
+    HomeAssistantDeviceSetup(SecureTokenStore tokenStore, HomeAssistantAuth auth, BoopRoomSource roomSource) {
         this.tokenStore = tokenStore;
         this.auth = auth;
+        this.roomSource = roomSource;
     }
 
     SetupResult ensureReady() {
@@ -56,12 +61,23 @@ final class HomeAssistantDeviceSetup {
             return SetupResult.AUTH_REQUIRED;
         }
 
-        if (tokenStore.hasHaDeviceIdentity()) {
+        BoopRoom room = roomSource.currentRoom();
+        String existingDeviceId = tokenStore.getHaDeviceId();
+        if (!BoopRoomSetupPolicy.needsAssignment(
+                existingDeviceId, tokenStore.getHaDeviceRoomId(), room)) {
+            // Migrate the established Living Room identity once, without an unnecessary
+            // registry update. Subsequent readiness checks remain entirely local.
+            if (tokenStore.getHaDeviceRoomId() == null) {
+                tokenStore.saveHaDeviceRoomId(room.id());
+            }
             return SetupResult.READY;
         }
 
         try {
             String accessToken = auth.freshAccessToken();
+            if (existingDeviceId != null && !existingDeviceId.isEmpty()) {
+                return assignRoom(baseUrl, accessToken, existingDeviceId, room);
+            }
             String webhookId = tokenStore.getHaWebhookId();
             if (webhookId == null || webhookId.isEmpty()) {
                 RegistrationResult registration = register(baseUrl, accessToken);
@@ -77,7 +93,7 @@ final class HomeAssistantDeviceSetup {
                 return lookup.result;
             }
 
-            return assignLivingRoom(baseUrl, accessToken, lookup.deviceId);
+            return assignRoom(baseUrl, accessToken, lookup.deviceId, room);
         } catch (HomeAssistantAuth.AuthRejectedException e) {
             return SetupResult.AUTH_REQUIRED;
         } catch (IOException e) {
@@ -134,8 +150,12 @@ final class HomeAssistantDeviceSetup {
         return new DeviceLookup(SetupResult.UNREACHABLE, null);
     }
 
-    private SetupResult assignLivingRoom(
-            String baseUrl, String accessToken, String haDeviceId) throws InterruptedException {
+    private SetupResult assignRoom(
+            String baseUrl, String accessToken, String haDeviceId, BoopRoom room)
+            throws InterruptedException {
+        // Invalidate the previous binding before HA may mutate the remote device. If
+        // the response is lost or the selected room changes, no stale room can read READY.
+        tokenStore.markHaDeviceRoomAssignmentPending();
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 .readTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
@@ -148,6 +168,7 @@ final class HomeAssistantDeviceSetup {
         SetupSocketListener listener = new SetupSocketListener(
                 accessToken,
                 haDeviceId,
+                room,
                 done,
                 outcome,
                 terminal);
@@ -175,6 +196,7 @@ final class HomeAssistantDeviceSetup {
     private final class SetupSocketListener extends WebSocketListener {
         private final String accessToken;
         private final String haDeviceId;
+        private final BoopRoom room;
         private final CountDownLatch done;
         private final AtomicReference<SetupResult> outcome;
         private final AtomicBoolean terminal;
@@ -182,11 +204,13 @@ final class HomeAssistantDeviceSetup {
         SetupSocketListener(
                 String accessToken,
                 String haDeviceId,
+                BoopRoom room,
                 CountDownLatch done,
                 AtomicReference<SetupResult> outcome,
                 AtomicBoolean terminal) {
             this.accessToken = accessToken;
             this.haDeviceId = haDeviceId;
+            this.room = room;
             this.done = done;
             this.outcome = outcome;
             this.terminal = terminal;
@@ -235,7 +259,16 @@ final class HomeAssistantDeviceSetup {
                         finish(SetupResult.FAILED);
                         return;
                     }
-                    String areaId = HomeAssistantDeviceSetupProtocol.findAreaId(areas, HOME_AREA);
+                    String areaId = HomeAssistantDeviceSetupProtocol.findAreaId(areas, room.name());
+                    if (areaId == null && !BoopRoom.DEFAULT_ID.equals(room.id())) {
+                        for (int i = 0; i < areas.length(); i++) {
+                            JSONObject area = areas.optJSONObject(i);
+                            if (area != null && room.id().equals(area.optString("area_id", ""))) {
+                                areaId = room.id();
+                                break;
+                            }
+                        }
+                    }
                     if (areaId == null) {
                         finish(SetupResult.AREA_NOT_FOUND);
                         return;
@@ -249,7 +282,12 @@ final class HomeAssistantDeviceSetup {
                 }
 
                 if (id == 2) {
+                    if (!BoopRoomSetupPolicy.canPersist(room, roomSource.currentRoom())) {
+                        finish(SetupResult.FAILED);
+                        return;
+                    }
                     tokenStore.saveHaDeviceId(haDeviceId);
+                    tokenStore.saveHaDeviceRoomId(room.id());
                     finish(SetupResult.READY);
                     return;
                 }

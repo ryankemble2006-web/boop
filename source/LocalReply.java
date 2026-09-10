@@ -14,6 +14,8 @@ final class LocalReply {
             case TARGET_OFFLINE:
                 return "The " + outcome.area().toLowerCase(Locale.ROOT) + " "
                         + outcome.targetName().toLowerCase(Locale.ROOT) + " is offline.";
+            case AMBIGUOUS_TARGET:
+                return "More than one device matches. Say the full device name.";
             case NO_TARGET:
                 return "I can't find that.";
             case NO_MATCH:

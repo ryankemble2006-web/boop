@@ -26,6 +26,7 @@ final class SecureTokenStore {
     private static final String PREF_BOOP_REGISTRATION_ID = "boop_registration_id";
     private static final String PREF_HA_WEBHOOK_ID = "ha_webhook_id";
     private static final String PREF_HA_DEVICE_ID = "ha_device_id";
+    private static final String PREF_HA_DEVICE_ROOM_ID = "ha_device_room_id";
 
     private final SharedPreferences prefs;
 
@@ -105,6 +106,18 @@ final class SecureTokenStore {
         prefs.edit().putString(PREF_HA_DEVICE_ID, deviceId).apply();
     }
 
+    String getHaDeviceRoomId() {
+        return prefs.getString(PREF_HA_DEVICE_ROOM_ID, null);
+    }
+
+    void saveHaDeviceRoomId(String roomId) {
+        prefs.edit().putString(PREF_HA_DEVICE_ROOM_ID, roomId).apply();
+    }
+
+    void markHaDeviceRoomAssignmentPending() {
+        saveHaDeviceRoomId(BoopRoomSetupPolicy.PENDING_ROOM_ID);
+    }
+
     boolean hasHaDeviceIdentity() {
         String deviceId = getHaDeviceId();
         return deviceId != null && !deviceId.isEmpty();
@@ -114,6 +127,7 @@ final class SecureTokenStore {
         prefs.edit()
                 .remove(PREF_HA_WEBHOOK_ID)
                 .remove(PREF_HA_DEVICE_ID)
+                .remove(PREF_HA_DEVICE_ROOM_ID)
                 .apply();
     }
 

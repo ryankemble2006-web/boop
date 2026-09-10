@@ -4,6 +4,7 @@ final class CommandOutcome {
     enum Status {
         SUCCESS,
         TARGET_OFFLINE,
+        AMBIGUOUS_TARGET,
         NO_MATCH,
         NO_TARGET,
         FAILED,
@@ -47,6 +48,10 @@ final class CommandOutcome {
 
     static CommandOutcome targetOffline(String targetName, String area) {
         return new CommandOutcome(Status.TARGET_OFFLINE, targetName, area);
+    }
+
+    static CommandOutcome ambiguousTarget() {
+        return new CommandOutcome(Status.AMBIGUOUS_TARGET, "", "");
     }
 
     static CommandOutcome noMatch() {

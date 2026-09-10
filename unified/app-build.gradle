@@ -20,8 +20,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 91
-        versionName "1.2.91-unified-static-track-state-fix"
+        versionCode 92
+        versionName "1.2.92-canonical-core"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }
@@ -56,6 +56,7 @@ android {
 dependencies {
     implementation project(':launcher-lib')
     implementation project(':shield-lib')
+    implementation project(':shield-home-lib')
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation files('libs/sherpa-onnx-1.13.7.aar')
     implementation 'org.apache.commons:commons-compress:1.28.0'
