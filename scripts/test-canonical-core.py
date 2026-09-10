@@ -5,6 +5,11 @@ root = Path(__file__).resolve().parents[1]
 java_home = os.environ.get('JAVA_HOME', '')
 javac = shutil.which('javac') or str(Path(java_home) / 'bin/javac')
 java = shutil.which('java') or str(Path(java_home) / 'bin/java')
+with tempfile.TemporaryDirectory() as output:
+    subprocess.run([javac, '-encoding', 'UTF-8', '-d', output,
+        str(root/'unified/recipes/BoopRecipeSession.java'),
+        str(root/'tests/canonical/RecipeCheck.java')], check=True)
+    subprocess.run([java, '-cp', output, 'com.boop.alpha1.RecipeCheck'], check=True)
 sources = list((root / 'unified/shared').glob('*.java'))
 with tempfile.TemporaryDirectory() as output:
     subprocess.run([javac, '-d', output, *map(str, sources), str(root/'tests/canonical/SharedStateCheck.java')], check=True)

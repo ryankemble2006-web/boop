@@ -1,12 +1,47 @@
-## v113 TV banner candidate
+## v113 verified and installed; tablet recipes active, 2026-09-10
 
-Ryan requested new TV banners for BOOP and BOOP Shield Home; Animation Lab is
-explicitly excluded. This branch changes only its own banner resources/manifest
-and version. Dark 320x180 banner, unchanged approved eye bitmap, vector app label.
-No animations, permissions, launcher routing or media behaviour changed. Android
-resource compilation and XML parsing pass locally; signed build and on-TV visual
-acceptance pending. Preserve installed rollback. Canonical v113 also retains v112
-album browsing, which still needs integrated physical acceptance.
+Banner source 5e043eaa46e2bac7706780ded50ee020a9fb8ceb; run34508703082 completed/success;
+artifact10165030502. Independent ZIP SHA256 94371313e7424e82b591a588ad35ef618a35170e5f668614c65e91911ed405cc.
+APK SHA256 4fb4285b3f3f06ba0669f8cb6580a82dbe778aca2998fb0104dc732f5621b300.
+Package com.boop.alpha1, version113 / 1.2.113-tv-banner; embedded source matches.
+Android apksigner verified permanent signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde,
+matching the actual installed v111 APK, privately preserved before installation.
+Approved adb update succeeded; Android independently reports v113. Agent opened Home
+and inspected current metadata/artwork. No new permissions or roles. No GitHub visual tests.
+Ryan's v111 scoped room/HA/media/cancellation acceptance remains the latest recorded
+physical acceptance. v113 visual acceptance and integrated artwork-to-album acceptance
+remain pending; component Deezer browsing evidence does not prove the integrated click.
+Standalone v24 was also verified/installed on its owning branch; heartbeat is paused.
+
+Ryan explicitly approved tablet recipes NOW, superseding the local September17 parking note.
+v114 is the implementation candidate; see docs/superpowers/plans/2026-09-10-tablet-recipes.md.
+Existing selected conversation provider generates the recipe; local cooking navigation
+precedes media handling on tablets only. Ingredient additions/corrections are collected
+until explicit readiness. No new microphone, provider or subscription. Pad7 on a magnetic
+keyboard stand is the target; other profile routing remains unchanged.
+Functional JVM checks pass locally. Android compilation/signing and real Pad/provider
+verification are still pending at this implementation receipt. No v114 install authorized
+by the banner approval. Existing untracked boop-build belongs to prior work and is preserved.
+
+### Retained work, not complete
+
+- Home spacing/black-blue polish and readable remote-friendly top icons remain unfinished;
+  BOOP placement stays for later.
+- EastEnders private wide/square artwork remains owned by another task; do not publish it.
+- Animation transplant remains PARKED to save credits. Natural voice volume, cadence/pitch
+  and late Done tracing remain deferred.
+- Startup Manager integration is approved in direction, not implemented. Read Turbo's
+  shield-turbo/ docs at shield-turbo-v01 c001d591aecedc2ab065850b8241953f3563068f.
+  StartupPolicy uses per-app background app-ops; StartupLedger keeps original app-op and
+  enabled state in private preferences, so copying UI alone cannot migrate that ledger.
+  CleanStartPolicy force-stops selected packages after boot; it is cleanup, not prevention.
+  Design an explicit verified transfer of selections and original-state Undo before removing
+  old Turbo. Investigate prevention first, bounded cleanup for exceptions, and recents removal
+  separately from stopping processes. Preserve manual app launches/controllers/audio/network
+  and BOOP essentials. Do not indiscriminately disable dependencies/shared services.
+  Processor switching/headroom experiments are abandoned; leave NVIDIA Max alone.
+  Old launcher/dependency/startup clutter requires inventory/design, not blind deletion.
+  Frame pacing/feel matters; no performance benefit is verified. Dolphin waits for the adapter.
 
 ## v112 candidate: artwork opens the current Deezer album for browsing
 
