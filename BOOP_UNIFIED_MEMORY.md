@@ -1,3 +1,17 @@
+## v108 physical acceptance extended: remote play music launches Deezer Flow
+
+Ryan confirmed "play music launched flow! :)" through the Shield remote after
+candle on/off passed. Accepted scope now includes real remote activation, speech,
+local HA candle on/off and default play-music routing to Deezer Flow on v108.
+He also reported BOOP eyes visible and the white circle disappearing quickly;
+that visual observation alone is not a failure when the command succeeds.
+Source500f839ef2a2db5bd25737cb8124211ac81bdc0d; APK SHA256
+ a6ca21e716e5389946d4972c9ee85898210665776d74532040646b352740b506.
+No device operations performed while recording this result. Artist/track-specific
+remote requests and extended stability remain unverified. Preserve this artifact
+and all previous protected rollback checkpoints. Prior pending Flow notes below
+are historical and superseded by this user result.
+
 ## v108 physical acceptance: Shield remote candle on and off
 
 Ryan tested the real Shield remote microphone button on installed v108 and
