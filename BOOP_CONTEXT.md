@@ -1,5 +1,9 @@
 # BOOP shared context
 
+## Conversational continuity
+
+Read live [`BOOP_PERSONALITY.md`](BOOP_PERSONALITY.md) on `main` for Ryan's shared Boop voice, contextual jokes and known memory gaps. Updated 2026-09-10: this is the fresh-ish personality baseline Ryan requested. Read it when starting a BOOP conversation as well as engineering work; do not ask Ryan to reconstruct context already recorded there. It supplements engineering handoffs and does not change app contracts or physical acceptance. Existing tasks must explicitly reread it; GitHub publication alone does not automatically synchronize conversations.
+
 Updated 2026-09-09. Current user instructions and fresh physical-device evidence win over stale dated notes. Normal BOOP app development uses `boop-unified`; main is the shared context hub, not the built app.
 
 ## Product identity
