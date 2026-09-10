@@ -8,7 +8,7 @@ Remote-first NVIDIA Shield utility for read-only diagnostics, reversible startup
 - Branch: `shield-turbo-v01`
 - v0.6.0 / code 21 remains the physically accepted persistent TURBO rollback point.
 - v0.6.1 / code 22 is machine-green for the one-time SILENT STARTUP note and silent CLEAN START boot behaviour.
-- v0.6.2 / code 23 adds the read-only TURBO+ HEADROOM physical discovery screen and is pending full CI/physical acceptance.
+- v0.6.2 / code 23 is machine-green for the read-only TURBO+ HEADROOM physical discovery screen; physical Shield acceptance is pending.
 
 ## TURBO
 
@@ -29,6 +29,8 @@ It checks readable evidence for:
 - `nv_power_mode` plus any other surfaced NVIDIA/processor/performance/fan/power/EMC setting names.
 
 Each section says `FOUND` or `BLOCKED`. ADB/setup failures use a large `TURBO+ • STOP` page with `ADB NOT READY` and the recovery path. The footer is `PHOTOGRAPH THIS • BACK TO CLOSE`.
+
+v0.6.2 machine-green source is `cb1a29fdf808f522b3089a325b2329b46ca1adc5`; workflow run `34423280461`, job `102703106376`; signed artifact ID `10131769734`; APK SHA-256 `ad357dbfae8579bd5748b1463c11ce75b35ce6adcc721a8cc428da0da1523e99`.
 
 Discovery does not promote a newly visible setting into a Turbo write target. Any candidate must be separately proven with save, change, read-back and restore before it can join persistent TURBO.
 
