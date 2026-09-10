@@ -14,12 +14,18 @@ import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.FrameLayout;
 import com.boop.eyes.*;
 
 /** Existing lab identity; no production services, permissions or network access. */
 public final class BoopDevMenuActivity extends Activity implements Choreographer.FrameCallback {
     private GLSurfaceView surface;
     private CanonicalEyeRenderer renderer;
+    private FrameLayout stage;
+    private NotificationSignView sign;
+    private boolean signActive;
+    private int signStyle;
+    private double signStart;
     private TextView label;
     private EyeMotion.Controller controller;
     private boolean resumed,focused,running,slow,motionOff;
@@ -36,7 +42,11 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         surface=new GLSurfaceView(this);surface.setEGLContextClientVersion(2);surface.setPreserveEGLContextOnPause(true);
         renderer=new CanonicalEyeRenderer(getAssets(),detail->runOnUiThread(()->label.setText("Renderer error: "+detail)));
         surface.setRenderer(renderer);surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        root.addView(surface,new LinearLayout.LayoutParams(-1,0,1));
+        stage=new FrameLayout(this);stage.addView(surface,new FrameLayout.LayoutParams(-1,-1));
+        sign=new NotificationSignView(this);sign.setVisibility(View.GONE);
+        stage.addView(sign,new FrameLayout.LayoutParams(-1,-1));
+        stage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->resizeEyes());
+        root.addView(stage,new LinearLayout.LayoutParams(-1,0,1));
         for(int row=0;row<2;row++){
             HorizontalScrollView scroll=new HorizontalScrollView(this);LinearLayout strip=new LinearLayout(this);
             for(int i=row*13;i<Math.min((row+1)*13,EyeCatalogue.ALL.length);i++){
@@ -48,7 +58,11 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         LinearLayout controls=new LinearLayout(this);
         Button speed=button("Slow review");speed.setOnClickListener(v->{slow=!slow;speed.setText(slow?"Normal speed":"Slow review");});controls.addView(speed);
         Button motion=button("Pause motion");motion.setOnClickListener(v->{motionOff=!motionOff;motion.setText(motionOff?"Resume motion":"Pause motion");});controls.addView(motion);
-        root.addView(controls);setContentView(root);
+        root.addView(controls);
+        HorizontalScrollView signScroll=new HorizontalScrollView(this);LinearLayout signButtons=new LinearLayout(this);
+        String[] signNames={"WhatsApp sign","Gmail sign","Facebook sign","X sign"};
+        for(int i=0;i<signNames.length;i++){final int style=i;Button b=button(signNames[i]);b.setOnClickListener(v->showSign(style));signButtons.addView(b,new LinearLayout.LayoutParams(dp(200),dp(54)));}
+        signScroll.addView(signButtons);root.addView(signScroll);setContentView(root);
         // Content is attached before applying immersive flags (v0.4 lifecycle lesson).
         root.post(()->getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY));
         readIntent(getIntent());
@@ -56,14 +70,26 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private Button button(String title){Button b=new Button(this);b.setText(title);b.setTextSize(16);b.setFocusable(true);return b;}
     private void select(String id){
+        signActive=false;if(sign!=null){sign.setVisibility(View.GONE);resizeEyes();}
         freeze=-1;EyeMotion.Clip c=EyeCatalogue.find(id);
         controller.select(c,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
-        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v7 • Ryan review");
+        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v8 • Ryan review");
         Log.i("BOOPEyes","clip="+c.id+" time="+(long)clock);
+    }
+    private void resizeEyes(){
+        int h=signActive?Math.max(1,(int)(stage.getHeight()*0.64f)):-1;
+        if(surface.getLayoutParams().height!=h){FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(-1,h);surface.setLayoutParams(p);}
+    }
+    private void showSign(int style){
+        signStyle=Math.floorMod(style,4);signStart=clock;signActive=true;freeze=-1;
+        sign.setVisibility(View.VISIBLE);resizeEyes();
+        label.setText("BOOP • Sign show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X"}[signStyle]+" • v8 • Demo only");
+        Log.i("BOOPEyes","sign="+signStyle+" time="+(long)clock);
     }
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);readIntent(intent);}
     private void readIntent(Intent intent){
         String id=intent==null?null:intent.getStringExtra("clip");select(id==null?"idle":id);
+        if(intent!=null&&intent.hasExtra("sign"))showSign(intent.getIntExtra("sign",0));
         if(intent!=null){freeze=intent.getIntExtra("freeze_ms",-1);slow=intent.getBooleanExtra("slow",false);}
     }
     @Override protected void onResume(){super.onResume();resumed=true;surface.onResume();
@@ -82,7 +108,10 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:1);
         lastFrame=time;
         EyeMotion.Clip clip=controller.clip();
-        renderer.pose=freeze>=0?clip.sample(freeze):reducedMotion?clip.sample(clip.loop?0:clip.duration):controller.sample((long)clock);
+        if(signActive){
+            SignMotion.Pose p=SignMotion.sample(freeze>=0?freeze:reducedMotion?9000:clock-signStart,signStyle);
+            renderer.pose=p.eyes;sign.show(p,signStyle);
+        }else renderer.pose=freeze>=0?clip.sample(freeze):reducedMotion?clip.sample(clip.loop?0:clip.duration):controller.sample((long)clock);
         surface.requestRender();Choreographer.getInstance().postFrameCallback(this);
     }
 }

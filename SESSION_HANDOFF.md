@@ -1,5 +1,15 @@
 # BOOP animation workshop handoff — 2026-09-10
 
+## Active: notification sign show, lab v8
+
+Ryan accepted the v7 corner preview as "absolutely perfect", then approved new
+notification routines based on the five-finger sign-holder concept. The existing
+lab gains four local app-sign fixtures with separate original hand layers, vector
+arrow props and unchanged v7 eyes. See canonical-eyes/SIGN_SHOW.md. Pure Java
+sign tests failed first on missing lift, then passed 53,508 checks. Build/runtime
+evidence will be recorded after the focused signed build. No real notifications
+or production app changes; no appearance acceptance for the new sign show yet.
+
 ## Latest: inner-corner repair, lab v7
 
 Ryan circled blunt inner eyelid ends in the v5 Thinking demo and authorized a

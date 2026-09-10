@@ -9,6 +9,7 @@ out=args.out;out.mkdir(parents=True,exist_ok=True)
 data=json.loads((ROOT/'catalogue.json').read_text())
 master=ROOT/'assets/boopApprovedEyes.png'
 assert hashlib.sha256(master.read_bytes()).hexdigest()==data['master_sha256']
+assert hashlib.sha256((ROOT/'assets/boop-notification-hands.png').read_bytes()).hexdigest()=='26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1'
 assert len({c['id'] for c in data['clips']})==len(data['clips'])
 java=out/'java/com/boop/eyes';java.mkdir(parents=True,exist_ok=True)
 assets=out/'assets';shutil.copytree(ROOT/'assets',assets,dirs_exist_ok=True)
