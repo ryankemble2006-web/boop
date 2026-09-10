@@ -139,6 +139,10 @@ python3 scripts/patch-unified-v70-regressions.py
 # content is already scrollable, before notification/dev-menu patches add more UI.
 python3 scripts/patch-unified-natural-voices.py
 
+# v89: keep v88's safe Android fallback and expose only the natural runtime stage
+# that failed, using a large debug-only code Ryan can photograph from hardware.
+python3 scripts/patch-v89-natural-diagnostics.py
+
 # Add phone notification controls after all current Wall source patches.
 python3 scripts/patch-unified-notifications.py
 
