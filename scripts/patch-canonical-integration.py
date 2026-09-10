@@ -26,6 +26,8 @@ for filename in ['BoopProfileActivity.java','BoopLocalMedia.java']:
 
 manifest=ROOT/'app/src/main/AndroidManifest.xml'
 text=manifest.read_text()
+# Android 16 otherwise bypasses the existing Back/long-Back handlers.
+text=once(text,'android:allowBackup="false"','android:allowBackup="false" android:enableOnBackInvokedCallback="false"')
 text=once(text,'    <application', '    <queries><package android:name="deezer.android.app" /></queries>\n    <application')
 text=once(text,'        <activity\n            android:name=".UnifiedEntryActivity"', '        <activity android:name=".BoopProfileActivity" android:exported="false" android:theme="@style/Theme.BOOP" />\n        <activity\n            android:name=".UnifiedEntryActivity"')
 manifest.write_text(text)

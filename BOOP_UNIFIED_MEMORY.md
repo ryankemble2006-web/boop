@@ -10,10 +10,14 @@ Ryan confirmed v91 natural voices are selectable, demos speak, and a normal BOOP
 
 Items 1, 3, 6, 7, 8 and 10 only: shared speech/room/media state; current-room exposed generic HA discovery; one media corner/Home owner; explicit Deezer and session transport; HA Back escape; manual/automatic profiles. Eyes are being handled in another task for later transplant. No eye/blink mechanics or Turbo work is authorized in this branch.
 
-Candidate version 92 uses the existing permanent signer/package. Existing Shield Home/Now Playing sources are integrated as an internal library under the approved rebuild; the standalone source branch remains preserved. No OS default-HOME or permission is changed automatically.
+Candidate version 93 uses the existing permanent signer/package. Existing Shield Home/Now Playing sources are integrated as an internal library under the approved rebuild; the standalone source branch remains preserved. No OS default-HOME or permission is changed automatically.
 
 ## Verification and next action
 
-Shared-state/parser Java 17 behavioral harness passes, and local source materialization passes. Independent review is in progress; room setup reassignment is being completed. Android compile, signed GitHub build, runtime/emulator inspection and candidate physical acceptance are pending. Use GitHub only for nonvisual builds/functional tests; do not run visual tests. Inspect the signed candidate locally on phone/TV emulators, then ask Ryan for device-only/provider/HA acceptance. Do not replace the accepted v91 artifact or merge to canonical until the candidate evidence is recorded.
+Initial candidate v92 source `a3eb768641e339ed59a6e2e86cb74f64bccf5979` passed GitHub run `34436377162`: 168 Unified and 58 Shield focused tests, package/signature/archive validation. Artifact `10136361414`; ZIP SHA256 `fcc418dc2244e48d84e82c26e82525e8f2189a1db9fffc2f27615f192026e76c`; APK SHA256 `6d8d5a797b8b9aba862f2bc0e5903e7d5e2260e94b6a1e88d75b613a6559cc38`. Download independently verified; installed on local API36 TV and Pixel emulators.
+
+Manual TV inspection confirmed first-run automatic Shield routing, readable Home/settings, Back from unpaired HA returning to caller, and a simulated media session producing one corner over its player then one puppet inside Home Now Playing. The fixture provides metadata only, no real audio/provider acceptance. Review fixes include room identity reassignment, ambiguous-name clarification, group-command preservation, shared dashboard room settings, and lifecycle-gated Home ownership.
+
+Manual inspection also found fresh-entry reopening old Settings and Android16 bypassing legacy Back handlers. v93 fixes fresh entry to Home and uses documented `enableOnBackInvokedCallback=false` compatibility for existing Back/long-Back handling; adds explicit media-overlay permission settings and foreground permission recheck. v93 build and final emulator checks are pending. No GitHub visual tests. Candidate physical/real Deezer/HA acceptance remains pending.
 
 Plan: `docs/superpowers/plans/2026-09-10-scoped-canonical-rebuild.md`. Source provenance: `unified/SOURCE_HEADS.md`. Historical v89/v90 failures and v91 repair evidence remain in git history of the canonical handoffs.

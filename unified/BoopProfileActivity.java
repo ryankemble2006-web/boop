@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 /** Explicit profile selection. Never changes Android's default HOME or grants access. */
 public final class BoopProfileActivity extends Activity {
+    private Button mediaAccess;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         ScrollView scroll = new ScrollView(this);
@@ -29,12 +30,28 @@ public final class BoopProfileActivity extends Activity {
         add(column,"Set this device’s room", this::room);
         add(column,"Home Assistant controls", () -> startActivity(new Intent().setClassName(getPackageName(),"com.boop.shieldoverlay.BoopHomeActivity")));
         add(column,"Voice settings", () -> { startActivity(new Intent(this,MainActivity.class).putExtra("boop_open_voice_settings",true)); });
+        if (BoopDeviceProfile.resolve(this) == BoopDeviceProfile.Mode.SHIELD) {
+            mediaAccess = add(column,"Allow BOOP over media apps", () -> {
+                try { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:"+getPackageName()))); }
+                catch (RuntimeException unavailable) { new AlertDialog.Builder(this)
+                        .setMessage("Open Android settings and allow BOOP to display over other apps.")
+                        .setPositiveButton("OK",null).show(); }
+            });
+        }
         add(column,"Done", this::finish);
         setContentView(scroll);
     }
-    private void add(LinearLayout column,String label,Runnable action) {
+    @Override protected void onResume() {
+        super.onResume();
+        boolean shield = BoopDeviceProfile.resolve(this) == BoopDeviceProfile.Mode.SHIELD;
+        com.boop.shieldhome.BoopMediaBridge.configure(this,shield);
+        if (mediaAccess != null) mediaAccess.setText(android.provider.Settings.canDrawOverlays(this)
+                ? "BOOP over media apps: allowed" : "Allow BOOP over media apps");
+    }
+    private Button add(LinearLayout column,String label,Runnable action) {
         Button button = new Button(this); button.setText(label); button.setTextSize(20); button.setMinHeight(Math.round(64*getResources().getDisplayMetrics().density));
-        button.setOnClickListener(v -> action.run()); column.addView(button);
+        button.setOnClickListener(v -> action.run()); column.addView(button); return button;
     }
     private void choose(BoopDeviceProfile.Mode mode) {
         BoopDeviceProfile.setOverride(this,mode);

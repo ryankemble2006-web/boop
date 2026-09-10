@@ -15,6 +15,7 @@ public final class BoopMediaBridge {
         enabled = active;
         initialize(context);
         publish(ShieldNowPlayingManager.get(context).state().current());
+        reconcile(context.getApplicationContext(),BoopState.INSTANCE.snapshot());
     }
     private static void publish(NowPlayingSnapshot snapshot) {
         BoopState.INSTANCE.media(!enabled || snapshot == null ? "" : Long.toString(snapshot.sessionId()),
@@ -24,18 +25,22 @@ public final class BoopMediaBridge {
         if (initialized) return;
         initialized = true;
         Context app = context.getApplicationContext();
-        BoopState.INSTANCE.subscribe(snapshot -> {
-            if(snapshot.owner != BoopState.Owner.MEDIA_CORNER) {
-                BoopMediaCornerService.hideNow();
-                app.stopService(new Intent(app,BoopMediaCornerService.class));
-            } else if(Settings.canDrawOverlays(app)) {
-                try { app.startForegroundService(new Intent(app,BoopMediaCornerService.class)); }
-                catch(RuntimeException unavailable) { BoopMediaCornerService.hideNow(); }
-            }
-        });
+        BoopState.INSTANCE.subscribe(snapshot -> reconcile(app,snapshot));
         ShieldNowPlayingManager.get(app).state().subscribe(snapshot -> {
             publish(snapshot);
         });
         ShieldNowPlayingManager.get(app).refreshAccess();
+    }
+    private static void reconcile(Context app, BoopState.Snapshot snapshot) {
+        if(snapshot.owner != BoopState.Owner.MEDIA_CORNER || !Settings.canDrawOverlays(app)) {
+            BoopMediaCornerService.hideNow();
+            app.stopService(new Intent(app,BoopMediaCornerService.class));
+        } else {
+            try { app.startForegroundService(new Intent(app,BoopMediaCornerService.class)); }
+            catch(RuntimeException unavailable) {
+                android.util.Log.w("BOOP-Media","E920: Android could not start the media corner",unavailable);
+                BoopMediaCornerService.hideNow();
+            }
+        }
     }
 }

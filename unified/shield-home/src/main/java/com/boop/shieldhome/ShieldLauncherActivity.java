@@ -112,6 +112,12 @@ public final class ShieldLauncherActivity extends Activity {
         // Unified profile selection does not request accessibility or replace Android HOME.
     }
 
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        showHome();
+    }
+
     @Override protected void onResume() {
         super.onResume();
         resumed = true;
