@@ -1,4 +1,22 @@
-## v104 signed room/device fixes: ready for Shield installation
+## v104 installed: authenticated room shortcut and Back physically checked
+
+Ryan explicitly approved v104 installation and room/Back checks. Exact signed APK
+hash verified before install; installation succeeded and version104 confirmed.
+After package replacement stock Home appeared initially; explicit UnifiedEntry
+launch restored BOOP Home and Now Playing. Existing accessibility entries including
+Home override, Cast visibility and EastEnders remained enabled; no grants changed.
+
+Actual Set this device's room shortcut opened live HA room choices using the
+existing Shield connection, without the former Wall-connect error. Back returned
+to BoopProfileActivity, confirmed by fresh resumed-activity output and screenshot.
+Living Room / living_room remained saved. One earlier UI dump failed to reach idle;
+its stale XML was not counted as evidence, and the check was repeated successfully.
+Returned Home and removed temporary device files. No playback commands were sent.
+These are agent physical route/cancel checks, not blanket user acceptance of v104.
+Live command matching and cross-room controls remain pending; protected v103 close,
+v101 Home/reboot and v91 voice acceptance retain their original scope.
+
+## v104 signed room/device artifact receipt
 
 Branch boop-canonical-rebuild. Final combined build source
 36651387ee2c30e7e3fda0b97e2142168659a3f9; GitHub run 34474767283 SUCCESS;
@@ -25,7 +43,7 @@ credentials or permissions added. WALL restored and verified, app stopped and
 temporary device files removed. No GitHub visual tests. Authenticated shortcut
 operation and live device-command matching require physical checks.
 
-Physical Shield stays v103. Ryan reported close player perfect, instant and nearly
+Before the approved v104 installation, Shield ran v103. Ryan reported close player perfect, instant and nearly
 invisible; exact native/Cast route was not specified. Existing v101 Home/reboot and
 v91 voice checkpoints remain protected. During room audit, Ryan confirmed an earlier
 test room and requested Living Room. The v103 shortcut failure was reproduced;
@@ -34,8 +52,8 @@ living_room was verified. Home returned, music transport was not changed.
 Broader cross-room command and profile acceptance remain pending.
 
 Delivered locally as BOOP-v104-room-device-fixes.apk. Monitor paused after delivery.
-Next: obtain approval to install this exact combined v104 on Shield and verify its
-authenticated room shortcut, Back/cancel preservation, and current-room controls.
+Authenticated shortcut and Back/cancel checks are complete as recorded above.
+Next remaining scope: physical current-room and cross-room voice/device controls.
 The earlier name-only v104 run34474085300 was not delivered or installed.
 
 ## v103 installed: native cleanup physically tested; Cast check pending
