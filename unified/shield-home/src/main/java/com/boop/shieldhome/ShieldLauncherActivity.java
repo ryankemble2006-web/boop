@@ -39,6 +39,8 @@ import java.util.concurrent.Executors;
 
 /** Standalone Shield launcher surface. */
 public final class ShieldLauncherActivity extends Activity {
+    private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
+
     public static final long PAGE_TRANSITION_MS = 140L;
     private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
     private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown_v2";
@@ -193,6 +195,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showHome(boolean focusFirstFavourite) {
+        albumBrowser.cancel();
         currentPage = Page.HOME;
         com.boop.shared.BoopState.INSTANCE.homeVisible(resumed);
         int generation = ++optionalGeneration;
@@ -305,6 +308,13 @@ public final class ShieldLauncherActivity extends Activity {
                 if (nowPlayingManager != null) nowPlayingManager.next();
             }
 
+            @Override public void onBrowseNowPlayingAlbum() {
+                if (nowPlayingManager == null) return;
+                NowPlayingSnapshot current = nowPlayingManager.state().current();
+                if (current != null && "deezer.android.app".equals(current.packageName()))
+                    albumBrowser.open(ShieldLauncherActivity.this, nowPlayingManager, current);
+                else nowPlayingManager.openSource(ShieldLauncherActivity.this);
+            }
             @Override public void onOpenNowPlayingSource() {
                 if (nowPlayingManager != null) nowPlayingManager.openSource(ShieldLauncherActivity.this);
             }
@@ -320,6 +330,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showApps() {
+        albumBrowser.cancel();
         currentPage = Page.APPS;
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
@@ -338,6 +349,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showSettings() {
+        albumBrowser.cancel();
         currentPage = Page.SETTINGS;
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
@@ -418,6 +430,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showNowPlayingPlayerChooser() {
+        albumBrowser.cancel();
         ArrayList<String> packages = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
         HashSet<String> seenPackages = new HashSet<>();
@@ -868,6 +881,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void handleShortBack() {
+        albumBrowser.cancel();
         if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
             ((ShieldHomeView) currentView).resetToFirstFavourite();
             return;
@@ -885,6 +899,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onDestroy() {
         destroyed = true;
+        albumBrowser.cancel();
         ++optionalGeneration;
         if (unsubscribeNowPlaying != null) {
             unsubscribeNowPlaying.run();
@@ -910,6 +925,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onPause() {
         resumed = false;
+        albumBrowser.cancel();
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         super.onPause();
     }

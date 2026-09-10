@@ -20,8 +20,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 111
-        versionName "1.2.111-responsive-room-controls"
+        versionCode 112
+        versionName "1.2.112-album-browsing"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }

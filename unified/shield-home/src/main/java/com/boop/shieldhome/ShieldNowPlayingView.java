@@ -80,7 +80,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         artwork.setFocusable(true);
         artwork.setClickable(true);
         artwork.setOnClickListener(v -> {
-            if (callbacks != null) callbacks.onOpenNowPlayingSource();
+            if (callbacks != null) callbacks.onBrowseNowPlayingAlbum();
         });
         installFocusPop(artwork);
         LinearLayout.LayoutParams artParams = new LinearLayout.LayoutParams(dp(154), dp(154));
@@ -179,6 +179,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
     public void bind(NowPlayingSnapshot snapshot, ShieldHomeView.Callbacks callbacks) {
         this.callbacks = callbacks;
         this.snapshot = snapshot;
+        artwork.setContentDescription(snapshot != null && "deezer.android.app".equals(snapshot.packageName())
+                ? "Browse album in Deezer" : "Open source player");
         stopTicker();
         puppetView.setSnapshot(snapshot);
 

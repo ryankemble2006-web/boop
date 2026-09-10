@@ -17,3 +17,7 @@ with tempfile.TemporaryDirectory() as output:
         str(root/'unified/LocalPlayerCloseGate.java'),
         str(root/'tests/canonical/CloseGateCheck.java')], check=True)
     subprocess.run([java, '-cp', output, 'com.boop.alpha1.CloseGateCheck'], check=True)
+
+with tempfile.TemporaryDirectory() as output:
+    subprocess.run([javac, '-d', output, str(root/'unified/shared/DeezerAlbumMatch.java'), str(root/'tests/canonical/AlbumMatchCheck.java')], check=True)
+    subprocess.run([java, '-cp', output, 'AlbumMatchCheck'], check=True)

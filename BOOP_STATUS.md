@@ -1,3 +1,34 @@
+## v112 candidate: artwork opens the current Deezer album for browsing
+
+Ryan approved clicking Now Playing artwork to browse the current album, preserving
+music until he chooses something. Public Deezer catalogue lookup using current
+track/artist/album metadata is explicitly approved. No provider credentials sent.
+
+Native Deezer album ACTION_VIEW was manually inspected on Shield: album browsing
+page opened while the same track continued playing. This validates the provider
+route, not the new BOOP artwork integration. Private capture stays local.
+
+Candidate preserves album metadata, matches exact title/artist/album with a unique
+album ID, opens a package-scoped album URL and never sends a play command. Missing
+or ambiguous metadata fails visibly. Pending lookup is cancelled on Home/Back;
+track/session changes suppress late navigation. Other providers retain source-open
+behaviour. Cast album browsing is not implemented by this native-app change.
+Canonical nonvisual checks and six album-matching cases pass locally; full signed
+build and artwork-click physical acceptance pending. Version112 /
+1.2.112-album-browsing. Installed v111 and its accepted room behaviour preserved.
+
+## Additional v111 physical results and deferred work
+
+Ryan accepted saved Living Room fan selection without a room name; an imaginary
+lamp request changed no real device (spoken response inaudible, still unverified).
+Repeated HA navigation/Back preserved music. Home cancelled pre-listening and active
+listening; cancellation during command lookup returned to Deezer. Fresh Flow worked;
+a second request superseded a cancelled first request. HA controls remained usable
+after cancellation. Close player removed playback/Now Playing without returning;
+subsequent Flow restart restored Home metadata and artwork. These are scoped user
+results, not blanket release acceptance. Later reply latency is deferred; no cause
+is assigned. Voice volume, cadence and pitch belong with later natural-voice work.
+
 ## v111 explicit-room voice targeting accepted
 
 Ryan tested two fans in different rooms: an explicit bedroom fan off request
