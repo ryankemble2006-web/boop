@@ -1,3 +1,14 @@
+Signed v100 source `75516b12ccef4de9faadec139778326897cf0518`.
+Run `34458283236` SUCCESS; artifact `10144534569`.
+197 Unified + 58 Shield functional tests passed; no GitHub visual tests.
+APK SHA256 `dc12df6fdd03e2bc3f80d31818f6c4ece829ae501b8b0b063f908583813f1963`.
+ZIP SHA256 `acde0565e7e4af7c6b8209fc02b8f71a58050228e5a4af4a9f6495f24c330a76`.
+Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Downloaded hashes, signer, package com.boop.alpha1, version 100 and entry verified.
+APK delivered as BOOP-v100-cast-only-corner.apk. Install and new optional Cast
+visibility accessibility permission approval remain pending. Physical transition
+verification remains pending. User saying looks done is not installed-v100 evidence.
+
 # v100 corrected Cast-only corner policy
 
 Ryan corrected the intended rule: show the corner during Deezer Chromecast music,
@@ -23,7 +34,7 @@ Version 100 / 1.2.100-cast-only-corner. Observed failing regression reproduced
 native playback incorrectly owning the corner, then shared-state/policy tests passed.
 Review found no serious blocker; positive window evidence additionally requires
 the observed CastWebContentsActivity class, not receiver dialogs. Shared tests
-passed after this tightening. Signed nonvisual build pending. Exact APK manual
+passed after this tightening. Signed nonvisual build complete; exact receipt follows. Exact APK manual
 emulator and physical Cast/native transition checks remain pending. v99 stays the
 installed candidate until separately approved; protected checkpoints unchanged.
 
