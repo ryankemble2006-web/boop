@@ -60,7 +60,8 @@ public final class NotificationSignView extends View {
         for(int digit=0;digit<4;digit++){
             // Closed grip: neighbouring fingers meet instead of fanning apart.
             float y=-42+digit*28;
-            float edge=left?-292:357-Math.abs(y)*128/124;
+            // One knuckle line keeps the right fingers closed over the sloping arrow.
+            float edge=left?-292:335;
             float root=edge-direction*16;
             float curl=.85f+.15f*pose.lift;
             float reach=lengths[digit]*(1-.32f*curl);
