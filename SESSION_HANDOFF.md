@@ -1,5 +1,24 @@
 # BOOP animation workshop handoff — 2026-09-10
 
+## Latest: inner-corner repair, lab v7
+
+Ryan circled blunt inner eyelid ends in the v5 Thinking demo and authorized a
+shared-code repair. Source `31735d1395ab1c5167bd5bdbcb0c48c6f77a752c` continues
+the destination curve past the source cap while leaving original skin sampling,
+face silhouette, exact master, all 26 clips and timing untouched. Failed v6
+alpha-only experiment is preserved at c8f6b60; its alpha change was reverted.
+Signed v7: Actions 34437977312, artifact 10136874223, APK SHA-256
+`2d383d6c089605dd70424d768c302bb495b1208dd3ebc412a7772b41d8ef97eb`.
+See canonical-eyes/VERIFICATION.md and tests/INNER_CORNER_REPRO.md.
+The fixed Thinking pose was captured in the Android TV emulator for Ryan's
+review; no physical acceptance or production integration is claimed. New local
+evidence and transplant exports live under animation-work/library-v2.
+
+Current shared main now records v91 Natural Voice physical acceptance at
+11650313221ae5bf997dbb93b6a905bfdc7da1ed (voice scope only). The older v88/not-yet-
+accepted wording below is historical. Rebuild remains separately owned on
+boop-canonical-rebuild; this task changes only the eye lab/library.
+
 ## Active continuation: all eye motions in shared code
 
 Ryan said the v3 MP4 blink was gorgeous and identified outer-edge artifacts in

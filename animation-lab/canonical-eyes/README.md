@@ -24,7 +24,7 @@ Neutral samples the master directly. Placement/scaling fits the view once and
 does not animate the character rectangle. The displayed pupil/iris moves by
 deforming the existing eye texture within a stationary support region.
 
-The existing Animation Lab package is the v5 test host (permanent signer).
+The existing Animation Lab package is the v7 test host (permanent signer).
 This focused lab shelf covers eyes; old v0.4 accessory/notification shelves
 remain preserved in the reference APK/source archive and are not claimed ported.
 No production Unified/clean HOME integration is performed by this library change.
@@ -33,3 +33,9 @@ CI checks state math, compilation, package/no-permission boundary, exact master,
 permanent signer and ZIP integrity. Local Android TV tests the actual shader.
 Ryan owns all appearance and animation acceptance. v3 MP4 rhythm received positive
 user feedback; these new code-rendered versions require their own review.
+
+v7 inner-corner repair: the opaque rig texture has TWO rows, source material
+edge and continued destination contour. Ship the generated rig and shader as
+one versioned unit. The destination no longer flattens into the old source cap.
+Only the moving boundary changes; skin UV sampling and original face alpha stay
+anchored. The failed v6 alpha-only experiment is not the final repair.

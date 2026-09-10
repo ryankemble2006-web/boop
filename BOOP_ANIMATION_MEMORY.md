@@ -1,5 +1,16 @@
 # Animation memory — 2026-09-10
 
+Latest repair: lab v7, source 31735d1395ab1c5167bd5bdbcb0c48c6f77a752c,
+Actions 34437977312 / artifact 10136874223. Ryan's circled inner-corner shelf
+was reproduced at Thinking 1100ms. v6 alpha-only did not fix it and was reverted.
+The source trace's horizontal end-cap must not define the moving destination:
+v7 uses a second rig row for a smoothly continued inner arc, retaining the
+original material trace. Shader correction eases from zero near open and goes
+to zero at full closure. Repackage the new shader AND two-row lid-rig together.
+Do not mix them with the v5 one-row rig. Master/catalogue/timing are unchanged.
+Ryan reviews the actual v7 runtime preview; no new physical acceptance.
+Local repair checkpoints/receipts: animation-work/library-v2.
+
 This existing art branch owns the durable animation workshop. The canonical app
 continues on boop-unified. Do not revive old separate-app architecture from
 inherited files. Do not start the separately queued full canonical rebuild.

@@ -1,5 +1,13 @@
 # BOOP Status
 
+## Latest eye correction — lab v7
+
+31735d1395ab1c5167bd5bdbcb0c48c6f77a752c repairs the inner moving-lid contour.
+Signed Actions 34437977312 / artifact 10136874223. Same exact artwork and 26
+timing definitions; no new app authority or production change. Fixed-pose
+Android TV screenshot and runtime preview are for Ryan's review, not acceptance.
+Details: animation-lab/canonical-eyes/VERIFICATION.md. v5/v6 below are provenance.
+
 ## Current animation workshop — 2026-09-10
 
 Owning branch: `animation-idle-blink-cleanup`; canonical application remains
