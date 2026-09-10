@@ -1,3 +1,11 @@
+## v118 startup prevention candidate, 2026-09-10
+
+Ryan approved keeping Deezer, Netflix and Plex excluded while adding the first prevention-first Startup Manager pass. v118 adds per-app background-start prevention beside v117 Clean Start. Before the first BOOP write it records the app's two original background app-op modes; turning prevention OFF restores and verifies those saved modes, then clears the record so a later change captures fresh state. Manual app launching remains allowed because this pass does not disable packages.
+
+The v117 bounded one-shot Clean Start remains as fallback. System/BOOP/NVIDIA/Google packages and the Deezer/Netflix/Plex warm path remain excluded. Hard Block, Recents cleanup, broad old-launcher/dependency disabling, NVIDIA processor/headroom controls, recipes, animations and natural-voice tuning are untouched.
+
+TDD evidence: StartupPreventionPolicyTest and StartupPreventionRecordTest were each observed failing before implementation, then passed. A regression test also caught the no-explicit-app-op case and now records it as `default` rather than pinning the effective `allow` mode. Fresh local materialization completed and Android Java compilation passed; both focused tests passed again afterward. GitHub signed build and physical install are still pending. The first real prevention action will require BOOP local-ADB approval because v117 has not created its private identity yet; real Shield prevention, manual launch and exact Undo behaviour remain physical tests.
+
 ## v116 charcoal correction, 2026-09-10
 
 Ryan physically approved v115 spacing, icons and cyan accent, but rejected the dark-blue

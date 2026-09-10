@@ -15,6 +15,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
     public interface Callbacks {
         void onCheckLocalLink();
         void onSetAuto(boolean enabled);
+        void onTogglePrevention(String packageName, boolean enabled);
         void onToggleTarget(String packageName, boolean enabled);
         void onRunNow();
         void onBack();
@@ -28,7 +29,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         setPadding(dp(52), dp(30), dp(52), dp(28));
     }
 
-    public void render(boolean auto, boolean hasIdentity, Set<String> selected,
+    public void render(boolean auto, boolean hasIdentity, Set<String> prevented, Set<String> selected,
                        List<TvAppEntry> candidates, String lastSummary, Callbacks callbacks) {
         removeAllViews();
         addView(text("Startup Manager", 28), wrap());
@@ -41,7 +42,18 @@ public final class ShieldStartupManagerView extends LinearLayout {
         addAction("Run clean-up now", callbacks::onRunNow);
 
         addSpacer(18);
-        addView(text("Apps to clean after boot (max " + StartupCleanupPolicy.MAX_TARGETS + ")", 20), wrap());
+        addView(text("Prevent background start", 20), wrap());
+        addSpacer(6);
+        addView(text("Recommended. Apps still open normally when you choose them. Turning this OFF restores the exact state BOOP found before changing it.", 15), wrap());
+        addSpacer(8);
+        for (TvAppEntry entry : candidates) {
+            boolean on = prevented.contains(entry.packageName());
+            addAction(entry.label() + " ? prevent: " + (on ? "ON" : "OFF"),
+                    () -> callbacks.onTogglePrevention(entry.packageName(), !on));
+        }
+
+        addSpacer(18);
+        addView(text("Clean after boot fallback (max " + StartupCleanupPolicy.MAX_TARGETS + ")", 20), wrap());
         addSpacer(8);
         for (TvAppEntry entry : candidates) {
             boolean on = selected.contains(entry.packageName());

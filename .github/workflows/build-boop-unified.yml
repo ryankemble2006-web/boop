@@ -87,6 +87,18 @@ jobs:
       - name: Test shared state and media command behaviour
         run: python scripts/test-canonical-core.py
 
+      - name: Test Startup Manager prevention policy and exact Undo record
+        shell: bash
+        run: |
+          rm -rf work/startup-prevention-tests && mkdir -p work/startup-prevention-tests
+          javac -d work/startup-prevention-tests \
+            unified/shield-home/src/main/java/com/boop/shieldhome/StartupCleanupPolicy.java \
+            unified/shield-home/src/main/java/com/boop/shieldhome/StartupPreventionPolicy.java \
+            unified/shield-home/src/main/java/com/boop/shieldhome/StartupPreventionRecord.java \
+            source-test/StartupPreventionPolicyTest.java source-test/StartupPreventionRecordTest.java
+          java -cp work/startup-prevention-tests StartupPreventionPolicyTest
+          java -cp work/startup-prevention-tests StartupPreventionRecordTest
+
       - name: Test notification, developer-lab and natural-voice contracts
         run: |
           python -m pytest -q tests/test_unified_notification_manifest_contract.py tests/test_unified_v70_materialized_dev_menu_contract.py::test_spoken_developer_menu_phrase_replaces_old_dev_menu_phrase tests/test_unified_v70_materialized_dev_menu_contract.py::test_spoken_developer_menu_is_materialized_before_ha_and_chat_routing tests/test_unified_v70_natural_voices_contract.py tests/test_unified_v85_natural_voice_install_flow.py

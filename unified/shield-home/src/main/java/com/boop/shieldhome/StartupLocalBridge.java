@@ -77,6 +77,40 @@ public final class StartupLocalBridge {
         });
     }
 
+    public String setPrevention(String packageName, boolean enabled, boolean allowApproval, Runnable approvalRequired) throws Exception {
+        cancelled = false;
+        if (!eligibleInstalled(packageName)) throw new IOException("App is not eligible for startup prevention.");
+        StartupPreventionStore store = new StartupPreventionStore(context);
+        return withAdb(allowApproval, approvalRequired, adb -> {
+            StartupPreventionRecord saved = store.record(packageName);
+            if (enabled) {
+                if (saved == null) {
+                    String first = StartupPreventionPolicy.parseMode(checked(adb,
+                            StartupPreventionPolicy.queryCommand(packageName, "RUN_IN_BACKGROUND")));
+                    String second = StartupPreventionPolicy.parseMode(checked(adb,
+                            StartupPreventionPolicy.queryCommand(packageName, "RUN_ANY_IN_BACKGROUND")));
+                    if (first == null || second == null) throw new IOException("Could not capture the original startup state.");
+                    saved = new StartupPreventionRecord(packageName, first, second, false);
+                    if (!store.rememberOriginal(saved)) throw new IOException("Could not save the original startup state.");
+                }
+                if (!store.markManaged(packageName)) throw new IOException("Could not arm the saved Undo record.");
+                for (String command : StartupPreventionPolicy.blockCommands(packageName)) checked(adb, command);
+                String firstNow = StartupPreventionPolicy.parseMode(checked(adb, StartupPreventionPolicy.queryCommand(packageName, "RUN_IN_BACKGROUND")));
+                String secondNow = StartupPreventionPolicy.parseMode(checked(adb, StartupPreventionPolicy.queryCommand(packageName, "RUN_ANY_IN_BACKGROUND")));
+                if (!"ignore".equals(firstNow) || !"ignore".equals(secondNow)) throw new IOException("Startup prevention could not be verified; Undo remains available.");
+                return "Prevent background start: ON";
+            }
+            if (saved == null || !saved.managed()) return "Prevent background start: already OFF";
+            for (String command : StartupPreventionPolicy.restoreCommands(packageName, saved.originalRunInBackground(), saved.originalRunAnyInBackground())) checked(adb, command);
+            String firstNow = StartupPreventionPolicy.parseMode(checked(adb, StartupPreventionPolicy.queryCommand(packageName, "RUN_IN_BACKGROUND")));
+            String secondNow = StartupPreventionPolicy.parseMode(checked(adb, StartupPreventionPolicy.queryCommand(packageName, "RUN_ANY_IN_BACKGROUND")));
+            if (!saved.originalRunInBackground().equals(firstNow) || !saved.originalRunAnyInBackground().equals(secondNow))
+                throw new IOException("Undo could not be verified.");
+            if (!store.remove(packageName)) throw new IOException("Undo worked but BOOP could not clear its saved record.");
+            return "Prevent background start: OFF - original state restored";
+        });
+    }
+
     private boolean eligibleInstalled(String packageName) {
         if (!StartupCleanupPolicy.validPackage(packageName)) return false;
         try {

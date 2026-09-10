@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 
 public final class ShieldStartupManagerActivity extends Activity {
     private StartupCleanupStore store;
+    private StartupPreventionStore preventionStore;
     private ExecutorService executor;
     private volatile StartupLocalBridge activeBridge;
 
@@ -25,6 +26,7 @@ public final class ShieldStartupManagerActivity extends Activity {
         super.onCreate(state);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         store = new StartupCleanupStore(this);
+        preventionStore = new StartupPreventionStore(this);
         executor = Executors.newSingleThreadExecutor();
         render();
     }
@@ -33,13 +35,14 @@ public final class ShieldStartupManagerActivity extends Activity {
         ShieldStartupManagerView view = new ShieldStartupManagerView(this);
         StartupLocalBridge probe = new StartupLocalBridge(this);
         Set<String> selected = store.targets();
-        view.render(store.autoEnabled(), probe.hasIdentity(), selected, candidates(), store.lastSummary(),
+        view.render(store.autoEnabled(), probe.hasIdentity(), preventionStore.managedPackages(), selected, candidates(), store.lastSummary(),
                 new ShieldStartupManagerView.Callbacks() {
             @Override public void onCheckLocalLink() { authorize(false); }
             @Override public void onSetAuto(boolean enabled) {
                 if (enabled) authorize(true);
                 else { store.setAutoEnabled(false); render(); }
             }
+            @Override public void onTogglePrevention(String packageName, boolean enabled) { togglePrevention(packageName, enabled); }
             @Override public void onToggleTarget(String packageName, boolean enabled) {
                 if (!store.setTarget(packageName, enabled)) {
                     Toast.makeText(ShieldStartupManagerActivity.this,
@@ -64,6 +67,20 @@ public final class ShieldStartupManagerActivity extends Activity {
                 String result = bridge.authorize(() -> runOnUiThread(() ->
                         Toast.makeText(this, "Approve BOOP on the Shield.", Toast.LENGTH_LONG).show()));
                 if (enableAfter) store.setAutoEnabled(true);
+                store.recordSummary(result);
+                runOnUiThread(this::render);
+            } catch (Exception failure) { showFailure(failure); }
+            finally { activeBridge = null; }
+        });
+    }
+
+    private void togglePrevention(String packageName, boolean enabled) {
+        executor.execute(() -> {
+            StartupLocalBridge bridge = new StartupLocalBridge(this);
+            activeBridge = bridge;
+            try {
+                String result = bridge.setPrevention(packageName, enabled, true, () -> runOnUiThread(() ->
+                        Toast.makeText(this, "Approve BOOP on the Shield.", Toast.LENGTH_LONG).show()));
                 store.recordSummary(result);
                 runOnUiThread(this::render);
             } catch (Exception failure) { showFailure(failure); }
