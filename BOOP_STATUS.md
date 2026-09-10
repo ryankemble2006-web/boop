@@ -11,8 +11,17 @@ Version 23 / 0.10.8-service-reconnect is a compatibility candidate on the existi
 standalone lineage, not a new app. Focused policy tests cover same-boot reconnect,
 new boot, first activation and unavailable boot count. GitHub performs only the
 focused functional test, build, signer and integrity checks; no visual tests.
-Physical install needs Ryan's approval after the signed artifact is available.
-Reboot, single/double Home and native music acceptance remain pending.
+Signed source: ccb10658bded07dbf2a91ee8234509999f960a49. GitHub run
+34446163444 SUCCESS; artifact 10139755652. ZIP SHA256
+9643be98a41ccb6c4173bdf8e52994fbc46239029ebac0189aa8deb05d75537d.
+APK SHA256 6bcc46633c38f61f4c7c5b4b0a49a4d3eec7b05818a25ef29abd4d36e82f411e.
+Permanent signer independently verified after download. Two focused policy tests pass.
+Ryan explicitly approved installing this exact v23 update; install succeeded after
+preserving the actual installed v22 APK privately for rollback. Repeated hierarchy
+reads now leave Deezer in front. Native track, Flow and artist switching component
+tests proceeded successfully after the fix, with agent-inspected playing indicators.
+This is scoped device evidence; Ryan's acoustic/end-to-end acceptance remains separate.
+Reboot and single/double Home physical acceptance remain pending.
 
 # BOOP Shield clean launcher status
 
