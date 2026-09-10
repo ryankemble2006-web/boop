@@ -1,3 +1,20 @@
+## Open regression: audible native Deezer without Android media session
+
+Ryan reports Home from Deezer has no Now Playing box and confirms music remains
+audible. Read-only inspection on v101: unified Home foreground; Android media_session
+reports zero sessions globally; unified notification access retained; Deezer process
+and audio player running. This reproduces the earlier v99 missing-session condition.
+Reopening native Deezer without pause/restart did not republish a session. Returned
+to Home; no playback command sent. Temporary screenshot removed. Logs place the
+Cast session ending before native playback resumed, but causation is not established.
+
+Missing media data explains the absent card; this is not proof of a Home renderer
+regression. Root cause inside provider/session lifecycle remains unresolved. Do not
+fake current metadata or add automatic force-close/restart. Next bounded diagnostic
+is a user-coordinated native pause/resume recovery check, observing whether a media
+session reappears, before considering any implementation change. Room/discovery
+follow-up paused for this issue. v101 Home/reboot acceptance remains scoped and valid.
+
 ## v101 post-reboot Cast recheck
 
 Ryan initiated Deezer casting after the accepted Home/reboot test. Read-only
