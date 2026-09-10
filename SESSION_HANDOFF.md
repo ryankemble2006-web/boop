@@ -1,4 +1,9 @@
-## v102 Close player candidate: implemented, full build pending
+## v102 Close player candidate: published, full build running
+
+Source c9da55f44345733729344fef799d0b4af52204c5 is published and live-head verified
+on boop-canonical-rebuild. GitHub run 34466946285 is building the signed v102
+candidate with nonvisual checks only. The existing build monitor checks every ten
+minutes while needed. Source remains separate from subsequent documentation HEAD.
 
 Ryan approved replacing the Now Playing Open player button with Close player:
 terminate native Deezer or the active Cast source, including YouTube, because
@@ -43,7 +48,8 @@ acceptance of the new BOOP button. Temporary probe removed, music controls retur
 to Ryan. Close client tests cover unique hardware, wrong/ambiguous hardware, stale
 receipts and selection change. Full app compilation/CI and v102 emulator/device
 checks remain pending. Review identified and corrected delayed Back cancellation
-and false success from lost session observation; re-review pending.
+and false success from lost session observation; re-review found both addressed
+and no further important defects. Full CI test execution remains pending.
 Ryan controls music outside explicitly agreed short tests; ask before interrupting.
 
 ## Deezer exemption: paused native session survives Cast interval
