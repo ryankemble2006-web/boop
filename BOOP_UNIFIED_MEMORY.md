@@ -1,3 +1,25 @@
+## v101 approved Shield installation and Home migration
+
+Ryan explicitly approved v101 installation and replacement of the old Home override.
+Install succeeded; package reports 101 / 1.2.101-unified-home-button. Replaced only
+standalone v23 HomeOverride with com.boop.alpha1.BoopHomeOverrideService. Preserved
+Button Mapper and BOOP Cast visibility. v23 remains installed for rollback; stock
+launcher remains installed and enabled. Prior accessibility list saved privately.
+
+Injected Android HOME key on physical Shield opened the unified package's
+ShieldLauncherActivity. Agent manually viewed Home with one Now Playing puppet.
+Launcher Settings > Home Assistant controls displayed the authenticated dashboard;
+Back twice returned to Home without fullscreen headphones. No house commands sent.
+Open player returned to native Deezer; active native media session reported playing.
+A hierarchy inspection/reconnect did not steal foreground back to Home. Agent
+screenshot confirmed native Deezer had no corner. No pause/restart/selection sent.
+Temporary device probe files removed and controls returned to Ryan.
+
+These are agent-observed physical-device checks. Ryan's physical remote-button
+acceptance, reboot behavior and v101 Cast regression remain pending. No Cast session
+was active during this check; preserve prior v100 Cast evidence without claiming a
+v101 Cast pass. Protected v91 voice checkpoint and other rollbacks unchanged.
+
 ## v101 signed artifact and emulator receipt
 
 Source be20d50ed3ee72ec7183215ade63e6253e929653, version 101 /
