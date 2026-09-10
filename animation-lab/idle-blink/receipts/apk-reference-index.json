@@ -1,0 +1,92 @@
+[
+  {
+    "artifact_id": 10083562650,
+    "branch": "boop-shield-clean-launcher",
+    "source_sha": "3340554465b88ac4bc40a50e1b4afbdae3a19393",
+    "run_id": 34297110698,
+    "sha256": "8c807edfebf866695dea6df8af04cb2bf02f3c1d045d9d74c505e056a6abca9a",
+    "identity": "package: name='com.boop.shieldhome' versionCode='22' versionName='0.10.7-puppet-bay' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "No exact-build physical acceptance claimed",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 10083716832,
+    "branch": "boop-shield-clean-launcher",
+    "source_sha": "e28f073c8566803bb8553c9f6ad1f4a0fb302f69",
+    "run_id": 34297552148,
+    "sha256": "d4e3fafa43d072b1a269aeb89c99d61754dc7e8bf35f306c0e864e1debaf8aa7",
+    "identity": "package: name='com.boop.shieldhome' versionCode='22' versionName='0.10.7-puppet-bay' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "No exact-build physical acceptance claimed",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 10084479659,
+    "branch": "boop-shield-clean-launcher",
+    "source_sha": "71828a49239fd41f2b7dd81fdfb6a758c4839d22",
+    "run_id": 34299712206,
+    "sha256": "62886af8b7bac55bebb019555aba3f3b08bc0f060ae53780133b15b8a20f4bf0",
+    "identity": "package: name='com.boop.shieldhome' versionCode='22' versionName='0.10.7-puppet-bay' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "No exact-build physical acceptance claimed",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 10117944176,
+    "branch": "boop-animation-lab",
+    "source_sha": "f80d5a3653e37115cd262dbb60acc47c6a4519d9",
+    "run_id": 34386396642,
+    "sha256": "783a03de3664496df8ba194119533eff5c99b391b94445d5c36bd89ac34f892c",
+    "identity": "package: name='com.boop.animationlab' versionCode='4' versionName='0.4-animation-lab-all-motion' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "No exact-build physical acceptance claimed",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 10129945925,
+    "branch": "boop-unified",
+    "source_sha": "f5f086fc4f67712b5746be067aff852331299bb0",
+    "run_id": 34418073143,
+    "sha256": "8fca19f2005b8a252488978e0efc7f7391711207d06ac1557088648a0402e108",
+    "identity": "package: name='com.boop.alpha1' versionCode='88' versionName='1.2.88-unified-natural-playback-recovery' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "v88: ordinary Android speech physically accepted; natural voice not accepted",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 10132764611,
+    "branch": "boop-unified",
+    "source_sha": "97688d1606e7ac1665a8626a00fed9111f062135",
+    "run_id": 34426014943,
+    "sha256": "94b63c350d50029d875e40bd4e18b839addad020155de231c918de8bbc3e8275",
+    "identity": "package: name='com.boop.alpha1' versionCode='90' versionName='1.2.90-unified-kokoro-preflight-fix' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "No exact-build physical acceptance claimed",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 10135121728,
+    "branch": "boop-natural-v91-audiotrack-stream",
+    "source_sha": "4ba0a2b263d443bc53db65d435e9aba45517d266",
+    "run_id": 34432642013,
+    "sha256": "42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d",
+    "identity": "package: name='com.boop.alpha1' versionCode='91' versionName='1.2.91-unified-static-track-state-fix' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "No exact-build physical acceptance claimed",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 10135283428,
+    "branch": "boop-unified",
+    "source_sha": "11650313221ae5bf997dbb93b6a905bfdc7da1ed",
+    "run_id": 34433115316,
+    "sha256": "42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d",
+    "identity": "package: name='com.boop.alpha1' versionCode='91' versionName='1.2.91-unified-static-track-state-fix' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "No exact-build physical acceptance claimed",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  },
+  {
+    "artifact_id": 9977166051,
+    "branch": "boop-wall-resurrection",
+    "source_sha": "595e1daa43393882a0e5de43967545ac526b8b66",
+    "run_id": 33992704568,
+    "sha256": "79ac40677687c4225989fa095644d5d97d36876150afe704e80eb6091d55530b",
+    "identity": "package: name='com.boop.alpha1' versionCode='29' versionName='0.4.9-alpha6.5.6-wall' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+    "physical_status": "Wall protected physically accepted 595e1da",
+    "use": "Historical animation/resources and runtime comparison; not a deployment instruction"
+  }
+]

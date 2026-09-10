@@ -1,0 +1,284 @@
+[
+  {
+    "family": "idle",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; existing timing reference; candidate replaces lid rendering only",
+    "timing": "183ms; 3\u20137s idle",
+    "files": [
+      {
+        "path": "source/BoopIdleBlink.java",
+        "sha256": "0aae9552ac3d8c7371f9f7566ef6d794c6fa06c1d0c3b7d1afe63f542a22fe72"
+      },
+      {
+        "path": "scripts/patch-wall-idle-blink.py",
+        "sha256": "43ebe56a86273b0f88e43f246f1942658e88d7bd37dad3c6b37a657403d26bab"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "wake",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; Android View animator; raw source requires canonical materialization",
+    "timing": "380ms overshoot 0.45",
+    "files": [
+      {
+        "path": "source/BoopFaceView.java",
+        "sha256": "8d293c3a85a48cbee7752287a277df469799f06a819650a9ed8f1a37d5052e12"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "sleep",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; Android View animator; raw source requires canonical materialization",
+    "timing": "300ms accelerate/fade",
+    "files": [
+      {
+        "path": "source/BoopFaceView.java",
+        "sha256": "8d293c3a85a48cbee7752287a277df469799f06a819650a9ed8f1a37d5052e12"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "thinking",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; property animation and Android interpolator",
+    "timing": "1680ms repeating",
+    "files": [
+      {
+        "path": "source/BoopFaceView.java",
+        "sha256": "8d293c3a85a48cbee7752287a277df469799f06a819650a9ed8f1a37d5052e12"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "berry",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; property animation and Android interpolator",
+    "timing": "300ms; 3 variants",
+    "files": [
+      {
+        "path": "source/BoopFaceView.java",
+        "sha256": "8d293c3a85a48cbee7752287a277df469799f06a819650a9ed8f1a37d5052e12"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "reactions",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; sensor trigger belongs to app, motion math preserved",
+    "timing": "1050ms shake",
+    "files": [
+      {
+        "path": "source/BoopShakeEyeMotion.java",
+        "sha256": "0caa608bcab337511362f2ac6644df3e86e227dfe1648cc83d9541bb4a699a8e"
+      },
+      {
+        "path": "source/BoopShakeDetector.java",
+        "sha256": "b69036f32bfed236270b248ad777ad7f8491405e9cbd4fd0a593f5a5ebabbea7"
+      },
+      {
+        "path": "source/BoopFaceView.java",
+        "sha256": "8d293c3a85a48cbee7752287a277df469799f06a819650a9ed8f1a37d5052e12"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "listening",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; legacy procedural iris adapter; must be reconciled with canonical eye rig before transplant",
+    "timing": "720ms half sweep",
+    "files": [
+      {
+        "path": "source/BoopListeningGaze.java",
+        "sha256": "20de1cf36de506fb4d1da9fecef83684c5c5e0efedfeb066d971aa59c8b1cc46"
+      },
+      {
+        "path": "source/BoopListeningCueState.java",
+        "sha256": "e9ca0a2d80c3b5b9589f9d7476c43744771099c1ccee4d0cdd9eaf0638731e88"
+      },
+      {
+        "path": "scripts/patch-unified-listening-eyes.py",
+        "sha256": "f94cef7b5f45ac47b8ef150acb59bc0a8e7dac21a352898fed1288145d33c376"
+      },
+      {
+        "path": "scripts/patch-unified-reading-eyes.py",
+        "sha256": "965569da0ae43c8e4245f6f75f075aabd7d39bb3b242487a640610a8b44f64bb"
+      },
+      {
+        "path": "scripts/patch-v64-procedural-sclera.py",
+        "sha256": "ad40963994bca8c8e774c1f4035f37a3086a6753935c2ab6e857f30594a09494"
+      },
+      {
+        "path": "scripts/patch-v65-feathered-sclera.py",
+        "sha256": "5461c40b4d74ea5048bad0d19d5e41663088e8e1ffb682d539aaeb5ac024150d"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "reading",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Wall/Unified; same implementation as listening, not an independent eye system",
+    "timing": "shared listening sweep",
+    "files": [
+      {
+        "path": "source/BoopListeningGaze.java",
+        "sha256": "20de1cf36de506fb4d1da9fecef83684c5c5e0efedfeb066d971aa59c8b1cc46"
+      },
+      {
+        "path": "source/BoopListeningCueState.java",
+        "sha256": "e9ca0a2d80c3b5b9589f9d7476c43744771099c1ccee4d0cdd9eaf0638731e88"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "media",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Shield; pure reusable motion/state source, Android host and asset adapter required",
+    "timing": "music 3600ms; cinema 12000ms; settle 520ms; track change 700ms",
+    "files": [
+      {
+        "path": "shield-overlay/app/src/main/java/com/boop/shieldoverlay/MediaPuppetMotion.java",
+        "sha256": "5d6907756b97d75c0fbd0dd15f5c42b917bf2363deb90c8954f9247108c193c8"
+      },
+      {
+        "path": "shield-overlay/app/src/main/java/com/boop/shieldoverlay/FullscreenPuppetMotion.java",
+        "sha256": "902e4bb2289fbf4f8ea011c0d5185aac33d0aadf13dd96129a5aa4b02d70b79f"
+      },
+      {
+        "path": "shield-overlay/app/src/main/java/com/boop/shieldoverlay/MediaPuppetState.java",
+        "sha256": "c5e02e4d56ac9ce84726aaf7429b770f2b870b761fac1f0fbb13c31f7f49f012"
+      },
+      {
+        "path": "shield-overlay/app/src/main/java/com/boop/shieldoverlay/MediaPuppetClock.java",
+        "sha256": "b2726723dc4f5be15dd03c8eecb2bb490c0054a2b077f30348fb0957799e7b63"
+      },
+      {
+        "path": "shield-overlay/app/src/main/java/com/boop/shieldoverlay/MediaPuppetFrameLoop.java",
+        "sha256": "86d11c9a80170b313389375f518c452d69ea0548a97d4987d54d890a124d0270"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "headphones",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Shield; flattened legacy source includes old eyes/arcs; alpha cleanup candidate separate",
+    "timing": "accessory follows media motion",
+    "files": [
+      {
+        "path": "shield-overlay/app/src/main/res/drawable-nodpi/boop_headphones.png",
+        "sha256": "c86d8fa046d1d6b6c96c15d5a6e38f3c0b89533a65946fc6d59347e7679250e9"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "hands",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Unified notification host; preserve privacy and original notification authority",
+    "timing": "see notification animator source",
+    "files": [
+      {
+        "path": "source/BoopNotificationPuppetView.java",
+        "sha256": "38e62e1c52bf3b14a6ea7fad18554a44147cd3f274aaae6d5d4393b35447f910"
+      },
+      {
+        "path": "source/BoopNotificationPresentation.java",
+        "sha256": "271e31da54b51cbdeff624b0c1aa813ff13d4820b10c4fc96cc42fadc5d9f249"
+      },
+      {
+        "path": "unified/assets/boop-notifications/boop-yellow-hands-approved.png",
+        "sha256": "26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "gestures",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Lab v0.4 Open Palms/Wave/Point/Grip/Earcup/One-Cup/Gaze/Recoil; prototypes, not accepted production",
+    "timing": "WIP loops in preserved Animation Lab source archive",
+    "files": [
+      {
+        "path": "docs/animation/SHIELD_2_5D_HANDS.md",
+        "sha256": "eb374312a21f4c1cc7c6e4be4b8c9d00b9509574e5702ad4bca7f972e4bcd935"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "transitions",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Existing state transitions; lifecycle cancellation stays with host",
+    "timing": "wake/sleep/settle/track-change",
+    "files": [
+      {
+        "path": "source/BoopFaceView.java",
+        "sha256": "8d293c3a85a48cbee7752287a277df469799f06a819650a9ed8f1a37d5052e12"
+      },
+      {
+        "path": "shield-overlay/app/src/main/java/com/boop/shieldoverlay/FullscreenPuppetMotion.java",
+        "sha256": "902e4bb2289fbf4f8ea011c0d5185aac33d0aadf13dd96129a5aa4b02d70b79f"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  },
+  {
+    "family": "other-animations",
+    "branch": "boop-unified",
+    "source_sha": "625257e7f0706c42286e2632bb5b8ac7c1be3d40",
+    "owner_dependencies": "Unified/lab app-specific demos; no notification listener permission required for fixture previews",
+    "timing": "local notification fixture timing in source",
+    "files": [
+      {
+        "path": "source/BoopDevMenuModel.java",
+        "sha256": "21aa06f16596c7cf135d98ba6fd2a0e40f0f0ead9a379a5ffbe08719c91f1bb5"
+      },
+      {
+        "path": "source/BoopDevNotificationPreview.java",
+        "sha256": "d6817cb6fdacef239f28cd79c2722f23ff19b3b4bb0e77c0e17fed2736e9d39e"
+      },
+      {
+        "path": "source/BoopDevNotificationIconDrawable.java",
+        "sha256": "c29a3aa8e03592d91d28463749a83d3def34b10e7058a088e4d882bd9c717dd2"
+      }
+    ],
+    "status": "source-prepared; integration and Ryan review pending",
+    "canonical_eye_rule": "Use exact approved master; archived legacy renderer is not a replacement eye system"
+  }
+]

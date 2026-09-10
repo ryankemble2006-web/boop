@@ -1,5 +1,15 @@
 # BOOP Status
 
+## Current animation workshop — 2026-09-10
+
+Owning branch: `animation-idle-blink-cleanup`; canonical application remains
+`boop-unified`. Read SESSION_HANDOFF.md and BOOP_ANIMATION_MEMORY.md.
+Canonical source recovered; blink v3 and headphone alpha cleanup are review
+candidates. Fourteen animation-family source exports and nine reference APKs
+are preserved locally. Existing Animation Lab emulator smoke passed; new blink
+is not yet integrated into an APK. Ryan visual acceptance remains pending.
+The old cross-project map below is historical, not current routing authority.
+
 ## Current cross-project status — 2026-09-06
 
 Continuity records were refreshed against live `main` on 2026-09-06. No new

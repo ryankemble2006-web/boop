@@ -1,3 +1,38 @@
+# BOOP animation workshop handoff — 2026-09-10
+
+Current owner: `animation-idle-blink-cleanup` (existing art/animation branch).
+Canonical app remains `boop-unified`; this is not a parallel application.
+Fresh main rules supersede the historical app map in this branch.
+
+Laptop workshop: `C:/Users/ryank/Documents/Codex/BOOP/animation-work`.
+Source inputs: Unified `11650313221ae5bf997dbb93b6a905bfdc7da1ed`, followed
+by documentation-only `625257e7f0706c42286e2632bb5b8ac7c1be3d40`; main
+`5179f95961c9c43b4939dd1ea4349a32eb7f99d1`. Concurrent Unified handoff changes
+were preserved. App source/packages/signing/permissions were not changed.
+
+Read `animation-lab/idle-blink/WORKSHOP_20260910.md` and `BOOP_ANIMATION_MEMORY.md`.
+Exact canonical ZIP/master recovered and hash verified. Blink v2 and v3 have
+25 PNG states, GIF/MP4, recipes, timing and checksums locally; v3 is a review
+candidate, not visually accepted. Separate headphones alpha-cleanup candidate
+uses existing Shield occlusion regions and still needs Ryan's edge review.
+
+Nine selected Actions APKs are retained locally with source/run/hash/package
+index. Fourteen family source exports preserve original ownership/dependencies.
+The v0.4 Animation Lab APK was installed only on Android TV API36 emulator:
+cold start, Back/reopen, 12 blink triggers and Wake/Listening/Think/Stop completed
+with the same process PID. This does not test the new blink inside Android.
+Logs/video stay local; no automated visual acceptance or physical test occurred.
+
+Next: Ryan reviews v3 face motion and headphone alpha cuts; refine if requested,
+then integrate through the approved canonical app/lab path and test that exact
+candidate. Existing full canonical rebuild remains separately gated on natural
+voice acceptance. Latest usable physical rollback is v88
+`f5f086fc4f67712b5746be067aff852331299bb0` (Android TTS accepted, natural voice
+not accepted). Latest canonical reference is signed v91, artifact `10135283428`;
+it is not an animation release from this task.
+
+## Historical handoff (not current animation status)
+
 # BOOP animation-lab handoff: official yellow hands, 2026-09-07
 
 Owner: `animation-freddie-mercury`. This is an art-only workspace, not an alternate app lineage. Normal application work belongs on `boop-unified` per fetched main.
