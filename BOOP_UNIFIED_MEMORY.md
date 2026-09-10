@@ -1,3 +1,26 @@
+# BOOP v99 artist-name matching candidate
+
+Branch `boop-canonical-rebuild`; version 99 / `1.2.99-artist-name-matching`.
+Ryan reports play music is perfect, Bohemian Rhapsody works, but play John Lennon
+selected the namesake SCH song. Exact installed version was not independently
+identified in this report; this is scoped physical feedback, not blanket acceptance.
+
+The resolver previously let the first exact song title override an exact artist.
+v99 compares matching performers across the returned catalogue rows with exact
+song-title matches: an exact artist whose music dominates wins; ties retain the
+song default. Explicit title by performer stays a track request. No hardcoded
+artists, extra requests, device control changes or OpenCode dependency.
+This is a bounded catalogue heuristic, not universal natural-language certainty.
+
+Regression reproduced John Lennon selecting SCH, then passed after repair.
+A live read-only probe caught the incidental Bohemian Rhapsody artist; a second
+regression reproduced and protected that collision. All 27 focused JVM music
+tests pass. Live public-catalogue probes select John Lennon artist 226, John Lennon
+by SCH track 112736672, Bohemian Rhapsody by Queen track 4091937401, Queen artist
+412, Britney Spears artist 483, and local Flow. No live device playback performed.
+Done/Failed wording from v98 remains. Signed v99 CI/APK and physical test pending.
+No UI changes or GitHub visual tests. Protected v91 and canonical remain unchanged.
+
 # BOOP v98 short music replies candidate
 
 Branch `boop-canonical-rebuild`. Ryan requested music confirmations say only

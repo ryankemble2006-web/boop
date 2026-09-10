@@ -67,3 +67,11 @@ tests and generated-helper emulator probe passed. Signed source
 (195 Unified + 58 Shield tests). Exact APK hashes/signer verified and Voice UI
 manually inspected on owned API36 emulator. Pixel-to-Shield physical acceptance pending.
 See current handoff for exact verification levels and preserved artifacts.
+
+## v99 catalogue collision repair
+
+Physical feedback: John Lennon chose SCH; Flow and Bohemian Rhapsody worked.
+Compare exact artist performer prevalence against exact title matches, preserving
+explicit by-performer requests and song-default ties. Two observed RED-to-GREEN
+regressions, 27 focused tests and six read-only catalogue requests passed.
+Signed build and exact APK device acceptance remain pending; see handoff.

@@ -28,9 +28,26 @@ final class DeezerCatalogue {
         if(first!=null && !normal(title).equals(normal(first.optString("title")))
                 && rankedArtist!=null && rankedArtist.optLong("id")>0
                 && normal(query).equals(normal(rankedArtist.optString("name")))) artist=rankedArtist;
-        // A real artist can share a famous song's title. Deezer's first ranked exact
-        // song result wins that ambiguity; an artist-name search normally ranks its songs.
-        if(artist!=null && (first==null || !normal(title).equals(normal(first.optString("title")))))
+        // Corroborate the exact artist against performers across the result set,
+        // not just its first row: a namesake song can outrank that artist's music.
+        int performerMatches=0, titleMatches=0;
+        if(artist!=null && tracks!=null && requestedArtist.isEmpty()) {
+            for(int i=0;i<tracks.length();i++) {
+                JSONObject row=tracks.optJSONObject(i);
+                if(row==null || row.optLong("id")<=0 || !row.optBoolean("readable",true)) continue;
+                if(normal(title).equals(normal(row.optString("title")))) titleMatches++;
+                JSONObject performer=row.optJSONObject("artist");
+                if(performer!=null && performer.optLong("id") == artist.optLong("id")
+                        && normal(query).equals(normal(performer.optString("name")))) {
+                    performerMatches++;
+                }
+            }
+        }
+        // Prefer the exact artist only when its music dominates exact-title matches.
+        // An incidental namesake performer must not steal a song request; ties keep
+        // the song default. Explicit "by" always requests a track.
+        if(artist!=null && requestedArtist.isEmpty() && (performerMatches > titleMatches
+                || first==null || !normal(title).equals(normal(first.optString("title")))))
             return new Selection(artist.getString("name"),"https://www.deezer.com/artist/"+artist.getLong("id"),artist.getString("name"),"Play top tracks",false,false);
         if(tracks==null) return null;
         // Deezer's top exact title match is the default; "by <artist>" disambiguates covers.
