@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.boop.animationlab" android:versionCode="5" android:versionName="0.5-canonical-eye-code">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <application android:label="BOOP Animation Lab" android:allowBackup="false"
+        android:theme="@android:style/Theme.Material.NoActionBar" android:hardwareAccelerated="true">
+        <activity android:name="com.boop.alpha1.BoopDevMenuActivity" android:exported="true"
+            android:launchMode="singleTop" android:enableOnBackInvokedCallback="false"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

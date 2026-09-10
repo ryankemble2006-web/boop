@@ -1,5 +1,19 @@
 # BOOP animation workshop handoff — 2026-09-10
 
+## Active continuation: all eye motions in shared code
+
+Ryan said the v3 MP4 blink was gorgeous and identified outer-edge artifacts in
+the slow GIF. Lossless frames confirmed a deformation edge issue, not only GIF
+quantization. He then authorized all other eye motions to use the default method,
+with brand-new animations allowed, explicitly "code not jiggle a png".
+
+`animation-lab/canonical-eyes/` now contains the shared four-channel state engine,
+26-clip catalogue, source-texture GLES2 shader and existing Animation Lab v5 host.
+Local state tests passed 30,636 checks. Android compile/shader/device evidence is
+pending until the focused build/test receipts are recorded. No new artwork or
+production app change. The concurrently owned canonical rebuild checkout is
+untouched. See canonical-eyes/DESIGN.md and README.md.
+
 Current owner: `animation-idle-blink-cleanup` (existing art/animation branch).
 Canonical app remains `boop-unified`; this is not a parallel application.
 Fresh main rules supersede the historical app map in this branch.
