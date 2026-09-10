@@ -28,7 +28,7 @@ Ryan then physically ran the v0.5.13 one-shot actuator proof on the real Shield.
 - final Optimized verified: `mode=1 cpu=0 gpu=0 frt=0 min=15`;
 - `DIRECT VENDOR WRITES • NONE`.
 
-Durable result: `system:nv_power_mode` is the physically accepted stock performance actuator. Mapping is `1=Optimized`, `0=Max performance`. Vendor boost properties remain evidence only.
+Durable result: `system:nv_power_mode` is a physically accepted stock performance actuator. Mapping is `1=Optimized`, `0=Max performance`. Vendor boost properties remain evidence only.
 
 ## Persistent TURBO v1 implementation
 
@@ -137,6 +137,26 @@ TDD / CI receipt:
 
 **v0.6.1 is machine verified only. It has not yet replaced v0.6.0 as the physically accepted rollback checkpoint.**
 
+## v0.6.2 TURBO+ HEADROOM candidate
+
+Ryan approved a deliberately simple physical-discovery flow: from the TURBO page press Right to the chunky `TURBO+ HEADROOM TEST` control, press OK once, then photograph the result.
+
+v0.6.2 / code 23 implementation is read-only and probes:
+
+- CPU online state plus current/max/governor clues;
+- GPU devfreq current/max/min/governor/frequency clues;
+- readable memory/EMC clock or devfreq clues;
+- thermal zones, cooling devices, and fan/thermal/cooling properties;
+- `nv_power_mode` plus any other surfaced NVIDIA/processor/performance/fan/power/EMC settings.
+
+The dedicated result screen is black/full-screen, uses large photo-friendly text, labels each section `FOUND` or `BLOCKED`, and ends with `PHOTOGRAPH THIS • BACK TO CLOSE`. ADB/setup failures become a full-screen `TURBO+ • STOP` page with `ADB NOT READY` and the useful recovery instruction. A ScrollView exists only as overflow insurance if the physical Shield exposes more evidence than fits.
+
+The headroom probe must remain read-only: no `settings put`, `setprop`, chmod, root, sysfs writes, voltage changes, above-stock clock requests or thermal bypass.
+
+TDD RED receipt: source-contract commit `4d1fe343c9865b084642169975ddb5396065f556`; workflow run `34422694164`, job `102701343392`; existing JVM tests passed and source contracts failed because HeadroomProbe/HeadroomActivity/button/manifest registration did not yet exist.
+
+GREEN source is being published after documentation-only WIP commits; do not call v0.6.2 machine-green until its post-source workflow fully passes. Do not call it physically accepted until Ryan photographs/runs it on the real Shield.
+
 ## Thermal fallback boundary
 
 The SEVERE-or-higher watchdog fallback remains machine-tested, not physically heat-tested. Do not intentionally overheat the Shield to validate it. If further evidence is needed, add a safe injected/test path that exercises the same controller transition without thermal stress.
@@ -153,13 +173,11 @@ Never direct-write `persist.vendor.sys.phs.cpufreq.boost`, `gpufreq.boost`, `frt
 
 Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the physical rollback checkpoint.
 
-Physical acceptance for v0.6.1 should confirm only:
+After v0.6.2 builds successfully, physical acceptance should be:
 
-1. the one-time `SILENT STARTUP` explanation appears on first real app launch;
-2. after reboot, CLEAN START performs no banner/overlay/popup attempt;
-3. any brief startup pause is acceptable;
-4. persistent TURBO still retains across reboot and restores NORMAL correctly.
-
-Any future performance expansion must preserve the v0.6.0 accepted performance path and add one independently proven stock control at a time.
+1. install/open the candidate and confirm the large TURBO+ button is reachable with one Right press from TURBO MODE;
+2. press TURBO+ once;
+3. photograph the full-screen result or any full-screen STOP page;
+4. use that evidence to decide whether another genuine stock-envelope actuator exists. Do not write any newly discovered control until it gets its own save/change/read-back/restore proof.
 
 At the start of this session, live `main` was `5179f95961c9c43b4939dd1ea4349a32eb7f99d1`.
