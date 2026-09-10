@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import re
 
 
@@ -153,3 +154,25 @@ def test_v89_natural_runtime_diagnostics_split_failure_before_another_fix():
     assert "BuildConfig.DEBUG" in diagnostics
     assert "Android voice kept" in Path("scripts/patch-unified-natural-voices.py").read_text(encoding="utf-8")
     assert "python3 scripts/patch-v89-natural-diagnostics.py" in materialize
+
+
+def test_v90_preflight_accepts_exact_official_kokoro_runtime_inputs_only():
+    manifest = json.loads(Path("natural-voices/manifest.json").read_text(encoding="utf-8"))
+    backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
+
+    # The installed pack validator is authoritative for what BOOP downloads.
+    # Runtime preflight must not invent extra files that the official v1.0 pack
+    # does not ship, otherwise a valid installed pack is guaranteed to raise E890.
+    expected_files = {
+        item for item in manifest["requiredFiles"] if item != "espeak-ng-data"
+    }
+    list_match = re.search(
+        r"SHERPA_RUNTIME_FILES\s*=\s*\{(?P<body>.*?)\};",
+        backend,
+        re.DOTALL,
+    )
+    assert list_match, "Could not locate Sherpa runtime file preflight list"
+    actual_files = set(re.findall(r'"([^"]+)"', list_match.group("body")))
+
+    assert actual_files == expected_files
+    assert not any(path.startswith("inno/") for path in actual_files)
