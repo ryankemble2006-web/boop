@@ -19,6 +19,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
     private static final float SILENCE_SCALE = 0.2f;
+    private static final int HIGHEST_REQUIRED_SPEAKER_ID = 26;
+    private static final String[] SHERPA_RUNTIME_FILES = {
+            "model.onnx",
+            "voices.bin",
+            "tokens.txt",
+            "lexicon-gb-en.txt",
+            "inno/nif_model.onnx",
+            "inno/possible_tokens.txt"
+    };
 
     static final class NaturalSpeechException extends RuntimeException {
         private final String stage;
@@ -148,6 +157,20 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         return pcm;
     }
 
+    static boolean runtimeFilesReadyForSherpa(File root) {
+        if (root == null || !root.isDirectory() || !root.canRead()) return false;
+        for (String relative : SHERPA_RUNTIME_FILES) {
+            File file = new File(root, relative);
+            if (!file.isFile() || !file.canRead() || file.length() <= 0L) return false;
+        }
+        File espeak = new File(root, "espeak-ng-data");
+        String[] entries = espeak.list();
+        return espeak.isDirectory()
+                && espeak.canRead()
+                && entries != null
+                && entries.length > 0;
+    }
+
     private void synthesizeAndPlay(
             RequestState request,
             String text,
@@ -173,7 +196,10 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         } catch (Throwable error) {
             if (!request.cancelled.get()) {
                 clearIfActive(request);
-                request.error(new NaturalSpeechException("synthesis", error));
+                NaturalSpeechException failure = error instanceof NaturalSpeechException
+                        ? (NaturalSpeechException) error
+                        : new NaturalSpeechException("synthesis", error);
+                request.error(failure);
             }
             return;
         }
@@ -193,31 +219,50 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             if (released) throw new IllegalStateException("Natural speech backend is closed");
             if (offlineTts != null) return offlineTts;
             File root = pack.activeDirectory();
+            if (!runtimeFilesReadyForSherpa(root)) {
+                throw new NaturalSpeechException(
+                        "files",
+                        new IllegalStateException("Natural voice runtime files are incomplete"));
+            }
             File lexicon = new File(root, "lexicon-gb-en.txt");
 
-            // The Android AAR exposes Sherpa's Kotlin data classes to Java as
-            // no-arg objects with bean setters, not the desktop Java builders.
-            OfflineTtsKokoroModelConfig kokoro = new OfflineTtsKokoroModelConfig();
-            kokoro.setModel(new File(root, "model.onnx").getAbsolutePath());
-            kokoro.setVoices(new File(root, "voices.bin").getAbsolutePath());
-            kokoro.setTokens(new File(root, "tokens.txt").getAbsolutePath());
-            kokoro.setDataDir(new File(root, "espeak-ng-data").getAbsolutePath());
-            kokoro.setLexicon(lexicon.getAbsolutePath());
+            try {
+                // The Android AAR exposes Sherpa's Kotlin data classes to Java as
+                // no-arg objects with bean setters, not the desktop Java builders.
+                OfflineTtsKokoroModelConfig kokoro = new OfflineTtsKokoroModelConfig();
+                kokoro.setModel(new File(root, "model.onnx").getAbsolutePath());
+                kokoro.setVoices(new File(root, "voices.bin").getAbsolutePath());
+                kokoro.setTokens(new File(root, "tokens.txt").getAbsolutePath());
+                kokoro.setDataDir(new File(root, "espeak-ng-data").getAbsolutePath());
+                kokoro.setLexicon(lexicon.getAbsolutePath());
 
-            OfflineTtsModelConfig model = new OfflineTtsModelConfig();
-            model.setKokoro(kokoro);
-            model.setNumThreads(2);
-            model.setDebug(false);
-            model.setProvider("cpu");
+                OfflineTtsModelConfig model = new OfflineTtsModelConfig();
+                model.setKokoro(kokoro);
+                model.setNumThreads(2);
+                model.setDebug(false);
+                model.setProvider("cpu");
 
-            OfflineTtsConfig config = new OfflineTtsConfig();
-            config.setModel(model);
-            config.setSilenceScale(SILENCE_SCALE);
+                OfflineTtsConfig config = new OfflineTtsConfig();
+                config.setModel(model);
+                config.setSilenceScale(SILENCE_SCALE);
 
-            // A null AssetManager tells Sherpa to load the app-private absolute
-            // file paths above instead of looking in APK assets.
-            offlineTts = new OfflineTts(null, config);
-            return offlineTts;
+                // A null AssetManager tells Sherpa to load the app-private absolute
+                // file paths above instead of looking in APK assets.
+                OfflineTts candidate = new OfflineTts(null, config);
+                int sampleRate = candidate.sampleRate();
+                int speakerCount = candidate.numSpeakers();
+                if (sampleRate <= 0 || speakerCount <= HIGHEST_REQUIRED_SPEAKER_ID) {
+                    try { candidate.release(); } catch (Throwable ignored) { }
+                    throw new IllegalStateException(
+                            "Natural voice model opened with invalid runtime metadata");
+                }
+                offlineTts = candidate;
+                return offlineTts;
+            } catch (NaturalSpeechException failure) {
+                throw failure;
+            } catch (Throwable error) {
+                throw new NaturalSpeechException("initialization", error);
+            }
         }
     }
 
