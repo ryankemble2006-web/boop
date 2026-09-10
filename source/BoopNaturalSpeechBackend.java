@@ -286,7 +286,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
                 .setTransferMode(AudioTrack.MODE_STATIC)
                 .setSessionId(AudioManager.AUDIO_SESSION_ID_GENERATE)
                 .build();
-        if (track.getState() != AudioTrack.STATE_INITIALIZED) {
+        if (track.getState() == AudioTrack.STATE_UNINITIALIZED) {
             track.release();
             throw new IllegalStateException("Natural speech audio output unavailable");
         }
