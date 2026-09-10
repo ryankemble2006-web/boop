@@ -1,42 +1,49 @@
 # BOOP Status
 
-## Current cross-project status — 2026-09-06
+Updated 2026-09-10. `main` is the shared context/contract hub; normal BOOP application work is on `boop-unified` unless the startup map names an explicit exception.
 
-Continuity records were refreshed against live `main` on 2026-09-06. No new
-application result, checkpoint, or release claim was created by that refresh.
+## Shared continuity status
 
-Main is now the context entry point. Read BOOP_START_HERE.md and BOOP_CONTEXT.md.
-Shield's latest development is on boop-shield-media-puppetry; working Wall is on
-boop-wall-resurrection; Android-led Launcher is on boop-launcher-alpha1.
-Their SESSION_HANDOFF.md files record current evidence and pending work.
-The paused Wall swipe draft is preserved separately as WIP, and routine-authoring
-research retains a failing capability gate. Neither is a physical checkpoint.
-No application code on main was merged or promoted by this documentation sync.
+Ryan approved an exhaustive two-file continuity transfer for Codex/Boop:
 
-## Historical main snapshot (superseded as a roadmap)
+- `BOOP_PERSONALITY.md` now carries the durable collaboration style, shorthand and reference meanings.
+- `BOOP_CONTEXT.md` now carries the broad BOOP/project mental model and adjacent vocabulary.
 
-## Current
-Routines v1 implementation in progress.
-Task 5 TV routines list is the active task.
+This is documentation-only. No application source, package, signer, permission, build or deployment state is changed by the continuity transfer.
 
-## Green
-- Shield Home launch/pairing/room discovery
-- Real Home Assistant favourite discovery
-- Remote navigation
-- Physical Home Assistant control
-- Real state-change confirmation
-- Tasks 1–4 of Routines v1
+The corrected `canary` meaning is now recorded as a deliberately narrow/sacrificial proof used to expose a risky assumption before applying the change to the real target. The prior skin-only/unknown note is superseded.
 
-## Next
-- Finish Task 5 TV routines list
-- Task 6 Activity wiring
-- Task 7 fresh CI + Shield sofa verification
+## Current canonical app pointer
 
-## Do Not Touch
-- checkpoint-shield-home-f8e8135
-- HomeAssistantRepository unless explicitly required
-- FocusCardView unless a regression proves it is necessary
-- BoopOverlayService protected overlay behaviour
+Observed live `boop-unified` branch HEAD during this update:
 
-## Latest Checkpoint
-checkpoint-shield-routines-plan-775f3fd
+`99474d141e7affad17cdbe854e94dd3986076980`
+
+Latest signed candidate recorded by `boop-unified`:
+
+- versionCode `91`;
+- versionName `1.2.91-unified-static-track-state-fix`;
+- app source/build head `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
+- canonical Unified workflow `34433115316`: SUCCESS;
+- artifact ID `10135283428`;
+- v91 remains **not physically accepted**.
+
+## Current physical rollback
+
+`checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
+
+Ryan physically accepted v88 as the usable Android-speech rollback. This does not prove Natural Voices work.
+
+## Immediate app gate
+
+Physical-test v91 Natural Voices. The required finish condition remains more than one speaker preview plus normal routed Natural Voice speech while ordinary Android TTS fallback remains safe.
+
+Only after Natural Voices are physically accepted should the already-approved canonical rebuild be started from the exact voice-working Unified head.
+
+## Explicit exception
+
+Clean Nvidia Shield HOME remains standalone on `boop-shield-clean-launcher` / `com.boop.shieldhome` until Ryan explicitly approves a merge. Do not infer otherwise from Unified's canonical status.
+
+## Acceptance rule
+
+CI/build/signing/integrity evidence and Ryan's physical/visual/acoustic acceptance are separate states. Ryan remains the real-device visual and acoustic authority.

@@ -1,23 +1,52 @@
-# Shared-context hub handoff — 2026-09-06
+# Shared-context hub handoff
 
-## Continuity refresh — 2026-09-06
+Updated 2026-09-10. `main` is the cross-project context hub, not the canonical BOOP application source.
 
-Ryan explicitly requested an "update your memory" refresh. No new product
-decision, implementation result, physical test, or app-branch task was supplied.
-The shared context, rules, status, and this handoff were reread; live `main` was
-fetched and verified at `7c0cf6b` before this documentation-only update. This
-does not promote any app state or substitute for fetching an owning app branch
-before its next change.
+## Exhaustive continuity transfer experiment — 2026-09-10
 
-Main is the cross-project entry point, NOT a consolidated latest build of all apps.
-This change is documentation only. Application source/build configuration on main
-is left at its previous8fcd6da baseline; do not build current Wall from it.
-Use BOOP_START_HERE.md to select each app's development branch and read that
-branch's SESSION_HANDOFF.md for fresh evidence and pending work.
+Ryan approved a documentation-only experiment to make a fresh Codex/Boop recover the accumulated working relationship and project mental model without reconstructing weeks of conversation manually.
 
-Ryan approved: laptop develops Shield, Android develops Launcher; GitHub shares
-reviewed code, decisions, memory and status. Agents check/fetch before editing
-and update/publish handoffs at the end. Never silently overwrite concurrent work.
-The local clone had been fetching only the old Shield Home branch; active app
-fetch mappings and a local Launcher checkout were added.
-New tasks need BOOP repo access. This is not automatic raw conversation syncing.
+The transfer is deliberately split across two main-owned files:
+
+- `BOOP_PERSONALITY.md` = **how to work with Ryan as Boop**: conversational voice, shorthand, humour/pace, evidence habits, read-only/locked/go/cook/poke/update-memory semantics, canary meaning, frustration handling, visual-authority behaviour and cross-session etiquette.
+- `BOOP_CONTEXT.md` = **what Boop understands**: product philosophy, Unified/device topology, current Natural Voice gate, Home Assistant/local-first model, protected eyes/hands, privacy/accessibility, product-family concepts, media/launcher/Turbo boundaries, adjacent Kodi/Forki vocabulary, rollback philosophy and continuity precedence.
+
+The old personality note saying `canary` was an unrecovered skin-only joke was corrected. Ryan explicitly confirmed on 2026-09-10 that the useful shared meaning is the broader narrow/sacrificial proof before risking the real target.
+
+Public-repository privacy remains in force: the expanded continuity captures durable working context, not credentials, account data, private addresses, personal secrets, raw chat history or private media.
+
+This change is documentation only. It does not alter app code, permissions, signing, builds, deployment or physical acceptance.
+
+## Current engineering pointer at handoff time
+
+Normal app development still belongs on `boop-unified`.
+
+Observed live `boop-unified` branch HEAD during this update:
+
+`99474d141e7affad17cdbe854e94dd3986076980`
+
+Latest signed Unified candidate recorded by the owning branch:
+
+- v91 / versionCode 91;
+- app source/build head `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
+- canonical Unified workflow `34433115316`: SUCCESS;
+- v91 CI/build verified, **not physically accepted**.
+
+Current protected usable physical rollback remains:
+
+`checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
+
+Natural Voice physical proof remains the next narrow gate before the approved canonical rebuild.
+
+## Startup rule for future sessions
+
+For BOOP work:
+
+1. read `AGENTS.md`, `BOOP_START_HERE.md`, `BOOP_CONTEXT.md`, `BOOP_RULES.md` and `BOOP_PERSONALITY.md`;
+2. follow the startup map to the owning branch/worktree;
+3. fetch/check live `main` and the owning branch;
+4. read that branch's handoff/status/memory files;
+5. preserve dirty/concurrent work and accepted checkpoints;
+6. do not ask Ryan to reconstruct context that those files already contain.
+
+Availability of the files is not proof another session has read them. If continuity appears wrong, re-read the live files before guessing.
