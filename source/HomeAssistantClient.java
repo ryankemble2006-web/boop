@@ -145,7 +145,7 @@ final class HomeAssistantClient {
             String baseUrl, String accessToken, String entityId) throws Exception {
         HttpURLConnection connection = null;
         try {
-            String encoded = URLEncoder.encode(entityId, StandardCharsets.UTF_8);
+            String encoded = HomeAssistantAuthUrls.enc(entityId);
             connection = open(baseUrl + "/api/states/" + encoded, "GET", accessToken);
             int status = connection.getResponseCode();
             if (status == 401 || status == 403) {

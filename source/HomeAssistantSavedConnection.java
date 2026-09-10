@@ -1,8 +1,5 @@
 package com.boop.alpha1;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 /** In-memory snapshot: keep the server and the OAuth identity with its token. */
 final class HomeAssistantSavedConnection {
     private final String baseUrl, clientId, refreshToken;
@@ -19,7 +16,7 @@ final class HomeAssistantSavedConnection {
     String refreshToken() { return refreshToken; }
     String refreshBody() {
         return "grant_type=refresh_token&refresh_token="
-                + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8)
-                + "&client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8);
+                + HomeAssistantAuthUrls.enc(refreshToken)
+                + "&client_id=" + HomeAssistantAuthUrls.enc(clientId);
     }
 }

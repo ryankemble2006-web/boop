@@ -58,6 +58,7 @@ jobs:
       - name: Check non-visual integration contracts
         run: |
           python scripts/test-house-discovery-lifecycle.py
+          python scripts/test-shield-url-encoding.py
           python -m pip install pytest
           python -m pytest -q tests/test_unified_home_override.py
           python -m pytest -q tests/test_unified_docked_shield_pass.py tests/test_approved_eye_master_contract.py::test_approved_eye_master_is_exact_uploaded_png_and_canonical_copy tests/test_unified_notification_asset_integrity.py tests/test_unified_v70_dev_lab_contract.py::test_unified_package_version_and_private_dev_activity_contract

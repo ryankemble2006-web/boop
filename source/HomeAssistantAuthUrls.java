@@ -1,7 +1,7 @@
 package com.boop.alpha1;
 
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.io.UnsupportedEncodingException;
 
 final class HomeAssistantAuthUrls {
     static final String CLIENT_ID = "https://raw.githubusercontent.com/ryankemble2006-web/boop/alpha2-local-ha-control/web/ha-auth/index.html";
@@ -30,8 +30,13 @@ final class HomeAssistantAuthUrls {
                 + "&client_id=" + enc(CLIENT_ID);
     }
 
-    private static String enc(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    static String enc(String value) {
+        try {
+            // The Charset overload is not available on Shield's Android 11 runtime.
+            return URLEncoder.encode(value, "UTF-8");
+        } catch (UnsupportedEncodingException impossible) {
+            throw new AssertionError("UTF-8 is required by Android", impossible);
+        }
     }
 
     static String trim(String value) {

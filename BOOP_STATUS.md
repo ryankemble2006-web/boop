@@ -1,3 +1,28 @@
+Actual Shield runtime probe: compiled the repaired auth/tuple code to dex and ran
+synthetic OAuth encoding checks through app_process; passed. No real credentials,
+network request, BOOP install or media action involved. This verifies this method
+on Android 11, not the full voice route. Source review found no blocker.
+
+## v108 compatibility repair candidate after v107 physical crash
+
+Ryan reported remote microphone/BOOP then a brief circle and Home refreshing.
+Two captured v107 attempts crashed the BOOP process after recognition returned
+speech. Exact failure: NoSuchMethodError for URLEncoder.encode(String, Charset),
+HomeAssistantSavedConnection.refreshBody -> SecureTokenStore.refreshBody ->
+HomeAssistantAuth.freshAccessToken -> HomeAssistantDeviceSetup.ensureReady.
+This is an Android 11 linkage incompatibility, not a successful command or reboot.
+
+v108 routes tuple/auth/entity URL encoding through the Android-compatible
+URLEncoder.encode(String, "UTF-8") overload. OAuth client identity and encoding
+semantics remain unchanged. The older auth helper and entity lookup had the same
+unsupported overload and were corrected in scope. New nonvisual regression
+compiles actual auth/tuple source and checks bytecode for the exact unsupported
+method descriptor: RED before repair, GREEN afterward. OAuth escaping/identity
+probe and delayed-dialog lifecycle regression also pass locally. Full CI, signer,
+install and physical command test pending. Version108 / 1.2.108-shield-auth-compatibility.
+No further physical changes made. v107 remains installed and fails this route;
+previous accepted checkpoints remain preserved. Do not call this physically fixed.
+
 ## v107 installed with approval; physical command result pending
 
 Ryan approved the exact v107 deployment. Delivered APK hash matched
