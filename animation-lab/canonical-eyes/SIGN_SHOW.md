@@ -1,4 +1,4 @@
-# Notification sign show — lab-only v8
+# Notification sign show — lab-only v9 grip candidate
 
 Ryan approved the roadside-costume sign-holder concept: lift an app sign with
 both five-digit hands, wobble it enthusiastically, glance toward it and blink.
@@ -10,9 +10,13 @@ notification listener, tap/dismiss authority or permissions are introduced.
 
 The byte-locked five-digit pair (SHA-256
 26fe95570ac995e08b693107db4324f038cebe9e4fe76b9174ec41d7556fe2f1) is sampled as
-two independent hand layers at runtime. The full source is unmodified. Whole
-hands pivot at the wrists; no new articulated finger rig or actual finger curl
-is claimed. Both hands travel with the sign's transform to keep the grip together.
+two palms/thumbs at rear depth and eight independently sampled finger strips at
+front depth. The full source is unmodified. Each strip is foreshortened through
+a small Canvas mesh, four fingers per hand facing the viewer. Palm/thumb material
+is behind the sign. This is a restrained 2D grip, not newly generated artwork or
+a full 3D hand. All layers travel with the sign's transform to keep contact.
+Ryan rejected v8's flat open hands drawn on top of the board. That screenshot is
+the manual visual failure reproduction; v9 needs Ryan's appearance review.
 The original v7 eye shader/master are unchanged and use separate state poses.
 
 SignMotion supplies a finite eight-second performance: anticipation/lift,
