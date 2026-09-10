@@ -1,3 +1,16 @@
+## v109 artifact verified; room-button physical test pending
+
+Source4f877853715fd568b25a88f98abc97e58914a44a; GitHub run34493634246 SUCCESS,
+artifact10158994867. 217 Unified +62 Shield functional tests passed with no failures,
+errors or skips. Independent local signature/package/version/hash checks passed:
+com.boop.alpha1 version109 / 1.2.109-live-room-controls, permanent signer
+f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+APK SHA256 fd399358d2072748b85e8f72ed62e98169d8efbb0c0ff669d9a6adfa5dfe8cc5.
+ZIP SHA256 6383d4b079109c3f4f1f3e25caefed449759a9c663cfc5d460bae0844b8ffd47.
+Delivered BOOP-v109-live-room-controls.apk. Not installed or physically accepted.
+v108 remains installed. Next: approved installation and candle dashboard response
+test. No GitHub visual tests. Build monitor paused after delivery.
+
 ## v108 cancellation test: native playback recovered
 
 User confirmed rapid remote microphone/Back cycles paused native Deezer playback
