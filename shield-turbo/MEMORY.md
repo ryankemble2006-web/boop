@@ -110,10 +110,28 @@ SEVERE-or-higher auto-NORMAL is machine-tested but has NOT been physically valid
 
 v0.5.12 exposed `Unexpected ADB stream`. Root cause was stale already-in-flight traffic from older closed streams in the single-connection ADB client. Commit `1b632e09706652d2f2802c6ca4bb28963d9e7685` allows only stale `OKAY`, `WRTE`, or `CLSE` packets addressed to older positive local stream IDs to be ignored. Current, future and invalid stream IDs still fail closed. Do not broaden this exception without a reproduced protocol case.
 
+## TURBO+ HEADROOM decision
+
+Ryan approved a read-only `TURBO+ HEADROOM TEST` designed for physical Shield probing and easy phone photographs.
+
+Durable UX:
+
+- chunky TURBO+ control lives beside the normal TURBO button so it is one Right press away from the default focus;
+- opening it immediately runs the read-only scan and shows a dedicated full-screen black page;
+- result sections are CPU, GPU, MEMORY, COOLING, and EXTRA STOCK CONTROLS;
+- visible evidence is labelled `FOUND`; unavailable evidence is labelled `BLOCKED`;
+- failures become a giant `TURBO+ • STOP` page; missing trusted ADB specifically says `ADB NOT READY` and points to `ADVANCED → ENABLE ADB TURBO`;
+- footer is `PHOTOGRAPH THIS • BACK TO CLOSE`;
+- the report is allowed to scroll only if the physical Shield exposes more evidence than fits.
+
+Probe scope is read-only only: CPU online/current/max/governor; GPU devfreq current/max/min/governor/frequency list; memory/EMC readable clues; thermal zones/cooling devices/fan-related properties; `nv_power_mode` and other surfaced NVIDIA/processor/performance/fan/power/EMC settings. It must contain no `settings put`, `setprop`, chmod, root, sysfs writes, overclock, voltage, or thermal bypass.
+
+TDD RED commit: `4d1fe343c9865b084642169975ddb5396065f556`; run `34422694164`, job `102701343392`; existing JVM tests passed and the new source contract failed because the feature was absent. v0.6.2 / code 23 implementation is pending full CI verification and physical Shield evidence.
+
 ## Future performance expansion
 
 There is no accepted above-stock clock path. Future TURBO work should look for **additional stock-envelope controls only**, read-only first. Add at most one independently evidenced actuator at a time, and require save, write, read-back, restore and thermal-safe semantics before it can join persistent TURBO.
 
-Likely read-only discovery targets include CPU online/idle state, CPU/GPU governor and frequency ceilings, memory/EMC state, and any genuinely stock fan/thermal control exposed by current Shield firmware. Presence on generic Tegra Linux does not prove Shield TV writability.
+Presence on generic Tegra Linux does not prove Shield TV writability. The physical TURBO+ photo evidence should drive the next decision.
 
 Treat v0.6.0 source `87feccaeba1c2c5fa2044aeeb572fad947aa985c` and artifact `10077342574` as the physical rollback point until a newer build is physically accepted.
