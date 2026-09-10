@@ -1,0 +1,2 @@
+e8c4ac635cf61d3d4e6e150113445a3fb1c0448006254eb0eb8c1bf0ad1b5a7b  BOOP-Block-Party-source.zip
+2aef34e7e2d58dcb81b23fcbfc1caed93bc567daca2cb42583dc538fe99ea6da  script.boop.blockparty-1.0.0.zip

@@ -1,56 +1,17 @@
-# Shared-context hub handoff
+# BOOP Block Party — standalone Kodi game
 
-Updated 2026-09-10. `main` is the cross-project context hub, not the canonical BOOP application source.
+Updated 2026-09-10. Owning branch: `boop-kodi-block-party`.
 
-## Exhaustive continuity transfer experiment — 2026-09-10
+This branch owns the standalone Kodi game Ryan explicitly requested. It is not a parallel Android BOOP app and does not replace `boop-unified`, `boop-canonical-rebuild`, or the animation tasks. Inherited shared documents concern those projects; this handoff identifies this branch's scope.
 
-Ryan approved a documentation-only experiment to make a fresh Codex/Boop recover the accumulated working relationship and project mental model without reconstructing weeks of conversation manually.
+Source: `kodi-block-party/script.boop.blockparty/`.
+Installable ZIP: `kodi-block-party/releases/script.boop.blockparty-1.0.0.zip`.
+Read `kodi-block-party/README.md`, `DESIGN.md` and `VERIFICATION.md`.
 
-The transfer is deliberately split across two main-owned files:
+Implemented: classic falling-block gameplay with pre-rendered 3D cube artwork, original approved BOOP eye spectator, native Kodi controls, Enter rotation, Up hard drop, pause/replay, score/level/combo rules, ghost landing, seven-bag and local best score. Offline, native Python3 Kodi add-on; no browser, global keymaps or device permissions.
 
-- `BOOP_PERSONALITY.md` = **how to work with Ryan as Boop**: conversational voice, shorthand, humour/pace, evidence habits, read-only/locked/go/cook/poke/update-memory semantics, canary meaning, frustration handling, visual-authority behaviour and cross-session etiquette.
-- `BOOP_CONTEXT.md` = **what Boop understands**: product philosophy, Unified/device topology, Natural Voice history/current acceptance, Home Assistant/local-first model, protected eyes/hands, privacy/accessibility, product-family concepts, media/launcher/Turbo boundaries, adjacent Kodi/Forki vocabulary, rollback philosophy and continuity precedence.
+Verification: 21 unit tests passed; independent code review; actual Kodi21.2 Windows launch/action/clear/pause/resume/exit tests passed in an isolated portable profile. Packaging/XML/Python3.8 syntax and approved eye hash checked. Screenshots are local manual inspection, not visual CI.
 
-The old personality note saying `canary` was an unrecovered skin-only joke was corrected. Ryan explicitly confirmed on 2026-09-10 that the useful shared meaning is the broader narrow/sacrificial proof before risking the real target.
+No physical Shield/Forki remote or acoustic acceptance yet. No game physical checkpoint exists. Android app/checkpoints are unchanged. Next safe step: Ryan installs the ZIP in Kodi and tries his remote/skin. Do not imply install permission from this handoff.
 
-Public-repository privacy remains in force: the expanded continuity captures durable working context, not credentials, account data, private addresses, personal secrets, raw chat history or private media.
-
-This change is documentation only. It does not alter app code, permissions, signing, builds, deployment or physical acceptance.
-
-## Concurrent reconciliation during publication
-
-While the first continuity commit was being published, another Codex session advanced `boop-unified` from `99474d141e7affad17cdbe854e94dd3986076980` to `771b68a00ac95b40ed6e17cffac60af77528a934` with `docs: accept v91 voices and point to scoped rebuild`.
-
-The shared context was therefore reread/reconciled before completion rather than leaving the first snapshot stale.
-
-Fresh accepted baseline from the owning branch:
-
-- v91 app source `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
-- Ryan physically confirmed Natural Voices installed/selectable, demos speaking and normal routed Natural Voice reply;
-- protected checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` -> exact v91 source;
-- v88 checkpoint remains preserved as historical usable Android-TTS rollback.
-
-Active selected overhaul now belongs to:
-
-- branch `boop-canonical-rebuild`;
-- base `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`;
-- candidate HEAD observed during reconciliation `a3eb768641e339ed59a6e2e86cb74f64bccf5979`;
-- candidate version 92;
-- selected scope includes shared room/speech/media state, dynamic exposed HA discovery, one Now Playing owner, Deezer/local transport, HA Back escape and device profiles;
-- eyes/blink are being handled separately for later transplant and Turbo redesign is outside this selected branch;
-- candidate was not yet merged/physically accepted at this snapshot.
-
-Re-fetch that branch before continuing because it is actively moving.
-
-## Startup rule for future sessions
-
-For BOOP work:
-
-1. read `AGENTS.md`, `BOOP_START_HERE.md`, `BOOP_CONTEXT.md`, `BOOP_RULES.md` and `BOOP_PERSONALITY.md`;
-2. follow the startup map to the owning branch/worktree;
-3. fetch/check live `main` and the owning branch;
-4. read that branch's handoff/status/memory files;
-5. preserve dirty/concurrent work and accepted checkpoints;
-6. do not ask Ryan to reconstruct context that those files already contain.
-
-Availability of the files is not proof another session has read them. If continuity appears wrong, re-read the live files before guessing.
+Exact release SHA is the commit containing this file; consult live GitHub HEAD and release SHA256SUMS before further work. Local task source is retained in the originating task workspace.

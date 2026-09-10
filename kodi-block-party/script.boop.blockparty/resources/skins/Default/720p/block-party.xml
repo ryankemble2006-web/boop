@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <defaultcontrol always="true">9000</defaultcontrol>
+  <backgroundcolor>FF07121C</backgroundcolor>
+  <coordinates><system>1</system><posx>0</posx><posy>0</posy></coordinates>
+  <controls>
+    <control type="button" id="9000">
+      <left>-200</left><top>-200</top><width>1</width><height>1</height>
+      <label></label><texturefocus></texturefocus><texturenofocus></texturenofocus>
+      <onleft>9000</onleft><onright>9000</onright><onup>9000</onup><ondown>9000</ondown>
+    </control>
+  </controls>
+</window>

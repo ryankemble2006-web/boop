@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="script.boop.blockparty" name="BOOP - Block Party" version="1.0.0" provider-name="Ryan and Boop">
+  <requires><import addon="xbmc.python" version="3.0.0"/></requires>
+  <extension point="xbmc.python.script" library="default.py"><provides>executable</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">A little order. A lot of falling things.</summary>
+    <description lang="en_GB">A BOOP-themed falling-block arcade game with extruded 3D blocks, ghost landing, seven-bag pieces, local best score and remote-friendly controls. Enter/OK rotates. Works offline. Classic flat-board gameplay with a 3D look.</description>
+    <platform>all</platform>
+    <license>MIT (code); BOOP artwork retained under its owner's rights</license>
+    <assets><icon>resources/media/icon.png</icon><fanart>resources/media/cabinet.png</fanart></assets>
+    <news>First sofa edition. Enter rotates; Up drops; Back pauses, then exits.</news>
+  </extension>
+</addon>
