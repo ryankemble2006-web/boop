@@ -1,12 +1,21 @@
 # BOOP Status
 
-## Latest: notification sign show — lab v8
+## Latest: notification grip candidate — lab v9
+
+Built source d220933572ed6ea91db4841ae03f512c138860ec; signed Actions
+34440698857 succeeded. Original-art finger meshes now cross the board front;
+palm/thumb layers sit behind. V8's flat open-hand grip was rejected by Ryan.
+V7 eye preview remains accepted; v9 grip appearance awaits his review.
+No physical-device acceptance or production integration. Runtime scope is in
+animation-lab/canonical-eyes/VERIFICATION.md.
+
+## Previous: notification sign show — lab v8
 
 Four local sign-holder performances from the approved five-digit hands and
 unchanged v7 eyes. Built source 3a7feea9f4e1706fb873e21a3fd7675ebe16197b;
 Actions 34439276646 succeeded, artifact 10137328681. No live notifications or
 production integration. See canonical-eyes/VERIFICATION.md for runtime scope.
-Ryan accepted the preceding v7 corner preview; v8 appearance is not yet accepted.
+Ryan accepted the preceding v7 corner preview; v8's grip was rejected.
 
 ## Latest eye correction — lab v7
 

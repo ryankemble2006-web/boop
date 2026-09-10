@@ -1,6 +1,17 @@
 # BOOP animation workshop handoff — 2026-09-10
 
-## Active: notification sign show, lab v8
+## Active: notification grip candidate, lab v9
+
+Built source d220933572ed6ea91db4841ae03f512c138860ec; signed Actions
+34440698857 succeeded. Ryan rejected v8's open hands pasted over the sign and
+requested thumbs behind, four bent fingers facing us, using the supplied art.
+v9 samples each non-thumb finger into a runtime mesh and draws rear palm/thumb
+material before the board. Sign timing, eye shader, catalogue and master bytes
+are unchanged. 30,636 eye and 53,508 sign-state checks passed; scoped code review
+found no blocking issue. Appearance approval remains Ryan's, not a test result.
+See canonical-eyes/VERIFICATION.md for runtime evidence. No production changes.
+
+## Previous: notification sign show, lab v8 (grip rejected)
 
 Ryan accepted the v7 corner preview as "absolutely perfect", then approved new
 notification routines based on the five-finger sign-holder concept. The existing

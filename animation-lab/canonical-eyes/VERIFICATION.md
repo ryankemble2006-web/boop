@@ -1,5 +1,24 @@
 # Canonical eye library verification — 2026-09-10
 
+## v9 original-art grip candidate
+
+Built source d220933572ed6ea91db4841ae03f512c138860ec; Actions 34440698857
+succeeded. Package com.boop.animationlab versionCode 9, same permanent signer.
+APK SHA-256 cd44e29520e75dcbd3d14b16d4e17782916b9afc87b2ab12468378673320a96b
+matches the downloaded build receipt. CI checks exact eye/hand bytes, archive,
+package boundary and signer. 30,636 eye-state and 53,508 sign-state tests passed
+locally and in CI. Scoped independent read-only review found no blocking issue.
+
+The dedicated API36 TV emulator5558 installed and cold-launched the signed APK.
+Fixed WhatsApp 3000ms pose captured; WhatsApp and Gmail performances recorded.
+All four fixtures launched, Home/Back/reopen and return to Thinking completed.
+Renderer-ready logged with no renderer/fatal error in the tested process.
+Receipts/script/raw video: animation-work/sign-spinner/evidence-v9 and
+record-grip-v9.ps1. User-facing MP4 is a 60fps-compatible encoding of that actual
+runtime capture. No automated visual acceptance, soak guarantee, physical-device
+test, live notifications or production integration. Ryan reviews appearance.
+V8's flat open-hand grip was rejected; v7 eye-corner preview remains accepted.
+
 ## v8 five-digit notification sign show
 
 Source 3a7feea9f4e1706fb873e21a3fd7675ebe16197b; Actions 34439276646 success;

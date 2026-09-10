@@ -1,6 +1,16 @@
 # Animation memory — 2026-09-10
 
-Latest continuation: Ryan accepted the v7 corner preview ("absolutely perfect")
+Latest continuation: v9 grip candidate, source
+d220933572ed6ea91db4841ae03f512c138860ec, Actions 34440698857 success.
+Ryan explicitly wants thumbs BEHIND the sign and FOUR fingers facing us,
+bent from the supplied open hands. Do not return to v8's full open-hand overlay.
+NotificationSignView samples four separate non-thumb strips per hand once,
+foreshortens them with a small Canvas mesh, and puts palm/thumb material at rear
+depth. All layers share the sign transform. Exact source hands and v7 eyes are
+unchanged. This is a limited 2D grip, not generated fingers or a full 3D hand.
+New appearance pending Ryan's review; no new physical acceptance.
+
+Previous continuation: Ryan accepted the v7 corner preview ("absolutely perfect")
 and approved a five-finger notification sign-holder routine. v8 source
 3a7feea9f4e1706fb873e21a3fd7675ebe16197b adds four local arrow-sign fixtures,
 independent original hand layers, wrist motion and coordinated existing eyes.

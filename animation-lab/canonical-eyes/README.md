@@ -24,7 +24,7 @@ Neutral samples the master directly. Placement/scaling fits the view once and
 does not animate the character rectangle. The displayed pupil/iris moves by
 deforming the existing eye texture within a stationary support region.
 
-The existing Animation Lab package is the v8 test host (permanent signer).
+The existing Animation Lab package is the v9 test host (permanent signer).
 This focused lab shelf covers eyes and the new SIGN_SHOW.md notification demo;
 old v0.4 accessory/notification shelves
 remain preserved in the reference APK/source archive and are not claimed ported.
@@ -40,7 +40,9 @@ The host arranges the same eye renderer above independent exact hand layers and
 a vector sign. Share the logical clock and pass SignMotion.Pose.eyes to the eye
 renderer, and the full pose/style to NotificationSignView.show. The sign stage
 uses a 1000x680 logical canvas; the example host reserves 64% height for eyes.
-This is wrist/prop puppetry, not a new articulated finger rig. Normal eye clips
+v9 replaces the rejected flat open-hand overlay with four individually sampled
+finger meshes per hand in front and palm/thumb material behind the board. This
+is a restrained 2D grip from the same artwork, not a full 3D rig. Normal eye clips
 remain selectable; no live notification semantics or production wiring exist.
 
 v7 inner-corner repair: the opaque rig texture has TWO rows, source material
