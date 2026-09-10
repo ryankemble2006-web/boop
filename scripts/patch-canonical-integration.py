@@ -21,8 +21,18 @@ shutil.copytree('shield-clean-launcher/app/src/main/res',home/'src/main/res',dir
 shutil.copy2('unified/shield-home-lib.gradle',home/'build.gradle')
 shutil.copy2('unified/shield-home-manifest.xml',home/'src/main/AndroidManifest.xml')
 with (ROOT/'settings.gradle').open('a') as file: file.write("\ninclude ':shield-home-lib'\n")
-for filename in ['BoopProfileActivity.java','BoopLocalMedia.java']:
+for filename in ['BoopProfileActivity.java','BoopLocalMedia.java','DeezerArtistClient.java']:
     shutil.copy2(Path('unified')/filename,MAIN/filename)
+
+ha_client=MAIN/'HomeAssistantClient.java'
+text=ha_client.read_text()
+text=once(text,'            String colour = LightColourCommandParser.parseColour(text);','''            CommandOutcome artistOutcome = new DeezerArtistClient().process(
+                    baseUrl, accessToken, text, room, roomSource);
+            if (artistOutcome != null) return artistOutcome;
+
+            String colour = LightColourCommandParser.parseColour(text);''')
+ha_client.write_text(text)
+shutil.copy2('unified/DeezerArtistClientTest.java',ROOT/'app/src/test/java/com/boop/alpha1/DeezerArtistClientTest.java')
 
 manifest=ROOT/'app/src/main/AndroidManifest.xml'
 text=manifest.read_text()

@@ -1,8 +1,8 @@
-# Scoped canonical rebuild - v94 handoff
+# Scoped canonical rebuild - v95 development handoff
 
 Updated 2026-09-10. Owning branch: `boop-canonical-rebuild`. Local source: `C:/Users/ryank/Documents/Codex/BOOP/.worktrees/boop-canonical-rebuild`. Base: `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`.
 
-## Current candidate
+## Last built candidate (v94)
 
 Application source/build commit: `e683b26e04a3bc2bb8ba5a94ee23eeb2380d1ec0`. Later documentation commits do not change this APK. Resolve the current branch documentation HEAD with live `git ls-remote`; do not confuse it with the built source.
 
@@ -54,10 +54,23 @@ Required behavior: artist requests from the Pixel must target the intended Shiel
 
 Live HA browser inspection: the Shield is the TV device in Living Room, owned by Android TV Remote, with media entity media_player.tv_2. Its current app is deezer.android.app. Browse media shows Applications with No items. Android Debug Bridge was not present in the configured integration list. This verifies the existing remote target but does not establish artist-search support. Do not fabricate a deep link or blindly forward a search intent to the Shield.
 
-Music Assistant 2.10.2 is already running. Its HA integration is discovered but not configured. Music sources currently contain only Ambient Sounds and the built-in Music Assistant provider; Deezer is available to add but is not connected. The Deezer setup form requires an ARL token; no token was read or entered and setup was cancelled without saving. Asked Ryan whether Music Assistant streaming to Shield is acceptable or playback must remain inside the Shield Deezer app. No HA configuration or playback was changed. ADB still lists emulators only.
+Music Assistant 2.10.2 is already running. Its HA integration is discovered but not configured. Music sources currently contain only Ambient Sounds and the built-in Music Assistant provider; Deezer is available to add but is not connected. The Deezer setup form requires an ARL token; no token was read or entered and setup was cancelled without saving. Ryan requires playback inside the Shield Deezer app; Music Assistant streaming is rejected for this feature. Initial browser inspection changed no configuration or playback. Subsequent native playback tests are recorded below.
 
 References: https://www.home-assistant.io/integrations/androidtv_remote/ and https://www.home-assistant.io/integrations/androidtv/ . No application code or permissions changed during this diagnosis. Preserve working HA/basic transport and Natural Voice paths; remote artist search and unexpected speaker activation remain unresolved.
 
+## Native Deezer investigation and v95 implementation
+
+Ryan explicitly requires native Deezer playback on the Shield. A pre-existing authorized Shield ADB connection was available; no debugging setting or device permission was enabled. The installed Deezer TV package is deezer.android.app, version 1.0.1.1. Its manifest declares native HTTPS artist links and SEARCH, but no PLAY_FROM_SEARCH activity handler. SEARCH produced no visible navigation. The public Deezer artist lookup resolved Britney Spears to artist/483; opening that artist link showed the correct native artist page with focused Play top tracks. Selecting it started music and Ryan confirmed audibly: "yes britney came on". This is physical acceptance of the diagnostic route, not of a new BOOP APK.
+
+Repeated via existing Home Assistant Android TV Remote: remote.turn_on with the official artist URL opened the correct page; media_player.media_pause changed its focused button to Play; remote.send_command DPAD_CENTER then showed playback again. The native button toggles, so selecting while already playing pauses it. The room/device-pair discovery template was verified live, and the TV media entity is already exposed to Assist. No HA integration, account, exposure, permission or automation was changed. Music was left playing. Always announce subsequent audible tests first; the initial live test surprised Ryan.
+
+Deezer's declared media-browser service and media-button receiver are exported=false. A temporary permission-free, non-playing diagnostic app confirmed connection failure, then was uninstalled. No private interface bypass is proposed. Physical screenshots, diagnostic APK/source, copied third-party APK and network details remain local scratch only; never publish them. Android media_session diagnostics showed no active session despite audible native playback, so that API is not proof of stopped music on this installed app.
+
+v95 implementation in this branch: bare play requests resolve an exact unique Deezer artist first; unmatched/ambiguous bare requests and unavailable catalogue preserve normal HA/conversation routing. Explicit on-Deezer failures remain local. The selected room must have one enabled, visible, Assist-exposed Android TV media player paired by HA device identity to its Android TV Remote. Open the official artist link, allow the native page to load, verify unchanged room and Deezer current app, pause, allow pause to settle, recheck, then send one selection command. No alternate speaker fallback or automatic selection retry. HA credentials never go to the public Deezer catalogue. The local reply says Requested rather than claiming confirmed playback; natural speech and existing transport paths are preserved.
+
+Known limitation: Android TV Remote reports the current app but not artist-page focus or completed pause. The 3-second page and 500-ms pause waits are best-effort, not visual/state confirmation. Cold app launch, repeated same artist, switching artist and Pixel end-to-end behavior must pass physical tests before accepting this candidate. A slow/error page or manual navigation during the sequence can still defeat UI-based playback; do not promote request dispatch to physical success. Item 7 stays open until those tests are accepted.
+
+Local shared-state/media behavioral harness and materialization passed. Added offline HTTP/JSON tests for credential separation, paired targets, ambiguity, exposure, app changes, pause failures, room changes and conversation preservation; GitHub CI/build/signing and candidate emulator/physical tests are pending. Review found bare-play conversation capture; fixed by validating bare artist requests before consuming them. No v95 signed artifact or new accepted rollback checkpoint exists yet.
 ## Physical baseline and next action
 
 Ryan physically confirmed v91 natural voices installed, selectable, demos speaking and a normal selected-voice BOOP reply. Accepted source: `11650313221ae5bf997dbb93b6a905bfdc7da1ed`; protected branch `checkpoint-boop-unified-v91-natural-voices-accepted`. APK SHA256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`. Preserve the exact v91 Desktop/server TEST APK and v88 rollback `f5f086fc4f67712b5746be067aff852331299bb0`. Canonical app source remains v91; canonical acceptance documentation was synchronized separately at `771b68a00ac95b40ed6e17cffac60af77528a934`.

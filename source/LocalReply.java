@@ -22,6 +22,7 @@ final class LocalReply {
                 return "I didn't understand that.";
             case AUTH_REQUIRED:
                 return "I need to reconnect to the house.";
+            case LOCAL_REPLY:
             case ASSISTANT_REPLY:
                 return outcome.assistantSpeech();
             case ASSISTANT_NO_AGENT:

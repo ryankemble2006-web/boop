@@ -3,6 +3,7 @@ package com.boop.alpha1;
 final class CommandOutcome {
     enum Status {
         SUCCESS,
+        LOCAL_REPLY,
         TARGET_OFFLINE,
         AMBIGUOUS_TARGET,
         NO_MATCH,
@@ -48,6 +49,10 @@ final class CommandOutcome {
 
     static CommandOutcome targetOffline(String targetName, String area) {
         return new CommandOutcome(Status.TARGET_OFFLINE, targetName, area);
+    }
+
+    static CommandOutcome localReply(String speech) {
+        return new CommandOutcome(Status.LOCAL_REPLY, "", "", speech);
     }
 
     static CommandOutcome ambiguousTarget() {

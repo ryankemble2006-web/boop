@@ -1,5 +1,6 @@
 import com.boop.shared.BoopState;
 import com.boop.shared.MediaRequest;
+import com.boop.shared.DeezerPlaybackSequence;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,32 @@ public final class SharedStateCheck {
         check(MediaRequest.parse("play on Deezer") == null, "no empty query");
         check(MediaRequest.parse("pause music").kind == MediaRequest.Kind.PAUSE, "pause preserved");
         check(MediaRequest.parse("turn the fan on") == null, "not a media command");
+        check(MediaRequest.parse("play Britney Spears").query.equals("Britney Spears"), "bare artist request");
+        check(MediaRequest.parse("play music") == null, "generic playback stays with transport routing");
+        try {
+            PlaybackProbe probe = new PlaybackProbe();
+            check(DeezerPlaybackSequence.request(probe), "native artist playback requested");
+            check(probe.events.equals("open,ready,pause,settle,select,"), "pause before select prevents repeat toggling");
+            probe = new PlaybackProbe(); probe.active = false;
+            check(!DeezerPlaybackSequence.request(probe) && !probe.events.contains("select"), "wrong app never gets select");
+            probe = new PlaybackProbe(); probe.changeDuringPause = true;
+            check(!DeezerPlaybackSequence.request(probe) && !probe.events.contains("select"), "room change cancels selection");
+            probe = new PlaybackProbe(); probe.current = false;
+            check(!DeezerPlaybackSequence.request(probe) && probe.events.isEmpty(), "stale request has no effects");
+            probe = new PlaybackProbe(); probe.pauseFails = true;
+            try { DeezerPlaybackSequence.request(probe); throw new AssertionError("pause failure ignored"); }
+            catch (java.io.IOException expected) { check(!probe.events.contains("select"), "failed pause cannot toggle playback"); }
+        } catch (Exception e) { throw new AssertionError(e); }
         System.out.println("Canonical shared state and media request checks passed");
+    }
+    private static final class PlaybackProbe implements DeezerPlaybackSequence.Gateway {
+        String events=""; boolean active=true,current=true,changeDuringPause=false,pauseFails=false;
+        public boolean current() { return current; }
+        public boolean deezerActive() { return active; }
+        public void openArtist() { events += "open,"; }
+        public void awaitArtist() { events += "ready,"; }
+        public void pause() throws Exception { events += "pause,"; if(pauseFails) throw new java.io.IOException(); if(changeDuringPause) current=false; }
+        public void awaitPause() { events += "settle,"; }
+        public void select() { events += "select,"; }
     }
 }
