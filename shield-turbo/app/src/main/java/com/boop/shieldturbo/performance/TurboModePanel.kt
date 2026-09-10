@@ -2,6 +2,7 @@ package com.boop.shieldturbo.performance
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Handler
@@ -43,13 +44,37 @@ class TurboModePanel(private val activity: Activity) {
         setOnClickListener { toggle() }
     }
 
+    val headroomButton = Button(activity).apply {
+        id = View.generateViewId()
+        isAllCaps = false
+        isFocusable = true
+        isFocusableInTouchMode = true
+        minHeight = dp(74)
+        textSize = 20f
+        text = "TURBO+ HEADROOM TEST"
+        contentDescription = "TURBO plus headroom test. Read only."
+        setTextColor(Color.WHITE)
+        background = activity.getDrawable(R.drawable.focus_panel)
+        setOnClickListener {
+            activity.startActivity(Intent(activity, HeadroomActivity::class.java))
+        }
+    }
+
     private val processorMode = readout("Processor mode:")
     private val thermalState = readout("Thermal state:")
     private val watchdogState = readout("Watchdog:")
     private val lastChange = readout("Last change:")
 
     init {
-        root.addView(modeButton, LinearLayout.LayoutParams(-1, dp(74)))
+        val controls = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
+        controls.addView(modeButton, LinearLayout.LayoutParams(0, dp(74), 1f))
+        controls.addView(headroomButton, LinearLayout.LayoutParams(0, dp(74), 1f).apply {
+            marginStart = dp(10)
+        })
+        modeButton.nextFocusRightId = headroomButton.id
+        headroomButton.nextFocusLeftId = modeButton.id
+        headroomButton.nextFocusRightId = headroomButton.id
+        root.addView(controls, LinearLayout.LayoutParams(-1, dp(74)))
         root.addView(processorMode)
         root.addView(thermalState)
         root.addView(watchdogState)
