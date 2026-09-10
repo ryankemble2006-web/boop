@@ -1,3 +1,16 @@
+## v111 physical acceptance: corrective room presses
+
+Ryan accepted the installed v111 corrective-click response and confirmed it settled
+after repeated rapid presses. HA's displayed state still updates later; that delay
+is accepted separately from input responsiveness. This is scoped room-control
+acceptance, not proof of unbounded command bursts or whole-app acceptance.
+
+Accepted source 5204d128b42e7469fda4d974a9831180167b52b4; run34501224903;
+artifact10162105090; APK5485e0f047263d80f76dcebcf58e7399c4b5f90b90e54e2f0795842db5e50f90.
+Earlier functional rollback and permanent signer remain preserved. No app change
+in this receipt. Next roster check: explicit cross-room voice targeting, which was
+not covered by the accepted Living Room candle/media commands. Default Android
+voice remains first; natural voice and eyes transplant are deferred.
 ## v111 installed with approval; rapid-click acceptance pending
 
 User approved the exact verified v111 APK. APK hash matched the signed receipt;
