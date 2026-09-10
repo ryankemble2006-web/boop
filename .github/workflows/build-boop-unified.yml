@@ -130,7 +130,7 @@ jobs:
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
             --tests '*BoopVoice*' --tests '*BoopNaturalVoice*' --tests '*BoopCommandRouterTest' \
             --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' \
-            --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --tests '*LocalPlayerCloseClientTest' \
+            --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --tests '*LocalPlayerCloseClientTest' --tests '*HomeAssistantSavedConnectionTest' --tests '*HomeAssistantAuthUrlsTest' \
             --tests '*HomeAssistantRoomLookupTest' --tests '*LocalReplyTest' --tests '*BoopRoom*' --tests '*HomeAssistantEntityResolverTest' --tests '*HomeAssistantEntityDiscoveryProtocolTest' --tests '*Deezer*Test' --stacktrace
 
       - name: Prepare permanent BOOP signer

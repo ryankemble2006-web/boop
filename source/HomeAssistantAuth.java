@@ -88,7 +88,7 @@ final class HomeAssistantAuth {
 
         JSONObject token = postForm(
                 HomeAssistantAuthUrls.tokenUrl(baseUrl),
-                HomeAssistantAuthUrls.refreshBody(refreshToken));
+                tokenStore.refreshBody(refreshToken));
         String accessToken = token.optString("access_token", "");
         if (accessToken.isEmpty()) {
             throw new AuthRejectedException("Home Assistant did not return an access token");

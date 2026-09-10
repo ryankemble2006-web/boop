@@ -47,6 +47,14 @@ manifest.write_text(text)
 
 wall=MAIN/'MainActivity.java'
 text=wall.read_text()
+shutil.copy2('unified/BoopVoiceTokenStore.java',MAIN/'BoopVoiceTokenStore.java')
+text=once(text,'tokenStore = new SecureTokenStore(this);','tokenStore = BoopVoiceTokenStore.create(this);')
+text=once(text,'    private void ensureHouseConnection() {','''    private void ensureHouseConnection() {
+        if (BoopDeviceProfile.resolve(this) == BoopDeviceProfile.Mode.SHIELD) {
+            startActivity(new Intent(this, com.boop.shieldoverlay.BoopHomeActivity.class));
+            finish(); // The next remote request must reload any repaired pairing.
+            return;
+        }''')
 text=once(text,'        handleAuthIntent(intent);','''        handleAuthIntent(intent);
         if (intent.getBooleanExtra("boop_open_voice_settings", false)) {
             interactionSurface.post(this::showVoiceSettings);

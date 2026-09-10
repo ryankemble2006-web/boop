@@ -1,3 +1,25 @@
+## v107 candidate: Shield remote voice reuses existing house pairing
+
+Ryan reported v106 opens microphone/BOOP but play Elton John and turn on candle
+performed no action. Recognition service logs returned speech results; no new
+BadToken crash appeared in the inspected window. Actual transcription and commands
+are not accepted. App-private preference filenames confirm old Wall boop-ha absent
+while Shield pairing store exists. Voice MainActivity was using Wall SecureTokenStore.
+
+Approved repair: on Shield only, load the existing encrypted dashboard credential
+into an in-memory server/client-id/refresh-token snapshot. Keep its issuing OAuth
+client ID when refreshing. Do not copy/rewrite the persisted dashboard credential.
+Normal non-Shield voice keeps its existing connection. Voice registration metadata
+is stored separately and scoped to the paired server; existing voice device/room
+setup still establishes the HA identity. Missing pairing opens Shield's dashboard.
+
+Local focused OAuth probe passed after missing-class RED. Added JUnit cases cover
+issuing client, token escaping, unchanged Wall identity and rejecting missing client.
+Shared state/Home/close-gate and delayed-dialog lifecycle checks passed. Version107
+candidate; full materialization/build/signing and physical command result pending.
+Ryan permits taking control for tests; music was left playing during source work.
+No v107 install or credential/device mutation performed by this source work.
+
 ## v106 installed with user approval; remote retest pending
 
 Ryan approved the exact delivered v106 installation. APK SHA256 matched the signed

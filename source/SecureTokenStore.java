@@ -29,9 +29,15 @@ final class SecureTokenStore {
     private static final String PREF_HA_DEVICE_ROOM_ID = "ha_device_room_id";
 
     private final SharedPreferences prefs;
+    private final HomeAssistantSavedConnection sharedConnection;
 
     SecureTokenStore(Context context) {
-        prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        this(context, null, PREFS);
+    }
+
+    SecureTokenStore(Context context, HomeAssistantSavedConnection connection, String identityPrefs) {
+        prefs = context.getSharedPreferences(identityPrefs, Context.MODE_PRIVATE);
+        sharedConnection = connection;
     }
 
     synchronized void saveConnection(String baseUrl, String refreshToken) throws Exception {
@@ -48,10 +54,12 @@ final class SecureTokenStore {
     }
 
     String getBaseUrl() {
+        if (sharedConnection != null) return sharedConnection.baseUrl();
         return prefs.getString(PREF_BASE, null);
     }
 
     synchronized String getRefreshToken() throws Exception {
+        if (sharedConnection != null) return sharedConnection.refreshToken();
         String ciphertext = prefs.getString(PREF_CIPHER, null);
         String iv = prefs.getString(PREF_IV, null);
         if (ciphertext == null || iv == null) {
@@ -75,9 +83,15 @@ final class SecureTokenStore {
     }
 
     boolean hasConnection() {
+        if (sharedConnection != null) return true;
         return getBaseUrl() != null
                 && prefs.contains(PREF_CIPHER)
                 && prefs.contains(PREF_IV);
+    }
+
+    String refreshBody(String refreshToken) {
+        return sharedConnection == null ? HomeAssistantAuthUrls.refreshBody(refreshToken)
+                : sharedConnection.refreshBody();
     }
 
     synchronized String getOrCreateBoopRegistrationId() {
