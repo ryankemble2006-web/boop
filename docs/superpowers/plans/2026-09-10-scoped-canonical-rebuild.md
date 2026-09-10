@@ -46,3 +46,8 @@ semantic native focus before one remote selection. Preserve transport and voices
 The installed launcher reconnect bug required a scoped compatibility fix on its
 existing branch, reviewed/built/signed and explicitly approved for installation.
 No new app lineage, permission, eye work or visual CI. See current handoff for receipts.
+
+Final v96 source 8a6c2bdb4a01149f86ce464505b2d354d1dde60f passed run34447810258
+(200 Unified, 58 Shield tests); signed APK and manual Pixel emulator checks complete.
+Native track/Flow/artist component checks observed playing indicators on the Shield.
+Pixel end-to-end and acoustic acceptance remain pending; candidate stays unmerged.
