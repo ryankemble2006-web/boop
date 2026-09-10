@@ -1,3 +1,16 @@
+## v110 artifact verified; timing test pending
+
+Source 13a54218808811871845537057a8c3b819712e6f; GitHub run 34498269821
+SUCCESS; artifact 10160866421. 217 Unified + 62 Shield functional tests passed,
+zero failures/errors/skips. No GitHub visual tests. Independently verified package
+com.boop.alpha1, version110 / 1.2.110-control-timing and permanent signer
+f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+APK SHA256 0323c04b2e8be895c9094021f2d3c5f76ca49989eb621d2f55ebe90d9a76fb72.
+ZIP SHA256 439b131de6c42afaa433b403a45bf025c8c459515ea17e8b7b63e22e7d612b08.
+Delivered BOOP-v110-control-timing.apk locally. Not installed or physically tested.
+v109 remains installed; user reports its room-button delay persists. v108 accepted
+functional rollback remains preserved. Next: approved v110 install and private
+candle timing capture. Default Android voice retained; natural voice remains later.
 ## v110 diagnostic candidate: measure room-button delay
 
 User reports v109 still makes the room button wait; physical speed improvement is
