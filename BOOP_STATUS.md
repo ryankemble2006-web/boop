@@ -1,3 +1,11 @@
+## v109 installed with approval; candle-button speed test pending
+
+User approved the exact verified v109 APK. Hash matched its signed receipt,
+installation succeeded and version109 was verified. Existing microphone permission
+and BOOP assistant assignment remained intact. BOOP Home opened for testing.
+No new permissions or role changes. Dashboard response speed is not yet physically
+accepted; next is candle on/off from HA controls. Earlier v108 acceptance retained.
+
 ## v109 artifact verified; room-button physical test pending
 
 Source4f877853715fd568b25a88f98abc97e58914a44a; GitHub run34493634246 SUCCESS,
