@@ -1,3 +1,15 @@
+## v108 physical acceptance: Shield remote candle on and off
+
+Ryan tested the real Shield remote microphone button on installed v108 and
+confirmed candle on ("yes !") and off ("and off"). This physically accepts the
+remote activation, speech capture and local HA candle on/off route for this build.
+Source500f839ef2a2db5bd25737cb8124211ac81bdc0d, run34488083152, artifact10156723766.
+APK SHA256 a6ca21e716e5389946d4972c9ee85898210665776d74532040646b352740b506.
+No additional device changes were made when recording this result. Preserve this
+successful artifact and previous rollback checkpoints. This does not establish
+Deezer artist/track/Flow through the remote, all devices, or long-running stability.
+Next scoped physical check: a remote Deezer request when coordinated with Ryan.
+
 ## v108 installed with approval; remote command result pending
 
 Ryan approved exact v108 installation. Delivered APK SHA256 matched the signed
