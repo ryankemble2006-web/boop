@@ -1,3 +1,19 @@
+## 2026-09-10 Deezer compatibility patch, v23 candidate
+
+During approved native Deezer control work, Android UI hierarchy reads reconnected
+ShieldHomeOverrideService. Its unconditional onServiceConnected launch brought
+Home over Deezer even though Ryan was not using the remote. Logs and source agree.
+The patch rearms Home once per device boot, using Android boot count and private
+preferences. Real stock-Home window events still use the existing override path.
+No permission, screen-content access, default Home, artwork or media changes.
+
+Version 23 / 0.10.8-service-reconnect is a compatibility candidate on the existing
+standalone lineage, not a new app. Focused policy tests cover same-boot reconnect,
+new boot, first activation and unavailable boot count. GitHub performs only the
+focused functional test, build, signer and integrity checks; no visual tests.
+Physical install needs Ryan's approval after the signed artifact is available.
+Reboot, single/double Home and native music acceptance remain pending.
+
 # BOOP Shield clean launcher handoff
 
 Updated 2026-09-09. Authoritative branch: `boop-shield-clean-launcher`.

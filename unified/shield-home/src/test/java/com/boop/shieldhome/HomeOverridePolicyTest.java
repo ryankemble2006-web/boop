@@ -6,6 +6,12 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public final class HomeOverridePolicyTest {
+    @Test public void reconnectDoesNotStealForegroundWithinSameBoot() {
+        assertFalse(HomeOverridePolicy.shouldRearmOnConnect(12, 12));
+        assertTrue(HomeOverridePolicy.shouldRearmOnConnect(13, 12));
+        assertTrue(HomeOverridePolicy.shouldRearmOnConnect(12, -1));
+        assertFalse(HomeOverridePolicy.shouldRearmOnConnect(-1, -1));
+    }
     @Test public void onlyRealShieldStockHomeTriggersOverride() {
         assertTrue(HomeOverridePolicy.shouldReplaceForeground(
                 "com.google.android.tvlauncher", "com.boop.shieldhome"));
