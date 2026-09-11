@@ -24,7 +24,6 @@ final class AudioModeController {
     }
 
     private final AudioManager audioManager;
-    private AudioModePolicy.Mode lastMode = AudioModePolicy.Mode.IGNORE;
     private AudioModePolicy.Mode foregroundLaunch = AudioModePolicy.Mode.IGNORE;
     private AudioModePolicy.Mode lastCast = AudioModePolicy.Mode.IGNORE;
 
@@ -48,11 +47,12 @@ final class AudioModeController {
     }
 
     private void applyResolved(AudioModePolicy.Mode mode) {
-        if (mode == null || mode == AudioModePolicy.Mode.IGNORE || mode == lastMode || audioManager == null) return;
+        if (mode == null || mode == AudioModePolicy.Mode.IGNORE || audioManager == null) return;
         String value = mode == AudioModePolicy.Mode.NATIVE_MUSIC ? "1" : "0";
         try {
+            String current = audioManager.getParameters("nv_param_audio_native_sample_rate_select");
+            if ((PARAM + value).equals(current)) return;
             audioManager.setParameters(PARAM + value);
-            lastMode = mode;
             Log.i(TAG, "native sample-rate mode=" + value);
         } catch (RuntimeException unavailable) {
             Log.w(TAG, "native sample-rate mode change rejected");
