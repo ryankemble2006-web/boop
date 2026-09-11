@@ -259,7 +259,9 @@ public final class ShieldHomeView extends LinearLayout {
         favouriteRow.setClipToPadding(false);
 
         String grabbedComponent = grabSession == null ? null : grabSession.grabbedComponent();
-        for (TvAppEntry entry : favourites) {
+        for (int index = 0; index < favourites.size(); index++) {
+            TvAppEntry entry = favourites.get(index);
+            boolean isLastFavourite = index == favourites.size() - 1;
             TvAppCardView card = new TvAppCardView(getContext());
             card.bindFavourite(entry);
             card.setTag(entry.component());
@@ -273,6 +275,14 @@ public final class ShieldHomeView extends LinearLayout {
             card.setOnLongClickListener(v -> {
                 beginGrab(entry, card);
                 return true;
+            });
+            card.setOnKeyListener((v, keyCode, event) -> {
+                if (grabSession == null
+                        && isLastFavourite
+                        && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                    return true;
+                }
+                return false;
             });
             LayoutParams params = new LayoutParams(dp(240), dp(185));
             params.rightMargin = dp(16);

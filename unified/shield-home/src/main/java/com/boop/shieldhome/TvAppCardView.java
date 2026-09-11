@@ -23,6 +23,7 @@ public final class TvAppCardView extends FrameLayout {
     public static final float GRABBED_SCALE = 1.14f;
     private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.05f;
     private static final float HOME_ARTWORK_GRABBED_SCALE = 1.03f;
+    private static final int HOME_ARTWORK_CORNER_DP = 8;
     public static final long FOCUS_DURATION_MS = 120L;
 
     private final ImageView iconView;
@@ -96,6 +97,10 @@ public final class TvAppCardView extends FrameLayout {
         grabbed = false;
         this.favourite = favourite;
         homeFavourite = preferBanner;
+        iconView.setClipToOutline(homeFavourite);
+        iconView.setBackground(homeFavourite
+                ? homeArtworkBackground()
+                : new ColorDrawable(Color.TRANSPARENT));
         configureCardPadding(preferBanner);
         setScaleX(1f);
         setScaleY(1f);
@@ -195,7 +200,9 @@ public final class TvAppCardView extends FrameLayout {
 
         if (homeFavourite) {
             setForeground(null);
-            iconView.setForeground(emphasized ? FocusChrome.outline(getContext(), 2) : null);
+            iconView.setForeground(emphasized
+                    ? FocusChrome.outline(getContext(), HOME_ARTWORK_CORNER_DP)
+                    : null);
         } else {
             iconView.setForeground(null);
             setForeground(emphasized ? FocusChrome.outline(getContext(), 12) : null);
@@ -228,6 +235,10 @@ public final class TvAppCardView extends FrameLayout {
                 .scaleY(target)
                 .setDuration(FOCUS_DURATION_MS)
                 .start();
+    }
+
+    private GradientDrawable homeArtworkBackground() {
+        return FocusChrome.filled(getContext(), Color.rgb(28, 28, 28), HOME_ARTWORK_CORNER_DP, false);
     }
 
     private GradientDrawable cardBackground() {

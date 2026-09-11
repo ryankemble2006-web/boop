@@ -23,7 +23,6 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.FrameLayout;
 
@@ -42,6 +41,7 @@ public final class ShieldLauncherActivity extends Activity {
     private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
 
     public static final long PAGE_TRANSITION_MS = 140L;
+    static final long SHIELD_SETTINGS_HOLD_MS = 650L;
     private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
     private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown_v2";
     private static final String KEY_HOME_OVERRIDE_PROMPT_SHOWN = "home_override_prompt_shown_v1";
@@ -859,9 +859,7 @@ public final class ShieldLauncherActivity extends Activity {
                     backPressGesture.onDown();
                     if (inputHandler != null && backHoldRunnable != null) {
                         inputHandler.removeCallbacks(backHoldRunnable);
-                        inputHandler.postDelayed(
-                                backHoldRunnable,
-                                ViewConfiguration.getLongPressTimeout());
+                        inputHandler.postDelayed(backHoldRunnable, SHIELD_SETTINGS_HOLD_MS);
                     }
                 }
                 return true;

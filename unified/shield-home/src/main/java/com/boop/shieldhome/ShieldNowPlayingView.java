@@ -12,6 +12,7 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -22,6 +23,8 @@ import android.widget.TextView;
 /** Remote-first Now Playing card. It owns only media UI and never rerenders launcher rows. */
 public final class ShieldNowPlayingView extends FrameLayout {
     private static final long PROGRESS_TICK_MS = 500L;
+    private static final int CONTROL_GAP_DP = 10;
+    private static final int ARTWORK_CORNER_DP = 10;
     static final int MASCOT_BAY_DP = 230;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -75,7 +78,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
         artwork = new ImageView(context);
         artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        artwork.setBackgroundColor(Color.rgb(28, 28, 28));
+        artwork.setBackground(artworkBackground());
+        artwork.setClipToOutline(true);
         artwork.setContentDescription("Open source player");
         artwork.setFocusable(true);
         artwork.setClickable(true);
@@ -90,11 +94,15 @@ public final class ShieldNowPlayingView extends FrameLayout {
         LinearLayout details = new LinearLayout(context);
         details.setOrientation(LinearLayout.VERTICAL);
         details.setGravity(Gravity.CENTER_VERTICAL);
+        details.setClipChildren(false);
+        details.setClipToPadding(false);
         row.addView(details, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
 
         LinearLayout titleRow = new LinearLayout(context);
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
         titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        titleRow.setClipChildren(false);
+        titleRow.setClipToPadding(false);
         details.addView(titleRow, new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
@@ -122,6 +130,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         });
         LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(130), dp(44));
         sourceParams.leftMargin = dp(12);
+        sourceParams.rightMargin = dp(8);
         titleRow.addView(sourceButton, sourceParams);
 
         stateLabel = text(14, Color.LTGRAY);
@@ -140,6 +149,9 @@ public final class ShieldNowPlayingView extends FrameLayout {
         LinearLayout controls = new LinearLayout(context);
         controls.setOrientation(LinearLayout.HORIZONTAL);
         controls.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        controls.setClipChildren(false);
+        controls.setClipToPadding(false);
+        controls.setPadding(dp(8), 0, 0, 0);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(46));
         controlsParams.topMargin = dp(4);
@@ -166,6 +178,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         addControl(controls, playPauseButton);
         addControl(controls, fastForwardButton);
         addControl(controls, nextButton);
+        installEdgeFocusNavigation();
 
         // BOOP now physically lives inside the reserved bay. The puppet view remains
         // non-focusable/non-clickable and clips all motion to this stage.
@@ -240,8 +253,29 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
     private void addControl(LinearLayout row, TextView button) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(70), dp(42));
-        params.rightMargin = dp(8);
+        params.rightMargin = dp(CONTROL_GAP_DP);
         row.addView(button, params);
+    }
+
+    private void installEdgeFocusNavigation() {
+        nextButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event != null
+                    && event.getAction() == KeyEvent.ACTION_DOWN
+                    && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                sourceButton.requestFocus();
+                return true;
+            }
+            return false;
+        });
+        sourceButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event != null
+                    && event.getAction() == KeyEvent.ACTION_DOWN
+                    && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                nextButton.requestFocus();
+                return true;
+            }
+            return false;
+        });
     }
 
     private TextView controlButton(String label, Runnable action) {
@@ -275,7 +309,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private void installFocusPop(View view) {
         view.setOnFocusChangeListener((v, focused) -> {
             if (v == artwork) {
-                v.setForeground(focused ? FocusChrome.outline(getContext(), 2) : null);
+                v.setForeground(focused ? FocusChrome.outline(getContext(), ARTWORK_CORNER_DP) : null);
             } else if (v instanceof TextView) {
                 v.setBackground(buttonBackground(focused));
             }
@@ -296,6 +330,10 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
     private LinearLayout.LayoutParams wrap() {
         return new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    }
+
+    private GradientDrawable artworkBackground() {
+        return FocusChrome.filled(getContext(), Color.rgb(28, 28, 28), ARTWORK_CORNER_DP, false);
     }
 
     private GradientDrawable cardBackground() {
