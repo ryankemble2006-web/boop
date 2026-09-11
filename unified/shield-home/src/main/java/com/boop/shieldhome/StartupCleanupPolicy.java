@@ -6,6 +6,7 @@ import java.util.Locale;
 /** Pure safety policy for BOOP's bounded post-boot cleanup. */
 public final class StartupCleanupPolicy {
     public static final int MAX_TARGETS = 5;
+    public static final String STOCK_LAUNCHER = "com.google.android.tvlauncher";
     private static final List<String> PROTECTED_PREFIXES = List.of(
             "com.boop.", "com.android.", "com.nvidia.",
             "com.google.android.gms", "com.google.android.gsf");
@@ -25,9 +26,18 @@ public final class StartupCleanupPolicy {
     }
 
     public static boolean eligible(String packageName, boolean systemApp) {
+        return eligibleForPrevention(packageName, systemApp);
+    }
+
+    public static boolean eligibleForPrevention(String packageName, boolean systemApp) {
         if (systemApp || !validPackage(packageName)) return false;
         String lower = packageName.toLowerCase(Locale.ROOT);
         return WARM_PATH.stream().noneMatch(lower::equals);
+    }
+
+    public static boolean eligibleForCleanStart(String packageName, boolean systemApp) {
+        if (STOCK_LAUNCHER.equals(packageName)) return true;
+        return eligibleForPrevention(packageName, systemApp);
     }
 
     public static boolean canAdd(int currentCount) {

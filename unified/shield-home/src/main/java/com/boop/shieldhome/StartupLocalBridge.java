@@ -47,7 +47,7 @@ public final class StartupLocalBridge {
             List<String> details = new ArrayList<>();
             int stopped = 0, skipped = 0, failed = 0;
             for (String packageName : requested) {
-                if (!eligibleInstalled(packageName)) {
+                if (!eligibleInstalledForCleanStart(packageName)) {
                     details.add(packageName + ": no longer eligible");
                     failed++;
                     continue;
@@ -79,7 +79,7 @@ public final class StartupLocalBridge {
 
     public String setPrevention(String packageName, boolean enabled, boolean allowApproval, Runnable approvalRequired) throws Exception {
         cancelled = false;
-        if (!eligibleInstalled(packageName)) throw new IOException("App is not eligible for startup prevention.");
+        if (!eligibleInstalledForPrevention(packageName)) throw new IOException("App is not eligible for startup prevention.");
         StartupPreventionStore store = new StartupPreventionStore(context);
         return withAdb(allowApproval, approvalRequired, adb -> {
             StartupPreventionRecord saved = store.record(packageName);
@@ -111,13 +111,25 @@ public final class StartupLocalBridge {
         });
     }
 
-    private boolean eligibleInstalled(String packageName) {
+    private boolean eligibleInstalledForPrevention(String packageName) {
         if (!StartupCleanupPolicy.validPackage(packageName)) return false;
         try {
             ApplicationInfo info = context.getPackageManager().getApplicationInfo(
                     packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
             boolean system = (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
-            return StartupCleanupPolicy.eligible(packageName, system);
+            return StartupCleanupPolicy.eligibleForPrevention(packageName, system);
+        } catch (PackageManager.NameNotFoundException ignored) {
+            return false;
+        }
+    }
+
+    private boolean eligibleInstalledForCleanStart(String packageName) {
+        if (!StartupCleanupPolicy.validPackage(packageName)) return false;
+        try {
+            ApplicationInfo info = context.getPackageManager().getApplicationInfo(
+                    packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
+            boolean system = (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+            return StartupCleanupPolicy.eligibleForCleanStart(packageName, system);
         } catch (PackageManager.NameNotFoundException ignored) {
             return false;
         }

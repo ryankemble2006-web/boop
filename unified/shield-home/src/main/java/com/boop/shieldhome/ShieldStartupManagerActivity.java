@@ -35,7 +35,7 @@ public final class ShieldStartupManagerActivity extends Activity {
         ShieldStartupManagerView view = new ShieldStartupManagerView(this);
         StartupLocalBridge probe = new StartupLocalBridge(this);
         Set<String> selected = store.targets();
-        view.render(store.autoEnabled(), probe.hasIdentity(), preventionStore.managedPackages(), selected, candidates(), store.lastSummary(),
+        view.render(store.autoEnabled(), probe.hasIdentity(), preventionStore.managedPackages(), selected, candidates(false), candidates(true), store.lastSummary(),
                 new ShieldStartupManagerView.Callbacks() {
             @Override public void onCheckLocalLink() { authorize(false); }
             @Override public void onSetAuto(boolean enabled) {
@@ -118,7 +118,7 @@ public final class ShieldStartupManagerActivity extends Activity {
         });
     }
 
-    private List<TvAppEntry> candidates() {
+    private List<TvAppEntry> candidates(boolean cleanStart) {
         PackageManager pm = getPackageManager();
         LinkedHashMap<String,TvAppEntry> found = new LinkedHashMap<>();
         for (String category : List.of(Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER)) {
@@ -129,7 +129,10 @@ public final class ShieldStartupManagerActivity extends Activity {
                 try {
                     ApplicationInfo app = pm.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS);
                     boolean system = (app.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
-                    if (!StartupCleanupPolicy.eligible(pkg, system)) continue;
+                    boolean eligible = cleanStart
+                            ? StartupCleanupPolicy.eligibleForCleanStart(pkg, system)
+                            : StartupCleanupPolicy.eligibleForPrevention(pkg, system);
+                    if (!eligible) continue;
                     CharSequence raw = info.loadLabel(pm);
                     String label = raw == null || raw.toString().isBlank() ? pkg : raw.toString().trim();
                     found.putIfAbsent(pkg, new TvAppEntry(pkg + "/" + info.activityInfo.name, pkg, label));
