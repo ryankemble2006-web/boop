@@ -1378,3 +1378,6 @@ https://www.home-assistant.io/integrations/androidtv/ .
 
 ## 2026-09-11 Shield audio experiment status
 Deezer Cast 44.1 kHz switching is physically proven on Shield with signed v119 from `boop-shield-audio-castfix` commit `6da770e`. The Cast classifier now handles `CONTENT_TYPE_UNKNOWN` music sessions via previous+next actions and ignores the transient STOP-only state during track changes. Track skip produced no normal-video pulse and the NVIDIA HAL reopened at 44100 Hz. Canonical v118 remains untouched at `8d179b4`. Next validation: switch from Deezer Cast to a known 48 kHz video and confirm clean return to mode `0` / 48 kHz.
+
+## Shield audio v121 completed physically (2026-09-11)
+Signed v121 from `59ed19b` passed CI run `34555614930`. Physical Shield testing proved the complete PCM loop with Google Cast alive: Deezer Cast/native mode 1 at 44.1 kHz -> BOOP-launched Kodi/video mode 0 -> return to BOOP -> Cast/native mode 1 at 44.1 kHz. Home resume now explicitly reapplies policy from the selected live session, eliminating the no-callback return race. BOOP HOME default was restored after install. Passthrough is not yet validated.

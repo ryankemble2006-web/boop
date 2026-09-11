@@ -1385,3 +1385,12 @@ https://www.home-assistant.io/integrations/androidtv/ .
 - Signed CI run `34552107655` passed all gates and produced the permanent-signed v119 APK.
 - Physical Shield proof after installing `6da770e`: Deezer Cast stayed in native mode `1`; track skip to `Rock Of Ages` produced no `mode=0` pulse; NVIDIA HAL reopened at 44100 Hz and AudioFlinger showed active 44100 Hz output.
 - Native Deezer and Deezer Cast 44.1 kHz paths are now proven. Remaining experiment work is a clean 48 kHz video transition validation from the same build, then decide whether to merge/promote the audio branch.
+
+## 2026-09-11 Shield audio v121 physical completion
+- Branch: `boop-shield-audio-video-priority`.
+- v121 code commit: `59ed19b` (`1.2.121-audio-home-reclaim`). Signed CI run `34555614930` passed all gates with the permanent BOOP signer.
+- Root cause of the final return-leg bug: returning Home did not guarantee a fresh Android media callback, so Cast could remain live while BOOP stayed in video mode. `reapplyAudioMode()` now re-evaluates the already-selected live media session on Home resume. No polling or synthetic media command was added.
+- Physical full-loop proof with Google Cast alive throughout: Cast track `Everybody's Changing` / `com.google.android.apps.mediashell` -> BOOP Kodi launch logged exactly `native sample-rate mode=0` and switched to video mode; return to BOOP logged exactly `native sample-rate mode=1` and restored native mode.
+- Current AudioFlinger/NVIDIA proof after return: native mode `1`; active HDMI direct stream handle 805 at `44100` Hz while the 48000 primary stream is standby.
+- APK installation temporarily displaced BOOP as Android HOME; restored with package manager and verified `KEYCODE_HOME` resumes `com.boop.alpha1/com.boop.shieldhome.ShieldLauncherActivity`.
+- Result: native Deezer, Deezer Google Cast, foreground Kodi/video priority, and Home Cast reclaim are physically proven. Passthrough remains a separate follow-up experiment; do not infer it from this PCM proof.

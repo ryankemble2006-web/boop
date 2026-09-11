@@ -1367,3 +1367,6 @@ separate from later documentation-only HEAD; verify live GitHub before claiming 
 
 References: https://www.home-assistant.io/actions/androidtv.adb_command/ and
 https://www.home-assistant.io/integrations/androidtv/ .
+
+## Shield audio Match Content result (2026-09-11)
+Physical Shield acceptance for the PCM sample-rate experiment is now complete on signed v121 (`59ed19b`). Exact NVIDIA control remains `nv_param_audio_native_sample_rate_select`: `1` native/match-content, `0` normal video. BOOP correctly classifies Deezer Google Cast despite `CONTENT_TYPE_UNKNOWN`, ignores the brief STOP-only Cast transition, gives BOOP-launched foreground video priority over background Cast music, and re-applies the selected live Cast policy on Home resume. Verified loop: Cast 44.1 kHz -> Kodi/video 48 kHz -> BOOP Home -> Cast 44.1 kHz, with Cast alive throughout. Passthrough remains untested and must be treated as separate work.
