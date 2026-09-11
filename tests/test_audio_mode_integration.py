@@ -10,5 +10,7 @@ def test_shield_audio_mode_is_wired():
 
     assert 'android.permission.MODIFY_AUDIO_SETTINGS' in manifest
     assert 'AudioModePolicy.forLaunch(entry.packageName())' in launcher
-    assert 'AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing)' in manager
+    assert 'PlaybackState.ACTION_SKIP_TO_PREVIOUS' in manager
+    assert 'PlaybackState.ACTION_SKIP_TO_NEXT' in manager
+    assert 'supportsPrevious, supportsNext' in manager
     assert 'onAudioInfoChanged' in manager
