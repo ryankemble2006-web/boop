@@ -542,6 +542,7 @@ public final class ShieldLauncherActivity extends Activity {
         }
         Intent intent = new Intent(Intent.ACTION_MAIN)
                 .setComponent(component);
+        AudioModeController.get(this).apply(AudioModePolicy.forLaunch(entry.packageName()));
         try {
             startActivity(intent);
         } catch (ActivityNotFoundException | SecurityException ignored) {

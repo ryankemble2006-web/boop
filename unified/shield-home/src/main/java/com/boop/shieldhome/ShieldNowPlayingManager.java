@@ -530,6 +530,14 @@ public final class ShieldNowPlayingManager {
                 continue;
             }
             selectedController = binding.controller;
+            MediaController.PlaybackInfo info = binding.controller.getPlaybackInfo();
+            int contentType = info == null || info.getAudioAttributes() == null
+                    ? android.media.AudioAttributes.CONTENT_TYPE_UNKNOWN
+                    : info.getAudioAttributes().getContentType();
+            PlaybackState playback = binding.controller.getPlaybackState();
+            boolean playing = playback != null && playback.getState() == PlaybackState.STATE_PLAYING;
+            AudioModeController.get(applicationContext).apply(
+                    AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing));
             state.update(snapshot(binding));
             return;
         }
@@ -676,6 +684,10 @@ public final class ShieldNowPlayingManager {
             }
 
             @Override public void onPlaybackStateChanged(PlaybackState playbackState) {
+                publishSelection();
+            }
+
+            @Override public void onAudioInfoChanged(MediaController.PlaybackInfo info) {
                 publishSelection();
             }
 
