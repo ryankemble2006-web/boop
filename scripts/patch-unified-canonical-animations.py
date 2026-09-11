@@ -88,6 +88,17 @@ if "case CANONICAL_ANIMATIONS:" not in text:
     text = replace_once(text, anchor, block, "dev menu canonical route")
     menu.write_text(text, encoding="utf-8")
 
+menu_test = APP / "src/test/java/com/boop/alpha1/BoopNotificationDevMenuModelTest.java"
+if menu_test.is_file():
+    text = menu_test.read_text(encoding="utf-8")
+    if "BoopDevMenuModel.Action.CANONICAL_ANIMATIONS" not in text:
+        text = replace_once(
+            text,
+            "                List.of(\n                        BoopDevMenuModel.Action.WAKE,\n",
+            "                List.of(\n                        BoopDevMenuModel.Action.CANONICAL_ANIMATIONS,\n                        BoopDevMenuModel.Action.WAKE,\n",
+            "dev menu unit-test canonical item")
+        menu_test.write_text(text, encoding="utf-8")
+
 required = [
     EYES / "EyeMotion.java",
     EYES / "EyeCatalogue.java",
