@@ -1375,3 +1375,6 @@ separate from later documentation-only HEAD; verify live GitHub before claiming 
 
 References: https://www.home-assistant.io/actions/androidtv.adb_command/ and
 https://www.home-assistant.io/integrations/androidtv/ .
+
+## 2026-09-11 Shield audio experiment status
+Deezer Cast 44.1 kHz switching is physically proven on Shield with signed v119 from `boop-shield-audio-castfix` commit `6da770e`. The Cast classifier now handles `CONTENT_TYPE_UNKNOWN` music sessions via previous+next actions and ignores the transient STOP-only state during track changes. Track skip produced no normal-video pulse and the NVIDIA HAL reopened at 44100 Hz. Canonical v118 remains untouched at `8d179b4`. Next validation: switch from Deezer Cast to a known 48 kHz video and confirm clean return to mode `0` / 48 kHz.

@@ -1375,3 +1375,13 @@ separate from later documentation-only HEAD; verify live GitHub before claiming 
 
 References: https://www.home-assistant.io/actions/androidtv.adb_command/ and
 https://www.home-assistant.io/integrations/androidtv/ .
+
+## 2026-09-11 Shield audio Match Content experiment
+- Protected canonical v118 remains on `boop-canonical-rebuild` at `8d179b4`.
+- Audio work is isolated on `boop-shield-audio-castfix`.
+- Exact NVIDIA parameter: `nv_param_audio_native_sample_rate_select` (`1` native/match-content, `0` normal video).
+- Deezer Cast uses `com.google.android.apps.mediashell`, reports `CONTENT_TYPE_UNKNOWN`, and exposes music-style previous/next actions when stable.
+- Fix commits: `42bb720` classifies unknown Cast with previous+next as music; `6da770e` ignores the brief STOP-only Cast transition seen during track changes.
+- Signed CI run `34552107655` passed all gates and produced the permanent-signed v119 APK.
+- Physical Shield proof after installing `6da770e`: Deezer Cast stayed in native mode `1`; track skip to `Rock Of Ages` produced no `mode=0` pulse; NVIDIA HAL reopened at 44100 Hz and AudioFlinger showed active 44100 Hz output.
+- Native Deezer and Deezer Cast 44.1 kHz paths are now proven. Remaining experiment work is a clean 48 kHz video transition validation from the same build, then decide whether to merge/promote the audio branch.
