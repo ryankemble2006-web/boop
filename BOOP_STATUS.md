@@ -1389,3 +1389,8 @@ Deezer Cast 44.1 kHz switching is physically proven on Shield with signed v119 f
 
 ## Shield audio v121 completed physically (2026-09-11)
 Signed v121 from `59ed19b` passed CI run `34555614930`. Physical Shield testing proved the complete PCM loop with Google Cast alive: Deezer Cast/native mode 1 at 44.1 kHz -> BOOP-launched Kodi/video mode 0 -> return to BOOP -> Cast/native mode 1 at 44.1 kHz. Home resume now explicitly reapplies policy from the selected live session, eliminating the no-callback return race. BOOP HOME default was restored after install. Passthrough is not yet validated.
+
+
+## v125 physical installation receipt, 2026-09-11
+
+Ryan explicitly approved installing signed v125 for visual review. Exact GitHub artifact APK SHA256 `03f731aa7ff85a745a55c98284db400ccdd92c6927501fe4f1c9902fbc62e323` was reverified locally before deployment. Shield was on version121 / `1.2.121-audio-home-reclaim`; its installed APK was privately preserved locally first (SHA256 `f3f43b372f3a7966d6bcb9a6999fa81418bb40e9a4edaa4c66055aaec690757f`). `adb install -r` succeeded without permission or settings changes. Android now reports version125 / `1.2.125-canonical-animation-integration`. `UnifiedEntryActivity` was launched and resolved to `com.boop.shieldhome.ShieldLauncherActivity` in the foreground. Physical/visual acceptance is now with Ryan and is not yet claimed.

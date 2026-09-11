@@ -1402,3 +1402,8 @@ https://www.home-assistant.io/integrations/androidtv/ .
 - Current AudioFlinger/NVIDIA proof after return: native mode `1`; active HDMI direct stream handle 805 at `44100` Hz while the 48000 primary stream is standby.
 - APK installation temporarily displaced BOOP as Android HOME; restored with package manager and verified `KEYCODE_HOME` resumes `com.boop.alpha1/com.boop.shieldhome.ShieldLauncherActivity`.
 - Result: native Deezer, Deezer Google Cast, foreground Kodi/video priority, and Home Cast reclaim are physically proven. Passthrough remains a separate follow-up experiment; do not infer it from this PCM proof.
+
+
+## v125 physical installation receipt, 2026-09-11
+
+Ryan explicitly approved installing signed v125 for visual review. Exact GitHub artifact APK SHA256 `03f731aa7ff85a745a55c98284db400ccdd92c6927501fe4f1c9902fbc62e323` was reverified locally before deployment. Shield was on version121 / `1.2.121-audio-home-reclaim`; its installed APK was privately preserved locally first (SHA256 `f3f43b372f3a7966d6bcb9a6999fa81418bb40e9a4edaa4c66055aaec690757f`). `adb install -r` succeeded without permission or settings changes. Android now reports version125 / `1.2.125-canonical-animation-integration`. `UnifiedEntryActivity` was launched and resolved to `com.boop.shieldhome.ShieldLauncherActivity` in the foreground. Physical/visual acceptance is now with Ryan and is not yet claimed.
