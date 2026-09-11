@@ -537,11 +537,8 @@ public final class ShieldNowPlayingManager {
             PlaybackState playback = binding.controller.getPlaybackState();
             boolean playing = playback != null && playback.getState() == PlaybackState.STATE_PLAYING;
             long actions = playback == null ? 0L : playback.getActions();
-            boolean supportsPrevious = (actions & PlaybackState.ACTION_SKIP_TO_PREVIOUS) != 0L;
-            boolean supportsNext = (actions & PlaybackState.ACTION_SKIP_TO_NEXT) != 0L;
             AudioModeController.get(applicationContext).apply(
-                    AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing,
-                            supportsPrevious, supportsNext));
+                    AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing, actions));
             state.update(snapshot(binding));
             return;
         }
