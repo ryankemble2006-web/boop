@@ -154,3 +154,4 @@ python3 scripts/patch-canonical-integration.py
 python3 scripts/patch-canonical-room.py
 python3 scripts/build-deezer-bridge.py
 python3 scripts/patch-tablet-recipes.py
+python3 scripts/patch-unified-canonical-animations.py

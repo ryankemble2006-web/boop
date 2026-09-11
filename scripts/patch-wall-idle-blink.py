@@ -19,6 +19,7 @@ FACE_FIELDS = FACE_MARKER + '''    private final java.util.Random idleBlinkRando
     private java.util.function.BooleanSupplier idleBlinkAllowed;
     private final Runnable idleBlinkRunnable = this::runIdleBlink;
     private ValueAnimator idleBlinkAnimator;
+    private int idleBlinksRemaining;
     private float idleBlinkOpenness = 1f;
     private boolean awakeForBlink;
     private long idleBlinkBlockedUntil;
@@ -44,6 +45,7 @@ FACE_METHODS = '''    void setIdleBlinkAllowed(java.util.function.BooleanSupplie
 
     private void deferIdleBlink(long settlingMillis) {
         idleBlinkBlockedUntil = android.os.SystemClock.uptimeMillis() + settlingMillis;
+        idleBlinksRemaining = 0;
         cancelIdleBlinkFrame();
         queueNextIdleBlink();
     }
@@ -60,9 +62,14 @@ FACE_METHODS = '''    void setIdleBlinkAllowed(java.util.function.BooleanSupplie
     private void runIdleBlink() {
         removeCallbacks(idleBlinkRunnable);
         if (!canIdleBlink()) {
+            idleBlinksRemaining = 0;
             queueNextIdleBlink();
             return;
         }
+        if (idleBlinksRemaining <= 0) {
+            idleBlinksRemaining = BoopIdleBlink.shouldDoubleBlink(idleBlinkRandom) ? 2 : 1;
+        }
+        idleBlinksRemaining--;
         cancelIdleBlinkFrame();
         ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
         idleBlinkAnimator = animator;
@@ -70,6 +77,7 @@ FACE_METHODS = '''    void setIdleBlinkAllowed(java.util.function.BooleanSupplie
         animator.setInterpolator(new android.view.animation.LinearInterpolator());
         animator.addUpdateListener(frame -> {
             if (!canIdleBlink()) {
+                idleBlinksRemaining = 0;
                 cancelIdleBlinkFrame();
                 queueNextIdleBlink();
                 return;
@@ -83,7 +91,16 @@ FACE_METHODS = '''    void setIdleBlinkAllowed(java.util.function.BooleanSupplie
                 idleBlinkAnimator = null;
                 idleBlinkOpenness = 1f;
                 invalidate();
-                queueNextIdleBlink();
+                if (!canIdleBlink()) {
+                    idleBlinksRemaining = 0;
+                    queueNextIdleBlink();
+                    return;
+                }
+                if (idleBlinksRemaining > 0) {
+                    postDelayed(idleBlinkRunnable, BoopIdleBlink.DOUBLE_GAP_MS);
+                } else {
+                    queueNextIdleBlink();
+                }
             }
         });
         animator.start();
@@ -99,6 +116,7 @@ FACE_METHODS = '''    void setIdleBlinkAllowed(java.util.function.BooleanSupplie
 
     private void suspendIdleBlinking() {
         if (idleBlinkRunnable != null) removeCallbacks(idleBlinkRunnable);
+        idleBlinksRemaining = 0;
         cancelIdleBlinkFrame();
     }
 
