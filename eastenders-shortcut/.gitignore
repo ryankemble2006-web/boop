@@ -1,0 +1,9 @@
+﻿/build/
+/signing/
+/test-classes/
+/test-out/
+*.apk
+*.apk.idsig
+*.p12
+*.jks
+*.keystore

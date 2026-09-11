@@ -1,0 +1,3 @@
+<resources>
+    <string name="helper_description">After you launch EastEnders, this helper checks the iPlayer screen for up to two minutes and presses the focused Watch now button once, only when EastEnders is visible. It does not choose profiles, change settings, record screen contents, or send data anywhere. Turn it off here at any time.</string>
+</resources>
