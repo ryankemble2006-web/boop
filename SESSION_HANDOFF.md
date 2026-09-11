@@ -1410,3 +1410,7 @@ Ryan explicitly approved installing signed v125 for visual review. Exact GitHub 
 ## v126 Shield launcher UI cleanup candidate, 2026-09-11
 
 Ryan requested direct fixes on the centralised v125 line. v126 moves Close player slightly inward, adds breathing room before Prev and equalises transport gaps, wires Next → Close player and Close player → Next remote focus, clips favourite banners and Now Playing artwork to rounded outlines so artwork cannot bleed through focus corners, stops Right at the final favourite, and gives the BOOP Back-hold Shield-settings gesture an explicit 650 ms threshold. No YouTube-specific code and no GitHub visual tests. Full local Unified Android unit gate passed after materialisation. Visual/remote acceptance remains Ryan-owned on the physical Shield.
+
+## v126 signed GitHub receipt, 2026-09-11
+
+GitHub Unified run 34654875243 completed successfully for source dbc88f55f1eca2d255c313d9c712b7896de1ad9d, version126 / 1.2.126-shield-ui-cleanup. Permanent signing, package/version/entry checks, ZIP integrity and artifact upload passed. Shield focused tests: 68; Unified focused tests: 217; zero failures/errors/skips. APK SHA256: f2b5a723c2858e7904862d7e5d1465a980225efd33bd1a84448704b60ad7f487. Artifact BOOP-Unified ID 10284809387; artifact ZIP digest sha256:8ac9feca765a6371a431266760df050e95e348861d8605260550e33331920a5f. Visual/device acceptance remains manual and pending.
