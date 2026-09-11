@@ -1,3 +1,18 @@
+## Completed 1.5 artwork update, 2026-09-11
+
+Published source/artwork commit: `b2106b1308477ad29a0ae2cdb866eb5535d8b562` on `boop-v125-animation-integration`.
+
+- package `uk.local.eastenders`, versionCode 6 / versionName 1.5
+- signed APK SHA256 `1ac6e4d99340fc4415f105cdef68dde700f05ab88fefe88ba2836781f7909d66`
+- signer SHA256 `6f85ae49982e0b38b9f134b6882fdbe4da6091051f828fb980c5a03fff439535`, identical to installed 1.4
+- four existing Java suites passed; artwork-preservation build regression passed
+- supplied 16:9 banner and direct-crop square icon are packaged in the APK; packaged resources manually inspected
+- physical Shield `adb install -r` succeeded; Android reports 1.5 installed at 2026-09-11 23:49:07
+- prior installed 1.4 APK privately preserved, SHA256 `302071a90e2ee6941cdb8154f614d9c1d0ef491ba88aa508f935d82c70433093`
+- no permission/settings/iPlayer/BOOP changes; user visual acceptance of the final tile remains separate
+
+The earlier WIP section below is historical and superseded for implementation/install state.
+
 # EastEnders artwork update: WIP, not installed
 
 Recorded 2026-09-11 after the laptop Remote Desktop Commander bridge stopped responding. This commit publishes only this handoff, not the locally prepared app source or artwork. Do not report completion or infer an installation from the generated mock-up shown in the chat; that image was rejected and is not evidence.

@@ -1,3 +1,11 @@
+## EastEnders 1.5 artwork installed, 2026-09-11
+
+Ryan approved replacing the standalone `uk.local.eastenders` launcher art with the supplied EastEnders map image, keeping the title centred, adding a matching direct-crop square icon, publishing the source/artwork, and installing it on the Shield. Source commit `b2106b1308477ad29a0ae2cdb866eb5535d8b562` on `boop-v125-animation-integration` adds the standalone project under `eastenders-shortcut/`; it does not alter Unified BOOP code. The branch had already advanced to the v126 Shield UI work before this commit and that concurrent work was fast-forwarded/preserved.
+
+Standalone version is now code 6 / name 1.5. Local build passed the four existing Java suites plus the new build-preparation artwork preservation regression. Signed APK SHA256 `1ac6e4d99340fc4415f105cdef68dde700f05ab88fefe88ba2836781f7909d66`; signer SHA256 `6f85ae49982e0b38b9f134b6882fdbe4da6091051f828fb980c5a03fff439535`, matching the installed 1.4 signer. The prior installed 1.4 APK was privately preserved with SHA256 `302071a90e2ee6941cdb8154f614d9c1d0ef491ba88aa508f935d82c70433093`.
+
+`adb install -r` succeeded on the physical Shield and Android reports versionCode 6 / versionName 1.5 with lastUpdateTime 2026-09-11 23:49:07. The APK's packaged banner and icon were manually inspected and show the expected supplied artwork; this is agent evidence, not Ryan's visual acceptance. A later focus-only probe returned to iPlayer, so no launcher-tile visual acceptance is claimed from that probe. BOOP Home was restored and private screenshots/device probe files were removed. No permissions, accessibility settings, iPlayer package, BOOP package, playback configuration, or signer were changed.
+
 ## v116 charcoal correction, 2026-09-10
 
 Ryan physically approved v115 spacing, icons and cyan accent, but rejected the dark-blue
