@@ -100,6 +100,11 @@ public final class ShieldNowPlayingManager {
         runOnMain(this::refreshAccessOnMain);
     }
 
+    /** Re-applies audio policy from the currently selected live media session. */
+    public void reapplyAudioMode() {
+        runOnMain(this::publishSelection);
+    }
+
     /** Returns Android's current Notification Listener grant for BOOP Now Playing. */
     public boolean hasAccess() {
         return isAccessGranted();

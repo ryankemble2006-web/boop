@@ -127,6 +127,7 @@ public final class ShieldLauncherActivity extends Activity {
         com.boop.shared.BoopState.INSTANCE.homeVisible(currentPage == Page.HOME);
         if (nowPlayingManager != null) {
             nowPlayingManager.refreshAccess();
+            nowPlayingManager.reapplyAudioMode();
         }
         if (root != null && store != null && currentPage == Page.SETTINGS) {
             showSettings();
