@@ -25,12 +25,29 @@ final class AudioModeController {
 
     private final AudioManager audioManager;
     private AudioModePolicy.Mode lastMode = AudioModePolicy.Mode.IGNORE;
+    private AudioModePolicy.Mode foregroundLaunch = AudioModePolicy.Mode.IGNORE;
+    private AudioModePolicy.Mode lastCast = AudioModePolicy.Mode.IGNORE;
 
     private AudioModeController(Context context) {
         audioManager = context.getSystemService(AudioManager.class);
     }
 
-    synchronized void apply(AudioModePolicy.Mode mode) {
+    synchronized void applyLaunch(AudioModePolicy.Mode mode) {
+        foregroundLaunch = mode == null ? AudioModePolicy.Mode.IGNORE : mode;
+        applyResolved(foregroundLaunch);
+    }
+
+    synchronized void applyCast(AudioModePolicy.Mode mode) {
+        if (mode != null && mode != AudioModePolicy.Mode.IGNORE) lastCast = mode;
+        applyResolved(AudioModePolicy.arbitrate(foregroundLaunch, mode));
+    }
+
+    synchronized void clearForegroundLaunch() {
+        foregroundLaunch = AudioModePolicy.Mode.IGNORE;
+        applyResolved(AudioModePolicy.arbitrate(foregroundLaunch, lastCast));
+    }
+
+    private void applyResolved(AudioModePolicy.Mode mode) {
         if (mode == null || mode == AudioModePolicy.Mode.IGNORE || mode == lastMode || audioManager == null) return;
         String value = mode == AudioModePolicy.Mode.NATIVE_MUSIC ? "1" : "0";
         try {

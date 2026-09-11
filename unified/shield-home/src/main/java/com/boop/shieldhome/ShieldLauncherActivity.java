@@ -123,6 +123,7 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         resumed = true;
+        AudioModeController.get(this).clearForegroundLaunch();
         com.boop.shared.BoopState.INSTANCE.homeVisible(currentPage == Page.HOME);
         if (nowPlayingManager != null) {
             nowPlayingManager.refreshAccess();
@@ -542,7 +543,7 @@ public final class ShieldLauncherActivity extends Activity {
         }
         Intent intent = new Intent(Intent.ACTION_MAIN)
                 .setComponent(component);
-        AudioModeController.get(this).apply(AudioModePolicy.forLaunch(entry.packageName()));
+        AudioModeController.get(this).applyLaunch(AudioModePolicy.forLaunch(entry.packageName()));
         try {
             startActivity(intent);
         } catch (ActivityNotFoundException | SecurityException ignored) {

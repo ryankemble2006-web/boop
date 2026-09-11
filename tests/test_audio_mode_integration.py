@@ -9,7 +9,9 @@ def test_shield_audio_mode_is_wired():
     manager = (ROOT / 'unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingManager.java').read_text(encoding='utf-8')
 
     assert 'android.permission.MODIFY_AUDIO_SETTINGS' in manifest
-    assert 'AudioModePolicy.forLaunch(entry.packageName())' in launcher
+    assert 'applyLaunch(AudioModePolicy.forLaunch(entry.packageName()))' in launcher
+    assert 'clearForegroundLaunch()' in launcher
     assert 'long actions = playback == null ? 0L : playback.getActions();' in manager
+    assert 'applyCast(' in manager
     assert 'AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing, actions)' in manager
     assert 'onAudioInfoChanged' in manager
