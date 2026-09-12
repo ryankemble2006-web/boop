@@ -1,5 +1,27 @@
 # BOOP — start here
 
+## Explicit standalone Shield Launcher, 2026-09-12
+
+The user requested a launcher-and-advanced-tools-only APK for another Shield and
+approved the split, excluding the unfinished integration changes from this task.
+Owning branch/worktree: **`boop-shield-launcher-standalone`**. Project:
+**`shield-launcher/`**. App label **BOOP Launcher**, package **`com.boop.shieldlauncher`**.
+Frozen source input: `boop-shield-defaults@503cdb63d64716c9c1a568aadca97ba1d24680cd`
+(the committed v145 launcher/defaults line). Initial split source is `72dde252`.
+Read its live SESSION_HANDOFF.md, BOOP_STATUS.md and shield-launcher/SOURCE.md
+for current build/signature/artifact and physical-test receipts.
+
+This explicitly approved standalone product is an exception to the general
+one-Unified-APK rule, not a rollback or replacement of the combined delivery below.
+Keep `com.boop.alpha1` and historical `com.boop.shieldhome` source/install histories
+untouched. Do not silently transplant v146 phone/lyrics/integration changes into
+this frozen split. It retains launcher/Now Playing/advanced tools, but not voice,
+Wall/phone, HA dashboard/credentials, overlay puppet or Animation Lab.
+The receiving Shield owns its new ADB identity and exact Restore records. No
+permission grant, default-HOME change, Apply/Undo or installation follows from
+signing/publishing; those remain explicit user actions. Visual/device acceptance
+is separate from compilation, functional tests and permanent-signature checks.
+
 ## Current combined device delivery, 2026-09-12
 
 Ryan explicitly authorized the completed phone iris-colour/menu/crash fixes,
