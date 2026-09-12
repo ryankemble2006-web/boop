@@ -1,3 +1,36 @@
+## Verified v134 installation receipt, 2026-09-12
+
+Startup Manager-only v134 was installed successfully and its installed APK bytes
+were independently verified against the signed GitHub artifact.
+
+- Build source: `56bbb7d5f2fdaf9ede5c46cc8f7c1d0f46bacca0`.
+- Version: `134 / 1.2.134-startup-manager-only`, package `com.boop.alpha1`.
+- Successful permanent-signed run: `34672558546`; artifact `10290724349`.
+- APK SHA256: `3241628257ae1835271d49c728f6a91f13fb2cfd1d3b209052081585a5e4664d`.
+- Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+- Installed v132 rollback preserved privately; SHA256
+  `46b7c4b6f233c9608d625e4cfa2ecf733a0b88afca0e628e546c3f084cdead46`.
+
+Fresh v134 checks: 15 Startup Manager Java suites and Android 11 linkage gate
+passed; signed CI passed all gates, including 68 Shield and 217 Unified focused
+functional tests with no failures/errors/skips. Package Control, its populated
+list/filter/detail screen and high-impact confirmation were observed on Shield.
+The current BOOP process had no AndroidRuntime fatal in the inspected output.
+The original inventory crash did not recur in this check. Visual acceptance and
+a complete disable/Restore round trip are not claimed by this installation task.
+
+Lyrics is excluded. Existing artwork, signer and permissions were not changed.
+Navigation/package selections changed during concurrent review, so this task
+stopped sending navigation inputs and did not undo the observed package choices.
+No active music session remained at the completion check, so no completion skip
+was sent and playback was not started unasked.
+
+A separate live review is preparing v135 for clipping at the existing large-text
+setting. Preserve its dirty View/version/handoff and materializer output. This
+receipt is published with a private temporary Git index so none of that concurrent
+local work is staged, reset or overwritten. The prior offline notes below are
+historical: the Yoga terminal and Shield ADB worked for this installation.
+
 # BOOP current status
 
 Updated 2026-09-12. Owning branch: `boop-v125-animation-integration`.
