@@ -48,4 +48,14 @@ public final class StartupPreventionStore {
         }
         return out;
     }
+
+    public Set<StartupPreventionRecord> records() {
+        LinkedHashSet<StartupPreventionRecord> out = new LinkedHashSet<>();
+        for (String key : prefs.getAll().keySet()) {
+            if (!key.startsWith(PREFIX)) continue;
+            StartupPreventionRecord record = StartupPreventionRecord.decode(prefs.getString(key, null));
+            if (record != null) out.add(record);
+        }
+        return out;
+    }
 }
