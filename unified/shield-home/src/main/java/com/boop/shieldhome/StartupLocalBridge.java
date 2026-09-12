@@ -177,6 +177,45 @@ public final class StartupLocalBridge {
                     isLauncherPackage(packageName), enabledState, first, second, actions);
         }
 
+        public List<StartupPackageState> inventory() throws Exception {
+            requireOpen();
+            String all = checked(adb, "pm list packages -u");
+            String system = checked(adb, "pm list packages -s -u");
+            String disabled = checked(adb, "pm list packages -d -u");
+            String launcher = checked(adb, "cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER")
+                    + "\n" + checked(adb, "cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER")
+                    + "\n" + checked(adb, "cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME");
+            List<StartupPackageState> base = StartupPackageInventory.merge(
+                    all, system, disabled, launcher, this::visibleLabel);
+            StartupRestoreStore restores = new StartupRestoreStore(
+                    new AndroidStartupRestoreBackend(context), System::currentTimeMillis);
+            boolean migrated = new AndroidStartupManagerMigrationMarker(context).migrated();
+            java.util.Set<String> boot = migrated ? java.util.Set.of() : new StartupCleanupStore(context).targets();
+            java.util.Set<String> background = migrated ? java.util.Set.of() : new StartupPreventionStore(context).managedPackages();
+            ArrayList<StartupPackageState> out = new ArrayList<>();
+            for (StartupPackageState row : base) {
+                java.util.EnumSet<StartupRecoveryPolicy.ManagedAction> actions =
+                        java.util.EnumSet.noneOf(StartupRecoveryPolicy.ManagedAction.class);
+                StartupRestoreRecord record = restores.record(row.packageName());
+                if (record != null) actions.addAll(record.managedActions());
+                if (boot.contains(row.packageName())) actions.add(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+                if (background.contains(row.packageName())) actions.add(StartupRecoveryPolicy.ManagedAction.BACKGROUND_BLOCK);
+                out.add(new StartupPackageState(row.packageName(), row.label(), row.systemApp(), row.launcher(),
+                        row.enabledState(), row.runInBackgroundMode(), row.runAnyInBackgroundMode(), actions));
+            }
+            return List.copyOf(out);
+        }
+
+        private String visibleLabel(String packageName) {
+            try {
+                ApplicationInfo app = context.getPackageManager().getApplicationInfo(
+                        packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
+                CharSequence raw = context.getPackageManager().getApplicationLabel(app);
+                return raw == null ? null : raw.toString().trim();
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
         @Override public void setEnabledState(String packageName, String enabledState) throws Exception {
             requireOpen();
             String command = switch (enabledState) {
