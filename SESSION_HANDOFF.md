@@ -1,3 +1,23 @@
+## Approved v145 Overview-only repair in progress, 2026-09-12
+
+The user approved fixing the observed one-pixel rows and installing the corrected
+build. This task stays on boop-shield-defaults and must not merge other work.
+Candidate145 changes only the six flexible Overview children from parent-height
+to content-height measurement; fixed-height Package Control/Restore rows, all
+actions, approved art, permissions and the preset remain unchanged. The prior
+manual screenshot/hierarchy is the failing reproduction. Do not add visual CI or
+source-string geometry guards. Run existing nonvisual gates, sign, preserve the
+actual installed APK/settings, install, manually confirm visible controls, and
+leave Use BOOP defaults focused without executing Apply/Undo. Versions143/144 are
+used on sibling experimental branches;145 was the next observed unused version.
+
+Local repair gates passed: Android Java compilation, all 277 Unified unit tests
+(0 failures/errors/skips), 27 defaults-coordinator cases, eight safety cases,
+profile/journal checks, 15 Startup suites and Android 11 linkage. The code diff
+changes only three Overview call sites plus a content-height helper. Existing
+callback bindings, focus IDs, fixed-height rows and package-control files are
+untouched. Signed build and live visual/focus checks are still pending.
+
 ## Live v143 Overview defect confirmed, 2026-09-12
 
 The device reports installed `143 / 1.2.143-boop-shield-defaults`. A fresh live

@@ -111,7 +111,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         TextView useDefaults=button("Use BOOP defaults","startup:overview:defaults",()->callbacks.onBoopDefaults(false));
         TextView undoDefaults=button("Undo BOOP defaults","startup:overview:undo-defaults",()->callbacks.onBoopDefaults(true));
         useDefaults.setMinHeight(dp(52));undoDefaults.setMinHeight(dp(52));
-        weighted(defaults,useDefaults);hspace(defaults,12);weighted(defaults,undoDefaults);
+        weightedContent(defaults,useDefaults);hspace(defaults,12);weightedContent(defaults,undoDefaults);
         body.addView(defaults,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));space(body,12);
         LinearLayout grid=column(); body.addView(grid,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
         LinearLayout top=row(),bottom=row(); grid.addView(top,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
@@ -120,8 +120,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
         TextView boot=hero("02   CLEAN AFTER BOOT","A quieter startup","Close selected apps once. Later launches stay alone.","startup:overview:boot",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BOOT_CLEAN));
         TextView background=hero("03   BACKGROUND START","Keep the extras quiet","Limit selected apps in the background. Open them when needed.","startup:overview:bg",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BACKGROUND));
         TextView restore=hero("04   RESTORE CHANGES","Put it back","Return to the state saved before BOOP changed anything.","startup:overview:restore",callbacks::onOpenRestore);
-        weighted(top,disable); hspace(top,12); weighted(top,boot);
-        weighted(bottom,background); hspace(bottom,12); weighted(bottom,restore);
+        weightedContent(top,disable); hspace(top,12); weightedContent(top,boot);
+        weightedContent(bottom,background); hspace(bottom,12); weightedContent(bottom,restore);
         space(body,12);
         LinearLayout utilities=row();
         TextView autoButton=button("After boot: "+(auto?"ON":"OFF"),"startup:overview:auto",()->callbacks.onSetAuto(!auto));
@@ -323,6 +323,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
     private LinearLayout column(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(VERTICAL);return v;}
     private LinearLayout row(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(HORIZONTAL);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
     private void weighted(LinearLayout row,View v){row.addView(v,new LayoutParams(0,LayoutParams.MATCH_PARENT,1));}
+    // Scrolling rows have no fixed height: measure their buttons/cards from content.
+    private void weightedContent(LinearLayout row,View v){row.addView(v,new LayoutParams(0,LayoutParams.WRAP_CONTENT,1));}
     private void space(LinearLayout parent,int size){parent.addView(new View(getContext()),new LayoutParams(1,dp(size)));}
     private void hspace(LinearLayout parent,int size){parent.addView(new View(getContext()),new LayoutParams(dp(size),1));}
     private int textHeight(int sp,int lines,int paddingDp) {
