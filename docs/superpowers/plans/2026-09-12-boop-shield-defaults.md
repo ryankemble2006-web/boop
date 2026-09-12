@@ -44,8 +44,8 @@ Create AndroidStartupDefaultsBackend.java and StartupDefaultsScreen.java; modify
 - [x] Review actual diff, scoped data, cancellation/Undo boundaries; no visual CI.
 - [x] Choose an unused forward version after checking sibling branches; keep the existing signer.
 - [x] Add new behavioral suite to existing workflow; push only the feature branch; dispatch its signed build.
-- [ ] Verify run source, package/version, archive and signer; update feature handoff/status/context/memory.
-- [ ] Verify live branch HEAD after publication. Supply signed artifact. Do not install, merge or apply the defaults on the shared Shield without separate approval.
+- [x] Verify run source, package/version, archive and signer; update feature handoff/status/context/memory.
+- [x] Verify live branch HEAD after publication. Supply signed artifact. Do not install, merge or apply the defaults on the shared Shield without separate approval.
 
 ## Current execution receipt
 Final local Android compilation and 277 unit tests passed, zero failures/errors/skips.
@@ -53,4 +53,4 @@ The three new suites include 27 coordinator and eight safety scenarios plus prof
 journal assertions. Existing 15 Startup suites, linkage and canonical core tests passed.
 Candidate143 reserves the next observed free version above sibling142. The initial
 UI preview is read-only; the new branch has never been installed or applied to the
-shared Shield. Signed artifact verification and final published receipt remain next.
+shared Shield. Signed run 34676381862 succeeded and artifact 10291778955 was independently verified. Final docs publish records the result without deployment.

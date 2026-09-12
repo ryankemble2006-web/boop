@@ -1,3 +1,10 @@
+## BOOP defaults signed feature, 2026-09-12
+
+The isolated candidate143 is signed and verified: source `696a1b2249b2549c12c4832baf7bc2c30b913aab`,
+run `34676381862`, artifact `10291778955`. No merge or device deployment
+has occurred. Its real-device preset/UI acceptance remains separate. Read the
+owning boop-shield-defaults SESSION_HANDOFF.md rather than an older app branch.
+
 ## Scoped BOOP defaults implementation, 2026-09-12
 
 The isolated boop-shield-defaults branch implements the BOOP-branded preset and
