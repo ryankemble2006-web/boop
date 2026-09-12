@@ -213,6 +213,32 @@ public final class StartupLocalBridge {
             requireOpen();
             checked(adb,StartupPackageCommands.forUser(StartupPackageCommands.setAppOp(pkg,"RUN_ANY_IN_BACKGROUND",any),userId));
         }
+        public void requireDefaultsSession() throws IOException { requireOpen(); }
+        public void verifyDefaultsSafety(String pkg) throws Exception {
+            requireOpen();
+            boolean shield="NVIDIA".equalsIgnoreCase(android.os.Build.MANUFACTURER)
+                    && context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+            boolean setup=android.provider.Settings.Global.getInt(context.getContentResolver(),"device_provisioned",0)==1
+                    && android.provider.Settings.Secure.getInt(context.getContentResolver(),"user_setup_complete",0)==1;
+            String foreground=StartupPackageCommands.parseResumedPackage(checked(adb,
+                    "dumpsys activity activities | grep -m2 -E 'mResumedActivity:|topResumedActivity='"));
+            java.util.Set<String> enabled=StartupPackageInventory.parsePackageList(checked(adb,"pm list packages -e --user "+userId));
+            var caps=AndroidRecoveryCapabilities.resolve(context);
+            java.util.Set<String> activeInput=new java.util.HashSet<>();
+            String services=android.provider.Settings.Secure.getString(context.getContentResolver(),"enabled_accessibility_services");
+            if(services!=null)for(String service:services.split(":")) {
+                android.content.ComponentName name=android.content.ComponentName.unflattenFromString(service);
+                if(name!=null)activeInput.add(name.getPackageName());
+            }
+            boolean homeReady=true;
+            if(StartupRecoveryPolicy.STOCK_LAUNCHER.equals(pkg)) {
+                String home=checked(adb,"cmd package query-activities --brief --user "+userId
+                        +" -a android.intent.action.MAIN -c android.intent.category.HOME -p "+context.getPackageName());
+                homeReady=java.util.regex.Pattern.compile("(?m)^\\s*"+java.util.regex.Pattern.quote(context.getPackageName())+"/").matcher(home).find();
+            }
+            String reason=StartupDefaultsSafety.reason(pkg,shield,setup,foreground,caps,enabled,activeInput,homeReady);
+            if(!reason.isEmpty())throw new IOException(reason);
+        }
         private void requireOpen() throws IOException {
             if(closed || cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelled");
             Integer current=StartupPackageCommands.parseCurrentUser(checked(adb,StartupPackageCommands.currentUser()));

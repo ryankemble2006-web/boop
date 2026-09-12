@@ -1,6 +1,6 @@
 # BOOP Shield defaults
 
-Status: isolated design and branch preparation; buttons are not implemented.
+Status: isolated implementation complete; signed build and physical review tracked in SESSION_HANDOFF.md.
 Date: 2026-09-12.
 Branch/worktree: `boop-shield-defaults` / `.worktrees/boop-shield-defaults`.
 Base: `boop-v125-animation-integration@582bd0d404a3d4ca61abd718551f7af5ef20aabe`,
@@ -12,10 +12,9 @@ The feature is called **BOOP defaults**, never a person's defaults.
 Overview actions: **Use BOOP defaults** and **Undo BOOP defaults**.
 Keep the existing chunky remote-first UI and 130% text-size support.
 
-The preceding inspection was explicitly read-only. This continuation creates
-and publishes only the requested isolated branch/worktree plus its naming,
-preset proposal and implementation handoff. App source remains the accepted
-v135 baseline; no build, merge, install, grants or live package changes are made.
+The preceding inspection and preparation were read-only/documentation stages.
+Implementation was subsequently approved with go and is now isolated here.
+No merge, install, grants or live package changes are authorized by that scope.
 The separate lyrics and animation work is excluded and must remain untouched.
 
 ## Proposed first preset
@@ -114,7 +113,7 @@ and protected package handling, per-device baselines, prior-customisation-safe
 Undo, repeated Apply, cancelled/partial operations, global-switch preservation,
 launcher-last gating and failed verification. Existing 15 Startup Manager suites
 and Android 11 linkage check passed on this unmodified branch baseline. New preset
-behavior and UI have not yet been implemented or tested.
+behavior and UI are now implemented; current verification is in SESSION_HANDOFF.md.
 
 ## Publication and device boundary
 

@@ -1,102 +1,63 @@
-## BOOP defaults: isolated feature preparation, 2026-09-12
+# BOOP defaults feature handoff
 
-Own this work on `boop-shield-defaults`, at `.worktrees/boop-shield-defaults`.
-Base is `582bd0d404a3d4ca61abd718551f7af5ef20aabe`, preserving accepted v135.
-The product labels are **Use BOOP defaults** and **Undo BOOP defaults**; no personal
-name in the feature. The prior read-only inspection is the source for the proposed
-nine confirmed disables and separately recorded startup actions. Three older
-unattributed/pre-existing disables and Kodi's old single restriction are excluded
-from automatic inclusion. Details and exact IDs:
-`docs/superpowers/specs/2026-09-12-boop-shield-defaults.md`.
+Updated 2026-09-12. Owning branch/worktree: `boop-shield-defaults` /
+`.worktrees/boop-shield-defaults`. Base: accepted v135 source with acceptance docs
+at `582bd0d404a3d4ca61abd718551f7af5ef20aabe`. Other app, lyrics, integration and
+animation worktrees are not part of this change. Do not merge or deploy by implication.
 
-This checkpoint creates/publishes the requested branch and documentation only.
-Preset UI/controller implementation is not started. Baseline verification passed:
-15 Startup Manager suites and Android 11 linkage. No app code, version, signing,
-permissions, installed packages or Shield settings were changed. ADB was confirmed
-connected. Keep the ongoing integration, lyrics and animation worktrees untouched.
-Do not copy this device's Restore records to another user; preserve per-device and
-pre-preset baselines. Do not install this branch by implication.
+## Candidate
 
-The inherited receipts below describe the accepted BASE, not a built preset.
+`143 / 1.2.143-boop-shield-defaults`, package `com.boop.alpha1`, permanent signer
+and permissions unchanged. This is the isolated defaults candidate, not a superset
+of unrelated later-numbered lyrics/animation branches. The version was selected
+after sibling reservations at 136, 137 and 142 were observed read-only.
 
-# BOOP Startup Manager continuation
+Implemented Overview actions: **Use BOOP defaults** and **Undo BOOP defaults**.
+The review screen shows exact matching packages, consequences and whole-row
+selection so individual entries can be excluded. Opening it does not apply changes.
+The existing Overview content scrolls instead of being squeezed by the new actions.
+No personal name appears in the feature's UI or profile data.
 
-## Ryan accepted Startup Manager v135, 2026-09-12
+## Preset and recovery
 
-Ryan reported that the installed Startup Manager works perfectly after using it
-to disable his unwanted packages, including the stock launcher, and prevent that
-launcher's startup. This is user-reported physical acceptance of v135's Startup
-Manager UI and the package controls he exercised. Preserve his selected setup.
+Frozen profile `boop-shield-defaults-v1`: 14 exact package IDs, nine disables,
+nine boot-cleanup selections and six paired background restrictions. No vendor-
+prefix rule. Three historical disables and Kodi's old single restriction stay
+excluded. Missing entries, foreground apps, protected recovery components and
+active input/accessibility providers are skipped with reasons. The NVIDIA-TV,
+setup/user/recovery checks are repeated during execution. Stock launcher is the
+last package and requires an enabled BOOP HOME route. ADB/grants are not enabled
+or changed by the preset. The ordinary manual package console remains unchanged.
 
-Accepted source: `7408ab85c8c58b4478a3a64f18af834160efb346`; signed run
-`34673227727`; artifact `10291770657`; APK SHA256
-`b50823e9b902de049ee7e19d919947bcd2062d24bd953ad1616792bfa0485d8f`.
-Use this exact v135 artifact as the accepted Startup Manager rollback reference.
-The exact disabled-package inventory was not supplied. Do not infer a universal
-Android/NVIDIA debloat recipe, measured performance gains, a completed Restore
-round trip or reboot persistence from this report. Lyrics remains excluded.
-This acceptance update is documentation only; the Shield is left untouched.
+Apply uses the established verified individual controller. Before each mutation,
+a separate bounded/versioned journal stores the receiving device's exact pre-
+preset state and individual Restore record. The journal is atomic and app-private
+under getNoBackupFilesDir; no source-device Restore data is shipped or backed up
+as a portable preset. Group Undo changes only dimensions this preset actually
+changed and reinstates the exact previous individual record. Existing global
+cleanup switches and unrelated selections are preserved. Partial work/process
+death remains recoverable. Repeated Apply cannot replace the initial baseline or
+broaden the selection. Later-state/ledger conflicts are kept rather than silently
+overwritten; the review reports them. Explicit Keep current settings only drops
+grouped ownership, leaving packages and individual Restore records unchanged.
 
-Updated 2026-09-12. Current user-accepted Startup Manager: **v135, lyrics excluded**.
-Lyrics is WIP and excluded by Ryan's explicit instruction. Do not reintroduce it.
+## Verification
 
-## Owning checkout
+Fresh local final candidate: real Android Java compilation and full Unified unit
+task passed, 277 tests / zero failures, errors or skips. Existing 15 Startup
+Manager suites and Android 11 linkage passed. New tests: 27 coordinator scenarios,
+eight recovery/safety scenarios and profile/journal structural checks. Canonical
+shared-state/media contracts passed. Observed RED-to-GREEN includes missing new
+behavior, partial recovery, mid-package external drift and forged review flags.
+Code review was performed locally with adversarial tests; no independent reviewer
+or physical preset acceptance is claimed. No GitHub visual tests were introduced.
 
-Repository `ryankemble2006-web/boop`, branch/worktree
-`boop-v125-animation-integration`. Follow root AGENTS.md and fetched main rules.
-The primary checkout is not automatically this app's latest source. Preserve the
-separate lyrics/music-art worktrees and all dirty or concurrent work.
+Permanent-signed build and artifact verification are next. The installed shared
+Shield was not changed, no defaults were applied, and no media cue was sent.
+Deployment requires separate approval to avoid overwriting work in progress.
 
-## Signed and installed receipt
-
-- Version: `135 / 1.2.135-startup-manager-large-text`, package `com.boop.alpha1`.
-- Build source: `7408ab85c8c58b4478a3a64f18af834160efb346`.
-- Successful permanent-signed run: `34673227727`; artifact `10291770657`.
-- APK SHA256: `b50823e9b902de049ee7e19d919947bcd2062d24bd953ad1616792bfa0485d8f`.
-- Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-- The installed APK's own SHA256 exactly matches that verified signed artifact.
-- Actual installed v134 APK was preserved privately before v135. Its SHA256 is
-  `3241628257ae1835271d49c728f6a91f13fb2cfd1d3b209052081585a5e4664d`.
-
-The preceding v134 installation was completed by the concurrent installation
-window. This review verified its exact APK and observed the 148-package screen,
-then built and installed the narrowly scoped v135 large-text correction.
-All four private Startup Manager preference files were byte-identical immediately
-across the v135 update. Existing package choices, original-state receipts and
-migration state were preserved. Later user changes are not attributed to this
-installation. No grants, signer changes, arbitrary package disables or resets.
-
-## Verification and physical scope
-
-Fresh local v135 materialization/Android Java compilation passed. Full Unified
-unit task: 277 tests, zero failures/errors/skips. Fifteen Startup Manager behavior
-suites and the Android 11 linkage gate passed. Signed CI passed all gates including
-68 Shield and 217 Unified focused tests; package/version/signature/ZIP checks passed.
-The repaired synthetic Startup suites were also previously run as dex on the
-actual Shield Android 11 runtime without mutating installed packages.
-
-Manual v135 screenshot inspection confirmed the live Package Control screen with
-148 packages, filter bar, detail pane, visible cyan focus and unclipped sidebar
-and Background ON/OFF labels at the existing `font_scale=1.3`. The current BOOP
-process had no AndroidRuntime fatal in the inspected log. The original inventory
-crash did not recur. No full destructive disable/Restore, reboot or universal
-navigation acceptance is claimed from this scoped review; those remain Ryan-owned.
-
-## Delivered behavior and next safe step
-
-The native UI has a fixed sidebar, responsive four-card Overview, package filters,
-per-package actions, details and Restore. Original-state recovery, v1 migration,
-cancellation and the minimal recovery floor are retained. v135 changes only text
-container sizing/labels; Android text size, package-control logic and already
-approved music artwork are unchanged. No new artwork was generated. Lyrics stays out.
-
-Ryan has accepted the installed Startup Manager; its route remains Home settings > Startup Manager.
-The last media check found no active track, so no completion skip was sent and no
-playback was started unasked. A future cue must not be claimed as already sent.
-Yoga and Shield access recovered, and this checkout was safely fast-forwarded to
-include the concurrent v134 documentation receipt before this final update.
-
-Historical detail remains in Git and in
-[docs/history/startup-v133/SESSION_HANDOFF.md](docs/history/startup-v133/SESSION_HANDOFF.md).
-Those dated v133/lyrics integration proposals are superseded. v128 was the failed
-String.lines candidate and must not be described as a working package console.
+Spec: docs/superpowers/specs/2026-09-12-boop-shield-defaults.md.
+Plan: docs/superpowers/plans/2026-09-12-boop-shield-defaults.md.
+Historical accepted v135 source/build receipt remains preserved in the base Git
+history and original integration branch. Baseline APK run: 34673227727,
+artifact 10291770657. Do not confuse that accepted base with this uninstalled feature.

@@ -1,3 +1,10 @@
+## Scoped BOOP defaults implementation, 2026-09-12
+
+The isolated boop-shield-defaults branch implements the BOOP-branded preset and
+pre-preset Undo. Candidate143 preserves the accepted v135 base; it is not the
+latest combined app. See SESSION_HANDOFF.md. Do not merge or deploy over ongoing
+work implicitly. Frozen actions are portable; private device baselines are not.
+
 ## BOOP defaults: isolated feature preparation, 2026-09-12
 
 Own this work on `boop-shield-defaults`, at `.worktrees/boop-shield-defaults`.

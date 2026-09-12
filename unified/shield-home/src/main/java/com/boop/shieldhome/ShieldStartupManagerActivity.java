@@ -21,7 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public final class ShieldStartupManagerActivity extends Activity {
-    private enum Screen { OVERVIEW, PACKAGES, RESTORE }
+    private enum Screen { OVERVIEW, PACKAGES, RESTORE, DEFAULTS, DEFAULTS_UNDO }
     private StartupCleanupStore cleanup;
     private StartupPreventionStore prevention;
     private StartupRestoreStore restores;
@@ -36,12 +36,17 @@ public final class ShieldStartupManagerActivity extends Activity {
     private final Set<String> selected=new LinkedHashSet<>();
     private String packageFocus,restoreFocus,focusTag,status="";
     private int actionFocus;
+    private StartupDefaultsJournal defaultsJournal;
+    private StartupDefaultsCoordinator.Preview defaultsPreview;
+    private StartupDefaultsCoordinator.UndoPlan defaultsUndo;
+    private final Set<String> defaultsSelected=new LinkedHashSet<>();
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state); getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         cleanup=new StartupCleanupStore(this); prevention=new StartupPreventionStore(this);
         restores=new StartupRestoreStore(new AndroidStartupRestoreBackend(this),System::currentTimeMillis);
         executor=Executors.newSingleThreadExecutor(); status=cleanup.lastSummary();
+        defaultsJournal=new StartupDefaultsJournal(new AndroidStartupDefaultsBackend(this));
         if(state!=null) {
             try {
                 screen=Screen.valueOf(state.getString("screen","OVERVIEW"));
@@ -51,6 +56,7 @@ public final class ShieldStartupManagerActivity extends Activity {
                 ArrayList<String> values=state.getStringArrayList("selected"); if(values!=null)selected.addAll(values);
             } catch(IllegalArgumentException ignored) { screen=Screen.OVERVIEW; }
         }
+        if(screen==Screen.DEFAULTS||screen==Screen.DEFAULTS_UNDO)screen=Screen.OVERVIEW;
         render(); if(screen!=Screen.OVERVIEW)loadPackages();
     }
     @Override protected void onSaveInstanceState(Bundle out) {
@@ -60,6 +66,15 @@ public final class ShieldStartupManagerActivity extends Activity {
     }
     private void render() {
         if(isFinishing()||isDestroyed())return;
+        if(screen==Screen.DEFAULTS&&defaultsPreview!=null) {
+            setContentView(new StartupDefaultsScreen(this,defaultsPreview.rows(),defaultsSelected,false,gate.busy(),status,
+                    !defaultsPreview.auto(),this::applyBoopDefaults,this::handleBack,null));return;
+        }
+        if(screen==Screen.DEFAULTS_UNDO&&defaultsUndo!=null) {
+            setContentView(new StartupDefaultsScreen(this,defaultsUndo.rows(),Set.of(),true,gate.busy(),status,
+                    defaultsUndo.batch()!=null&&defaultsUndo.batch().autoArmed(),this::undoBoopDefaults,this::handleBack,
+                    defaultsUndo.batch()==null?null:this::keepBoopDefaults));return;
+        }
         ShieldStartupManagerView view=new ShieldStartupManagerView(this); view.setStatus(status,gate.busy()); view.setPackageLabels(packages);
         var cb=callbacks();
         if(screen==Screen.OVERVIEW)view.renderOverview(new StartupLocalBridge(this).hasIdentity(),cleanup.autoEnabled(),restores.records().size(),status,cb);
@@ -84,6 +99,7 @@ public final class ShieldStartupManagerActivity extends Activity {
             public void onCheckLocalLink(){perform("Checking the local connection",session->new Outcome(null,"Local control connection verified.",null));}
             public void onRunNow(){runCleanup();}
             public void onRefresh(){loadPackages();}
+            public void onBoopDefaults(boolean undo){openBoopDefaults(undo);}
             public void onSetAuto(boolean enabled){
                 if(!enabled){cancelWork(); boolean saved=cleanup.setAutoEnabled(false); status=saved?"Automatic boot cleanup is OFF.":"Could not save boot cleanup.";render();return;}
                 perform("Checking boot cleanup",session->{
@@ -105,6 +121,59 @@ public final class ShieldStartupManagerActivity extends Activity {
             public void onBack(){handleBack();}
         };
     }
+    private StartupDefaultsCoordinator defaultsController(StartupLocalBridge.PackageSession session) {
+        return new StartupDefaultsCoordinator(new AndroidStartupDefaultsEnvironment(this,session),defaultsJournal);
+    }
+    private void openBoopDefaults(boolean undo) {
+        if(gate.busy())return;
+        try {if(defaultsJournal.load()!=null)undo=true;}
+        catch(RuntimeException invalid){status=safeMessage(invalid);render();return;}
+        final boolean showUndo=undo;
+        perform(showUndo?"Reading saved BOOP defaults":"Checking BOOP defaults on this Shield",session->{
+            var coordinator=defaultsController(session);
+            if(showUndo){var review=coordinator.previewUndo();return new Outcome(null,"Review before Undo.",()->{
+                defaultsUndo=review;screen=Screen.DEFAULTS_UNDO;focusTag=null;render();});}
+            var review=coordinator.preview();return new Outcome(null,"Opening this review does not change any packages.",()->{
+                defaultsPreview=review;defaultsSelected.clear();
+                for(var row:review.rows())if(row.available())defaultsSelected.add(row.profile().packageName());
+                screen=Screen.DEFAULTS;focusTag=null;render();});
+        });
+    }
+    private void applyBoopDefaults() {
+        if(gate.busy()||defaultsPreview==null||defaultsSelected.isEmpty())return;
+        var review=defaultsPreview;Set<String> selection=Set.copyOf(defaultsSelected);
+        perform("Applying selected BOOP defaults. Back stops remaining changes.",session->{
+            ensureMigration(session);
+            var result=defaultsController(session).apply(review,selection,()->Thread.currentThread().isInterrupted());
+            return defaultsOutcome(result,session);
+        });
+    }
+    private void undoBoopDefaults() {
+        if(gate.busy()||defaultsUndo==null)return;
+        var review=defaultsUndo;
+        perform("Undoing only BOOP defaults changes",session->{
+            var result=defaultsController(session).undo(review,()->Thread.currentThread().isInterrupted());
+            return defaultsOutcome(result,session);
+        });
+    }
+    private Outcome defaultsOutcome(StartupDefaultsCoordinator.Result result,StartupLocalBridge.PackageSession session) {
+        List<StartupPackageState> rows=null;try{rows=session.inventory();}catch(Exception ignored){}
+        return new Outcome(rows,result.summary(),()->{
+            screen=Screen.OVERVIEW;defaultsPreview=null;defaultsUndo=null;focusTag="startup:overview:defaults";render();
+            dialog("BOOP defaults",String.join("\n\n",result.details()),"OK",()->{});
+        });
+    }
+    private void keepBoopDefaults() {
+        if(gate.busy()||defaultsUndo==null||defaultsUndo.batch()==null)return;
+        var reviewed=defaultsUndo.batch();
+        dialog("Keep current settings?","No package settings will change. This forgets the grouped BOOP defaults Undo only. Individual Restore records remain available.","Keep settings",()->{
+            if(gate.busy())return;
+            try{new StartupDefaultsCoordinator(null,defaultsJournal).keepCurrent(reviewed);
+                screen=Screen.OVERVIEW;status="Current settings kept. Grouped defaults Undo removed.";focusTag="startup:overview:defaults";render();}
+            catch(RuntimeException failure){status=safeMessage(failure);render();}
+        });
+    }
+
     private interface Action { StartupPackageController.Result apply(StartupPackageController controller); }
     private interface Work { Outcome run(StartupLocalBridge.PackageSession session) throws Exception; }
     private record Outcome(List<StartupPackageState> rows,String message,Runnable afterRender) { }
