@@ -21,3 +21,20 @@ Java 17 compilation alone did not prove Android 11 runtime compatibility: v128 c
 The new no-lyrics source still requires its exact signed build, install and Package Control check. Last observed installed Shield version was v132. Re-read it and preserve the actual installed APK before deployment. Ryan authorized one music-track-change completion signal only after the requested delivery is genuinely installed. Do not send it for a source-only update.
 
 The Yoga bridge currently rejects filesystem/terminal calls. Publishing via GitHub does not synchronize the local checkout automatically. On reconnection, fetch and reconcile without overwriting dirty or concurrent work. See [SESSION_HANDOFF.md](SESSION_HANDOFF.md).
+
+## v135 large-text UI candidate, 2026-09-12
+
+v134 is installed and its Package Control screen was manually observed loading
+148 packages without the old Android 11 crash. The installed APK hash matches
+run 34672558546 / artifact 10290724349 exactly. Its on-screen font_scale=1.3
+exposed clipping in two-line sidebar labels, package labels and the Background
+state controls. v135 uses concise single-line sidebar labels, intrinsic package
+label/card heights and action heights calculated from the actual scaled font
+metrics. Android's text-size setting is unchanged.
+
+Fresh v135 local materialization/Android Java compilation passed; 277 Unified
+unit tests passed with zero failures/errors/skips, 15 Startup Manager behavior
+suites passed, and Android 11 linkage checks passed. Signed v135 build/install
+and manual large-text confirmation are next. Only Startup Manager UI is changed;
+lyrics remains excluded and approved art/package-control behavior is retained.
+No destructive package test or music-track signal was sent by this review.

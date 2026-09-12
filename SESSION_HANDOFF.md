@@ -35,3 +35,24 @@ Remote Desktop Commander currently answers a ping but rejects terminal/file call
 After the Yoga bridge reconnects: fetch this branch, preserve any dirty/concurrent work, fast-forward only if clean, run the existing build workflow for the exact current source, verify artifact hash/package/version/permanent signer, preserve the installed APK, then install. Do not install the superseded lyrics-containing v133 artifact. Recheck live branch and installed version immediately before deployment.
 
 Ryan authorized installation and one music-track-change completion signal after the verified candidate is genuinely installed. Do not signal completion while installation or the Package Control crash check remains unfinished. No permission grants, root, signer changes, automatic debloat or arbitrary package disabling are authorized. Destructive package and stock-launcher disable/Restore acceptance remains user-owned.
+
+## v134 installed; large-text correction in progress
+
+The exact permanent-signed v134 APK from source
+`56bbb7d5f2fdaf9ede5c46cc8f7c1d0f46bacca0`, run `34672558546`, artifact
+`10290724349`, is installed on the Shield. Independent installed-file SHA256
+matched `3241628257ae1835271d49c728f6a91f13fb2cfd1d3b209052081585a5e4664d`.
+The installation completed concurrently; this review did not reinstall over it.
+The actual Package Control screen loaded 148 packages and stayed in
+ShieldStartupManagerActivity. This closes the original package-inventory crash
+check, not destructive action or user acceptance.
+
+Manual screenshot review found clipping at the user's existing font_scale=1.3:
+sidebar two-word labels and two-line background action state. This window is
+correcting those exact text containers for v135 without changing Android text
+settings, package controls, approved art or excluded lyrics. No package changes
+or completion media signal have been sent by this review. Other windows should
+leave this view/version pair alone until the v135 check finishes.
+
+Fresh v135 local verification passed: Android compilation, 277 unit tests,
+15 Startup Manager suites and Android 11 linkage. Signed build is next.
