@@ -6,8 +6,9 @@ import shutil
 ROOT = Path("boop-build/BOOP-Alpha1")
 APP = ROOT / "app"
 MAIN = APP / "src/main/java/com/boop/alpha1"
-EYES = APP / "src/main/java/com/boop/eyes"
-ASSETS = APP / "src/main/assets"
+LIB = ROOT / "animation-lib"
+JAVA = LIB / "src/main/java/com/boop/eyes"
+ASSETS = LIB / "src/main/assets"
 ANIM = Path("unified/animation")
 MASTER = Path("unified/assets/boop-eyes/boopApprovedEyes.png")
 HANDS = Path("unified/assets/boop-notifications/boop-yellow-hands-approved.png")
@@ -30,17 +31,29 @@ if digest(MASTER) != MASTER_SHA:
 if digest(HANDS) != HANDS_SHA:
     raise SystemExit("Locked BOOP notification hands changed")
 
-EYES.mkdir(parents=True, exist_ok=True)
+shutil.rmtree(LIB, ignore_errors=True)
+JAVA.mkdir(parents=True, exist_ok=True)
 ASSETS.mkdir(parents=True, exist_ok=True)
+shutil.copy2("unified/animation-lib.gradle", LIB / "build.gradle")
+manifest_dir = LIB / "src/main"
+manifest_dir.mkdir(parents=True, exist_ok=True)
+(manifest_dir / "AndroidManifest.xml").write_text(
+    '<manifest xmlns:android="http://schemas.android.com/apk/res/android" />\n',
+    encoding="utf-8")
+
 for source in (ANIM / "java/com/boop/eyes").glob("*.java"):
-    shutil.copy2(source, EYES / source.name)
-for source in (ANIM / "android/com/boop/eyes").glob("*.java"):
-    shutil.copy2(source, EYES / source.name)
+    shutil.copy2(source, JAVA / source.name)
 for source in (ANIM / "assets").iterdir():
     if source.is_file():
         shutil.copy2(source, ASSETS / source.name)
 shutil.copy2(MASTER, ASSETS / "boopApprovedEyes.png")
 shutil.copy2(HANDS, ASSETS / "boop-notification-hands.png")
+
+settings = ROOT / "settings.gradle"
+settings_text = settings.read_text(encoding="utf-8")
+if "include ':animation-lib'" not in settings_text:
+    with settings.open("a", encoding="utf-8") as handle:
+        handle.write("\ninclude ':animation-lib'\n")
 
 if digest(ASSETS / "boopApprovedEyes.png") != MASTER_SHA:
     raise SystemExit("Materialized eye master changed")
@@ -100,12 +113,13 @@ if menu_test.is_file():
         menu_test.write_text(text, encoding="utf-8")
 
 required = [
-    EYES / "EyeMotion.java",
-    EYES / "EyeCatalogue.java",
-    EYES / "CanonicalEyeRenderer.java",
-    EYES / "SignMotion.java",
-    EYES / "FreddieMotion.java",
-    EYES / "NotificationSignView.java",
+    JAVA / "EyeMotion.java",
+    JAVA / "EyeCatalogue.java",
+    JAVA / "ProductionAnimationController.java",
+    JAVA / "CanonicalEyeRenderer.java",
+    JAVA / "SignMotion.java",
+    JAVA / "FreddieMotion.java",
+    JAVA / "NotificationSignView.java",
     ASSETS / "catalogue.json",
     ASSETS / "eyes.frag",
     ASSETS / "eyes.vert",
@@ -114,4 +128,4 @@ required = [
 for path in required:
     if not path.is_file() or path.stat().st_size == 0:
         raise SystemExit(f"Missing canonical animation runtime: {path}")
-print("Canonical animation lab embedded in Unified; visual acceptance remains manual")
+print("Canonical production animation library embedded in Unified; visual acceptance remains manual")

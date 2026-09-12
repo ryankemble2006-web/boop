@@ -1,8 +1,7 @@
 plugins { id 'com.android.library' }
 android {
-    namespace 'com.boop.shieldhome'
+    namespace 'com.boop.animation'
     compileSdk 36
     defaultConfig { minSdk 29; targetSdk 36 }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
-dependencies { implementation project(':animation-lib'); implementation project(':shield-lib') }

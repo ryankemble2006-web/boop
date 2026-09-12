@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation project(':animation-lib')
     implementation project(':launcher-lib')
     implementation project(':shield-lib')
     implementation project(':shield-home-lib')
