@@ -577,3 +577,7 @@ STARTUP MANAGER V2 DECISION (2026-09-12)
 Ryan approved a full remote-first package-control redesign for Shield Startup Manager. The accepted mockup direction uses charcoal/black BOOP styling with cyan focus, a dashboard, package list/detail view, confirmation flow and Restore screen. The user wants control over unwanted system/vendor packages including the evicted Google TV launcher and its optional advertising/recommendation companions. v2 therefore exposes user and system packages with Disable/Re-enable, Force stop, Clean after boot and Prevent background start. Persistent BOOP changes must capture exact original state and provide verified Restore. Only BOOP itself and a minimal recovery floor needed to undo mistakes remain protected. Ryan owns visual acceptance; do not add automated visual CI.
 
 Design spec: docs/superpowers/specs/2026-09-12-startup-manager-v2-design.md. This is an approved design decision, not implementation or physical acceptance.
+
+NOW PLAYING DEEZER LYRICS DECISION (2026-09-12)
+------------------------------------------------
+Ryan approved a Lyrics shortcut in Unified Shield Now Playing for native Deezer only. The implementation must use Deezer's live semantic Lyrics accessibility target and verify the dedicated scrolling lyrics panel; do not store fixed screen coordinates or expose the button for Cast/other media providers. Preserve existing media controls, Close-player focus behavior and the published Startup Manager v2 work underneath it. v131 is the current isolated candidate; signed/physical acceptance remains separate.

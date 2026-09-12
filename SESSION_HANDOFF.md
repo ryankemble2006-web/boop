@@ -1448,3 +1448,11 @@ Ryan requested the BOOP-specific Back-hold gesture that opens Shield settings be
 Ryan approved replacing the current Startup Manager scroll wall with the mockup-led remote-first Package Control design. v2 exposes installed user and system packages, including Google TV Launcher and launcher/ad/recommendation companions, with Disable, Re-enable, Force stop, Clean after boot and Prevent background start actions. Only BOOP plus a minimal recovery floor remains protected. Persistent changes capture exact original state for verified Restore. Visual acceptance remains Ryan-owned; no visual CI is permitted.
 
 Design spec: `docs/superpowers/specs/2026-09-12-startup-manager-v2-design.md`. This is design-only; no production code has been changed for v2 yet.
+
+## v131 Deezer lyrics shortcut candidate, 2026-09-12
+
+Ryan approved a native-Deezer-only `Lyrics` button in Unified Shield Now Playing. This branch was replayed onto published Startup Manager v2 base `c7a38b7`, so the candidate preserves that v128 work and advances to version `131` / `1.2.131-deezer-lyrics-shortcut`.
+
+Clean physical probing showed Deezer's player exposes a unique descendant `content-desc="Lyrics"` inside a clickable parent; no fixed screen coordinate is stored. BOOP opens the current Deezer notification target, resolves that semantic control from a fresh UI hierarchy, clicks its live bounds, then requires Deezer's scrolling lyric panel before reporting success. Non-Deezer sessions do not show the button. Existing non-Deezer Close-player geometry/focus behavior is preserved.
+
+Fresh candidate verification before publication: canonical core checks pass including Lyrics target/panel and native-Deezer policy regressions; materialized Unified Android unit suite is 277 tests, zero failures/errors/skips. Permanent-signed GitHub build, installation and physical BOOP-button acceptance remain pending at this entry.
