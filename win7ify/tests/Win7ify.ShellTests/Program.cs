@@ -1,6 +1,6 @@
 using Boop.Win7ify.Tests;
 int failures = 0, total = 0;
-foreach (var test in OpenShellTests.Cases)
+foreach (var test in OpenShellTests.Cases.Concat(OpenShellEdgeTests.Cases))
 {
     total++;
     try { test.Run(); Console.WriteLine($"PASS {test.Name}"); }
