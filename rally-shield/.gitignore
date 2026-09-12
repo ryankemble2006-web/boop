@@ -1,0 +1,9 @@
+build/
+vendor/
+games/
+release/
+__pycache__/
+*.pyc
+*.jks
+*.keystore
+local.properties

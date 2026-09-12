@@ -1,0 +1,13 @@
+BOOP Rally: independent launcher and Android host, GPL-2.0-or-later.
+DOSBox Pure Copyright (C) 2020-2025 Bernhard Schelling and contributors.
+DOSBox Copyright the DOSBox Team; see DOSBOX-AUTHORS and DOSBOX-THANKS.
+Emulator source: https://github.com/schellingb/dosbox-pure
+Pinned revision: a4a0bab7f8931433588f2fcad9045c85b277373d (1.0-preview6).
+
+Network Q RAC Rally and Rally Championship are third-party games.
+Names and trademarks remain with their owners. No affiliation is claimed.
+Game binaries, artwork, disc images and commercial content are not included
+in the public APK or source. Use your own existing game files privately.
+
+Complete corresponding launcher and emulator source accompany the CI APK
+as corresponding-source.tar.gz. Build instructions are in rally-shield/README.md.
