@@ -35,10 +35,7 @@ public final class ShieldNowPlayingListenerService extends NotificationListenerS
         if (!isMediaNotification(statusBarNotification)) {
             return;
         }
-        Notification notification = statusBarNotification.getNotification();
-        ShieldNowPlayingManager.get(this).onNotificationContentIntent(
-                statusBarNotification.getPackageName(), notification.contentIntent);
-        Bitmap artwork = artworkFrom(notification);
+        Bitmap artwork = artworkFrom(statusBarNotification.getNotification());
         if (artwork != null) {
             ShieldNowPlayingManager.get(this).onNotificationArtwork(
                     statusBarNotification.getPackageName(), artwork);
@@ -50,8 +47,6 @@ public final class ShieldNowPlayingListenerService extends NotificationListenerS
         if (!isMediaNotification(statusBarNotification)) {
             return;
         }
-        ShieldNowPlayingManager.get(this).onNotificationContentIntent(
-                statusBarNotification.getPackageName(), null);
         ShieldNowPlayingManager.get(this).onNotificationArtworkRemoved(
                 statusBarNotification.getPackageName());
     }

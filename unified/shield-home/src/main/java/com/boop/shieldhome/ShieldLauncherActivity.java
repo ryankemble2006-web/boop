@@ -39,7 +39,6 @@ import java.util.concurrent.Executors;
 /** Standalone Shield launcher surface. */
 public final class ShieldLauncherActivity extends Activity {
     private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
-    private final DeezerLyricsBrowser lyricsBrowser = new DeezerLyricsBrowser();
 
     public static final long PAGE_TRANSITION_MS = 140L;
     static final long SHIELD_SETTINGS_HOLD_MS = 250L;
@@ -309,13 +308,6 @@ public final class ShieldLauncherActivity extends Activity {
 
             @Override public void onNowPlayingNext() {
                 if (nowPlayingManager != null) nowPlayingManager.next();
-            }
-
-            @Override public void onOpenNowPlayingLyrics() {
-                if (nowPlayingManager == null) return;
-                NowPlayingSnapshot current = nowPlayingManager.state().current();
-                if (current != null) lyricsBrowser.open(
-                        ShieldLauncherActivity.this, nowPlayingManager, current);
             }
 
             @Override public void onBrowseNowPlayingAlbum() {
@@ -909,7 +901,6 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onDestroy() {
         destroyed = true;
         albumBrowser.cancel();
-        lyricsBrowser.cancel();
         ++optionalGeneration;
         if (unsubscribeNowPlaying != null) {
             unsubscribeNowPlaying.run();

@@ -27,12 +27,3 @@ with tempfile.TemporaryDirectory() as output:
 with tempfile.TemporaryDirectory() as output:
     subprocess.run([javac, '-d', output, str(root/'unified/shared/DeezerAlbumMatch.java'), str(root/'tests/canonical/AlbumMatchCheck.java')], check=True)
     subprocess.run([java, '-cp', output, 'AlbumMatchCheck'], check=True)
-
-with tempfile.TemporaryDirectory() as output:
-    subprocess.run([javac, '-d', output,
-        str(root/'unified/shared/DeezerScreen.java'),
-        str(root/'unified/shield-home/src/main/java/com/boop/shieldhome/DeezerLyricsPolicy.java'),
-        str(root/'tests/canonical/LyricsTargetCheck.java'),
-        str(root/'source-test/DeezerLyricsPolicyTest.java')], check=True)
-    subprocess.run([java, '-cp', output, 'LyricsTargetCheck'], check=True)
-    subprocess.run([java, '-cp', output, 'DeezerLyricsPolicyTest'], check=True)

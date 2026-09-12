@@ -32,7 +32,6 @@ public final class ShieldHomeView extends LinearLayout {
         default void onNowPlayingPlayPause() { }
         default void onNowPlayingFastForward() { }
         default void onNowPlayingNext() { }
-        default void onOpenNowPlayingLyrics() { }
         default void onOpenNowPlayingSource() { }
         default void onBrowseNowPlayingAlbum() { onOpenNowPlayingSource(); }
         default void onCloseNowPlayingSource() { }
