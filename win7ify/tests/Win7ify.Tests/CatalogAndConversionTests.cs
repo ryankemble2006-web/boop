@@ -25,6 +25,19 @@ internal static class CatalogAndConversionTests
         if (!experimental.Experimental) throw new Exception("classic context menu must remain experimental");
     }
 
+    public static void DefaultPresetExcludesExperimentalTweak()
+    {
+        var defaults = PresetCatalog.Windows7ish.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var safeIds = TweakCatalog.All.Where(tweak => !tweak.Experimental).Select(tweak => tweak.Id).ToArray();
+        foreach (var id in safeIds)
+            if (!defaults.Contains(id)) throw new Exception($"safe tweak missing from default preset: {id}");
+
+        if (defaults.Contains("context.classic.experimental"))
+            throw new Exception("experimental context menu must be opt-in");
+        if (defaults.Count != safeIds.Length)
+            throw new Exception("default preset contains an unknown or duplicate tweak");
+    }
+
     public static void WindowsDwordConversionRoundTrips()
     {
         var stored = WindowsRegistryStore.DecodeWindowsValue(42, RegistryValueKind.DWord);
