@@ -1,59 +1,28 @@
-# BOOP Status
+# BOOP Rally Shield status
 
-Updated 2026-09-10. `main` is the shared context/contract hub. `boop-unified` is the accepted Unified baseline; the currently selected overhaul work is on `boop-canonical-rebuild`.
+Updated 2026-09-12. This branch owns only the adjacent Network Q Rally project. Main remains the shared context hub; do not interpret this file as the current Unified or standalone HOME status.
 
-## Shared continuity status
+## Implemented and published
 
-Ryan approved an exhaustive two-file continuity transfer for Codex/Boop:
+Branch/worktree `boop-rally-shield`, project `rally-shield/`, package `com.boop.rally`. One offline Android TV launcher selects the original RAC Rally and Rally Championship through a pinned native ARM64 DOSBox Pure core. It includes controller/keyboard mapping, a pause/return menu, app-private save locations and an optional prepared-pack importer. The app does not replace HOME or request Internet/storage/accessibility/microphone permissions.
 
-- `BOOP_PERSONALITY.md` carries the durable collaboration style, shorthand and reference meanings.
-- `BOOP_CONTEXT.md` carries the broad BOOP/project mental model and adjacent vocabulary.
+Public source, behavioral tests and GitHub build/signing workflow are committed. Proprietary game files remain private. Original desktop game folders were preserved. This is an emulator-host port, not a rewritten game engine or PC-streaming shortcut.
 
-This is documentation-only. No application source, package, signer, permission, build or deployment state is changed by the continuity transfer.
+## Installed candidate
 
-The corrected `canary` meaning is recorded as a deliberately narrow/sacrificial proof used to expose a risky assumption before applying the change to the real target. The prior skin-only/unknown note is superseded.
+Version 1 / 1.0, source `71c71157fd9b6931b3c7d320409fa32d94f72197`.
+Actions run `34688081241` succeeded; artifact `10296216335`.
+APK SHA-256: `cb3b37efd9dfe4b5ea1850c4fe3ff9155e3c319ecefa1855ee1ae6f408e192d8`.
+APK size: 1,602,630 bytes. Permanent BOOP signer verified.
 
-## Reconciled live app state
+Installed successfully on the positively identified Shield. Both private game packs were provisioned and hash-verified. Both titles booted; advancing frames and nonzero PCM were observed. Championship's menus responded to keyboard navigation. Twelve behavioral tests passed, independently rerun from the release source. See `rally-shield/VERIFICATION.md` for details and limitations.
 
-A concurrent Codex session advanced the owning app docs while the first continuity commit was being published. Shared context was reconciled to the fresher state.
+## Incomplete acceptance
 
-Current observed `boop-unified` documentation HEAD:
+Actual driving, physical gamepad feel, audible engine/co-driver/music, save/clean-return/reopen persistence and repeated game-switch/background-resume acceptance remain unfinished. No complete race was verified. The laptop's remote file/command/ping requests timed out before these checks finished. The user remains visual/acoustic authority.
 
-`771b68a00ac95b40ed6e17cffac60af77528a934`
+A separate `local.networkq.rally` APK also exists and sometimes took foreground. Its dialogs are not evidence about this build. It and Johnny Castaway were left unchanged.
 
-Physically accepted Natural Voice baseline:
+## Continuation
 
-- versionCode `91`;
-- versionName `1.2.91-unified-static-track-state-fix`;
-- app source/build head `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
-- canonical Unified workflow `34433115316`: SUCCESS;
-- artifact ID `10135283428`;
-- protected checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` -> `11650313221ae5bf997dbb93b6a905bfdc7da1ed`.
-
-Ryan physically confirmed Natural Voices are installed/selectable, demos speak and normal BOOP speech used the selected Natural Voice. That is voice-specific acceptance, not blanket physical acceptance of unrelated behaviour.
-
-Historical rollback remains preserved:
-
-`checkpoint-boop-unified-v88-android-voice-restored` -> `f5f086fc4f67712b5746be067aff852331299bb0`
-
-## Active selected canonical rebuild
-
-Owning branch:
-
-`boop-canonical-rebuild`
-
-Observed candidate HEAD during reconciliation:
-
-`a3eb768641e339ed59a6e2e86cb74f64bccf5979`
-
-Base:
-
-`boop-unified@99474d141e7affad17cdbe854e94dd3986076980`
-
-Candidate version 92. Selected scope is items 1, 3, 6, 7, 8 and 10: shared speech/room/media state; dynamic configured-room and generic exposed HA discovery; one media corner/Home Now Playing owner; Deezer/local session transport; HA Back escape; manual/automatic profiles.
-
-Eyes/blink are handled separately for later transplant. Turbo redesign is outside this branch. The candidate was not merged or physically accepted at this snapshot. Re-fetch its live handoff/status/memory before continuing.
-
-## Acceptance rule
-
-CI/build/signing/integrity evidence and Ryan's physical/visual/acoustic acceptance are separate states. Ryan remains the real-device visual and acoustic authority.
+Read this branch's live SESSION_HANDOFF.md and rally-shield/MEMORY.md. Fetch/check live GitHub before touching the local worktree: the final documentation was published directly while the laptop was not answering. Do not repeat preparation, replace the approved signer or merge this app into Unified. No post-install application-code changes were made in this session; later documentation builds do not establish a new device installation.
