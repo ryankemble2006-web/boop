@@ -2,16 +2,16 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <bitmap
-            android:src="@drawable/boop_headphones_legacy"
+            android:src="@drawable/boop_music_h1_approved"
             android:gravity="fill"
             android:antialias="true"
             android:filter="true" />
     </item>
 
     <!--
-      The legacy headphones render predates BOOP's permanent eye master and has an old
-      upper eyelid baked into each side. These two black caps hide only those obsolete
-      arcs. The permanent approved eye pair and its animated top eyelids are separate
+      The approved H1 music art predates BOOP's permanent eye master and carries its
+      concept-era eyes. These two black caps hide only those baked-in eye areas. The permanent
+      approved eye pair and its animated top eyelids are separate
       layers above this frame in ShieldNowPlayingPuppetView.
     -->
     <item>
