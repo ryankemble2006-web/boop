@@ -1435,3 +1435,9 @@ Ryan requested the BOOP-specific Back-hold gesture that opens Shield settings be
 Approved direction: one unified remote-first Package Control console, based on the accepted dark/charcoal cyan-focus mockup. It will expose user and system packages, including Google TV Launcher and optional launcher/ad/recommendation components, with Disable/Re-enable, Force stop, Clean after boot and Prevent background start. Exact pre-change state is recorded for Restore; only BOOP and a minimal recovery floor are protected. Design-only at this point; implementation has not started.
 
 Spec: `docs/superpowers/specs/2026-09-12-startup-manager-v2-design.md`.
+
+## v132 approved music puppet installed, 2026-09-12
+
+`boop-music-puppet-asset` source/build commit `0f9adecc9ef9e242a07288c1d3292645620eae3c` produced version132 / `1.2.132-approved-music-puppet`. GitHub Unified run `34670760842` passed the selected nonvisual build, functional, package, integrity and permanent-signer gates. Exact APK SHA256: `46b7c4b6f233c9608d625e4cfa2ecf733a0b88afca0e628e546c3f084cdead46`.
+
+The Shield had concurrently advanced to v131, so v130 was not installed. The v131 installed APK was privately backed up (SHA256 `4279cd96ec539f895a66a3fe663d5dcb21f2a48d7773b1fc484926fcc6d383c5`), then `adb install -r` of exact signed v132 succeeded. Android reports versionCode 132 and versionName `1.2.132-approved-music-puppet`; `UnifiedEntryActivity` resumed `com.boop.alpha1/com.boop.shieldhome.ShieldLauncherActivity`. Visual acceptance remains manual.

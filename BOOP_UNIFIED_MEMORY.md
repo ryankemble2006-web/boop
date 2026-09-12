@@ -1394,3 +1394,11 @@ https://www.home-assistant.io/integrations/androidtv/ .
 
 ## Shield audio Match Content result (2026-09-11)
 Physical Shield acceptance for the PCM sample-rate experiment is now complete on signed v121 (`59ed19b`). Exact NVIDIA control remains `nv_param_audio_native_sample_rate_select`: `1` native/match-content, `0` normal video. BOOP correctly classifies Deezer Google Cast despite `CONTENT_TYPE_UNKNOWN`, ignores the brief STOP-only Cast transition, gives BOOP-launched foreground video priority over background Cast music, and re-applies the selected live Cast policy on Home resume. Verified loop: Cast 44.1 kHz -> Kodi/video 48 kHz -> BOOP Home -> Cast 44.1 kHz, with Cast alive throughout. Passthrough remains untested and must be treated as separate work.
+
+## 2026-09-12 v132 approved music puppet
+
+The Shield music-puppet branch now uses the previously approved H1 soft-groove composition rather than regenerating artwork. The existing v125+ animation/approved-eye machinery remains the driver; visual acceptance remains manual.
+
+Exact source/build commit: `0f9adecc9ef9e242a07288c1d3292645620eae3c`; version132 / `1.2.132-approved-music-puppet`; GitHub run `34670760842` SUCCESS; signed APK SHA256 `46b7c4b6f233c9608d625e4cfa2ecf733a0b88afca0e628e546c3f084cdead46`.
+
+Concurrent work had already advanced the physical Shield to v131, so the earlier v130 artifact was deliberately not installed. The v131 installed APK was privately preserved first, then exact signed v132 update-install succeeded. Android reports v132 and `ShieldLauncherActivity` resumed in the foreground. This proves deployment/runtime entry only, not Ryan's visual acceptance of H1.

@@ -1448,3 +1448,13 @@ Ryan requested the BOOP-specific Back-hold gesture that opens Shield settings be
 Ryan approved replacing the current Startup Manager scroll wall with the mockup-led remote-first Package Control design. v2 exposes installed user and system packages, including Google TV Launcher and launcher/ad/recommendation companions, with Disable, Re-enable, Force stop, Clean after boot and Prevent background start actions. Only BOOP plus a minimal recovery floor remains protected. Persistent changes capture exact original state for verified Restore. Visual acceptance remains Ryan-owned; no visual CI is permitted.
 
 Design spec: `docs/superpowers/specs/2026-09-12-startup-manager-v2-design.md`. This is design-only; no production code has been changed for v2 yet.
+
+## v132 approved music puppet installed, 2026-09-12
+
+Ryan approved installing the approved H1 music-puppet update on Shield. Concurrent work advanced the device to v131 while v130 was signing, so this branch moved forward to v132 rather than forcing a downgrade.
+
+Source/build commit: `0f9adecc9ef9e242a07288c1d3292645620eae3c` on `boop-music-puppet-asset`. Version: `132` / `1.2.132-approved-music-puppet`. GitHub Unified run `34670760842` completed successfully with the permanent signer and all selected nonvisual gates.
+
+Exact signed APK SHA256: `46b7c4b6f233c9608d625e4cfa2ecf733a0b88afca0e628e546c3f084cdead46`. Signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. The prior installed v131 APK was privately backed up before replacement; backup SHA256: `4279cd96ec539f895a66a3fe663d5dcb21f2a48d7773b1fc484926fcc6d383c5`.
+
+`adb install -r` succeeded. Shield now reports versionCode 132 / `1.2.132-approved-music-puppet`, and launching `UnifiedEntryActivity` resumed `com.boop.alpha1/com.boop.shieldhome.ShieldLauncherActivity`. Visual acceptance of the approved H1 music puppet remains Ryan-owned and is not inferred from install success.
