@@ -1,3 +1,30 @@
+# Current phone animation crash repair: v145
+
+Updated 2026-09-12. Owner: `boop-v144-devmenu-hue-experimental`,
+worktree `.worktrees/boop-v144-devmenu-hue-experimental`.
+This is the isolated phone animation experiment, not the active Shield branch.
+The inherited Startup Manager notes below are history, not this task's scope.
+
+## Current evidence
+
+v143 phone animation delivery was received positively by the user. v144
+(`97982839738141b4ea3e557754fd9f6f25c31bc5`) installed, but entering the eyes
+crashed: saved-hue initialization requested a frame before `setRenderer` created
+GLThread. The v145 constructor initializes renderer state without requesting a frame.
+A second audit found spoken/settings developer entry owns an in-place menu in
+MainActivity. It now uses the canonical face and all 26 catalogue clips, rather
+than updating only the separate BoopDevMenuActivity.
+
+Local materialization, 10 focused contracts, and full Unified compilation/unit
+checks pass. Locked eye and hand hashes remain exact. Version is
+`145 / 1.2.145-devmenu-hue-crashfix`. Signed build and phone verification pending.
+Keep permissions, signing, animation timelines/assets and Shield installation unchanged.
+Next: signed workflow, exact artifact verification, phone-only update, then
+repeat the former Launcher-to-eyes crash path and inspect crash/renderer logs.
+
+---
+## Inherited historical notes
+
 # BOOP Unified continuation memory
 
 Updated 2026-09-12. This is the current scoped supplement. The complete preceding memory is preserved byte-for-byte at [docs/history/startup-v133/BOOP_UNIFIED_MEMORY.md](docs/history/startup-v133/BOOP_UNIFIED_MEMORY.md). Read it for protected checkpoints, wider app history and earlier decisions; current user instructions and the owning handoff take precedence over its dated progress entries.

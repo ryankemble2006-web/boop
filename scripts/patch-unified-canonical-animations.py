@@ -96,6 +96,47 @@ text = replace_once(text, "    private BoopFaceView face;",
                     "    private BoopCanonicalFaceView face;", "canonical Wall face field")
 text = replace_once(text, "        face = new BoopFaceView(this);",
                     "        face = new BoopCanonicalFaceView(this);", "canonical Wall face constructor")
+# Spoken/settings entry is in MainActivity, not the standalone preview activity.
+text = replace_once(text, "    private BoopFaceView developerMenuFace;",
+        "    private BoopCanonicalFaceView developerMenuFace;", "in-place developer face field")
+old_dev = "developerMenuFace = new BoopFaceView(this);"
+if text.count(old_dev) != 2:
+    raise SystemExit("Expected both in-place developer face constructors")
+text = text.replace(old_dev, "developerMenuFace = new BoopCanonicalFaceView(this);")
+shelf_anchor = "        for (BoopDevMenuModel.Shelf shelf : BoopDevMenuModel.shelves()) {"
+text = replace_once(text, shelf_anchor,
+        '        addCanonicalDeveloperShelf(column);\n\n' + shelf_anchor, "in-place canonical shelf")
+canonical_shelf = '''
+    private void addCanonicalDeveloperShelf(LinearLayout column) {
+        addDeveloperSection(column, "Canonical animations");
+        HorizontalScrollView scroll = new HorizontalScrollView(this);
+        scroll.setHorizontalScrollBarEnabled(false);
+        scroll.setContentDescription("Canonical animations horizontal selector");
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        for (com.boop.eyes.EyeMotion.Clip clip : com.boop.eyes.EyeCatalogue.ALL) {
+            Button button = new Button(this);
+            button.setText(clip.label); button.setAllCaps(false);
+            button.setTextSize(18f); button.setTextColor(Color.WHITE);
+            button.setBackgroundColor(Color.rgb(42, 42, 42));
+            button.setContentDescription(clip.label + " canonical animation");
+            button.setOnClickListener(v -> {
+                if (developerMenuFace != null) developerMenuFace.playCanonicalClip(clip.id);
+            });
+            LinearLayout.LayoutParams item = new LinearLayout.LayoutParams(dp(180), dp(64));
+            item.setMargins(0, 0, dp(12), 0); row.addView(button, item);
+        }
+        scroll.addView(row);
+        scroll.setOnScrollChangeListener((v, x, y, ox, oy) -> developerAnimationScrollX = x);
+        int saved = developerAnimationScrollX;
+        scroll.post(() -> scroll.scrollTo(saved, 0));
+        column.addView(scroll, new LinearLayout.LayoutParams(-1, dp(70)));
+    }
+
+'''
+text = replace_once(text, "    private void addDeveloperShelf(",
+        canonical_shelf + "    private void addDeveloperShelf(", "canonical shelf method")
+
 wall.write_text(text, encoding="utf-8")
 
 hue = MAIN / "BoopEyeHueOverlay.java"

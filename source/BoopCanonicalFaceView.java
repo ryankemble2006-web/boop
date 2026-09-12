@@ -74,7 +74,10 @@ final class BoopCanonicalFaceView extends FrameLayout {
         surface.setPreserveEGLContextOnPause(true);
         renderer = new CanonicalEyeRenderer(
                 context.getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
-        setEyeHueDegrees(BoopEyeHue.loadHue(context));
+        // Configure saved colour without requesting a frame before setRenderer creates GLThread.
+        eyeHueDegrees = BoopEyeHueMath.clampHue(BoopEyeHue.loadHue(context));
+        renderer.setHueRotationDegrees(
+                BoopEyeHueMath.rotationDegreesForHue(eyeHueDegrees));
         surface.setRenderer(renderer);
         surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         surface.setFocusable(false);
