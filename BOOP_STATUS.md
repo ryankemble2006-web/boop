@@ -1,3 +1,32 @@
+## v133 Startup Manager integrated candidate, 2026-09-12
+
+Candidate version: `133 / 1.2.133-startup-manager-console`. This continuation
+combines Startup Manager runtime/recovery/UI repair `42fe4be8ddfb196a34be73c713d434b235663415`,
+published lyrics `c05138a01694cf265b6444729d1373d05312c82c`, and approved music art
+`0f9adecc9ef9e242a07288c1d3292645620eae3c`. Their worktrees remain untouched.
+The pre-deployment Shield advanced from v131 to v132 during sibling work, so the
+old v129 reservation is superseded and no downgrade is permitted.
+
+Fresh integrated verification: 15 Startup Manager behavior suites passed; Android
+11 linkage gate passed; canonical shared-state/media/lyrics checks passed; approved
+H1 asset integrity passed; Android Java compilation and full Unified unit suite
+passed, 277 tests / 0 failures / 0 errors / 0 skipped. Earlier in this repair, all
+15 synthetic Startup suites ran successfully as dex on the actual Shield Android
+11 runtime without mutating installed packages; the temporary harness was removed.
+
+The native TV UI now has a fixed navigation rail, four responsive Overview cards,
+package filters, full-width compact rows/actions, selected-package details and
+Restore. It restores Auto-clean OFF, cancels stale asynchronous work on Back and
+checks outside changes before confirmed Restore. Current package visibility uses
+installed-only shell inventory bound to this app's Android user, without a new
+package-query permission. All original v1 records remain privately available.
+
+Status: source and local gates verified; permanent-signed GitHub run and v133
+installation are next. v128 is a failed physical Package Control candidate, not
+a working checkpoint. Ryan authorized installation and a music-track completion
+alert. No automatic package debloating, grants, root or signer changes. Stock
+launcher disable/restore acceptance remains a deliberate Ryan-present test.
+
 ## Startup Manager repair verification, 2026-09-12
 
 The repaired pure-Java Startup Manager suites were compiled to dex and all 15

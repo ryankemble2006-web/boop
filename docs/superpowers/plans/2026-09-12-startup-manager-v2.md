@@ -338,3 +338,12 @@ Update handoff/status with exact source SHA, workflow run, artifact/hash, test c
 ## Completion gate
 
 Do not remove the legacy v1 persisted stores until migration is CI-green **and** at least one migrated package has been physically restored on the Shield. Do not disable arbitrary packages during automated tests. Google TV Launcher disable/restore is a deliberate physical acceptance step only after the signed candidate is installed and Ryan is present.
+## Execution receipt, 2026-09-12
+
+Tasks 1-7 are implemented in the integrated v133 candidate. Device discovery,
+controller and recovery contracts have host and Android 11 dex-harness evidence.
+The v128 String.lines failure is repaired with a nonvisual linkage regression.
+Task 8: integrated local tests and compilation passed; signing, installation,
+manual screen review and user-owned destructive acceptance remain separately
+tracked in SESSION_HANDOFF.md. The target version is 133, preserving the live
+lyrics and approved-art branches rather than downgrading their deployed versions.
