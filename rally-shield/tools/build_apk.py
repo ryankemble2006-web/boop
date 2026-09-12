@@ -28,7 +28,7 @@ def main():
     head = subprocess.check_output(['git', '-C', str(vendor), 'rev-parse', 'HEAD'], text=True).strip()
     if head != REVISION:
         raise RuntimeError('Unexpected emulator revision')
-    run(ndk/'ndk-build', '-C', vendor, 'APP_ABI=arm64-v8a', 'APP_PLATFORM=android-26', '-j2')
+    run(ndk/'ndk-build', 'APP_ABI=arm64-v8a', 'APP_PLATFORM=android-26', '-j2', cwd=vendor/'jni')
     libdir = vendor / 'libs' / 'arm64-v8a'
     core = libdir/'libretro.so'
     if not core.is_file():
