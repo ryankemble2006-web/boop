@@ -8,6 +8,7 @@ var tests = new (string Name, Action Run)[]
     ("restore removes originally missing value", RestoreRemovesOriginallyMissing),
     ("restore returns original value and kind", RestoreReturnsOriginalValue),
     ("catalog has expected safe scope", CatalogAndConversionTests.CatalogHasExpectedSafeScope),
+    ("default preset excludes experimental tweak", CatalogAndConversionTests.DefaultPresetExcludesExperimentalTweak),
     ("Windows DWORD conversion round-trips", CatalogAndConversionTests.WindowsDwordConversionRoundTrips),
     ("Windows expand string preserves kind", CatalogAndConversionTests.WindowsExpandStringPreservesKind),
     ("Windows binary conversion preserves bytes", CatalogAndConversionTests.WindowsBinaryConversionPreservesBytes)
