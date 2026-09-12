@@ -120,12 +120,14 @@ jobs:
             unified/shield-home/src/main/java/com/boop/shieldhome/StartupRestoreStore.java \
             unified/shield-home/src/main/java/com/boop/shieldhome/StartupPackageCommands.java \
             unified/shield-home/src/main/java/com/boop/shieldhome/StartupPackageController.java \
+            unified/shield-home/src/main/java/com/boop/shieldhome/StartupManagerMigration.java \
             source-test/StartupPreventionPolicyTest.java source-test/StartupPreventionRecordTest.java source-test/StartupCleanupPolicyTest.java \
             unified/shield-home/src/test/java/com/boop/shieldhome/StartupRecoveryPolicyTest.java \
             unified/shield-home/src/test/java/com/boop/shieldhome/StartupPackageRepositoryTest.java \
             unified/shield-home/src/test/java/com/boop/shieldhome/StartupRestoreStoreTest.java \
             unified/shield-home/src/test/java/com/boop/shieldhome/StartupPackageCommandsTest.java \
-            unified/shield-home/src/test/java/com/boop/shieldhome/StartupPackageControllerTest.java
+            unified/shield-home/src/test/java/com/boop/shieldhome/StartupPackageControllerTest.java \
+            unified/shield-home/src/test/java/com/boop/shieldhome/StartupManagerMigrationTest.java
           java -cp work/startup-prevention-tests StartupPreventionPolicyTest
           java -cp work/startup-prevention-tests StartupPreventionRecordTest
           java -cp work/startup-prevention-tests StartupCleanupPolicyTest
@@ -134,6 +136,7 @@ jobs:
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupRestoreStoreTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupPackageCommandsTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupPackageControllerTest
+          java -cp work/startup-prevention-tests com.boop.shieldhome.StartupManagerMigrationTest
 
       - name: Test notification, developer-lab and natural-voice contracts
         run: |

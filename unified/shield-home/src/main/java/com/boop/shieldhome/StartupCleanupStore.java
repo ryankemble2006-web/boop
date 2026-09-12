@@ -29,10 +29,8 @@ public final class StartupCleanupStore {
     public boolean setTarget(String packageName, boolean enabled) {
         if (!StartupCleanupPolicy.validPackage(packageName)) return false;
         LinkedHashSet<String> next = targets();
-        if (enabled) {
-            if (!next.contains(packageName) && !StartupCleanupPolicy.canAdd(next.size())) return false;
-            next.add(packageName);
-        } else next.remove(packageName);
+        if (enabled) next.add(packageName);
+        else next.remove(packageName);
         return prefs.edit().putStringSet(TARGETS, new LinkedHashSet<>(next)).commit();
     }
 
