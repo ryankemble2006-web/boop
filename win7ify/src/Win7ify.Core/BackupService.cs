@@ -32,7 +32,7 @@ public sealed class BackupService
         if (changed) SaveAtomically(document);
     }
 
-    public IReadOnlyList<ChangeResult> RestoreAll(Action<ChangeResult>? progress = null)
+    public IReadOnlyList<ChangeResult> RestoreAll(Action<ChangeResult>? progress = null, bool keepBackup = false)
     {
         var document = Load();
         if (document is null) return Array.Empty<ChangeResult>();
@@ -44,8 +44,8 @@ public sealed class BackupService
             results.Add(result);
             progress?.Invoke(result);
         }
-        // A denied or unverified restore must never destroy the original recovery baseline.
-        if (results.All(r => r.Succeeded)) File.Delete(_backupPath);
+        // Multi-stage recovery can keep the baseline until its installer removal also succeeds.
+        if (!keepBackup && results.All(r => r.Succeeded)) File.Delete(_backupPath);
         return results;
     }
 
@@ -67,7 +67,6 @@ public sealed class BackupService
         }
         finally
         {
-            // Failure must leave the old backup intact, never replace it with a partial JSON file.
             if (File.Exists(temp)) File.Delete(temp);
         }
     }
