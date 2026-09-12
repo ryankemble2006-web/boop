@@ -125,3 +125,10 @@ deliver this actual 0.2 artifact, and not silently install anything later.
 This branch remains isolated; Android source, packages, permissions, permanent
 signer and protected checkpoints are untouched. See CODEX_HANDOFF for advanced
 work, and preserve 0.1.1 only as historical settings-recovery provenance.
+
+## Shared routing receipt
+
+Main received only the Win7ify branch-routing note in BOOP_START_HERE.md at
+`2caf40fa4357b47e5c37dd02899f32924edf116a`, verified against the live remote.
+No main application source changed. The owning Windows worktree is retained;
+its code remains the exact ee744db build above.
