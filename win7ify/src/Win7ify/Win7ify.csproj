@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14.0</LangVersion>
+    <AssemblyName>Win7ify</AssemblyName>
+    <RootNamespace>Boop.Win7ify</RootNamespace>
+    <Version>0.1.0</Version>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Win7ify.Core\Win7ify.Core.csproj" />
+    <EmbeddedResource Include="Assets\boopApprovedEyes.png" LogicalName="Boop.Win7ify.Assets.boopApprovedEyes.png" />
+  </ItemGroup>
+</Project>
