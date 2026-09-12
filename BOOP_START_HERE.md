@@ -1,5 +1,24 @@
 # BOOP — start here
 
+## Current combined device delivery, 2026-09-12
+
+Ryan explicitly authorized the completed phone iris-colour/menu/crash fixes,
+Lyrics availability preflight and Startup Manager/defaults to be combined.
+Owning branch/worktree: **`boop-unified-v146-integration`**.
+Version **146 / 1.2.146-phone-lyrics-startup**, package `com.boop.alpha1`, is
+installed on both Pixel 10 Pro XL and Shield; each installed APK hash matches.
+Signed build: `c868421e021ab4e0d3775f71c4fd1b484c1a88c4`, Actions `34683100171`.
+APK SHA256: `4ee558ddf81be95371f07bf5025f581b397e6f16bc47895727fc91e45f576adc`.
+
+Read that branch's live SESSION_HANDOFF.md, BOOP_STATUS.md and
+`docs/verification/v146-combined.md` for exact merge inputs and device evidence.
+New combined work must preserve all three fixes rather than start from an older
+isolated v142/v145 branch. Former input branches/checkpoints remain rollback and
+provenance; the standalone Animation Lab is unchanged. Main remains a context hub.
+This is agent-verified installation with scoped physical checks, not blanket user
+visual/acoustic, preset Apply/Undo/reboot or all-feature acceptance. Current user
+instructions and newer live owning-branch evidence still win.
+
 ## Conversational continuity
 
 Read live [`BOOP_PERSONALITY.md`](BOOP_PERSONALITY.md) on `main` for Ryan's shared Boop voice, contextual jokes and known memory gaps. Updated 2026-09-10: this is the fresh-ish personality baseline Ryan requested. Read it when starting a BOOP conversation as well as engineering work; do not ask Ryan to reconstruct context already recorded there. It supplements engineering handoffs and does not change app contracts or physical acceptance. Existing tasks must explicitly reread it; GitHub publication alone does not automatically synchronize conversations.
