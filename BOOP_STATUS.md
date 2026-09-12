@@ -1,19 +1,36 @@
-# BOOP current status
+# BOOP v142 lyrics preflight status
 
-Updated 2026-09-12. Owning branch: `boop-v125-animation-integration`.
+Updated 2026-09-12. This status applies only to `boop-v142-lyrics-fastfail`.
+Base: v142 animation experiment, commit `5c383c68452766f9ecda059c2891f89c553e652b`.
 
-## Current delivery
+## Implemented
 
-**Startup Manager only. Lyrics is work in progress and excluded by Ryan's explicit instruction.** Candidate version is `134 / 1.2.134-startup-manager-only`.
+- Select only the exact native Deezer recording ID from the selected MediaSession.
+- Obtain an anonymous guest session; no account token, cookies or login input.
+- Request only timed-line type information, not lyric text or audio.
+- Available: retain the previously established notification/semantic Lyrics path.
+- Unavailable: stay in BOOP and show `No lyrics for this track.`
+- Unknown/offline/malformed/ambiguous: stay in BOOP and explain that checking failed.
+- One in-flight check, 2.5-second UI deadline, cancellation on leaving Home and
+  stale recording/session results discarded before any external launch.
+- Existing v137 shortcut wiring imported narrowly; v142 animation files untouched.
 
-The Startup Manager repair/UI is retained from `42fe4be8ddfb196a34be73c713d434b235663415`. Existing approved music art remains unchanged. The lyrics branch is untouched. v133's proposed combined integration is superseded and must not be installed for this request.
+## Evidence and boundary
 
-## Evidence and pending work
+18 focused JVM tests pass: response parsing, guest-only transport, cancellation,
+recording/session identity, repeated presses, stale responses and deadline handling.
+The real Java client also ran on the Shield through a temporary shell probe:
+positive cold check 357 ms; negative check 48 ms; positive warm check 100 ms.
+The foreground activity was unchanged throughout that API-only probe.
+This is not a full-APK button acceptance test.
 
-- Prior repair checks: 15 focused suites; local Android compilation; 277 Unified unit tests with no failures/errors/skips; synthetic Android 11 dex-harness checks with no installed-package mutations.
-- Current v134: source scope corrected; new signed build and installation not yet verified.
-- Last observed Shield install: v132. Recheck live before installing and preserve its exact rollback APK.
-- Yoga terminal/files are unavailable despite a successful ping. GitHub is accessible. Local checkout synchronization is not claimed.
-- No completion track change has been sent for this corrected candidate.
+The installed Shield remains v143 `1.2.143-boop-shield-defaults`.
+No app installation, signing change, permission grant or playback change was made.
+Full local app compilation and the 18 focused Gradle/JUnit tests passed.
+Signed CI APK build is the remaining publication check. Do not downgrade or overwrite the newer install.
+See `SESSION_HANDOFF.md` before continuing.
 
-Follow [SESSION_HANDOFF.md](SESSION_HANDOFF.md) for the next safe step. The previous detailed status is preserved unchanged at [docs/history/startup-v133/BOOP_STATUS.md](docs/history/startup-v133/BOOP_STATUS.md); its earlier v133 integration plan is historical.
+
+Local full build/test compile receipt: 45 seconds, 79 Gradle tasks, 18 lyrics tests
+with zero failures/errors. Canonical/shared media and listener-seeding checks also
+passed. This does not promote the experiment or authorize installing over v143.

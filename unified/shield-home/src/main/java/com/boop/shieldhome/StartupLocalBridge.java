@@ -35,6 +35,34 @@ public final class StartupLocalBridge {
         });
     }
 
+    public String openDeezerLyrics() throws Exception {
+        cancelled = false;
+        return withAdb(false, null, adb -> {
+            com.boop.shared.DeezerScreen screen = dumpDeezerScreen(adb);
+            if (screen.hasLyricsPanel()) return "Lyrics already open.";
+            com.boop.shared.DeezerScreen.Target target = screen.lyricsTarget();
+            if (target == null) throw new IOException("Deezer Lyrics control is not available.");
+            checked(adb, "input tap " + target.x + " " + target.y);
+            for (int attempt = 0; attempt < 5; attempt++) {
+                Thread.sleep(attempt == 0 ? 220L : 180L);
+                try {
+                    if (dumpDeezerScreen(adb).hasLyricsPanel()) return "Lyrics opened.";
+                } catch (IOException settling) {
+                    if (attempt == 4) throw settling;
+                }
+            }
+            throw new IOException("Deezer did not open lyrics.");
+        });
+    }
+
+    private com.boop.shared.DeezerScreen dumpDeezerScreen(AdbWire adb) throws Exception {
+        String path = "/sdcard/boop_lyrics.xml";
+        String command = "rm -f " + path + "; uiautomator dump " + path
+                + " >/dev/null 2>&1; code=$?; if [ $code -eq 0 ]; then cat " + path
+                + "; fi; rm -f " + path + "; exit $code";
+        return com.boop.shared.DeezerScreen.parse(checked(adb, command));
+    }
+
     public String run(Collection<String> requested, boolean allowApproval, Runnable approvalRequired) throws Exception {
         int stopped=0, skipped=0, failed=0;
         try(PackageSession session=openPackageSession(allowApproval,approvalRequired)) {

@@ -20,3 +20,13 @@ The once-per-boot Shield Home reconnect repair is shared with standalone source
 boop-shield-clean-launcher@ccb10658bded07dbf2a91ee8234509999f960a49. Ryan approved
 installing its signed v23 compatibility update. Artwork and other imported Home
 behavior remain unchanged; see the current handoff for physical limits.
+
+## Isolated lyrics preflight, 2026-09-12
+
+- Owning candidate: `boop-v142-lyrics-fastfail`.
+- Animation base: `5c383c68452766f9ecda059c2891f89c553e652b`.
+- Positive lyrics wiring only: delta `582bd0d4..b3749810` from
+  `boop-v136-startup-lyrics`. No wholesale branch merge or version rollback.
+- New source-owned anonymous preflight uses only exact recording metadata and
+  synchronized-line type counts. No third-party/decompiled source is included.
+- Shield v143 BOOP-defaults install is outside this candidate and preserved.

@@ -190,6 +190,7 @@ jobs:
           unset BOOP_RELAY_URL BOOP_RELAY_TOKEN
           gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:testDebugUnitTest \
             --tests '*BoopNotificationPresentationTest' --tests '*BoopNotificationCoordinatorTest' --tests '*BoopNotificationIntakePolicyTest' --tests '*BoopNotificationPolicyTest' --tests '*BoopNotificationRuntimeModeTest' --tests '*BoopNotificationSettingsCodecTest' --tests '*BoopNotificationStartupGateTest' --tests '*BoopNotificationSurfaceSelectorTest' --tests '*BoopNotificationTapPolicyTest' --tests '*BoopNotificationSwipeGestureTest' --tests '*BoopDevMenuIntentTest' \
+            --tests '*DeezerLyrics*Test' \
             --tests '*BoopWake*' --tests '*BoopSentencePiece*' --tests '*BoopCustomWake*' \
             --tests '*BoopDockPowerTest' --tests '*BoopMirrorIntentTest' \
             --tests '*BoopVoice*' --tests '*BoopNaturalVoice*' --tests '*BoopCommandRouterTest' \

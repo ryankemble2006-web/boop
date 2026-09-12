@@ -33,6 +33,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private final TextView subtitle;
     private final TextView stateLabel;
     private final ProgressBar progress;
+    private final TextView lyricsButton;
     private final TextView sourceButton;
     private final TextView previousButton;
     private final TextView rewindButton;
@@ -124,6 +125,15 @@ public final class ShieldNowPlayingView extends FrameLayout {
         subtitleParams.topMargin = dp(2);
         textStack.addView(subtitle, subtitleParams);
 
+        lyricsButton = actionButton("Lyrics");
+        lyricsButton.setOnClickListener(v -> {
+            if (callbacks != null) callbacks.onOpenNowPlayingLyrics();
+        });
+        LinearLayout.LayoutParams lyricsParams = new LinearLayout.LayoutParams(dp(92), dp(44));
+        lyricsParams.leftMargin = dp(12);
+        lyricsParams.rightMargin = dp(8);
+        titleRow.addView(lyricsButton, lyricsParams);
+
         sourceButton = actionButton("Close player");
         sourceButton.setOnClickListener(v -> {
             if (callbacks != null) callbacks.onCloseNowPlayingSource();
@@ -209,6 +219,12 @@ public final class ShieldNowPlayingView extends FrameLayout {
         subtitle.setText(snapshot.subtitle());
         stateLabel.setText(stateText(snapshot.playbackState()));
         playPauseButton.setText(snapshot.isPlaying() ? "Pause" : "Play");
+        boolean deezerLyrics = DeezerLyricsPolicy.available(snapshot.packageName());
+        lyricsButton.setVisibility(deezerLyrics ? VISIBLE : GONE);
+        setControlEnabled(lyricsButton, deezerLyrics);
+        LinearLayout.LayoutParams sourceLayout = (LinearLayout.LayoutParams) sourceButton.getLayoutParams();
+        sourceLayout.leftMargin = deezerLyrics ? 0 : dp(12);
+        sourceButton.setLayoutParams(sourceLayout);
 
         setControlEnabled(previousButton, snapshot.canPrevious());
         setControlEnabled(rewindButton, snapshot.canRewind());
@@ -262,16 +278,22 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                sourceButton.requestFocus();
+                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : sourceButton).requestFocus();
                 return true;
             }
+            return false;
+        });
+        lyricsButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { nextButton.requestFocus(); return true; }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { sourceButton.requestFocus(); return true; }
             return false;
         });
         sourceButton.setOnKeyListener((v, keyCode, event) -> {
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                nextButton.requestFocus();
+                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : nextButton).requestFocus();
                 return true;
             }
             return false;

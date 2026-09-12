@@ -2,6 +2,7 @@ package com.boop.shieldhome;
 
 import android.app.Activity;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -47,6 +48,7 @@ public final class ShieldNowPlayingManager {
     private final NowPlayingState state = new NowPlayingState();
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
     private final LinkedHashMap<String, Bitmap> notificationArtwork = new LinkedHashMap<>();
+    private final LinkedHashMap<String, PendingIntent> notificationContentIntents = new LinkedHashMap<>();
     private final NowPlayingArtworkResolver artworkResolver;
 
     private final MediaSessionManager.OnActiveSessionsChangedListener activeSessionsChanged =
@@ -306,6 +308,52 @@ public final class ShieldNowPlayingManager {
         } catch (ActivityNotFoundException | SecurityException unavailable) {
             return false;
         }
+    }
+
+    void onNotificationContentIntent(String packageName, PendingIntent contentIntent) {
+        if (packageName == null || packageName.trim().isEmpty()) return;
+        String key = packageName.trim();
+        runOnMain(() -> {
+            if (contentIntent == null) notificationContentIntents.remove(key);
+            else notificationContentIntents.put(key, contentIntent);
+        });
+    }
+
+    /** Reads only Deezer's published recording identity; never searches by song name. */
+    String deezerLyricsTrackId(NowPlayingSnapshot requested) {
+        if (Looper.myLooper() != Looper.getMainLooper() || requested == null) return "";
+        NowPlayingSnapshot current = state.current();
+        MediaController controller = selectedController;
+        if (current == null || controller == null || current.sessionId() != requested.sessionId()
+                || !DeezerLyricsPolicy.available(current.packageName())
+                || !DeezerLyricsPolicy.available(controller.getPackageName())
+                || !current.trackKey().equals(requested.trackKey())
+                || !current.album().equals(requested.album())
+                || current.durationMs() != requested.durationMs()) return "";
+        try {
+            MediaMetadata metadata = controller.getMetadata();
+            if (metadata == null || !"TRACK".equals(metadataText(metadata,
+                    "com.deezer.METADATA_KEY_PLAYABLE_IDENTIFIER_TYPE"))) return "";
+            String title = metadataText(metadata, MediaMetadata.METADATA_KEY_TITLE);
+            if (title.isEmpty()) title = metadataText(metadata, MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
+            String artist = metadataText(metadata, MediaMetadata.METADATA_KEY_ARTIST);
+            if (artist.isEmpty()) artist = metadataText(metadata, MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE);
+            if (artist.isEmpty()) artist = metadataText(metadata, MediaMetadata.METADATA_KEY_ALBUM_ARTIST);
+            if (!requested.title().equals(title) || !requested.subtitle().equals(artist)
+                    || !requested.album().equals(metadataText(metadata, MediaMetadata.METADATA_KEY_ALBUM))
+                    || requested.durationMs() != metadata.getLong(MediaMetadata.METADATA_KEY_DURATION)) return "";
+            String id = metadataText(metadata, "com.deezer.METADATA_KEY_PLAYABLE_IDENTIFIER_ID");
+            return DeezerLyricsClient.validTrackId(id) ? id : "";
+        } catch (RuntimeException unavailable) { return ""; }
+    }
+
+    boolean openNotificationSource() {
+        if (Looper.myLooper() != Looper.getMainLooper()) return false;
+        NowPlayingSnapshot snapshot = state.current();
+        PendingIntent intent = snapshot == null ? null : notificationContentIntents.get(snapshot.packageName());
+        if (intent == null) return false;
+        try { intent.send(); return true; }
+        catch (PendingIntent.CanceledException unavailable) { notificationContentIntents.remove(snapshot.packageName()); return false; }
     }
 
     /** Stores only artwork extracted from a media notification. No text enters this manager. */
