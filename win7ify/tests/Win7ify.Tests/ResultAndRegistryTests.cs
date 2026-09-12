@@ -9,7 +9,7 @@ internal static class ResultAndRegistryTests
 {
     public static void BlockedResultNamesExactSetting()
     {
-        var (store, backup, service, tweaks) = Fixture();
+        var (store, backup, service, tweaks) = PermissionRegressionTests.Fixture();
         store.Values["blocked"] = RegistryStoredValue.DWord(1);
         store.Deny = "blocked";
         var report = service.Apply(new[] { "blocked", "later" });
@@ -19,14 +19,14 @@ internal static class ResultAndRegistryTests
     }
     public static void UnchangedIsNotReportedAsWritten()
     {
-        var (store, backup, service, tweaks) = Fixture();
+        var (store, backup, service, tweaks) = PermissionRegressionTests.Fixture();
         store.Values["later"] = RegistryStoredValue.DWord(9);
         var report = service.Apply(new[] { "later" });
         Check(report.Single().Status == ChangeStatus.AlreadyCorrect && store.Writes == 0, "No-op was reported as a write.");
     }
     public static void IgnoredWriteIsNotSuccess()
     {
-        var (store, backup, service, tweaks) = Fixture();
+        var (store, backup, service, tweaks) = PermissionRegressionTests.Fixture();
         store.IgnoreWrites = true;
         var report = service.Apply(new[] { "later" });
         Check(report.Single().Status == ChangeStatus.Failed, "Write without matching readback claimed success.");
@@ -34,7 +34,7 @@ internal static class ResultAndRegistryTests
     }
     public static void RetryRestoreKeepsFirstBaseline()
     {
-        var (store, backup, service, tweaks) = Fixture();
+        var (store, backup, service, tweaks) = PermissionRegressionTests.Fixture();
         store.Values["blocked"] = RegistryStoredValue.DWord(1);
         store.Values["later"] = RegistryStoredValue.DWord(2);
         service.Apply(new[] { "blocked", "later" });
@@ -50,7 +50,7 @@ internal static class ResultAndRegistryTests
     }
     public static void InvalidBackupPathCannotEscapeAllowlist()
     {
-        var (store, oldBackup, service, tweaks) = Fixture();
+        var (store, oldBackup, service, tweaks) = PermissionRegressionTests.Fixture();
         var backup = new BackupService(store, oldBackup.BackupPath, tweaks);
         Directory.CreateDirectory(Path.GetDirectoryName(backup.BackupPath)!);
         var doc = new BackupService.BackupDocument();
@@ -62,7 +62,7 @@ internal static class ResultAndRegistryTests
     }
     public static void CorruptBackupStopsBeforeWrite()
     {
-        var (store, backup, service, tweaks) = Fixture();
+        var (store, backup, service, tweaks) = PermissionRegressionTests.Fixture();
         Directory.CreateDirectory(Path.GetDirectoryName(backup.BackupPath)!);
         File.WriteAllText(backup.BackupPath, "{incomplete");
         try { service.Apply(new[] { "later" }); }
