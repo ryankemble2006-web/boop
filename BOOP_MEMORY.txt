@@ -590,3 +590,6 @@ v135 Startup Manager-only is installed with its permanent-signed APK bytes verif
 
 STARTUP MANAGER V135 USER ACCEPTANCE (2026-09-12)
 Ryan confirmed Startup Manager works perfectly after using its package controls to remove unwanted apps, disable the stock launcher and prevent its startup. This is scoped physical user acceptance, with accepted source 7408ab85c8c58b4478a3a64f18af834160efb346 and signed run 34673227727 / artifact 10291770657. Preserve his chosen setup and this rollback provenance. Do not invent the exact package inventory or treat broad vendor categories as a safe automatic disable recipe. Restore round-trip, reboot persistence and performance gains were not separately reported. Lyrics remains excluded. Only documentation was updated; no Shield commands were sent.
+
+BOOP DEFAULTS ISOLATION (2026-09-12)
+Product labels are Use BOOP defaults / Undo BOOP defaults, never a personal name. Work is explicitly isolated on boop-shield-defaults, based on the accepted v135 lineage. Branch setup and preset design only at this checkpoint; no app code or device changes. Preserve existing integration/lyrics/animation work. Use exact curated package IDs and the receiving device's own before-state, not vendor-prefix sweeps or copied private Restore files. See docs/superpowers/specs/2026-09-12-boop-shield-defaults.md.

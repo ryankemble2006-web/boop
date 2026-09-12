@@ -1,3 +1,24 @@
+## BOOP defaults: isolated feature preparation, 2026-09-12
+
+Own this work on `boop-shield-defaults`, at `.worktrees/boop-shield-defaults`.
+Base is `582bd0d404a3d4ca61abd718551f7af5ef20aabe`, preserving accepted v135.
+The product labels are **Use BOOP defaults** and **Undo BOOP defaults**; no personal
+name in the feature. The prior read-only inspection is the source for the proposed
+nine confirmed disables and separately recorded startup actions. Three older
+unattributed/pre-existing disables and Kodi's old single restriction are excluded
+from automatic inclusion. Details and exact IDs:
+`docs/superpowers/specs/2026-09-12-boop-shield-defaults.md`.
+
+This checkpoint creates/publishes the requested branch and documentation only.
+Preset UI/controller implementation is not started. Baseline verification passed:
+15 Startup Manager suites and Android 11 linkage. No app code, version, signing,
+permissions, installed packages or Shield settings were changed. ADB was confirmed
+connected. Keep the ongoing integration, lyrics and animation worktrees untouched.
+Do not copy this device's Restore records to another user; preserve per-device and
+pre-preset baselines. Do not install this branch by implication.
+
+The inherited receipts below describe the accepted BASE, not a built preset.
+
 # BOOP current status
 
 ## Ryan accepted Startup Manager v135, 2026-09-12
