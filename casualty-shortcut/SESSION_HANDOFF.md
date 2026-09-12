@@ -1,3 +1,7 @@
+# Casualty shortcut 1.1 - 12 September 2026
+
+Artwork-only update: modern ensemble wide/banner and dedicated square tile treatment installed on Shield. VersionCode 2 / versionName 1.1. APK SHA256 `ea77f6383b8da96ef38ba34701944f87de489c80ada22c3d0941371c65c4c2aa`; signer unchanged. Existing accessibility service remained enabled. Wide SHA256 `760725b9a5e41d2ec0925367af0b422e5da07b624f16de2f054aaebbaaf244f1`; square SHA256 `f4cd4d99df2b5596320358e34f996274c3ddfd31a312a49999151adac181770d`.
+
 # Casualty shortcut 1.0 - 12 September 2026
 
 Standalone Android TV package: `uk.local.casualty`, versionCode 1 / versionName 1.0.

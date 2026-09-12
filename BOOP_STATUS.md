@@ -1,3 +1,11 @@
+## Casualty 1.1 modern artwork installed, 2026-09-12
+
+Ryan approved replacing the standalone `uk.local.casualty` launcher artwork with the newly created modern emergency-department ensemble while retaining the existing bounded iPlayer automation. Version is now code 2 / name 1.1. The wide 640x360 banner uses the full modern cast composition with a large centred Casualty title; the 640x640 button art uses the same cast crop with a dedicated high-contrast centred title treatment so the word remains fully readable on a square TV tile.
+
+Fresh build verification passed RouteTest, ClickGateTest, AutoplayPolicyTest, LaunchPolicyTest and BuildAssetsTest. Signed APK SHA256 `ea77f6383b8da96ef38ba34701944f87de489c80ada22c3d0941371c65c4c2aa`. Signer SHA256 remains `d198e64f5cce0ccc77201bebd41db0283832be7b05476e26c2370b72d018a7ef`. The previous installed 1.0 APK was privately preserved and matches its recorded SHA256 `4b59f2666a7fab0d94a4c70ba14dc528197a1e6903442d5bb85d47818befdaa3`.
+
+`adb install -r` succeeded on the physical Shield. Android reports versionCode 2 / versionName 1.1, and the existing `uk.local.casualty/.WatchNowService` accessibility service remained enabled. No BOOP Unified code, EastEnders package, iPlayer settings or Android permissions were changed. Natural end-of-episode return remains outside this artwork-only update.
+
 ## EastEnders 1.7 Skip trailer verified, 2026-09-12
 
 Ryan approved optional exact `Skip trailer` handling in standalone `uk.local.eastenders`. Version 1.7 / code 8 keeps the 1.6 return-focus repair and adds a bounded 60-second one-shot trailer gate after the helper starts the newest episode. It matches only an exact visible/enabled `Skip trailer` text or accessibility label, uses no coordinates or fixed 18-second delay, and does nothing when absent.

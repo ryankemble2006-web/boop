@@ -571,3 +571,8 @@ BOOP is allowed to evolve. The job of memory is not to freeze the first idea; it
 is to stop good reasons from being lost when the implementation changes bodies.
 Keep the thread connecting the cute plastic smart-speaker robot, the expressive
 Pixel puppet, the Shield eyes, BOOP Home and whatever body comes next.
+
+
+CASUALTY STANDALONE ARTWORK - 2026-09-12
+----------------------------------------
+Standalone `uk.local.casualty` v1.1 keeps the existing iPlayer newest-episode / optional trailer-skip / return-focus behaviour and replaces only launcher artwork with the approved modern emergency-department ensemble. Wide banner is 640x360 with large centred title; square tile is separately composed for full title readability. Physical Shield update succeeded and preserved the existing accessibility service. This does not change BOOP Unified or EastEnders.

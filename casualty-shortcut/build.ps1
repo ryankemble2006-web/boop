@@ -53,11 +53,11 @@ try {
         & keytool -genkeypair -keystore signing/casualty.p12 -storetype PKCS12 -alias casualty -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=Casualty Personal Launcher' -storepass:env CASUALTY_SIGN_PASSWORD -keypass:env CASUALTY_SIGN_PASSWORD
         Check
     }
-    & "$bt/apksigner.bat" sign --ks signing/casualty.p12 --ks-key-alias casualty --ks-pass "file:signing/password.txt" --out build/Casualty-1.0.apk build/aligned.apk
+    & "$bt/apksigner.bat" sign --ks signing/casualty.p12 --ks-key-alias casualty --ks-pass "file:signing/password.txt" --out build/Casualty-1.1.apk build/aligned.apk
     Check
 } finally { Remove-Item Env:CASUALTY_SIGN_PASSWORD -ErrorAction SilentlyContinue }
-& "$bt/apksigner.bat" verify --verbose --print-certs build/Casualty-1.0.apk
+& "$bt/apksigner.bat" verify --verbose --print-certs build/Casualty-1.1.apk
 Check
-& "$bt/aapt2.exe" dump badging build/Casualty-1.0.apk
+& "$bt/aapt2.exe" dump badging build/Casualty-1.1.apk
 Check
-Get-FileHash build/Casualty-1.0.apk -Algorithm SHA256
+Get-FileHash build/Casualty-1.1.apk -Algorithm SHA256
