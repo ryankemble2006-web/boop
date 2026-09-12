@@ -1,3 +1,15 @@
+CURRENT SCOPED LYRICS CONTINUATION - 2026-09-12
+Owner: boop-v142-lyrics-fastfail. Source fc0b552fe058cfaa0d29668cc1400d7fc8675ed5.
+Anonymous exact-track preflight is implemented and signed by run 34681420296.
+295 Unified tests, 18 lyrics tests, 15 Startup suites and real Shield API-only
+positive/negative probes passed. Full button/device acceptance remains pending.
+Unavailable: stay in BOOP, say "No lyrics for this track." Unknown is not no lyrics.
+Do not repeat Deezer archaeology, copy account tokens, or trust old LYRICS_ID flags.
+Current Shield v145 BOOP-defaults-visible belongs to another task and is preserved.
+The signed v142 candidate must NOT replace it without a deliberate forward merge.
+Read SESSION_HANDOFF.md and BOOP_STATUS.md for exact artifact/signing receipts.
+The dated historical memory below is not the current app topology or release.
+
 BOOP DURABLE MEMORY
 ===================
 
