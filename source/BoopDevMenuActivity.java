@@ -18,7 +18,7 @@ import android.widget.TextView;
 
 public final class BoopDevMenuActivity extends Activity {
     private FrameLayout root;
-    private BoopFaceView face;
+    private BoopCanonicalFaceView face;
     private boolean previewShowing;
 
     @Override
@@ -97,7 +97,7 @@ public final class BoopDevMenuActivity extends Activity {
         subtitleParams.setMargins(0, dp(2), 0, dp(14));
         column.addView(subtitle, subtitleParams);
 
-        BoopFaceView menuFace = new BoopFaceView(this);
+        BoopCanonicalFaceView menuFace = new BoopCanonicalFaceView(this);
         face = menuFace;
         LinearLayout.LayoutParams faceParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -109,6 +109,8 @@ public final class BoopDevMenuActivity extends Activity {
             menuFace.showIdleBlackImmediately();
             menuFace.wakeFromIdle();
         });
+
+        addCanonicalAnimationShelf(column);
 
         for (BoopDevMenuModel.Shelf shelf : BoopDevMenuModel.shelves()) {
             addShelf(column, shelf);
@@ -163,39 +165,28 @@ public final class BoopDevMenuActivity extends Activity {
         column.addView(scroller, scrollerParams);
     }
 
+    private void addCanonicalAnimationShelf(LinearLayout column) {
+        TextView title = new TextView(this);
+        title.setText("Canonical animations");
+        title.setTextColor(Color.WHITE); title.setTextSize(20f);
+        column.addView(title);
+        HorizontalScrollView scroller = new HorizontalScrollView(this);
+        scroller.setHorizontalScrollBarEnabled(false);
+        LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
+        for (com.boop.eyes.EyeMotion.Clip clip : com.boop.eyes.EyeCatalogue.ALL) {
+            Button button = new Button(this); styleButton(button, clip.label);
+            button.setContentDescription(clip.label + " canonical animation");
+            button.setOnClickListener(v -> { if (face != null) face.playCanonicalClip(clip.id); });
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(180), dp(66));
+            params.setMargins(0, 0, dp(10), 0); row.addView(button, params);
+        }
+        scroller.addView(row);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(0, dp(6), 0, dp(14)); column.addView(scroller, params);
+    }
+
     private void runAction(BoopDevMenuModel.Action action) {
         switch (action) {
-            case WAKE:
-                cancelActiveAnimation();
-                if (face != null) {
-                    face.showIdleBlackImmediately();
-                    face.wakeFromIdle();
-                }
-                return;
-            case THINK:
-                cancelActiveAnimation();
-                if (face != null) face.startThinking();
-                return;
-            case STOP:
-                cancelActiveAnimation();
-                return;
-            case BERRY_1:
-                playBerry(0);
-                return;
-            case BERRY_2:
-                playBerry(1);
-                return;
-            case BERRY_3:
-                playBerry(2);
-                return;
-            case SHAKE:
-                cancelActiveAnimation();
-                if (face != null) face.playShakeMuppet(0.85f);
-                return;
-            case SLEEP:
-                cancelActiveAnimation();
-                if (face != null) face.goIdleBlack();
-                return;
             case NOTIFICATION_FACEBOOK:
             case NOTIFICATION_WHATSAPP:
             case NOTIFICATION_GMAIL:
@@ -208,16 +199,10 @@ public final class BoopDevMenuActivity extends Activity {
             case NOTIFICATION_REDDIT:
             case NOTIFICATION_LOCKED:
             case NOTIFICATION_BUNDLE:
-                showNotificationPreview(action);
-                return;
+                showNotificationPreview(action); return;
             default:
                 throw new IllegalArgumentException("Unknown dev action: " + action);
         }
-    }
-
-    private void playBerry(int variant) {
-        cancelActiveAnimation();
-        if (face != null) face.playMemberBerry(variant);
     }
 
     private void showNotificationPreview(BoopDevMenuModel.Action action) {
@@ -263,7 +248,7 @@ public final class BoopDevMenuActivity extends Activity {
     }
 
     private void cancelActiveAnimation() {
-        if (face != null) face.stopThinking();
+        if (face != null) face.playCanonicalClip("idle");
     }
 
     private void styleButton(Button button, String label) {

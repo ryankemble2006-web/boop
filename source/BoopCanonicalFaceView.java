@@ -74,6 +74,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
         surface.setPreserveEGLContextOnPause(true);
         renderer = new CanonicalEyeRenderer(
                 context.getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
+        setEyeHueDegrees(BoopEyeHue.loadHue(context));
         surface.setRenderer(renderer);
         surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         surface.setFocusable(false);
@@ -154,7 +155,14 @@ final class BoopCanonicalFaceView extends FrameLayout {
     }
     void setEyeHueDegrees(int hueDegrees) {
         eyeHueDegrees = BoopEyeHueMath.clampHue(hueDegrees);
+        renderer.setHueRotationDegrees(BoopEyeHueMath.rotationDegreesForHue(eyeHueDegrees));
         surface.requestRender();
+    }
+
+    void playCanonicalClip(String id) {
+        EyeMotion.Clip clip = EyeCatalogue.find(id);
+        if (clip.loop) setSteady(clip.id, 120f);
+        else trigger(clip.id, 120f);
     }
 
     void playNotification() {

@@ -21,13 +21,17 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
     private final AssetManager assets;
     private final Failure failure;
     private final FloatBuffer positions=buffer(8), uv=buffer(8);
-    private int program, positionLocation, uvLocation, poseLocation;
+    private int program, positionLocation, uvLocation, poseLocation, hueLocation;
     private int[] textures=new int[2];
     private boolean ready;
     public volatile EyeMotion.Pose pose=EyeMotion.OPEN;
+    private volatile float hueRotationRadians;
     public CanonicalEyeRenderer(AssetManager assets,Failure failure){
         this.assets=assets;this.failure=failure;
         uv.put(new float[]{0,1,1,1,0,0,1,0}).position(0);
+    }
+    public void setHueRotationDegrees(float degrees){
+        hueRotationRadians=(float)Math.toRadians(degrees);
     }
     private static FloatBuffer buffer(int n){return ByteBuffer.allocateDirect(n*4).order(ByteOrder.nativeOrder()).asFloatBuffer();}
     private String read(String name)throws Exception{
@@ -52,7 +56,7 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
             GLES20.glDeleteShader(vertex);GLES20.glDeleteShader(fragment);
             if(result[0]==0)throw new IllegalStateException(GLES20.glGetProgramInfoLog(program));
             GLES20.glUseProgram(program);
-            positionLocation=GLES20.glGetAttribLocation(program,"aPosition");uvLocation=GLES20.glGetAttribLocation(program,"aUv");poseLocation=GLES20.glGetUniformLocation(program,"uPose");
+            positionLocation=GLES20.glGetAttribLocation(program,"aPosition");uvLocation=GLES20.glGetAttribLocation(program,"aUv");poseLocation=GLES20.glGetUniformLocation(program,"uPose");hueLocation=GLES20.glGetUniformLocation(program,"uHueRadians");
             GLES20.glGenTextures(2,textures,0);
             String[] names={"boopApprovedEyes.png","lid-rig.png"};
             for(int i=0;i<2;i++){
@@ -84,7 +88,7 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
         GLES20.glClearColor(0,0,0,0);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         if(!ready)return;
         EyeMotion.Pose current=pose;
-        GLES20.glUseProgram(program);GLES20.glUniform4f(poseLocation,current.left,current.right,current.x,current.y);
+        GLES20.glUseProgram(program);GLES20.glUniform4f(poseLocation,current.left,current.right,current.x,current.y);GLES20.glUniform1f(hueLocation,hueRotationRadians);
         positions.position(0);uv.position(0);
         GLES20.glEnableVertexAttribArray(positionLocation);GLES20.glEnableVertexAttribArray(uvLocation);
         GLES20.glVertexAttribPointer(positionLocation,2,GLES20.GL_FLOAT,false,0,positions);

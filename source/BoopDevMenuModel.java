@@ -53,15 +53,6 @@ final class BoopDevMenuModel {
     }
 
     private static final List<Shelf> SHELVES = List.of(
-            new Shelf("Animations", List.of(
-                    new Item("Wake", Action.WAKE),
-                    new Item("Think", Action.THINK),
-                    new Item("Stop", Action.STOP),
-                    new Item("Berry 1", Action.BERRY_1),
-                    new Item("Berry 2", Action.BERRY_2),
-                    new Item("Berry 3", Action.BERRY_3),
-                    new Item("Shake", Action.SHAKE),
-                    new Item("Sleep", Action.SLEEP))),
             new Shelf("Notification demos", List.of(
                     new Item("Facebook", Action.NOTIFICATION_FACEBOOK),
                     new Item("WhatsApp", Action.NOTIFICATION_WHATSAPP),

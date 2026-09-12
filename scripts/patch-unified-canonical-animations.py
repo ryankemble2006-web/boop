@@ -74,43 +74,19 @@ if ".BoopCanonicalAnimationActivity" not in text:
     text = replace_once(text, anchor, anchor + activity, "canonical activity manifest")
     manifest.write_text(text, encoding="utf-8")
 
-model = MAIN / "BoopDevMenuModel.java"
-text = model.read_text(encoding="utf-8")
-if "CANONICAL_ANIMATIONS" not in text:
-    text = replace_once(text, "        WAKE,\n", "        CANONICAL_ANIMATIONS,\n        WAKE,\n", "dev menu enum")
-    text = replace_once(
-        text,
-        '            new Shelf("Animations", List.of(\n',
-        '            new Shelf("Animations", List.of(\n                    new Item("Canonical set", Action.CANONICAL_ANIMATIONS),\n',
-        "dev menu canonical item")
-    model.write_text(text, encoding="utf-8")
-
 menu = MAIN / "BoopDevMenuActivity.java"
-text = menu.read_text(encoding="utf-8")
-if "case CANONICAL_ANIMATIONS:" not in text:
-    anchor = '''        switch (action) {
-            case WAKE:
-'''
-    block = '''        switch (action) {
-            case CANONICAL_ANIMATIONS:
-                startActivity(new android.content.Intent(
-                        this, BoopCanonicalAnimationActivity.class));
-                return;
-            case WAKE:
-'''
-    text = replace_once(text, anchor, block, "dev menu canonical route")
-    menu.write_text(text, encoding="utf-8")
-
-menu_test = APP / "src/test/java/com/boop/alpha1/BoopNotificationDevMenuModelTest.java"
-if menu_test.is_file():
-    text = menu_test.read_text(encoding="utf-8")
-    if "BoopDevMenuModel.Action.CANONICAL_ANIMATIONS" not in text:
-        text = replace_once(
-            text,
-            "                List.of(\n                        BoopDevMenuModel.Action.WAKE,\n",
-            "                List.of(\n                        BoopDevMenuModel.Action.CANONICAL_ANIMATIONS,\n                        BoopDevMenuModel.Action.WAKE,\n",
-            "dev menu unit-test canonical item")
-        menu_test.write_text(text, encoding="utf-8")
+menu_text = menu.read_text(encoding="utf-8")
+if "EyeCatalogue.ALL" not in menu_text:
+    model = MAIN / "BoopDevMenuModel.java"
+    text = model.read_text(encoding="utf-8")
+    if "CANONICAL_ANIMATIONS" not in text:
+        text = replace_once(text, "        WAKE,\n", "        CANONICAL_ANIMATIONS,\n        WAKE,\n", "dev menu enum")
+        text = replace_once(text, '            new Shelf("Animations", List.of(\n',
+                '            new Shelf("Animations", List.of(\n                    new Item("Canonical set", Action.CANONICAL_ANIMATIONS),\n',
+                "dev menu canonical item")
+        model.write_text(text, encoding="utf-8")
+else:
+    print("Developer menu already uses canonical catalogue directly")
 
 # Final production swap: older materialization patches may consume BoopFaceView,
 # but the built APK uses the canonical Animation Lab-backed face.

@@ -8,24 +8,10 @@ import org.junit.Test;
 
 public class BoopNotificationDevMenuModelTest {
     @Test
-    public void exposesTwoShelvesWithApprovedV70Actions() {
+    public void exposesNotificationShelfWhileAnimationsComeFromCanonicalCatalogue() {
         List<BoopDevMenuModel.Shelf> shelves = BoopDevMenuModel.shelves();
-
-        assertEquals(2, shelves.size());
-        assertEquals("Animations", shelves.get(0).title());
-        assertEquals(
-                List.of(
-                        BoopDevMenuModel.Action.WAKE,
-                        BoopDevMenuModel.Action.THINK,
-                        BoopDevMenuModel.Action.STOP,
-                        BoopDevMenuModel.Action.BERRY_1,
-                        BoopDevMenuModel.Action.BERRY_2,
-                        BoopDevMenuModel.Action.BERRY_3,
-                        BoopDevMenuModel.Action.SHAKE,
-                        BoopDevMenuModel.Action.SLEEP),
-                actions(shelves.get(0)));
-
-        assertEquals("Notification demos", shelves.get(1).title());
+        assertEquals(1, shelves.size());
+        assertEquals("Notification demos", shelves.get(0).title());
         assertEquals(
                 List.of(
                         BoopDevMenuModel.Action.NOTIFICATION_FACEBOOK,
@@ -40,7 +26,7 @@ public class BoopNotificationDevMenuModelTest {
                         BoopDevMenuModel.Action.NOTIFICATION_REDDIT,
                         BoopDevMenuModel.Action.NOTIFICATION_LOCKED,
                         BoopDevMenuModel.Action.NOTIFICATION_BUNDLE),
-                actions(shelves.get(1)));
+                actions(shelves.get(0)));
     }
 
     private static List<BoopDevMenuModel.Action> actions(BoopDevMenuModel.Shelf shelf) {
