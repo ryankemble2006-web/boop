@@ -112,6 +112,43 @@ if menu_test.is_file():
             "dev menu unit-test canonical item")
         menu_test.write_text(text, encoding="utf-8")
 
+# Final production swap: older materialization patches may consume BoopFaceView,
+# but the built APK uses the canonical Animation Lab-backed face.
+wall = MAIN / "MainActivity.java"
+text = wall.read_text(encoding="utf-8")
+text = replace_once(text, "    private BoopFaceView face;",
+                    "    private BoopCanonicalFaceView face;", "canonical Wall face field")
+text = replace_once(text, "        face = new BoopFaceView(this);",
+                    "        face = new BoopCanonicalFaceView(this);", "canonical Wall face constructor")
+wall.write_text(text, encoding="utf-8")
+
+hue = MAIN / "BoopEyeHueOverlay.java"
+text = hue.read_text(encoding="utf-8")
+count = text.count("BoopFaceView")
+if count != 3:
+    raise SystemExit(f"canonical hue overlay face type: expected 3, found {count}")
+text = text.replace("BoopFaceView", "BoopCanonicalFaceView")
+hue.write_text(text, encoding="utf-8")
+
+notice = MAIN / "BoopNotificationPuppetView.java"
+text = notice.read_text(encoding="utf-8")
+text = replace_once(text, "    private final BoopFaceView faceView;",
+                    "    private final BoopCanonicalFaceView faceView;", "canonical notification face field")
+text = replace_once(text, "        faceView = new BoopFaceView(context);",
+                    "        faceView = new BoopCanonicalFaceView(context);", "canonical notification face constructor")
+old_entrance = '''        faceView.post(() -> {
+            faceView.showIdleBlackImmediately();
+            faceView.wakeFromIdle();
+        });
+'''
+new_entrance = '''        faceView.post(() -> {
+            faceView.showIdleBlackImmediately();
+            faceView.playNotification();
+        });
+'''
+text = replace_once(text, old_entrance, new_entrance, "canonical notification clip")
+notice.write_text(text, encoding="utf-8")
+
 required = [
     JAVA / "EyeMotion.java",
     JAVA / "EyeCatalogue.java",

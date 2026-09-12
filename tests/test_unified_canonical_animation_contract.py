@@ -46,3 +46,18 @@ def test_preview_activity_uses_the_same_production_controller():
     source = (ROOT / "source/BoopCanonicalAnimationActivity.java").read_text()
     assert "ProductionAnimationController" in source
     assert "new EyeMotion.Controller" not in source
+
+
+def test_materialized_wall_and_notification_use_canonical_face():
+    main = (BUILD / "app/src/main/java/com/boop/alpha1/MainActivity.java").read_text()
+    notice = (BUILD / "app/src/main/java/com/boop/alpha1/BoopNotificationPuppetView.java").read_text()
+    face = BUILD / "app/src/main/java/com/boop/alpha1/BoopCanonicalFaceView.java"
+    assert face.is_file()
+    assert "BoopCanonicalFaceView face" in main
+    assert "new BoopCanonicalFaceView(this)" in main
+    assert "face.startListeningCue()" in main
+    assert "face.stopListeningCue()" in main
+    hue = (BUILD / "app/src/main/java/com/boop/alpha1/BoopEyeHueOverlay.java").read_text()
+    assert "BoopCanonicalFaceView face" in hue
+    assert "BoopCanonicalFaceView faceView" in notice
+    assert "faceView.playNotification()" in notice
