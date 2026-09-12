@@ -81,7 +81,7 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
         positions.clear();positions.put(new float[]{-x,-y,x,-y,-x,y,x,y}).position(0);
     }
     @Override public void onDrawFrame(GL10 unused){
-        GLES20.glClearColor(0,0,0,1);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+        GLES20.glClearColor(0,0,0,0);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         if(!ready)return;
         EyeMotion.Pose current=pose;
         GLES20.glUseProgram(program);GLES20.glUniform4f(poseLocation,current.left,current.right,current.x,current.y);

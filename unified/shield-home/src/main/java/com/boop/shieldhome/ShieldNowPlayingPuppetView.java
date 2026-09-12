@@ -10,6 +10,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.opengl.GLSurfaceView;
 import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Looper;
@@ -36,14 +38,14 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final LayeredPuppetView puppet;
     private final PowerManager powerManager;
-    private final Random blinkRandom = new Random();
+    private final com.boop.eyes.ProductionAnimationController animation =
+            new com.boop.eyes.ProductionAnimationController("idle", SystemClock.uptimeMillis(), 20260910L);
 
     private NowPlayingSnapshot snapshot;
     private NowPlayingPuppetPolicy.Mode mode = NowPlayingPuppetPolicy.Mode.HIDDEN;
-    private long motionStartedMs;
-    private long acknowledgementStartedMs = -1L;
     private boolean frameScheduled;
     private boolean homeVisible = true;
+    private boolean animationPaused;
     private com.boop.shared.BoopState.Owner presentationOwner = com.boop.shared.BoopState.Owner.HOME_NOW_PLAYING;
     private Runnable unsubscribeShared;
 
@@ -51,48 +53,13 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         presentationOwner = owner;
         applyCurrentState();
     }
-    private ValueAnimator blinkAnimator;
-    private boolean blinkScheduled;
-    private boolean secondBlinkScheduled;
-    private int blinksRemaining;
 
     private final Runnable frame = new Runnable() {
         @Override public void run() {
             frameScheduled = false;
             if (!shouldAnimateFrame()) return;
-            long now = SystemClock.uptimeMillis();
-            NowPlayingPuppetMotion.Pose pose = currentPose(now);
-            if (acknowledgementStartedMs >= 0L) {
-                long ackElapsed = now - acknowledgementStartedMs;
-                pose = NowPlayingPuppetMotion.acknowledge(pose, ackElapsed);
-                if (ackElapsed >= NowPlayingPuppetMotion.ACK_DURATION_MS) {
-                    acknowledgementStartedMs = -1L;
-                }
-            }
-            applyPose(pose);
-            if (isContinuousMotionMode() || acknowledgementStartedMs >= 0L) {
-                scheduleFrame();
-            }
-        }
-    };
-
-    private final Runnable blinkRunnable = new Runnable() {
-        @Override public void run() {
-            blinkScheduled = false;
-            if (!canBlink()) return;
-            blinksRemaining = NowPlayingPuppetBlink.shouldDoubleBlink(blinkRandom) ? 2 : 1;
-            startNextBlink();
-        }
-    };
-
-    private final Runnable secondBlinkRunnable = new Runnable() {
-        @Override public void run() {
-            secondBlinkScheduled = false;
-            if (!canBlink()) {
-                blinksRemaining = 0;
-                return;
-            }
-            startNextBlink();
+            puppet.setCanonicalPose(animation.sample(SystemClock.uptimeMillis()));
+            scheduleFrame();
         }
     };
 
@@ -128,17 +95,18 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
     public void setSnapshot(NowPlayingSnapshot next) {
         NowPlayingSnapshot previous = snapshot;
-        NowPlayingPuppetPolicy.Mode previousMode = mode;
         snapshot = next;
         mode = NowPlayingPuppetPolicy.mode(next);
-        if (mode != previousMode) {
-            motionStartedMs = 0L;
+        long now = SystemClock.uptimeMillis();
+        String steady = CanonicalMediaAnimationPolicy.steadyClip(mode);
+        if (!steady.equals(animation.steadyClipId())) {
+            animation.setState(steady, now, 160f);
         }
         boolean changed = previous != null && next != null
                 && (previous.sessionId() != next.sessionId()
                     || !previous.trackKey().equals(next.trackKey()));
-        if (changed) {
-            acknowledgementStartedMs = SystemClock.uptimeMillis();
+        if (changed && mode != NowPlayingPuppetPolicy.Mode.HIDDEN) {
+            animation.trigger(CanonicalMediaAnimationPolicy.trackChangeClip(), now, 120f);
         }
         applyCurrentState();
     }
@@ -154,56 +122,45 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private void applyCurrentState() {
-        if (!homeVisible || mode == NowPlayingPuppetPolicy.Mode.HIDDEN
-                || com.boop.shared.BoopState.INSTANCE.snapshot().owner != presentationOwner) {
-            if (mode == NowPlayingPuppetPolicy.Mode.HIDDEN) {
-                acknowledgementStartedMs = -1L;
-                motionStartedMs = 0L;
-                applyPose(NowPlayingPuppetMotion.rest());
-            }
-            cancelBlink();
+        boolean visible = homeVisible
+                && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
+                && com.boop.shared.BoopState.INSTANCE.snapshot().owner == presentationOwner;
+        if (!visible) {
+            pauseCanonicalAnimation();
             stopFrames();
             setVisibility(GONE);
             return;
         }
 
         setVisibility(VISIBLE);
+        resumeCanonicalAnimation();
         long now = SystemClock.uptimeMillis();
-        if (isContinuousMotionMode() && motionStartedMs == 0L) {
-            motionStartedMs = com.boop.shared.BoopState.INSTANCE.snapshot().mediaStartedMs;
-            if (motionStartedMs == 0L) motionStartedMs = now;
-        } else if (!isContinuousMotionMode()) {
-            motionStartedMs = 0L;
-        }
-
         if (!animationAllowed()) {
-            acknowledgementStartedMs = -1L;
-            cancelBlink();
             stopFrames();
-            applyPose(NowPlayingPuppetMotion.rest());
+            com.boop.eyes.EyeMotion.Clip steady =
+                    com.boop.eyes.EyeCatalogue.find(animation.steadyClipId());
+            puppet.setCanonicalPose(steady.sample(steady.loop ? 0 : steady.duration));
             return;
         }
+        puppet.setCanonicalPose(animation.sample(now));
+        scheduleFrame();
+    }
 
-        ensureBlinkScheduled();
-        NowPlayingPuppetMotion.Pose pose = currentPose(now);
-        if (acknowledgementStartedMs >= 0L) {
-            long ackElapsed = now - acknowledgementStartedMs;
-            pose = NowPlayingPuppetMotion.acknowledge(pose, ackElapsed);
-            if (ackElapsed >= NowPlayingPuppetMotion.ACK_DURATION_MS) {
-                acknowledgementStartedMs = -1L;
-            }
-        }
-        applyPose(pose);
-        if (isContinuousMotionMode() || acknowledgementStartedMs >= 0L) {
-            scheduleFrame();
-        } else {
-            stopFrames();
-        }
+    private void pauseCanonicalAnimation() {
+        if (animationPaused) return;
+        animation.pause(SystemClock.uptimeMillis());
+        animationPaused = true;
+    }
+
+    private void resumeCanonicalAnimation() {
+        if (!animationPaused) return;
+        animation.resume(SystemClock.uptimeMillis());
+        animationPaused = false;
     }
 
     @Override protected void onDetachedFromWindow() {
         if(unsubscribeShared != null) { unsubscribeShared.run(); unsubscribeShared=null; }
-        cancelBlink();
+        pauseCanonicalAnimation();
         stopFrames();
         super.onDetachedFromWindow();
     }
@@ -246,101 +203,16 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER);
     }
 
-    private NowPlayingPuppetMotion.Pose currentPose(long now) {
-        long elapsed = motionStartedMs == 0L ? 0L : Math.max(0L, now - motionStartedMs);
-        if (mode == NowPlayingPuppetPolicy.Mode.GROOVE) {
-            return NowPlayingPuppetMotion.groove(elapsed);
-        }
-        if (mode == NowPlayingPuppetPolicy.Mode.UPSET) {
-            return NowPlayingPuppetMotion.upset(elapsed);
-        }
-        return NowPlayingPuppetMotion.rest();
-    }
-
-    private boolean isContinuousMotionMode() {
-        return mode == NowPlayingPuppetPolicy.Mode.GROOVE
-                || mode == NowPlayingPuppetPolicy.Mode.UPSET;
-    }
-
     private boolean shouldAnimateFrame() {
-        return homeVisible
-                && getVisibility() == VISIBLE
-                && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
-                && animationAllowed()
-                && (isContinuousMotionMode() || acknowledgementStartedMs >= 0L);
-    }
-
-    private boolean animationAllowed() {
-        return ValueAnimator.areAnimatorsEnabled()
-                && (powerManager == null || !powerManager.isPowerSaveMode());
-    }
-
-    private boolean canBlink() {
         return homeVisible
                 && getVisibility() == VISIBLE
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
                 && animationAllowed();
     }
 
-    private void ensureBlinkScheduled() {
-        if (!canBlink()
-                || blinkAnimator != null
-                || blinkScheduled
-                || secondBlinkScheduled
-                || blinksRemaining > 0) {
-            return;
-        }
-        blinkScheduled = true;
-        handler.postDelayed(blinkRunnable, NowPlayingPuppetBlink.nextDelayMillis(blinkRandom));
-    }
-
-    private void startNextBlink() {
-        if (!canBlink()) {
-            cancelBlink();
-            return;
-        }
-        if (blinksRemaining <= 0) {
-            ensureBlinkScheduled();
-            return;
-        }
-        blinksRemaining--;
-        ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
-        blinkAnimator = animator;
-        animator.setDuration(NowPlayingPuppetBlink.DURATION_MS);
-        animator.addUpdateListener(valueAnimator -> {
-            float progress = (Float) valueAnimator.getAnimatedValue();
-            puppet.setBlinkOpenness(NowPlayingPuppetBlink.openness(progress));
-        });
-        animator.addListener(new AnimatorListenerAdapter() {
-            @Override public void onAnimationEnd(Animator animation) {
-                if (blinkAnimator != animation) return;
-                blinkAnimator = null;
-                puppet.setBlinkOpenness(1f);
-                if (!canBlink()) {
-                    blinksRemaining = 0;
-                    return;
-                }
-                if (blinksRemaining > 0) {
-                    secondBlinkScheduled = true;
-                    handler.postDelayed(secondBlinkRunnable, NowPlayingPuppetBlink.DOUBLE_GAP_MS);
-                } else {
-                    ensureBlinkScheduled();
-                }
-            }
-        });
-        animator.start();
-    }
-
-    private void cancelBlink() {
-        handler.removeCallbacks(blinkRunnable);
-        handler.removeCallbacks(secondBlinkRunnable);
-        blinkScheduled = false;
-        secondBlinkScheduled = false;
-        blinksRemaining = 0;
-        ValueAnimator animator = blinkAnimator;
-        blinkAnimator = null;
-        if (animator != null) animator.cancel();
-        puppet.setBlinkOpenness(1f);
+    private boolean animationAllowed() {
+        return ValueAnimator.areAnimatorsEnabled()
+                && (powerManager == null || !powerManager.isPowerSaveMode());
     }
 
     private void scheduleFrame() {
@@ -354,21 +226,14 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         frameScheduled = false;
     }
 
-    private void applyPose(NowPlayingPuppetMotion.Pose pose) {
-        puppet.setTranslationX(pose.x);
-        puppet.setTranslationY(pose.y);
-        puppet.setRotation(pose.rotationDegrees);
-        puppet.setScaleX(pose.scale);
-        puppet.setScaleY(pose.scale);
-    }
-
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
-    /** One poseable puppet: headphones, immutable approved eyes, then a moving top eyelid. */
+    /** Headphones remain approved artwork; the eye surface is the Animation Lab renderer. */
     private static final class LayeredPuppetView extends FrameLayout {
-        private final TopEyelidLayer eyelidLayer;
+        private final GLSurfaceView eyeSurface;
+        private final com.boop.eyes.CanonicalEyeRenderer eyeRenderer;
 
         LayeredPuppetView(Context context) {
             super(context);
@@ -387,21 +252,47 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             headphonesLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             addView(headphonesLayer, fillLayout());
 
-            ApprovedEyesLayer eyesLayer = new ApprovedEyesLayer(context);
-            eyesLayer.setFocusable(false);
-            eyesLayer.setClickable(false);
-            eyesLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            addView(eyesLayer, fillLayout());
-
-            eyelidLayer = new TopEyelidLayer(context);
-            eyelidLayer.setFocusable(false);
-            eyelidLayer.setClickable(false);
-            eyelidLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            addView(eyelidLayer, fillLayout());
+            eyeSurface = new GLSurfaceView(context);
+            eyeSurface.setEGLContextClientVersion(2);
+            eyeSurface.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+            eyeSurface.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+            eyeSurface.setZOrderOnTop(true);
+            eyeSurface.setPreserveEGLContextOnPause(true);
+            eyeRenderer = new com.boop.eyes.CanonicalEyeRenderer(
+                    context.getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
+            eyeSurface.setRenderer(eyeRenderer);
+            eyeSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+            eyeSurface.setFocusable(false);
+            eyeSurface.setClickable(false);
+            addView(eyeSurface, new FrameLayout.LayoutParams(1, 1));
         }
 
-        void setBlinkOpenness(float openness) {
-            eyelidLayer.setBlinkOpenness(openness);
+        void setCanonicalPose(com.boop.eyes.EyeMotion.Pose pose) {
+            eyeRenderer.pose = pose;
+            eyeSurface.requestRender();
+        }
+
+        @Override protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            eyeSurface.onResume();
+        }
+
+        @Override protected void onDetachedFromWindow() {
+            eyeSurface.onPause();
+            super.onDetachedFromWindow();
+        }
+
+        @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+            super.onSizeChanged(w, h, oldw, oldh);
+            if (w <= 0 || h <= 0) return;
+            RectF pair = PuppetArtGeometry.mapBox(
+                    NowPlayingPuppetEyePlacement.pairInHeadphoneSource(), w, h);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    Math.max(1, Math.round(pair.width())),
+                    Math.max(1, Math.round(pair.height())));
+            params.leftMargin = Math.round(pair.left);
+            params.topMargin = Math.round(pair.top);
+            eyeSurface.setLayoutParams(params);
         }
 
         private FrameLayout.LayoutParams fillLayout() {
@@ -458,95 +349,4 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         }
     }
 
-    /** Draws the exact approved pair as one undistorted layer over the legacy raster eyes. */
-    private static final class ApprovedEyesLayer extends View {
-        private final Bitmap approvedEyes;
-        private final Paint bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        private final Paint oldEyeOcclusion = new Paint(Paint.ANTI_ALIAS_FLAG);
-
-        ApprovedEyesLayer(Context context) {
-            super(context);
-            approvedEyes = BitmapFactory.decodeResource(
-                    getResources(), com.boop.shieldhome.R.drawable.boop_approved_eyes);
-            oldEyeOcclusion.setColor(Color.BLACK);
-        }
-
-        @Override protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            if (approvedEyes == null || getWidth() <= 0 || getHeight() <= 0) return;
-
-            // The headphones raster predates the permanent eye master and still contains old eyes.
-            // Hide only those legacy eye ovals. The approved pair is then drawn once, as one unit.
-            canvas.drawOval(
-                    PuppetArtGeometry.mapRect(PuppetArtGeometry.LEFT_OLD_EYE_SLOT, getWidth(), getHeight()),
-                    oldEyeOcclusion);
-            canvas.drawOval(
-                    PuppetArtGeometry.mapRect(PuppetArtGeometry.RIGHT_OLD_EYE_SLOT, getWidth(), getHeight()),
-                    oldEyeOcclusion);
-
-            RectF pair = PuppetArtGeometry.mapBox(
-                    NowPlayingPuppetEyePlacement.pairInHeadphoneSource(), getWidth(), getHeight());
-            canvas.drawBitmap(approvedEyes, null, pair, bitmapPaint);
-        }
-    }
-
-    /** Top black round eyelid only. It is clipped to each eye, so no slab can appear above it. */
-    private static final class TopEyelidLayer extends View {
-        private final Paint eyelidPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        private final Path eyeClip = new Path();
-        private final Path lidPath = new Path();
-        private float blinkOpenness = 1f;
-
-        TopEyelidLayer(Context context) {
-            super(context);
-            eyelidPaint.setColor(Color.BLACK);
-        }
-
-        void setBlinkOpenness(float openness) {
-            float next = Float.isFinite(openness)
-                    ? Math.max(0f, Math.min(1f, openness))
-                    : 1f;
-            if (Math.abs(blinkOpenness - next) < 0.001f) return;
-            blinkOpenness = next;
-            invalidate();
-        }
-
-        @Override protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-            if (blinkOpenness >= 0.999f || getWidth() <= 0 || getHeight() <= 0) return;
-            drawTopLid(canvas, NowPlayingPuppetEyePlacement.leftEyeInHeadphoneSource());
-            drawTopLid(canvas, NowPlayingPuppetEyePlacement.rightEyeInHeadphoneSource());
-        }
-
-        private void drawTopLid(Canvas canvas, NowPlayingPuppetEyePlacement.Box approvedEye) {
-            RectF eye = PuppetArtGeometry.mapBox(approvedEye, getWidth(), getHeight());
-            float sideY = eye.top + eye.height() * NowPlayingPuppetLidTravel.sideEdge(blinkOpenness);
-            float centreY = eye.top + eye.height() * NowPlayingPuppetLidTravel.centreEdge(blinkOpenness);
-            float overhang = eye.width() * 0.12f;
-            float left = eye.left - overhang;
-            float right = eye.right + overhang;
-            float centre = eye.centerX();
-
-            eyeClip.reset();
-            eyeClip.addOval(eye, Path.Direction.CW);
-            int save = canvas.save();
-            canvas.clipPath(eyeClip);
-
-            lidPath.reset();
-            lidPath.moveTo(left, eye.top - eye.height());
-            lidPath.lineTo(right, eye.top - eye.height());
-            lidPath.lineTo(right, sideY);
-            lidPath.cubicTo(
-                    right - eye.width() * 0.18f, sideY,
-                    centre + eye.width() * 0.18f, centreY,
-                    centre, centreY);
-            lidPath.cubicTo(
-                    centre - eye.width() * 0.18f, centreY,
-                    left + eye.width() * 0.18f, sideY,
-                    left, sideY);
-            lidPath.close();
-            canvas.drawPath(lidPath, eyelidPaint);
-            canvas.restoreToCount(save);
-        }
-    }
 }
