@@ -1,3 +1,14 @@
+# Phone animation branch context, 2026-09-12
+
+This worktree owns `boop-v144-devmenu-hue-experimental`. Signed candidate v145
+fixes eye-entry startup and the in-place canonical developer-menu route.
+Pixel remains on crashing v144 because the installation tool blocked deployment.
+Read SESSION_HANDOFF.md and docs/verification/v145-phone-crashfix.md for exact
+current receipts. The lower inherited app-routing/progress text is historical.
+No main/Shield merge or permission/signing changes are authorized by this work.
+
+---
+
 # BOOP context
 
 Updated 2026-09-08. Fresh main owns shared product/ownership contracts. `SESSION_HANDOFF.md` owns implementation/evidence. Normal app work uses `boop-unified`, package `com.boop.alpha1` and the permanent signer. Protect historical/physically accepted checkpoints.

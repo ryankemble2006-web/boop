@@ -1,26 +1,23 @@
-# Current phone animation crash repair: v145
+# Current phone animation experiment: signed v145, installation blocked
 
 Updated 2026-09-12. Owner: `boop-v144-devmenu-hue-experimental`,
 worktree `.worktrees/boop-v144-devmenu-hue-experimental`.
-This is the isolated phone animation experiment, not the active Shield branch.
-The inherited Startup Manager notes below are history, not this task's scope.
+This is phone-animation work, NOT the active Shield/Startup Manager task.
 
-## Current evidence
+Source `055275a17ad0a0f485cc11f500edc0c258e63656` fixes the reproduced
+pre-renderer hue initialization crash and the still-legacy IN-PLACE phone
+developer-menu path. All 26 canonical clips are exposed by that actual menu.
+277 local unit tests + 10 focused contracts pass; signed run `34681294081` passes.
+See [exact verification/deployment receipt](docs/verification/v145-phone-crashfix.md).
 
-v143 phone animation delivery was received positively by the user. v144
-(`97982839738141b4ea3e557754fd9f6f25c31bc5`) installed, but entering the eyes
-crashed: saved-hue initialization requested a frame before `setRenderer` created
-GLThread. The v145 constructor initializes renderer state without requesting a frame.
-A second audit found spoken/settings developer entry owns an in-place menu in
-MainActivity. It now uses the canonical face and all 26 catalogue clips, rather
-than updating only the separate BoopDevMenuActivity.
+**Pixel still runs v144. v145 was NOT installed: the installation tool blocked
+the request.** No phone runtime/visual success is claimed for v145.
+The verified signed APK is on the laptop Desktop. The next action is explicit
+user confirmation before retrying the phone-only install, followed by the real
+Launcher-to-eyes crash-path and in-place menu check. Keep the Shield untouched.
+Do not bypass tool/Android permission gates or change the permanent signer.
 
-Local materialization, 10 focused contracts, and full Unified compilation/unit
-checks pass. Locked eye and hand hashes remain exact. Version is
-`145 / 1.2.145-devmenu-hue-crashfix`. Signed build and phone verification pending.
-Keep permissions, signing, animation timelines/assets and Shield installation unchanged.
-Next: signed workflow, exact artifact verification, phone-only update, then
-repeat the former Launcher-to-eyes crash path and inspect crash/renderer logs.
+The inherited notes below are historical context, not this task's current scope.
 
 ---
 ## Inherited historical notes
