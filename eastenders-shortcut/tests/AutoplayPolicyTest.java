@@ -10,6 +10,10 @@ public final class AutoplayPolicyTest {
         check(!UiPolicy.isEpisodeRow("programme-grid:row_1"), "Ignore older episode rows");
         check(UiPolicy.isEpisodeCard("m0031blw", "29 mins 10/09/2026 Alfie encourages Kat to make amends with Zoe."), "Accept first real episode card");
         check(!UiPolicy.isEpisodeCard("programme-grid:row_0", ""), "Do not click row container");
+        check(UiPolicy.isSkipTrailer("Skip trailer", null), "Recognise exact Skip trailer button text");
+        check(UiPolicy.isSkipTrailer(null, "Skip trailer"), "Recognise exact Skip trailer accessibility label");
+        check(!UiPolicy.isSkipTrailer("Skip", null), "Do not match vague skip controls");
+        check(!UiPolicy.isSkipTrailer("Skip trailer now", null), "Do not match expanded labels");
         System.out.println("PASS: profile chooser and newest-episode UI policy");
     }
 }

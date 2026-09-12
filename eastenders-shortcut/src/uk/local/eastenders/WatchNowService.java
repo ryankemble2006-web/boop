@@ -27,6 +27,7 @@ public final class WatchNowService extends AccessibilityService {
         boolean title;
         AccessibilityNodeInfo profile;
         AccessibilityNodeInfo episode;
+        AccessibilityNodeInfo trailer;
         int visited;
     }
 
@@ -48,6 +49,9 @@ public final class WatchNowService extends AccessibilityService {
             if (insideNewestRow && page.episode == null && node.isEnabled() && node.isClickable()
                     && UiPolicy.isEpisodeCard(viewId, description)) {
                 page.episode = AccessibilityNodeInfo.obtain(node);
+            }            if (page.trailer == null && node.isEnabled() && node.isClickable()
+                    && UiPolicy.isSkipTrailer(text, description)) {
+                page.trailer = AccessibilityNodeInfo.obtain(node);
             }
         }
 
@@ -63,7 +67,8 @@ public final class WatchNowService extends AccessibilityService {
     private final Runnable check = new Runnable() {
         @Override public void run() {
             inspect();
-            if (gate.launchActive(SystemClock.elapsedRealtime())) handler.postDelayed(this, 500);
+            long now = SystemClock.elapsedRealtime();
+            if (gate.launchActive(now) || gate.trailerWatchActive(now)) handler.postDelayed(this, 500);
         }
     };
 
@@ -128,6 +133,12 @@ public final class WatchNowService extends AccessibilityService {
                 scan(root, page, 0, false);
                 long now = SystemClock.elapsedRealtime();
                 if (gate.recoveryActive(now)) {
+                    if (gate.claimTrailer(now, page.trailer != null)) {
+                        boolean skipped = page.trailer.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        Log.i("EastEnders", "Skip trailer click accepted: " + skipped);
+                        report(skipped ? "Trailer skipped" : "Skip trailer control rejected click");
+                        return;
+                    }
                     if (!gate.returnPageReady(now, page.title)) {
                         report(page.title ? "Playback starting; return focus guard waiting" : "Playback active; return focus guard armed");
                         return;
@@ -155,11 +166,11 @@ public final class WatchNowService extends AccessibilityService {
                 if (gate.claimEpisode(SystemClock.elapsedRealtime(), true, page.episode != null)) {
                     boolean clicked = page.episode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                     Log.i("EastEnders", "Newest episode click accepted: " + clicked);
-                    handler.removeCallbacks(check);
                 }
             } finally {
                 if (page.profile != null) page.profile.recycle();
                 if (page.episode != null) page.episode.recycle();
+                if (page.trailer != null) page.trailer.recycle();
             }
         } finally {
             root.recycle();

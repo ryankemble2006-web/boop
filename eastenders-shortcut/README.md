@@ -1,11 +1,11 @@
-# EastEnders 1.6 — personal Android TV shortcut
+# EastEnders 1.7 â€” personal Android TV shortcut
 
 Opens official BBC iPlayer directly to EastEnders. With its optional accessibility helper enabled, presses the programme page's focused **Watch now** button once. It follows the selected iPlayer profile's choice rather than forcing the latest episode.
 
 ## Install and use
 
-1. Sideload `EastEnders-1.6.apk` onto the Shield and open the EastEnders tile.
-2. To automate Watch now, enable **EastEnders auto-play** in Shield **Settings â†’ Device Preferences â†’ Accessibility** (the exact Settings nesting can vary). The shortcut's **Enable auto-play** button also opens Accessibility settings. Press Back from iPlayer to reach the shortcut's recovery screen if needed.
+1. Sideload `EastEnders-1.7.apk` onto the Shield and open the EastEnders tile.
+2. To automate Watch now, enable **EastEnders auto-play** in Shield **Settings Ã¢â€ â€™ Device Preferences Ã¢â€ â€™ Accessibility** (the exact Settings nesting can vary). The shortcut's **Enable auto-play** button also opens Accessibility settings. Press Back from iPlayer to reach the shortcut's recovery screen if needed.
 3. Open the EastEnders tile. If iPlayer asks who's watching, select your profile. Once the EastEnders page appears with Watch now focused, the helper clicks it once.
 
 The launch helper expires after two minutes. After it starts an EastEnders episode, a bounded return-focus guard remains armed for up to two hours. If iPlayer returns to the EastEnders programme page with no useful focus after playback, the helper requests focus on the first episode card once and then disarms. It does not intercept remote keys. It cancels if another app takes the foreground or when you return to the shortcut. It never chooses a profile or confirms playback warnings.
@@ -14,13 +14,13 @@ Without the helper, the tile still opens the programme page automatically. It ca
 
 If no installed iPlayer accepts the link, the shortcut opens the EastEnders website in an installed browser. If iPlayer accepts but silently ignores the link, press Back to the shortcut and choose **Open in browser**. Android does not report such a silent rejection to the launching application. The Shield inspected for this build had Android's browser placeholder, but no usable browser; the app reports this rather than sending you into that placeholder. Website playback depends on the browser's capabilities and BBC availability.
 
-## Version 1.6 return-focus repair — 12 September 2026
+## Version 1.6 return-focus repair â€” 12 September 2026
 
 - Fixes the Shield case where iPlayer can return from EastEnders playback with Android reporting no focused application/window, leaving the physical remote apparently dead.
 - The helper keeps a bounded one-shot recovery guard only after its own auto-play episode click. It must observe playback leave the EastEnders programme page before it will act on a later return.
 - On return, it requests accessibility focus on the first real EastEnders episode card and then disarms. It does not intercept D-pad or Back keys and does not alter ordinary iPlayer browsing.
 - Physical proxy verification on the Shield: launch -> auto-play -> playback page -> Back to programme page logged `Return episode focus accepted: true`; a fresh UI hierarchy then showed the episode card focused.
-## Version 1.5 artwork update — 11 September 2026
+## Version 1.5 artwork update â€” 11 September 2026
 
 - Launcher behaviour is unchanged from 1.4; this release changes the Android TV banner and square app icon only.
 - The 16:9 banner uses the user-supplied EastEnders map artwork with its existing title centred for Shield Home.
@@ -68,3 +68,7 @@ The source archive excludes generated build files and signing secrets. The origi
 - BBC TV route definitions used for verification: https://interactive-tv.files.bbci.co.uk/telly/42.7.0.0/assets/Main-legacy2.js
 
 Installed package inspection, programme landing screen, and accessibility controls were checked directly on the connected Shield; generic online package examples were not assumed to apply to it.
+
+## Version 1.7 trailer skip - 12 September 2026
+
+- Optionally clicks one exact Skip trailer control during early playback, then leaves playback alone.

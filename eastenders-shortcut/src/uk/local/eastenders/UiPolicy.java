@@ -21,5 +21,11 @@ final class UiPolicy {
         return description != null && !description.toString().trim().isEmpty();
     }
 
+    static boolean isSkipTrailer(CharSequence text, CharSequence description) {
+        String label = text != null ? text.toString().trim() : null;
+        String spoken = description != null ? description.toString().trim() : null;
+        return "Skip trailer".equals(label) || "Skip trailer".equals(spoken);
+    }
+
     private UiPolicy() {}
 }

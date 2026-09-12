@@ -1,3 +1,8 @@
+## EastEnders 1.7 Skip trailer verified, 2026-09-12
+
+Ryan approved optional exact `Skip trailer` handling in standalone `uk.local.eastenders`. Version 1.7 / code 8 keeps the 1.6 return-focus repair and adds a bounded 60-second one-shot trailer gate after the helper starts the newest episode. It matches only an exact visible/enabled `Skip trailer` text or accessibility label, uses no coordinates or fixed 18-second delay, and does nothing when absent.
+
+Fresh focused tests passed after an observed RED for the missing policy/gate. Signed APK SHA256 `a311d6cce19413a3a9531ec6bef28d20e1fcfcc93a9d324bf79f44e0a3d715ca`; signer SHA256 remains `6f85ae49982e0b38b9f134b6882fdbe4da6091051f828fb980c5a03fff439535`. Physical Shield install succeeded. With Deezer fully stopped, a real EastEnders launch logged `Skip trailer click accepted: true` and `Trailer skipped` about two seconds after episode launch. Back from playback then logged `Return episode focus accepted: true`, and the actual first episode node was `focused=true`. Natural episode-end return remains a separate final user acceptance case.
 ## EastEnders 1.6 return-focus repair installed, 2026-09-12
 
 Published source commit: e067bbdbb64f93740eb74dde758a72641147bf19 on oop-v125-animation-integration.
@@ -106,7 +111,7 @@ large-text readability and hands-free microphone/acoustic behavior remain unveri
 Existing loaded-step navigation is local; generation uses selected OpenCode or Native Chat.
 External Free Chat cannot return structured recipes into the app, so recipe generation
 explains that the existing BOOP conversation service must be selected. No new subscription.
-Ingredient lists wait for “that's everything” / “find a recipe”; each addition uses normal
+Ingredient lists wait for â€œthat's everythingâ€ / â€œfind a recipeâ€; each addition uses normal
 intentional BOOP listening. Ingredients detours preserve the cooking cursor. Existing
 sleep/dismissal commands close cooking. No separate continuously running microphone.
 The app's existing Wall awake policy is restored on exit; this feature does not change it.
@@ -1428,7 +1433,7 @@ https://www.home-assistant.io/integrations/androidtv/ .
 Ryan explicitly approved installing signed v125 for visual review. Exact GitHub artifact APK SHA256 `03f731aa7ff85a745a55c98284db400ccdd92c6927501fe4f1c9902fbc62e323` was reverified locally before deployment. Shield was on version121 / `1.2.121-audio-home-reclaim`; its installed APK was privately preserved locally first (SHA256 `f3f43b372f3a7966d6bcb9a6999fa81418bb40e9a4edaa4c66055aaec690757f`). `adb install -r` succeeded without permission or settings changes. Android now reports version125 / `1.2.125-canonical-animation-integration`. `UnifiedEntryActivity` was launched and resolved to `com.boop.shieldhome.ShieldLauncherActivity` in the foreground. Physical/visual acceptance is now with Ryan and is not yet claimed.
 ## v126 Shield launcher UI cleanup candidate, 2026-09-11
 
-Ryan requested direct fixes on the centralised v125 line. v126 moves Close player slightly inward, adds breathing room before Prev and equalises transport gaps, wires Next → Close player and Close player → Next remote focus, clips favourite banners and Now Playing artwork to rounded outlines so artwork cannot bleed through focus corners, stops Right at the final favourite, and gives the BOOP Back-hold Shield-settings gesture an explicit 650 ms threshold. No YouTube-specific code and no GitHub visual tests. Full local Unified Android unit gate passed after materialisation. Visual/remote acceptance remains Ryan-owned on the physical Shield.
+Ryan requested direct fixes on the centralised v125 line. v126 moves Close player slightly inward, adds breathing room before Prev and equalises transport gaps, wires Next â†’ Close player and Close player â†’ Next remote focus, clips favourite banners and Now Playing artwork to rounded outlines so artwork cannot bleed through focus corners, stops Right at the final favourite, and gives the BOOP Back-hold Shield-settings gesture an explicit 650 ms threshold. No YouTube-specific code and no GitHub visual tests. Full local Unified Android unit gate passed after materialisation. Visual/remote acceptance remains Ryan-owned on the physical Shield.
 
 ## v126 signed GitHub receipt, 2026-09-11
 

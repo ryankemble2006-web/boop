@@ -1,3 +1,8 @@
+## EastEnders 1.7 Skip trailer verified, 2026-09-12
+
+Ryan approved optional exact `Skip trailer` handling in standalone `uk.local.eastenders`. Version 1.7 / code 8 keeps the 1.6 return-focus repair and adds a bounded 60-second one-shot trailer gate after the helper starts the newest episode. It matches only an exact visible/enabled `Skip trailer` text or accessibility label, uses no coordinates or fixed 18-second delay, and does nothing when absent.
+
+Fresh focused tests passed after an observed RED for the missing policy/gate. Signed APK SHA256 `a311d6cce19413a3a9531ec6bef28d20e1fcfcc93a9d324bf79f44e0a3d715ca`; signer SHA256 remains `6f85ae49982e0b38b9f134b6882fdbe4da6091051f828fb980c5a03fff439535`. Physical Shield install succeeded. With Deezer fully stopped, a real EastEnders launch logged `Skip trailer click accepted: true` and `Trailer skipped` about two seconds after episode launch. Back from playback then logged `Return episode focus accepted: true`, and the actual first episode node was `focused=true`. Natural episode-end return remains a separate final user acceptance case.
 ## EastEnders 1.6 return-focus repair installed, 2026-09-12
 
 Published source commit: e067bbdbb64f93740eb74dde758a72641147bf19 on oop-v125-animation-integration.

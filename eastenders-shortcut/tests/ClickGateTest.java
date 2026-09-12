@@ -17,6 +17,11 @@ public final class ClickGateTest {
         check(!gate.returnPageReady(4004, true), "Do not repair while launch page is still fading into playback");
         check(!gate.returnPageReady(4005, false), "Seeing playback leave the programme page only arms return detection");
         check(gate.returnPageReady(4006, true), "Repair only after EastEnders page genuinely returns from playback");
+        check(gate.claimTrailer(4010, true), "Click exact trailer control once during early playback");
+        check(!gate.claimTrailer(4011, true), "Never click trailer twice");
+        gate.arm(200000);
+        check(gate.claimEpisode(200001, true, true), "Arm a fresh playback window");
+        check(!gate.claimTrailer(260002, true), "Ignore trailer controls after bounded startup window");
         check(gate.recoveryActive(4003), "Return-focus guard is active after episode launch");
         check(!gate.claimProfile(4004, true, true), "Never revisit profile selection during playback recovery");
         gate.arm(5000);

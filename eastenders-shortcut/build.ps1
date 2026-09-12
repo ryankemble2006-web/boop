@@ -52,11 +52,11 @@ try {
         & keytool -genkeypair -keystore signing/eastenders.p12 -storetype PKCS12 -alias eastenders -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=EastEnders Personal Launcher' -storepass:env EASTENDERS_SIGN_PASSWORD -keypass:env EASTENDERS_SIGN_PASSWORD
         Check
     }
-    & "$bt/apksigner.bat" sign --ks signing/eastenders.p12 --ks-key-alias eastenders --ks-pass "file:signing/password.txt" --out build/EastEnders-1.6.apk build/aligned.apk
+    & "$bt/apksigner.bat" sign --ks signing/eastenders.p12 --ks-key-alias eastenders --ks-pass "file:signing/password.txt" --out build/EastEnders-1.7.apk build/aligned.apk
     Check
 } finally { Remove-Item Env:EASTENDERS_SIGN_PASSWORD -ErrorAction SilentlyContinue }
-& "$bt/apksigner.bat" verify --verbose --print-certs build/EastEnders-1.6.apk
+& "$bt/apksigner.bat" verify --verbose --print-certs build/EastEnders-1.7.apk
 Check
-& "$bt/aapt2.exe" dump badging build/EastEnders-1.6.apk
+& "$bt/aapt2.exe" dump badging build/EastEnders-1.7.apk
 Check
-Get-FileHash build/EastEnders-1.6.apk -Algorithm SHA256
+Get-FileHash build/EastEnders-1.7.apk -Algorithm SHA256
