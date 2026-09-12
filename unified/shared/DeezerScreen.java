@@ -40,6 +40,24 @@ public final class DeezerScreen {
         for(int i=0;i<nodes.getLength();i++) if(normal(text).equals(normal(((Element)nodes.item(i)).getAttribute("text")))) return true;
         return false;
     }
+    public boolean hasLyricsPanel() {
+        if(!isDeezer()) return false;
+        NodeList nodes=document.getElementsByTagName("node");
+        for(int i=0;i<nodes.getLength();i++) {
+            Element item=(Element)nodes.item(i);
+            if(!"true".equals(item.getAttribute("scrollable"))) continue;
+            NodeList descendants=item.getElementsByTagName("node");
+            int lyricLines=0;
+            for(int j=0;j<descendants.getLength();j++) {
+                Element child=(Element)descendants.item(j);
+                if("android.widget.TextView".equals(child.getAttribute("class"))
+                        && !normal(child.getAttribute("text")).isEmpty()) lyricLines++;
+            }
+            if(lyricLines>=3) return true;
+        }
+        return false;
+    }
+    public Target lyricsTarget() { return target("Lyrics"); }
     public Target target(String text) {
         if(!isDeezer()) return null;
         Map<String,Target> matches=new LinkedHashMap<>();
