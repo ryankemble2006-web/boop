@@ -1,15 +1,12 @@
 # BOOP Win7ify branch status
 
-This branch owns the adjacent Windows utility `win7ify/`, not Android BOOP.
-The old inherited main context-hub status is superseded here by the Windows
-handoff; live main still owns the shared Android/product contracts.
+This isolated branch owns the Windows utility under `win7ify/`, not an Android APK.
+Current executable: 0.2.0. Built source `ee744db`, GitHub run `34674142722` SUCCESS.
+41 functional tests plus real official install/profile/menu lifecycle/uninstall,
+including the normal hosted Explorer-hook path, passed. Yoga GUI/read-only checks
+passed. The EXE is on its Desktop. Actual Yoga installation still needs normal
+Windows permission approval and visual acceptance; no approval was bypassed.
 
-Version 0.1.1 built from `bb554f64e3c01bae09559366e7c431cf2e552285`.
-Run `34671365939`: SUCCESS. Main artifact `10290934035`.
-21 tests passed on GitHub and the physical laptop's disposable validation area.
-The exact EXE opened and closed normally on the laptop without applying settings.
-
-Actual 0.1.1 desktop Apply/Restore and visual acceptance remain unverified.
-The v0.1 physical failure is recorded, not promoted to a working checkpoint.
-Read SESSION_HANDOFF.md, win7ify/STATUS.md, win7ify/MEMORY.md and
-win7ify/CODEX_HANDOFF.md. Other app branches and protected checkpoints are untouched.
+Read SESSION_HANDOFF.md, win7ify/STATUS.md, win7ify/MEMORY.md and CODEX_HANDOFF.md.
+The shared product context belongs to live main. Do not build an Android app from
+this Windows branch or alter the protected Android lineages/signing.

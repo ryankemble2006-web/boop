@@ -1,11 +1,13 @@
 # Win7ify branch context
 
-On this isolated branch, the active application is the adjacent Windows utility
-under `win7ify/`. Use SESSION_HANDOFF.md and win7ify/MEMORY.md for current state.
-0.1.1 fixes the first protected-Widgets failure without elevation or permission
-bypass. Real desktop Apply/Restore acceptance is still pending. The inherited
-shared product context below remains reference only; fetch live main for shared
-contracts, and do not build an Android app from this Windows branch.
+This branch owns the adjacent Windows utility under `win7ify/`. Read SESSION_HANDOFF.md
+and win7ify/MEMORY.md. Version 0.2 now includes the real official Open-Shell Windows
+7-style Start menu, retryable ownership-safe recovery and large diagnostic reports.
+41 functional tests and real hosted Windows install/menu/uninstall cycles pass.
+Yoga GUI/read-only checks pass; its installation still needs normal Windows approval
+and target visual acceptance. No OS approval was bypassed while the user slept.
+The shared product context below is reference; fetch live main for shared contracts.
+Do not build an Android app from this Windows branch.
 
 # BOOP shared context
 

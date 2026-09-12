@@ -1,18 +1,31 @@
-# Win7ify 0.2.0 candidate
+# Win7ify 0.2.0 status
 
-The user approved bringing the real Open-Shell Windows 7-style Start menu forward,
-with no further consultation. This is no longer just the settings-only 0.1.1 app.
+2026-09-12. Owner `boop-win7ify-v01`, source `win7ify/`.
+Built source `ee744dbb8f1bae6851916801eed6163a67541344`.
+GitHub run `34674142722` SUCCESS. Main artifact `10291618453`.
+EXE SHA256 `ab65fe6c7b3891cf3a31fac40a9edca5a7bce80226b397c92d65432706546f67`.
 
-Implemented candidate: official pinned embedded installer, StartMenu-only feature,
-separate typed profile backup and ownership journal, retryable install/undo,
-effective-settings export verification, menu process/window check, large diagnostic
-codes and copy/save/local-log controls. Normal UAC/SmartScreen remain in charge.
+## Delivered capability
 
-RED shell contracts: run 34672711655, all 12 tests failed before implementation.
-GREEN core: run 34672991011. Existing recovery suite: run 34672991043 succeeded.
-GUI/real-installer integration candidate is now awaiting its own build and real
-integration cycle. It is NOT yet a verified 0.2 executable or a Yoga deployment.
+Actual official Open-Shell 4.4.198 StartMenu-only integration, Windows 7 menu profile,
+Aero menu skin, effective export and runtime checks, BOOP error codes/reports and
+recoverable install/undo. Not an OS downgrade, full desktop Aero or replacement taskbar.
+Existing Open-Shell installs are preserved. Both EXEs remain unsigned.
 
-Yoga was offline in this session. Hosted Windows Server standalone-menu checks
-are not Windows 11 Insider Explorer-hook or visual acceptance. No screenshot tests.
-Keep Android apps, signing and main untouched. Full desktop Aero remains deferred.
+## Proven
+
+41 functional tests pass. Real disposable install/profile/repeat setup/menu lifecycle/
+uninstall/repeat undo pass. Normal Explorer-hook start, repeated open, clean stop and
+owned uninstall PASS on hosted Windows Server; this probe was not skipped.
+Exact EXE GUI and read-only diagnostics pass on Yoga; original backup unchanged.
+The verified EXE is on Yoga's Desktop as `BOOP Win7ify 0.2.0.exe`.
+No GitHub appearance tests, no independent-review claim.
+
+## Still awaiting target approval
+
+Yoga's remote process is not elevated. No unattended installer or UAC request was
+started there. Actual Yoga Windows 11 Insider installation/menu appearance and
+user visual acceptance are unverified. Normal Windows approval is still required.
+A real failure produces an E2xx stage and local report, not a false success.
+
+See ../SESSION_HANDOFF.md for exact tests, repaired failures, artifacts and boundaries.

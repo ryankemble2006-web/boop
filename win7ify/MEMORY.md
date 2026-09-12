@@ -1,33 +1,44 @@
 # Win7ify durable decisions
 
-2026-09-12. Win7ify is a separate Windows utility within the public BOOP repository,
-explicitly requested on `boop-win7ify-v01`. Source: `win7ify/`. Do not fold it into
-an Android package or change an Android app branch, permission or signer.
+Updated 2026-09-12. Owning branch `boop-win7ify-v01`, source `win7ify/`.
+The user explicitly requested this adjacent Windows utility inside BOOP's public
+repository. It is not the Android Unified APK. Preserve all Android app lineages,
+permissions, signing and protected checkpoints.
 
-The user requested an EXE built by GitHub now and the advanced shell work recorded
-for a later Codex session. BOOP styling uses the existing approved eyes unchanged,
-black/cyan colours, large readable controls, and a conspicuous undo action.
+The user wanted an EXE built now and advanced work handed to Codex later. v0.1
+failed on a redundant protected Widgets write. v0.1.1 repaired that using no-op
+checks, per-setting truthful results and preserved original backups. Its 21 tests
+and local launch passed, but the user correctly reported no visible makeover:
+there was no actual Windows 7 menu in that settings-only app.
 
-The first v0.1 physical Apply test failed. This is NOT a physically accepted build.
-The Widgets value TaskbarDa rejected an identical-value rewrite on the test laptop;
-the equivalent TaskbarAl write succeeded. The existing user's original backup was
-inspected and kept intact. Do not describe this as a generic missing-admin problem.
+The user then approved the official Open-Shell Windows 7 Start menu integration
+and autonomous diagnostics/test/fix cycles while sleeping, without further chat
+consultation. This brings the real Start-menu component forward to 0.2. Full
+Windows 7 taskbar replacement and whole-desktop Aero remain for the advanced phase.
+Do not keep calling the actual Start menu deferred or call settings tweaks a theme.
 
-Required repair principles:
-- Leave settings already correct alone, including during Restore.
-- A denied setting is named and skipped, not forced by changing permissions.
-- Continue the remaining independent settings and show truthful per-setting outcomes.
-- Keep the complete original backup after partial restore; validate before writing.
-- Preserve schema-v1 compatibility and first-original values across repeated Apply.
-- Do not claim saved registry data proves that Windows drew a Windows 7 interface.
-- Opening the app is not permission to Apply. Refreshing Explorer is separately confirmed.
-- No automated appearance/layout/screenshot acceptance. Functional tests and process smoke
-  are separate from the user's real-device visual judgement.
+Use the exact approved BOOP eyes unchanged, black/cyan, large controls, plain-English
+E2xx failures, and conspicuous recovery. Opening the app makes no OS setting changes.
+Only an explicit install action invokes the official pinned installer through normal
+Windows UAC. Do not bypass security or consent because the user is asleep.
 
-Advanced Start/taskbar replacement, Aero/glass and third-party integration remain
-future work, not features quietly included in this repair. Read CODEX_HANDOFF.md.
+Pin official Open-Shell 4.4.198, verify size/SHA at build and execution, include full
+upstream notices, install StartMenu only and suppress reboots. The installer and
+BOOP EXE are unsigned. Checksum provenance is not Authenticode trust. This bundle
+is free/non-commercial; review source-asset/trademark restrictions before commercial use.
 
-Verification update: v0.1.1 source bb554f6 built in run 34671365939. All 21
-functional tests passed in CI and on the laptop; the exact GUI opened/closed
-without settings changes. The original backup stayed byte-identical. This does
-not replace the pending real desktop Apply/Restore and visual acceptance.
+Keep the original desktop backup separate from a typed menu-profile backup and
+ownership journal. Repeated Apply preserves the first baseline. A pre-existing menu
+is never owned/uninstalled. Interrupted operations preserve recovery; changed package
+version/location blocks removal. Validate missing/corrupt recovery before stopping
+an existing menu. Never force-kill Explorer to fix an Open-Shell shutdown race.
+
+Final 0.2 source ee744db passed 41 functional tests plus real installer/profile/menu/
+uninstall cycles, including normal Explorer-hook start/stop on hosted Windows Server.
+A real E241 shutdown failure was exposed and repaired, not relabelled. No automated
+appearance tests and no fictitious independent reviewer. Exact receipts are in handoff.
+
+Yoga later reconnected without elevation. Exact EXE GUI and read-only diagnostics
+passed; its original backup stayed unchanged. No unattended install/UAC prompt,
+Apply/Restore/Refresh/reboot/media action. The EXE is on the Desktop for morning use.
+Yoga actual installed-menu compatibility and visual acceptance remain unverified.
