@@ -90,3 +90,14 @@ Historical Wall/Launcher/Shield branches and older v70 iteration receipts remain
 7. CI-green, signer-green and physically accepted are separate states.
 
 When Ryan says `update memory`, treat it as documentation synchronization unless he separately asks for app-code changes.
+
+## Adjacent Windows utility: BOOP Win7ify
+
+The user explicitly owns a separate Windows project on **`boop-win7ify-v01`**,
+source **`win7ify/`**, local task worktree **`.worktrees/boop-win7ify-v01`**.
+Read that branch's SESSION_HANDOFF.md, win7ify/STATUS.md, win7ify/MEMORY.md and
+win7ify/CODEX_HANDOFF.md for current EXE, Open-Shell integration and verification.
+It is not the Android Unified APK. Do not route Windows work into an Android app
+branch, change Android signing, or assume the shared main checkout is its latest
+source. Normal Windows installation approval, ownership-safe Undo, and separate
+CI versus physical-device/visual acceptance remain explicit boundaries.
