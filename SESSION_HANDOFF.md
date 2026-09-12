@@ -1,6 +1,22 @@
 # BOOP Startup Manager continuation
 
-Updated 2026-09-12. Current installed candidate: **v135 Startup Manager only**.
+## Ryan accepted Startup Manager v135, 2026-09-12
+
+Ryan reported that the installed Startup Manager works perfectly after using it
+to disable his unwanted packages, including the stock launcher, and prevent that
+launcher's startup. This is user-reported physical acceptance of v135's Startup
+Manager UI and the package controls he exercised. Preserve his selected setup.
+
+Accepted source: `7408ab85c8c58b4478a3a64f18af834160efb346`; signed run
+`34673227727`; artifact `10291770657`; APK SHA256
+`b50823e9b902de049ee7e19d919947bcd2062d24bd953ad1616792bfa0485d8f`.
+Use this exact v135 artifact as the accepted Startup Manager rollback reference.
+The exact disabled-package inventory was not supplied. Do not infer a universal
+Android/NVIDIA debloat recipe, measured performance gains, a completed Restore
+round trip or reboot persistence from this report. Lyrics remains excluded.
+This acceptance update is documentation only; the Shield is left untouched.
+
+Updated 2026-09-12. Current user-accepted Startup Manager: **v135, lyrics excluded**.
 Lyrics is WIP and excluded by Ryan's explicit instruction. Do not reintroduce it.
 
 ## Owning checkout
@@ -53,7 +69,7 @@ cancellation and the minimal recovery floor are retained. v135 changes only text
 container sizing/labels; Android text size, package-control logic and already
 approved music artwork are unchanged. No new artwork was generated. Lyrics stays out.
 
-Ryan can review the installed screen through Home settings > Startup Manager.
+Ryan has accepted the installed Startup Manager; its route remains Home settings > Startup Manager.
 The last media check found no active track, so no completion skip was sent and no
 playback was started unasked. A future cue must not be claimed as already sent.
 Yoga and Shield access recovered, and this checkout was safely fast-forwarded to
