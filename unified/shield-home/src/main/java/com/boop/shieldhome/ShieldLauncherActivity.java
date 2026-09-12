@@ -41,7 +41,7 @@ public final class ShieldLauncherActivity extends Activity {
     private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
 
     public static final long PAGE_TRANSITION_MS = 140L;
-    static final long SHIELD_SETTINGS_HOLD_MS = 650L;
+    static final long SHIELD_SETTINGS_HOLD_MS = 250L;
     private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
     private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown_v2";
     private static final String KEY_HOME_OVERRIDE_PROMPT_SHOWN = "home_override_prompt_shown_v1";

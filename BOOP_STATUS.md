@@ -1420,3 +1420,7 @@ Ryan requested direct fixes on the centralised v125 line. v126 moves Close playe
 ## v126 signed GitHub receipt, 2026-09-11
 
 GitHub Unified run 34654875243 completed successfully for source dbc88f55f1eca2d255c313d9c712b7896de1ad9d, version126 / 1.2.126-shield-ui-cleanup. Permanent signing, package/version/entry checks, ZIP integrity and artifact upload passed. Shield focused tests: 68; Unified focused tests: 217; zero failures/errors/skips. APK SHA256: f2b5a723c2858e7904862d7e5d1465a980225efd33bd1a84448704b60ad7f487. Artifact BOOP-Unified ID 10284809387; artifact ZIP digest sha256:8ac9feca765a6371a431266760df050e95e348861d8605260550e33331920a5f. Visual/device acceptance remains manual and pending.
+
+## v127 Shield Back-hold timing, 2026-09-12
+
+Ryan requested the BOOP-specific Back-hold gesture that opens Shield settings be reduced from 650 ms to 250 ms. `ShieldLauncherActivity.SHIELD_SETTINGS_HOLD_MS` is now 250L; no Android system long-press setting is changed. Version is `127` / `1.2.127-shield-back-hold-250ms`. Local materialized Unified unit gate: 277 tests, zero failures/errors/skips. Visual/device acceptance remains manual.
