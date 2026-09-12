@@ -13,6 +13,12 @@ public final class ClickGateTest {
         check(!gate.claimEpisode(4001, false, true), "Never click episode outside EastEnders");
         check(gate.claimEpisode(4002, true, true), "Click newest EastEnders episode");
         check(!gate.claimEpisode(4003, true, true), "Only click episode once");
+        check(gate.active(4003), "Keep a bounded guard alive after playback starts so return focus can be repaired");
+        check(!gate.returnPageReady(4004, true), "Do not repair while launch page is still fading into playback");
+        check(!gate.returnPageReady(4005, false), "Seeing playback leave the programme page only arms return detection");
+        check(gate.returnPageReady(4006, true), "Repair only after EastEnders page genuinely returns from playback");
+        check(gate.recoveryActive(4003), "Return-focus guard is active after episode launch");
+        check(!gate.claimProfile(4004, true, true), "Never revisit profile selection during playback recovery");
         gate.arm(5000);
         check(gate.claimEpisode(5001, true, true), "Allow direct episode when iPlayer skips chooser");
         gate.arm(6000);

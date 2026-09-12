@@ -63,7 +63,7 @@ public final class WatchNowService extends AccessibilityService {
     private final Runnable check = new Runnable() {
         @Override public void run() {
             inspect();
-            if (gate.active(SystemClock.elapsedRealtime())) handler.postDelayed(this, 500);
+            if (gate.launchActive(SystemClock.elapsedRealtime())) handler.postDelayed(this, 500);
         }
     };
 
@@ -126,6 +126,21 @@ public final class WatchNowService extends AccessibilityService {
             Page page = new Page();
             try {
                 scan(root, page, 0, false);
+                long now = SystemClock.elapsedRealtime();
+                if (gate.recoveryActive(now)) {
+                    if (!gate.returnPageReady(now, page.title)) {
+                        report(page.title ? "Playback starting; return focus guard waiting" : "Playback active; return focus guard armed");
+                        return;
+                    }
+                    if (page.episode == null) {
+                        report("EastEnders returned; waiting for episode focus target");
+                        return;
+                    }
+                    boolean focused = page.episode.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+                    Log.i("EastEnders", "Return episode focus accepted: " + focused);
+                    if (focused) gate.cancel();
+                    return;
+                }
                 if (gate.claimProfile(SystemClock.elapsedRealtime(), page.chooser, page.profile != null)) {
                     boolean clicked = page.profile.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                     Log.i("EastEnders", "Existing iPlayer profile click accepted: " + clicked);
