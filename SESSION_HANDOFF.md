@@ -1442,3 +1442,9 @@ GitHub Unified run 34654875243 completed successfully for source dbc88f55f1eca2d
 ## v127 Shield Back-hold timing, 2026-09-12
 
 Ryan requested the BOOP-specific Back-hold gesture that opens Shield settings be reduced from 650 ms to 250 ms. `ShieldLauncherActivity.SHIELD_SETTINGS_HOLD_MS` is now 250L; no Android system long-press setting is changed. Version is `127` / `1.2.127-shield-back-hold-250ms`. Local materialized Unified unit gate: 277 tests, zero failures/errors/skips. Visual/device acceptance remains manual.
+
+## Startup Manager v2 design approved, 2026-09-12
+
+Ryan approved replacing the current Startup Manager scroll wall with the mockup-led remote-first Package Control design. v2 exposes installed user and system packages, including Google TV Launcher and launcher/ad/recommendation companions, with Disable, Re-enable, Force stop, Clean after boot and Prevent background start actions. Only BOOP plus a minimal recovery floor remains protected. Persistent changes capture exact original state for verified Restore. Visual acceptance remains Ryan-owned; no visual CI is permitted.
+
+Design spec: `docs/superpowers/specs/2026-09-12-startup-manager-v2-design.md`. This is design-only; no production code has been changed for v2 yet.
