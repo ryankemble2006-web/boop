@@ -1,5 +1,6 @@
-bin/
-obj/
+**/bin/
+**/obj/
 publish/
-*.log
-*.tmp
+*.user
+*.suo
+src/Win7ify/Payload/

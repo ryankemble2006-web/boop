@@ -1,106 +1,85 @@
 name: BOOP Win7ify
-
 on:
   workflow_dispatch:
   push:
-    branches:
-      - boop-win7ify-v01
-    paths:
-      - 'win7ify/**'
-      - '.github/workflows/win7ify-build.yml'
-
+    branches: [boop-win7ify-v01]
+    paths: ['win7ify/**', '.github/workflows/win7ify-build.yml']
 permissions:
   contents: read
-
 concurrency:
   group: boop-win7ify-${{ github.ref }}
-  cancel-in-progress: true
-
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
-
-      - name: Show SDK
-        run: dotnet --info
-
       - name: Verify approved BOOP eyes
         shell: pwsh
         run: |
-          $expected = 'ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22'
           $actual = (Get-FileHash win7ify/src/Win7ify/Assets/boopApprovedEyes.png -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actual -ne $expected) { throw "Approved BOOP eye asset changed: $actual" }
-          Write-Host "Approved BOOP eyes verified: $actual"
-
-      - name: Run Win7ify core tests
-        run: dotnet run --project win7ify/tests/Win7ify.Tests/Win7ify.Tests.csproj -c Release
-
-      - name: Publish Win7ify
+          if ($actual -ne 'ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22') { throw 'Approved eye bytes changed' }
+      - name: Prepare pinned official Open-Shell payload
         shell: pwsh
-        run: |
-          dotnet publish win7ify/src/Win7ify/Win7ify.csproj `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
-            -p:PublishSingleFile=true `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:DebugType=None `
-            -p:DebugSymbols=false `
-            -o publish/win-x64
-
-      - name: Non-visual launch smoke (no settings applied)
+        run: ./win7ify/tools/Prepare-Payload.ps1
+      - name: Run original recovery regression tests
+        run: dotnet run --project win7ify/tests/Win7ify.Tests -c Release
+      - name: Run new shell recovery contracts
+        run: dotnet run --project win7ify/tests/Win7ify.ShellTests -c Release
+      - name: Publish self-contained EXE
+        run: dotnet publish win7ify/src/Win7ify/Win7ify.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o publish/win-x64
+      - name: Non-visual opening and closing smoke
         shell: pwsh
         run: |
           $p = Start-Process (Resolve-Path publish/win-x64/Win7ify.exe) -PassThru
-          try {
-            if (-not $p.WaitForInputIdle(20000)) { throw 'App did not reach an input-ready state' }
-            Start-Sleep -Seconds 2
-            $p.Refresh()
-            if ($p.HasExited -or $p.MainWindowHandle -eq 0) { throw 'App did not remain open' }
-            if (-not $p.CloseMainWindow()) { throw 'App did not accept a normal close' }
-            if (-not $p.WaitForExit(10000)) { throw 'App did not exit cleanly' }
-            if ($p.ExitCode -ne 0) { throw "App exited with code $($p.ExitCode)" }
-            Write-Host 'Launch and close passed. No appearance judgement and no Apply/Restore clicked.'
-          } finally {
-            if (-not $p.HasExited) { Stop-Process -Id $p.Id }
-          }
-
-      - name: Publish portable test harness
+          if (!$p.WaitForInputIdle(20000)) { throw 'GUI did not reach input-ready' }
+          Start-Sleep -Seconds 2
+          $p.Refresh()
+          if ($p.HasExited -or $p.MainWindowHandle -eq 0) { throw 'GUI did not create a window' }
+          if (!$p.CloseMainWindow() -or !$p.WaitForExit(10000)) { throw 'GUI did not close normally' }
+          if ($p.ExitCode -ne 0) { throw 'GUI exited abnormally' }
+          $p.Dispose()
+      - name: Real installer and recovery integration cycle
         shell: pwsh
-        run: |
-          dotnet publish win7ify/tests/Win7ify.Tests/Win7ify.Tests.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o publish/checks
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Upload non-visual test harness
-        uses: actions/upload-artifact@v4
-        with:
-          name: BOOP-Win7ify-checks-v0.1.1
-          path: publish/checks/Win7ify.Tests.exe
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Write SHA-256 receipt
+        run: ./win7ify/tools/Test-Integration.ps1 -Exe publish/win-x64/Win7ify.exe
+      - name: Package verified EXE and receipt
         shell: pwsh
         run: |
           $hash = (Get-FileHash publish/win-x64/Win7ify.exe -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  Win7ify.exe" | Set-Content publish/win-x64/Win7ify.sha256.txt
-          Get-Content publish/win-x64/Win7ify.sha256.txt
-
-      - name: Upload portable EXE
-        uses: actions/upload-artifact@v4
+          Copy-Item win7ify/THIRD_PARTY_NOTICES.txt publish/win-x64/
+          Copy-Item win7ify/README.md publish/win-x64/
+          "Built from $env:GITHUB_SHA; run $env:GITHUB_RUN_ID. Installer/profile/standalone-menu/uninstall checks passed. Yoga Explorer-hook and appearance acceptance remain unverified." | Set-Content publish/win-x64/BUILD-RECEIPT.txt
+      - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Win7ify-v0.1.1-win-x64
-          path: |
-            publish/win-x64/Win7ify.exe
-            publish/win-x64/Win7ify.sha256.txt
+          name: BOOP-Win7ify-v0.2.0-win-x64
+          path: publish/win-x64/
           if-no-files-found: error
           retention-days: 30
+      - name: Preserve non-visual test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Win7ify-v0.2.0-integration-evidence
+          path: integration-receipts/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Source review bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Win7ify-source-review
+          path: |
+            win7ify/
+            .github/workflows/win7ify-build.yml
+            !win7ify/**/bin/**
+            !win7ify/**/obj/**
+            !win7ify/src/Win7ify/Payload/**
+          include-hidden-files: true
+          retention-days: 7

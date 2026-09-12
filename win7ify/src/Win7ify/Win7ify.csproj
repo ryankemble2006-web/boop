@@ -8,11 +8,13 @@
     <LangVersion>14.0</LangVersion>
     <AssemblyName>Win7ify</AssemblyName>
     <RootNamespace>Boop.Win7ify</RootNamespace>
-    <Version>0.1.1</Version>
+    <Version>0.2.0</Version>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Win7ify.Core\Win7ify.Core.csproj" />
     <EmbeddedResource Include="Assets\boopApprovedEyes.png" LogicalName="Boop.Win7ify.Assets.boopApprovedEyes.png" />
+    <EmbeddedResource Include="Payload\OpenShellSetup_4_4_198.exe" LogicalName="Boop.Win7ify.OpenShellInstaller" />
+    <EmbeddedResource Include="..\..\THIRD_PARTY_NOTICES.txt" LogicalName="Boop.Win7ify.ThirdPartyNotices" />
   </ItemGroup>
 </Project>
