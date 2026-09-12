@@ -1,91 +1,65 @@
-## Verified v134 installation receipt, 2026-09-12
-
-Startup Manager-only v134 was installed successfully and its installed APK bytes
-were independently verified against the signed GitHub artifact.
-
-- Build source: `56bbb7d5f2fdaf9ede5c46cc8f7c1d0f46bacca0`.
-- Version: `134 / 1.2.134-startup-manager-only`, package `com.boop.alpha1`.
-- Successful permanent-signed run: `34672558546`; artifact `10290724349`.
-- APK SHA256: `3241628257ae1835271d49c728f6a91f13fb2cfd1d3b209052081585a5e4664d`.
-- Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-- Installed v132 rollback preserved privately; SHA256
-  `46b7c4b6f233c9608d625e4cfa2ecf733a0b88afca0e628e546c3f084cdead46`.
-
-Fresh v134 checks: 15 Startup Manager Java suites and Android 11 linkage gate
-passed; signed CI passed all gates, including 68 Shield and 217 Unified focused
-functional tests with no failures/errors/skips. Package Control, its populated
-list/filter/detail screen and high-impact confirmation were observed on Shield.
-The current BOOP process had no AndroidRuntime fatal in the inspected output.
-The original inventory crash did not recur in this check. Visual acceptance and
-a complete disable/Restore round trip are not claimed by this installation task.
-
-Lyrics is excluded. Existing artwork, signer and permissions were not changed.
-Navigation/package selections changed during concurrent review, so this task
-stopped sending navigation inputs and did not undo the observed package choices.
-No active music session remained at the completion check, so no completion skip
-was sent and playback was not started unasked.
-
-A separate live review is preparing v135 for clipping at the existing large-text
-setting. Preserve its dirty View/version/handoff and materializer output. This
-receipt is published with a private temporary Git index so none of that concurrent
-local work is staged, reset or overwritten. The prior offline notes below are
-historical: the Yoga terminal and Shield ADB worked for this installation.
-
 # BOOP Startup Manager continuation
 
-Updated 2026-09-12. Current scope: **Startup Manager only. Lyrics is WIP and must stay out.** This explicit Ryan correction supersedes the preceding v133 integration plan.
+Updated 2026-09-12. Current installed candidate: **v135 Startup Manager only**.
+Lyrics is WIP and excluded by Ryan's explicit instruction. Do not reintroduce it.
 
-## Owning checkout and branch
+## Owning checkout
 
-- Repository: `ryankemble2006-web/boop`.
-- Task branch/worktree: `boop-v125-animation-integration`.
-- Primary checkout is not this app's current worktree. Follow root AGENTS.md and fetched main rules.
-- Last verified remote before this correction: `7e0d17907f5b3e59ecf108cbcc58911a283ec6c9`.
-- The complete previous handoff is preserved byte-for-byte at [docs/history/startup-v133/SESSION_HANDOFF.md](docs/history/startup-v133/SESSION_HANDOFF.md). Its dated release claims are historical, not the current scope.
+Repository `ryankemble2006-web/boop`, branch/worktree
+`boop-v125-animation-integration`. Follow root AGENTS.md and fetched main rules.
+The primary checkout is not automatically this app's latest source. Preserve the
+separate lyrics/music-art worktrees and all dirty or concurrent work.
 
-## Candidate scope
+## Signed and installed receipt
 
-Version `134 / 1.2.134-startup-manager-only`, package `com.boop.alpha1`, permanent signing workflow unchanged.
+- Version: `135 / 1.2.135-startup-manager-large-text`, package `com.boop.alpha1`.
+- Build source: `7408ab85c8c58b4478a3a64f18af834160efb346`.
+- Successful permanent-signed run: `34673227727`; artifact `10291770657`.
+- APK SHA256: `b50823e9b902de049ee7e19d919947bcd2062d24bd953ad1616792bfa0485d8f`.
+- Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+- The installed APK's own SHA256 exactly matches that verified signed artifact.
+- Actual installed v134 APK was preserved privately before v135. Its SHA256 is
+  `3241628257ae1835271d49c728f6a91f13fb2cfd1d3b209052081585a5e4664d`.
 
-The app and tests use the Startup Manager repair from `42fe4be8ddfb196a34be73c713d434b235663415`, before the lyrics merge. The Lyrics button, browser/policy classes, bridge entry point, shared-screen additions and lyrics-specific tests are excluded. The `boop-now-playing-lyrics` branch and worktree are not changed.
+The preceding v134 installation was completed by the concurrent installation
+window. This review verified its exact APK and observed the 148-package screen,
+then built and installed the narrowly scoped v135 large-text correction.
+All four private Startup Manager preference files were byte-identical immediately
+across the v135 update. Existing package choices, original-state receipts and
+migration state were preserved. Later user changes are not attributed to this
+installation. No grants, signer changes, arbitrary package disables or resets.
 
-Existing approved music artwork is retained exactly as already present in the v133 source and the observed installed v132 lineage. No new artwork is created or edited. The only new feature being delivered is Startup Manager.
+## Verification and physical scope
 
-The approved Startup Manager implementation includes the sidebar, responsive Overview cards, package controls/detail pane, Restore, Android 11-safe parsers, exact original-state recovery, verified package actions, migration, cancellation and minimal recovery protection.
+Fresh local v135 materialization/Android Java compilation passed. Full Unified
+unit task: 277 tests, zero failures/errors/skips. Fifteen Startup Manager behavior
+suites and the Android 11 linkage gate passed. Signed CI passed all gates including
+68 Shield and 217 Unified focused tests; package/version/signature/ZIP checks passed.
+The repaired synthetic Startup suites were also previously run as dex on the
+actual Shield Android 11 runtime without mutating installed packages.
 
-## Verification level
+Manual v135 screenshot inspection confirmed the live Package Control screen with
+148 packages, filter bar, detail pane, visible cyan focus and unclipped sidebar
+and Background ON/OFF labels at the existing `font_scale=1.3`. The current BOOP
+process had no AndroidRuntime fatal in the inspected log. The original inventory
+crash did not recur. No full destructive disable/Restore, reboot or universal
+navigation acceptance is claimed from this scoped review; those remain Ryan-owned.
 
-Before this scope correction, the pre-lyrics repair passed local Android compilation, the full 277-test Unified unit gate and 15 focused Startup Manager suites. The synthetic dex harness also ran on the actual Shield Android 11 runtime without changing installed package state. These are recorded prior results, not a claim that v134 has been built or installed.
+## Delivered behavior and next safe step
 
-v134 source is assembled from those exact pre-lyrics Git objects plus its version change and the unchanged approved art. A new permanent-signed build and physical checks are still required.
+The native UI has a fixed sidebar, responsive four-card Overview, package filters,
+per-package actions, details and Restore. Original-state recovery, v1 migration,
+cancellation and the minimal recovery floor are retained. v135 changes only text
+container sizing/labels; Android text size, package-control logic and already
+approved music artwork are unchanged. No new artwork was generated. Lyrics stays out.
 
-v128 crashed on `String.lines()` and is not a working package-control checkpoint. v127 rollback was preserved privately. The last actual installed version observed before the connection slipped was v132; re-read installed version and preserve its exact rollback APK before installing anything.
+Ryan can review the installed screen through Home settings > Startup Manager.
+The last media check found no active track, so no completion skip was sent and no
+playback was started unasked. A future cue must not be claimed as already sent.
+Yoga and Shield access recovered, and this checkout was safely fast-forwarded to
+include the concurrent v134 documentation receipt before this final update.
 
-## Connection and next step
-
-Remote Desktop Commander currently answers a ping but rejects terminal/file calls with `Not connected`. No local files or Shield state have been changed during this scope correction. The correction is being published directly through the connected GitHub tools.
-
-After the Yoga bridge reconnects: fetch this branch, preserve any dirty/concurrent work, fast-forward only if clean, run the existing build workflow for the exact current source, verify artifact hash/package/version/permanent signer, preserve the installed APK, then install. Do not install the superseded lyrics-containing v133 artifact. Recheck live branch and installed version immediately before deployment.
-
-Ryan authorized installation and one music-track-change completion signal after the verified candidate is genuinely installed. Do not signal completion while installation or the Package Control crash check remains unfinished. No permission grants, root, signer changes, automatic debloat or arbitrary package disabling are authorized. Destructive package and stock-launcher disable/Restore acceptance remains user-owned.
-
-## v134 installed; large-text correction in progress
-
-The exact permanent-signed v134 APK from source
-`56bbb7d5f2fdaf9ede5c46cc8f7c1d0f46bacca0`, run `34672558546`, artifact
-`10290724349`, is installed on the Shield. Independent installed-file SHA256
-matched `3241628257ae1835271d49c728f6a91f13fb2cfd1d3b209052081585a5e4664d`.
-The installation completed concurrently; this review did not reinstall over it.
-The actual Package Control screen loaded 148 packages and stayed in
-ShieldStartupManagerActivity. This closes the original package-inventory crash
-check, not destructive action or user acceptance.
-
-Manual screenshot review found clipping at the user's existing font_scale=1.3:
-sidebar two-word labels and two-line background action state. This window is
-correcting those exact text containers for v135 without changing Android text
-settings, package controls, approved art or excluded lyrics. No package changes
-or completion media signal have been sent by this review. Other windows should
-leave this view/version pair alone until the v135 check finishes.
-
-Fresh v135 local verification passed: Android compilation, 277 unit tests,
-15 Startup Manager suites and Android 11 linkage. Signed build is next.
+Historical detail remains in Git and in
+[docs/history/startup-v133/SESSION_HANDOFF.md](docs/history/startup-v133/SESSION_HANDOFF.md).
+Those dated v133/lyrics integration proposals are superseded. v128 was the failed
+String.lines candidate and must not be described as a working package console.
