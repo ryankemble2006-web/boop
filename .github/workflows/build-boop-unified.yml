@@ -115,12 +115,15 @@ jobs:
             unified/shield-home/src/main/java/com/boop/shieldhome/StartupPreventionRecord.java \
             unified/shield-home/src/main/java/com/boop/shieldhome/StartupPackageState.java \
             unified/shield-home/src/main/java/com/boop/shieldhome/StartupRecoveryPolicy.java \
+            unified/shield-home/src/main/java/com/boop/shieldhome/StartupPackageRepository.java \
             source-test/StartupPreventionPolicyTest.java source-test/StartupPreventionRecordTest.java source-test/StartupCleanupPolicyTest.java \
-            unified/shield-home/src/test/java/com/boop/shieldhome/StartupRecoveryPolicyTest.java
+            unified/shield-home/src/test/java/com/boop/shieldhome/StartupRecoveryPolicyTest.java \
+            unified/shield-home/src/test/java/com/boop/shieldhome/StartupPackageRepositoryTest.java
           java -cp work/startup-prevention-tests StartupPreventionPolicyTest
           java -cp work/startup-prevention-tests StartupPreventionRecordTest
           java -cp work/startup-prevention-tests StartupCleanupPolicyTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupRecoveryPolicyTest
+          java -cp work/startup-prevention-tests com.boop.shieldhome.StartupPackageRepositoryTest
 
       - name: Test notification, developer-lab and natural-voice contracts
         run: |

@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 public final class ShieldStartupManagerActivity extends Activity {
     private StartupCleanupStore store;
     private StartupPreventionStore preventionStore;
+    private StartupPackageRepository packageRepository;
     private ExecutorService executor;
     private volatile StartupLocalBridge activeBridge;
 
@@ -27,6 +28,8 @@ public final class ShieldStartupManagerActivity extends Activity {
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
         store = new StartupCleanupStore(this);
         preventionStore = new StartupPreventionStore(this);
+        packageRepository = new StartupPackageRepository(
+                new AndroidStartupPackageSource(this), store::targets, preventionStore::managedPackages);
         executor = Executors.newSingleThreadExecutor();
         render();
     }
