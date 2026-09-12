@@ -13,3 +13,9 @@ local.properties
 *.jks
 *.keystore
 .cache/boop-wake/
+
+# Private device/API investigation; never publish captures or third-party files.
+/private-inspect/
+
+# Reproducible Android materialization and local outputs.
+/boop-build/

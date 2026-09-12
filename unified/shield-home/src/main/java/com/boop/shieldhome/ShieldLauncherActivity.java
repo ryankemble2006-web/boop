@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 /** Standalone Shield launcher surface. */
 public final class ShieldLauncherActivity extends Activity {
     private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
+    private final DeezerLyricsBrowser lyricsBrowser = new DeezerLyricsBrowser();
 
     public static final long PAGE_TRANSITION_MS = 140L;
     static final long SHIELD_SETTINGS_HOLD_MS = 250L;
@@ -140,6 +141,7 @@ public final class ShieldLauncherActivity extends Activity {
             return;
         }
         nowPlayingSnapshot = snapshot;
+        lyricsBrowser.onTrackChanged(nowPlayingManager);
         if (destroyed || currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) {
             return;
         }
@@ -198,6 +200,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void showHome(boolean focusFirstFavourite) {
         albumBrowser.cancel();
+        lyricsBrowser.cancel();
         currentPage = Page.HOME;
         com.boop.shared.BoopState.INSTANCE.homeVisible(resumed);
         int generation = ++optionalGeneration;
@@ -310,6 +313,13 @@ public final class ShieldLauncherActivity extends Activity {
                 if (nowPlayingManager != null) nowPlayingManager.next();
             }
 
+            @Override public void onOpenNowPlayingLyrics() {
+                if (nowPlayingManager == null) return;
+                NowPlayingSnapshot current = nowPlayingManager.state().current();
+                if (current != null) lyricsBrowser.open(
+                        ShieldLauncherActivity.this, nowPlayingManager, current);
+            }
+
             @Override public void onBrowseNowPlayingAlbum() {
                 if (nowPlayingManager == null) return;
                 NowPlayingSnapshot current = nowPlayingManager.state().current();
@@ -333,6 +343,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void showApps() {
         albumBrowser.cancel();
+        lyricsBrowser.cancel();
         currentPage = Page.APPS;
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
@@ -352,6 +363,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void showSettings() {
         albumBrowser.cancel();
+        lyricsBrowser.cancel();
         currentPage = Page.SETTINGS;
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
@@ -901,6 +913,7 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onDestroy() {
         destroyed = true;
         albumBrowser.cancel();
+        lyricsBrowser.destroy();
         ++optionalGeneration;
         if (unsubscribeNowPlaying != null) {
             unsubscribeNowPlaying.run();
@@ -927,6 +940,7 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onPause() {
         resumed = false;
         albumBrowser.cancel();
+        lyricsBrowser.onHostPaused();
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         super.onPause();
     }
