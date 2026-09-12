@@ -76,6 +76,13 @@ public final class StartupPackageCommands {
         };
     }
 
+    public static String parseResumedPackage(String output) {
+        if (output == null) return null;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
+                "(?:mResumedActivity:|topResumedActivity=)[^\\n]*?\\bu\\d+\\s+([A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z0-9_]+)+)/")
+                .matcher(output);
+        return matcher.find() ? matcher.group(1) : null;
+    }
     public static Boolean parseStopped(String output) {
         Matcher matcher = STOPPED.matcher(output == null ? "" : output);
         return matcher.find() ? Boolean.valueOf(matcher.group(1)) : null;

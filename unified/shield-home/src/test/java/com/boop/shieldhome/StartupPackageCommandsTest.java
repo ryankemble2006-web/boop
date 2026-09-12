@@ -25,6 +25,7 @@ public final class StartupPackageCommandsTest {
                 .equals("disabled-user"), "parse disabled-user");
         check(StartupPackageCommands.parseEnabled("User 0: installed=true stopped=false enabled=0")
                 .equals("default"), "parse default");
+        check("com.android.tvlauncher".equals(StartupPackageCommands.parseResumedPackage("mResumedActivity: ActivityRecord{abc u0 com.android.tvlauncher/.MainActivity t1}")), "parse system resumed package");
         check(Boolean.TRUE.equals(StartupPackageCommands.parseStopped(
                 "User 0: installed=true stopped=true enabled=0")), "parse stopped");
         check(StartupPackageCommands.packageProcesses("com.example.app",

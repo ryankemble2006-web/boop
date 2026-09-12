@@ -20,14 +20,14 @@ public final class StartupCleanupStore {
     public LinkedHashSet<String> targets() {
         ArrayList<String> values = new ArrayList<>();
         for (String value : prefs.getStringSet(TARGETS, Set.of())) {
-            if (StartupCleanupPolicy.validPackage(value)) values.add(value);
+            if (StartupPackageController.validPackageName(value)) values.add(value);
         }
         values.sort(String.CASE_INSENSITIVE_ORDER);
         return new LinkedHashSet<>(values);
     }
 
     public boolean setTarget(String packageName, boolean enabled) {
-        if (!StartupCleanupPolicy.validPackage(packageName)) return false;
+        if (!StartupPackageController.validPackageName(packageName)) return false;
         LinkedHashSet<String> next = targets();
         if (enabled) next.add(packageName);
         else next.remove(packageName);

@@ -38,16 +38,16 @@ public final class StartupLocalBridge {
     public String run(Collection<String> requested, boolean allowApproval, Runnable approvalRequired) throws Exception {
         cancelled = false;
         return withAdb(allowApproval, approvalRequired, adb -> {
-            String resumed = StartupCleanupPolicy.parseResumedPackage(
+            String resumed = StartupPackageCommands.parseResumedPackage(
                     checked(adb, StartupCleanupPolicy.resumedActivityCommand()));
-            Integer userId = StartupCleanupPolicy.parseCurrentUser(
-                    checked(adb, StartupCleanupPolicy.currentUserCommand()));
+            Integer userId = StartupPackageCommands.parseCurrentUser(
+                    checked(adb, StartupPackageCommands.currentUser()));
             if (userId == null) throw new IOException("Could not verify the current Shield user.");
 
             List<String> details = new ArrayList<>();
             int stopped = 0, skipped = 0, failed = 0;
             for (String packageName : requested) {
-                if (!eligibleInstalledForCleanStart(packageName)) {
+                if (!manageableInstalled(packageName)) {
                     details.add(packageName + ": no longer eligible");
                     failed++;
                     continue;
@@ -58,10 +58,10 @@ public final class StartupLocalBridge {
                     continue;
                 }
                 try {
-                    checked(adb, StartupCleanupPolicy.forceStopCommand(packageName));
-                    String processes = checked(adb, StartupCleanupPolicy.processSnapshotCommand());
-                    String state = checked(adb, StartupCleanupPolicy.userStateCommand(packageName, userId));
-                    if (!StartupCleanupPolicy.verifiedStopped(packageName, processes, state))
+                    checked(adb, StartupPackageCommands.forceStop(packageName));
+                    String processes = checked(adb, StartupPackageCommands.processSnapshot());
+                    String state = checked(adb, StartupPackageCommands.userState(packageName, userId));
+                    if (!StartupPackageCommands.verifiedStopped(packageName, processes, state))
                         throw new IOException("stop could not be verified");
                     stopped++;
                 } catch (Exception failure) {
@@ -237,6 +237,19 @@ public final class StartupLocalBridge {
         return false;
     }
 
+    private boolean manageableInstalled(String packageName) {
+        if (!StartupPackageController.validPackageName(packageName)) return false;
+        try {
+            ApplicationInfo info = context.getPackageManager().getApplicationInfo(
+                    packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
+            boolean system = (info.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+            StartupPackageState state = new StartupPackageState(packageName, packageName, system,
+                    false, "default", "default", "default", java.util.Set.of());
+            return !StartupRecoveryPolicy.assess(state, AndroidRecoveryCapabilities.resolve(context)).protectedPackage();
+        } catch (PackageManager.NameNotFoundException ignored) {
+            return false;
+        }
+    }
     private boolean eligibleInstalledForPrevention(String packageName) {
         if (!StartupCleanupPolicy.validPackage(packageName)) return false;
         try {
