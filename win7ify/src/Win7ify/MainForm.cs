@@ -1,4 +1,5 @@
 using Boop.Win7ify.Core;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Boop.Win7ify;
@@ -6,262 +7,206 @@ namespace Boop.Win7ify;
 internal sealed class MainForm : Form
 {
     private static readonly Color Cyan = Color.FromArgb(0, 224, 255);
-    private static readonly Color PanelBlack = Color.FromArgb(16, 16, 18);
-
+    private static readonly Color PanelBlack = Color.FromArgb(20, 22, 26);
     private readonly Win7ifyService _service;
     private readonly BackupService _backup;
-    private readonly List<ToggleBinding> _toggles = new();
+    private readonly List<(CheckBox Box, string[] Ids)> _toggles = new();
     private readonly TextBox _log;
-    private readonly Button _applyButton;
-    private readonly Button _restoreButton;
-    private readonly Image? _eyesImage;
+    private readonly Label _status;
+    private readonly Button _apply, _restore, _refresh, _settings;
+    private readonly Image _eyes;
+    private readonly string _logPath;
+    private bool _busy;
 
     public MainForm(Win7ifyService service, BackupService backup)
     {
         _service = service;
         _backup = backup;
-
-        Text = "BOOP // Win7ify";
-        StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(780, 720);
-        Size = new Size(900, 900);
+        _logPath = Path.Combine(Path.GetDirectoryName(backup.BackupPath)!, "logs", $"Win7ify-{DateTime.Now:yyyyMMdd-HHmmss}-{Environment.ProcessId}.log");
+        AutoScaleDimensions = new SizeF(96, 96);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        Font = new Font("Segoe UI", 13f);
+        Text = "BOOP // Win7ify 0.1.1";
         BackColor = Color.Black;
         ForeColor = Color.White;
-        Font = new Font("Segoe UI", 11f);
-        AutoScaleMode = AutoScaleMode.Dpi;
+        MinimumSize = new Size(720, 660);
+        ClientSize = new Size(1080, 850);
+        StartPosition = FormStartPosition.CenterScreen;
+        WindowState = FormWindowState.Maximized;
 
-        var root = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            AutoScroll = true,
-            Padding = new Padding(26),
-            BackColor = Color.Black
-        };
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 5, Padding = new Padding(22), BackColor = Color.Black };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 136));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 160));
 
-        _eyesImage = LoadEyes();
-        if (_eyesImage is not null)
-        {
-            root.Controls.Add(new PictureBox
-            {
-                Image = _eyesImage,
-                SizeMode = PictureBoxSizeMode.Zoom,
-                Size = new Size(360, 180),
-                Margin = new Padding(0, 0, 0, 4)
-            });
-        }
+        var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1 };
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
+        header.Controls.Add(new Label {
+            Text = "BOOP // WIN7IFY 0.1.1\r\nFamiliar Windows habits. Your original settings kept safe.",
+            Dock = DockStyle.Fill, ForeColor = Cyan, Font = new Font("Segoe UI", 19f, FontStyle.Bold),
+            TextAlign = ContentAlignment.MiddleLeft
+        }, 0, 0);
+        _eyes = LoadEyes();
+        header.Controls.Add(new PictureBox { Image = _eyes, SizeMode = PictureBoxSizeMode.Zoom, Dock = DockStyle.Fill }, 1, 0);
+        root.Controls.Add(header, 0, 0);
 
-        root.Controls.Add(MakeLabel("BOOP // WIN7IFY", 28f, FontStyle.Bold, Cyan));
-        root.Controls.Add(MakeLabel("Put the familiar furniture back without replacing Windows.", 12f, FontStyle.Regular, Color.White));
-        root.Controls.Add(MakeLabel(
-            $"{Environment.OSVersion.VersionString}\r\nOriginal settings are saved before Win7ify touches them.",
-            10f,
-            FontStyle.Regular,
-            Color.Silver));
-
-        var options = new FlowLayoutPanel
-        {
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            AutoSize = true,
-            BackColor = PanelBlack,
-            Padding = new Padding(16),
-            Margin = new Padding(0, 18, 0, 14),
-            MinimumSize = new Size(790, 0)
-        };
-
-        AddToggle(options, "Start and taskbar buttons on the left", "taskbar.left");
-        AddToggle(options, "Ask Windows for separate taskbar buttons with labels", "taskbar.nevercombine");
-        AddToggle(options, "Hide Search from the taskbar", "taskbar.search.hide");
-        AddToggle(options, "Hide Task View", "taskbar.taskview.hide");
-        AddToggle(options, "Hide Widgets", "taskbar.widgets.hide");
-        AddToggle(options, "Restore the far-right Show Desktop corner", "taskbar.showdesktop");
-        AddToggle(options, "Open File Explorer to This PC", "explorer.thispc");
-        AddToggle(options, "Show the classic desktop icons",
+        var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = PanelBlack };
+        var choices = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, Padding = new Padding(12) };
+        choices.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        AddToggle(choices, "Start and taskbar buttons on the left", "taskbar.left");
+        AddToggle(choices, "Separate taskbar buttons with labels", "taskbar.nevercombine");
+        AddToggle(choices, "Hide Search from the taskbar", "taskbar.search.hide");
+        AddToggle(choices, "Hide Task View", "taskbar.taskview.hide");
+        AddToggle(choices, "Hide Widgets (Windows may protect this)", "taskbar.widgets.hide");
+        AddToggle(choices, "Restore the far-right Show Desktop corner", "taskbar.showdesktop");
+        AddToggle(choices, "Open File Explorer to This PC", "explorer.thispc");
+        AddToggle(choices, "Show Computer, user files, Network, Control Panel and Recycle Bin",
             "desktop.computer", "desktop.userfiles", "desktop.network", "desktop.controlpanel", "desktop.recyclebin");
-        AddToggle(options, "EXPERIMENTAL: ask for the old full right-click menu", false, "context.classic.experimental");
-        root.Controls.Add(options);
+        AddToggle(choices, "EXPERIMENTAL: old full right-click menu", "context.classic.experimental");
+        scroll.Controls.Add(choices);
+        root.Controls.Add(scroll, 0, 1);
 
-        _applyButton = MakeButton("MAKE WINDOWS 7-ISH", true);
-        _restoreButton = MakeButton("PUT WINDOWS 11 BACK", false);
-        _applyButton.Click += (_, _) => ApplySelected();
-        _restoreButton.Click += (_, _) => RestoreWindows();
+        _apply = MakeButton("MAKE WINDOWS 7-ISH", true);
+        _restore = MakeButton("PUT WINDOWS 11 BACK", false);
+        _refresh = MakeButton("REFRESH DESKTOP...", false);
+        _settings = MakeButton("TASKBAR SETTINGS", false);
+        _apply.Click += async (_, _) => await RunChanges(restore: false);
+        _restore.Click += async (_, _) => await RunChanges(restore: true);
+        _refresh.Click += async (_, _) => await RefreshDesktop();
+        _settings.Click += (_, _) => OpenTaskbarSettings();
+        var buttons = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2, Padding = new Padding(0, 8, 0, 0) };
+        buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        buttons.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        buttons.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        buttons.Controls.Add(_apply, 0, 0);
+        buttons.Controls.Add(_restore, 1, 0);
+        buttons.Controls.Add(_refresh, 0, 1);
+        buttons.Controls.Add(_settings, 1, 1);
+        root.Controls.Add(buttons, 0, 2);
 
-        var buttons = new FlowLayoutPanel
-        {
-            AutoSize = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = true,
-            BackColor = Color.Black,
-            Margin = new Padding(0, 0, 0, 14)
-        };
-        buttons.Controls.Add(_applyButton);
-        buttons.Controls.Add(_restoreButton);
-        root.Controls.Add(buttons);
-
-        root.Controls.Add(MakeLabel(
-            "Windows 11 updates can ignore some old shell settings. Win7ify reports what it actually writes, not what Windows merely promises to draw.",
-            9.5f,
-            FontStyle.Regular,
-            Color.Silver));
-
-        _log = new TextBox
-        {
-            Multiline = true,
-            ReadOnly = true,
-            ScrollBars = ScrollBars.Vertical,
-            Width = 790,
-            Height = 150,
-            BackColor = PanelBlack,
-            ForeColor = Cyan,
-            BorderStyle = BorderStyle.FixedSingle,
-            Font = new Font("Consolas", 9.5f),
-            Margin = new Padding(0, 12, 0, 0)
-        };
-        root.Controls.Add(_log);
-        root.Controls.Add(MakeLabel("No system DLL patches. No hidden installer. One big undo button.", 9f, FontStyle.Regular, Color.Gray));
-
+        _status = new Label { Dock = DockStyle.Fill, ForeColor = Color.White, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 12f, FontStyle.Bold) };
+        root.Controls.Add(_status, 0, 3);
+        _log = new TextBox { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical,
+            BackColor = PanelBlack, ForeColor = Cyan, BorderStyle = BorderStyle.FixedSingle, Font = new Font("Consolas", 11f) };
+        root.Controls.Add(_log, 0, 4);
         Controls.Add(root);
-        FormClosed += (_, _) => _eyesImage?.Dispose();
-
-        WriteLog(_backup.HasBackup
-            ? "A Win7ify backup already exists. The restore button will use that original baseline."
-            : "Ready. Nothing has been changed by this copy of Win7ify yet.");
+        FormClosed += (_, _) => _eyes.Dispose();
+        FormClosing += (_, e) => { if (_busy) { e.Cancel = true; _status.Text = "Please let this operation finish before closing."; } };
+        _status.Text = _backup.HasBackup ? "Original backup found. Undo will use that same baseline." : "Ready. Nothing is changed just by opening this window.";
+        // Startup is read-only. Logs are created only after a user-requested operation.
+        _log.Text = $"Windows build: {Environment.OSVersion.Version}\r\n" +
+            "This is a settings makeover, not a Windows 7 Start-menu replacement.\r\n" +
+            "Already-correct settings are left alone. Blocked settings are named, not forced.\r\n" +
+            "The desktop is refreshed only when you press REFRESH DESKTOP.\r\n";
     }
 
-    private void AddToggle(Control parent, string text, params string[] ids) =>
-        AddToggle(parent, text, ids.All(id => PresetCatalog.Windows7ish.Contains(id)), ids);
-
-    private void AddToggle(Control parent, string text, bool defaultChecked, params string[] ids)
+    private void AddToggle(TableLayoutPanel parent, string text, params string[] ids)
     {
-        var box = new CheckBox
-        {
-            Text = text,
-            Checked = defaultChecked,
-            AutoSize = true,
-            ForeColor = text.StartsWith("EXPERIMENTAL", StringComparison.Ordinal) ? Color.Gold : Color.White,
-            Font = new Font("Segoe UI", 11f, FontStyle.Bold),
-            Margin = new Padding(4, 6, 4, 6),
-            Padding = new Padding(4)
-        };
-        _toggles.Add(new ToggleBinding(box, ids));
-        parent.Controls.Add(box);
+        var experimental = ids.Contains("context.classic.experimental");
+        var box = new CheckBox { Text = text, Checked = ids.All(PresetCatalog.Windows7ish.Contains), Dock = DockStyle.Fill,
+            AutoSize = false, Height = 54, MinimumSize = new Size(0, 54), Padding = new Padding(10, 4, 10, 4),
+            ForeColor = experimental ? Color.Gold : Color.White, BackColor = PanelBlack,
+            Font = new Font("Segoe UI", 13f, FontStyle.Bold), Margin = new Padding(2, 3, 2, 3),
+            AccessibleDescription = text + ". Click anywhere in this row, or use Space, to select." };
+        parent.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        parent.Controls.Add(box, 0, parent.RowCount++);
+        _toggles.Add((box, ids));
     }
 
-    private void ApplySelected()
+    private async Task RunChanges(bool restore)
     {
-        var ids = _toggles
-            .Where(binding => binding.Box.Checked)
-            .SelectMany(binding => binding.TweakIds)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (ids.Length == 0)
-        {
-            WriteLog("Nothing selected, so BOOP left Windows alone.");
-            return;
-        }
-
+        if (_busy) return;
+        if (restore && !_backup.HasBackup) { _status.Text = "There are no BOOP changes to undo yet."; return; }
+        var ids = _toggles.Where(t => t.Box.Checked).SelectMany(t => t.Ids).Distinct().ToArray();
+        if (!restore && ids.Length == 0) { _status.Text = "Nothing selected. Windows was left alone."; return; }
+        if (!restore && ids.Contains("context.classic.experimental") &&
+            MessageBox.Show(this, "The old right-click menu is an unsupported, experimental compatibility tweak. Include it?", "BOOP Win7ify",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
         SetBusy(true);
+        _status.Text = restore ? "Putting the saved settings back..." : "Saving your originals, then applying the selected settings...";
+        WriteLog(restore ? "UNDO requested." : $"APPLY requested: {ids.Length} settings.");
+        IProgress<ChangeResult> progress = new Progress<ChangeResult>(ShowResult);
         try
         {
-            var applied = _service.Apply(ids);
-            WriteLog($"Saved the original values at {_backup.BackupPath}");
-            foreach (var tweak in applied)
-                WriteLog($"Wrote: {tweak.Label}");
-
-            WriteLog("Restarting Explorer so Windows can reread the shell settings...");
-            ExplorerShell.Restart();
-            WriteLog("Explorer restarted. Any ignored legacy setting is a Windows limitation, not reported as success here.");
+            var results = await Task.Run(() => restore ? _service.RestoreAll(progress.Report) : _service.Apply(ids, progress.Report));
+            var changed = results.Count(r => r.Status == ChangeStatus.Changed);
+            var unchanged = results.Count(r => r.Status == ChangeStatus.AlreadyCorrect);
+            var blocked = results.Count(r => r.Status == ChangeStatus.Blocked);
+            var failed = results.Count(r => r.Status == ChangeStatus.Failed);
+            _status.Text = $"{changed} changed | {unchanged} already correct | {blocked} blocked | {failed} not verified.";
+            WriteLog(_status.Text);
+            if (restore) WriteLog(_backup.HasBackup ? "Original backup kept. Some settings still need attention; Undo can be retried." : "All saved values are back. The completed backup has been removed.");
+            else WriteLog($"Original backup kept at {_backup.BackupPath}");
+            if (changed > 0) WriteLog("Press REFRESH DESKTOP when file transfers are finished, or sign out later, to let Windows reread the changes.");
+            WriteLog("A saved registry value does not prove a visible Windows change. No shell replacement is installed.");
         }
         catch (Exception ex)
         {
-            WriteLog($"Stopped safely: {ex.Message}");
-            MessageBox.Show(ex.Message, "BOOP Win7ify", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            _status.Text = "Could not finish. Check the details below; do not delete your backup.";
+            WriteLog($"{ex.GetType().Name}: {ex.Message}");
         }
-        finally
-        {
-            SetBusy(false);
-        }
+        finally { SetBusy(false); }
     }
 
-    private void RestoreWindows()
+    private void ShowResult(ChangeResult result)
     {
-        if (!_backup.HasBackup)
-        {
-            WriteLog("There is no Win7ify backup to restore yet.");
-            return;
-        }
+        var state = result.Status switch { ChangeStatus.Changed => "SAVED", ChangeStatus.AlreadyCorrect => "ALREADY CORRECT", ChangeStatus.Blocked => "BLOCKED", _ => "NOT VERIFIED" };
+        WriteLog($"{state}: {result.Label}. {result.Detail}");
+        if (!result.Succeeded) WriteLog($"Setting: HKCU\\{result.Path} | {result.Name}");
+    }
 
+    private async Task RefreshDesktop()
+    {
+        if (_busy) return;
+        if (MessageBox.Show(this, "Finish all file copying and moving first.\r\n\r\nThis restarts your Windows desktop and taskbar, and may close File Explorer windows. Other applications should stay open.\r\n\r\nRefresh now?",
+            "Refresh desktop", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
         SetBusy(true);
-        try
-        {
-            var count = _service.RestoreAll();
-            WriteLog($"Restored {count} original registry values.");
-            WriteLog("Restarting Explorer...");
-            ExplorerShell.Restart();
-            WriteLog("Original saved Windows settings restored. The backup was removed after the successful restore.");
-        }
-        catch (Exception ex)
-        {
-            WriteLog($"Restore stopped: {ex.Message}");
-            WriteLog("The backup was kept so you can try Restore again.");
-            MessageBox.Show(ex.Message, "BOOP Win7ify", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
-        finally
-        {
-            SetBusy(false);
-        }
+        _status.Text = "Refreshing the Windows desktop...";
+        try { await Task.Run(ExplorerShell.Restart); _status.Text = "Desktop restarted. Check which changes Windows displayed."; WriteLog(_status.Text); }
+        catch (Exception ex) { _status.Text = "Desktop refresh did not finish. Sign out later to reload the settings."; WriteLog(ex.Message); }
+        finally { SetBusy(false); }
+    }
+
+    private void OpenTaskbarSettings()
+    {
+        try { Process.Start(new ProcessStartInfo("ms-settings:taskbar") { UseShellExecute = true }); }
+        catch (Exception ex) { _status.Text = "Open Windows Settings > Personalisation > Taskbar."; WriteLog(ex.Message); }
     }
 
     private void SetBusy(bool busy)
     {
-        _applyButton.Enabled = !busy;
-        _restoreButton.Enabled = !busy;
+        _busy = busy;
+        _apply.Enabled = _restore.Enabled = _refresh.Enabled = _settings.Enabled = !busy;
+        foreach (var t in _toggles) t.Box.Enabled = !busy;
         UseWaitCursor = busy;
     }
-
-    private void WriteLog(string message) =>
-        _log.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
-
-    private static Label MakeLabel(string text, float size, FontStyle style, Color color) => new()
+    private void WriteLog(string message)
     {
-        Text = text,
-        AutoSize = true,
-        MaximumSize = new Size(790, 0),
-        ForeColor = color,
-        Font = new Font("Segoe UI", size, style),
-        Margin = new Padding(0, 2, 0, 6)
-    };
-
+        var line = $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}";
+        _log.AppendText(line);
+        try { Directory.CreateDirectory(Path.GetDirectoryName(_logPath)!); File.AppendAllText(_logPath, line); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { _log.AppendText("Could not save the log file. Details remain in this window.\r\n"); }
+    }
     private static Button MakeButton(string text, bool primary)
     {
-        var button = new Button
-        {
-            Text = text,
-            Width = primary ? 360 : 330,
-            Height = 62,
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font("Segoe UI", 12f, FontStyle.Bold),
-            BackColor = primary ? Cyan : Color.Black,
-            ForeColor = primary ? Color.Black : Cyan,
-            Margin = new Padding(0, 4, 18, 4)
-        };
+        var button = new Button { Text = text, Dock = DockStyle.Fill, FlatStyle = FlatStyle.Flat,
+            UseVisualStyleBackColor = false, Font = new Font("Segoe UI", 13f, FontStyle.Bold),
+            BackColor = primary ? Cyan : Color.FromArgb(36, 43, 50), ForeColor = primary ? Color.Black : Color.White,
+            Margin = new Padding(5), MinimumSize = new Size(0, 48) };
         button.FlatAppearance.BorderColor = Cyan;
         button.FlatAppearance.BorderSize = 2;
         return button;
     }
-
-    private static Image? LoadEyes()
+    private static Image LoadEyes()
     {
-        var assembly = Assembly.GetExecutingAssembly();
-        const string resource = "Boop.Win7ify.Assets.boopApprovedEyes.png";
-        using var stream = assembly.GetManifestResourceStream(resource);
-        if (stream is null) return null;
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Boop.Win7ify.Assets.boopApprovedEyes.png")
+            ?? throw new InvalidDataException("The approved BOOP eyes were not included in this build.");
         using var source = Image.FromStream(stream);
         return new Bitmap(source);
     }
-
-    private sealed record ToggleBinding(CheckBox Box, string[] TweakIds);
 }

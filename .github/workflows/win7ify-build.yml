@@ -19,6 +19,7 @@ concurrency:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -56,6 +57,37 @@ jobs:
             -p:DebugSymbols=false `
             -o publish/win-x64
 
+      - name: Non-visual launch smoke (no settings applied)
+        shell: pwsh
+        run: |
+          $p = Start-Process (Resolve-Path publish/win-x64/Win7ify.exe) -PassThru
+          try {
+            if (-not $p.WaitForInputIdle(20000)) { throw 'App did not reach an input-ready state' }
+            Start-Sleep -Seconds 2
+            $p.Refresh()
+            if ($p.HasExited -or $p.MainWindowHandle -eq 0) { throw 'App did not remain open' }
+            if (-not $p.CloseMainWindow()) { throw 'App did not accept a normal close' }
+            if (-not $p.WaitForExit(10000)) { throw 'App did not exit cleanly' }
+            if ($p.ExitCode -ne 0) { throw "App exited with code $($p.ExitCode)" }
+            Write-Host 'Launch and close passed. No appearance judgement and no Apply/Restore clicked.'
+          } finally {
+            if (-not $p.HasExited) { Stop-Process -Id $p.Id }
+          }
+
+      - name: Publish portable test harness
+        shell: pwsh
+        run: |
+          dotnet publish win7ify/tests/Win7ify.Tests/Win7ify.Tests.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o publish/checks
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload non-visual test harness
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Win7ify-checks-v0.1.1
+          path: publish/checks/Win7ify.Tests.exe
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Write SHA-256 receipt
         shell: pwsh
         run: |
@@ -66,7 +98,7 @@ jobs:
       - name: Upload portable EXE
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Win7ify-v0.1-win-x64
+          name: BOOP-Win7ify-v0.1.1-win-x64
           path: |
             publish/win-x64/Win7ify.exe
             publish/win-x64/Win7ify.sha256.txt

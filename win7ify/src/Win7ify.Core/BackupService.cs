@@ -6,14 +6,15 @@ public sealed class BackupService
 {
     private readonly IRegistryStore _registry;
     private readonly string _backupPath;
+    private readonly IReadOnlyList<TweakDefinition>? _allowed;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-    public BackupService(IRegistryStore registry, string backupPath)
+    public BackupService(IRegistryStore registry, string backupPath, IReadOnlyList<TweakDefinition>? allowed = null)
     {
         _registry = registry;
         _backupPath = backupPath;
+        _allowed = allowed;
     }
-
     public string BackupPath => _backupPath;
     public bool HasBackup => File.Exists(_backupPath);
 
@@ -21,47 +22,100 @@ public sealed class BackupService
     {
         var document = Load() ?? new BackupDocument();
         var changed = false;
-
         foreach (var tweak in tweaks)
         {
-            if (document.Entries.Any(entry => SameValue(entry, tweak.Path, tweak.Name)))
-                continue;
-
+            if (document.Entries.Any(e => SameValue(e, tweak.Path, tweak.Name))) continue;
             document.Entries.Add(new BackupEntry(tweak.Path, tweak.Name, _registry.Read(tweak.Path, tweak.Name)));
             changed = true;
         }
-
-        if (!changed) return;
-        var directory = Path.GetDirectoryName(_backupPath);
-        if (!string.IsNullOrWhiteSpace(directory)) Directory.CreateDirectory(directory);
-        File.WriteAllText(_backupPath, JsonSerializer.Serialize(document, JsonOptions));
+        Validate(document);
+        if (changed) SaveAtomically(document);
     }
 
-    public int RestoreAll()
+    public IReadOnlyList<ChangeResult> RestoreAll(Action<ChangeResult>? progress = null)
     {
         var document = Load();
-        if (document is null) return 0;
-
+        if (document is null) return Array.Empty<ChangeResult>();
+        var results = new List<ChangeResult>();
         foreach (var entry in document.Entries)
         {
-            if (entry.Value.Exists)
-                _registry.Write(entry.Path, entry.Name, entry.Value);
-            else
-            {
-                _registry.Delete(entry.Path, entry.Name);
-                _registry.DeleteKeyIfEmpty(entry.Path);
-            }
+            var label = _allowed?.FirstOrDefault(t => SameValue(entry, t.Path, t.Name))?.Label ?? entry.Name;
+            var result = RegistryChange.Execute(_registry, label, entry.Path, entry.Name, entry.Value);
+            results.Add(result);
+            progress?.Invoke(result);
         }
+        // A denied or unverified restore must never destroy the original recovery baseline.
+        if (results.All(r => r.Succeeded)) File.Delete(_backupPath);
+        return results;
+    }
 
-        File.Delete(_backupPath);
-        return document.Entries.Count;
+    private void SaveAtomically(BackupDocument document)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(_backupPath))!;
+        Directory.CreateDirectory(directory);
+        var temp = Path.Combine(directory, $".backup-{Guid.NewGuid():N}.tmp");
+        try
+        {
+            using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+                4096, FileOptions.WriteThrough))
+            {
+                JsonSerializer.Serialize(stream, document, JsonOptions);
+                stream.Flush(flushToDisk: true);
+            }
+            if (File.Exists(_backupPath)) File.Replace(temp, _backupPath, null);
+            else File.Move(temp, _backupPath);
+        }
+        finally
+        {
+            // Failure must leave the old backup intact, never replace it with a partial JSON file.
+            if (File.Exists(temp)) File.Delete(temp);
+        }
     }
 
     private BackupDocument? Load()
     {
         if (!File.Exists(_backupPath)) return null;
-        return JsonSerializer.Deserialize<BackupDocument>(File.ReadAllText(_backupPath), JsonOptions)
-            ?? throw new InvalidDataException("Win7ify backup file is empty or invalid.");
+        if (new FileInfo(_backupPath).Length > 2_000_000)
+            throw new InvalidDataException("The backup is unexpectedly large. Kept untouched; no settings written.");
+        BackupDocument document;
+        try
+        {
+            document = JsonSerializer.Deserialize<BackupDocument>(File.ReadAllText(_backupPath), JsonOptions)
+                ?? throw new InvalidDataException("The backup is empty. Kept untouched; no settings written.");
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException("The backup could not be read. Kept untouched; no settings written.", ex);
+        }
+        Validate(document);
+        return document;
+    }
+
+    private void Validate(BackupDocument document)
+    {
+        if (document.Version != 1 || document.Entries is null || document.Entries.Count > 100)
+            throw new InvalidDataException("This backup format is not supported. Kept untouched; no settings written.");
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in document.Entries)
+        {
+            if (entry is null || string.IsNullOrWhiteSpace(entry.Path) || entry.Name is null || entry.Value is null ||
+                !seen.Add(entry.Path + "\0" + entry.Name))
+                throw new InvalidDataException("The backup contains an invalid or duplicate entry. Nothing written.");
+            if (_allowed is not null && !_allowed.Any(t => SameValue(entry, t.Path, t.Name)))
+                throw new InvalidDataException("The backup names a setting outside Win7ify. Nothing written.");
+            if (entry.Value.Exists)
+            {
+                if (entry.Value.Kind is null || !Enum.IsDefined(entry.Value.Kind.Value))
+                    throw new InvalidDataException("The backup has an unknown value type. Nothing written.");
+                if (entry.Value.Kind is RegistryDataKind.DWord && (entry.Value.Number is null || entry.Value.Number < int.MinValue || entry.Value.Number > int.MaxValue))
+                    throw new InvalidDataException("The backup has an invalid number. Nothing written.");
+                if (entry.Value.Kind is RegistryDataKind.QWord && entry.Value.Number is null ||
+                    entry.Value.Kind is RegistryDataKind.String or RegistryDataKind.ExpandString && entry.Value.Text is null ||
+                    entry.Value.Kind is RegistryDataKind.Binary && entry.Value.Bytes is null ||
+                    entry.Value.Kind is RegistryDataKind.MultiString && (entry.Value.MultiText is null || entry.Value.MultiText.Any(s => s is null)))
+                    throw new InvalidDataException("The backup has incomplete data. Nothing written.");
+            }
+        }
     }
 
     private static bool SameValue(BackupEntry entry, string path, string name) =>
@@ -74,6 +128,5 @@ public sealed class BackupService
         public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
         public List<BackupEntry> Entries { get; set; } = new();
     }
-
     public sealed record BackupEntry(string Path, string Name, RegistryStoredValue Value);
 }

@@ -8,7 +8,7 @@
     <LangVersion>14.0</LangVersion>
     <AssemblyName>Win7ify</AssemblyName>
     <RootNamespace>Boop.Win7ify</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
   <ItemGroup>

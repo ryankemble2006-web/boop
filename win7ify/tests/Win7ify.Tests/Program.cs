@@ -8,6 +8,13 @@ var tests = new (string Name, Action Run)[]
     ("restore skips unchanged protected value", PermissionRegressionTests.RestoreSkipsUnchangedProtectedValue),
     ("restore continues after blocked value", PermissionRegressionTests.RestoreContinuesAfterBlockedValue),
     ("unknown backup version blocks writes", PermissionRegressionTests.UnknownBackupVersionCannotWrite),
+    ("blocked result identifies exact setting", ResultAndRegistryTests.BlockedResultNamesExactSetting),
+    ("unchanged value is not reported written", ResultAndRegistryTests.UnchangedIsNotReportedAsWritten),
+    ("ignored write cannot report success", ResultAndRegistryTests.IgnoredWriteIsNotSuccess),
+    ("partial restore retry keeps first baseline", ResultAndRegistryTests.RetryRestoreKeepsFirstBaseline),
+    ("backup cannot escape setting allowlist", ResultAndRegistryTests.InvalidBackupPathCannotEscapeAllowlist),
+    ("corrupt backup stops before write", ResultAndRegistryTests.CorruptBackupStopsBeforeWrite),
+    ("real Windows registry typed apply and restore", ResultAndRegistryTests.RealWindowsRegistryRoundTrip),
     ("apply backs up original before writing", ApplyBacksUpOriginal),
     ("second apply keeps first baseline", SecondApplyKeepsBaseline),
     ("restore removes originally missing value", RestoreRemovesOriginallyMissing),
@@ -34,6 +41,7 @@ foreach (var test in tests)
     }
 }
 
+Console.WriteLine($"TOTAL: {tests.Length} tests, {failures} failures.");
 return failures == 0 ? 0 : 1;
 
 static void ApplyBacksUpOriginal()

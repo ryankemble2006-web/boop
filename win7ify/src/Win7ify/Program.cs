@@ -8,6 +8,8 @@ internal static class Program
     private static void Main()
     {
         ApplicationConfiguration.Initialize();
+        using var single = new Mutex(true, @"Local\BOOP.Win7ify", out var first);
+        if (!first) { MessageBox.Show("BOOP Win7ify is already open. Use that window first.", "BOOP Win7ify"); return; }
 
         if (!OperatingSystem.IsWindows())
         {
@@ -26,7 +28,7 @@ internal static class Program
             "backup-v1.json");
 
         var registry = new WindowsRegistryStore();
-        var backup = new BackupService(registry, backupPath);
+        var backup = new BackupService(registry, backupPath, TweakCatalog.All);
         var service = new Win7ifyService(registry, backup, TweakCatalog.All);
 
         Application.Run(new MainForm(service, backup));
