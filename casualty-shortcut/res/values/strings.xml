@@ -1,0 +1,3 @@
+<resources>
+    <string name="helper_description">After you launch Casualty, this helper can select the existing iPlayer profile and newest episode, click an exact Skip trailer control once if it appears, and restore episode focus when playback returns. It does not intercept remote keys, record screen contents, change settings, or send data anywhere. Turn it off here at any time.</string>
+</resources>
