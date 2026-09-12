@@ -1,4 +1,32 @@
-# Canonical eye library verification — 2026-09-10
+# Canonical eye library verification
+
+## v11 icons: interrupted-session recovery, 2026-09-12
+
+Branch: `animation-lab-icons-v11`. Built source:
+`64d82eb2fc48d5ce85342a2afcc60a56eafa7bc9`. Signed Actions run 34678462196
+succeeded; artifact 10292949278, `BOOP-Canonical-Eye-Lab-v11`.
+APK: `BOOP-Animation-Lab-v11.apk`; package `com.boop.animationlab`;
+versionCode 11, versionName `0.11-felt-grip-icons`.
+SHA-256: `3308c5e32bca07dea0b8f3f8511fa3b2449d99e67cc0304bd87f8f4d024430c1`.
+Recovery downloaded this artifact and pulled the already-installed Shield APK:
+both hashes match exactly. No rebuild, reinstallation or downgrade occurred.
+Local apksigner verification confirmed the existing permanent signer:
+`f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+ZIP integrity and exact approved eye/hand hashes passed. Resource dimensions are
+512x512 (icon) and 320x180 (banner). AAPT resolves both for application/launchable
+entry and reports no permissions.
+Recovered CI logs show 30,636 eye timing/state checks and 53,508 sign checks
+passed, plus package/signer/archive checks. These were not rerun as visual tests.
+Reviewed icon patch changes only manifest, prepare.py launcher-resource creation
+and build.sh resource packaging/checks. Diff against its parent confirms animation
+Java, runtime assets/shaders and catalogue are unchanged.
+Physical Shield: cold launch returned Status ok (650 ms); the lab rendered.
+Back/Home returned to the launcher. Manual screenshots show the square icon in
+Apps and wide banner in Favourite apps; the latter was left visible.
+Unified v143 version/name/update timestamp stayed unchanged. No permissions or
+other packages were modified, and newer animation-owner work was not merged.
+Evidence remains private under `animation-work/lab-icons-20260912-resume/`.
+This is a scoped icon/launch check, not all-animation/soak/user-appearance acceptance.
 
 ## v10 closed fingers
 

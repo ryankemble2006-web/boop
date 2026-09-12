@@ -1,4 +1,26 @@
-# BOOP animation workshop handoff — 2026-09-10
+# BOOP Animation Lab icon handoff - 2026-09-12
+
+## Current: icon-only v11 verified on the physical Shield
+
+Task branch/worktree: `animation-lab-icons-v11` / `.worktrees/animation-lab-icons-v11`.
+Built source: `64d82eb2fc48d5ce85342a2afcc60a56eafa7bc9`; package
+`com.boop.animationlab`, versionCode 11, `0.11-felt-grip-icons`.
+Actions 34678462196 succeeded; artifact 10292949278. The interrupted session
+already installed this exact APK. Recovery pulled it from the Shield and
+matched its SHA-256 to the signed artifact; no rebuild or reinstall was needed.
+Square BOOP eyes icon is visible in Apps; wide eyes banner is visible in
+Favourite apps. Cold launch completed successfully, followed by Back/Home.
+The Shield was left on Home with the Animation Lab banner visible.
+Animation Java, shaders/assets and catalogue are unchanged by the icon patch.
+Unified v143 and the later separately owned animation branch were left intact.
+Existing signer, locked eye/hand masters and package identity were verified.
+No permissions, signing, animation code or app installation changed in recovery.
+See `animation-lab/canonical-eyes/VERIFICATION.md` for exact receipts and limits.
+Private evidence remains under `animation-work/lab-icons-20260912-resume/`.
+Next: user appearance review only; do not repeat the build/install or merge
+unrelated animation work merely because the chat interrupted.
+
+## Historical workshop records (not the icon task's current status)
 
 ## Active: closed notification grip, lab v10
 

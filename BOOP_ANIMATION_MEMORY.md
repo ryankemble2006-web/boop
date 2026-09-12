@@ -1,4 +1,20 @@
-# Animation memory — 2026-09-10
+# Animation memory - 2026-09-12
+
+## Current icon-only task (separate from animation development)
+
+The Shield Animation Lab is `com.boop.animationlab`, not Unified `com.boop.alpha1`.
+`animation-lab-icons-v11` at built source `64d82eb2fc48d5ce85342a2afcc60a56eafa7bc9`
+adds square/wide BOOP eyes launcher resources plus manifest/build packaging only.
+Preserve the exact animation Java, shaders, catalogue, eye and hand masters.
+The interrupted run had already built and installed v11 `0.11-felt-grip-icons`.
+Recovery verified the installed APK byte-for-byte against signed Actions
+34678462196 / artifact 10292949278 and observed both icons on the physical Shield.
+Cold launch and Back/Home passed; no rebuild/reinstall or new animation acceptance.
+Unified v143 and later `animation-idle-blink-cleanup` work were not changed/merged.
+Use the icon-branch handoff and VERIFICATION.md rather than the older v10 notes.
+Screenshots, pulled APK and diagnostic receipts are private/local only.
+
+## Historical animation memory
 
 Latest continuation: v10 closes the finger spacing and shortens their projected
 reach. Keep one right-hand knuckle line instead of following the arrow slope
