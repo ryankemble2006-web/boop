@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: boop-win7ify-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
@@ -27,6 +31,14 @@ jobs:
 
       - name: Show SDK
         run: dotnet --info
+
+      - name: Verify approved BOOP eyes
+        shell: pwsh
+        run: |
+          $expected = 'ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22'
+          $actual = (Get-FileHash win7ify/src/Win7ify/Assets/boopApprovedEyes.png -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Approved BOOP eye asset changed: $actual" }
+          Write-Host "Approved BOOP eyes verified: $actual"
 
       - name: Run Win7ify core tests
         run: dotnet run --project win7ify/tests/Win7ify.Tests/Win7ify.Tests.csproj -c Release
