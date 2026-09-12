@@ -65,7 +65,6 @@ public sealed class OpenShellSession
             }
             else
             {
-                // Recover an interrupted installer only at our exclusive location and pinned version.
                 state.Owned = true;
                 state.InstallPending = false;
                 Save(state);
@@ -99,6 +98,21 @@ public sealed class OpenShellSession
         var state = Load();
         if (state is null) { progress?.Invoke(new("BOOP OK", "No BOOP menu installation to undo. Existing software was left alone.")); return; }
         if (state.Phase == "done") { Cleanup(); return; }
+        if (!state.SnapshotReady)
+        {
+            // Setup never reached any installer, process-stop or settings-write stage.
+            state.Phase = "done"; Save(state); Cleanup();
+            progress?.Invoke(new("BOOP OK", "The unfinished preparation was cleared. No menu had been changed."));
+            return;
+        }
+        // Validate the whole existing baseline BEFORE stopping a working menu.
+        // With an empty selection EnsureBackedUp only loads/validates; it writes nothing.
+        var backup = new BackupService(_registry, Profile, OpenShellProfile.All);
+        if (!backup.HasBackup)
+            throw new ShellProblem("BOOP E214", "The original menu backup is missing. The running menu and installation were left alone.");
+        try { backup.EnsureBackedUp(Array.Empty<TweakDefinition>()); }
+        catch (IOException ex)
+        { throw new ShellProblem("BOOP E214", "The original menu backup could not be validated. The running menu was left alone; recovery data is kept.", ex); }
         var info = _host.Inspect();
         var owned = !state.Preexisting && (state.Owned || state.InstallPending);
         if (owned && info.Installed && (!info.OwnedLocation || info.Version != OpenShellPayload.Version))
@@ -106,17 +120,11 @@ public sealed class OpenShellSession
         if (info.Installed) await _host.StopAsync();
         state.Phase = "restoring";
         Save(state);
-        if (state.SnapshotReady)
-        {
-            var backup = new BackupService(_registry, Profile, OpenShellProfile.All);
-            if (!backup.HasBackup)
-                throw new ShellProblem("BOOP E214", "The original menu backup is missing. The installation was not removed.");
-            var results = backup.RestoreAll(keepBackup: true);
-            foreach (var result in results)
-                progress?.Invoke(new("BOOP S250", result.Label, result.Status + ": " + result.Detail));
-            if (results.Any(r => !r.Succeeded))
-                throw new ShellProblem("BOOP E251", "Some original menu preferences could not be restored. The complete backup is kept for retry.");
-        }
+        var results = backup.RestoreAll(keepBackup: true);
+        foreach (var result in results)
+            progress?.Invoke(new("BOOP S250", result.Label, result.Status + ": " + result.Detail));
+        if (results.Any(r => !r.Succeeded))
+            throw new ShellProblem("BOOP E251", "Some original menu preferences could not be restored. The complete backup is kept for retry.");
         state.Phase = "restored";
         Save(state);
         if (owned && info.Installed)
@@ -150,7 +158,9 @@ public sealed class OpenShellSession
             var state = JsonSerializer.Deserialize<JournalState>(File.ReadAllText(Journal), Json);
             if (state is null || state.Schema != 1 || state.Release != OpenShellPayload.Version ||
                 state.Phase is not ("prepared" or "configured" or "active" or "restoring" or "restored" or "done") ||
-                state.Preexisting && (state.Owned || state.InstallPending)) throw new InvalidDataException();
+                state.Preexisting && (state.Owned || state.InstallPending) ||
+                !state.SnapshotReady && (state.Owned || state.InstallPending || state.Phase is "active" or "configured"))
+                throw new InvalidDataException();
             return state;
         }
         catch (Exception ex) when (ex is JsonException or IOException)

@@ -48,6 +48,9 @@ jobs:
       - name: Real installer and recovery integration cycle
         shell: pwsh
         run: ./win7ify/tools/Test-Integration.ps1 -Exe publish/win-x64/Win7ify.exe
+      - name: Normal Explorer-hook runtime probe when a taskbar is available
+        shell: pwsh
+        run: ./win7ify/tools/Test-HookedMenu.ps1 -Exe publish/win-x64/Win7ify.exe
       - name: Package verified EXE and receipt
         shell: pwsh
         run: |
@@ -55,7 +58,8 @@ jobs:
           "$hash  Win7ify.exe" | Set-Content publish/win-x64/Win7ify.sha256.txt
           Copy-Item win7ify/THIRD_PARTY_NOTICES.txt publish/win-x64/
           Copy-Item win7ify/README.md publish/win-x64/
-          "Built from $env:GITHUB_SHA; run $env:GITHUB_RUN_ID. Installer/profile/standalone-menu/uninstall checks passed. Yoga Explorer-hook and appearance acceptance remain unverified." | Set-Content publish/win-x64/BUILD-RECEIPT.txt
+          Copy-Item integration-receipts/explorer-hook.txt publish/win-x64/EXPLORER-HOOK-CHECK.txt
+          "Built from $env:GITHUB_SHA; run $env:GITHUB_RUN_ID. Installer/profile/standalone-menu/uninstall checks passed. See EXPLORER-HOOK-CHECK.txt for the actual hosted-desktop probe result. Yoga and appearance acceptance remain unverified." | Set-Content publish/win-x64/BUILD-RECEIPT.txt
       - uses: actions/upload-artifact@v4
         with:
           name: BOOP-Win7ify-v0.2.0-win-x64
