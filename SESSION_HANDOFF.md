@@ -44,3 +44,10 @@ Only generated side effects in this owned worktree were restored after build.
 
 Next: permanent signed CI, verify artifact, install on both authorized devices,
 then physical launch/feature checks and final handoff. No acceptance claim yet.
+
+## CI provenance correction
+
+First run 34682994462 stopped before compilation because the condensed new
+SOURCE_HEADS.md omitted the original three Unified provenance hashes. The
+original provenance section is restored alongside the new integration inputs.
+The existing assertion now passes. No app-code or test weakening was involved.
