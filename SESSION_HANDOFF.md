@@ -1,3 +1,16 @@
+# BOOP Launcher v1: signed standalone candidate
+
+Updated 2026-09-12. Owner `boop-shield-launcher-standalone`; project `shield-launcher/`.
+Package `com.boop.shieldlauncher`, version `1 / 1.0.0-launcher-tools`.
+Signed source `72dde252f4f73487d9b99af52ea189777822a795`; Actions run `34684440925`
+succeeded, artifact `10295068406` (BOOP-Launcher), 7,250,154-byte APK.
+SHA256 `5293f65d53299bf49b45c10911693f1e3b97c6effd1a87a3734c2ee88037bb7b`.
+Permanent signature, downloaded package/version/hash, actual APK dependency closure,
+Android build and focused startup/defaults/close tests verified. No physical install
+or acceptance on the other Shield. Failed integration work was not imported.
+Read docs/verification/2026-09-12-shield-launcher-v1.md for the full receipt and limits.
+Shared main product exception published at `af0db837bf9dde26d16c632fe75d8b5bca1f7fc0`.
+
 # BOOP Launcher standalone handoff
 
 Updated 2026-09-12. Owner: `boop-shield-launcher-standalone`.
@@ -49,8 +62,15 @@ No physical device install, permission/role grant, package action, Apply/Undo or
 media action has been performed. Real second-Shield setup/launch/remote/close/
 reboot and visual acceptance remain pending.
 
-## Next receipt
+## Final signed receipt and next safe step
 
-Publish the reviewed source, verify the signed CI artifact and record exact
-run/artifact/source/hash/signer, then publish documentation receipts and verify
-live GitHub HEAD. Shared main needs the explicit standalone product exception.
+Build source `72dde252f4f73487d9b99af52ea189777822a795`; run `34684440925`
+completed successfully; artifact `10295068406`. The signed APK is 7,250,154 bytes,
+SHA256 `5293f65d53299bf49b45c10911693f1e3b97c6effd1a87a3734c2ee88037bb7b`.
+Independent downloaded apksigner/aapt/hash/ZIP/DEX checks passed. Permanent signer
+unchanged. Full receipt: docs/verification/2026-09-12-shield-launcher-v1.md.
+Shared main owns the explicit standalone exception at `af0db837` and preserves
+the separately delivered v146 combined app. No changes to either installed app.
+Next safe step is user-authorized installation/setup on the other Shield and
+physical launcher/media/local-tools/recovery checks. Do not auto-grant access or
+apply the default preset. Keep this source branch separate from Unified.

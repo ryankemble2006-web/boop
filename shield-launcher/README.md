@@ -1,5 +1,8 @@
 # BOOP Launcher
 
+Current signed candidate: v1, source 72dde252, run 34684440925, artifact 10295068406.
+See ../docs/verification/2026-09-12-shield-launcher-v1.md for hashes and test limits.
+
 A standalone Nvidia Shield Home app with the existing BOOP launcher and advanced
 tools. Package com.boop.shieldlauncher is separate from Unified and older Home.
 
