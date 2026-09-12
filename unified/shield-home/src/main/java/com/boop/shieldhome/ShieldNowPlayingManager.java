@@ -2,6 +2,7 @@ package com.boop.shieldhome;
 
 import android.app.Activity;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
@@ -47,6 +48,7 @@ public final class ShieldNowPlayingManager {
     private final NowPlayingState state = new NowPlayingState();
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
     private final LinkedHashMap<String, Bitmap> notificationArtwork = new LinkedHashMap<>();
+    private final LinkedHashMap<String, PendingIntent> notificationContentIntents = new LinkedHashMap<>();
     private final NowPlayingArtworkResolver artworkResolver;
 
     private final MediaSessionManager.OnActiveSessionsChangedListener activeSessionsChanged =
@@ -306,6 +308,24 @@ public final class ShieldNowPlayingManager {
         } catch (ActivityNotFoundException | SecurityException unavailable) {
             return false;
         }
+    }
+
+    void onNotificationContentIntent(String packageName, PendingIntent contentIntent) {
+        if (packageName == null || packageName.trim().isEmpty()) return;
+        String key = packageName.trim();
+        runOnMain(() -> {
+            if (contentIntent == null) notificationContentIntents.remove(key);
+            else notificationContentIntents.put(key, contentIntent);
+        });
+    }
+
+    boolean openNotificationSource() {
+        if (Looper.myLooper() != Looper.getMainLooper()) return false;
+        NowPlayingSnapshot snapshot = state.current();
+        PendingIntent intent = snapshot == null ? null : notificationContentIntents.get(snapshot.packageName());
+        if (intent == null) return false;
+        try { intent.send(); return true; }
+        catch (PendingIntent.CanceledException unavailable) { notificationContentIntents.remove(snapshot.packageName()); return false; }
     }
 
     /** Stores only artwork extracted from a media notification. No text enters this manager. */
