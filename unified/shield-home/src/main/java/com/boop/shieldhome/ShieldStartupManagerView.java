@@ -131,7 +131,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
             StartupManagerUiModel.Mode mode,StartupRecoveryPolicy.RecoveryCapabilities caps,
             String focusPackage,int focusAction,Callbacks callbacks) {
         int section=mode==StartupManagerUiModel.Mode.BOOT_CLEAN?2:mode==StartupManagerUiModel.Mode.BACKGROUND?3:1;
-        frame("Package Control",modeSubtitle(mode)+"   ?   "+rows.size()+" shown",section,callbacks);
+        frame("Package Control",modeSubtitle(mode)+"   \u2022   "+rows.size()+" shown",section,callbacks);
         LinearLayout chips=row(); List<TextView> filters=new ArrayList<>();
         for(StartupManagerUiModel.Filter option:StartupManagerUiModel.Filter.values()) {
             TextView chip=button(filterName(option),"startup:filter:"+option,()->callbacks.onFilter(option));
@@ -171,7 +171,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
             for(int a=0;a<4;a++) {
                 TextView control=button(labels[a],tag(state,a+1),(locked && (a!=0 || !StartupManagerUiModel.canUsePrimary(state,caps)))?guard:actions[a]);
                 control.setGravity(Gravity.CENTER); control.setTextSize(13);
-                if(a==2) control.setText("BG: "+(bg?"ON":"OFF"));
+                if(a==2) control.setText("Background\n"+(bg?"ON":"OFF"));
                 if(locked) control.setTextColor(MUTED);
                 weighted(strip,control); if(a<3)hspace(strip,6); controls.add(control);
             }
@@ -185,7 +185,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
             }
             matrix.add(controls); list.addView(card,new LayoutParams(LayoutParams.MATCH_PARENT,dp(102))); space(list,8);
         }
-        if(rows.isEmpty()) list.addView(caption(busy?"Reading installed packages?":"No packages match this filter.",17));
+        if(rows.isEmpty()) list.addView(caption(busy?"Reading installed packages...":"No packages match this filter.",17));
         space(body,10); LinearLayout utilities=row();
         TextView back=button("Back","startup:packages:back",callbacks::onBack);
         TextView refresh=button("Refresh","startup:packages:refresh",callbacks::onRefresh);
@@ -204,7 +204,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
     }
     private void showDetail(StartupPackageState state,StartupRecoveryPolicy.Assessment risk) {
         detail.setText(state.label()+"\n\n"+state.packageName()+"\n\n"
-                +(StartupManagerUiModel.isDisabled(state)?"DISABLED":"ENABLED")+"  ?  "+(state.systemApp()?"System app":"User app")
+                +(StartupManagerUiModel.isDisabled(state)?"DISABLED":"ENABLED")+"  \u2022  "+(state.systemApp()?"System app":"User app")
                 +"\n"+(risk.protectedPackage()?"Protected for recovery":risk.impact()==StartupRecoveryPolicy.Impact.HIGH?"High impact":risk.impact()==StartupRecoveryPolicy.Impact.MEDIUM?"Changes a system feature":"User-controlled app")
                 +"\n\n"+(risk.protectedPackage()?risk.protectionReason():state.launcher()?"Provides a Home screen. Disabling it changes the stock Home experience.":"Disable, close after boot, limit background start, or stop this app.")
                 +"\n\nBOOP rules:\n"+actionSummary(state.managedActions()));
@@ -218,7 +218,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         for(StartupRestoreRecord record:records) {
             String pkg=record.packageName(); ids.add(pkg); LinearLayout card=row();
             String time=new SimpleDateFormat("dd MMM, HH:mm",Locale.getDefault()).format(new Date(record.firstChangedAtMillis()));
-            TextView select=button((selected.contains(pkg)?"?  ":"?  ")+packageLabels.getOrDefault(pkg,pkg)+"\n"+pkg+"  ?  "+time,
+            TextView select=button((selected.contains(pkg)?"\u2713  ":"\u25cb  ")+packageLabels.getOrDefault(pkg,pkg)+"\n"+pkg+"  \u2022  "+time,
                     "startup:restore:"+pkg+":0",()->callbacks.onToggleRestoreSelection(pkg,!selected.contains(pkg)));
             secondLine(select); select.setMaxLines(2); select.setEllipsize(TextUtils.TruncateAt.END);
             TextView now=button("Restore","startup:restore:"+pkg+":1",()->callbacks.onRestoreOne(pkg));
@@ -299,7 +299,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
     private String modeSubtitle(StartupManagerUiModel.Mode mode){return switch(mode){case DISABLE->"Installed apps, including hidden system packages";case BOOT_CLEAN->"Close chosen packages once after startup";case BACKGROUND->"Limit background start, without disabling the app";};}
     private String actionSummary(Set<StartupRecoveryPolicy.ManagedAction> actions){
         if(actions==null||actions.isEmpty())return "No active BOOP rules";
-        return actions.stream().map(a->switch(a){case DISABLED->"Disabled by BOOP";case BOOT_CLEAN->"Close after boot";case BACKGROUND_BLOCK->"Background limited";}).sorted().reduce((a,b)->a+" ? "+b).orElse("");
+        return actions.stream().map(a->switch(a){case DISABLED->"Disabled by BOOP";case BOOT_CLEAN->"Close after boot";case BACKGROUND_BLOCK->"Background limited";}).sorted().reduce((a,b)->a+" \u2022 "+b).orElse("");
     }
     private LinearLayout column(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(VERTICAL);return v;}
     private LinearLayout row(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(HORIZONTAL);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
