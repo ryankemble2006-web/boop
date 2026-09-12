@@ -149,6 +149,7 @@ jobs:
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupPackageInventoryTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupManagerUiModelTest
           python scripts/test-startup-manager.py
+          python scripts/test-startup-defaults.py
 
       - name: Test notification, developer-lab and natural-voice contracts
         run: |

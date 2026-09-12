@@ -1,3 +1,9 @@
+CURRENT COMBINED DELIVERY, 2026-09-12
+Owner: boop-unified-v146-integration; version 146. Phone iris/menu/crash repairs, Lyrics preflight
+and Startup Manager/defaults are now explicitly authorized together, including
+installation of one signed APK on Pixel 10 Pro XL and Shield. Earlier no-merge
+notes below belong to their original tasks. Read current SESSION_HANDOFF.md.
+
 CURRENT SCOPED LYRICS CONTINUATION - 2026-09-12
 Owner: boop-v142-lyrics-fastfail. Source fc0b552fe058cfaa0d29668cc1400d7fc8675ed5.
 Anonymous exact-track preflight is implemented and signed by run 34681420296.

@@ -37,6 +37,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         default void onOpenOverview() { onBack(); }
         default void onSetAuto(boolean enabled) { }
         default void onRefresh() { }
+        default void onBoopDefaults(boolean undo) { }
     }
     private static final int MUTED=Color.rgb(174,184,193), PANEL=Color.rgb(25,27,29), CARD=Color.rgb(36,39,42);
     private LinearLayout body,rail;
@@ -59,7 +60,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         addView(rail,new LayoutParams(dp(170),LayoutParams.MATCH_PARENT));
         TextView wordmark=text("BOOP",26,true); wordmark.setTextColor(FocusChrome.accentColor(getContext()));
         rail.addView(wordmark); rail.addView(caption("YOUR SHIELD. YOUR RULES.",10)); space(rail,22);
-        String[] labels={"Overview","Package control","Boot cleanup","Background start","Restore"};
+        String[] labels={"Overview","Packages","Boot cleanup","Background","Restore"};
         Runnable[] actions={callbacks::onOpenOverview,
             ()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.DISABLE),
             ()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BOOT_CLEAN),
@@ -67,7 +68,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
         for(int i=0;i<labels.length;i++) {
             TextView item=button(labels[i],"startup:nav:"+i,actions[i]); item.setTextSize(14);
             if(i==selected) item.setTextColor(FocusChrome.accentColor(getContext()));
-            rail.addView(item,new LayoutParams(LayoutParams.MATCH_PARENT,dp(46))); space(rail,7);
+            item.setSingleLine(true); item.setMinHeight(dp(46));
+            rail.addView(item,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)); space(rail,7);
             navigation.add(item);
         }
         rail.addView(new View(getContext()),new LayoutParams(1,0,1));
@@ -95,20 +97,31 @@ public final class ShieldStartupManagerView extends LinearLayout {
     }
     public void renderOverview(boolean linkReady,boolean auto,int managedCount,String lastSummary,Callbacks callbacks) {
         frame("Startup Manager","Choose what starts, what stays, and what gets out of the way.",0,callbacks);
+        // The new actions do not squeeze the existing dashboard at large text sizes.
+        LinearLayout rootBody=body;
+        ScrollView overviewScroll=new ScrollView(getContext());overviewScroll.setVerticalScrollBarEnabled(false);
+        body=column();overviewScroll.addView(body);
+        rootBody.addView(overviewScroll,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
         LinearLayout badges=row();
         badge(badges,"LOCAL CONTROL",linkReady?"Link saved":"Needs setup");
         badge(badges,"MANAGED PACKAGES",Integer.toString(managedCount));
         badge(badges,"RECOVERY","Core protected");
         body.addView(badges,new LayoutParams(LayoutParams.MATCH_PARENT,dp(56))); space(body,12);
-        LinearLayout grid=column(); body.addView(grid,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
-        LinearLayout top=row(),bottom=row(); grid.addView(top,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
-        space(grid,12); grid.addView(bottom,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
+        LinearLayout defaults=row();
+        TextView useDefaults=button("Use BOOP defaults","startup:overview:defaults",()->callbacks.onBoopDefaults(false));
+        TextView undoDefaults=button("Undo BOOP defaults","startup:overview:undo-defaults",()->callbacks.onBoopDefaults(true));
+        useDefaults.setMinHeight(dp(52));undoDefaults.setMinHeight(dp(52));
+        weightedContent(defaults,useDefaults);hspace(defaults,12);weightedContent(defaults,undoDefaults);
+        body.addView(defaults,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));space(body,12);
+        LinearLayout grid=column(); body.addView(grid,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
+        LinearLayout top=row(),bottom=row(); grid.addView(top,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
+        space(grid,12); grid.addView(bottom,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
         TextView disable=hero("01   DISABLE APPS","Take back control","Turn off unwanted apps, launchers and companion packages.","startup:overview:disable",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.DISABLE));
         TextView boot=hero("02   CLEAN AFTER BOOT","A quieter startup","Close selected apps once. Later launches stay alone.","startup:overview:boot",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BOOT_CLEAN));
         TextView background=hero("03   BACKGROUND START","Keep the extras quiet","Limit selected apps in the background. Open them when needed.","startup:overview:bg",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BACKGROUND));
         TextView restore=hero("04   RESTORE CHANGES","Put it back","Return to the state saved before BOOP changed anything.","startup:overview:restore",callbacks::onOpenRestore);
-        weighted(top,disable); hspace(top,12); weighted(top,boot);
-        weighted(bottom,background); hspace(bottom,12); weighted(bottom,restore);
+        weightedContent(top,disable); hspace(top,12); weightedContent(top,boot);
+        weightedContent(bottom,background); hspace(bottom,12); weightedContent(bottom,restore);
         space(body,12);
         LinearLayout utilities=row();
         TextView autoButton=button("After boot: "+(auto?"ON":"OFF"),"startup:overview:auto",()->callbacks.onSetAuto(!auto));
@@ -117,15 +130,20 @@ public final class ShieldStartupManagerView extends LinearLayout {
         weighted(utilities,autoButton); hspace(utilities,8); weighted(utilities,link); hspace(utilities,8); weighted(utilities,back);
         body.addView(utilities,new LayoutParams(LayoutParams.MATCH_PARENT,dp(44)));
         if(status.isEmpty()) status=lastSummary;
-        footer(callbacks);
+        body=rootBody;footer(callbacks);
+        useDefaults.setNextFocusRightId(undoDefaults.getId());undoDefaults.setNextFocusLeftId(useDefaults.getId());
+        useDefaults.setNextFocusDownId(disable.getId());undoDefaults.setNextFocusDownId(boot.getId());
+        disable.setNextFocusUpId(useDefaults.getId());boot.setNextFocusUpId(undoDefaults.getId());
+        useDefaults.setNextFocusUpId(useDefaults.getId());undoDefaults.setNextFocusUpId(undoDefaults.getId());
         disable.setNextFocusRightId(boot.getId()); disable.setNextFocusDownId(background.getId());
         boot.setNextFocusLeftId(disable.getId()); boot.setNextFocusDownId(restore.getId());
         background.setNextFocusRightId(restore.getId()); background.setNextFocusUpId(disable.getId());
         restore.setNextFocusLeftId(background.getId()); restore.setNextFocusUpId(boot.getId());
         disable.setNextFocusLeftId(navigation.get(0).getId());
         background.setNextFocusLeftId(navigation.get(0).getId());
-        navigation.get(0).setNextFocusRightId(disable.getId());
-        post(disable::requestFocus);
+        navigation.get(0).setNextFocusRightId(useDefaults.getId());
+        useDefaults.setNextFocusLeftId(navigation.get(0).getId());
+        post(useDefaults::requestFocus);
     }
     public void renderPackages(List<StartupPackageState> rows,StartupManagerUiModel.Filter filter,
             StartupManagerUiModel.Mode mode,StartupRecoveryPolicy.RecoveryCapabilities caps,
@@ -150,7 +168,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         detail=text("Choose a package to inspect its controls.",15,false);
         ScrollView detailsScroll=new ScrollView(getContext()); detailsScroll.setVerticalScrollBarEnabled(false);
         detailsScroll.addView(detail); pane.addView(detailsScroll,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
-        space(pane,10); pane.addView(caption("Disable keeps app data.\nRestore saves the way back.\n\nRelated names are hints, not proof of a dependency.",12));
+        space(pane,10); pane.addView(caption("App data is kept. Restore saves the original settings.",12));
         split.addView(pane,new LayoutParams(0,LayoutParams.MATCH_PARENT,0.30f));
         body.addView(split,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
         List<List<TextView>> matrix=new ArrayList<>(); List<String> ids=new ArrayList<>();
@@ -160,7 +178,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
             card.setPadding(dp(6),dp(4),dp(6),dp(6)); card.setBackground(FocusChrome.filled(getContext(),PANEL,12,false));
             TextView info=button(state.label()+"\n"+state.packageName(),tag(state,0),()->callbacks.onPackageInfo(state.packageName()));
             secondLine(info); info.setMaxLines(2); info.setEllipsize(TextUtils.TruncateAt.END);
-            card.addView(info,new LayoutParams(LayoutParams.MATCH_PARENT,dp(48)));
+            info.setMinHeight(dp(48));
+            card.addView(info,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
             LinearLayout strip=row(); List<TextView> controls=new ArrayList<>(); controls.add(info);
             boolean boot=state.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
             boolean bg=state.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BACKGROUND_BLOCK);
@@ -175,7 +194,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
                 if(locked) control.setTextColor(MUTED);
                 weighted(strip,control); if(a<3)hspace(strip,6); controls.add(control);
             }
-            card.addView(strip,new LayoutParams(LayoutParams.MATCH_PARENT,dp(40)));
+            card.addView(strip,new LayoutParams(LayoutParams.MATCH_PARENT,Math.max(dp(48),textHeight(13,2,12))));
             for(int a=0;a<controls.size();a++) {
                 final int action=a;
                 controls.get(a).setOnFocusChangeListener((v,focused)->{
@@ -183,7 +202,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
                     if(focused) { callbacks.onPackageFocus(state.packageName(),action); showDetail(state,risk); }
                 });
             }
-            matrix.add(controls); list.addView(card,new LayoutParams(LayoutParams.MATCH_PARENT,dp(102))); space(list,8);
+            matrix.add(controls); list.addView(card,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)); space(list,8);
         }
         if(rows.isEmpty()) list.addView(caption(busy?"Reading installed packages...":"No packages match this filter.",17));
         space(body,10); LinearLayout utilities=row();
@@ -304,7 +323,15 @@ public final class ShieldStartupManagerView extends LinearLayout {
     private LinearLayout column(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(VERTICAL);return v;}
     private LinearLayout row(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(HORIZONTAL);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
     private void weighted(LinearLayout row,View v){row.addView(v,new LayoutParams(0,LayoutParams.MATCH_PARENT,1));}
+    // Scrolling rows have no fixed height: measure their buttons/cards from content.
+    private void weightedContent(LinearLayout row,View v){row.addView(v,new LayoutParams(0,LayoutParams.WRAP_CONTENT,1));}
     private void space(LinearLayout parent,int size){parent.addView(new View(getContext()),new LayoutParams(1,dp(size)));}
     private void hspace(LinearLayout parent,int size){parent.addView(new View(getContext()),new LayoutParams(dp(size),1));}
+    private int textHeight(int sp,int lines,int paddingDp) {
+        android.graphics.Paint paint=new android.graphics.Paint();
+        paint.setTextSize(sp*getResources().getDisplayMetrics().scaledDensity);
+        android.graphics.Paint.FontMetricsInt fm=paint.getFontMetricsInt();
+        return (fm.bottom-fm.top)*lines+dp(paddingDp);
+    }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
 }

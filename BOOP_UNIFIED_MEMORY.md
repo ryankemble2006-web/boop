@@ -25,5 +25,22 @@ Record any screen-lock or acceptance limits without bypassing device security.
 
 ## Current state
 
-Merging in an isolated worktree. Both devices currently run different v145 APKs.
+Three-way source integration complete. Both devices currently run different v145 APKs.
 No combined build, deployment or physical acceptance claimed yet.
+
+## Combined local verification
+
+Full materialization and Android compile passed. Unified unit suite: 295 tests
+across 85 suites, zero failures/errors/skips. All 18 Lyrics tests included.
+12 phone/menu/constructor/shared-library contracts pass; 15 Startup Manager suites
+pass; 27 defaults coordinator scenarios, eight safety scenarios and profile/journal
+checks pass. Android 11 linkage, canonical media and listener seeding checks pass.
+Independent feature files match the frozen inputs; only their shared local bridge
+was combined additively. No renderer, artwork or permission redesign.
+Both v145 installed APKs were privately pulled and hash-matched to device before
+any update; app preference/restore/journal and OS package/settings hashes saved
+privately for comparison. No installed version has changed yet.
+Only generated side effects in this owned worktree were restored after build.
+
+Next: permanent signed CI, verify artifact, install on both authorized devices,
+then physical launch/feature checks and final handoff. No acceptance claim yet.
