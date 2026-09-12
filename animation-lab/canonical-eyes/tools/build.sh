@@ -10,7 +10,7 @@ find "$BASE/java" "$BASE/android" "$OUT/java" -name '*.java' > "$OUT/sources.txt
 javac -source 8 -target 8 -classpath "$SDK" -d "$OUT/classes" @"$OUT/sources.txt"
 jar cf "$OUT/classes.jar" -C "$OUT/classes" .
 "$TOOLS/d8" --lib "$SDK" --min-api 26 --output "$OUT/dex" "$OUT/classes.jar"
-"$TOOLS/aapt" package -f -M "$BASE/android/AndroidManifest.xml" -I "$SDK" -A "$OUT/assets" -F "$OUT/unsigned.apk"
+"$TOOLS/aapt" package -f -M "$BASE/android/AndroidManifest.xml" -I "$SDK" -A "$OUT/assets" -S "$OUT/res" -F "$OUT/unsigned.apk"
 python - "$OUT" <<'PY'
 import sys,zipfile
 from pathlib import Path
@@ -25,6 +25,8 @@ grep -Fq 'f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde' "$OU
 "$TOOLS/aapt" dump badging "$OUT/BOOP-Animation-Lab-v11.apk" > "$OUT/badging.txt"
 grep -Fq "package: name='com.boop.animationlab' versionCode='11'" "$OUT/badging.txt"
 grep -Fq "launchable-activity: name='com.boop.alpha1.BoopDevMenuActivity'" "$OUT/badging.txt"
+grep -Fq "icon='res/drawable/boop_animation_lab_icon.png'" "$OUT/badging.txt"
+grep -Fq "banner='res/drawable/boop_animation_lab_banner.png'" "$OUT/badging.txt"
 if grep -q '^uses-permission:' "$OUT/badging.txt"; then echo 'Unexpected permission' >&2; exit 1; fi
 git rev-parse HEAD > "$OUT/built-commit.txt"
 sha256sum "$OUT/BOOP-Animation-Lab-v11.apk" > "$OUT/apk-sha256.txt"

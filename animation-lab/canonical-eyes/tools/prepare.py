@@ -14,6 +14,21 @@ assert len({c['id'] for c in data['clips']})==len(data['clips'])
 java=out/'java/com/boop/eyes';java.mkdir(parents=True,exist_ok=True)
 assets=out/'assets';shutil.copytree(ROOT/'assets',assets,dirs_exist_ok=True)
 shutil.copy2(ROOT/'catalogue.json',assets/'catalogue.json')
+
+# Build BOOP-branded launcher art from the locked eye master without changing it.
+from PIL import ImageDraw
+res=out/'res/drawable';res.mkdir(parents=True,exist_ok=True)
+eyes=Image.open(master).convert('RGBA');bbox=eyes.getbbox();eyes=eyes.crop(bbox)
+def branded(size,name,pad,border):
+    canvas=Image.new('RGBA',size,(4,7,10,255))
+    art=eyes.copy();art.thumbnail((size[0]-pad*2,size[1]-pad*2),Image.Resampling.LANCZOS)
+    x=(size[0]-art.width)//2;y=(size[1]-art.height)//2
+    canvas.alpha_composite(art,(x,y))
+    draw=ImageDraw.Draw(canvas)
+    draw.rounded_rectangle((border,border,size[0]-border-1,size[1]-border-1),radius=max(12,min(size)//12),outline=(0,220,255,255),width=max(3,min(size)//80))
+    canvas.save(res/name,optimize=True)
+branded((512,512),'boop_animation_lab_icon.png',54,18)
+branded((320,180),'boop_animation_lab_banner.png',28,8)
 entries=[]
 for c in data['clips']:
     keys=c['keys'];assert keys[0][0]==0 and len(keys)>1
