@@ -1,3 +1,13 @@
+## v137 direct Deezer lyrics physically verified, 2026-09-12
+
+Ryan reported v136 did not work. Root-cause investigation found native Deezer exposes no MediaSession Lyrics custom action (`custom actions=[]`) and its notification exposes no Lyrics action. The v136 direct path also depended on a Deezer media-notification `PendingIntent` learned only from future `onNotificationPosted` callbacks. Because Deezer was already playing before v136 was installed, BOOP's fresh process had no cached player PendingIntent and the Lyrics button never left BOOP Home. Chromecast Deezer is a separate receiver-side path that renders lyrics automatically when available.
+
+v137 (`137 / 1.2.137-startup-manager-direct-lyrics-seed`) retains the accepted v135 Startup Manager base and the v136 direct Lyrics path, then seeds already-active media notifications from `getActiveNotifications()` when BOOP's notification listener connects. The Lyrics path opens Deezer's existing player PendingIntent, resolves the live semantic Lyrics control from the current Deezer accessibility hierarchy, activates that target directly, and verifies the scrolling lyrics panel. No D-pad navigation or scrolling sequence is used. The separate animation work was not merged.
+
+TDD: `tests/test_lyrics_listener_seed_contract.py` first failed with `RED: listener does not seed already-active media notifications`, then passed after the minimal listener change. Android Java compilation passed. GitHub run `34675721698` succeeded for exact source `10ca42ce2e33bfe72f82f3ffc9fa7405123bec96`, including Startup Manager, Shield, Unified, signing, package and archive gates. Permanent signer remains `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`; signed APK SHA256 is `10e8c6c065fc6f3e94e8492b1245653a9c27482f0f7e05ef9329de475c12cf68`.
+
+The exact signed v137 artifact was installed in place over v136 on the Shield. Android reports versionCode 137. With native Deezer already playing `99 Red Balloons`, BOOP Home's Lyrics button opened Deezer and the resulting screen visibly showed synchronized lyrics with the current line highlighted. This is agent-observed physical verification of the direct Lyrics path; Ryan's own acceptance is still separate. No app-data clear, permission grant, Startup Manager package changes, signer change, or animation-branch integration occurred. v135 remains the accepted Startup Manager rollback reference.
+
 BOOP DURABLE MEMORY
 ===================
 
