@@ -1,56 +1,19 @@
-# Shared-context hub handoff
+# BOOP Rally Shield handoff
 
-Updated 2026-09-10. `main` is the cross-project context hub, not the canonical BOOP application source.
+Updated 2026-09-12. Explicit adjacent-game task, not Unified or HOME work.
+Branch: boop-rally-shield. Project: rally-shield/. Package: com.boop.rally.
+Base: live main af0db837bf9dde26d16c632fe75d8b5bca1f7fc0.
 
-## Exhaustive continuity transfer experiment — 2026-09-10
+The user requested one launcher for the two existing portable Network Q rally games, a Shield APK, installation and testing, with source/builds on a separate BOOP GitHub branch.
 
-Ryan approved a documentation-only experiment to make a fresh Codex/Boop recover the accumulated working relationship and project mental model without reconstructing weeks of conversation manually.
+Recovered source inputs: original RAC Rally RALLY folder and Rally Championship's accepted Browser-Test folder. Preserve both originals. Championship's original RALLY copy is not the accepted desktop launch target.
 
-The transfer is deliberately split across two main-owned files:
+Architecture: native ARM64 DOSBox Pure 1.0-preview6 at a4a0bab7f8931433588f2fcad9045c85b277373d inside an offline two-game Android TV launcher. No separate RetroArch install or PC streaming. Separate game process, controller/remote mapping, pause/return menu and per-game persistent saves.
 
-- `BOOP_PERSONALITY.md` = **how to work with Ryan as Boop**: conversational voice, shorthand, humour/pace, evidence habits, read-only/locked/go/cook/poke/update-memory semantics, canary meaning, frustration handling, visual-authority behaviour and cross-session etiquette.
-- `BOOP_CONTEXT.md` = **what Boop understands**: product philosophy, Unified/device topology, Natural Voice history/current acceptance, Home Assistant/local-first model, protected eyes/hands, privacy/accessibility, product-family concepts, media/launcher/Turbo boundaries, adjacent Kodi/Forki vocabulary, rollback philosophy and continuity precedence.
+Public repository must contain only original launcher/host/build/test code and permitted open-source dependencies/notices. Keep proprietary game files, device addresses, raw logs/screenshots and private source receipts local. Local bundle preparation/provisioning supplies the user's existing games after installation. GitHub APK contains no games.
 
-The old personality note saying `canary` was an unrecovered skin-only joke was corrected. Ryan explicitly confirmed on 2026-09-10 that the useful shared meaning is the broader narrow/sacrificial proof before risking the real target.
+Use the existing permanent BOOP development signer in GitHub Actions, with fingerprint f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde. Do not export a key or replace any existing app.
 
-Public-repository privacy remains in force: the expanded continuity captures durable working context, not credentials, account data, private addresses, personal secrets, raw chat history or private media.
+State: implementation in progress; no APK has yet been built or installed. Source preparation tests have been written and observed failing before implementation. Hardware performance, sound, race entry and controller behavior are unverified.
 
-This change is documentation only. It does not alter app code, permissions, signing, builds, deployment or physical acceptance.
-
-## Concurrent reconciliation during publication
-
-While the first continuity commit was being published, another Codex session advanced `boop-unified` from `99474d141e7affad17cdbe854e94dd3986076980` to `771b68a00ac95b40ed6e17cffac60af77528a934` with `docs: accept v91 voices and point to scoped rebuild`.
-
-The shared context was therefore reread/reconciled before completion rather than leaving the first snapshot stale.
-
-Fresh accepted baseline from the owning branch:
-
-- v91 app source `11650313221ae5bf997dbb93b6a905bfdc7da1ed`;
-- Ryan physically confirmed Natural Voices installed/selectable, demos speaking and normal routed Natural Voice reply;
-- protected checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` -> exact v91 source;
-- v88 checkpoint remains preserved as historical usable Android-TTS rollback.
-
-Active selected overhaul now belongs to:
-
-- branch `boop-canonical-rebuild`;
-- base `boop-unified@99474d141e7affad17cdbe854e94dd3986076980`;
-- candidate HEAD observed during reconciliation `a3eb768641e339ed59a6e2e86cb74f64bccf5979`;
-- candidate version 92;
-- selected scope includes shared room/speech/media state, dynamic exposed HA discovery, one Now Playing owner, Deezer/local transport, HA Back escape and device profiles;
-- eyes/blink are being handled separately for later transplant and Turbo redesign is outside this selected branch;
-- candidate was not yet merged/physically accepted at this snapshot.
-
-Re-fetch that branch before continuing because it is actively moving.
-
-## Startup rule for future sessions
-
-For BOOP work:
-
-1. read `AGENTS.md`, `BOOP_START_HERE.md`, `BOOP_CONTEXT.md`, `BOOP_RULES.md` and `BOOP_PERSONALITY.md`;
-2. follow the startup map to the owning branch/worktree;
-3. fetch/check live `main` and the owning branch;
-4. read that branch's handoff/status/memory files;
-5. preserve dirty/concurrent work and accepted checkpoints;
-6. do not ask Ryan to reconstruct context that those files already contain.
-
-Availability of the files is not proof another session has read them. If continuity appears wrong, re-read the live files before guessing.
+Next: implement and behavior-test bundle/control layers, build native core and APK on GitHub, then provision and test on the positively identified Shield. Record actual build/device results before declaring completion.
