@@ -2,7 +2,7 @@ name: Build BOOP Unified APK
 
 on:
   push:
-    branches: [ "boop-unified", "boop-unified-notifications", "boop-v70-natural-voices", "boop-v85-natural-tablet", "boop-canonical-rebuild" ]
+    branches: [ "boop-unified", "boop-unified-notifications", "boop-v70-natural-voices", "boop-v85-natural-tablet", "boop-canonical-rebuild", "boop-v125-animation-integration" ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
