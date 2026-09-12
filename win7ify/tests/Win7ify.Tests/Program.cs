@@ -6,7 +6,11 @@ var tests = new (string Name, Action Run)[]
     ("apply backs up original before writing", ApplyBacksUpOriginal),
     ("second apply keeps first baseline", SecondApplyKeepsBaseline),
     ("restore removes originally missing value", RestoreRemovesOriginallyMissing),
-    ("restore returns original value and kind", RestoreReturnsOriginalValue)
+    ("restore returns original value and kind", RestoreReturnsOriginalValue),
+    ("catalog has expected safe scope", CatalogAndConversionTests.CatalogHasExpectedSafeScope),
+    ("Windows DWORD conversion round-trips", CatalogAndConversionTests.WindowsDwordConversionRoundTrips),
+    ("Windows expand string preserves kind", CatalogAndConversionTests.WindowsExpandStringPreservesKind),
+    ("Windows binary conversion preserves bytes", CatalogAndConversionTests.WindowsBinaryConversionPreservesBytes)
 };
 
 var failures = 0;
