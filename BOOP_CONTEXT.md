@@ -2,7 +2,9 @@
 
 This worktree owns `boop-v144-devmenu-hue-experimental`. Signed candidate v145
 fixes eye-entry startup and the in-place canonical developer-menu route.
-Pixel remains on crashing v144 because the installation tool blocked deployment.
+Pixel now runs verified v145 after a later successful phone-only update.
+Eyes activity and renderer startup were observed without a new fatal exception;
+hands-on menu/colour and broader physical acceptance are still pending.
 Read SESSION_HANDOFF.md and docs/verification/v145-phone-crashfix.md for exact
 current receipts. The lower inherited app-routing/progress text is historical.
 No main/Shield merge or permission/signing changes are authorized by this work.

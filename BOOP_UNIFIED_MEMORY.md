@@ -1,4 +1,4 @@
-# Current phone animation experiment: signed v145, installation blocked
+# Current phone animation experiment: v145 installed
 
 Updated 2026-09-12. Owner: `boop-v144-devmenu-hue-experimental`,
 worktree `.worktrees/boop-v144-devmenu-hue-experimental`.
@@ -10,12 +10,16 @@ developer-menu path. All 26 canonical clips are exposed by that actual menu.
 277 local unit tests + 10 focused contracts pass; signed run `34681294081` passes.
 See [exact verification/deployment receipt](docs/verification/v145-phone-crashfix.md).
 
-**Pixel still runs v144. v145 was NOT installed: the installation tool blocked
-the request.** No phone runtime/visual success is claimed for v145.
-The verified signed APK is on the laptop Desktop. The next action is explicit
-user confirmation before retrying the phone-only install, followed by the real
-Launcher-to-eyes crash-path and in-place menu check. Keep the Shield untouched.
-Do not bypass tool/Android permission gates or change the permanent signer.
+**Later live receipt: v145 is installed on Pixel 10 Pro XL.** The remote
+phone-only update returned Success; installed version and on-device APK SHA-256
+match the signed artifact. The earlier blocked attempt remains historical in
+the verification receipt and is not the current device state.
+MainActivity subsequently resumed and the canonical GLES2 renderer reported
+ready without a new fatal exception in the observed post-update log window.
+The phone then locked before the hands-on menu check finished. Real swipe,
+spoken-menu, colour/animation appearance and longer-session acceptance remain
+user-owned. Do not call those physically accepted. No Shield install or
+permission/signing changes were made.
 
 The inherited notes below are historical context, not this task's current scope.
 

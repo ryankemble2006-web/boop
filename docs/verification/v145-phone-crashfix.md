@@ -33,7 +33,27 @@ menu, approved animation timelines, master artwork and hue shader are retained.
 - Packaged shader matches the exact signed Git object. Windows CRLF working-copy
   differences are not artifact corruption; compare text sources to Git bytes.
 
-## Deployment boundary
+## Later successful phone deployment and runtime observation
+
+A later continuation supersedes the earlier blocked-install result below.
+The verified update returned Success on Pixel 10 Pro XL. Fresh Android package
+queries report versionCode 145 and 1.2.145-devmenu-hue-crashfix. The installed
+base APK hash independently matches af10e94b40572904111278004be215dfa0fd93639e8babe1a8ecf68abbf0fddd.
+The prior v144 backup was hash-matched to the phone before replacement.
+No uninstall, data clearing, permission grant, signer replacement or Shield
+deployment was performed by this continuation.
+
+MainActivity was observed resumed and the GLES2 canonical renderer reported
+ready during the post-update observation. No new AndroidRuntime fatal exception
+appeared in the collected post-update log window. The 10 focused contracts
+were independently rerun successfully against the materialized source.
+The phone subsequently locked; a UI-tree check showed the lock screen rather
+than BOOP. Actual in-place menu interaction, iris appearance and complete
+swipe/longer-session acceptance remain pending, not inferred from CI or logs.
+Private raw observations and backups stay outside Git.
+
+## Earlier blocked attempt (historical, superseded)
+
 
 v145 is NOT installed. The tool safety gate blocked the installation request.
 A subsequent read confirmed Pixel 10 Pro XL still runs v144. Do not call this
