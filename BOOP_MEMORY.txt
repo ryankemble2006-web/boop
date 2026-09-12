@@ -580,3 +580,7 @@ Design spec: docs/superpowers/specs/2026-09-12-startup-manager-v2-design.md. Thi
 
 STARTUP MANAGER RECOVERY REPAIR (2026-09-12)
 A saved baseline must support Undo even when a multi-step Android write stops halfway, before successful-action flags were written. Capture exact state before changes, verify every field and preserve damaged/partial receipts instead of overwriting them. Bind package identity and Android user to the verified request. Keep core System UI, settings storage, physical input and the recovery connection available, while the stock launcher remains manageable. Verify runtime compatibility on Android 11, not merely Java 17 compilation. The approved UI has a fixed navigation rail, responsive dashboard cards and a selected-package detail pane. Physical acceptance remains pending.
+
+NOW PLAYING DEEZER LYRICS DECISION (2026-09-12)
+------------------------------------------------
+Ryan approved a Lyrics shortcut in Unified Shield Now Playing for native Deezer only. The implementation must use Deezer's live semantic Lyrics accessibility target and verify the dedicated scrolling lyrics panel; do not store fixed screen coordinates or expose the button for Cast/other media providers. Preserve existing media controls, Close-player focus behavior and the published Startup Manager v2 work underneath it. v131 is the current isolated candidate; signed/physical acceptance remains separate.

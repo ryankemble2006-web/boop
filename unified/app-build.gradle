@@ -20,8 +20,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 129
-        versionName "1.2.129-startup-manager-v2"
+        versionCode 133
+        versionName "1.2.133-startup-manager-console"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }
