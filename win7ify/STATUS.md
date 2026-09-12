@@ -1,16 +1,30 @@
-# Win7ify repair status
+# Win7ify status
 
-2026-09-12. Branch boop-win7ify-v01, source under win7ify/.
+2026-09-12. Owner: `boop-win7ify-v01`. Version 0.1.1.
+Built source `bb554f64e3c01bae09559366e7c431cf2e552285`.
+GitHub run `34671365939` SUCCESS; artifact `10290934035`.
+EXE SHA-256: `2a03f288c6e7c1c661ab561438cbd97e843939348b591abb149c90eb5c165751`.
 
-v0.1 built but failed the first user Apply test with a permissions exception.
-A same-value-only probe reproduced the exception on TaskbarDa; TaskbarAl passed.
-The original backup was inspected and preserved. No permissions or security settings changed.
+## Proven
 
-RED proof: 8103242, Actions run 34670905369. Five regression assertions failed,
-while the original nine tests passed. No artifact produced by that RED run.
+21 functional checks passed on GitHub and as the downloaded self-contained harness
+on the user's laptop. Includes protected-write/no-op cases, partial-restore retry,
+backup validation and actual typed Windows registry round-trip in a disposable subtree.
+EXE compilation, asset integrity, hash receipt and upload passed. The exact GUI
+opened and closed cleanly on both CI and the laptop. No settings were applied by
+those launch tests. The original user backup remains byte-identical.
 
-Repair candidate: v0.1.1. Per-setting outcomes, no-op skipping, read-back validation,
-partial-restore retry, atomic validated backup, clearer always-visible action area.
-Explorer refresh is now separately confirmed, limited to the current desktop shell.
-GitHub build/test and local smoke verification are pending for this candidate.
-Do not call it physically accepted or install/apply it automatically.
+## Not yet proven
+
+User acceptance of 0.1.1 Apply/Restore visible effects, the resized interface,
+experimental context menu, and separately confirmed Explorer refresh.
+No Windows 7 Start/taskbar replacement or Aero is implemented. Windows EXE unsigned.
+
+## Known first-build failure, now covered
+
+v0.1 tried rewriting protected Widgets data even when it was already correct.
+That stopped the batch and made recovery vulnerable to the same needless write.
+0.1.1 skips matching values, isolates denials, verifies each result and retains
+original backup data after any incomplete restore. No permission bypass added.
+
+See ../SESSION_HANDOFF.md for receipts and CODEX_HANDOFF.md for the next phase.

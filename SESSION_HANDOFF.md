@@ -1,62 +1,95 @@
-# BOOP Win7ify session handoff — 2026-09-12
+# BOOP Win7ify handoff
 
-## Ownership
+Updated 2026-09-12. Owning branch: `boop-win7ify-v01`. Source: `win7ify/`.
+This is an adjacent Windows utility, NOT the Android Unified APK. The primary
+checkout and other concurrent Android worktrees are not this application's source.
+Use the dedicated `.worktrees/boop-win7ify-v01` checkout on the development laptop.
+Read live main shared rules, this handoff, `win7ify/STATUS.md`, `win7ify/MEMORY.md`
+and `win7ify/CODEX_HANDOFF.md` before continuing.
 
-This branch is `boop-win7ify-v01`, an isolated Windows utility branch created from live `main`. It is adjacent to BOOP's Android products and does not replace or modify `boop-unified`, `boop-canonical-rebuild`, Wall, Launcher, Shield, Turbo, Android permissions or signing.
+## Current executable and build
 
-Source lives under `win7ify/`. Design and plan live under `docs/superpowers/`.
+Version: **0.1.1**, self-contained Windows x64 GUI executable, not Authenticode-signed.
 
-## Implemented
+- Built source: `bb554f64e3c01bae09559366e7c431cf2e552285`.
+- Workflow: `.github/workflows/win7ify-build.yml`.
+- GitHub run: `34671365939`, SUCCESS.
+- Main artifact: `10290934035`, `BOOP-Win7ify-v0.1.1-win-x64`.
+- Artifact ZIP SHA-256: `4c4eb51c4b466406f8a90717cba50e2629b7a00f28591777e8da77aac51fca13`.
+- EXE bytes: `117059686`.
+- EXE SHA-256: `2a03f288c6e7c1c661ab561438cbd97e843939348b591abb149c90eb5c165751`.
+- Developer checks artifact: `10290479801`, `BOOP-Win7ify-checks-v0.1.1`.
 
-BOOP Win7ify v0.1 is a .NET 10 WinForms x64 utility with black/cyan BOOP presentation, the exact approved BOOP eyes, large controls and two primary actions:
+Approved BOOP eyes are unchanged, SHA-256
+`ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`.
+Do not regenerate, recompress, crop or recolour that source asset.
 
-- `MAKE WINDOWS 7-ISH`;
-- `PUT WINDOWS 11 BACK`.
+## First physical failure and why
 
-Safe preset scope: left taskbar alignment; never-combine/labels request; hide Search, Task View and Widgets; Show Desktop corner; Explorer -> This PC; classic desktop icons. The classic full context-menu compatibility key is Experimental and off by default.
+v0.1 source `0ba351eccfa138b92f34ba9fb7045c351af6c4c9` compiled, but the user's
+first Apply on Windows 11 Home Insider build 26220.9343 stopped with
+`Attempted to perform an unauthorized operation.` It is NOT physically accepted.
+The Widgets setting `TaskbarDa` was already 0, yet Apply needlessly rewrote it.
+A same-value-only test reproduced the denial there while `TaskbarAl` succeeded;
+neither value changed. Opening the writable parent key itself had succeeded.
+Do not misdiagnose this as universally missing admin permission.
 
-The core uses `IRegistryStore`, `BackupService` and `Win7ifyService`. Before a value is first changed, its original existence/type/data is captured at `%LOCALAPPDATA%\BOOP\Win7ify\backup-v1.json`. Repeated Apply calls do not overwrite the baseline. Restore replays originals, removes originally absent values and deletes the backup only after complete success.
+The old code abandoned all later settings on one denied write, and Restore had
+the same needless-write issue. Its disabled dark restore button was unreadable
+in the user's failure screenshot. That private screenshot is not in the repository.
+The user's existing original backup was read for diagnosis and left byte-identical.
 
-No protected Windows binaries are patched/replaced. v0.1 does not change security/update/activation services and does not silently install a third-party shell.
+## Repair
 
-## Automated evidence
+- Apply/Restore skip values already correct, including protected values.
+- Every attempted setting returns a named `ChangeResult`: Changed, AlreadyCorrect,
+  Blocked or Failed. A denial does not abandon the independent remaining settings.
+- Every write/delete is read back. No write success implies visible shell acceptance.
+- Backup schema v1 remains compatible; the first baseline is never replaced by a
+  later Apply baseline. Partial restore retains the complete original file.
+- Backup writes are flushed and atomically replaced; malformed/unknown/out-of-scope
+  backups stop the operation before registry writes. Production uses an allowlist.
+- Only values are restored; empty keys are left alone because schema v1 does not
+  record ownership/existence of whole keys. Investigate this before certifying
+  experimental context-menu key cleanup on a future version.
+- UI opens maximised, scrolls only the choices, keeps large action buttons visible,
+  uses light secondary-button text, and displays failures without a disabled modal.
+- Apply/Restore do NOT automatically restart Explorer. REFRESH DESKTOP asks for
+  explicit confirmation after file transfers finish, and targets only the current
+  session's desktop-shell Explorer. TASKBAR SETTINGS is the ordinary Windows fallback.
+- One instance per session; local operation logs only; no startup Apply or elevation.
 
-TDD evidence was preserved in GitHub Actions:
+## Verification
 
-- RED run `34669603123`: first core test contract failed before implementation.
-- GREEN core run `34669693420`: initial four backup/restore contracts passed; publish still intentionally failed because the GUI did not exist yet.
-- RED run `34669758958`: catalog/Windows-registry conversion contracts failed before their implementation.
-- GREEN run `34669833051`: catalog/conversion tests passed; publish still intentionally awaited GUI.
-- RED run `34669933576`: default-preset safety contract failed before `PresetCatalog` existed.
-- GREEN run `34669994610`: all nine safety tests passed; publish still intentionally awaited GUI.
+- RED source `810324265acddfa030b44a846ca93b1ba3ef1163`, run `34670905369`:
+  five new behavioral failure cases failed as intended; the old nine tests passed.
+- Candidate `9be0195` initially failed test compilation because an imported fixture
+  name collided with the old top-level test helper. `bb554f6` fully qualifies that
+  helper; no regression assertion was removed or weakened.
+- Final GitHub run: 21 functional tests passed, EXE publish passed, opening/closing
+  smoke passed, asset hash and artifact receipt passed. No visual checks were used.
+- Exact self-contained developer harness downloaded to the laptop: **21 tests,
+  0 failures**, exit 0. The real-registry test creates/restores/deletes only its
+  own random scratch subtree, not the real desktop settings.
+- Exact EXE opened on the laptop as `BOOP // Win7ify 0.1.1`, reached input-ready,
+  and closed normally with exit 0. No Apply, Restore or Refresh was invoked.
+- Original user backup hash before/after all checks matched. It was not deleted,
+  replaced, uploaded or committed.
+- Downloaded artifact ZIP and EXE hashes independently verified; EXE is PE x64.
+- Review: scoped source/diff and tests reviewed in this session; no independent
+  reviewer/subagent was available. No claim of independent review.
 
-First complete build/publish/upload green after GUI integration:
+## Next safe step and boundaries
 
-- source commit `0ba351eccfa138b92f34ba9fb7045c351af6c4c9`;
-- workflow run `34670164392`;
-- approved-eye hash check PASS;
-- all nine core tests PASS;
-- single-file self-contained win-x64 publish PASS;
-- SHA receipt PASS;
-- artifact upload PASS;
-- artifact ID `10290356901`, name `BOOP-Win7ify-v0.1-win-x64`;
-- artifact ZIP digest `sha256:f44c475676aa29ee9426114305396654e11401caa9bfe7c94dbebcad455a73c8`;
-- `Win7ify.exe` SHA-256 `781a446060b13477762ae1ed3be286bb472b96d907c283029552197f2f30a0d9`.
+Deliver 0.1.1 for the user's actual Apply and subsequent Restore test. It is
+CI-green and local-launch-green, NOT yet physically accepted as a desktop makeover.
+Leave Experimental context menu unchecked for the next ordinary test.
+The full Windows 7 Start menu/taskbar/Aero work remains deferred for Codex;
+see `win7ify/CODEX_HANDOFF.md`.
 
-The downloaded artifact was independently unpacked and the receipt hash matched the EXE byte-for-byte. `file` identified it as a PE32+ x86-64 Windows GUI executable. This is CI/build evidence only, not physical Windows visual/shell acceptance.
-
-Approved BOOP eye SHA-256 remains `ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22`. The workflow fails if the embedded asset differs.
-
-## Next safe step
-
-Run the GitHub artifact on Ryan's Windows 11 laptop and physically verify Apply then Restore. Do not turn a CI-green result into a physical checkpoint before that test.
-
-After v0.1 physical acceptance, the advanced phase is documented in `win7ify/CODEX_HANDOFF.md`: true Windows 7 Start/taskbar experience, Explorer chrome, Aero/glass, Windows-build adaptation, Windows Sandbox regression coverage, release hardening and optional consent-driven Open-Shell integration.
-
-## Current limitations
-
-- Some legacy taskbar/shell values may be ignored by current/future Windows 11 builds.
-- Context-menu compatibility is Experimental.
-- v0.1 is not Authenticode-signed, so SmartScreen may warn.
-- No physical Windows acceptance has been recorded yet.
-- This branch is intentionally not merged into `main` or an Android app branch.
+No Android app code, permission, signing, installation or protected branch changed.
+No Windows permission/security/update changes, silent installs or system DLL patches.
+This branch is not merged to main. Private downloaded validation executables remain
+in the task's separate local validation folder; they are not repository source.
+The previously unattached v0.1 documentation commit `b74261e` is now included in
+this branch's published history, followed by this corrected repair handoff.

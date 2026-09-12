@@ -1,47 +1,64 @@
-# BOOP Win7ify v0.1
+# BOOP Win7ify 0.1.1
 
-Win7ify is a small BOOP-themed Windows utility that nudges Windows 11 back toward familiar Windows 7 behaviour without replacing protected Windows system files.
+A BOOP-themed settings makeover for Windows 11, not an operating-system downgrade
+or a full Windows 7 Start menu/taskbar replacement.
 
-## The two big buttons
+## Use it
 
-- **MAKE WINDOWS 7-ISH** applies the selected per-user tweaks after saving their original registry state.
-- **PUT WINDOWS 11 BACK** replays that saved state and removes the backup only after a complete successful restore.
+Open the EXE normally. The window opens maximised with a scrollable options area
+and permanently visible actions. Opening it does not apply settings.
 
-The backup lives at `%LOCALAPPDATA%\BOOP\Win7ify\backup-v1.json`.
+- **MAKE WINDOWS 7-ISH** saves the original values, then processes the selected settings.
+- **PUT WINDOWS 11 BACK** restores that saved baseline, not guessed factory defaults.
+- **REFRESH DESKTOP...** separately asks permission to restart your current Explorer desktop. Finish copying/moving files first; Explorer windows may close.
+- **TASKBAR SETTINGS** opens Windows' own taskbar options for settings Windows protects.
 
-## v0.1 controls
+Results distinguish **saved and read back**, **already correct**, **blocked**, and
+**not verified**. A blocked setting does not abandon the rest. Read-back confirms
+a registry value, not that Windows rendered a particular appearance.
 
-The safe preset can request:
+## Included options
 
-- Start/taskbar alignment on the left;
-- separate taskbar buttons with labels where the current Windows shell still honours the legacy value;
-- Search, Task View and Widgets hidden from the taskbar;
-- the far-right Show Desktop corner enabled;
-- File Explorer opening to This PC;
-- classic Computer, User Files, Network, Control Panel and Recycle Bin desktop icons.
+Left taskbar alignment; separate taskbar buttons/labels request; hide Search,
+Task View and Widgets; Show Desktop corner; Explorer opens to This PC; classic
+Computer, user files, Network, Control Panel and Recycle Bin desktop icons.
+The old full right-click menu remains Experimental, off by default, and requires
+confirmation when selected. Windows updates can ignore legacy settings.
 
-The old full context-menu compatibility key is deliberately **Experimental** and off by default.
+## What failed in 0.1
 
-Windows updates can ignore legacy shell values. Win7ify records what it actually wrote; a successful registry write is not presented as proof that a particular Windows build rendered the requested appearance.
+The first real laptop test hit a protected Widgets value (`TaskbarDa`). It was
+already set as requested, but 0.1 needlessly tried to rewrite it. Windows denied
+the write and the whole batch stopped. Restore had the same needless-write flaw.
+0.1.1 skips identical values and reports genuine denials without forcing permissions.
+The original nine tests had not covered that protected-value failure.
 
-## Safety boundary
+## Backup and safety
 
-v0.1 changes HKCU values only. It does not patch or replace Explorer, DLLs or other protected Windows binaries, does not disable Windows security/update services, does not alter BOOP Android signing, and does not silently install Open-Shell or any other third-party shell.
+Your original settings remain at `%LOCALAPPDATA%\BOOP\Win7ify\backup-v1.json`.
+Existing 0.1 backups are compatible and must not be deleted before retrying.
+Repeated Apply preserves the first baseline. Backup updates use a flushed temporary
+file and atomic replacement. Unsupported/corrupt/out-of-scope backups stop the
+operation before writes. Restore keeps the complete original backup if any value
+cannot be restored or verified; retrying remains possible. Empty registry keys
+are left alone because the old format never recorded who created those keys.
 
-The approved BOOP eye asset is embedded unchanged. CI verifies its locked SHA-256 before compiling.
+Changes remain in the current user's registry. No elevation, permission rewrites,
+Windows security/update/activation changes, system-binary patching, third-party
+shell installation, or telemetry is added. Logs are local, written only during
+user-requested operations under `%LOCALAPPDATA%\BOOP\Win7ify\logs`.
 
-## Build
+The approved BOOP eyes are embedded byte-for-byte unchanged. This Windows EXE is
+not Authenticode-signed. Android BOOP packages and signing are unrelated and untouched.
 
-GitHub Actions workflow: `.github/workflows/win7ify-build.yml`.
+## Build and verification
 
-The workflow runs the dependency-free core safety harness, verifies the approved eye asset, publishes a self-contained Windows x64 `Win7ify.exe`, writes an EXE SHA-256 receipt and uploads both as artifact `BOOP-Win7ify-v0.1-win-x64`.
+Workflow: `.github/workflows/win7ify-build.yml` on branch `boop-win7ify-v01`.
+.NET 10, Windows x64, self-contained single-file EXE. GitHub runs functional tests,
+asset integrity, compilation, and an opening/closing process smoke test. It does
+not judge appearance or click Apply on a real user's desktop. The real-registry
+test uses only its own randomly named disposable test subtree.
 
-The EXE is not Authenticode-signed in v0.1, so Windows SmartScreen may warn on first launch. Do not confuse that with BOOP's Android signing lineage.
-
-## Verification levels
-
-- Core registry/backup behaviour: automated.
-- Compilation/publish/artifact hash: GitHub CI.
-- Visual appearance and actual shell behaviour on a real Windows 11 installation: manual physical acceptance only.
-
-See `CODEX_HANDOFF.md` for the advanced phase.
+Main artifact: `BOOP-Win7ify-v0.1.1-win-x64`. Separate developer test artifact:
+`BOOP-Win7ify-checks-v0.1.1`. See `../SESSION_HANDOFF.md` for exact build/test receipts,
+`STATUS.md` for current evidence, and `CODEX_HANDOFF.md` for the advanced phase.

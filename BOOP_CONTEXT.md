@@ -1,3 +1,12 @@
+# Win7ify branch context
+
+On this isolated branch, the active application is the adjacent Windows utility
+under `win7ify/`. Use SESSION_HANDOFF.md and win7ify/MEMORY.md for current state.
+0.1.1 fixes the first protected-Widgets failure without elevation or permission
+bypass. Real desktop Apply/Restore acceptance is still pending. The inherited
+shared product context below remains reference only; fetch live main for shared
+contracts, and do not build an Android app from this Windows branch.
+
 # BOOP shared context
 
 Updated 2026-09-10. Shared cross-project understanding owned by `main`.

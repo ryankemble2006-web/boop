@@ -11,7 +11,31 @@ Read the branch design and implementation plan first:
 - `docs/superpowers/specs/2026-09-12-boop-win7ify-v01-design.md`
 - `docs/superpowers/plans/2026-09-12-boop-win7ify-v01.md`
 
-## v0.1 proven state
+## Current repair and physical result
+
+The initial 0.1 EXE launched but the first physical Apply failed. Do not treat its
+old green CI result as physical acceptance. The protected Widgets setting
+`TaskbarDa` rejected even an identical-value write; `TaskbarAl` did not. The existing
+user backup remains compatible and must be preserved.
+
+Version 0.1.1 addresses this without elevation or permission bypass. Apply and
+Restore now return `IReadOnlyList<ChangeResult>` with `Changed`, `AlreadyCorrect`,
+`Blocked`, and `Failed` outcomes. They skip matching data, read back writes, continue
+past per-setting denials, and preserve the original backup after incomplete restore.
+Backup reads validate version/type/duplicates/production allowlist, and updates are
+atomic. Restore leaves empty key structures alone: schema v1 recorded values, not
+whether entire keys originally existed.
+
+The UI opens maximised, keeps actions outside the scrollable choices, uses legible
+secondary buttons, and shows failures in the log after buttons are re-enabled.
+Apply/Restore no longer automatically kill Explorer. A separate confirmed action
+restarts only the current session's desktop shell. Startup is read-only.
+
+The focused RED proof is commit `810324265acddfa030b44a846ca93b1ba3ef1163`,
+run `34670905369`: five new failure cases failed as intended and the old nine passed.
+Read `../SESSION_HANDOFF.md` and `STATUS.md` for the latest repair verification.
+
+## Historical v0.1 build evidence
 
 The core is deliberately separated from WinForms behind `IRegistryStore`.
 
@@ -48,7 +72,7 @@ Preserve these unless new evidence justifies a deliberate redesign:
 - `PUT WINDOWS 11 BACK` remains prominent and simple;
 - original registry values are captured before first touch and survive repeated Apply operations;
 - a failed restore retains the backup;
-- normal preset remains HKCU-only and does not require elevation;
+- normal preset remains HKCU-only with no elevation request; protected values may still be blocked;
 - Experimental classic-context-menu support remains opt-in;
 - no protected Windows binary replacement;
 - no silent third-party downloads/installers;
@@ -77,7 +101,7 @@ On a real Windows 11 machine, check:
 
 - app launches and BOOP eyes look correct;
 - Apply makes the requested visible changes that the installed build supports;
-- Explorer restarts cleanly;
+- the separately confirmed current-desktop Explorer refresh restarts cleanly;
 - repeated Apply does not corrupt the original backup;
 - Restore returns the original visible state;
 - Experimental context-menu toggle can be applied and restored independently;
