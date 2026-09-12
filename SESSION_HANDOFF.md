@@ -1,159 +1,56 @@
-## Installed v145: Overview visibility repaired, 2026-09-12
+# BOOP Launcher standalone handoff
 
-The user explicitly approved the narrow row fix and installation. Installed
-version: `145 / 1.2.145-boop-defaults-visible`, package `com.boop.alpha1`.
-Build source: `8fbe84411ec211f3adfec4409e41f3d49b2607fa`.
-Successful permanent-signed run: `34679678333`; artifact `10293642500`.
-APK SHA256: `5b28036f6a3b7114f752bdbdc5273486394fbbafb7e8ca55c56caf7bd37ef6b5`.
-Signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-The installed APK's hash exactly matches the verified signed artifact. The actual
-installed v143 APK was privately preserved before the update. All four Startup
-Manager preference files, defaults journal presence/content, disabled-package
-list, paired background-restriction lists and font_scale matched immediately
-before and after installation. No Apply, Undo, permission grant or package change
-was performed by this task.
+Updated 2026-09-12. Owner: `boop-shield-launcher-standalone`.
+Project `shield-launcher/`; generated dependency closure `work/shield-launcher-src/`.
+Package `com.boop.shieldlauncher`, version 1 / `1.0.0-launcher-tools`.
+User explicitly approved splitting the launcher and its advanced tools, excluding
+failed uncommitted integration work. The subsequently published v146 integration
+is still not an input. Unified and historical standalone installs are untouched.
 
-The only application repair is in ShieldStartupManagerView: the six Overview
-buttons/cards in flexible rows now measure height from their content. Existing
-fixed-height rows, focus links, callbacks, preset/controller/Restore behavior,
-artwork and excluded-lyrics scope are unchanged. No other worktree was modified.
-Local gates passed: Android compilation; 277 Unified tests (zero failures/errors/
-skips); 15 Startup Manager suites; 27 preset-coordinator scenarios; eight safety
-scenarios; profile/journal checks; Android 11 linkage. Signed CI passed, including
-68 Shield and 217 Unified focused tests plus the preset suite. No visual CI added.
+## Frozen input and product boundary
 
-Manual live screenshot review confirmed both defaults buttons and all four action
-cards now visible at the unchanged 130% text setting. The defaults controls have
-83-pixel height in the actual view tree rather than v143's one-pixel rows. After
-ordinary Home settings navigation, Up/Right focused Use BOOP defaults; a fresh
-screenshot confirmed its visible cyan outline. The button was left focused, not
-activated. Opening Home initially produced a transient black frame; a subsequent
-capture showed Home normally, with no current-process AndroidRuntime fatal in the
-inspected log. UIAutomator could not idle on animated Home, so that screen was
-inspected by screenshot before normal navigation to the static settings screen.
+Base `boop-shield-defaults@503cdb63d64716c9c1a568aadca97ba1d24680cd`, with signed
+v145 source `8fbe84411ec211f3adfec4409e41f3d49b2607fa`. Includes corrected visible
+Startup Manager Overview/defaults controls and accepted v135 startup foundations.
+Retains Home/favourites/drawer/Now Playing/album browsing/audio handling, Startup
+Manager, Clean Start, package controls and device-specific exact defaults Undo.
+The existing lyrics branch, phone/Wall, HA dashboard, voice/wake/models, overlay
+media puppet and Animation Lab are excluded. Home Now Playing puppet remains.
+New label BOOP Launcher; new package does not replace com.boop.alpha1 or the
+historical com.boop.shieldhome package. No new artwork; inherited launcher PNGs
+are byte-checked and unchanged, with an XML app icon using the existing eyes.
 
-This is scoped agent verification of the requested layout/installation, not user
-acceptance of all preset Apply/Undo or reboot behavior. The previous v143 defect
-and older not-installed statements below are historical and superseded here.
-Keep all subsequent work on boop-shield-defaults unless an explicit merge is asked.
+## Extraction and review
 
-## Approved v145 Overview-only repair in progress, 2026-09-12
+83 Java files currently form the standalone dependency closure. The original
+Unified sources remain unchanged; generation applies narrow standalone adapters.
+Settings open the existing Shield firmware router and OS Home chooser, not HA or
+Unified profiles. Close Player uses this app's previously authorized local ADB
+bridge and exact session checks, never HA credentials. Native targets remain
+Deezer/YouTube; Cast uses the existing session Stop and is never force-stopped.
+Back, pause, session change and timeout cancel work; actual session disappearance
+requires a fresh Android observation. The local ADB identity and Restore journal
+are app-private and not backed up or imported from the source Shield.
 
-The user approved fixing the observed one-pixel rows and installing the corrected
-build. This task stays on boop-shield-defaults and must not merge other work.
-Candidate145 changes only the six flexible Overview children from parent-height
-to content-height measurement; fixed-height Package Control/Restore rows, all
-actions, approved art, permissions and the preset remain unchanged. The prior
-manual screenshot/hierarchy is the failing reproduction. Do not add visual CI or
-source-string geometry guards. Run existing nonvisual gates, sign, preserve the
-actual installed APK/settings, install, manually confirm visible controls, and
-leave Use BOOP defaults focused without executing Apply/Undo. Versions143/144 are
-used on sibling experimental branches;145 was the next observed unused version.
+## Verification to this point
 
-Local repair gates passed: Android Java compilation, all 277 Unified unit tests
-(0 failures/errors/skips), 27 defaults-coordinator cases, eight safety cases,
-profile/journal checks, 15 Startup suites and Android 11 linkage. The code diff
-changes only three Overview call sites plus a content-height helper. Existing
-callback bindings, focus IDs, fixed-height rows and package-control files are
-untouched. Signed build and live visual/focus checks are still pending.
+Observed test-first RED before implementation for packaging and local close.
+Five packaging/routing contracts, local-close adversarial Java tests, 15 existing
+Startup Manager suites, 27 defaults coordinator cases, eight defaults safety
+cases and profile/journal checks are the focused gate. Local unsigned Android
+build and actual APK ZIP/DEX-boundary checks pass after the final settings-router
+manifest repair. Five packaging tests, local-close scenarios, all 15 startup
+suites and all defaults scenarios were freshly rerun and passed. Unsigned local
+artifact is 7,675,699 bytes; it is not the permanent-signed delivery.
+Self-review only; no independent reviewer or physical acceptance claimed.
+Permanent signing is required through build-shield-launcher.yml and the existing
+GitHub BOOP secrets. Never distribute the unsigned local compile artifact.
+No physical device install, permission/role grant, package action, Apply/Undo or
+media action has been performed. Real second-Shield setup/launch/remote/close/
+reboot and visual acceptance remain pending.
 
-## Live v143 Overview defect confirmed, 2026-09-12
+## Next receipt
 
-The device reports installed `143 / 1.2.143-boop-shield-defaults`. A fresh live
-screen inspection found both defaults buttons AND the four action cards collapsed
-to one-pixel-high rows below the status boxes. The Android view tree confirms
-one-pixel heights; this is not a navigation-location or missing-build problem.
-Focus was moved onto **Use BOOP defaults**, but the collapsed control cannot show
-a usable visible focus treatment. No Apply, Undo or package action was selected.
-The scrollable Overview uses MATCH_PARENT-height weighted children in
-WRAP_CONTENT-height rows. Repair that scoped sizing behavior on this branch before
-claiming the buttons are visible or promoting v143 as physically accepted.
-The current user request was recheck/highlight only. No app-code edits, build,
-install, permission changes or package mutations were made in this investigation.
-Previous source/signing evidence below remains valid, but is not visual acceptance.
-
-# BOOP defaults feature handoff
-
-Updated 2026-09-12. Owning branch/worktree: `boop-shield-defaults` /
-`.worktrees/boop-shield-defaults`. Base: accepted v135 source with acceptance docs
-at `582bd0d404a3d4ca61abd718551f7af5ef20aabe`. Other app, lyrics, integration and
-animation worktrees are not part of this change. Do not merge or deploy by implication.
-
-## Candidate
-
-`143 / 1.2.143-boop-shield-defaults`, package `com.boop.alpha1`, permanent signer
-and permissions unchanged. This is the isolated defaults candidate, not a superset
-of unrelated later-numbered lyrics/animation branches. The version was selected
-after sibling reservations at 136, 137 and 142 were observed read-only.
-
-Implemented Overview actions: **Use BOOP defaults** and **Undo BOOP defaults**.
-The review screen shows exact matching packages, consequences and whole-row
-selection so individual entries can be excluded. Opening it does not apply changes.
-The existing Overview content scrolls instead of being squeezed by the new actions.
-No personal name appears in the feature's UI or profile data.
-
-## Preset and recovery
-
-Frozen profile `boop-shield-defaults-v1`: 14 exact package IDs, nine disables,
-nine boot-cleanup selections and six paired background restrictions. No vendor-
-prefix rule. Three historical disables and Kodi's old single restriction stay
-excluded. Missing entries, foreground apps, protected recovery components and
-active input/accessibility providers are skipped with reasons. The NVIDIA-TV,
-setup/user/recovery checks are repeated during execution. Stock launcher is the
-last package and requires an enabled BOOP HOME route. ADB/grants are not enabled
-or changed by the preset. The ordinary manual package console remains unchanged.
-
-Apply uses the established verified individual controller. Before each mutation,
-a separate bounded/versioned journal stores the receiving device's exact pre-
-preset state and individual Restore record. The journal is atomic and app-private
-under getNoBackupFilesDir; no source-device Restore data is shipped or backed up
-as a portable preset. Group Undo changes only dimensions this preset actually
-changed and reinstates the exact previous individual record. Existing global
-cleanup switches and unrelated selections are preserved. Partial work/process
-death remains recoverable. Repeated Apply cannot replace the initial baseline or
-broaden the selection. Later-state/ledger conflicts are kept rather than silently
-overwritten; the review reports them. Explicit Keep current settings only drops
-grouped ownership, leaving packages and individual Restore records unchanged.
-
-## Verification
-
-Fresh local final candidate: real Android Java compilation and full Unified unit
-task passed, 277 tests / zero failures, errors or skips. Existing 15 Startup
-Manager suites and Android 11 linkage passed. New tests: 27 coordinator scenarios,
-eight recovery/safety scenarios and profile/journal structural checks. Canonical
-shared-state/media contracts passed. Observed RED-to-GREEN includes missing new
-behavior, partial recovery, mid-package external drift and forged review flags.
-Code review was performed locally with adversarial tests; no independent reviewer
-or physical preset acceptance is claimed. No GitHub visual tests were introduced.
-
-## Signed candidate receipt, 2026-09-12
-
-- Version: `143 / 1.2.143-boop-shield-defaults`, package `com.boop.alpha1`.
-- Exact build source: `696a1b2249b2549c12c4832baf7bc2c30b913aab`.
-- Successful permanent-signed workflow run: `34676381862`.
-- Artifact: `BOOP-Unified`, ID `10291778955`.
-- APK SHA256: `4c91bf3b54675afb11f3a0c2f574b1eb0da5b7747d2919016e3d3145cb77f2a1`.
-- Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-- GitHub-reported artifact archive digest: `sha256:677de8185388cab4b418318a32f29e3057c70a5dbcd6de9028dc8dc371489a9d`.
-
-The signed download was independently checked against its included APK hash and
-built-commit receipt. Package/version, permanent signer and ZIP integrity passed.
-The APK contains the preset coordinator/review screen and both BOOP-branded
-buttons; the unfinished Lyrics browser is absent. GitHub passed the existing
-nonvisual gates, including 68 Shield and 217 Unified focused tests with zero
-failures/errors/skips, plus the new defaults behavior suites.
-
-**Not installed, not applied, not merged into ongoing work.** No live package,
-permission, media or default-HOME changes were made in this feature task.
-The preset's real-device layout, Apply/Undo round trip and firmware behavior
-remain unverified; signed/tested does not imply physical acceptance. Obtain
-separate deployment approval, inspect the shared device's current build first,
-and preserve its rollback. Do not overwrite newer unrelated branch work merely
-because this isolated candidate has versionCode143.
-
-
-Spec: docs/superpowers/specs/2026-09-12-boop-shield-defaults.md.
-Plan: docs/superpowers/plans/2026-09-12-boop-shield-defaults.md.
-Historical accepted v135 source/build receipt remains preserved in the base Git
-history and original integration branch. Baseline APK run: 34673227727,
-artifact 10291770657. Do not confuse that accepted base with this uninstalled feature.
+Publish the reviewed source, verify the signed CI artifact and record exact
+run/artifact/source/hash/signer, then publish documentation receipts and verify
+live GitHub HEAD. Shared main needs the explicit standalone product exception.

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-feature android:name="android.software.leanback" android:required="true" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <queries>
+        <package android:name="deezer.android.app" />
+        <package android:name="com.google.android.youtube.tv" />
+        <package android:name="com.android.tv.settings" />
+        <intent><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.HOME" /></intent>
+        <intent><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LEANBACK_LAUNCHER" /></intent>
+        <intent><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent>
+    </queries>
+    <application android:allowBackup="false" android:enableOnBackInvokedCallback="false"
+        android:label="BOOP Launcher" android:icon="@drawable/boop_launcher_icon"
+        android:banner="@drawable/boop_tv_banner" android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity android:name="com.boop.shieldhome.ShieldLauncherActivity" android:exported="true"
+            android:launchMode="singleTask" android:screenOrientation="landscape"
+            android:label="BOOP Launcher" android:icon="@drawable/boop_launcher_icon" android:banner="@drawable/boop_tv_banner">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.HOME" /><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LEANBACK_LAUNCHER" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity>
+        <activity android:name="com.boop.shieldhome.ShieldAccessibilityRouteActivity" android:exported="false" android:noHistory="true" android:excludeFromRecents="true" android:theme="@android:style/Theme.NoDisplay" />
+        <activity android:name="com.boop.shieldhome.ShieldStartupManagerActivity" android:exported="false" android:screenOrientation="landscape" />
+        <activity android:name="com.boop.shieldhome.LauncherClosePlayerActivity" android:exported="false" android:screenOrientation="landscape" android:excludeFromRecents="true" />
+        <receiver android:name="com.boop.shieldhome.StartupCleanupBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter></receiver>
+        <service android:name="com.boop.shieldhome.StartupCleanupJobService" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service android:name="com.boop.shieldhome.ShieldNowPlayingListenerService" android:exported="true" android:label="BOOP Launcher media access" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
+        </service>
+        <service android:name="com.boop.shieldhome.ShieldHomeOverrideService" android:exported="true" android:label="BOOP Launcher Home button" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/boop_home_override_service" />
+        </service>
+    </application>
+</manifest>

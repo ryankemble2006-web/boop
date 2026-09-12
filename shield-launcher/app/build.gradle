@@ -1,0 +1,32 @@
+plugins { id 'com.android.application' }
+def signer = System.getenv('BOOP_SIGNING_STORE_FILE')
+android {
+    namespace 'com.boop.shieldhome'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'com.boop.shieldlauncher'
+        minSdk 29
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0-launcher-tools'
+    }
+    sourceSets {
+        main {
+            java.srcDirs = ['../../work/shield-launcher-src/java']
+            res.srcDirs = ['../../work/shield-launcher-src/res']
+            assets.srcDirs = ['../../work/shield-launcher-src/assets']
+        }
+    }
+    signingConfigs {
+        boop {
+            if (signer) {
+                storeFile file(signer)
+                storePassword System.getenv('BOOP_DEV_STORE_PASSWORD')
+                keyAlias 'boop-dev'
+                keyPassword System.getenv('BOOP_DEV_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes { debug { signingConfig = signer ? signingConfigs.boop : null } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
