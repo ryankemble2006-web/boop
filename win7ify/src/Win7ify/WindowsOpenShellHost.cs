@@ -123,10 +123,29 @@ internal sealed class WindowsOpenShellHost : IOpenShellHost, IDisposable
         var info = Inspect();
         if (!info.Installed || !info.Running) return;
         var exe = MenuExe();
-        await RunToExitAsync(exe, "-exit", 15);
-        for (var attempt = 0; attempt < 40 && Running(exe); attempt++) await Task.Delay(250);
+        // Upstream MSG_EXIT is ignored while CanShowMenu() is false. Dismiss the
+        // active menu first, then send the official exit command. Never kill Explorer.
+        for (var request = 0; request < 3 && Running(exe); request++)
+        {
+            var menu = FindWindow("OpenShell.CMenuContainer", null);
+            var shell = GetShellWindow();
+            if (menu != IntPtr.Zero && shell != IntPtr.Zero)
+            {
+                GetWindowThreadProcessId(menu, out var menuPid);
+                GetWindowThreadProcessId(shell, out var shellPid);
+                if (menuPid == shellPid)
+                {
+                    _log.Add(new("BOOP S241", "Closing the open menu before its official shutdown."));
+                    PostMessage(menu, 0x0010, IntPtr.Zero, IntPtr.Zero);
+                    for (var wait = 0; wait < 20 && IsWindowVisible(menu); wait++) await Task.Delay(100);
+                }
+            }
+            await RunToExitAsync(exe, "-exit", 15);
+            for (var wait = 0; wait < 40 && Running(exe); wait++) await Task.Delay(250);
+        }
         if (Running(exe))
             throw new ShellProblem("BOOP E241", "The current Start menu did not close cleanly. BOOP did not force-kill Explorer. Recovery remains available.");
+        _log.Add(new("BOOP S244", "The Start-menu process finished its normal shutdown."));
     }
     public async Task VerifyProfileAsync()
     {
@@ -158,8 +177,18 @@ internal sealed class WindowsOpenShellHost : IOpenShellHost, IDisposable
     public async Task StartAsync(bool openMenu)
     {
         var exe = MenuExe();
+        var wasRunning = Running(exe);
         using var started = Process.Start(new ProcessStartInfo(exe, openMenu ? "-open" : "") { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe)! })
             ?? throw new ShellProblem("BOOP E240", "The installed menu could not start.");
+        if (wasRunning)
+        {
+            // A second -open is a command sender, not the resident menu process.
+            // Let it finish forwarding before reporting readiness or beginning Undo.
+            using var commandTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            try { await started.WaitForExitAsync(commandTimeout.Token); }
+            catch (OperationCanceledException ex)
+            { throw new ShellProblem("BOOP E243", "The existing menu did not finish receiving its command. Check the report before retrying.", ex); }
+        }
         for (var attempt = 0; attempt < 100; attempt++)
         {
             if (Running(exe) && (!openMenu || MenuWindowVisible()))
@@ -207,6 +236,9 @@ internal sealed class WindowsOpenShellHost : IOpenShellHost, IDisposable
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
     }
+    [DllImport("user32.dll")] private static extern IntPtr GetShellWindow();
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+    [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindow(string className, string? windowName);
     [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool IsWindowVisible(IntPtr window);
 }

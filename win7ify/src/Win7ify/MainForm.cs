@@ -26,7 +26,7 @@ internal sealed class MainForm : Form
         AutoScaleDimensions = new SizeF(96, 96);
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 13f);
-        Text = "BOOP // Win7ify 0.1.1";
+        Text = "BOOP // Desktop settings 0.2.0";
         BackColor = Color.Black;
         ForeColor = Color.White;
         MinimumSize = new Size(720, 660);
@@ -46,7 +46,7 @@ internal sealed class MainForm : Form
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200));
         header.Controls.Add(new Label {
-            Text = "BOOP // WIN7IFY 0.1.1\r\nFamiliar Windows habits. Your original settings kept safe.",
+            Text = "BOOP // DESKTOP SETTINGS\r\nFamiliar Windows habits. Your original settings kept safe.",
             Dock = DockStyle.Fill, ForeColor = Cyan, Font = new Font("Segoe UI", 19f, FontStyle.Bold),
             TextAlign = ContentAlignment.MiddleLeft
         }, 0, 0);
@@ -100,7 +100,7 @@ internal sealed class MainForm : Form
         _status.Text = _backup.HasBackup ? "Original backup found. Undo will use that same baseline." : "Ready. Nothing is changed just by opening this window.";
         // Startup is read-only. Logs are created only after a user-requested operation.
         _log.Text = $"Windows build: {Environment.OSVersion.Version}\r\n" +
-            "This is a settings makeover, not a Windows 7 Start-menu replacement.\r\n" +
+            "This page adjusts desktop preferences. The main window manages the Start menu.\r\n" +
             "Already-correct settings are left alone. Blocked settings are named, not forced.\r\n" +
             "The desktop is refreshed only when you press REFRESH DESKTOP.\r\n";
     }
@@ -143,7 +143,7 @@ internal sealed class MainForm : Form
             if (restore) WriteLog(_backup.HasBackup ? "Original backup kept. Some settings still need attention; Undo can be retried." : "All saved values are back. The completed backup has been removed.");
             else WriteLog($"Original backup kept at {_backup.BackupPath}");
             if (changed > 0) WriteLog("Press REFRESH DESKTOP when file transfers are finished, or sign out later, to let Windows reread the changes.");
-            WriteLog("A saved registry value does not prove a visible Windows change. No shell replacement is installed.");
+            WriteLog("Saved desktop preferences do not prove a visible Windows change. Use the main window to manage the Windows 7 Start menu.");
         }
         catch (Exception ex)
         {
