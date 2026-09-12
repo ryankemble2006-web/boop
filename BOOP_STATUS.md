@@ -1,5 +1,7 @@
 ## EastEnders 1.6 return-focus repair installed, 2026-09-12
 
+Published source commit: e067bbdbb64f93740eb74dde758a72641147bf19 on oop-v125-animation-integration.
+
 Ryan reproduced an iPlayer post-playback return where the EastEnders programme page was visible but the physical remote could not navigate. Live Shield evidence captured Android InputDispatcher with no focused application or focused window even though iPlayer PlayerActivity was resumed. One injected D-pad event restored the iPlayer window and navigation, isolating the failure to lost focus rather than a dead page or EastEnders key interception.
 
 Standalone `uk.local.eastenders` versionCode 7 / versionName 1.6 adds a bounded one-shot return-focus guard after the helper's own newest-episode click. The guard must first observe the EastEnders programme page disappear for playback, preventing an early transition race. If the EastEnders page later returns while the guard is active, it requests accessibility focus on the first real episode card and then disarms. No D-pad/Back interception, new permission, iPlayer modification, or BOOP Unified behavior change.
