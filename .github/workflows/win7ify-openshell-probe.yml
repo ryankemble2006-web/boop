@@ -1,0 +1,46 @@
+name: Win7ify Open-Shell inputs
+on:
+  workflow_dispatch:
+  push:
+    branches: [boop-win7ify-v01]
+    paths: ['.github/workflows/win7ify-openshell-probe.yml']
+permissions:
+  contents: read
+jobs:
+  inputs:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: Open-Shell/Open-Shell-Menu
+          ref: b2070640ffbe047791de25f83063fb62bbc7d22f
+          path: upstream
+          persist-credentials: false
+      - name: Inspect official installer and collect source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory probe | Out-Null
+          Copy-Item win7ify probe/win7ify -Recurse
+          Copy-Item AGENTS.md,BOOP_RULES.md,BOOP_CONTEXT.md,BOOP_START_HERE.md,SESSION_HANDOFF.md,BOOP_PERSONALITY.md probe
+          Copy-Item .github/workflows/win7ify-build.yml probe
+          Copy-Item upstream/Src probe/upstream-src -Recurse
+          Copy-Item upstream/LICENSE probe/OpenShell-LICENSE.txt
+          Invoke-WebRequest 'https://github.com/Open-Shell/Open-Shell-Menu/releases/download/v4.4.198/OpenShellSetup_4_4_198.exe' -OutFile probe/OpenShellSetup_4_4_198.exe
+          $h = (Get-FileHash probe/OpenShellSetup_4_4_198.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($h -ne 'a4d2d4459de55b5e962ba2a14f7bb794170511649138173dfa72949837b48c3f') { throw 'Installer integrity mismatch' }
+          Get-AuthenticodeSignature probe/OpenShellSetup_4_4_198.exe | Format-List Status,StatusMessage,SignerCertificate | Out-File probe/signature.txt
+          $exe = (Resolve-Path probe/OpenShellSetup_4_4_198.exe).Path
+          $p = Start-Process $exe -ArgumentList 'extract64' -WorkingDirectory (Resolve-Path probe).Path -PassThru -Wait
+          "extract-exit=$($p.ExitCode)" | Out-File probe/extraction.txt
+          Get-ChildItem probe | Select-Object Name,Length | Format-Table | Out-File probe/files.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Win7ify-OpenShell-inputs
+          path: probe/
+          if-no-files-found: error
+          retention-days: 7
