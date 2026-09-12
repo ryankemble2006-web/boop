@@ -39,11 +39,11 @@ public final class StartupPreventionPolicy {
 
     public static String parseMode(String output) {
         if (output == null) return null;
-        Matcher explicit = Pattern.compile("(?:RUN_IN_BACKGROUND|RUN_ANY_IN_BACKGROUND):\\s*(allow|ignore|deny|default)\\b")
+        Matcher explicit = Pattern.compile("(?:RUN_IN_BACKGROUND|RUN_ANY_IN_BACKGROUND):\\s*(allow|ignore|deny|default|foreground)\\b")
                 .matcher(output);
         if (explicit.find()) return explicit.group(1);
         if (output.contains("No operations.")) return "default";
-        Matcher fallback = Pattern.compile("Default mode:\\s*(allow|ignore|deny|default)\\b").matcher(output);
+        Matcher fallback = Pattern.compile("Default mode:\\s*(allow|ignore|deny|default|foreground)\\b").matcher(output);
         return fallback.find() ? fallback.group(1) : null;
     }
 

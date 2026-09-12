@@ -17,7 +17,7 @@ public final class StartupPackageInventory {
     public static Set<String> parsePackageList(String raw) {
         LinkedHashSet<String> out = new LinkedHashSet<>();
         if (raw == null) return out;
-        for (String line : raw.lines().toList()) {
+        for (String line : raw.split("\\r\\n|\\r|\\n")) {
             String value = line.trim();
             if (!value.startsWith("package:")) continue;
             String pkg = value.substring("package:".length()).trim();
@@ -32,6 +32,17 @@ public final class StartupPackageInventory {
         Matcher matcher = COMPONENT.matcher(raw);
         while (matcher.find()) out.add(matcher.group(1));
         return Set.copyOf(out);
+    }
+
+    public static StartupPackageState detail(String pkg, String userState, boolean system,
+            boolean home, String label, String run, String any,
+            Set<StartupRecoveryPolicy.ManagedAction> actions) {
+        String enabled = StartupPackageCommands.parseEnabled(userState);
+        if(!StartupPackageController.validPackageName(pkg) || enabled == null || userState == null
+                || !Pattern.compile("\\binstalled=true\\b").matcher(userState).find()
+                || !StartupRestoreRecord.validMode(run) || !StartupRestoreRecord.validMode(any))
+            throw new IllegalArgumentException("Installed package state could not be verified.");
+        return new StartupPackageState(pkg,label,system,home,enabled,run,any,actions);
     }
 
     public static List<StartupPackageState> merge(String allRaw, String systemRaw,

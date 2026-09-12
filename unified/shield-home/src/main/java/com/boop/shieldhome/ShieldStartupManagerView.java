@@ -2,354 +2,309 @@ package com.boop.shieldhome;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
-import android.util.TypedValue;
+import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
+/** TV-first presentation only. Package authority stays in the controller and bridge. */
 public final class ShieldStartupManagerView extends LinearLayout {
     public interface Callbacks {
         void onOpenPackages(StartupManagerUiModel.Mode mode);
-        void onOpenRestore();
-        void onCheckLocalLink();
-        void onRunNow();
+        void onOpenRestore(); void onCheckLocalLink(); void onRunNow();
         void onFilter(StartupManagerUiModel.Filter filter);
-        void onPackageInfo(String packageName);
-        void onPrimary(String packageName);
-        void onToggleBoot(String packageName, boolean enabled);
-        void onToggleBackground(String packageName, boolean enabled);
-        void onForceStop(String packageName);
-        void onProtected(String packageName, String reason);
-        void onPackageFocus(String packageName, int actionIndex);
-        void onToggleRestoreSelection(String packageName, boolean selected);
-        void onRestoreOne(String packageName);
-        void onRestoreSelected();
-        void onBack();
+        void onPackageInfo(String packageName); void onPrimary(String packageName);
+        void onToggleBoot(String packageName,boolean enabled);
+        void onToggleBackground(String packageName,boolean enabled);
+        void onForceStop(String packageName); void onProtected(String packageName,String reason);
+        void onPackageFocus(String packageName,int actionIndex);
+        void onToggleRestoreSelection(String packageName,boolean selected);
+        void onRestoreOne(String packageName); void onRestoreSelected(); void onBack();
+        default void onOpenOverview() { onBack(); }
+        default void onSetAuto(boolean enabled) { }
+        default void onRefresh() { }
     }
-
+    private static final int MUTED=Color.rgb(174,184,193), PANEL=Color.rgb(25,27,29), CARD=Color.rgb(36,39,42);
+    private LinearLayout body,rail;
+    private TextView detail;
+    private final java.util.Map<String,String> packageLabels = new java.util.HashMap<>();
+    public void setPackageLabels(List<StartupPackageState> rows) { for (var row:rows) packageLabels.put(row.packageName(),row.label()); }
+    private boolean busy;
+    private String status="";
+    private final List<TextView> navigation=new ArrayList<>();
     public ShieldStartupManagerView(Context context) {
-        super(context);
-        setOrientation(VERTICAL);
-        setBackgroundColor(Color.BLACK);
-        setPadding(dp(44), dp(26), dp(44), dp(26));
-        setClipToPadding(false);
+        super(context); setBackgroundColor(Color.BLACK);
+        setPadding(dp(26),dp(22),dp(26),dp(20));
     }
+    public void setStatus(String text,boolean working) { status=text==null?"":text; busy=working; }
 
-    public void renderOverview(boolean hasIdentity, boolean bootEnabled, int managedCount,
-                               String lastSummary, Callbacks callbacks) {
-        removeAllViews();
-        addView(text("Startup Manager", 34, true), wrap());
-        addSpacer(4);
-        addView(text("Control what starts, what stays, and what gets out of the way.", 17, false), wrap());
-        addSpacer(16);
-        addView(text("Local control: " + (hasIdentity ? "READY" : "APPROVAL NEEDED")
-                + "    •    Managed packages: " + managedCount
-                + "    •    Clean after boot: " + (bootEnabled ? "ON" : "OFF"), 15, false), wrap());
-        addSpacer(16);
-
-        TextView first = card("Disable apps", "Turn off junk packages, launchers and companion services",
-                "startup:overview:disable", () -> callbacks.onOpenPackages(StartupManagerUiModel.Mode.DISABLE));
-        addView(first, cardParams()); addSpacer(10);
-        addView(card("Clean after boot", "Close selected packages once after startup",
-                "startup:overview:boot", () -> callbacks.onOpenPackages(StartupManagerUiModel.Mode.BOOT_CLEAN)), cardParams()); addSpacer(10);
-        addView(card("Prevent background start", "Stop selected packages waking in the background",
-                "startup:overview:bg", () -> callbacks.onOpenPackages(StartupManagerUiModel.Mode.BACKGROUND)), cardParams()); addSpacer(10);
-        addView(card("Restore changes", "Undo BOOP package disables and startup rules",
-                "startup:overview:restore", callbacks::onOpenRestore), cardParams());
-        addSpacer(16);
-
-        LinearLayout utilities = row();
-        utilities.addView(button(hasIdentity ? "Check local link" : "Approve local link", 260, 58,
-                "startup:overview:link", callbacks::onCheckLocalLink));
-        addHSpacer(10, utilities);
-        utilities.addView(button("Run boot cleanup now", 300, 58,
-                "startup:overview:run", callbacks::onRunNow));
-        addHSpacer(10, utilities);
-        utilities.addView(button("Back", 180, 58, "startup:overview:back", callbacks::onBack));
-        addView(utilities, wrap());
-        if (lastSummary != null && !lastSummary.isBlank()) {
-            addSpacer(14);
-            addView(text("Last result: " + lastSummary, 14, false), wrap());
+    private void frame(String title,String subtitle,int selected,Callbacks callbacks) {
+        removeAllViews(); setOrientation(HORIZONTAL); navigation.clear();
+        rail=column(); rail.setPadding(dp(12),dp(14),dp(12),dp(12));
+        rail.setBackground(FocusChrome.filled(getContext(),PANEL,16,false));
+        addView(rail,new LayoutParams(dp(170),LayoutParams.MATCH_PARENT));
+        TextView wordmark=text("BOOP",26,true); wordmark.setTextColor(FocusChrome.accentColor(getContext()));
+        rail.addView(wordmark); rail.addView(caption("YOUR SHIELD. YOUR RULES.",10)); space(rail,22);
+        String[] labels={"Overview","Package control","Boot cleanup","Background start","Restore"};
+        Runnable[] actions={callbacks::onOpenOverview,
+            ()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.DISABLE),
+            ()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BOOT_CLEAN),
+            ()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BACKGROUND),callbacks::onOpenRestore};
+        for(int i=0;i<labels.length;i++) {
+            TextView item=button(labels[i],"startup:nav:"+i,actions[i]); item.setTextSize(14);
+            if(i==selected) item.setTextColor(FocusChrome.accentColor(getContext()));
+            rail.addView(item,new LayoutParams(LayoutParams.MATCH_PARENT,dp(46))); space(rail,7);
+            navigation.add(item);
         }
-        first.post(first::requestFocus);
+        rail.addView(new View(getContext()),new LayoutParams(1,0,1));
+        rail.addView(caption("Core recovery stays protected.\nEverything else stays visible.",12));
+        addView(new View(getContext()),new LayoutParams(dp(22),1));
+        body=column(); addView(body,new LayoutParams(0,LayoutParams.MATCH_PARENT,1));
+        body.addView(text(title,29,true)); body.addView(caption(subtitle,14)); space(body,14);
     }
-
-    public void renderPackages(List<StartupPackageState> rows,
-                               StartupManagerUiModel.Filter filter,
-                               StartupManagerUiModel.Mode mode,
-                               StartupRecoveryPolicy.RecoveryCapabilities capabilities,
-                               String focusPackage, int focusAction, Callbacks callbacks) {
-        removeAllViews();
-        addView(text("Package Control", 31, true), wrap());
-        addSpacer(2);
-        addView(text(modeSubtitle(mode) + "    •    " + rows.size() + " shown", 15, false), wrap());
-        addSpacer(12);
-
-        HorizontalScrollView filterScroll = new HorizontalScrollView(getContext());
-        filterScroll.setHorizontalScrollBarEnabled(false);
-        LinearLayout filterRow = row();
-        List<TextView> filterViews = new ArrayList<>();
-        for (StartupManagerUiModel.Filter option : StartupManagerUiModel.Filter.values()) {
-            TextView chip = filterChip(option, option == filter, () -> callbacks.onFilter(option));
-            filterViews.add(chip);
-            filterRow.addView(chip);
-            addHSpacer(8, filterRow);
+    private void footer(Callbacks callbacks) {
+        space(body,8);
+        TextView result=caption((busy?"Working: ":"")+status,13);
+        result.setMaxLines(2); result.setEllipsize(TextUtils.TruncateAt.END);
+        result.setTextColor(busy?FocusChrome.accentColor(getContext()):MUTED);
+        body.addView(result,new LayoutParams(LayoutParams.MATCH_PARENT,dp(36)));
+        body.addView(caption("D-pad  Browse     OK  Choose     Back  Return     Menu  Restore",11));
+        for(int i=0;i<navigation.size();i++) {
+            final int index=i;
+            navigation.get(i).setOnKeyListener((v,key,event)->{
+                if(event.getAction()!=KeyEvent.ACTION_DOWN) return false;
+                if(key==KeyEvent.KEYCODE_DPAD_UP){navigation.get(Math.max(0,index-1)).requestFocus();return true;}
+                if(key==KeyEvent.KEYCODE_DPAD_DOWN){navigation.get(Math.min(navigation.size()-1,index+1)).requestFocus();return true;}
+                return key==KeyEvent.KEYCODE_DPAD_LEFT;
+            });
         }
-        filterScroll.addView(filterRow);
-        addView(filterScroll, new LayoutParams(LayoutParams.MATCH_PARENT, dp(56)));
-        addSpacer(8);
-
-        ScrollView scroll = new ScrollView(getContext());
-        scroll.setFillViewport(true);
-        scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout list = new LinearLayout(getContext());
-        list.setOrientation(VERTICAL);
-        List<List<TextView>> matrix = new ArrayList<>();
-        for (StartupPackageState state : rows) {
-            StartupRecoveryPolicy.Assessment assessment = StartupRecoveryPolicy.assess(state, capabilities);
-            boolean protectedPackage = assessment.protectedPackage();
-            LinearLayout packageRow = row();
-            packageRow.setGravity(Gravity.CENTER_VERTICAL);
-            ArrayList<TextView> actions = new ArrayList<>();
-            String info = state.label() + "\n" + state.packageName() + "  •  "
-                    + (state.systemApp() ? "SYSTEM" : "USER") + "  •  " + assessment.impact();
-            TextView infoView = button(info, 500, 76, "startup:package:" + state.packageName() + ":0",
-                    () -> callbacks.onPackageInfo(state.packageName()));
-            actions.add(infoView); packageRow.addView(infoView); addHSpacer(8, packageRow);
-
-            String primary = protectedPackage ? "Protected" : StartupManagerUiModel.primaryAction(state);
-            actions.add(rowAction(packageRow, primary, state.packageName(), 1,
-                    protectedPackage ? () -> callbacks.onProtected(state.packageName(), assessment.protectionReason())
-                            : () -> callbacks.onPrimary(state.packageName())));
-            boolean boot = state.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
-            actions.add(rowAction(packageRow, "Boot: " + (boot ? "ON" : "OFF"), state.packageName(), 2,
-                    protectedPackage ? () -> callbacks.onProtected(state.packageName(), assessment.protectionReason())
-                            : () -> callbacks.onToggleBoot(state.packageName(), !boot)));
-            boolean bg = state.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BACKGROUND_BLOCK);
-            actions.add(rowAction(packageRow, "BG: " + (bg ? "ON" : "OFF"), state.packageName(), 3,
-                    protectedPackage ? () -> callbacks.onProtected(state.packageName(), assessment.protectionReason())
-                            : () -> callbacks.onToggleBackground(state.packageName(), !bg)));
-            actions.add(rowAction(packageRow, "Stop", state.packageName(), 4,
-                    protectedPackage ? () -> callbacks.onProtected(state.packageName(), assessment.protectionReason())
-                            : () -> callbacks.onForceStop(state.packageName())));
-            for (int i = 0; i < actions.size(); i++) {
-                final int actionIndex = i;
-                actions.get(i).setOnFocusChangeListener(focusListener(() ->
-                        callbacks.onPackageFocus(state.packageName(), actionIndex)));
+    }
+    public void renderOverview(boolean linkReady,boolean auto,int managedCount,String lastSummary,Callbacks callbacks) {
+        frame("Startup Manager","Choose what starts, what stays, and what gets out of the way.",0,callbacks);
+        LinearLayout badges=row();
+        badge(badges,"LOCAL CONTROL",linkReady?"Link saved":"Needs setup");
+        badge(badges,"MANAGED PACKAGES",Integer.toString(managedCount));
+        badge(badges,"RECOVERY","Core protected");
+        body.addView(badges,new LayoutParams(LayoutParams.MATCH_PARENT,dp(56))); space(body,12);
+        LinearLayout grid=column(); body.addView(grid,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
+        LinearLayout top=row(),bottom=row(); grid.addView(top,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
+        space(grid,12); grid.addView(bottom,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
+        TextView disable=hero("01   DISABLE APPS","Take back control","Turn off unwanted apps, launchers and companion packages.","startup:overview:disable",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.DISABLE));
+        TextView boot=hero("02   CLEAN AFTER BOOT","A quieter startup","Close selected apps once. Later launches stay alone.","startup:overview:boot",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BOOT_CLEAN));
+        TextView background=hero("03   BACKGROUND START","Keep the extras quiet","Limit selected apps in the background. Open them when needed.","startup:overview:bg",()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BACKGROUND));
+        TextView restore=hero("04   RESTORE CHANGES","Put it back","Return to the state saved before BOOP changed anything.","startup:overview:restore",callbacks::onOpenRestore);
+        weighted(top,disable); hspace(top,12); weighted(top,boot);
+        weighted(bottom,background); hspace(bottom,12); weighted(bottom,restore);
+        space(body,12);
+        LinearLayout utilities=row();
+        TextView autoButton=button("After boot: "+(auto?"ON":"OFF"),"startup:overview:auto",()->callbacks.onSetAuto(!auto));
+        TextView link=button("Check local link","startup:overview:link",callbacks::onCheckLocalLink);
+        TextView back=button("Back","startup:overview:back",callbacks::onBack);
+        weighted(utilities,autoButton); hspace(utilities,8); weighted(utilities,link); hspace(utilities,8); weighted(utilities,back);
+        body.addView(utilities,new LayoutParams(LayoutParams.MATCH_PARENT,dp(44)));
+        if(status.isEmpty()) status=lastSummary;
+        footer(callbacks);
+        disable.setNextFocusRightId(boot.getId()); disable.setNextFocusDownId(background.getId());
+        boot.setNextFocusLeftId(disable.getId()); boot.setNextFocusDownId(restore.getId());
+        background.setNextFocusRightId(restore.getId()); background.setNextFocusUpId(disable.getId());
+        restore.setNextFocusLeftId(background.getId()); restore.setNextFocusUpId(boot.getId());
+        disable.setNextFocusLeftId(navigation.get(0).getId());
+        background.setNextFocusLeftId(navigation.get(0).getId());
+        navigation.get(0).setNextFocusRightId(disable.getId());
+        post(disable::requestFocus);
+    }
+    public void renderPackages(List<StartupPackageState> rows,StartupManagerUiModel.Filter filter,
+            StartupManagerUiModel.Mode mode,StartupRecoveryPolicy.RecoveryCapabilities caps,
+            String focusPackage,int focusAction,Callbacks callbacks) {
+        int section=mode==StartupManagerUiModel.Mode.BOOT_CLEAN?2:mode==StartupManagerUiModel.Mode.BACKGROUND?3:1;
+        frame("Package Control",modeSubtitle(mode)+"   ?   "+rows.size()+" shown",section,callbacks);
+        LinearLayout chips=row(); List<TextView> filters=new ArrayList<>();
+        for(StartupManagerUiModel.Filter option:StartupManagerUiModel.Filter.values()) {
+            TextView chip=button(filterName(option),"startup:filter:"+option,()->callbacks.onFilter(option));
+            chip.setGravity(Gravity.CENTER); chip.setTextSize(13);
+            if(option==filter) chip.setTextColor(FocusChrome.accentColor(getContext()));
+            weighted(chips,chip); hspace(chips,6); filters.add(chip);
+        }
+        body.addView(chips,new LayoutParams(LayoutParams.MATCH_PARENT,dp(42))); space(body,12);
+        LinearLayout split=row(); split.setGravity(Gravity.TOP);
+        ScrollView scroll=new ScrollView(getContext()); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout list=column(); scroll.addView(list);
+        split.addView(scroll,new LayoutParams(0,LayoutParams.MATCH_PARENT,0.70f)); hspace(split,14);
+        LinearLayout pane=column(); pane.setPadding(dp(16),dp(15),dp(16),dp(12));
+        pane.setBackground(FocusChrome.filled(getContext(),PANEL,14,false));
+        pane.addView(caption("SELECTED PACKAGE",11)); space(pane,12);
+        detail=text("Choose a package to inspect its controls.",15,false);
+        ScrollView detailsScroll=new ScrollView(getContext()); detailsScroll.setVerticalScrollBarEnabled(false);
+        detailsScroll.addView(detail); pane.addView(detailsScroll,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
+        space(pane,10); pane.addView(caption("Disable keeps app data.\nRestore saves the way back.\n\nRelated names are hints, not proof of a dependency.",12));
+        split.addView(pane,new LayoutParams(0,LayoutParams.MATCH_PARENT,0.30f));
+        body.addView(split,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
+        List<List<TextView>> matrix=new ArrayList<>(); List<String> ids=new ArrayList<>();
+        for(StartupPackageState state:rows) {
+            ids.add(state.packageName()); var risk=StartupRecoveryPolicy.assess(state,caps);
+            boolean locked=risk.protectedPackage(); LinearLayout card=column();
+            card.setPadding(dp(6),dp(4),dp(6),dp(6)); card.setBackground(FocusChrome.filled(getContext(),PANEL,12,false));
+            TextView info=button(state.label()+"\n"+state.packageName(),tag(state,0),()->callbacks.onPackageInfo(state.packageName()));
+            secondLine(info); info.setMaxLines(2); info.setEllipsize(TextUtils.TruncateAt.END);
+            card.addView(info,new LayoutParams(LayoutParams.MATCH_PARENT,dp(48)));
+            LinearLayout strip=row(); List<TextView> controls=new ArrayList<>(); controls.add(info);
+            boolean boot=state.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+            boolean bg=state.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BACKGROUND_BLOCK);
+            String[] labels={StartupManagerUiModel.canUsePrimary(state,caps)?StartupManagerUiModel.primaryAction(state):"Protected","Boot: "+(boot?"ON":"OFF"),"Background", "Stop"};
+            Runnable guard=()->callbacks.onProtected(state.packageName(),risk.protectionReason());
+            Runnable[] actions={()->callbacks.onPrimary(state.packageName()),()->callbacks.onToggleBoot(state.packageName(),!boot),
+                ()->callbacks.onToggleBackground(state.packageName(),!bg),()->callbacks.onForceStop(state.packageName())};
+            for(int a=0;a<4;a++) {
+                TextView control=button(labels[a],tag(state,a+1),(locked && (a!=0 || !StartupManagerUiModel.canUsePrimary(state,caps)))?guard:actions[a]);
+                control.setGravity(Gravity.CENTER); control.setTextSize(13);
+                if(a==2) control.setText("BG: "+(bg?"ON":"OFF"));
+                if(locked) control.setTextColor(MUTED);
+                weighted(strip,control); if(a<3)hspace(strip,6); controls.add(control);
             }
-            matrix.add(actions);
-            list.addView(packageRow, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(84)));
-            addSpacerTo(list, 6);
-        }
-        if (rows.isEmpty()) {
-            list.addView(text("No packages match this filter.", 18, false), wrap());
-        }
-        scroll.addView(list);
-        LayoutParams scrollParams = new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f);
-        addView(scroll, scrollParams);
-        addSpacer(8);
-        TextView back = button("Back to Startup Manager", 330, 56, "startup:packages:back", callbacks::onBack);
-        addView(back, wrap());
-
-        wirePackageNavigation(matrix, filterViews, mode, focusPackage, focusAction);
-    }
-
-    public void renderRestore(List<StartupRestoreRecord> records, Set<String> selected,
-                              String focusPackage, Callbacks callbacks) {
-        removeAllViews();
-        addView(text("Restore", 31, true), wrap());
-        addSpacer(2);
-        addView(text("Return packages to the exact state BOOP found before changing them.", 15, false), wrap());
-        addSpacer(12);
-        TextView batch = button("Restore selected (" + selected.size() + ")", 330, 58,
-                "startup:restore:batch", callbacks::onRestoreSelected);
-        addView(batch, wrap());
-        addSpacer(10);
-        ScrollView scroll = new ScrollView(getContext());
-        scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout list = new LinearLayout(getContext());
-        list.setOrientation(VERTICAL);
-        List<List<TextView>> matrix = new ArrayList<>();
-        for (StartupRestoreRecord record : records) {
-            String pkg = record.packageName();
-            boolean checked = selected.contains(pkg);
-            LinearLayout restoreRow = row();
-            ArrayList<TextView> controls = new ArrayList<>();
-            TextView toggle = button((checked ? "[✓] " : "[ ] ") + pkg + "\n"
-                            + actionSummary(record.managedActions()), 780, 72,
-                    "startup:restore:" + pkg + ":0",
-                    () -> callbacks.onToggleRestoreSelection(pkg, !checked));
-            TextView now = button("Restore now", 240, 72, "startup:restore:" + pkg + ":1",
-                    () -> callbacks.onRestoreOne(pkg));
-            controls.add(toggle); controls.add(now);
-            restoreRow.addView(toggle); addHSpacer(8, restoreRow); restoreRow.addView(now);
-            matrix.add(controls);
-            list.addView(restoreRow, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(80)));
-            addSpacerTo(list, 6);
-        }
-        if (records.isEmpty()) list.addView(text("Nothing to restore. BOOP has no managed package changes.", 18, false), wrap());
-        scroll.addView(list);
-        addView(scroll, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
-        addSpacer(8);
-        TextView back = button("Back to Startup Manager", 330, 56, "startup:restore:back", callbacks::onBack);
-        addView(back, wrap());
-        wireRestoreNavigation(matrix, batch, focusPackage);
-    }
-
-    private TextView rowAction(LinearLayout parent, String label, String pkg, int index, Runnable action) {
-        TextView view = button(label, 205, 76, "startup:package:" + pkg + ":" + index, action);
-        parent.addView(view); addHSpacer(8, parent); return view;
-    }
-
-    private void wirePackageNavigation(List<List<TextView>> matrix, List<TextView> filters,
-                                       StartupManagerUiModel.Mode mode, String focusPackage, int focusAction) {
-        if (!filters.isEmpty()) {
-            for (int i = 0; i < filters.size(); i++) {
-                int index = i;
-                filters.get(i).setOnKeyListener((v, key, event) -> {
-                    if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-                    if (key == KeyEvent.KEYCODE_DPAD_LEFT) { filters.get(Math.max(0, index - 1)).requestFocus(); return true; }
-                    if (key == KeyEvent.KEYCODE_DPAD_RIGHT) { filters.get(Math.min(filters.size() - 1, index + 1)).requestFocus(); return true; }
-                    if (key == KeyEvent.KEYCODE_DPAD_DOWN && !matrix.isEmpty()) {
-                        matrix.get(0).get(preferredAction(mode)).requestFocus(); return true;
-                    }
-                    return key == KeyEvent.KEYCODE_DPAD_UP;
+            card.addView(strip,new LayoutParams(LayoutParams.MATCH_PARENT,dp(40)));
+            for(int a=0;a<controls.size();a++) {
+                final int action=a;
+                controls.get(a).setOnFocusChangeListener((v,focused)->{
+                    focus(v,focused);
+                    if(focused) { callbacks.onPackageFocus(state.packageName(),action); showDetail(state,risk); }
                 });
             }
+            matrix.add(controls); list.addView(card,new LayoutParams(LayoutParams.MATCH_PARENT,dp(102))); space(list,8);
         }
-        for (int r = 0; r < matrix.size(); r++) {
-            List<TextView> row = matrix.get(r);
-            for (int c = 0; c < row.size(); c++) {
-                int rr = r, cc = c;
-                row.get(c).setOnKeyListener((v, key, event) -> {
-                    if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-                    if (key == KeyEvent.KEYCODE_DPAD_LEFT) { row.get(Math.max(0, cc - 1)).requestFocus(); return true; }
-                    if (key == KeyEvent.KEYCODE_DPAD_RIGHT) { row.get(Math.min(row.size() - 1, cc + 1)).requestFocus(); return true; }
-                    if (key == KeyEvent.KEYCODE_DPAD_UP) {
-                        if (rr == 0) { if (!filters.isEmpty()) filters.get(0).requestFocus(); }
-                        else matrix.get(rr - 1).get(Math.min(cc, matrix.get(rr - 1).size() - 1)).requestFocus();
-                        return true;
-                    }
-                    if (key == KeyEvent.KEYCODE_DPAD_DOWN) {
-                        matrix.get(Math.min(matrix.size() - 1, rr + 1)).get(
-                                Math.min(cc, matrix.get(Math.min(matrix.size() - 1, rr + 1)).size() - 1)).requestFocus();
-                        return true;
-                    }
-                    return false;
-                });
-            }
+        if(rows.isEmpty()) list.addView(caption(busy?"Reading installed packages?":"No packages match this filter.",17));
+        space(body,10); LinearLayout utilities=row();
+        TextView back=button("Back","startup:packages:back",callbacks::onBack);
+        TextView refresh=button("Refresh","startup:packages:refresh",callbacks::onRefresh);
+        TextView run=button("Run boot cleanup","startup:packages:run",callbacks::onRunNow);
+        weighted(utilities,back); hspace(utilities,8); weighted(utilities,refresh); hspace(utilities,8); weighted(utilities,run);
+        body.addView(utilities,new LayoutParams(LayoutParams.MATCH_PARENT,dp(42)));
+        footer(callbacks);
+        wireMatrix(matrix,ids,filters,back,focusPackage,focusAction,StartupManagerNav.Screen.PACKAGES);
+        for(int i=0;i<filters.size();i++) {
+            TextView chip=filters.get(i);
+            chip.setNextFocusLeftId(i==0?navigation.get(section).getId():filters.get(i-1).getId());
+            chip.setNextFocusRightId(i==filters.size()-1?chip.getId():filters.get(i+1).getId());
+            if(!matrix.isEmpty())chip.setNextFocusDownId(matrix.get(0).get(0).getId());
         }
-        if (!matrix.isEmpty()) {
-            TextView target = null;
-            if (focusPackage != null) {
-                for (List<TextView> row : matrix) {
-                    Object tag = row.get(0).getTag();
-                    if (tag != null && tag.toString().startsWith("startup:package:" + focusPackage + ":")) {
-                        target = row.get(Math.max(0, Math.min(row.size() - 1, focusAction))); break;
-                    }
-                }
-            }
-            if (target == null) target = matrix.get(0).get(preferredAction(mode));
-            TextView finalTarget = target;
-            post(finalTarget::requestFocus);
-        } else if (!filters.isEmpty()) post(() -> filters.get(0).requestFocus());
+        navigation.get(section).setNextFocusRightId(filters.get(filter.ordinal()).getId());
     }
-
-    private void wireRestoreNavigation(List<List<TextView>> matrix, TextView batch, String focusPackage) {
-        for (int r = 0; r < matrix.size(); r++) {
-            List<TextView> row = matrix.get(r);
-            for (int c = 0; c < row.size(); c++) {
-                int rr = r, cc = c;
-                row.get(c).setOnKeyListener((v, key, event) -> {
-                    if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-                    if (key == KeyEvent.KEYCODE_DPAD_LEFT) { row.get(Math.max(0, cc - 1)).requestFocus(); return true; }
-                    if (key == KeyEvent.KEYCODE_DPAD_RIGHT) { row.get(Math.min(row.size() - 1, cc + 1)).requestFocus(); return true; }
-                    if (key == KeyEvent.KEYCODE_DPAD_UP) { if (rr == 0) batch.requestFocus(); else matrix.get(rr - 1).get(Math.min(cc, matrix.get(rr - 1).size() - 1)).requestFocus(); return true; }
-                    if (key == KeyEvent.KEYCODE_DPAD_DOWN) { matrix.get(Math.min(matrix.size() - 1, rr + 1)).get(Math.min(cc, matrix.get(Math.min(matrix.size() - 1, rr + 1)).size() - 1)).requestFocus(); return true; }
-                    return false;
-                });
-            }
+    private void showDetail(StartupPackageState state,StartupRecoveryPolicy.Assessment risk) {
+        detail.setText(state.label()+"\n\n"+state.packageName()+"\n\n"
+                +(StartupManagerUiModel.isDisabled(state)?"DISABLED":"ENABLED")+"  ?  "+(state.systemApp()?"System app":"User app")
+                +"\n"+(risk.protectedPackage()?"Protected for recovery":risk.impact()==StartupRecoveryPolicy.Impact.HIGH?"High impact":risk.impact()==StartupRecoveryPolicy.Impact.MEDIUM?"Changes a system feature":"User-controlled app")
+                +"\n\n"+(risk.protectedPackage()?risk.protectionReason():state.launcher()?"Provides a Home screen. Disabling it changes the stock Home experience.":"Disable, close after boot, limit background start, or stop this app.")
+                +"\n\nBOOP rules:\n"+actionSummary(state.managedActions()));
+    }
+    public void renderRestore(List<StartupRestoreRecord> records,Set<String> selected,String focusPackage,Callbacks callbacks) {
+        frame("Restore changes","The original state is saved before BOOP changes anything.",4,callbacks);
+        TextView batch=button("Restore selected  ("+selected.size()+")","startup:restore:batch",callbacks::onRestoreSelected);
+        body.addView(batch,new LayoutParams(LayoutParams.MATCH_PARENT,dp(46))); space(body,12);
+        ScrollView scroll=new ScrollView(getContext()); scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout list=column(); List<List<TextView>> matrix=new ArrayList<>(); List<String> ids=new ArrayList<>();
+        for(StartupRestoreRecord record:records) {
+            String pkg=record.packageName(); ids.add(pkg); LinearLayout card=row();
+            String time=new SimpleDateFormat("dd MMM, HH:mm",Locale.getDefault()).format(new Date(record.firstChangedAtMillis()));
+            TextView select=button((selected.contains(pkg)?"?  ":"?  ")+packageLabels.getOrDefault(pkg,pkg)+"\n"+pkg+"  ?  "+time,
+                    "startup:restore:"+pkg+":0",()->callbacks.onToggleRestoreSelection(pkg,!selected.contains(pkg)));
+            secondLine(select); select.setMaxLines(2); select.setEllipsize(TextUtils.TruncateAt.END);
+            TextView now=button("Restore","startup:restore:"+pkg+":1",()->callbacks.onRestoreOne(pkg));
+            card.addView(select,new LayoutParams(0,dp(78),1)); hspace(card,10);
+            card.addView(now,new LayoutParams(dp(114),dp(78))); matrix.add(List.of(select,now));
+            list.addView(card,new LayoutParams(LayoutParams.MATCH_PARENT,dp(78))); space(list,10);
         }
-        batch.setOnKeyListener((v, key, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN && key == KeyEvent.KEYCODE_DPAD_DOWN && !matrix.isEmpty()) {
-                matrix.get(0).get(0).requestFocus(); return true;
-            }
-            return false;
-        });
-        TextView target = batch;
-        if (focusPackage != null) {
-            for (List<TextView> row : matrix) {
-                if (String.valueOf(row.get(0).getTag()).startsWith("startup:restore:" + focusPackage + ":")) { target = row.get(0); break; }
-            }
+        if(records.isEmpty())list.addView(caption("Nothing to undo. No BOOP package changes are saved.",18));
+        scroll.addView(list); body.addView(scroll,new LayoutParams(LayoutParams.MATCH_PARENT,0,1)); space(body,10);
+        TextView back=button("Back","startup:restore:back",callbacks::onBack);
+        body.addView(back,new LayoutParams(LayoutParams.MATCH_PARENT,dp(42))); footer(callbacks);
+        wireMatrix(matrix,ids,List.of(batch),back,focusPackage,0,StartupManagerNav.Screen.RESTORE);
+        batch.setNextFocusLeftId(navigation.get(4).getId());
+        if(!matrix.isEmpty())batch.setNextFocusDownId(matrix.get(0).get(0).getId());
+        if(focusPackage==null)post(batch::requestFocus);
+    }
+    private void wireMatrix(List<List<TextView>> matrix,List<String> ids,List<TextView> header,TextView back,
+            String focusPackage,int action,StartupManagerNav.Screen screen) {
+        for(int r=0;r<matrix.size();r++)for(int c=0;c<matrix.get(r).size();c++) {
+            final int rr=r,cc=c;
+            matrix.get(r).get(c).setOnKeyListener((v,key,event)->{
+                if(event.getAction()!=KeyEvent.ACTION_DOWN)return false;
+                if((key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER)&&event.getRepeatCount()>0)return true;
+                StartupManagerNav.Key direction=switch(key) {
+                    case KeyEvent.KEYCODE_DPAD_UP->StartupManagerNav.Key.UP;
+                    case KeyEvent.KEYCODE_DPAD_DOWN->StartupManagerNav.Key.DOWN;
+                    case KeyEvent.KEYCODE_DPAD_LEFT->StartupManagerNav.Key.LEFT;
+                    case KeyEvent.KEYCODE_DPAD_RIGHT->StartupManagerNav.Key.RIGHT;
+                    default->null;
+                };
+                if(direction==null)return false;
+                if(direction==StartupManagerNav.Key.UP&&rr==0){header.get(0).requestFocus();return true;}
+                if(direction==StartupManagerNav.Key.DOWN&&rr==matrix.size()-1){back.requestFocus();return true;}
+                var state=new StartupManagerNav.State(screen,0,ids.get(rr),cc,ids);
+                var next=StartupManagerNav.key(state,direction,matrix.get(rr).size()).state();
+                matrix.get(ids.indexOf(next.focusedPackageId())).get(next.actionIndex()).requestFocus(); return true;
+            });
         }
-        TextView finalTarget = target; post(finalTarget::requestFocus);
+        if(!matrix.isEmpty()) {
+            int row=Math.max(0,ids.indexOf(focusPackage)); TextView target=matrix.get(row).get(Math.min(Math.max(0,action),matrix.get(row).size()-1));
+            back.setNextFocusUpId(matrix.get(matrix.size()-1).get(0).getId()); post(target::requestFocus);
+        } else post(back::requestFocus);
     }
-
-    private int preferredAction(StartupManagerUiModel.Mode mode) {
-        return mode == StartupManagerUiModel.Mode.BOOT_CLEAN ? 2 : mode == StartupManagerUiModel.Mode.BACKGROUND ? 3 : 1;
+    private TextView hero(String eyebrow,String title,String subtitle,String tag,Runnable action) {
+        TextView v=button(eyebrow+"\n"+title+"\n\n"+subtitle,tag,action); v.setTextSize(17); v.setPadding(dp(18),dp(13),dp(18),dp(13));
+        SpannableString text=new SpannableString(v.getText()); int split=text.toString().indexOf('\n');
+        text.setSpan(new RelativeSizeSpan(0.67f),0,split,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new ForegroundColorSpan(FocusChrome.accentColor(getContext())),0,split,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        int sub=text.toString().indexOf("\n\n")+2;
+        text.setSpan(new RelativeSizeSpan(0.78f),sub,text.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new ForegroundColorSpan(MUTED),sub,text.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        v.setText(text); return v;
     }
-    private String modeSubtitle(StartupManagerUiModel.Mode mode) {
-        return switch (mode) {
-            case DISABLE -> "Disable or re-enable any package";
-            case BOOT_CLEAN -> "Choose packages BOOP should close once after boot";
-            case BACKGROUND -> "Choose packages that should not wake in the background";
-        };
+    private void badge(LinearLayout row,String title,String value) {
+        LinearLayout box=column(); box.setPadding(dp(13),dp(5),dp(8),dp(5));
+        box.setBackground(FocusChrome.filled(getContext(),PANEL,10,false));
+        box.addView(caption(title,10)); box.addView(text(value,18,true)); weighted(row,box); hspace(row,8);
     }
-    private String actionSummary(Set<StartupRecoveryPolicy.ManagedAction> actions) {
-        if (actions == null || actions.isEmpty()) return "Baseline captured";
-        return actions.stream().map(a -> switch (a) {
-            case DISABLED -> "Disabled"; case BOOT_CLEAN -> "Boot close"; case BACKGROUND_BLOCK -> "Background blocked";
-        }).sorted().reduce((a,b) -> a + " • " + b).orElse("Baseline captured");
+    private TextView button(String label,String tag,Runnable action) {
+        TextView v=text(label,15,false); v.setGravity(Gravity.CENTER_VERTICAL); v.setPadding(dp(10),dp(5),dp(10),dp(5));
+        v.setFocusable(true); v.setClickable(true); v.setId(View.generateViewId()); v.setTag(tag);
+        v.setContentDescription(label); v.setBackground(FocusChrome.filled(getContext(),CARD,10,false));
+        v.setOnFocusChangeListener(this::focus); v.setOnClickListener(ignored->action.run()); return v;
     }
-
-    private TextView card(String title, String subtitle, String tag, Runnable action) {
-        TextView view = button(title + "\n" + subtitle, 940, 84, tag, action);
-        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-        return view;
+    private void secondLine(TextView view) {
+        SpannableString s=new SpannableString(view.getText()); int split=s.toString().indexOf('\n');
+        if(split>=0){s.setSpan(new RelativeSizeSpan(0.72f),split+1,s.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            s.setSpan(new ForegroundColorSpan(MUTED),split+1,s.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);view.setText(s);}
     }
-    private TextView filterChip(StartupManagerUiModel.Filter filter, boolean selected, Runnable action) {
-        TextView view = button(filter.name().replace('_',' '), 180, 48, "startup:filter:" + filter.name(), action);
-        if (selected) view.setBackground(FocusChrome.outline(getContext(), 10));
-        return view;
+    private void focus(View view,boolean focused) { view.setBackground(FocusChrome.filled(getContext(),focused?Color.rgb(42,47,51):CARD,10,focused)); }
+    private TextView text(String value,int size,boolean bold) {
+        TextView v=new TextView(getContext()); v.setText(value); v.setTextSize(size); v.setTextColor(Color.WHITE);
+        if(bold)v.setTypeface(Typeface.DEFAULT,Typeface.BOLD); return v;
     }
-    private TextView button(String label, int widthDp, int heightDp, String tag, Runnable action) {
-        TextView view = text(label, 16, false);
-        view.setGravity(Gravity.CENTER_VERTICAL);
-        view.setFocusable(true); view.setClickable(true); view.setTag(tag); view.setId(View.generateViewId());
-        view.setPadding(dp(16), dp(7), dp(16), dp(7));
-        view.setBackground(background(false));
-        view.setOnFocusChangeListener(focusListener(null));
-        view.setOnClickListener(v -> action.run());
-        view.setLayoutParams(new LayoutParams(dp(widthDp), dp(heightDp)));
-        return view;
+    private TextView caption(String value,int size) { TextView v=text(value,size,false); v.setTextColor(MUTED); return v; }
+    private String tag(StartupPackageState s,int a){return "startup:package:"+s.packageName()+":"+a;}
+    private String filterName(StartupManagerUiModel.Filter f){return switch(f){case ALL->"All";case LAUNCHERS->"Launchers";case ADS->"Ads / recs";case SYSTEM->"System";case USER->"User";case DISABLED->"Disabled";};}
+    private String modeSubtitle(StartupManagerUiModel.Mode mode){return switch(mode){case DISABLE->"Installed apps, including hidden system packages";case BOOT_CLEAN->"Close chosen packages once after startup";case BACKGROUND->"Limit background start, without disabling the app";};}
+    private String actionSummary(Set<StartupRecoveryPolicy.ManagedAction> actions){
+        if(actions==null||actions.isEmpty())return "No active BOOP rules";
+        return actions.stream().map(a->switch(a){case DISABLED->"Disabled by BOOP";case BOOT_CLEAN->"Close after boot";case BACKGROUND_BLOCK->"Background limited";}).sorted().reduce((a,b)->a+" ? "+b).orElse("");
     }
-    private OnFocusChangeListener focusListener(Runnable whenFocused) {
-        return (v, focused) -> {
-            v.setBackground(background(focused));
-            v.animate().scaleX(focused ? 1.015f : 1f).scaleY(focused ? 1.015f : 1f).setDuration(90).start();
-            if (focused && whenFocused != null) whenFocused.run();
-        };
-    }
-    private TextView text(String value, int sp, boolean strong) {
-        TextView view = new TextView(getContext());
-        view.setText(value); view.setTextColor(Color.WHITE); view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
-        if (strong) view.setTypeface(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD);
-        return view;
-    }
-    private GradientDrawable background(boolean focused) { return FocusChrome.filled(getContext(), Color.rgb(38,38,38), 10, focused); }
-    private LinearLayout row() { LinearLayout row = new LinearLayout(getContext()); row.setOrientation(HORIZONTAL); row.setGravity(Gravity.CENTER_VERTICAL); return row; }
-    private LayoutParams cardParams() { return new LayoutParams(dp(940), dp(84)); }
-    private LayoutParams wrap() { return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT); }
-    private void addSpacer(int amount) { addView(new View(getContext()), new LayoutParams(1, dp(amount))); }
-    private void addSpacerTo(LinearLayout parent, int amount) { parent.addView(new View(getContext()), new LayoutParams(1, dp(amount))); }
-    private void addHSpacer(int amount, LinearLayout parent) { parent.addView(new View(getContext()), new LayoutParams(dp(amount), 1)); }
-    private int dp(int value) { return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, getResources().getDisplayMetrics())); }
+    private LinearLayout column(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(VERTICAL);return v;}
+    private LinearLayout row(){LinearLayout v=new LinearLayout(getContext());v.setOrientation(HORIZONTAL);v.setGravity(Gravity.CENTER_VERTICAL);return v;}
+    private void weighted(LinearLayout row,View v){row.addView(v,new LayoutParams(0,LayoutParams.MATCH_PARENT,1));}
+    private void space(LinearLayout parent,int size){parent.addView(new View(getContext()),new LayoutParams(1,dp(size)));}
+    private void hspace(LinearLayout parent,int size){parent.addView(new View(getContext()),new LayoutParams(dp(size),1));}
+    private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
 }

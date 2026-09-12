@@ -52,6 +52,13 @@ public final class StartupManagerMigrationTest {
         StartupManagerMigration.Result failed = failing.runOnce();
         check(!failed.success() && !failingMarker.value, "failed import leaves marker clear");
         check(failingLegacy.clean.contains("com.example.fail"), "legacy data untouched on failure");
+        Legacy bootLegacy = new Legacy(); bootLegacy.clean.add("com.example.booted");
+        StartupRestoreStore bootStore = new StartupRestoreStore(StartupRestoreStore.memoryBackend(), () -> 80L);
+        StartupPackageState bootState = new StartupPackageState("com.example.booted", "Booted", false, false,
+                "default", "default", "default", Set.of(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN));
+        check(new StartupManagerMigration(bootLegacy, pkg -> bootState, bootStore, new Marker()).runOnce().success(), "boot migration succeeds");
+        check(!bootStore.record("com.example.booted").originalBootClean(), "Undo removes the original BOOP v1 boot rule");
+        check(bootStore.record("com.example.booted").lastAppliedBootClean(), "current boot rule is kept during migration");
         System.out.println("StartupManagerMigrationTest PASS");
     }
 }

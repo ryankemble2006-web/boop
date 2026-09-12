@@ -1,6 +1,6 @@
 # BOOP Startup Manager v2 Design
 
-**Status:** Design approved in chat; implementation not started.
+**Status:** Implemented candidate; v128 physical compatibility failure is repaired in the continuation. Final signed UI/device acceptance is pending.
 **Target:** BOOP Unified on Nvidia Shield TV.
 **Visual direction:** approved dark/charcoal BOOP mockup with cyan focus chrome, large remote-first cards, Package Control list, detail pane, confirmation flow and Restore screen.
 

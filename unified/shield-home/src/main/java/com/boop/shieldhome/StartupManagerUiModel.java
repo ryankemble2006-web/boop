@@ -35,6 +35,10 @@ public final class StartupManagerUiModel {
                 || state.equals("disabled-until-used") || state.equals("manifest-disabled"));
     }
 
+    public static boolean canUsePrimary(StartupPackageState row, StartupRecoveryPolicy.RecoveryCapabilities caps) {
+        return isDisabled(row) || !StartupRecoveryPolicy.assess(row,caps).protectedPackage();
+    }
+
     public static String primaryAction(StartupPackageState row) {
         return isDisabled(row) ? "Re-enable" : "Disable";
     }

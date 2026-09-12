@@ -36,45 +36,27 @@ public final class StartupLocalBridge {
     }
 
     public String run(Collection<String> requested, boolean allowApproval, Runnable approvalRequired) throws Exception {
-        cancelled = false;
-        return withAdb(allowApproval, approvalRequired, adb -> {
-            String resumed = StartupPackageCommands.parseResumedPackage(
-                    checked(adb, StartupCleanupPolicy.resumedActivityCommand()));
-            Integer userId = StartupPackageCommands.parseCurrentUser(
-                    checked(adb, StartupPackageCommands.currentUser()));
-            if (userId == null) throw new IOException("Could not verify the current Shield user.");
-
-            List<String> details = new ArrayList<>();
-            int stopped = 0, skipped = 0, failed = 0;
-            for (String packageName : requested) {
-                if (!manageableInstalled(packageName)) {
-                    details.add(packageName + ": no longer eligible");
-                    failed++;
-                    continue;
-                }
-                if (packageName.equals(resumed)) {
-                    details.add(packageName + ": left open");
-                    skipped++;
-                    continue;
-                }
+        int stopped=0, skipped=0, failed=0;
+        try(PackageSession session=openPackageSession(allowApproval,approvalRequired)) {
+            for(String pkg: requested) {
+                session.requireOpen();
+                String foreground=StartupPackageCommands.parseResumedPackage(checked(session.adb,
+                        "dumpsys activity activities | grep -m2 -E 'mResumedActivity:|topResumedActivity='"));
+                if(foreground==null) throw new IOException("Could not verify which app is open; cleanup stopped.");
+                if(pkg.equals(foreground)) { skipped++; continue; }
                 try {
-                    checked(adb, StartupPackageCommands.forceStop(packageName));
-                    String processes = checked(adb, StartupPackageCommands.processSnapshot());
-                    String state = checked(adb, StartupPackageCommands.userState(packageName, userId));
-                    if (!StartupPackageCommands.verifiedStopped(packageName, processes, state))
-                        throw new IOException("stop could not be verified");
-                    stopped++;
-                } catch (Exception failure) {
+                    StartupPackageState state=session.probe(pkg);
+                    if(StartupRecoveryPolicy.assess(state,AndroidRecoveryCapabilities.resolve(context)).protectedPackage()) {
+                        skipped++; continue;
+                    }
+                    session.forceStop(pkg); stopped++;
+                } catch(Exception failure) {
+                    if(cancelled || Thread.currentThread().isInterrupted()) throw failure;
                     failed++;
-                    details.add(packageName + ": " + compact(failure));
                 }
             }
-            String summary = "Clean Start: " + stopped + " stopped";
-            if (skipped > 0) summary += ", " + skipped + " left open";
-            if (failed > 0) summary += ", " + failed + " not changed";
-            if (!details.isEmpty()) summary += ". " + String.join("; ", details);
-            return summary;
-        });
+        }
+        return "Clean after boot: " + stopped + " stopped, " + skipped + " left open, " + failed + " not changed.";
     }
 
     public String setPrevention(String packageName, boolean enabled, boolean allowApproval, Runnable approvalRequired) throws Exception {
@@ -136,136 +118,116 @@ public final class StartupLocalBridge {
 
     public final class PackageSession implements StartupPackageController.Bridge, AutoCloseable {
         private final AdbWire adb;
+        private final int userId;
         private boolean closed;
-
-        private PackageSession(AdbWire adb) { this.adb = adb; }
-
-        @Override public StartupPackageState probe(String packageName) throws Exception {
-            requireOpen();
-            if (!StartupPackageController.validPackageName(packageName))
-                throw new IOException("Invalid package name.");
-            Integer userId = StartupPackageCommands.parseCurrentUser(
-                    checked(adb, StartupPackageCommands.currentUser()));
-            if (userId == null) throw new IOException("Could not verify the current Shield user.");
-            String userState = checked(adb, StartupPackageCommands.userState(packageName, userId));
-            String enabledState = StartupPackageCommands.parseEnabled(userState);
-            if (enabledState == null) throw new IOException("Could not read package enabled state.");
-            String first = StartupPreventionPolicy.parseMode(checked(adb,
-                    StartupPackageCommands.queryAppOp(packageName, "RUN_IN_BACKGROUND")));
-            String second = StartupPreventionPolicy.parseMode(checked(adb,
-                    StartupPackageCommands.queryAppOp(packageName, "RUN_ANY_IN_BACKGROUND")));
-            if (first == null || second == null) throw new IOException("Could not read background state.");
-
-            ApplicationInfo app;
-            try {
-                app = context.getPackageManager().getApplicationInfo(
-                        packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
-            } catch (PackageManager.NameNotFoundException failure) {
-                throw new IOException("Package is no longer installed.", failure);
-            }
-            if (enabledState.equals("default") && !app.enabled) enabledState = "manifest-disabled";
-            boolean system = (app.flags & (ApplicationInfo.FLAG_SYSTEM
-                    | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
-            CharSequence rawLabel = context.getPackageManager().getApplicationLabel(app);
-            String label = rawLabel == null || rawLabel.toString().isBlank()
-                    ? packageName : rawLabel.toString().trim();
-            StartupRestoreRecord restore = new StartupRestoreStore(
-                    new AndroidStartupRestoreBackend(context), System::currentTimeMillis).record(packageName);
-            java.util.Set<StartupRecoveryPolicy.ManagedAction> actions = restore == null
-                    ? java.util.Set.of() : restore.managedActions();
-            return new StartupPackageState(packageName, label, system,
-                    isLauncherPackage(packageName), enabledState, first, second, actions);
+        private java.util.Map<String,StartupPackageState> known;
+        private PackageSession(AdbWire adb) throws IOException {
+            this.adb=adb;
+            Integer current=StartupPackageCommands.parseCurrentUser(checked(adb,StartupPackageCommands.currentUser()));
+            // Android UIDs reserve 100000 IDs per user. Receipts belong to this app's user only.
+            if(current==null || current != context.getApplicationInfo().uid / 100000)
+                throw new IOException("Open BOOP under the current Shield user before making changes.");
+            userId=current;
         }
-
+        private void loadKnown() throws Exception {
+            if(known!=null) return;
+            String all=checked(adb,StartupPackageCommands.installedPackages(false,false,userId));
+            String system=checked(adb,StartupPackageCommands.installedPackages(true,false,userId));
+            String disabled=checked(adb,StartupPackageCommands.installedPackages(false,true,userId));
+            String home=checked(adb,StartupPackageCommands.homeActivities(userId));
+            known=new java.util.LinkedHashMap<>();
+            for(StartupPackageState row: StartupPackageInventory.merge(all,system,disabled,home,this::visibleLabel))
+                known.put(row.packageName(),row);
+        }
+        @Override public StartupPackageState probe(String pkg) throws Exception {
+            requireOpen(); loadKnown();
+            StartupPackageState metadata=known.get(pkg);
+            if(metadata==null) throw new IOException("This package is not installed for the current user.");
+            String state=checked(adb,StartupPackageCommands.userState(pkg,userId));
+            String run=StartupPreventionPolicy.parseMode(checked(adb,
+                    StartupPackageCommands.forUser(StartupPackageCommands.queryAppOp(pkg,"RUN_IN_BACKGROUND"),userId)));
+            String any=StartupPreventionPolicy.parseMode(checked(adb,
+                    StartupPackageCommands.forUser(StartupPackageCommands.queryAppOp(pkg,"RUN_ANY_IN_BACKGROUND"),userId)));
+            StartupRestoreRecord record=new StartupRestoreStore(new AndroidStartupRestoreBackend(context),
+                    System::currentTimeMillis).record(pkg);
+            java.util.EnumSet<StartupRecoveryPolicy.ManagedAction> flags=java.util.EnumSet.noneOf(StartupRecoveryPolicy.ManagedAction.class);
+            if(record!=null) flags.addAll(record.managedActions());
+            if(new StartupCleanupStore(context).targets().contains(pkg)) flags.add(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+            else flags.remove(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+            return StartupPackageInventory.detail(pkg,state,metadata.systemApp(),metadata.launcher(),metadata.label(),run,any,flags);
+        }
         public List<StartupPackageState> inventory() throws Exception {
-            requireOpen();
-            String all = checked(adb, "pm list packages -u");
-            String system = checked(adb, "pm list packages -s -u");
-            String disabled = checked(adb, "pm list packages -d -u");
-            String launcher = checked(adb, "cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER")
-                    + "\n" + checked(adb, "cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER")
-                    + "\n" + checked(adb, "cmd package query-activities --brief -a android.intent.action.MAIN -c android.intent.category.HOME");
-            List<StartupPackageState> base = StartupPackageInventory.merge(
-                    all, system, disabled, launcher, this::visibleLabel);
-            StartupRestoreStore restores = new StartupRestoreStore(
-                    new AndroidStartupRestoreBackend(context), System::currentTimeMillis);
-            boolean migrated = new AndroidStartupManagerMigrationMarker(context).migrated();
-            java.util.Set<String> boot = migrated ? java.util.Set.of() : new StartupCleanupStore(context).targets();
-            java.util.Set<String> background = migrated ? java.util.Set.of() : new StartupPreventionStore(context).managedPackages();
-            ArrayList<StartupPackageState> out = new ArrayList<>();
-            for (StartupPackageState row : base) {
-                java.util.EnumSet<StartupRecoveryPolicy.ManagedAction> actions =
-                        java.util.EnumSet.noneOf(StartupRecoveryPolicy.ManagedAction.class);
-                StartupRestoreRecord record = restores.record(row.packageName());
-                if (record != null) actions.addAll(record.managedActions());
-                if (boot.contains(row.packageName())) actions.add(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
-                if (background.contains(row.packageName())) actions.add(StartupRecoveryPolicy.ManagedAction.BACKGROUND_BLOCK);
-                out.add(new StartupPackageState(row.packageName(), row.label(), row.systemApp(), row.launcher(),
-                        row.enabledState(), row.runInBackgroundMode(), row.runAnyInBackgroundMode(), actions));
+            requireOpen(); known=null; loadKnown();
+            StartupRestoreStore restores=new StartupRestoreStore(new AndroidStartupRestoreBackend(context),System::currentTimeMillis);
+            java.util.Set<String> boot=new StartupCleanupStore(context).targets();
+            java.util.Set<String> legacy=new AndroidStartupManagerMigrationMarker(context).migrated()
+                    ? java.util.Set.of() : new StartupPreventionStore(context).managedPackages();
+            ArrayList<StartupPackageState> result=new ArrayList<>();
+            for(StartupPackageState row:known.values()) {
+                java.util.EnumSet<StartupRecoveryPolicy.ManagedAction> flags=java.util.EnumSet.noneOf(StartupRecoveryPolicy.ManagedAction.class);
+                try { StartupRestoreRecord record=restores.record(row.packageName()); if(record!=null) flags.addAll(record.managedActions()); }
+                catch(IllegalStateException damaged) { /* Preserve unreadable receipts; per-package mutation fails closed. */ }
+                if(boot.contains(row.packageName())) flags.add(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+                else flags.remove(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+                if(legacy.contains(row.packageName())) flags.add(StartupRecoveryPolicy.ManagedAction.BACKGROUND_BLOCK);
+                result.add(new StartupPackageState(row.packageName(),row.label(),row.systemApp(),row.launcher(),row.enabledState(),
+                        "unknown","unknown",flags));
             }
-            return List.copyOf(out);
+            return List.copyOf(result);
         }
-
-        private String visibleLabel(String packageName) {
+        private String visibleLabel(String pkg) {
             try {
-                ApplicationInfo app = context.getPackageManager().getApplicationInfo(
-                        packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
-                CharSequence raw = context.getPackageManager().getApplicationLabel(app);
-                return raw == null ? null : raw.toString().trim();
-            } catch (Exception ignored) {
-                return null;
-            }
+                ApplicationInfo info=context.getPackageManager().getApplicationInfo(pkg,PackageManager.MATCH_DISABLED_COMPONENTS);
+                CharSequence label=context.getPackageManager().getApplicationLabel(info);
+                return label==null ? pkg : label.toString();
+            } catch(Exception invisible) { return pkg; }
         }
-        @Override public void setEnabledState(String packageName, String enabledState) throws Exception {
+        @Override public void setEnabledState(String pkg,String state) throws Exception {
             requireOpen();
-            String command = switch (enabledState) {
-                case "default", "manifest-disabled" -> StartupPackageCommands.resetEnabled(packageName);
-                case "enabled" -> StartupPackageCommands.enable(packageName);
-                case "disabled" -> StartupPackageCommands.disablePlain(packageName);
-                case "disabled-user" -> StartupPackageCommands.disable(packageName);
-                case "disabled-until-used" -> StartupPackageCommands.disableUntilUsed(packageName);
-                default -> throw new IOException("Unsupported enabled state: " + enabledState);
+            String command=switch(state) {
+                case "default","manifest-disabled" -> StartupPackageCommands.resetEnabled(pkg);
+                case "enabled" -> StartupPackageCommands.enable(pkg);
+                case "disabled" -> StartupPackageCommands.disablePlain(pkg);
+                case "disabled-user" -> StartupPackageCommands.disable(pkg);
+                case "disabled-until-used" -> StartupPackageCommands.disableUntilUsed(pkg);
+                default -> throw new IOException("Unknown enabled state.");
             };
-            checked(adb, command);
+            checked(adb,StartupPackageCommands.forUser(command,userId));
         }
-
-        @Override public void forceStop(String packageName) throws Exception {
+        public boolean canCleanNow(String pkg) throws Exception {
             requireOpen();
-            Integer userId = StartupPackageCommands.parseCurrentUser(
-                    checked(adb, StartupPackageCommands.currentUser()));
-            if (userId == null) throw new IOException("Could not verify the current Shield user.");
-            checked(adb, StartupPackageCommands.forceStop(packageName));
-            String processes = checked(adb, StartupPackageCommands.processSnapshot());
-            String userState = checked(adb, StartupPackageCommands.userState(packageName, userId));
-            if (!StartupPackageCommands.verifiedStopped(packageName, processes, userState))
-                throw new IOException("Stop could not be verified.");
+            String foreground=StartupPackageCommands.parseResumedPackage(checked(adb,
+                    "dumpsys activity activities | grep -m2 -E 'mResumedActivity:|topResumedActivity='"));
+            return foreground!=null && !pkg.equals(foreground);
         }
-
-        @Override public void setBackgroundModes(String packageName, String runInBackground,
-                                                 String runAnyInBackground) throws Exception {
+        @Override public void forceStop(String pkg) throws Exception {
             requireOpen();
-            checked(adb, StartupPackageCommands.setAppOp(
-                    packageName, "RUN_IN_BACKGROUND", runInBackground));
-            checked(adb, StartupPackageCommands.setAppOp(
-                    packageName, "RUN_ANY_IN_BACKGROUND", runAnyInBackground));
+            checked(adb,StartupPackageCommands.forUser(StartupPackageCommands.forceStop(pkg),userId));
+            String processes=checked(adb,StartupPackageCommands.processSnapshot());
+            String state=checked(adb,StartupPackageCommands.userState(pkg,userId));
+            if(!StartupPackageCommands.verifiedStopped(pkg,processes,state)) throw new IOException("Stop could not be verified.");
         }
-
+        @Override public void setBackgroundModes(String pkg,String run,String any) throws Exception {
+            requireOpen();
+            checked(adb,StartupPackageCommands.forUser(StartupPackageCommands.setAppOp(pkg,"RUN_IN_BACKGROUND",run),userId));
+            requireOpen();
+            checked(adb,StartupPackageCommands.forUser(StartupPackageCommands.setAppOp(pkg,"RUN_ANY_IN_BACKGROUND",any),userId));
+        }
         private void requireOpen() throws IOException {
-            if (closed || cancelled) throw new IOException("Cancelled");
+            if(closed || cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelled");
+            Integer current=StartupPackageCommands.parseCurrentUser(checked(adb,StartupPackageCommands.currentUser()));
+            if(current==null || current!=userId) throw new IOException("The Shield user changed. No further changes were made.");
         }
-
         @Override public void close() {
-            if (closed) return;
-            closed = true;
-            try { adb.close(); } catch (Exception ignored) { }
-            if (active == adb) active = null;
+            closed=true;
+            try { adb.close(); } catch(Exception ignored) { }
+            if(active==adb) active=null;
         }
     }
 
     private boolean isLauncherPackage(String packageName) {
         PackageManager pm = context.getPackageManager();
-        for (String category : List.of(android.content.Intent.CATEGORY_LEANBACK_LAUNCHER,
-                android.content.Intent.CATEGORY_LAUNCHER, android.content.Intent.CATEGORY_HOME)) {
+        for (String category : List.of(android.content.Intent.CATEGORY_HOME)) {
             android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_MAIN)
                     .addCategory(category);
             for (android.content.pm.ResolveInfo info : pm.queryIntentActivities(
@@ -329,6 +291,7 @@ public final class StartupLocalBridge {
     }
 
     private String checked(AdbWire adb, String command) throws IOException {
+        if(cancelled || Thread.currentThread().isInterrupted()) throw new IOException("Cancelled");
         AdbWire.Result result = adb.execute(command, 20_000);
         if (result.exitCode != 0 || result.output.contains("SecurityException") || result.output.contains("Permission Denial"))
             throw new IOException(result.output.isBlank() ? "Shield rejected the command." :

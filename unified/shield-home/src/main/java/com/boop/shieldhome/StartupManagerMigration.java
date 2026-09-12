@@ -45,7 +45,11 @@ public final class StartupManagerMigration {
                     record = restoreStore.capturePreventionIfAbsent(
                             oldPrevention, current.enabledState(), System::currentTimeMillis);
                 } else {
-                    record = restoreStore.captureIfAbsent(packageName, current);
+                    // The v1 cleanup selection itself is a BOOP change; its Undo target is OFF.
+                    StartupPackageState baseline = new StartupPackageState(packageName, current.label(),
+                            current.systemApp(), current.launcher(), current.enabledState(),
+                            current.runInBackgroundMode(), current.runAnyInBackgroundMode(), Set.of());
+                    record = restoreStore.captureIfAbsent(packageName, baseline);
                 }
                 LinkedHashSet<StartupRecoveryPolicy.ManagedAction> actions =
                         new LinkedHashSet<>(record.managedActions());
@@ -58,7 +62,7 @@ public final class StartupManagerMigration {
                 restoreStore.updateManagedActions(packageName, actions, current);
                 imported++;
             }
-            if (!marker.markMigrated()) throw new IllegalStateException("Could not save migration marker.");
+            if (!marker.markMigrated() || !marker.migrated()) throw new IllegalStateException("Could not save migration marker.");
             return new Result(true, false, imported, "Imported " + imported + " package(s).");
         } catch (Exception failure) {
             String message = failure.getMessage();

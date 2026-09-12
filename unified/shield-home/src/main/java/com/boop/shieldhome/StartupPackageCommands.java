@@ -10,7 +10,7 @@ public final class StartupPackageCommands {
     private static final Pattern ENABLED = Pattern.compile("\\benabled=([0-4])\\b");
     private static final Pattern STOPPED = Pattern.compile("\\bstopped=(true|false)\\b");
     private static final Set<String> APP_OPS = Set.of("RUN_IN_BACKGROUND", "RUN_ANY_IN_BACKGROUND");
-    private static final Set<String> APP_OP_MODES = Set.of("allow", "ignore", "deny", "default");
+    private static final Set<String> APP_OP_MODES = Set.of("allow", "ignore", "deny", "default", "foreground");
 
     private StartupPackageCommands() { }
 
@@ -92,7 +92,7 @@ public final class StartupPackageCommands {
         requirePackage(packageName);
         ArrayList<String> out = new ArrayList<>();
         if (snapshot == null) return out;
-        for (String line : snapshot.lines().toList()) {
+        for (String line : snapshot.split("\\r\\n|\\r|\\n")) {
             String value = line.trim();
             if (value.isEmpty()) continue;
             String[] fields = value.split("\\s+");
@@ -115,6 +115,27 @@ public final class StartupPackageCommands {
     public static boolean verifiedStopped(String packageName, String processSnapshot, String userState) {
         Boolean stopped = parseStopped(userState);
         return packageProcesses(packageName, processSnapshot).isEmpty() && Boolean.TRUE.equals(stopped);
+    }
+
+    public static String installedPackages(boolean system, boolean disabled, int user) {
+        requireUser(user);
+        return "pm list packages" + (system ? " -s" : "") + (disabled ? " -d" : "") + " --user " + user;
+    }
+    public static String homeActivities(int user) {
+        requireUser(user);
+        return "cmd package query-activities --brief --user " + user + " --query-flags 512"
+                + " -a android.intent.action.MAIN -c android.intent.category.HOME";
+    }
+    public static String forUser(String command, int user) {
+        requireUser(user);
+        if (command.startsWith("cmd appops get "))
+            return command.replace("cmd appops get ", "cmd appops get --user " + user + " ");
+        if (command.startsWith("cmd appops set "))
+            return command.replace("cmd appops set ", "cmd appops set --user " + user + " ");
+        return command.replace("--user current", "--user " + user);
+    }
+    private static void requireUser(int user) {
+        if(user < 0) throw new IllegalArgumentException("Invalid user");
     }
 
     private static String requirePackage(String packageName) {

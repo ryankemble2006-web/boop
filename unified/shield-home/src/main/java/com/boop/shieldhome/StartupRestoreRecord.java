@@ -5,127 +5,103 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/** Private, versioned receipt. Only exact known state values can become a baseline. */
 public record StartupRestoreRecord(
-        String packageName,
-        String originalEnabledState,
-        String originalRunInBackground,
-        String originalRunAnyInBackground,
+        String packageName, String originalEnabledState,
+        String originalRunInBackground, String originalRunAnyInBackground,
         Set<StartupRecoveryPolicy.ManagedAction> managedActions,
-        String lastAppliedEnabledState,
-        String lastAppliedRunInBackground,
-        String lastAppliedRunAnyInBackground,
-        long firstChangedAtMillis) {
+        String lastAppliedEnabledState, String lastAppliedRunInBackground,
+        String lastAppliedRunAnyInBackground, long firstChangedAtMillis,
+        boolean originalBootClean, boolean lastAppliedBootClean) {
 
-    private static final Pattern PACKAGE = Pattern.compile("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+");
+    public StartupRestoreRecord(String pkg, String enabled, String run, String any,
+            Set<StartupRecoveryPolicy.ManagedAction> actions, String lastEnabled,
+            String lastRun, String lastAny, long when) {
+        this(pkg, enabled, run, any, actions, lastEnabled, lastRun, lastAny, when,
+                false, actions != null && actions.contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN));
+    }
 
     public StartupRestoreRecord {
-        if (packageName == null || !PACKAGE.matcher(packageName).matches()) throw new IllegalArgumentException("packageName");
-        originalEnabledState = safe(originalEnabledState, "unknown");
-        originalRunInBackground = safe(originalRunInBackground, "unknown");
-        originalRunAnyInBackground = safe(originalRunAnyInBackground, "unknown");
-        lastAppliedEnabledState = safe(lastAppliedEnabledState, originalEnabledState);
-        lastAppliedRunInBackground = safe(lastAppliedRunInBackground, originalRunInBackground);
-        lastAppliedRunAnyInBackground = safe(lastAppliedRunAnyInBackground, originalRunAnyInBackground);
+        if (packageName == null || packageName.length() >= 180
+                || !packageName.matches("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+"))
+            throw new IllegalArgumentException("Invalid restore package");
+        if (!validEnabled(originalEnabledState) || !validEnabled(lastAppliedEnabledState)
+                || !validMode(originalRunInBackground) || !validMode(originalRunAnyInBackground)
+                || !validMode(lastAppliedRunInBackground) || !validMode(lastAppliedRunAnyInBackground))
+            throw new IllegalArgumentException("Cannot save an unknown package state");
+        if (firstChangedAtMillis < 0) throw new IllegalArgumentException("Invalid restore time");
         managedActions = managedActions == null ? Set.of() : Set.copyOf(managedActions);
-        if (firstChangedAtMillis < 0) throw new IllegalArgumentException("firstChangedAtMillis");
-    }
-    public static StartupRestoreRecord fromBaseline(StartupPackageState baseline, long now) {
-        return new StartupRestoreRecord(
-                baseline.packageName(), baseline.enabledState(), baseline.runInBackgroundMode(),
-                baseline.runAnyInBackgroundMode(), Set.of(), baseline.enabledState(),
-                baseline.runInBackgroundMode(), baseline.runAnyInBackgroundMode(), now);
     }
 
-    public StartupRestoreRecord withManagedActions(
-            Set<StartupRecoveryPolicy.ManagedAction> actions, StartupPackageState applied) {
-        return new StartupRestoreRecord(
-                packageName, originalEnabledState, originalRunInBackground, originalRunAnyInBackground,
-                actions, applied.enabledState(), applied.runInBackgroundMode(),
-                applied.runAnyInBackgroundMode(), firstChangedAtMillis);
+    public static boolean validEnabled(String value) {
+        return value != null && Set.of("default", "enabled", "disabled", "disabled-user",
+                "disabled-until-used", "manifest-disabled").contains(value);
     }
-
+    public static boolean validMode(String value) {
+        return value != null && Set.of("allow", "ignore", "deny", "default", "foreground").contains(value);
+    }
+    public static StartupRestoreRecord fromBaseline(StartupPackageState state, long now) {
+        boolean boot = state.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+        return new StartupRestoreRecord(state.packageName(), state.enabledState(),
+                state.runInBackgroundMode(), state.runAnyInBackgroundMode(), Set.of(),
+                state.enabledState(), state.runInBackgroundMode(), state.runAnyInBackgroundMode(), now, boot, boot);
+    }
+    public StartupRestoreRecord withManagedActions(Set<StartupRecoveryPolicy.ManagedAction> actions,
+                                                  StartupPackageState applied) {
+        if (!packageName.equals(applied.packageName())) throw new IllegalArgumentException("Restore target changed");
+        return new StartupRestoreRecord(packageName, originalEnabledState, originalRunInBackground,
+                originalRunAnyInBackground, actions, applied.enabledState(), applied.runInBackgroundMode(),
+                applied.runAnyInBackgroundMode(), firstChangedAtMillis, originalBootClean,
+                applied.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN));
+    }
     public boolean drifted(StartupPackageState current) {
-        return !lastAppliedEnabledState.equals(current.enabledState())
+        return !packageName.equals(current.packageName())
+                || !lastAppliedEnabledState.equals(current.enabledState())
                 || !lastAppliedRunInBackground.equals(current.runInBackgroundMode())
-                || !lastAppliedRunAnyInBackground.equals(current.runAnyInBackgroundMode());
+                || !lastAppliedRunAnyInBackground.equals(current.runAnyInBackgroundMode())
+                || lastAppliedBootClean != current.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
     }
-
-    public String encode() {
-        return "{\"v\":1,\"package\":\"" + esc(packageName)
-                + "\",\"originalEnabled\":\"" + esc(originalEnabledState)
-                + "\",\"originalRun\":\"" + esc(originalRunInBackground)
-                + "\",\"originalRunAny\":\"" + esc(originalRunAnyInBackground)
-                + "\",\"actions\":\"" + esc(actionString(managedActions))
-                + "\",\"lastEnabled\":\"" + esc(lastAppliedEnabledState)
-                + "\",\"lastRun\":\"" + esc(lastAppliedRunInBackground)
-                + "\",\"lastRunAny\":\"" + esc(lastAppliedRunAnyInBackground)
-                + "\",\"firstChanged\":" + firstChangedAtMillis + "}";
+    public String encode() { return encode(false); }
+    private String encode(boolean legacy) {
+        String actions = managedActions.stream().map(Enum::name).sorted().reduce((a,b) -> a+","+b).orElse("");
+        return "{\"v\":" + (legacy ? 1 : 2) + ",\"package\":\"" + packageName
+                + "\",\"originalEnabled\":\"" + originalEnabledState
+                + "\",\"originalRun\":\"" + originalRunInBackground
+                + "\",\"originalRunAny\":\"" + originalRunAnyInBackground
+                + "\",\"actions\":\"" + actions + "\",\"lastEnabled\":\"" + lastAppliedEnabledState
+                + "\",\"lastRun\":\"" + lastAppliedRunInBackground
+                + "\",\"lastRunAny\":\"" + lastAppliedRunAnyInBackground
+                + "\",\"firstChanged\":" + firstChangedAtMillis
+                + (legacy ? "" : ",\"originalBoot\":" + originalBootClean + ",\"lastBoot\":" + lastAppliedBootClean) + "}";
     }
     public static StartupRestoreRecord decode(String raw) {
-        if (raw == null || raw.isBlank()) return null;
+        if (raw == null) return null;
         try {
-            if (!raw.contains("\"v\":1")) return null;
-            String pkg = extract(raw, "package");
-            String originalEnabled = extract(raw, "originalEnabled");
-            String originalRun = extract(raw, "originalRun");
-            String originalRunAny = extract(raw, "originalRunAny");
-            String actionsRaw = extract(raw, "actions");
-            String lastEnabled = extract(raw, "lastEnabled");
-            String lastRun = extract(raw, "lastRun");
-            String lastRunAny = extract(raw, "lastRunAny");
-            long firstChanged = Long.parseLong(extractNumber(raw, "firstChanged"));
-            return new StartupRestoreRecord(pkg, originalEnabled, originalRun, originalRunAny,
-                    parseActions(actionsRaw), lastEnabled, lastRun, lastRunAny, firstChanged);
-        } catch (RuntimeException failure) {
-            return null;
-        }
+            boolean legacy = raw.startsWith("{\"v\":1,");
+            if (!legacy && !raw.startsWith("{\"v\":2,")) return null;
+            EnumSet<StartupRecoveryPolicy.ManagedAction> actions = EnumSet.noneOf(StartupRecoveryPolicy.ManagedAction.class);
+            String actionText = field(raw, "actions");
+            if (!actionText.isEmpty()) for (String action : actionText.split(","))
+                actions.add(StartupRecoveryPolicy.ManagedAction.valueOf(action));
+            StartupRestoreRecord result = new StartupRestoreRecord(field(raw,"package"),
+                    field(raw,"originalEnabled"), field(raw,"originalRun"), field(raw,"originalRunAny"),
+                    actions, field(raw,"lastEnabled"), field(raw,"lastRun"), field(raw,"lastRunAny"),
+                    Long.parseLong(scalar(raw,"firstChanged","[0-9]+")),
+                    !legacy && Boolean.parseBoolean(scalar(raw,"originalBoot","true|false")),
+                    legacy ? actions.contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN)
+                           : Boolean.parseBoolean(scalar(raw,"lastBoot","true|false")));
+            // Deliberately accept only the canonical private receipt format, not arbitrary JSON.
+            return raw.equals(result.encode(legacy)) ? result : null;
+        } catch (RuntimeException invalid) { return null; }
     }
-
-    private static String safe(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
-    }
-
-    private static String actionString(Set<StartupRecoveryPolicy.ManagedAction> actions) {
-        return actions.stream().map(Enum::name).sorted().reduce((a,b) -> a + "," + b).orElse("");
-    }
-
-    private static Set<StartupRecoveryPolicy.ManagedAction> parseActions(String raw) {
-        EnumSet<StartupRecoveryPolicy.ManagedAction> out = EnumSet.noneOf(StartupRecoveryPolicy.ManagedAction.class);
-        if (raw == null || raw.isBlank()) return out;
-        for (String item : raw.split(",")) out.add(StartupRecoveryPolicy.ManagedAction.valueOf(item));
-        return out;
-    }
-    private static String extract(String raw, String key) {
-        Pattern p = Pattern.compile("\\\"" + Pattern.quote(key) + "\\\":\\\"((?:\\\\.|[^\\\"])*)\\\"");
-        Matcher m = p.matcher(raw);
-        if (!m.find()) throw new IllegalArgumentException("missing " + key);
-        return unesc(m.group(1));
-    }
-
-    private static String extractNumber(String raw, String key) {
-        Pattern p = Pattern.compile("\\\"" + Pattern.quote(key) + "\\\":([0-9]+)");
-        Matcher m = p.matcher(raw);
-        if (!m.find()) throw new IllegalArgumentException("missing " + key);
+    private static String field(String raw, String key) {
+        Matcher m = Pattern.compile("\"" + Pattern.quote(key) + "\":\"([^\"]*)\"").matcher(raw);
+        if (!m.find()) throw new IllegalArgumentException("Missing receipt field");
         return m.group(1);
     }
-
-    private static String esc(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"")
-                .replace("\n", "\\n").replace("\r", "\\r");
-    }
-
-    private static String unesc(String value) {
-        StringBuilder out = new StringBuilder();
-        boolean escaped = false;
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (escaped) {
-                out.append(c == 'n' ? '\n' : c == 'r' ? '\r' : c);
-                escaped = false;
-            } else if (c == '\\') escaped = true;
-            else out.append(c);
-        }
-        if (escaped) out.append('\\');
-        return out.toString();
+    private static String scalar(String raw, String key, String expression) {
+        Matcher m = Pattern.compile("\"" + Pattern.quote(key) + "\":(" + expression + ")(?=[,}])").matcher(raw);
+        if (!m.find()) throw new IllegalArgumentException("Missing receipt field");
+        return m.group(1);
     }
 }

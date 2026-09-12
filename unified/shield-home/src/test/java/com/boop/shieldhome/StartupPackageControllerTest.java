@@ -95,7 +95,7 @@ public final class StartupPackageControllerTest {
                 protectedBridge, new FakeBootStore(),
                 new StartupRestoreStore(StartupRestoreStore.memoryBackend(), () -> 30L), caps);
         check(!protectedController.disable("com.boop.alpha1").success(), "protected package rejected");
-        check(protectedBridge.calls.equals(List.of("probe")), "protected package not mutated");
+        check(protectedBridge.calls.stream().allMatch("probe"::equals), "protected package not mutated");
 
         FakeBridge launcherBridge = new FakeBridge();
         launcherBridge.state = state("com.google.android.tvlauncher", "default", "default", "default");

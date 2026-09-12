@@ -27,6 +27,13 @@ public final class StartupRecoveryPolicy {
             add(out, packageInstallerPackage, "The package installer must stay available for recovery.");
             add(out, inputPackage, "The active input path must stay available for recovery.");
             add(out, localBridgePackage, "BOOP local control must stay available for recovery.");
+            add(out, "android", "Android itself must stay available for recovery.");
+            add(out, "com.android.providers.settings", "Saved Android settings are needed for local recovery.");
+            add(out, "com.android.systemui", "The system screen and permission prompts are needed for recovery.");
+            add(out, "com.android.bluetooth", "Bluetooth keeps the physical remote connected.");
+            add(out, "com.android.shell", "The local recovery connection needs Android shell.");
+            add(out, "com.android.networkstack", "The network connection is needed for local recovery.");
+            add(out, "com.google.android.networkstack", "The network connection is needed for local recovery.");
             return out;
         }
 

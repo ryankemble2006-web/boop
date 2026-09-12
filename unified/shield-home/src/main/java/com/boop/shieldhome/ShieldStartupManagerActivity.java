@@ -4,306 +4,264 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
-import android.widget.Toast;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.TextView;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public final class ShieldStartupManagerActivity extends Activity {
     private enum Screen { OVERVIEW, PACKAGES, RESTORE }
-    private StartupCleanupStore cleanupStore;
-    private StartupPreventionStore preventionStore;
-    private StartupRestoreStore restoreStore;
-    private StartupRecoveryPolicy.RecoveryCapabilities recoveryCapabilities;
+    private StartupCleanupStore cleanup;
+    private StartupPreventionStore prevention;
+    private StartupRestoreStore restores;
     private ExecutorService executor;
+    private Future<?> task;
     private volatile StartupLocalBridge activeBridge;
-    private Screen screen = Screen.OVERVIEW;
-    private StartupManagerUiModel.Filter filter = StartupManagerUiModel.Filter.ALL;
-    private StartupManagerUiModel.Mode mode = StartupManagerUiModel.Mode.DISABLE;
-    private List<StartupPackageState> packages = List.of();
-    private final LinkedHashSet<String> restoreSelection = new LinkedHashSet<>();
-    private String focusPackage;
-    private int focusAction = 1;
-    private boolean loadingPackages;
+    private final StartupActionGate gate=new StartupActionGate();
+    private Screen screen=Screen.OVERVIEW,restoreReturn=Screen.OVERVIEW;
+    private StartupManagerUiModel.Filter filter=StartupManagerUiModel.Filter.ALL;
+    private StartupManagerUiModel.Mode mode=StartupManagerUiModel.Mode.DISABLE;
+    private List<StartupPackageState> packages=List.of();
+    private final Set<String> selected=new LinkedHashSet<>();
+    private String packageFocus,restoreFocus,focusTag,status="";
+    private int actionFocus;
 
     @Override protected void onCreate(Bundle state) {
-        super.onCreate(state);
-        getWindow().getDecorView().setBackgroundColor(Color.BLACK);
-        cleanupStore = new StartupCleanupStore(this);
-        preventionStore = new StartupPreventionStore(this);
-        restoreStore = new StartupRestoreStore(new AndroidStartupRestoreBackend(this), System::currentTimeMillis);
-        recoveryCapabilities = AndroidRecoveryCapabilities.resolve(this);
-        executor = Executors.newSingleThreadExecutor();
-        render();
+        super.onCreate(state); getWindow().getDecorView().setBackgroundColor(Color.BLACK);
+        cleanup=new StartupCleanupStore(this); prevention=new StartupPreventionStore(this);
+        restores=new StartupRestoreStore(new AndroidStartupRestoreBackend(this),System::currentTimeMillis);
+        executor=Executors.newSingleThreadExecutor(); status=cleanup.lastSummary();
+        if(state!=null) {
+            try {
+                screen=Screen.valueOf(state.getString("screen","OVERVIEW"));
+                mode=StartupManagerUiModel.Mode.valueOf(state.getString("mode","DISABLE"));
+                filter=StartupManagerUiModel.Filter.valueOf(state.getString("filter","ALL"));
+                packageFocus=state.getString("package"); actionFocus=state.getInt("action",0);
+                ArrayList<String> values=state.getStringArrayList("selected"); if(values!=null)selected.addAll(values);
+            } catch(IllegalArgumentException ignored) { screen=Screen.OVERVIEW; }
+        }
+        render(); if(screen!=Screen.OVERVIEW)loadPackages();
     }
-
+    @Override protected void onSaveInstanceState(Bundle out) {
+        out.putString("screen",screen.name()); out.putString("mode",mode.name()); out.putString("filter",filter.name());
+        out.putString("package",packageFocus); out.putInt("action",actionFocus); out.putStringArrayList("selected",new ArrayList<>(selected));
+        super.onSaveInstanceState(out);
+    }
     private void render() {
-        ShieldStartupManagerView view = new ShieldStartupManagerView(this);
-        ShieldStartupManagerView.Callbacks callbacks = callbacks();
-        if (screen == Screen.OVERVIEW) {
-            view.renderOverview(new StartupLocalBridge(this).hasIdentity(), cleanupStore.autoEnabled(),
-                    restoreStore.records().size(), cleanupStore.lastSummary(), callbacks);
-        } else if (screen == Screen.PACKAGES) {
-            List<StartupPackageState> visible = StartupManagerUiModel.filter(packages, filter);
-            view.renderPackages(visible, filter, mode, recoveryCapabilities, focusPackage, focusAction, callbacks);
-        } else {
-            view.renderRestore(restoreStore.records(), Set.copyOf(restoreSelection), focusPackage, callbacks);
+        if(isFinishing()||isDestroyed())return;
+        ShieldStartupManagerView view=new ShieldStartupManagerView(this); view.setStatus(status,gate.busy()); view.setPackageLabels(packages);
+        var cb=callbacks();
+        if(screen==Screen.OVERVIEW)view.renderOverview(new StartupLocalBridge(this).hasIdentity(),cleanup.autoEnabled(),restores.records().size(),status,cb);
+        else if(screen==Screen.PACKAGES)view.renderPackages(StartupManagerUiModel.filter(packages,filter),filter,mode,
+                AndroidRecoveryCapabilities.resolve(this),packageFocus,actionFocus,cb);
+        else {
+            Set<String> remaining=new LinkedHashSet<>();for(var record:restores.records())remaining.add(record.packageName());
+            selected.retainAll(remaining);
+            view.renderRestore(restores.records(),Set.copyOf(selected),restoreFocus,cb);
         }
         setContentView(view);
+        if(focusTag!=null){String target=focusTag;view.post(()->{View focus=view.findViewWithTag(target);if(focus!=null)focus.requestFocus();});}
     }
-
     private ShieldStartupManagerView.Callbacks callbacks() {
         return new ShieldStartupManagerView.Callbacks() {
-            @Override public void onOpenPackages(StartupManagerUiModel.Mode requested) {
-                mode = requested;
-                filter = StartupManagerUiModel.Filter.ALL;
-                screen = Screen.PACKAGES;
-                focusPackage = null;
-                focusAction = requested == StartupManagerUiModel.Mode.BOOT_CLEAN ? 2
-                        : requested == StartupManagerUiModel.Mode.BACKGROUND ? 3 : 1;
-                render();
-                loadPackages();
+            public void onOpenOverview(){cancelWork();screen=Screen.OVERVIEW;focusTag=null;render();}
+            public void onOpenPackages(StartupManagerUiModel.Mode requested){
+                if(gate.busy())cancelWork(); mode=requested;screen=Screen.PACKAGES;focusTag=null;
+                render();loadPackages();
             }
-            @Override public void onOpenRestore() { screen = Screen.RESTORE; focusPackage = null; render(); }
-            @Override public void onCheckLocalLink() { authorize(); }
-            @Override public void onRunNow() { runCleanupNow(); }
-            @Override public void onFilter(StartupManagerUiModel.Filter requested) {
-                filter = requested;
-                if (focusPackage != null && StartupManagerUiModel.filter(packages, filter).stream()
-                        .noneMatch(p -> p.packageName().equals(focusPackage))) focusPackage = null;
-                render();
-            }
-            @Override public void onPackageInfo(String packageName) { showPackageInfo(packageName); }
-            @Override public void onPrimary(String packageName) { primary(packageName); }
-            @Override public void onToggleBoot(String packageName, boolean enabled) {
-                packageAction(packageName, controller -> controller.setBootClean(packageName, enabled), result -> {
-                    if (result.success() && enabled) cleanupStore.setAutoEnabled(true);
+            public void onOpenRestore(){openRestore();}
+            public void onCheckLocalLink(){perform("Checking the local connection",session->new Outcome(null,"Local control connection verified.",null));}
+            public void onRunNow(){runCleanup();}
+            public void onRefresh(){loadPackages();}
+            public void onSetAuto(boolean enabled){
+                if(!enabled){cancelWork(); boolean saved=cleanup.setAutoEnabled(false); status=saved?"Automatic boot cleanup is OFF.":"Could not save boot cleanup.";render();return;}
+                perform("Checking boot cleanup",session->{
+                    if(!cleanup.setAutoEnabled(true)||!cleanup.autoEnabled())throw new IOException("Could not save boot cleanup.");
+                    return new Outcome(null,"Automatic boot cleanup is ON. Only your selected packages are closed.",null);
                 });
             }
-            @Override public void onToggleBackground(String packageName, boolean enabled) {
-                packageAction(packageName, controller -> controller.setBackgroundBlock(packageName, enabled), null);
-            }
-            @Override public void onForceStop(String packageName) {
-                packageAction(packageName, controller -> controller.forceStop(packageName), null);
-            }
-            @Override public void onProtected(String packageName, String reason) {
-                Toast.makeText(ShieldStartupManagerActivity.this,
-                        reason == null || reason.isBlank() ? "Protected recovery package." : reason,
-                        Toast.LENGTH_LONG).show();
-            }
-            @Override public void onPackageFocus(String packageName, int actionIndex) {
-                focusPackage = packageName; focusAction = actionIndex;
-            }
-            @Override public void onToggleRestoreSelection(String packageName, boolean selected) {
-                if (selected) restoreSelection.add(packageName); else restoreSelection.remove(packageName);
-                focusPackage = packageName; render();
-            }
-            @Override public void onRestoreOne(String packageName) {
-                focusPackage = packageName;
-                packageAction(packageName, controller -> controller.restore(packageName), result -> {
-                    if (result.success()) restoreSelection.remove(packageName);
-                });
-            }
-            @Override public void onRestoreSelected() { restoreSelected(); }
-            @Override public void onBack() { handleBack(); }
+            public void onFilter(StartupManagerUiModel.Filter value){filter=value;focusTag="startup:filter:"+value;render();}
+            public void onPackageInfo(String pkg){inspect(pkg);}
+            public void onPrimary(String pkg){primary(pkg);}
+            public void onToggleBoot(String pkg,boolean enabled){act(pkg,c->c.setBootClean(pkg,enabled));}
+            public void onToggleBackground(String pkg,boolean enabled){act(pkg,c->c.setBackgroundBlock(pkg,enabled));}
+            public void onForceStop(String pkg){act(pkg,c->c.forceStop(pkg));}
+            public void onProtected(String pkg,String reason){dialog("Protected for recovery",reason,"OK",()->{});}
+            public void onPackageFocus(String pkg,int action){packageFocus=pkg;actionFocus=action;focusTag=null;}
+            public void onToggleRestoreSelection(String pkg,boolean checked){if(gate.busy())return;if(checked)selected.add(pkg);else selected.remove(pkg);restoreFocus=pkg;render();}
+            public void onRestoreOne(String pkg){prepareRestore(Set.of(pkg));}
+            public void onRestoreSelected(){prepareRestore(Set.copyOf(selected));}
+            public void onBack(){handleBack();}
         };
     }
-
-    private void primary(String packageName) {
-        StartupPackageState state = findPackage(packageName);
-        if (state == null) return;
-        if (StartupManagerUiModel.isDisabled(state)) {
-            packageAction(packageName, controller -> controller.reenable(packageName), null);
-            return;
-        }
-        StartupRecoveryPolicy.Assessment assessment = StartupRecoveryPolicy.assess(state, recoveryCapabilities);
-        if (assessment.impact() == StartupRecoveryPolicy.Impact.HIGH) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Disable " + state.label() + "?")
-                    .setMessage("This is a high-impact package. Disabling it may remove stock Home behavior, recommendations, or related features. BOOP keeps recovery-critical packages protected and records an exact Restore baseline.")
-                    .setPositiveButton("Disable", (dialog, which) ->
-                            packageAction(packageName, controller -> controller.disable(packageName), null))
-                    .setNegativeButton("Cancel", null).show();
-        } else {
-            packageAction(packageName, controller -> controller.disable(packageName), null);
-        }
+    private interface Action { StartupPackageController.Result apply(StartupPackageController controller); }
+    private interface Work { Outcome run(StartupLocalBridge.PackageSession session) throws Exception; }
+    private record Outcome(List<StartupPackageState> rows,String message,Runnable afterRender) { }
+    private void perform(String message,Work work) {
+        long token=gate.begin(); if(token<0)return;
+        status=message;render();
+        task=executor.submit(()->{
+            StartupLocalBridge bridge=new StartupLocalBridge(getApplicationContext());activeBridge=bridge;
+            if(!gate.current(token)){bridge.cancel();return;}
+            try(StartupLocalBridge.PackageSession session=bridge.openPackageSession(true,()->runOnUiThread(()->{
+                if(gate.current(token)){status="Approve BOOP's local connection on the Shield.";render();}
+            }))) {
+                if(!gate.current(token))return;
+                Outcome result=work.run(session);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||!gate.complete(token))return;
+                    if(result.rows()!=null)replacePackages(result.rows());
+                    status=result.message()==null?"":result.message();
+                    if(!status.isEmpty())cleanup.recordSummary(status);
+                    render();if(result.afterRender()!=null)result.afterRender().run();
+                });
+            } catch(Exception|LinkageError failure) {
+                Log.w("BOOP-Startup","Package action did not finish",failure);
+                runOnUiThread(()->{
+                    if(isFinishing()||isDestroyed()||!gate.complete(token))return;
+                    status=failure instanceof LinkageError?"This build could not open that function on this Shield.":safeMessage(failure);
+                    cleanup.recordSummary(status);render();
+                });
+            } finally {if(activeBridge==bridge)activeBridge=null;}
+        });
     }
-
-    private void showPackageInfo(String packageName) {
-        StartupPackageState state = findPackage(packageName);
-        if (state == null) return;
-        StartupRecoveryPolicy.Assessment assessment = StartupRecoveryPolicy.assess(state, recoveryCapabilities);
-        String message = state.packageName() + "\n\n"
-                + (state.systemApp() ? "System package" : "User package")
-                + (state.launcher() ? " • Launcher" : "")
-                + "\nCurrent state: " + state.enabledState()
-                + "\nImpact: " + assessment.impact()
-                + (assessment.protectionReason() == null ? "" : "\n\nProtected because: " + assessment.protectionReason());
-        new AlertDialog.Builder(this).setTitle(state.label()).setMessage(message)
-                .setPositiveButton("OK", null).show();
+    private void replacePackages(List<StartupPackageState> rows) {
+        List<String> oldIds=new ArrayList<>(),newIds=new ArrayList<>();
+        for(var row:StartupManagerUiModel.filter(packages,filter))oldIds.add(row.packageName());
+        for(var row:StartupManagerUiModel.filter(rows,filter))newIds.add(row.packageName());
+        var current=new StartupManagerNav.State(StartupManagerNav.Screen.PACKAGES,filter.ordinal(),packageFocus,actionFocus,oldIds);
+        var next=StartupManagerNav.reconcile(current,newIds); packageFocus=next.focusedPackageId();actionFocus=next.actionIndex();packages=rows;
     }
-
-    private StartupPackageState findPackage(String packageName) {
-        for (StartupPackageState state : packages) if (state.packageName().equals(packageName)) return state;
-        return null;
-    }
-
     private void loadPackages() {
-        if (loadingPackages) return;
-        loadingPackages = true;
-        executor.execute(() -> {
-            StartupLocalBridge bridge = new StartupLocalBridge(this);
-            activeBridge = bridge;
-            try (StartupLocalBridge.PackageSession session = bridge.openPackageSession(true, this::showApprovalPrompt)) {
-                ensureMigration(session);
-                List<StartupPackageState> loaded = session.inventory();
-                runOnUiThread(() -> { packages = loaded; loadingPackages = false; render(); });
-            } catch (Exception failure) {
-                loadingPackages = false;
-                showFailure(failure);
-            } finally { activeBridge = null; }
+        perform("Reading installed packages",session->{
+            String migration="";
+            try{ensureMigration(session);}catch(Exception failed){migration="Existing rules kept unchanged. "+safeMessage(failed);}
+            List<StartupPackageState> rows=session.inventory();
+            return new Outcome(rows,migration.isEmpty()?rows.size()+" installed packages. Browsing does not change them.":migration,null);
         });
     }
-
-    private void authorize() {
-        executor.execute(() -> {
-            StartupLocalBridge bridge = new StartupLocalBridge(this);
-            activeBridge = bridge;
-            try {
-                String result = bridge.authorize(this::showApprovalPrompt);
-                cleanupStore.recordSummary(result);
-                runOnUiThread(this::render);
-            } catch (Exception failure) { showFailure(failure); }
-            finally { activeBridge = null; }
+    private StartupPackageState cached(String pkg){for(var row:packages)if(row.packageName().equals(pkg))return row;return null;}
+    private void primary(String pkg) {
+        StartupPackageState displayed=cached(pkg);if(displayed==null||gate.busy())return;
+        boolean enable=StartupManagerUiModel.isDisabled(displayed);
+        perform("Checking "+displayed.label(),session->{
+            ensureMigration(session);StartupPackageState live=session.probe(pkg);
+            if(enable!=StartupManagerUiModel.isDisabled(live))return new Outcome(session.inventory(),"That app's state changed. Choose the action again.",null);
+            var risk=StartupRecoveryPolicy.assess(live,AndroidRecoveryCapabilities.resolve(this));
+            if(!enable&&risk.protectedPackage())return new Outcome(null,risk.protectionReason(),null);
+            Runnable apply=()->act(pkg,c->enable?c.reenable(pkg):c.disable(pkg));
+            if(!enable&&risk.impact()==StartupRecoveryPolicy.Impact.HIGH)
+                return new Outcome(null,"",()->dialog("Disable "+live.label()+"?",
+                        "This changes the stock Home experience or a related feature. App data stays in place. BOOP saves the original settings for Restore.\n\n"+pkg,"Disable",apply));
+            return new Outcome(null,"",apply);
         });
     }
-
-    private void runCleanupNow() {
-        Set<String> targets = cleanupStore.targets();
-        if (targets.isEmpty()) {
-            Toast.makeText(this, "No Boot close packages selected.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        executor.execute(() -> {
-            StartupLocalBridge bridge = new StartupLocalBridge(this);
-            activeBridge = bridge;
-            try {
-                String result = bridge.run(targets, true, this::showApprovalPrompt);
-                cleanupStore.recordSummary(result);
-                runOnUiThread(this::render);
-            } catch (Exception failure) { showFailure(failure); }
-            finally { activeBridge = null; }
+    private void act(String pkg,Action action) {
+        perform("Applying package change",session->{
+            ensureMigration(session);var result=action.apply(controller(session));
+            return refreshed(session,result.summary());
         });
     }
-
-    private interface ControllerAction { StartupPackageController.Result run(StartupPackageController controller); }
-    private interface ResultHook { void apply(StartupPackageController.Result result); }
-
-    private void packageAction(String packageName, ControllerAction action, ResultHook hook) {
-        executor.execute(() -> {
-            StartupLocalBridge bridge = new StartupLocalBridge(this);
-            activeBridge = bridge;
-            try (StartupLocalBridge.PackageSession session = bridge.openPackageSession(true, this::showApprovalPrompt)) {
-                ensureMigration(session);
-                StartupPackageController controller = new StartupPackageController(
-                        session, bootStore(), restoreStore, recoveryCapabilities);
-                StartupPackageController.Result result = action.run(controller);
-                if (hook != null) hook.apply(result);
-                cleanupStore.recordSummary(result.summary());
-                List<StartupPackageState> loaded = session.inventory();
-                runOnUiThread(() -> {
-                    packages = loaded;
-                    Toast.makeText(this, result.summary(), result.success() ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show();
-                    render();
-                });
-            } catch (Exception failure) { showFailure(failure); }
-            finally { activeBridge = null; }
+    private Outcome refreshed(StartupLocalBridge.PackageSession session,String message) {
+        try{return new Outcome(session.inventory(),message,null);}
+        catch(Exception unavailable){return new Outcome(null,message+" Use Refresh to update the list.",null);}
+    }
+    private void inspect(String pkg) {
+        perform("Reading current package state",session->{
+            StartupPackageState live=session.probe(pkg);StartupRestoreRecord record=restores.record(pkg);
+            var risk=StartupRecoveryPolicy.assess(live,AndroidRecoveryCapabilities.resolve(this));
+            String text=pkg+"\n\nCurrent enabled state: "+live.enabledState()+"\nBackground: "+live.runInBackgroundMode()+" / "+live.runAnyInBackgroundMode()
+                    +"\nClose after boot: "+(cleanup.targets().contains(pkg)?"ON":"OFF")
+                    +(risk.protectedPackage()?"\n\n"+risk.protectionReason():"")
+                    +(record!=null&&record.drifted(live)?"\n\nChanged outside BOOP or an earlier action was interrupted. Restore still has the original.":"");
+            return new Outcome(null,"Current package state verified.",()->dialog(live.label(),text,record==null?"OK":"Restore",record==null?()->{}:()->prepareRestore(Set.of(pkg))));
         });
     }
-
-    private StartupPackageController.BootStore bootStore() {
-        return new StartupPackageController.BootStore() {
-            @Override public boolean setTarget(String packageName, boolean enabled) {
-                return cleanupStore.setTarget(packageName, enabled);
+    private void prepareRestore(Set<String> requested) {
+        if(requested.isEmpty()){status="Select at least one package to restore.";render();return;}
+        perform("Checking saved originals",session->{
+            ensureMigration(session);Map<String,StartupPackageState> expected=new LinkedHashMap<>();boolean drift=false;
+            for(String pkg:requested){var live=session.probe(pkg);var receipt=restores.record(pkg);
+                if(receipt==null)throw new IOException("No saved original for "+pkg);expected.put(pkg,live);drift|=receipt.drifted(live);}
+            String message=(drift?"Changed outside BOOP or an earlier action was interrupted.\n\n":"")
+                    +"Restore "+requested.size()+" package(s) to their saved enabled, background and boot-cleanup settings?\n\nNothing is uninstalled or cleared.";
+            return new Outcome(null,"",()->dialog("Restore saved settings?",message,"Restore",()->restoreBatch(expected)));
+        });
+    }
+    private void restoreBatch(Map<String,StartupPackageState> expected) {
+        perform("Restoring saved settings",session->{
+            List<String> completed=new ArrayList<>(),failed=new ArrayList<>();var c=controller(session);
+            for(var entry:expected.entrySet()) {
+                var current=session.probe(entry.getKey());
+                if(!sameState(entry.getValue(),current)){failed.add(entry.getKey()+": state changed; review again");continue;}
+                var result=c.restore(entry.getKey());if(result.success())completed.add(entry.getKey());else failed.add(entry.getKey()+": "+result.summary());
             }
-            @Override public boolean contains(String packageName) { return cleanupStore.targets().contains(packageName); }
-        };
-    }
-
-    private void restoreSelected() {
-        if (restoreSelection.isEmpty()) {
-            Toast.makeText(this, "Choose at least one package to restore.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        Set<String> requested = Set.copyOf(restoreSelection);
-        executor.execute(() -> {
-            StartupLocalBridge bridge = new StartupLocalBridge(this);
-            activeBridge = bridge;
-            try (StartupLocalBridge.PackageSession session = bridge.openPackageSession(true, this::showApprovalPrompt)) {
-                ensureMigration(session);
-                StartupPackageController controller = new StartupPackageController(session, bootStore(), restoreStore, recoveryCapabilities);
-                ArrayList<String> failed = new ArrayList<>();
-                int restored = 0;
-                for (String pkg : requested) {
-                    StartupPackageController.Result result = controller.restore(pkg);
-                    if (result.success()) { restored++; restoreSelection.remove(pkg); }
-                    else failed.add(pkg + ": " + result.summary());
-                }
-                String summary = restored + " restored" + (failed.isEmpty() ? "." : "; " + failed.size() + " not restored. " + String.join("; ", failed));
-                cleanupStore.recordSummary(summary);
-                List<StartupPackageState> loaded = session.inventory();
-                runOnUiThread(() -> { packages = loaded; Toast.makeText(this, summary, failed.isEmpty() ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG).show(); render(); });
-            } catch (Exception failure) { showFailure(failure); }
-            finally { activeBridge = null; }
+            String message=completed.size()+" restored."+(failed.isEmpty()?"":" "+failed.size()+" need attention. "+String.join("; ",failed));
+            List<StartupPackageState> rows=session.inventory();
+            return new Outcome(rows,message,()->{selected.removeAll(completed);if(completed.contains(restoreFocus))restoreFocus=null;render();});
         });
     }
-
-    private void ensureMigration(StartupLocalBridge.PackageSession session) throws Exception {
-        AndroidStartupManagerMigrationMarker marker = new AndroidStartupManagerMigrationMarker(this);
-        if (marker.migrated()) return;
-        StartupManagerMigration.LegacySource legacy = new StartupManagerMigration.LegacySource() {
-            @Override public Set<String> cleanupTargets() { return cleanupStore.targets(); }
-            @Override public Set<StartupPreventionRecord> preventionRecords() { return preventionStore.records(); }
+    private static boolean sameState(StartupPackageState a,StartupPackageState b) {
+        return a.packageName().equals(b.packageName())&&a.enabledState().equals(b.enabledState())
+                &&a.runInBackgroundMode().equals(b.runInBackgroundMode())&&a.runAnyInBackgroundMode().equals(b.runAnyInBackgroundMode())
+                &&a.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN)==b.managedActions().contains(StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN);
+    }
+    private StartupPackageController controller(StartupLocalBridge.PackageSession session) {
+        return new StartupPackageController(session,new StartupPackageController.BootStore(){
+            public boolean setTarget(String pkg,boolean enabled){return cleanup.setTarget(pkg,enabled);}
+            public boolean contains(String pkg){return cleanup.targets().contains(pkg);}
+        },restores,AndroidRecoveryCapabilities.resolve(this));
+    }
+    private void ensureMigration(StartupLocalBridge.PackageSession session)throws Exception {
+        var marker=new AndroidStartupManagerMigrationMarker(this);if(marker.migrated())return;
+        var legacy=new StartupManagerMigration.LegacySource(){
+            public Set<String> cleanupTargets(){return cleanup.targets();}
+            public Set<StartupPreventionRecord> preventionRecords(){return prevention.records();}
         };
-        StartupManagerMigration.Result result = new StartupManagerMigration(
-                legacy, session::probe, restoreStore, marker).runOnce();
-        if (!result.success()) throw new IOException("Could not import existing Startup Manager state: " + result.summary());
+        var result=new StartupManagerMigration(legacy,session::probe,restores,marker).runOnce();
+        if(!result.success())throw new IOException("Existing rules could not be imported: "+result.summary());
     }
-
-    private void showApprovalPrompt() {
-        runOnUiThread(() -> Toast.makeText(this, "Approve BOOP on the Shield.", Toast.LENGTH_LONG).show());
+    private void runCleanup() {
+        Set<String> targets=cleanup.targets();if(targets.isEmpty()){status="No packages are selected for boot cleanup.";render();return;}
+        dialog("Run boot cleanup now?","Close "+targets.size()+" selected package(s) once? The app currently on screen is left alone.","Run cleanup",()->{
+            perform("Closing selected packages",session->{
+                // Reuse the same authorized session and verify the foreground before each stop.
+                int stopped=0,skipped=0;for(String pkg:targets){
+                    if(!session.canCleanNow(pkg)){skipped++;continue;}
+                    var result=controller(session).forceStop(pkg);if(result.success())stopped++;else skipped++;
+                }
+                return refreshed(session,stopped+" stopped; "+skipped+" left unchanged.");
+            });
+        });
     }
-
-    private void showFailure(Exception failure) {
-        String message = failure.getMessage();
-        if (message == null || message.isBlank()) message = failure.getClass().getSimpleName();
-        final String safe = message.length() > 220 ? message.substring(0, 220) : message;
-        cleanupStore.recordSummary("Not applied: " + safe);
-        runOnUiThread(() -> { Toast.makeText(this, safe, Toast.LENGTH_LONG).show(); render(); });
+    private void dialog(String title,String message,String positive,Runnable action) {
+        if(isFinishing()||isDestroyed())return;
+        AlertDialog dialog=new AlertDialog.Builder(this,android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(title).setMessage(message).setPositiveButton(positive,(d,w)->action.run())
+                .setNegativeButton("Back",null).create();
+        dialog.setOnShowListener(ignored->{
+            if(dialog.getWindow()!=null)dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*0.65),WindowManager.LayoutParams.WRAP_CONTENT);
+            TextView content=dialog.findViewById(android.R.id.message);if(content!=null)content.setTextSize(18);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextSize(18);dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextSize(18);
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).requestFocus();
+        });dialog.show();
     }
-
-    private void handleBack() {
-        if (screen == Screen.OVERVIEW) { finish(); return; }
-        screen = Screen.OVERVIEW; filter = StartupManagerUiModel.Filter.ALL; focusPackage = null; render();
-    }
-
-    @Override public void onBackPressed() { handleBack(); }
-
-    @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_MENU && event.getRepeatCount() == 0) {
-            screen = Screen.RESTORE; focusPackage = null; render(); return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override protected void onDestroy() {
-        if (activeBridge != null) activeBridge.cancel();
-        if (executor != null) executor.shutdownNow();
-        super.onDestroy();
-    }
+    private static String safeMessage(Throwable e){String m=e.getMessage();if(m==null||m.trim().isEmpty())return "The action could not be completed.";m=m.replace('\n',' ').replace('\r',' ');return m.substring(0,Math.min(240,m.length()));}
+    private void cancelWork(){if(gate.busy())status="Stopped waiting. Any saved original remains available in Restore.";gate.cancel();if(activeBridge!=null)activeBridge.cancel();if(task!=null)task.cancel(true);task=null;}
+    private void openRestore(){cancelWork();if(screen!=Screen.RESTORE)restoreReturn=screen;screen=Screen.RESTORE;focusTag=null;render();}
+    private void handleBack(){cancelWork();focusTag=null;if(screen==Screen.OVERVIEW){finish();return;}screen=screen==Screen.RESTORE?restoreReturn:Screen.OVERVIEW;render();}
+    @Override public void onBackPressed(){handleBack();}
+    @Override public boolean onKeyDown(int key,KeyEvent event){if(key==KeyEvent.KEYCODE_MENU&&event.getRepeatCount()==0){openRestore();return true;}return super.onKeyDown(key,event);}
+    @Override protected void onDestroy(){cancelWork();if(executor!=null)executor.shutdownNow();super.onDestroy();}
 }

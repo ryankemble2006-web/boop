@@ -26,14 +26,21 @@ public final class StartupRestoreStore {
     }
 
     public StartupRestoreRecord record(String packageName) {
-        return StartupRestoreRecord.decode(backend.get(PREFIX + packageName));
+        String raw = backend.get(PREFIX + packageName);
+        StartupRestoreRecord value = StartupRestoreRecord.decode(raw);
+        if (raw != null && (value == null || !packageName.equals(value.packageName())))
+            throw new IllegalStateException("Saved restore data needs attention; nothing was changed.");
+        return value;
     }
 
     public StartupRestoreRecord captureIfAbsent(String packageName, StartupPackageState baseline) {
+        if (baseline == null || !packageName.equals(baseline.packageName()))
+            throw new IllegalArgumentException("Restore target does not match the observed package");
         StartupRestoreRecord existing = record(packageName);
         if (existing != null) return existing;
         StartupRestoreRecord created = StartupRestoreRecord.fromBaseline(baseline, clock.getAsLong());
         if (!backend.put(PREFIX + packageName, created.encode())) throw new IllegalStateException("Could not save restore baseline");
+        if (!created.equals(record(created.packageName()))) throw new IllegalStateException("Restore save could not be verified");
         return created;
     }
     public StartupRestoreRecord updateManagedActions(String packageName,
@@ -43,6 +50,7 @@ public final class StartupRestoreStore {
         if (current == null) throw new IllegalStateException("Missing restore baseline");
         StartupRestoreRecord next = current.withManagedActions(actions, applied);
         if (!backend.put(PREFIX + packageName, next.encode())) throw new IllegalStateException("Could not update restore record");
+        if (!next.equals(record(packageName))) throw new IllegalStateException("Restore update could not be verified");
         return next;
     }
 
@@ -62,11 +70,12 @@ public final class StartupRestoreStore {
         if (!backend.put(PREFIX + prevention.packageName(), created.encode())) {
             throw new IllegalStateException("Could not import prevention restore baseline");
         }
+        if (!created.equals(record(created.packageName()))) throw new IllegalStateException("Restore save could not be verified");
         return created;
     }
 
     public boolean remove(String packageName) {
-        return backend.remove(PREFIX + packageName);
+        return backend.remove(PREFIX + packageName) && backend.get(PREFIX + packageName) == null;
     }
 
     public List<StartupRestoreRecord> records() {

@@ -16,8 +16,8 @@ public record StartupPackageState(
         if (packageName == null || packageName.isBlank()) throw new IllegalArgumentException("packageName");
         if (label == null || label.isBlank()) label = packageName;
         if (enabledState == null || enabledState.isBlank()) enabledState = "unknown";
-        if (runInBackgroundMode == null || runInBackgroundMode.isBlank()) runInBackgroundMode = "default";
-        if (runAnyInBackgroundMode == null || runAnyInBackgroundMode.isBlank()) runAnyInBackgroundMode = "default";
+        if (runInBackgroundMode == null || runInBackgroundMode.isBlank()) runInBackgroundMode = "unknown";
+        if (runAnyInBackgroundMode == null || runAnyInBackgroundMode.isBlank()) runAnyInBackgroundMode = "unknown";
         managedActions = managedActions == null ? Set.of() : Set.copyOf(managedActions);
     }
 }

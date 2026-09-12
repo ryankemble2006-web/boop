@@ -1,3 +1,32 @@
+## Startup Manager repair verification, 2026-09-12
+
+The repaired pure-Java Startup Manager suites were compiled to dex and all 15
+suites passed on the actual Shield Android 11 runtime with synthetic package
+state only. No installed package was disabled by this harness; the temporary
+device file was removed. Host linkage and 15 behavior suites pass, including
+interrupted-write Undo, exact boot restoration, stale work cancellation, corrupt
+receipt preservation and protected recovery. Local Android compilation and
+full Unified unit task passed. The UI now has a sidebar, responsive two-by-two
+dashboard, weighted package actions and a detail pane. Visual acceptance awaits
+the signed candidate.
+
+The deployment check found lyrics v131 now installed. Do not install v129 over
+it. The forward integration must retain the published lyrics and approved art
+without editing their worktrees. The earlier v129 reservation is superseded.
+
+## Startup Manager v129 repair in progress, 2026-09-12
+
+Owning continuation: `boop-v125-animation-integration`, from v128 source
+`c7a38b7c5d6a77126cf7bab636e4c6303a714cff`. v128 signed run `34669007991`
+passed, but physical Package Control crashed with `String.lines()` on Android 11.
+v128 is not a working package-control checkpoint. v127 rollback remains private.
+Ryan approved completion, signed installation and one music-track-change alert
+after verification. No new grants or arbitrary package debloating are authorized.
+v129 is reserved for this repair and approved mockup implementation. Concurrent
+music-art v130 and lyrics v131 worktrees must remain untouched.
+Next: finish runtime compatibility, recovery review and TV layout/focus, then
+verify signed build and coordinate the installed-version check before deployment.
+
 ## EastEnders 1.7 Skip trailer verified, 2026-09-12
 
 Ryan approved optional exact `Skip trailer` handling in standalone `uk.local.eastenders`. Version 1.7 / code 8 keeps the 1.6 return-focus repair and adds a bounded 60-second one-shot trailer gate after the helper starts the newest episode. It matches only an exact visible/enabled `Skip trailer` text or accessibility label, uses no coordinates or fixed 18-second delay, and does nothing when absent.

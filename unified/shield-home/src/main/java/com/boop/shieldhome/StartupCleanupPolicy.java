@@ -67,10 +67,10 @@ public final class StartupCleanupPolicy {
 
     public static List<String> packageProcesses(String packageName, String snapshot) {
         if (!validPackage(packageName)) throw new IllegalArgumentException("Invalid or protected package");
-        return snapshot.lines().map(String::trim).filter(s -> !s.isEmpty()).map(s -> s.split("\\s+"))
+        return java.util.Arrays.stream(snapshot.split("\\r\\n|\\r|\\n")).map(String::trim).filter(s -> !s.isEmpty()).map(s -> s.split("\\s+"))
                 .filter(parts -> parts.length >= 2 && parts[0].matches("\\d+"))
                 .map(parts -> parts[parts.length - 1])
-                .filter(name -> name.equals(packageName) || name.startsWith(packageName + ":")).toList();
+                .filter(name -> name.equals(packageName) || name.startsWith(packageName + ":")).collect(java.util.stream.Collectors.toList());
     }
 
     public static Boolean parseStopped(String output) {

@@ -33,7 +33,7 @@ final class AndroidStartupPackageSource implements StartupPackageRepository.Pack
     }
     private Set<String> launcherPackages() {
         HashSet<String> out = new HashSet<>();
-        for (String category : List.of(Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER, Intent.CATEGORY_HOME)) {
+        for (String category : List.of(Intent.CATEGORY_HOME)) {
             Intent intent = new Intent(Intent.ACTION_MAIN).addCategory(category);
             for (ResolveInfo info : pm.queryIntentActivities(intent, PackageManager.MATCH_DISABLED_COMPONENTS)) {
                 if (info.activityInfo != null && info.activityInfo.packageName != null) {
