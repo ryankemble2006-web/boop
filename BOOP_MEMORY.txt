@@ -602,3 +602,6 @@ The BOOP-branded preset feature is implemented and signed only on boop-shield-de
 
 BOOP DEFAULTS v143 LIVE OVERVIEW DEFECT (2026-09-12)
 Actual device inspection confirmed the defaults and four action-card rows are one pixel high. Presence in source/APK does not prove visible buttons. Focus-only inspection reached Use BOOP defaults but no readable highlight could render. The scrollable Overview row/child height interaction needs a scoped repair before physical acceptance. No app/package changes were made by this investigation.
+
+BOOP DEFAULTS V145 OVERVIEW REPAIR (2026-09-12)
+The approved layout-only repair is signed and installed on boop-shield-defaults. Flexible scrolling rows must measure their buttons/cards with content height, not match a parent that is itself wrapping; the one-pixel spacers exposed the v143 collapse. Manual v145 screen review confirmed both defaults buttons, all four cards and visible cyan focus on Use BOOP defaults at unchanged 130% text. The user package choices and private recovery data survived the update unchanged. No preset Apply/Undo was pressed. Read SESSION_HANDOFF.md for exact source/signing/install evidence; no unrelated branches were merged.

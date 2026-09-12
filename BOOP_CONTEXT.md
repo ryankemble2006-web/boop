@@ -1,3 +1,16 @@
+## Current v145 delivery, 2026-09-12
+
+The user-approved Overview row repair is signed and installed. Source
+`8fbe84411ec211f3adfec4409e41f3d49b2607fa`, run `34679678333`, artifact `10293642500`.
+Manual Shield review confirms both BOOP defaults buttons and all four Overview
+cards are visible; Use BOOP defaults was left with visible cyan focus, unpressed.
+The settings/receipts, disabled list, background limits and 130% text setting were
+unchanged across installation. Only the six flexible Overview child heights and
+app version changed; preset logic, artwork and other branches remain untouched.
+Local and signed gates passed. See SESSION_HANDOFF.md for full hashes and evidence.
+Earlier v143 not-installed/failed-visibility entries below are historical. The
+preset's full Apply/Undo/reboot and user acceptance are still separate.
+
 ## BOOP defaults signed feature, 2026-09-12
 
 The isolated candidate143 is signed and verified: source `696a1b2249b2549c12c4832baf7bc2c30b913aab`,

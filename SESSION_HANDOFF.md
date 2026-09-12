@@ -1,3 +1,42 @@
+## Installed v145: Overview visibility repaired, 2026-09-12
+
+The user explicitly approved the narrow row fix and installation. Installed
+version: `145 / 1.2.145-boop-defaults-visible`, package `com.boop.alpha1`.
+Build source: `8fbe84411ec211f3adfec4409e41f3d49b2607fa`.
+Successful permanent-signed run: `34679678333`; artifact `10293642500`.
+APK SHA256: `5b28036f6a3b7114f752bdbdc5273486394fbbafb7e8ca55c56caf7bd37ef6b5`.
+Signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+The installed APK's hash exactly matches the verified signed artifact. The actual
+installed v143 APK was privately preserved before the update. All four Startup
+Manager preference files, defaults journal presence/content, disabled-package
+list, paired background-restriction lists and font_scale matched immediately
+before and after installation. No Apply, Undo, permission grant or package change
+was performed by this task.
+
+The only application repair is in ShieldStartupManagerView: the six Overview
+buttons/cards in flexible rows now measure height from their content. Existing
+fixed-height rows, focus links, callbacks, preset/controller/Restore behavior,
+artwork and excluded-lyrics scope are unchanged. No other worktree was modified.
+Local gates passed: Android compilation; 277 Unified tests (zero failures/errors/
+skips); 15 Startup Manager suites; 27 preset-coordinator scenarios; eight safety
+scenarios; profile/journal checks; Android 11 linkage. Signed CI passed, including
+68 Shield and 217 Unified focused tests plus the preset suite. No visual CI added.
+
+Manual live screenshot review confirmed both defaults buttons and all four action
+cards now visible at the unchanged 130% text setting. The defaults controls have
+83-pixel height in the actual view tree rather than v143's one-pixel rows. After
+ordinary Home settings navigation, Up/Right focused Use BOOP defaults; a fresh
+screenshot confirmed its visible cyan outline. The button was left focused, not
+activated. Opening Home initially produced a transient black frame; a subsequent
+capture showed Home normally, with no current-process AndroidRuntime fatal in the
+inspected log. UIAutomator could not idle on animated Home, so that screen was
+inspected by screenshot before normal navigation to the static settings screen.
+
+This is scoped agent verification of the requested layout/installation, not user
+acceptance of all preset Apply/Undo or reboot behavior. The previous v143 defect
+and older not-installed statements below are historical and superseded here.
+Keep all subsequent work on boop-shield-defaults unless an explicit merge is asked.
+
 ## Approved v145 Overview-only repair in progress, 2026-09-12
 
 The user approved fixing the observed one-pixel rows and installing the corrected
