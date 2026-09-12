@@ -27,7 +27,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     private int signStyle;
     private double signStart;
     private TextView label;
-    private EyeMotion.Controller controller;
+    private ProductionAnimationController controller;
     private boolean resumed,focused,running,slow,motionOff;
     private long lastFrame;
     private double clock;
@@ -35,7 +35,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     private boolean reducedMotion;
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
-        controller=new EyeMotion.Controller(EyeCatalogue.find("idle"),0,20260910);
+        controller=new ProductionAnimationController("idle",0,20260910);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.BLACK);
         label=new TextView(this);label.setTextColor(Color.WHITE);label.setTextSize(20);label.setPadding(24,12,24,8);
         root.addView(label,new LinearLayout.LayoutParams(-1,-2));
@@ -72,7 +72,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     private void select(String id){
         signActive=false;if(sign!=null){sign.setVisibility(View.GONE);resizeEyes();}
         freeze=-1;EyeMotion.Clip c=EyeCatalogue.find(id);
-        controller.select(c,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
+        controller.setState(c.id,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
         label.setText("BOOP • "+c.label+"  |  Canonical eye code • v12 • Ryan review");
         Log.i("BOOPEyes","clip="+c.id+" time="+(long)clock);
     }
@@ -107,7 +107,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
         if(!running)return;
         if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:1);
         lastFrame=time;
-        EyeMotion.Clip clip=controller.clip();
+        EyeMotion.Clip clip=EyeCatalogue.find(controller.activeClipId());
         if(signActive){
             double elapsed=freeze>=0?freeze:reducedMotion?10000:clock-signStart;
             SignMotion.Pose p=signStyle==4?FreddieMotion.sample(elapsed):SignMotion.sample(elapsed,signStyle);

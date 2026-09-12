@@ -40,3 +40,9 @@ def test_canonical_preview_activity_remains_private_in_unified_manifest():
     manifest = (BUILD / "app/src/main/AndroidManifest.xml").read_text()
     assert ".BoopCanonicalAnimationActivity" in manifest
     assert 'android:name=".BoopCanonicalAnimationActivity"' in manifest
+
+
+def test_preview_activity_uses_the_same_production_controller():
+    source = (ROOT / "source/BoopCanonicalAnimationActivity.java").read_text()
+    assert "ProductionAnimationController" in source
+    assert "new EyeMotion.Controller" not in source
