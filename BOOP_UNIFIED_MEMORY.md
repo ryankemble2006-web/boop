@@ -1,3 +1,18 @@
+## Live v143 Overview defect confirmed, 2026-09-12
+
+The device reports installed `143 / 1.2.143-boop-shield-defaults`. A fresh live
+screen inspection found both defaults buttons AND the four action cards collapsed
+to one-pixel-high rows below the status boxes. The Android view tree confirms
+one-pixel heights; this is not a navigation-location or missing-build problem.
+Focus was moved onto **Use BOOP defaults**, but the collapsed control cannot show
+a usable visible focus treatment. No Apply, Undo or package action was selected.
+The scrollable Overview uses MATCH_PARENT-height weighted children in
+WRAP_CONTENT-height rows. Repair that scoped sizing behavior on this branch before
+claiming the buttons are visible or promoting v143 as physically accepted.
+The current user request was recheck/highlight only. No app-code edits, build,
+install, permission changes or package mutations were made in this investigation.
+Previous source/signing evidence below remains valid, but is not visual acceptance.
+
 # BOOP defaults continuation memory
 
 The requested feature is BOOP-branded: Use BOOP defaults and Undo BOOP defaults.

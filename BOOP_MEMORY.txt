@@ -599,3 +599,6 @@ Use BOOP defaults and Undo BOOP defaults are implemented on the isolated boop-sh
 
 BOOP DEFAULTS SIGNED CANDIDATE (2026-09-12)
 The BOOP-branded preset feature is implemented and signed only on boop-shield-defaults: code143, source 696a1b2249b2549c12c4832baf7bc2c30b913aab, run 34676381862, artifact 10291778955. APK hash 4c91bf3b54675afb11f3a0c2f574b1eb0da5b7747d2919016e3d3145cb77f2a1 and the permanent signer were independently verified. Existing 277 local tests, 15 Startup Manager suites, 27 new coordinator scenarios, eight safety scenarios and profile/journal checks passed; signed CI passed. This is not installed/applied/merged or physically accepted. Keep other branches and the shared Shield unchanged until explicit deployment approval.
+
+BOOP DEFAULTS v143 LIVE OVERVIEW DEFECT (2026-09-12)
+Actual device inspection confirmed the defaults and four action-card rows are one pixel high. Presence in source/APK does not prove visible buttons. Focus-only inspection reached Use BOOP defaults but no readable highlight could render. The scrollable Overview row/child height interaction needs a scoped repair before physical acceptance. No app/package changes were made by this investigation.
