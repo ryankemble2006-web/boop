@@ -3,6 +3,11 @@ using Boop.Win7ify.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("already correct protected setting is not rewritten", PermissionRegressionTests.AlreadyCorrectDoesNotWrite),
+    ("blocked setting does not abandon others", PermissionRegressionTests.BlockedSettingDoesNotAbandonOthers),
+    ("restore skips unchanged protected value", PermissionRegressionTests.RestoreSkipsUnchangedProtectedValue),
+    ("restore continues after blocked value", PermissionRegressionTests.RestoreContinuesAfterBlockedValue),
+    ("unknown backup version blocks writes", PermissionRegressionTests.UnknownBackupVersionCannotWrite),
     ("apply backs up original before writing", ApplyBacksUpOriginal),
     ("second apply keeps first baseline", SecondApplyKeepsBaseline),
     ("restore removes originally missing value", RestoreRemovesOriginallyMissing),
