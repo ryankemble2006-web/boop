@@ -21,6 +21,12 @@ public final class ShieldNowPlayingListenerService extends NotificationListenerS
     @Override
     public void onListenerConnected() {
         super.onListenerConnected();
+        StatusBarNotification[] active = getActiveNotifications();
+        if (active != null) {
+            for (StatusBarNotification existing : active) {
+                onNotificationPosted(existing);
+            }
+        }
         ShieldNowPlayingManager.get(this).onListenerConnected();
     }
 
