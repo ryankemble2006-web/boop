@@ -79,7 +79,7 @@ Ryan chose one APK/one canonical app lineage after separate Wall, Launcher and S
 
 Canonical `boop-unified` retains v91 app source `11650313221ae5bf997dbb93b6a905bfdc7da1ed` and the permanent signer/package. Ryan physically accepted natural voice selection, demos and a normal selected-voice reply on 2026-09-10. Checkpoint `checkpoint-boop-unified-v91-natural-voices-accepted` preserves that source. Unified run `34433115316` succeeded; artifact `10135283428`; APK SHA256 `42dc50d12031a674aa751918f6bfd6b4deab8b6ced95332a437f4068124fe53d`. Voice acceptance does not imply blanket visual/HA/remote-microphone acceptance. Detailed receipts are on canonical handoff/status/memory.
 
-Ryan selected overhaul items **1, 3, 6, 7, 8 and 10** on dedicated **`boop-canonical-rebuild`**: shared state, configured room and generic exposed HA discovery, one media corner/Home owner, local/Deezer transport, HA Back escape; device profiles. Read that branch's live `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` and scoped plan. It is a candidate, not a replacement for accepted canonical. Eyes are owned by another task for later transplant; eyes/blink and Turbo redesign are outside this selected scope.
+Ryan selected overhaul items **1, 3, 6, 7, 8 and 10** on dedicated **`boop-canonical-rebuild`**: shared state, configured room and generic exposed HA discovery, one media corner/Home owner, local/Deezer transport, HA Back escape, device profiles. Read that branch's live `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` and scoped plan. It is a candidate, not a replacement for accepted canonical. Eyes are owned by another task for later transplant; eyes/blink and Turbo redesign are outside this selected scope.
 
 GitHub performs nonvisual builds/functional checks/signing. No GitHub appearance/visual tests. Manual local emulator inspection and Ryan's device/provider acceptance remain separate.
 
@@ -112,7 +112,7 @@ v85 includes the optional local Kokoro natural-voice layer:
 - Emma `bf_emma` / speaker 21;
 - Isabella `bf_isabella` / 22;
 - George `bm_george` / 26;
-- Fable `bf_fable` / 25.
+- Fable `bm_fable` / 25.
 
 The pack is downloaded from the pinned HTTPS Sherpa release asset inside BOOP, verified by pinned size/SHA, extracted to app-private storage, and used locally/offline afterward. Existing Android TextToSpeech remains fallback; installing the pack does not silently switch voices.
 
