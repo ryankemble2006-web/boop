@@ -1,46 +1,45 @@
-# Current handoff: v161 Lab scale-zero repair verified in GitHub
+# Current handoff: v161 installed; Ryan and assistant test together
 
-Updated 2026-09-13. Ryan said "do it" after the GitHub-only speed review identified the embedded Lab's remaining Android-scale dependency. This continuation reproduced that specific failure in host-side tests, made the minimal integration repair, and produced a permanent-signed v161 APK. Runtime and physical acceptance remain separate and pending. No laptop, emulator or physical-device action was attempted.
+Updated 2026-09-13. Ryan explicitly requested installation of the signed candidate for his own testing and changed the ongoing workflow: development stays on GitHub, device testing happens together with him. This supersedes the earlier emulator-first requirement and the physical-deployment hold. It is NOT permission to change permissions, bypass locks or access the physical Pixel 10.
 
-## Current source, build and artifact
+## Installed candidate
 
-Owner: `boop-unified-eye-sync-safe-v159`. Starting checkpoint: `983e2c866fe05b64b9c3265e269afbfa223de67f`. Current engineering/build commit: `0b6ee6f91e05f00138a94ec2c9fd846117020754`, tree `ad86f60be7b4405ee249c6cc079a0c378821faa7`.
+Owner branch: `boop-unified-eye-sync-safe-v159`. App/build commit remains `0b6ee6f91e05f00138a94ec2c9fd846117020754`. Version `161 / 1.2.161-lab-scale-independent`, package `com.boop.alpha1`.
 
-Version: `161 / 1.2.161-lab-scale-independent`, package `com.boop.alpha1`. The v160 clock, four saved speeds, hue integration and authored animations are retained; this is not a replacement implementation. The version increase distinguishes the actual Lab code repair from the preserved v160 APK.
+GitHub build `34770388933` was rechecked as successful, including package and permanent-signer verification. Artifact `10321956422` / `BOOP-Unified` was downloaded through the connector and staged on the laptop solely for installation. Its ZIP and APK SHA256 matched the recorded build receipts before installation.
 
-GitHub timing run `34770388848`: SUCCESS. Appearance run `34770388845`: SUCCESS. Full build `34770388933`, job `103758794713`: SUCCESS, including all mandatory pre-signing timing, materialized-source, colour, ownership and preservation gates, permanent signing, package/archive verification and artifact upload.
-
-Artifact `10321956422` / `BOOP-Unified`, created `2026-09-13T17:06:36Z`:
 - APK SHA256: `c68b81be9b7d3e10883d2aea52c05dc7b8c187fcd835eaddf73e25e91cb4acd6`.
 - ZIP SHA256: `623805381b04c2ce61a8a5bfcb56e663a9a2fc8eddbc1b9eb9b98ed987ccdf3b`.
 - Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-The downloaded archive and extracted APK hashes match their receipts. All 13 APK asset entries match the previous v160 APK byte-for-byte. Package/version, built-commit, signer and verification receipts were read. Artifact inspection ran in the chat sandbox only; it was not an Android launch or local application build/test.
+Both authorized targets were identified live as Nvidia Shield Android TV and Pixel 7 Pro, both initially on v159. Their lock-state queries showed `showing=false`. Each received the exact APK via an ordinary `adb install -r`, with no grant, downgrade, uninstall or data-clear flag. Both installations returned `Success` and exit code 0. Afterward each reported versionCode161 and the expected versionName; SHA256 of each installed base APK matched the exact GitHub APK above.
 
-Read `docs/handoffs/2026-09-13-lab-scale-zero-verification.md` for complete red/green evidence and limits.
+Installation is verified on BOTH Shield and Pixel 7. On-screen speed behaviour is awaiting Ryan's test, not yet accepted. No animation/navigation input, settings changes, screenshots or autonomous runtime tests were sent. Physical Pixel 10 received no targeted commands or installation. Existing emulators and the dirty source worktree were left alone. No app code, artwork, signing configuration or permissions changed in this continuation.
 
-## Reproduced cause and minimal fix
+Detailed installation receipt: `docs/handoffs/2026-09-13-v161-installed-joint-testing.md`.
 
-The Lab's `onResume` set `reducedMotion` when Android `ANIMATOR_DURATION_SCALE` was zero. `doFrame` then selected fixed/end poses even though BOOP's own clock advanced. In the new regression, the sign pose failed specifically at Android scale0, BOOP speed0.5, sign style0; nonzero control scales passed.
+## Current workflow
 
-Test-first commit `fc9e6633ca7b578b7729cc5ee0e134294969075a` is preserved at `wip/boop-lab-scale-zero-red-fc9e663`. Timing run `34770049893` failed only the new sixth test; five existing tests passed. Full build `34770049896` reproduced the same failure against both raw and fully materialized Lab callbacks, and stopped before signer preparation. Both failing Lab files had identical SHA256 `c97c3b0bae3cbd150472b668bfdee96140ee1aefe9f2b15aa93900e5fcf1f652`.
+GitHub owns source edits, non-visual logic/functional tests, builds, permanent signing and durable documentation. Once those existing checks pass, provide the APK and perform the installation Ryan requests. Do not withhold it for an emulator-first gate or add automated visual tests to GitHub. Device testing is a joint session with Ryan, guided by his observations and agreed next checks. An emulator is optional only when he explicitly asks for one.
 
-The only behavior change is in `source/BoopCanonicalAnimationActivity.java`: remove the Android Settings import and make reduced motion depend only on the existing power-saving condition. Manual Pause motion, Slow review, explicit freeze, focus/pause/resume, the frame-clock expression and artwork are unchanged. `unified/app-build.gradle` changes only the version number/name.
+Desktop Commander/ADB remains available for requested installations, package/version/hash readback and agreed joint diagnosis. This is not a local source-edit/build loop or permission for autonomous testing. Do not reopen the historical blocked combined test command, alter tools/permissions or disguise device execution as a GitHub workflow. The explicitly requested installation above succeeded through the ordinary authorized tool path.
 
-The full green build ran all six timing test functions. Existing harnesses passed 160720 and 1157272 numerical checks. The new Lab harness passed 20920 checks for raw callbacks and another 20920 for materialized callbacks; both fixed files had SHA256 `266c7e5284843dda3e441b1e0c55c7a645260dbcc17306be438b7cd6ea9c97dc`. Build receipts report 235 Unified and 68 Shield functional tests, zero failures/errors/skips. These are numerical/source/compile checks, not Android callback scheduling or visible rendering proof.
+The shared workflow is published in `main/BOOP_START_HERE.md` at `24a260b6e7cdd5aed792ccfbb683e8e495eb5f80`. This current user instruction overrides older cosmetic/substantive emulator distinctions in inherited context and older handoffs. Main remains a shared-context hub; this branch owns app implementation and installation state.
 
-## Accepted colour and device boundary
+## What the candidate contains
 
-Ryan's Wall -> Shield colour acceptance remains valid. Prior physical captures also demonstrated Shield -> Pixel7 and Pixel7 -> Shield. Do not reopen colour repair or reset historical fixtures. Last recorded physical state, not queried in this continuation: Shield and Pixel7 on v159, APK `80e86119d4771624ff47617373df2cebc03c0454aa47f10a0996a6d507b68353`, sharing on, user hue2. Physical Pixel10 remains excluded and untouched.
+The published v160 clock, four saved device-local speeds, accepted hue integration and all authored animations are retained. v161 changes only the embedded Lab's zero Android animator-scale freeze condition, retaining the existing power-saver condition, plus its version. Manual Pause motion, Slow review, freeze controls and original1x timing are unchanged.
 
-No APK was installed in this continuation. Older main laptop emulators were previously found on v160; current reachability/state is not established. Historical dirty worktree contents and private runtime captures were left alone and are not claimed synchronized.
+Prior verified CI: timing `34770388848`, appearance `34770388845`, full build `34770388933`, all successful. The six timing tests include 160720 timing and 1157272 edge checks, plus 20920 Lab assertions per raw/materialized source path. Build receipts report 235 Unified and 68 Shield functional tests, zero failures/errors/skips. These were not rerun during installation; the existing build result was rechecked. All 13 APK assets previously matched v160 byte-for-byte.
 
-## Next permitted step
+Full regression evidence remains in `docs/handoffs/2026-09-13-lab-scale-zero-verification.md`. Red checkpoint `fc9e6633ca7b578b7729cc5ee0e134294969075a` remains on `wip/boop-lab-scale-zero-red-fc9e663`. Do not restart that repaired source diagnosis from an old note.
 
-The source-level Lab scale-zero defect is repaired and tested; do not restart that diagnosis from the older v160 note. Actual on-screen speed acceptance remains pending. When permitted and within Ryan's scope, validate this exact v161 artifact on the existing laptop emulators: all four speeds, changes mid-clip, exact original1x, sleep/wake completion, signs/eyes, pause/resume and zero Android animation scales. Then authorized Shield/Pixel7 device-specific checks. Physical deployment stays held until runtime gates pass. Do not move Android runtime/visual tests to GitHub or route around the earlier denied laptop request.
+## Accepted colour and next step
 
-A deliberate two-device colour offline/reconnect cycle is still separate coverage, not a reason to reopen accepted live delivery. Preserve approved masters, shaders, authored motion, working Wall hue controls, accepted Shield polish, voice/media behavior and single-face ownership. No permissions, signing keys, platform installs or unrelated branches were changed.
+Ryan's Wall -> Shield eye-colour acceptance remains valid; prior controlled captures also demonstrated Shield -> Pixel7 and Pixel7 -> Shield. No colour setting was read or changed during this installation, and no old fixture hue was restored. A successful package update does not establish a new colour or speed acceptance result.
 
-## Provenance
+Wait for Ryan's v161 observation and test together. Available speed controls are 0.5x, 1x, 1.5x and 2x. Speed is device-local, not shared via Home Assistant. Focus next diagnosis only on the device/surface and behaviour he reports. Sleep/wake, signs/eyes, mid-clip changes and scale-zero behaviour can be checked together, not turned into a fresh autonomous gate. Colour offline/reconnect coverage remains separate.
 
-The earlier v160 build `34769075927`, artifact `10321686042`, source `1d8bf3d39a0858aa0c4f2b435fc92b1b16ef486a`, and original v160 implementation `d149cb509ec376779daf84c50f621d8adcbacd24` remain preserved. Prior receipts: `docs/handoffs/2026-09-13-speed-github-verification.md`, `docs/handoffs/2026-09-13-colour-accepted-wall-shield.md`, and the historical colour-failure continuation. Main remained `b7d3eb6ea5e1189b45bd3ed4ecf685723613464d` when checked; no shared ownership/product contract changed, so main context was not rewritten. This continuation is primary. No queued device inputs or scheduled monitoring exists.
+Preserve approved masters/shaders, coded animations, exact1x, working Wall hue controls, accepted Shield polish, voice/media behaviour and single-face ownership. No permissions, lock bypass, data clear, key replacements, unrelated branch merges or physical Pixel10 access. Source worktrees were not synchronized or changed. Only the verified installer artifact remains staged locally. No queued device inputs or scheduled monitoring exists.
+
+Prior provenance remains in the v160 GitHub verification, colour-accepted and historical colour-failure receipts. This session is primary. Update current handoff/status/memory after material results and verify live GitHub HEAD.

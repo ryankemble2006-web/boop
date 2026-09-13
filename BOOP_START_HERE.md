@@ -1,64 +1,25 @@
-# BOOP — start here on either device
+# BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-06. Repository: [ryankemble2006-web/boop](https://github.com/ryankemble2006-web/boop).
+Updated 2026-09-13. Current owner: `boop-unified-eye-sync-safe-v159`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Do not infer the APK version from the branch's v159 name.
 
-**One repository, separate app branches.** The branches do not need the same
-commit ID. Each task must match the current GitHub HEAD of its own app branch
-and read the other branches when cross-project context is needed.
+## Latest user rule: GitHub development, testing together
 
-| Work | Authoritative branch | Source | Owner / state |
-| --- | --- | --- | --- |
-| Shield Home + Deezer puppet | [boop-shield-media-puppetry](https://github.com/ryankemble2006-web/boop/tree/boop-shield-media-puppetry) | shield-overlay/ | Laptop; H1 play/pause and lower placement user-tested |
-| BOOP Wall voice/eyes | [boop-wall-resurrection](https://github.com/ryankemble2006-web/boop/tree/boop-wall-resurrection) | source/ plus materialization scripts | Working voice/control baseline; preserve it |
-| BOOP Launcher | [boop-launcher-alpha1](https://github.com/ryankemble2006-web/boop/tree/boop-launcher-alpha1) | launcher/ | Android-led development; read launcher/README.md |
-| Wall-to-Launcher swipe draft | [boop-wall-launcher-handoff-wip](https://github.com/ryankemble2006-web/boop/tree/boop-wall-launcher-handoff-wip) | source/ and focused tests | WIP snapshot, not a verified installable update |
-| Routine-authoring research | [boop-routine-authoring-v1](https://github.com/ryankemble2006-web/boop/tree/boop-routine-authoring-v1) | docs/superpowers/ and tests/ | Capability evidence/design; do not infer full authoring implementation |
-| Older Shield Home lineage | [boop-shield-home-implementation](https://github.com/ryankemble2006-web/boop/tree/boop-shield-home-implementation) | shield-overlay/ | Historical/reference; new Shield work uses puppetry branch |
-| Cross-project context | main | AGENTS.md, BOOP_CONTEXT.md, this map | Context hub; app files here can be historical |
+Ryan explicitly requested the ready signed APK be installed for his own testing and set the ongoing workflow to development on GitHub plus device testing together with him. This supersedes older emulator-first rules, the cosmetic/substantive distinction, and the previous deployment hold in historical handoffs/context. Shared workflow is recorded in `main/BOOP_START_HERE.md` at `24a260b6e7cdd5aed792ccfbb683e8e495eb5f80`.
 
-## Start a new Work task
+Use GitHub for source edits, non-visual code tests, builds, permanent signing and durable documentation. After the existing code/package/signer checks pass, provide the signed APK and perform the installation Ryan requests. No autonomous emulator run, emulator-first delivery gate or GitHub visual test. Test visible device behaviour with Ryan, guided by his observations and agreed next checks. Do not report CI, changed sliders or installation success as physical acceptance.
 
-Attach this repository and choose the branch for the app you are developing.
-Read AGENTS.md and that branch's SESSION_HANDOFF.md before making changes.
-Fetch and compare the live branch heads: a downloaded folder is not a live sync.
-Read the fetched main versions of this map, BOOP_CONTEXT.md and AGENTS.md.
-Main owns shared decisions/contracts; the app branch's SESSION_HANDOFF.md owns
-its current implementation and verification evidence. Branch-local shared files
-are fallback copies when offline, and must not hide newer main decisions.
-Root README files inherited from Alpha 1 do not override the current app map.
+Desktop Commander/ADB may stage the GitHub artifact, perform an explicitly requested installation on authorized devices and verify package/version/hash. Use further device inputs, captures or diagnosis only as part of the joint test. No local app-source edits/builds. Preserve dirty/concurrent work and existing AVDs; use an emulator only if Ryan explicitly requests it.
 
-Cross-project reference does not require merging the apps. For example, a
-Launcher task can read Wall's current manifest/source from the Wall branch and
-Shield's notes from the Shield branch. Use explicit refs in shallow/single-branch
-environments, for example:
+Current authorized physical targets: Shield and Pixel7. Leave physical Pixel10 alone. No permission changes, lock bypass, data clear, signing-key replacement, colour/settings reset or unrelated branch merge. Approved artwork, all coded animations, exact1x, single-face ownership, working Wall hue controls and accepted Shield polish remain protected.
 
-    git fetch --no-tags origin refs/heads/boop-wall-resurrection:refs/remotes/origin/boop-wall-resurrection
-    git show origin/boop-wall-resurrection:SESSION_HANDOFF.md
+## Current delivery and evidence
 
-Do not check out another branch over dirty work. If connectivity or permissions
-prevent synchronization, state that immediately and do not claim up-to-date.
+v161 from app/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754` is installed and identity-verified on Shield and Pixel7. Its on-screen speed acceptance is awaiting Ryan. Read `docs/handoffs/2026-09-13-v161-installed-joint-testing.md`. The separate Lab scale-zero source defect was already repaired and GitHub-tested; do not restart it from older notes.
 
-## End a session / hand over
+## Continuity
 
-Update SESSION_HANDOFF.md, branch memory/status, and relevant decisions; run
-appropriate checks; commit reviewed files; push the owning branch; verify the
-live GitHub HEAD matches. Label unverified work as WIP and retain its failures.
-A task is not synced merely because a file was saved on one laptop.
+Current user instructions and freshly fetched main decisions override inherited historical root maps/context. Do not restore the old separate-package roadmap over the current Unified lineage. Standalone Launcher, standalone Animation Lab and unrelated projects remain separate unless Ryan explicitly requests integration.
 
-This is a task startup/handoff workflow, not a real-time folder mirror or a
-guarantee that a chat without repository access can read files. Already-open
-tasks must explicitly reread new instructions. Abrupt shutdowns/offline work
-can still leave unpushed changes, so record/publish at useful milestones.
+After material results, update the current handoff/status/memory, review the exact diff, publish only relevant files and verify live GitHub HEAD. A GitHub-only session must not claim a laptop checkout was synchronized. Do not force-push or overwrite concurrent changes. Keep credentials, private addresses, raw device dumps and private captures out of this public repository. Preserve all previous acceptance/research receipts as history rather than current blockers.
 
-## Cross-app contract
-
-- Wall: com.boop.alpha1. Launcher: com.boop.launcher. Shield: com.boop.shieldoverlay.
-- Wall and Launcher stay independently launchable. Do not merge packages.
-- Proposed Wall eyes -> deliberate left swipe -> Launcher is still WIP.
-- Existing tap/hold/voice/HA behaviour must survive the swipe work.
-- Launcher may open Wall by its package; permissions/return-strip behaviour
-  require their own consent and device testing.
-- Stable update signing remains in the existing GitHub workflows.
-
-Read BOOP_CONTEXT.md for durable product decisions and each branch's handoff
-for current evidence. Do not publish private third-party inspection artifacts.
+Known-good laptop transport remains `npx.cmd -y @wonderwhy-er/desktop-commander@0.2.47 remote`; do not change it while it works. Explicit tool denials are not permission to bypass them. The current requested ordinary v161 installations succeeded without changing the transport or permissions.

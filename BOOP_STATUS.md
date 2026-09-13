@@ -1,22 +1,15 @@
-# BOOP status: v161 Lab scale-zero fix built; colour remains accepted
+# BOOP status: v161 installed on Shield and Pixel 7; joint testing next
 
-Updated 2026-09-13. Current scope: GitHub source/tests/build/permanent signing only. No laptop, emulator or physical-device operations ran in this continuation.
+Updated 2026-09-13. Ryan explicitly requested installation and changed the ongoing workflow to GitHub development plus device testing together with him. Earlier emulator-first gates and the physical deployment hold are superseded for this requested delivery. No automatic emulator or hosted visual testing.
 
-Engineering/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754` on `boop-unified-eye-sync-safe-v159` is version161 / `1.2.161-lab-scale-independent`. It retains v160 speed and changes only the embedded Lab's Android-scale freeze condition plus the APK version. No artwork, authored motion, hue, permissions or signer changes.
+Installed on BOTH Nvidia Shield Android TV and Pixel 7 Pro: `com.boop.alpha1`, versionCode161, `1.2.161-lab-scale-independent`. Each ordinary `adb install -r` returned Success/exit0. Subsequent package/version and installed-base-APK SHA256 checks matched the signed GitHub build. Physical Pixel10 was not targeted.
 
-Test-first checkpoint `fc9e6633ca7b578b7729cc5ee0e134294969075a`: standalone timing `34770049893` had the expected zero-scale Lab sign failure with five other tests passing. Full build `34770049896` reproduced it in raw AND materialized callbacks and stopped before signing. Red branch: `wip/boop-lab-scale-zero-red-fc9e663`.
+App/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754`; full build `34770388933`, artifact `10321956422` / `BOOP-Unified`. APK SHA256 `c68b81be9b7d3e10883d2aea52c05dc7b8c187fcd835eaddf73e25e91cb4acd6`. Permanent signer unchanged. Existing successful CI/signature/package results were rechecked; no new build or code test was run for this install.
 
-At the repair commit, timing `34770388848`, appearance `34770388845` and full build `34770388933` all succeeded. All six timing functions passed; new Lab checks passed 20920 assertions per source path. Receipts report 235 Unified and 68 Shield functional tests with zero failures/errors/skips. All required preservation, colour, permanent-signing, package and archive checks passed.
+Verification level: INSTALLED AND IDENTITY-VERIFIED. Actual visible speed behaviour: awaiting Ryan's test. No app navigation, animation test, permission grant, setting reset or data clear occurred. Existing source worktree and emulators were not changed. No source/artwork/signing edits.
 
-Artifact `10321956422` / `BOOP-Unified`:
-- APK SHA256 `c68b81be9b7d3e10883d2aea52c05dc7b8c187fcd835eaddf73e25e91cb4acd6`.
-- ZIP SHA256 `623805381b04c2ce61a8a5bfcb56e663a9a2fc8eddbc1b9eb9b98ed987ccdf3b`.
-- Same permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Wall -> Shield eye colour remains user-accepted. No fixture colour was restored or sharing changed. v160 speed implementation, v161 Lab scale-zero repair, exact1x, approved assets and accepted Shield polish remain intact.
 
-Artifact hashes/receipts were checked in the chat sandbox; all 13 packaged asset entries are byte-identical to v160. The APK itself differs because this is a real Lab repair/version bump, not another identical v160 rebuild.
+Current workflow is saved on main at `24a260b6e7cdd5aed792ccfbb683e8e495eb5f80` in `BOOP_START_HERE.md`: GitHub source/non-visual tests/build/signing, requested install, then joint device testing. Do not claim CI or installation proves physical motion. No autonomous emulator gate before Ryan gets the APK.
 
-Wall -> Shield eye colour remains physically accepted by Ryan. Prior captures demonstrated both directions with Pixel7. Last recorded physical state remains v159, user hue2, sharing on; no fresh device query or mutation here. Physical Pixel10 stays excluded.
-
-Remaining: actual v161 runtime/visual speed checks on permitted laptop emulators, then authorized physical-device validation. No v161 installation or on-screen acceptance is claimed, and physical deployment remains held. The source-level Lab concern is now reproduced and repaired, not still an uninvestigated hypothesis. Two-device colour offline/reconnect is separate outstanding coverage.
-
-Current details: `SESSION_HANDOFF.md` and `docs/handoffs/2026-09-13-lab-scale-zero-verification.md`. Preserve the v160 and colour receipts as historical evidence. No local synchronization, unrelated merge, permission change or bypass of the prior laptop block occurred.
+Next: Ryan tests the installed v161; investigate his specific observations together. Current details: `SESSION_HANDOFF.md`, `BOOP_UNIFIED_MEMORY.md`, `docs/handoffs/2026-09-13-v161-installed-joint-testing.md`. Preserve older regression/acceptance receipts as history, not current deployment blockers.
