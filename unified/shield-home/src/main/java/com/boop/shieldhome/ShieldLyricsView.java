@@ -29,7 +29,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private final int accent;
     private final Controls controls;
     private final ImageView artwork;
-    private final TextView eyebrow, title, artist, status, credit, elapsed, duration, hint;
+    private final TextView eyebrow, title, artist, status, credit, elapsed, duration;
     private final LyricsLinesView lyrics;
     private final TransportButton[] buttons = new TransportButton[5];
     private final PositionBar progress;
@@ -88,14 +88,12 @@ public final class ShieldLyricsView extends FrameLayout {
         status = label("", 24, Color.rgb(155, 174, 184), false);
         status.setGravity(Gravity.CENTER_VERTICAL);
         status.setMaxLines(3);
-        credit = label("", 10, Color.rgb(116, 133, 143), false);
+        credit = label("", 5, Color.rgb(116, 133, 143), false);
         credit.setMaxLines(3);
         credit.setEllipsize(TextUtils.TruncateAt.END);
-        hint = label("Back to Now Playing", 12, Color.rgb(134, 153, 163), false);
-        hint.setFocusable(true);
-        hint.setClickable(true);
-        hint.setOnClickListener(v -> controls.close());
-        hint.setOnFocusChangeListener((v, focused) -> hint.setTextColor(focused ? accent : Color.rgb(134, 153, 163)));
+        credit.setGravity(Gravity.END | Gravity.BOTTOM);
+        credit.setFocusable(false);
+        credit.setClickable(false);
         elapsed = label("0:00", 12, Color.rgb(161, 177, 187), false);
         duration = label("", 12, Color.rgb(161, 177, 187), false);
         duration.setGravity(Gravity.END);
@@ -133,7 +131,7 @@ public final class ShieldLyricsView extends FrameLayout {
                     && key == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable() && progress.requestFocus());
             addView(button);
         }
-        post(() -> { if (buttons[2].isFocusable()) buttons[2].requestFocus(); else hint.requestFocus(); });
+        post(() -> { if (buttons[2].isFocusable()) buttons[2].requestFocus(); });
     }
     public void setSnapshot(NowPlayingSnapshot next, boolean knownClock) {
         long now = SystemClock.elapsedRealtime();
@@ -213,14 +211,14 @@ public final class ShieldLyricsView extends FrameLayout {
         float lyricsX = 590f * unit;
         place(lyrics, lyricsX, 52f * unit, w - lyricsX - 66f * unit, 550f * unit);
         place(status, lyricsX, 180f * unit, w - lyricsX - 85f * unit, 260f * unit);
-        place(credit, lyricsX, 620f * unit, w - lyricsX - 70f * unit, 54f * unit);
+        // Keep the former footer's right/bottom inset, with room for the complete credit.
+        place(credit, lyricsX, 676f * unit, w - lyricsX - 57f * unit, 28f * unit);
         place(progress, left, 583f * unit, 397f * unit, 18f * unit);
         place(elapsed, left, 601f * unit, 80f * unit, 24f * unit);
         place(duration, left + 317f * unit, 601f * unit, 80f * unit, 24f * unit);
         for (int i = 0; i < buttons.length; i++) place(buttons[i], left + i * 71f * unit, 632f * unit, 54f * unit, 54f * unit);
-        place(hint, w - 242f * unit, 676f * unit, 185f * unit, 28f * unit);
         size(eyebrow, 13); size(title, 28); size(artist, 19); size(status, 24);
-        size(credit, 10); size(elapsed, 12); size(duration, 12); size(hint, 12);
+        size(credit, 5); size(elapsed, 12); size(duration, 12);
         artwork.invalidateOutline();
     }
     private void place(View view, float x, float y, float w, float h) {
