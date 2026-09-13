@@ -111,6 +111,13 @@ jobs:
           javac -d work/face-ownership-tests source/BoopFacePresentationState.java tests/java/BoopFacePresentationHarness.java
           java -cp work/face-ownership-tests com.boop.alpha1.BoopFacePresentationHarness
 
+      - name: Verify Android-scale-independent BOOP motion
+        run: |
+          python -m pytest -q tests/test_unified_animation_scale_independence.py
+          mkdir -p work/motion-policy-tests
+          javac -d work/motion-policy-tests source/BoopMotionPolicy.java tests/java/BoopMotionPolicyHarness.java
+          java -cp work/motion-policy-tests com.boop.alpha1.BoopMotionPolicyHarness
+
       - name: Test shared state and media command behaviour
         run: python scripts/test-canonical-core.py
 

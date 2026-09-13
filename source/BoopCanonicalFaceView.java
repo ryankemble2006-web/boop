@@ -1,6 +1,5 @@
 package com.boop.alpha1;
 
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -256,8 +255,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
     }
 
     private boolean animationAllowed() {
-        return ValueAnimator.areAnimatorsEnabled()
-                && (powerManager == null || !powerManager.isPowerSaveMode());
+        return BoopMotionPolicy.shouldAnimate(powerManager != null && powerManager.isPowerSaveMode());
     }
     private boolean shouldAnimate() {
         return isAttachedToWindow()
