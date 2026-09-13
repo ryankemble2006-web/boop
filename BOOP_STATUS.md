@@ -55,3 +55,13 @@ Explicit `adb install -r` returned Success on Nvidia Shield and Pixel 10 Pro XL.
 Physical Shield independent-motion verification: Android window, transition and animator scales were all 0. Unified routed to `com.boop.alpha1/com.boop.shieldhome.ShieldLauncherActivity`; the resumed activity was explicitly confirmed before capture. Three screenshots 350 ms apart produced three different hashes, proving live Unified motion continued with Android animation scales disabled. Johnny Castaway can take the dream foreground later; any hierarchy captured while it owned foreground was discarded.
 
 Phone duplicate visual acceptance is still pending. The physical Pixel is securely locked and normal `wm dismiss-keyguard` did not remove the keyguard; no PIN was entered or bypass attempted. A fresh Pixel 10 emulator installed v149, but its Android System UI entered the already-known ANR state, so its UI hierarchy was also discarded. Source red/green ownership tests and CI are green, but they are not substituted for Ryan's real-device visual acceptance.
+
+## Release workflow rule - 2026-09-13
+
+Ryan's standing BOOP rule: do not stop to ask for approval on routine build/release gates after source intent is already approved. Push the reviewed source, let GitHub perform materialization, tests, signing, packaging and integrity checks, then install the resulting signed APK on both Nvidia Shield and Pixel 10 Pro XL automatically. Ryan owns final visual inspection only. Do not substitute local unsigned builds for this pipeline.
+
+## v150 signed device install - 2026-09-13
+
+GitHub Actions run `34741902983` completed SUCCESS from source `28a2d92c58ecbab4fc42f8c84206d383ea03a997`. Signed artifact `BOOP-Unified` is `com.boop.alpha1`, version `150 / 1.2.150-canonical-notifications-nowplaying`, APK SHA256 `a13957ff8c02e2d5062d3993ed8113d005d6ad1831b9649994240eb9e8a54ba0`, permanent signer SHA256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+
+`adb install -r` returned Success on Nvidia Shield and Pixel 10 Pro XL. Both devices report v150 and both installed `base.apk` hashes exactly match the signed artifact. Shield launch resolves to `com.boop.alpha1/com.boop.shieldhome.ShieldLauncherActivity` and was left foreground for Ryan's visual inspection. Pixel launch was requested successfully but the secure keyguard remains showing; no PIN entry or bypass was attempted. Visual acceptance remains Ryan-owned.
