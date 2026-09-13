@@ -1,0 +1,25 @@
+name: Check BOOP music audio permission
+on:
+  push:
+    branches: [boop-unified-music-audio-prompt]
+    paths:
+      - '.github/workflows/check-boop-music-permission.yml'
+      - 'unified/shield-home/**'
+      - 'unified/shield-home-manifest.xml'
+      - 'tests/test_music_audio_permission.py'
+      - 'tests/java/MusicAudioPermissionHarness.java'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  permission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Test permission decisions and integration without a device
+        run: python3 tests/test_music_audio_permission.py
