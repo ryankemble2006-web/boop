@@ -28,3 +28,11 @@ Keep it isolated from Unified and preserve original game folders/private packs.
 
 For any BOOP task, fetch the intended live branch, preserve dirty/concurrent work, and read only that branch's newest task-specific handoff or verification note when needed.
 Do not require the deleted historical root rule stack before planning or editing.
+
+## Desktop Commander / ADB
+
+On Ryan's laptop, the known-good Desktop Commander remote command is:
+`npx.cmd -y @wonderwhy-er/desktop-commander@0.2.47 remote`
+
+Keep Desktop Commander pinned to `0.2.47` while it works. Do not proactively upgrade it or change this command merely because online documentation changes.
+Only troubleshoot, change version, or change command after a real failure. Diagnose that failure from Ryan's supplied screenshots/evidence first, then make the smallest necessary change.
