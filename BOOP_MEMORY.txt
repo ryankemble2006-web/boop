@@ -1,33 +1,32 @@
-BOOP LYRICS LAB MEMORY - INTEGRATED, RETIREMENT PENDING
-Updated 2026-09-13. Branch boop-lyrics-lab-side-by-side-v157.
+BOOP LYRICS LAB MEMORY - RETIRED AFTER UNIFIED ACCEPTANCE
+Updated 2026-09-13. Branch boop-lyrics-lab-side-by-side-v157 is retained as history.
 
-Ryan authorized integration into Unified161 as162 and removal of the Lab once
-confirmed. PR10 is merged at0908d6955c90978e97dcbae9031f3f1de638bd9d into the current
-owner boop-unified-eye-sync-safe-v159. Its delivery docs are at978bf7df5e0759512b8a69807d9badeee7a8bb95.
-Use that owner's live handoff for further Unified work. Do not restart from this
-older Lab base or treat previous no-merge/wait wording as the current instruction.
+Ryan replied "perfection" after the request to confirm Unified162's internal
+Now Playing -> Lyrics screen and Skip. Record USER ACCEPTANCE on Shield.
+His prior instruction was to bin the Lab once confirmed. That cleanup is DONE.
 
-Unified162 is installed and package/hash-verified on Shield. The existing Lyrics
-button enters the internal native screen, not the Lab or a Deezer menu macro.
-Shared renderer/parser/loader and the half-size bottom-right credit were copied
-exactly. Main song lyrics retain their size. No Lab-specific observer or listener
-was imported; Unified keeps its existing manager. Accepted v161 colour/speed and
-unrelated source/artwork stay unchanged. Neither phone was touched.
-
-KEEP LAB UNTIL USER CONFIRMS UNIFIED
-com.boop.lyricslab remains installed at159 /0.1.159-lyrics-footer, unchanged hash
+Only com.boop.lyricslab was uninstalled from Shield. Before removal it matched
+159 /0.1.159-lyrics-footer and APK
 fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503.
-Wait for Ryan to confirm the new Unified route and desired refresh behavior.
-Then remove ONLY com.boop.lyricslab from Shield and verify absence. Preserve this
-source branch/history, Unified, Deezer and other Labs. Build/install success is
-not user confirmation and must not trigger early removal.
+ADB returned Success/exit0 and a fresh exact package query confirmed absence.
+Unified162's version and APK hash stayed identical before and after:
+cef4527510d9856b669889abfc01c00e6f1a3819e1a28b5e05cee5d472df7171.
+No other Lab, Unified, Deezer, phone, emulator or source history was removed.
+No app launch, media key, new install, manual permission/settings change, code
+edit or build accompanied this scoped cleanup and documentation update.
 
-PREVIOUS ACCEPTANCE AND DURABLE HISTORY
-Ryan confirmed Skip refresh inside the Lab, player controls and emulator design.
-No need to repeat that old check. It is distinct from the new Unified integration.
-The previous complete memory ledger is preserved at
-5ce581be6f1da10eb47640c4c11636a4bfa9e330:BOOP_MEMORY.txt.
-Existing dated footer/refresh/device receipts and older product history remain.
-No app code, build, permission or device changes accompany this memory update.
-GitHub development and joint testing remain current; no autonomous emulator gate,
-local source builds, connection upgrades or private data publication.
+Current owner is boop-unified-eye-sync-safe-v159. Read its LIVE handoff for
+future changes; do not reinstall this helper or restart from the old Lab base.
+Acceptance/cleanup docs published at112d09b5b446d6582954a6d89b3700fe16298ecb,
+including docs/handoffs/2026-09-13-unified-v162-accepted-lab-retired.md.
+Unified already includes the private native screen, exact reviewed data/rendering
+code and half-size bottom-right licence footer. Main lyric font is unchanged.
+No runtime Lab package/listener dependency. Accepted v161 features are preserved.
+
+Keep original Lab Skip/control/design acceptance, genuine v157 refresh regression
+and v158 fix as provenance, distinct from new Unified user acceptance. Do not
+expand either report to all catalogue/offline cases or demand repeated approval.
+Previous complete ledger:5ce581be6f1da10eb47640c4c11636a4bfa9e330:BOOP_MEMORY.txt.
+Pending-retirement docs remain atbcd9ed52dcda071fcf71e7e8ab751e52f19c7e3d.
+Dated receipts/tests/history stay in GitHub. No local source/build loop, connection
+upgrade, autonomous emulator gate or private-data publication is authorized.
