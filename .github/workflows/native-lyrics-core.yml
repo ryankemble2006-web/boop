@@ -28,6 +28,7 @@ jobs:
           for name in DeezerLyricsDocument LyricsRequestGate DeezerLyricsClient DeezerLyricsHttp DeezerTimedLyricsClient; do
             if [ -f "$src/$name.java" ]; then files+=("$src/$name.java"); fi
           done
-          javac -encoding UTF-8 -cp work/native-lyrics-core/json.jar -d work/native-lyrics-core "${files[@]}" tests/canonical/NativeLyricsCoreCheck.java tests/canonical/NativeLyricsTransportCheck.java
+          javac -encoding UTF-8 -cp work/native-lyrics-core/json.jar -d work/native-lyrics-core "${files[@]}" tests/canonical/NativeLyricsCoreCheck.java tests/canonical/NativeLyricsTransportCheck.java tests/canonical/NativeLyricsIncompleteCheck.java
           java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsCoreCheck
           java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsTransportCheck
+          java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsIncompleteCheck
