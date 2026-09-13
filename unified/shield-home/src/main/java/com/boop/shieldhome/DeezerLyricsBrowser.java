@@ -31,10 +31,12 @@ final class DeezerLyricsBrowser {
         pinnedSnapshot = requested;
         pinnedIdentity = requestIdentity;
         loader.load(id, requestIdentity, document -> {
-            if (!requestIdentity.equals(pinnedIdentity) || !validHost(activity)
-                    || !requestIdentity.equals(identity(manager, requested))) return;
+            if (!requestIdentity.equals(pinnedIdentity)) return;
+            // A completed lookup must release the button even if a dialog or another
+            // window briefly took focus. Never launch late, and never latch entry busy.
             pinnedSnapshot = null;
             pinnedIdentity = "";
+            if (!validHost(activity) || !requestIdentity.equals(identity(manager, requested))) return;
             if (document.status() == DeezerLyricsDocument.Status.UNAVAILABLE) {
                 message(activity, "No lyrics for this track.");
             } else if (document.status() == DeezerLyricsDocument.Status.UNKNOWN) {
