@@ -1,21 +1,15 @@
-# BOOP status: Wall-to-Shield colour physically accepted
+# BOOP status: colour accepted; v160 GitHub speed verification passed
 
-## Latest speed continuation attempt (2026-09-13)
+Updated 2026-09-13. Latest scope is GitHub work only. No laptop/device execution or deployment occurred in this continuation.
 
-Ryan asked to proceed. The first laptop process request was blocked before execution by OpenAI because its safety status could not be determined. No equivalent retry or alternate route was attempted. Local root instruction reads had succeeded and Desktop Commander reported online; do not label this as missing source/tools or a proven connection/permission failure. No emulator speed check or deployment ran in this attempt.
+Wall -> Shield eye colour is physically accepted by Ryan. Prior captures verified visible delivery in both directions with Pixel 7. Preserve the last recorded user hue2 and enabled sharing; do not restore old test values. Physical devices were last verified on v159. Physical Pixel 10 remains excluded.
 
-Existing GitHub timing `34760362356` and full signed build `34760362417` were rechecked as successful. Candidate artifact `10318393790` remains available, unexpired and tied to source `d149cb509ec376779daf84c50f621d8adcbacd24`. This is not a new test run or runtime acceptance. Continue the existing local validation plan only through permitted laptop execution. Physical speed deployment remains held. Documentation only; no app or device changes.
+Engineering commit `1d8bf3d39a0858aa0c4f2b435fc92b1b16ef486a` adds a mandatory timing/materialized-source gate before APK signing. The app itself remains the unchanged published v160 implementation. Tests were expanded without changing artwork, motion, hue, settings permissions or signing.
 
----
+Test-first timing run `34768979364` at `ca6cd34af50c42dfb5606053b5d27fde7128eaea`: expected missing-gate failure, four other tests passed. Five-line workflow repair then passed in full build `34769075927`. Appearance run `34769075918` passed. Permanent-signed artifact `10321686042` / `BOOP-Unified`, built from `1d8bf3d39a0858aa0c4f2b435fc92b1b16ef486a`, is available.
 
-Updated 2026-09-13 after Ryan reported: "it works btw, i just tested eye colour :) from wall to shield".
+APK SHA256 `a584381d10ebb220ab686acec22f7668384e240f39ade052e4177583aa4adc7b` matches the existing v160 candidate exactly. Build receipts report 235 Unified and 68 Shield functional tests with zero failures/errors/skips, plus timing and preservation gates.
 
-Wall -> Shield is user-accepted. Controlled physical captures also verified visible Shield -> Pixel 7 delivery at hue 260 and Pixel 7 -> Shield delivery at hue 122. This supersedes the earlier reported-failure blocker; do not keep presenting colour as untested or restart a speculative repair.
+Speed remains pending runtime/visual acceptance and physical deployment. Next coverage is the existing emulator-first speed plan when permitted. Raw embedded Lab scale-zero handling needs a materialized-path check; the existing scale-independence contract is Wall-only. Do not report all-surface runtime success from green CI.
 
-Current evidence and remaining coverage: `docs/handoffs/2026-09-13-colour-accepted-wall-shield.md` and `SESSION_HANDOFF.md`. A deliberate two-device offline/reconnect cycle is still separate outstanding coverage. No claim of exhaustive lifecycle or all-surface acceptance.
-
-Physical Shield and Pixel 7 remain on verified v159. Both had sharing enabled and hue 2 in the read-only post-acceptance receipt. Preserve the user's newer colour; do not reset it to test fixtures. Physical Pixel 10 was not touched. No app code changes or deployments were made in this diagnostic continuation.
-
-Owner remains `boop-unified-eye-sync-safe-v159`; app source is `d149cb509ec376779daf84c50f621d8adcbacd24`, v160. The existing main phone/TV emulators were found already running v160. Published appearance `34760362361`, timing `34760362356` and full build `34760362417` succeeded; artifact `10318393790` remains the candidate. Speed is implemented and CI-green, not physically accepted.
-
-Next: validate that existing speed candidate locally, preserving exact 1x and authored animation. Keep physical speed deployment on hold until its runtime gates pass. Accepted v156 Shield polish stays accepted. This update changes documentation only.
+Details: `SESSION_HANDOFF.md` and `docs/handoffs/2026-09-13-speed-github-verification.md`. Owner remains `boop-unified-eye-sync-safe-v159`. No local synchronization, no new app repair and no bypass of the prior laptop block are claimed.
