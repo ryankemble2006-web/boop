@@ -130,6 +130,9 @@ jobs:
       - name: Test add-only favourites selector
         run: python tests/test_favourites_picker.py
 
+      - name: Test native lyrics integration and preserve accepted v161
+        run: bash scripts/test-unified-native-lyrics.sh
+
       - name: Test shared state and media command behaviour
         run: python scripts/test-canonical-core.py
 
