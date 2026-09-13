@@ -1,5 +1,13 @@
 # Current Unified memory: colour accepted, speed candidate preserved
 
+## Latest continuation after Ryan asked for the next step
+
+2026-09-13: start v160 runtime validation, not another colour repair. The first combined laptop process call was blocked before execution by OpenAI because safety status could not be determined. Do not retry an equivalent request or route around that denial, change permissions or diagnose a missing checkout from it. Root instruction reads succeeded and Desktop Commander reported online. No runtime checks, app edits, installs or device-setting changes occurred in this attempt.
+
+Existing timing run `34760362356` and full signed build `34760362417` were rechecked as successful; artifact `10318393790` remains unexpired and tied to `d149cb509ec376779daf84c50f621d8adcbacd24`. No tests were rerun. Runtime speed acceptance and physical v160 deployment remain pending. Resume the saved emulator-first validation when permitted execution is available; no background work or queued device inputs remain. The accepted colour result and newer user hue remain protected.
+
+---
+
 2026-09-13 latest user confirmation: "it works btw, i just tested eye colour :) from wall to shield". Wall -> Shield is physically accepted by Ryan. This supersedes the earlier colour-failure note; do not re-open accepted work because a historical handoff says it was blocked.
 
 Current receipt: `docs/handoffs/2026-09-13-colour-accepted-wall-shield.md`. Keep the old failure-continuation and research plans for provenance, not as newer instructions than this confirmation.

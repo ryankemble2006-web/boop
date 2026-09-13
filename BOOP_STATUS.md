@@ -1,5 +1,13 @@
 # BOOP status: Wall-to-Shield colour physically accepted
 
+## Latest speed continuation attempt (2026-09-13)
+
+Ryan asked to proceed. The first laptop process request was blocked before execution by OpenAI because its safety status could not be determined. No equivalent retry or alternate route was attempted. Local root instruction reads had succeeded and Desktop Commander reported online; do not label this as missing source/tools or a proven connection/permission failure. No emulator speed check or deployment ran in this attempt.
+
+Existing GitHub timing `34760362356` and full signed build `34760362417` were rechecked as successful. Candidate artifact `10318393790` remains available, unexpired and tied to source `d149cb509ec376779daf84c50f621d8adcbacd24`. This is not a new test run or runtime acceptance. Continue the existing local validation plan only through permitted laptop execution. Physical speed deployment remains held. Documentation only; no app or device changes.
+
+---
+
 Updated 2026-09-13 after Ryan reported: "it works btw, i just tested eye colour :) from wall to shield".
 
 Wall -> Shield is user-accepted. Controlled physical captures also verified visible Shield -> Pixel 7 delivery at hue 260 and Pixel 7 -> Shield delivery at hue 122. This supersedes the earlier reported-failure blocker; do not keep presenting colour as untested or restart a speculative repair.

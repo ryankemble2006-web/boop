@@ -1,5 +1,17 @@
 # Current handoff: Wall-to-Shield colour accepted (2026-09-13)
 
+## Latest next-step attempt: speed runtime checks not executed
+
+Ryan asked to proceed to the next step after accepting colour. Live feature HEAD was rechecked at `2d80808112518a88722f40ec526693c349107a51`; main remained `b7d3eb6ea5e1189b45bd3ed4ecf685723613464d`. Desktop Commander reported online, and reads of the existing laptop root AGENTS.md, BOOP_START_HERE.md and BOOP_CONTEXT.md succeeded. Those local routing documents are historical, not a replacement for this live feature handoff.
+
+The first combined laptop process request was blocked before execution by OpenAI because it could not determine the request's safety status. It would have read worktree status, emulator identity/preferences, existing Android animation-scale values and tool paths. It did NOT run. No equivalent retry or alternate route around the block was attempted. Do not infer a disconnected laptop, moved repository, missing tools or changed permissions from this result. No new runtime result, installation, preference change or device query is established by this attempt.
+
+Independent GitHub verification succeeded: existing timing run `34760362356` and full signed-build run `34760362417` still report success. Artifact `10318393790` / `BOOP-Unified` is present and not expired, with workflow source `d149cb509ec376779daf84c50f621d8adcbacd24`. These were status/artifact rechecks, not new test runs. The archive digest is `sha256:7933748103a6535113c45c9fdfe9ddb6172501a01745dd1db1fb1d601bd9b40b`, not the installed APK digest.
+
+Next permitted engineering step remains local runtime validation of the existing v160 candidate once laptop execution is available within the existing authorization. Do not replace it, change permissions, upgrade Desktop Commander, move visual checks to GitHub or deploy to physical devices to evade this block. Keep physical speed deployment held. This continuation changes documentation only; there is no running or queued device-test sequence.
+
+---
+
 Ryan's latest feedback: "it works btw, i just tested eye colour :) from wall to shield". This is user-confirmed physical acceptance of Wall -> Shield colour changes. It supersedes the earlier failure blocker. Do not restart colour repairs or ask Ryan to approve this route again without new contrary evidence.
 
 Read `docs/handoffs/2026-09-13-colour-accepted-wall-shield.md` for the current runtime evidence, limits and device state. The older `docs/handoffs/2026-09-13-colour-failure-continuation.md` remains preserved research/provenance, not the latest acceptance status. This continuation remains primary; old recovery threads are not blockers.
