@@ -74,7 +74,7 @@ public class LabPolicyCheck {
   for(String id:new String[]{null,"","0","-1"," 123","123;456","123/4","9999999999999999999999"})
    same("",LyricsLabMediaPolicy.recordingId("deezer.android.app","TRACK",id));
   for(String type:new String[]{null,"","PODCAST","RADIO","track"})
-   same("",LyricsLabMediaPolicy.recordingId("deezer.android.app",type,id));
+   same("",LyricsLabMediaPolicy.recordingId("deezer.android.app",type,"123"));
   System.out.println("PASS: "+checks+" exact native Deezer identity checks.");
  }
 }'''
