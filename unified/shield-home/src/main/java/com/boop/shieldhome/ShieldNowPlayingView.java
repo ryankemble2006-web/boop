@@ -197,11 +197,16 @@ public final class ShieldNowPlayingView extends FrameLayout {
         addControl(controls, nextButton);
         installEdgeFocusNavigation();
 
-        // BOOP now physically lives inside the reserved bay. The puppet view remains
-        // non-focusable/non-clickable and clips all motion to this stage.
-        puppetView = new ShieldNowPlayingPuppetView(context);
-        row.addView(puppetView, new LinearLayout.LayoutParams(
+        // Media ownership can hide the puppet while a seek buffers. Keep its bay
+        // in the row so media controls cannot expand behind the GL eye surface.
+        LinearLayout puppetBay = new LinearLayout(context);
+        puppetBay.setFocusable(false);
+        puppetBay.setClickable(false);
+        row.addView(puppetBay, new LinearLayout.LayoutParams(
                 dp(MASCOT_BAY_DP), LayoutParams.MATCH_PARENT));
+        puppetView = new ShieldNowPlayingPuppetView(context);
+        puppetBay.addView(puppetView, new LinearLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         setVisibility(GONE);
     }

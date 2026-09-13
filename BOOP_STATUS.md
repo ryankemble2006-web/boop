@@ -1,3 +1,20 @@
+## Current continuation: v154 seek-layout flash (2026-09-13)
+
+Owner: `boop-unified-seekflash-v154`, from accepted v153 docs `1f314af6`.
+Ryan signed off 10-second seeking, Down from the progress bar to Pause, and the
+250 ms settings hold. The accepted thin corner geometry stays unchanged.
+Only remaining reported symptom: seeking left briefly moves Lyrics/Close player
+behind the eyes. A focused real-Shield seek reproduced a progress-area width
+change from 1082 to 1450 and back while the activity/view identities stayed fixed.
+The transient puppet was a direct row child; its GONE state released the bay.
+The fix gives that existing puppet a persistent, non-focusable row host, without
+changing media ownership, animation, seek commands, focus keys or accepted art.
+Two ownership checks failed before the fix and now pass; 10 existing focused
+contracts also pass. No CI visual checks or new dependencies were added.
+Full GitHub signing/build and Shield-only installation are pending this checkpoint.
+This is a small cosmetic repair: no emulator gate. Neither Pixel is in scope;
+Pixel 10 remains on hold. No grants, lock changes, data clearing or signer changes.
+
 ## Current continuation: v153 artwork corners (2026-09-13)
 
 Owner: `boop-unified-artframe-v153`; signed source `cb61f62a6c3a249fed82abfd9e629ffea0e70ea2`.

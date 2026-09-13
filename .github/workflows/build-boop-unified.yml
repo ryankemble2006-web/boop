@@ -122,7 +122,7 @@ jobs:
         run: python -m pytest -q tests/test_notification_canonical_only.py tests/test_now_playing_canonical_only.py
 
       - name: Verify launcher polish contracts
-        run: python -m pytest -q tests/test_unified_launcher_polish_v151.py tests/test_unified_artwork_frame_v152.py tests/test_artwork_corner_geometry.py
+        run: python -m pytest -q tests/test_unified_launcher_polish_v151.py tests/test_unified_artwork_frame_v152.py tests/test_artwork_corner_geometry.py tests/test_now_playing_bay_ownership.py
 
       - name: Test shared state and media command behaviour
         run: python scripts/test-canonical-core.py
