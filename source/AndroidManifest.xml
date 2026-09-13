@@ -27,6 +27,9 @@
         </intent>
     </queries>
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <application
         android:allowBackup="false"
         android:icon="@drawable/boop_eyes"
@@ -91,5 +94,7 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <activity android:name="com.boop.alpha1.BoopPuppetSettingsActivity" android:exported="false" />
+        <service android:name="com.boop.alpha1.BoopPuppetSyncService" android:exported="false" android:foregroundServiceType="connectedDevice" />
     </application>
 </manifest>

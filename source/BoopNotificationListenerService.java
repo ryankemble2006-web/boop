@@ -21,6 +21,7 @@ public final class BoopNotificationListenerService extends NotificationListenerS
             return;
         }
         runtime.attachListener(this);
+        android.util.Log.i("BOOPNotify", "listener connected");
         rebuildActiveNotifications();
     }
 
@@ -90,6 +91,7 @@ public final class BoopNotificationListenerService extends NotificationListenerS
         }
         BoopNotificationRuntime.RuntimeRecord record = readRichRecord(prepared);
         if (record != null) {
+            android.util.Log.i("BOOPNotify", "accepted source=" + prepared.packageName);
             runtime.post(record, System.currentTimeMillis());
         }
     }
@@ -134,6 +136,9 @@ public final class BoopNotificationListenerService extends NotificationListenerS
         }
 
         runtime.observeChannel(channelInfo);
+        if (packageName.equals(getPackageName())
+                || (notification.flags & Notification.FLAG_GROUP_SUMMARY) != 0
+                || (packageName.equals("com.boop.animationlab") && channelId.equals("boop_lab_receiver"))) return null;
         BoopNotificationIntakePolicy.Mode mode = BoopNotificationIntakePolicy.decide(
                 runtime.settings(), packageName, channelId);
         return new Prepared(sbn, notification, channelInfo, packageName, key, channelId, mode);

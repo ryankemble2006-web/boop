@@ -50,6 +50,7 @@ final class BoopVoiceController {
     };
 
     private final SharedPreferences preferences;
+    private final SharedPreferences.OnSharedPreferenceChangeListener tuningListener;
     private final List<Voice> localEnglishVoices = new ArrayList<>();
 
     private TextToSpeech tts;
@@ -74,6 +75,13 @@ final class BoopVoiceController {
         naturalRuntimeProvenVersion = preferences.getString(KEY_NATURAL_RUNTIME_PROVEN_VERSION, "");
         if (!BACKEND_NATURAL.equals(selectedBackend)) selectedBackend = BACKEND_ANDROID;
         if (findNaturalVoice(naturalSpeakerKey) == null) naturalSpeakerKey = NATURAL_VOICES[0].key();
+        tuningListener = (store,key) -> {
+            if (!KEY_PITCH.equals(key) && !KEY_SPEECH_RATE.equals(key)) return;
+            currentPitch = BoopVoiceTuning.clampPitch(preferences.getFloat(KEY_PITCH,1f));
+            currentSpeechRate = BoopVoiceTuning.clampRate(preferences.getFloat(KEY_SPEECH_RATE,1f));
+            applyPuppetCadence();
+        };
+        preferences.registerOnSharedPreferenceChangeListener(tuningListener);
     }
 
     void initialize(TextToSpeech tts, Locale preferredLocale) {

@@ -44,8 +44,8 @@ final class BoopNotificationSettingsState {
         if (packageName == null || channelId == null) {
             return false;
         }
-        return enabledChannelKeys.contains(
-                BoopNotificationSettingsCodec.channelKey(packageName, channelId));
+        return enabledChannelKeys.contains(BoopNotificationSettingsCodec.channelKey(packageName, "*"))
+                || enabledChannelKeys.contains(BoopNotificationSettingsCodec.channelKey(packageName, channelId));
     }
 
     BoopNotificationSettingsState withMasterEnabled(boolean enabled) {

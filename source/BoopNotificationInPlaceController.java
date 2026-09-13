@@ -42,6 +42,7 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
         if (currentView != null) {
             parent.removeView(currentView);
             currentView = null;
+            BoopPuppetVisibility.cover(parent, this, false);
         }
     }
 
@@ -67,10 +68,12 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
                         dismissPresentation();
                     }
                 });
+        BoopPuppetVisibility.cover(parent, this, true);
         parent.addView(currentView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
         resetTimeout(timeoutMs);
+        android.util.Log.i("BOOPNotify", "in-place attached: one canonical sign scene");
     }
 
     private void openSingle(String notificationKey) {

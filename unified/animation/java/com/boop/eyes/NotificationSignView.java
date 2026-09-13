@@ -14,6 +14,8 @@ public final class NotificationSignView extends View {
     private final float[] mesh=new float[9*17*2];
     private SignMotion.Pose pose=SignMotion.sample(0,0);
     private int style;
+    private String identityLabel;
+    private android.graphics.drawable.Drawable identityIcon;
     private boolean freddie;
     private static final String[] NAMES={"WHATSAPP","GMAIL","FACEBOOK","X"};
     private static final String[] WORDS={"MESSAGE!","MAIL'S HERE!","OVER HERE!","SOMETHING NEW!"};
@@ -32,6 +34,7 @@ public final class NotificationSignView extends View {
             fingers[side][digit]=sampleFinger(digits[digit],side==1);
         for(int side=0;side<2;side++)thumbs[side]=sampleFinger(new float[]{696,425,769,282,174},side==1);
     }
+    public void setIdentity(String label,android.graphics.drawable.Drawable icon){identityLabel=label;identityIcon=icon;invalidate();}
     public void show(SignMotion.Pose pose,int style){this.pose=pose;this.style=Math.floorMod(style,4);freddie=false;invalidate();}
     public void showFreddie(SignMotion.Pose pose){this.pose=pose;freddie=true;invalidate();}
     private void text(Canvas c,String value,float x,float y,float size,int colour){
@@ -115,8 +118,11 @@ public final class NotificationSignView extends View {
         paint.setShader(new LinearGradient(0,-100,0,110,0xffffffff,0xffdce9eb,Shader.TileMode.CLAMP));c.drawPath(arrow,paint);paint.setShader(null);
         paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(7);paint.setColor(COLOURS[style]);c.drawPath(arrow,paint);paint.setStyle(Paint.Style.FILL);
         paint.setColor(COLOURS[style]);c.drawRoundRect(new RectF(-188,-57,-83,57),20,20,paint);
-        text(c,style==0?"W":style==1?"M":style==2?"f":"X",-135,24,76,Color.WHITE);
-        text(c,NAMES[style],70,-22,25,COLOURS[style]);
+        if(identityIcon==null)text(c,style==0?"W":style==1?"M":style==2?"f":"X",-135,24,76,Color.WHITE);
+        else { identityIcon.setBounds(-182,-48,-90,48); identityIcon.draw(c); }
+        String name=identityLabel==null?NAMES[style]:identityLabel;
+        if(name.length()>23)name=name.substring(0,22)+"…";
+        text(c,name,70,-22,name.length()>15?20:25,COLOURS[style]);
         text(c,WORDS[style],70,27,style==3?24:31,0xff13202d);
         // Four individually sampled, foreshortened digits wrap across the front surface.
         handBridge(c,true);handBridge(c,false);

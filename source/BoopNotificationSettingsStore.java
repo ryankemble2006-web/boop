@@ -22,11 +22,21 @@ final class BoopNotificationSettingsStore {
     }
 
     BoopNotificationSettingsState load() {
-        return new BoopNotificationSettingsState(
+        BoopNotificationSettingsState state = new BoopNotificationSettingsState(
                 preferences.getBoolean(KEY_MASTER_ENABLED, false),
                 preferences.getLong(KEY_TIMEOUT_MS, BoopNotificationSettingsState.DEFAULT_TIMEOUT_MS),
                 copy(preferences.getStringSet(KEY_ENABLED_APPS, Collections.emptySet())),
                 copy(preferences.getStringSet(KEY_ENABLED_CHANNELS, Collections.emptySet())));
+        if (!preferences.getBoolean("app_category_defaults_v2", false)) {
+            Set<String> channels = new LinkedHashSet<>(state.enabledChannelKeys());
+            if (channels.isEmpty()) {
+                for (String app : state.enabledApps()) channels.add(BoopNotificationSettingsCodec.channelKey(app, "*"));
+                state = state.withEnabledChannelKeys(channels);
+            }
+            preferences.edit().putBoolean("app_category_defaults_v2", true)
+                    .putStringSet(KEY_ENABLED_CHANNELS, channels).apply();
+        }
+        return state;
     }
 
     void save(BoopNotificationSettingsState state) {

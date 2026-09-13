@@ -27,7 +27,7 @@ import java.util.Random;
 
 /** Transparent launcher-owned headphones BOOP layer. It never participates in remote focus. */
 public final class ShieldNowPlayingPuppetView extends FrameLayout {
-    private static final long FRAME_MS = 33L;
+    private static final long FRAME_MS = 16L;
 
     // These match ShieldHomeView's fixed HOME/nav/card geometry and ShieldNowPlayingView's
     // reserved right-hand mascot bay. The bay itself clips motion, so BOOP can never cover media UI.
@@ -48,6 +48,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private boolean animationPaused;
     private com.boop.shared.BoopState.Owner presentationOwner = com.boop.shared.BoopState.Owner.HOME_NOW_PLAYING;
     private Runnable unsubscribeShared;
+    private Runnable unsubscribeStyle;
 
     public void setPresentationOwner(com.boop.shared.BoopState.Owner owner) {
         presentationOwner = owner;
@@ -58,6 +59,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         @Override public void run() {
             frameScheduled = false;
             if (!shouldAnimateFrame()) return;
+            animation.setSpeed(com.boop.eyes.PuppetPreferences.speed(getContext()),SystemClock.uptimeMillis());
             puppet.setCanonicalPose(animation.sample(SystemClock.uptimeMillis()));
             scheduleFrame();
         }
@@ -91,6 +93,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         super.onAttachedToWindow();
         lockToMascotBay();
         unsubscribeShared = com.boop.shared.BoopState.INSTANCE.subscribe(ignored -> applyCurrentState());
+        unsubscribeStyle = com.boop.eyes.PuppetPreferences.watch(getContext(),this::applyCurrentState);
     }
 
     public void setSnapshot(NowPlayingSnapshot next) {
@@ -122,6 +125,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private void applyCurrentState() {
+        animation.setSpeed(com.boop.eyes.PuppetPreferences.speed(getContext()),SystemClock.uptimeMillis());
         boolean visible = homeVisible
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
                 && com.boop.shared.BoopState.INSTANCE.snapshot().owner == presentationOwner;
@@ -160,6 +164,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
     @Override protected void onDetachedFromWindow() {
         if(unsubscribeShared != null) { unsubscribeShared.run(); unsubscribeShared=null; }
+        if(unsubscribeStyle != null) { unsubscribeStyle.run(); unsubscribeStyle=null; }
         pauseCanonicalAnimation();
         stopFrames();
         super.onDetachedFromWindow();
@@ -211,7 +216,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private boolean animationAllowed() {
-        return ValueAnimator.areAnimatorsEnabled()
+        return com.boop.eyes.PuppetPreferences.speed(getContext()) > 0
                 && (powerManager == null || !powerManager.isPowerSaveMode());
     }
 
@@ -274,6 +279,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         }
 
         void setCanonicalPose(com.boop.eyes.EyeMotion.Pose pose) {
+            eyeRenderer.setHueRotationDegrees(com.boop.eyes.PuppetPreferences.hue(getContext())-190);
             eyeRenderer.pose = pose;
             eyeSurface.requestRender();
         }

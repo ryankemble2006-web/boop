@@ -9,7 +9,14 @@ def test_real_phone_developer_entry_uses_canonical_face_and_catalogue():
     assert "BoopDevMenuIntent.matches(transcript)" in text
     assert "private BoopCanonicalFaceView developerMenuFace;" in text
     assert "new BoopFaceView(this)" not in text
-    assert text.count("developerMenuFace = new BoopCanonicalFaceView(this);") == 2
+    assert text.count("developerMenuFace = new BoopCanonicalFaceView(this);") == 1
+    assert "face.setCovered(voiceFaceCover, true)" in text
+    assert "face.setCovered(voiceFaceCover, false)" in text
+    assert "face.setCovered(developerFaceCover, true)" in text
+    assert "face.setCovered(developerFaceCover, false)" in text
+    preview = text[text.index("private void showDeveloperNotificationPreview("):text.index("private void hideDeveloperMenu()")]
+    assert "new BoopCanonicalFaceView" not in preview
+    assert "puppet.setFaceVisible(false)" not in preview
     content = text[text.index("private void showDeveloperMenuContent()"):
                    text.index("private void addDeveloperShelf(")]
     assert "addCanonicalDeveloperShelf(column);" in content

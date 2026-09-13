@@ -94,6 +94,7 @@ final class BoopNotificationOverlayController implements BoopNotificationHost {
         try {
             windowManager.addView(view, params);
             currentView = view;
+            android.util.Log.i("BOOPNotify", "overlay attached: one canonical sign scene");
             resetTimeout(timeoutMs);
         } catch (RuntimeException failure) {
             try {

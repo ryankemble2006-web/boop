@@ -26,7 +26,7 @@ import java.util.Set;
 
 public final class BoopNotificationSettingsActivity extends Activity {
     private static final String NO_CATEGORIES =
-            "No notification categories seen yet. When this app sends one, BOOP will learn the category here. It will not interrupt until you enable that category.";
+            "New categories are included when this app is enabled. Individual categories can be switched off after BOOP has seen them.";
     private static final String ANDROID_STILL_ALERTING =
             "Android is still alerting for this category. Make it silent there before BOOP uses his own sound.";
     private static final String STATE_PENDING_MASTER_ENABLE = "pending_master_enable";
@@ -84,6 +84,14 @@ public final class BoopNotificationSettingsActivity extends Activity {
         content.removeAllViews();
         addText("Notifications", 30f, true, 0);
         addText(readiness(), 18f, false, 12);
+        if (!BoopNotificationPermissionState.hasOverlayAccess(this)) {
+            Button display = button("Allow BOOP over other apps");
+            display.setOnClickListener(v -> {
+                try { startActivity(BoopNotificationPermissionState.overlaySettingsIntent(this)); }
+                catch (RuntimeException unavailable) { Toast.makeText(this,"Open Android's display-over-other-apps setting for BOOP.",Toast.LENGTH_LONG).show(); }
+            });
+            addWithBottom(display, 12);
+        }
 
         Switch master = switchRow("BOOP Notifications", state.masterEnabled());
         master.setContentDescription("BOOP Notifications master switch");
@@ -157,7 +165,9 @@ public final class BoopNotificationSettingsActivity extends Activity {
         appSwitch.setOnCheckedChangeListener((button, checked) -> {
             Set<String> apps = new LinkedHashSet<>(state.enabledApps());
             if (checked) apps.add(app.packageName()); else apps.remove(app.packageName());
-            persist(state.withEnabledApps(apps), true);
+            Set<String> categories = new LinkedHashSet<>(state.enabledChannelKeys());
+            if (checked) categories.add(BoopNotificationSettingsCodec.channelKey(app.packageName(), "*"));
+            persist(state.withEnabledApps(apps).withEnabledChannelKeys(categories), true);
         });
         content.addView(appSwitch, matchWrap());
         addText(app.packageName(), 13f, false, 7);
@@ -189,7 +199,16 @@ public final class BoopNotificationSettingsActivity extends Activity {
             Set<String> channels = new LinkedHashSet<>(state.enabledChannelKeys());
             String key = BoopNotificationSettingsCodec.channelKey(
                     channel.packageName(), channel.channelId());
-            if (checked) channels.add(key); else channels.remove(key);
+            if (checked) channels.add(key);
+            else {
+                if (channels.remove(BoopNotificationSettingsCodec.channelKey(channel.packageName(), "*"))) {
+                    for (BoopNotificationChannelInfo other : observedChannels()) {
+                        if (other.packageName().equals(channel.packageName()) && !other.channelId().equals(channel.channelId()))
+                            channels.add(BoopNotificationSettingsCodec.channelKey(other.packageName(), other.channelId()));
+                    }
+                }
+                channels.remove(key);
+            }
             persist(state.withEnabledChannelKeys(channels), false);
         });
         LinearLayout.LayoutParams switchParams = matchWrap();

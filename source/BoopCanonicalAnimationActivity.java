@@ -56,7 +56,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
             scroll.addView(strip);root.addView(scroll,new LinearLayout.LayoutParams(-1,-2));
         }
         LinearLayout controls=new LinearLayout(this);
-        Button speed=button("Slow review");speed.setOnClickListener(v->{slow=!slow;speed.setText(slow?"Normal speed":"Slow review");});controls.addView(speed);
+        for(float speed:new float[]{.5f,1f,1.5f,2f}) { Button b=button(speed+"x");b.setOnClickListener(v->{slow=false;PuppetPreferences.speed(this,speed);});controls.addView(b); }
         Button motion=button("Pause motion");motion.setOnClickListener(v->{motionOff=!motionOff;motion.setText(motionOff?"Resume motion":"Pause motion");});controls.addView(motion);
         root.addView(controls);
         HorizontalScrollView signScroll=new HorizontalScrollView(this);LinearLayout signButtons=new LinearLayout(this);
@@ -94,7 +94,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     }
     @Override protected void onResume(){super.onResume();resumed=true;surface.onResume();
         PowerManager power=(PowerManager)getSystemService(POWER_SERVICE);
-        reducedMotion=Settings.Global.getFloat(getContentResolver(),Settings.Global.ANIMATOR_DURATION_SCALE,1f)==0f||(power!=null&&power.isPowerSaveMode());
+        reducedMotion=power!=null&&power.isPowerSaveMode();
         updateLoop();}
     @Override protected void onPause(){resumed=false;updateLoop();surface.onPause();super.onPause();}
     @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);focused=hasFocus;if(surface!=null)updateLoop();}
@@ -105,8 +105,9 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     }
     @Override public void doFrame(long time){
         if(!running)return;
-        if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:1);
+        if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:PuppetPreferences.speed(this));
         lastFrame=time;
+        renderer.setHueRotationDegrees(PuppetPreferences.hue(this)-190);
         EyeMotion.Clip clip=EyeCatalogue.find(controller.activeClipId());
         if(signActive){
             double elapsed=freeze>=0?freeze:reducedMotion?10000:clock-signStart;

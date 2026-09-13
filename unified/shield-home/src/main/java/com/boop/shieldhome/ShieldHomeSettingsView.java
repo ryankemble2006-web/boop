@@ -53,6 +53,9 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         TextView title = text(launcherSettingsLabel(), 28); addView(title, wrap()); addSpacer(dp(18));
         TextView homeSection = text("Shield Home", 20); addView(homeSection, wrap()); addSpacer(dp(10));
 
+        TextView character = action("BOOP puppet controls");
+        character.setOnClickListener(v -> getContext().startActivity(new Intent("com.boop.alpha1.PUPPET_SETTINGS").setClassName(getContext().getPackageName(),"com.boop.alpha1.UnifiedEntryActivity")));
+        addView(character, rowParams()); addSpacer(dp(10));
         TextView overrideHome = action("BOOP device and room settings");
         overrideHome.setOnClickListener(v -> { if (callbacks != null) callbacks.onEnableHomeOverride(); });
         addView(overrideHome, rowParams()); addSpacer(dp(10));

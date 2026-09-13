@@ -5,6 +5,7 @@ import java.util.Random;
 /** Pure animation state. No Android, bitmap, microphone or application ownership. */
 public final class EyeMotion {
     public static final long BLINK_MS = 183, DOUBLE_GAP_MS = 110;
+    public static final double BLINK_SPEED = 1.15;
     public static final Pose OPEN = new Pose(0, 0, 0, 0);
     private EyeMotion() { }
 
@@ -23,6 +24,7 @@ public final class EyeMotion {
         public final String id, label, family;
         public final boolean loop, ambientBlink;
         private final float[][] keys;
+        private final java.util.List<float[]> blinkWindows = new java.util.ArrayList<>();
         public final float duration;
         public Clip(String id, String label, String family, boolean loop,
                     boolean ambientBlink, float[][] input) {
@@ -37,8 +39,29 @@ public final class EyeMotion {
                 if((i==0 && keys[i][0]!=0) || (i>0 && keys[i][0]<=keys[i-1][0])) throw new IllegalArgumentException("Ordered times required");
             }
             duration=keys[keys.length-1][0];
+            // Only closed-both-eyes pulses between open poses are blinks.
+            // Keep the catalogue, gaze, winks, sleep and all event start times intact.
+            for(int i=1;i<keys.length-1;i++) {
+                if(keys[i][1]<.999f || keys[i][2]<.999f)continue;
+                int end=i;
+                while(end<keys.length && keys[end][1]>=.999f && keys[end][2]>=.999f)end++;
+                float[] a=keys[i-1];
+                if(end<keys.length && a[1]==0 && a[2]==0 && keys[end][1]==0 && keys[end][2]==0
+                        && keys[end][0]-a[0]<=500)blinkWindows.add(new float[]{a[0],keys[end][0]});
+                i=end-1;
+            }
         }
         public Pose sample(double elapsed) {
+            Pose base=sampleRaw(elapsed);
+            double t=Double.isFinite(elapsed)?Math.max(0,elapsed):0;
+            if(loop)t%=duration;
+            for(float[] window:blinkWindows)if(t>=window[0]&&t<=window[1]) {
+                Pose lids=sampleRaw(Math.min(window[1],window[0]+(t-window[0])*BLINK_SPEED));
+                return new Pose(lids.left,lids.right,base.x,base.y);
+            }
+            return base;
+        }
+        private Pose sampleRaw(double elapsed) {
             double t=Double.isFinite(elapsed)?Math.max(0,elapsed):0;
             if(loop) t=t%duration;
             if(t>=duration)return pose(keys[keys.length-1]);
@@ -52,6 +75,7 @@ public final class EyeMotion {
     }
 
     public static float blink(double elapsed) {
+        elapsed*=BLINK_SPEED;
         if(elapsed<=0 || elapsed>=183 || !Double.isFinite(elapsed))return 0;
         if(elapsed<73.2)return smooth((float)(elapsed/73.2));
         if(elapsed<=81.2)return 1;

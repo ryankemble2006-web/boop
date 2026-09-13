@@ -96,7 +96,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
                     request,
                     text,
                     speakerId,
-                    speedForRate(rate)));
+                    speedForRate(rate), pitchForPlayback(pitch)));
             return true;
         } catch (RuntimeException rejected) {
             synchronized (lock) {
@@ -140,8 +140,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         return BoopVoiceTuning.clampRate(rate);
     }
 
-    // Retained for source/API compatibility with existing focused tests. Natural
-    // pitch is not applied until the Android playback path is physically proven.
+    // Pitch is applied at playback independently of the native synthesis rate.
     static float pitchForPlayback(float pitch) {
         return BoopVoiceTuning.clampPitch(pitch);
     }
@@ -173,7 +172,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             RequestState request,
             String text,
             int speakerId,
-            float speed) {
+            float speed, float pitch) {
         GeneratedAudio audio;
         try {
             OfflineTts tts = ensureTts();
@@ -203,7 +202,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         }
 
         try {
-            play(request, audio.getSamples(), audio.getSampleRate());
+            play(request, audio.getSamples(), audio.getSampleRate(), pitch);
         } catch (Throwable error) {
             if (!request.cancelled.get()) {
                 clearIfActive(request);
@@ -264,7 +263,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         }
     }
 
-    private void play(RequestState request, float[] samples, int sampleRate)
+    private void play(RequestState request, float[] samples, int sampleRate, float pitch)
             throws InterruptedException {
         short[] pcm = toPcm16(samples);
         int minimumBytes = AudioTrack.getMinBufferSize(
@@ -303,6 +302,13 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         if (written != pcm.length) {
             throw new IllegalStateException("Natural speech audio output was incomplete");
         }
+        if (pitch != 1f) {
+            android.media.PlaybackParams character = new android.media.PlaybackParams()
+                    .allowDefaults().setSpeed(1f).setPitch(pitch)
+                    .setAudioFallbackMode(android.media.PlaybackParams.AUDIO_FALLBACK_MODE_FAIL);
+            track.setPlaybackParams(character);
+        }
+        android.util.Log.i("BOOPVoice", "natural playback pitch="+pitch);
         track.play();
 
         while (!request.cancelled.get()

@@ -59,5 +59,7 @@ def test_materialized_wall_and_notification_use_canonical_face():
     assert "face.stopListeningCue()" in main
     hue = (BUILD / "app/src/main/java/com/boop/alpha1/BoopEyeHueOverlay.java").read_text()
     assert "BoopCanonicalFaceView face" in hue
-    assert "BoopCanonicalFaceView faceView" in notice
-    assert "faceView.playNotification()" in notice
+    assert "CanonicalSignScene scene" in notice
+    assert "BoopFaceView" not in notice
+    assert "scene.identity(" in notice
+    assert "CanonicalSignScene(context)" in notice

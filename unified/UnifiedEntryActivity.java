@@ -34,6 +34,13 @@ public final class UnifiedEntryActivity extends Activity {
     }
 
     private void route() {
+        String action=getIntent()==null?null:getIntent().getAction();
+        if ("com.boop.alpha1.PUPPET_SETTINGS".equals(action)) {
+            startActivity(new Intent(this,BoopPuppetSettingsActivity.class));finish();return;
+        }
+        if ("com.boop.alpha1.OPEN_VOICE_SETTINGS".equals(action) || "com.boop.alpha1.OPEN_DEVELOPER_MENU".equals(action)) {
+            startActivity(new Intent(this,MainActivity.class).setAction(action).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));finish();return;
+        }
         if (!getSharedPreferences("boop_unified", MODE_PRIVATE).getBoolean("profile_choice_seen", false)) {
             startActivity(new Intent(this, BoopProfileActivity.class)); finish(); return;
         }

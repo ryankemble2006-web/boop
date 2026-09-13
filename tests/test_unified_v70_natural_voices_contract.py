@@ -126,7 +126,11 @@ def test_natural_backend_uses_local_sherpa_and_safe_android_audio_controls() -> 
     assert "setSpeed" in source
     assert "AudioTrack" in source
     assert "AudioFormat.ENCODING_PCM_16BIT" in source
-    assert "PlaybackParams" not in source
+    assert "PlaybackParams" in source
+    assert "if (pitch != 1f)" in source
+    assert ".setSpeed(1f).setPitch(pitch)" in source
+    assert "AUDIO_FALLBACK_MODE_FAIL" in source
+    assert "pitchForPlayback(pitch)" in source
     assert "lexicon-gb-en.txt" in source
 
 

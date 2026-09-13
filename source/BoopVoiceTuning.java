@@ -3,13 +3,13 @@ package com.boop.alpha1;
 final class BoopVoiceTuning {
     static final int PROGRESS_MAX = 1000;
 
-    static final float MIN_PITCH = 0.75f;
-    static final float MAX_PITCH = 1.45f;
-    static final float DEFAULT_PITCH = 1.12f;
+    static final float MIN_PITCH = 0.5f;
+    static final float MAX_PITCH = 2.0f;
+    static final float DEFAULT_PITCH = 1.0f;
 
-    static final float MIN_RATE = 0.70f;
-    static final float MAX_RATE = 1.25f;
-    static final float DEFAULT_RATE = 0.96f;
+    static final float MIN_RATE = 0.5f;
+    static final float MAX_RATE = 2.0f;
+    static final float DEFAULT_RATE = 1.0f;
 
     private BoopVoiceTuning() { }
 
@@ -40,16 +40,16 @@ final class BoopVoiceTuning {
     private static float fromProgress(int progress, float min, float max) {
         int bounded = Math.max(0, Math.min(PROGRESS_MAX, progress));
         float fraction = bounded / (float) PROGRESS_MAX;
-        return min + ((max - min) * fraction);
+        return fraction<=0.5f ? min+(1f-min)*fraction*2f : 1f+(max-1f)*(fraction-0.5f)*2f;
     }
 
     private static int toProgress(float value, float min, float max) {
         float bounded = clamp(value, min, max);
-        float fraction = (bounded - min) / (max - min);
+        float fraction = bounded<=1f ? (bounded-min)/(1f-min)*0.5f : 0.5f+(bounded-1f)/(max-1f)*0.5f;
         return Math.round(fraction * PROGRESS_MAX);
     }
 
     private static float clamp(float value, float min, float max) {
-        return Math.max(min, Math.min(max, value));
+        return Float.isFinite(value) ? Math.max(min, Math.min(max, value)) : 1f;
     }
 }

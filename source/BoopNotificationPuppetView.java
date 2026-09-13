@@ -31,8 +31,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
     }
 
     private final Callback callback;
-    private final BoopFaceView faceView;
-    private final ImageView handsView;
+    private final com.boop.eyes.CanonicalSignScene scene;
     private final FrameLayout cardHost;
     private BoopNotificationPresentation presentation;
 
@@ -52,24 +51,15 @@ final class BoopNotificationPuppetView extends FrameLayout {
         setClipChildren(false);
         setClipToPadding(false);
 
-        faceView = new BoopFaceView(context);
-        addView(faceView, match());
-
-        handsView = new ImageView(context);
-        handsView.setImageResource(R.drawable.boop_notification_hands);
-        handsView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        handsView.setAdjustViewBounds(false);
-        handsView.setContentDescription(null);
-        addView(handsView, match());
-
+        LinearLayout column = new LinearLayout(context);
+        column.setOrientation(LinearLayout.VERTICAL);
+        addView(column, match());
+        scene = new com.boop.eyes.CanonicalSignScene(context);
+        column.addView(scene, new LinearLayout.LayoutParams(-1,0,1f));
         cardHost = new FrameLayout(context);
-        FrameLayout.LayoutParams hostParams = new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER);
-        int margin = dp(28);
-        hostParams.setMargins(margin, margin, margin, margin);
-        addView(cardHost, hostParams);
+        LinearLayout.LayoutParams hostParams = new LinearLayout.LayoutParams(-1,-2);
+        hostParams.setMargins(dp(20),0,dp(20),dp(20));
+        column.addView(cardHost,hostParams);
 
         rebuildCard();
         setOnClickListener(v -> openCurrentPresentation());
@@ -80,10 +70,11 @@ final class BoopNotificationPuppetView extends FrameLayout {
     void updatePresentation(BoopNotificationPresentation updated) {
         presentation = updated;
         rebuildCard();
+        startEntrance();
     }
 
     void setFaceVisible(boolean visible) {
-        faceView.setVisibility(visible ? View.VISIBLE : View.GONE);
+        scene.setEyesVisible(visible);
     }
 
     private void openCurrentPresentation() {
@@ -167,27 +158,11 @@ final class BoopNotificationPuppetView extends FrameLayout {
     }
 
     private void startEntrance() {
-        faceView.post(() -> {
-            faceView.showIdleBlackImmediately();
-            faceView.wakeFromIdle();
-        });
-
-        cardHost.setAlpha(0f);
-        cardHost.setTranslationY(-dp(BANNER_REST_LIFT_DP + BANNER_ENTRANCE_OFFSET_DP));
-        cardHost.animate()
-                .alpha(1f)
-                .translationY(-dp(BANNER_REST_LIFT_DP))
-                .setDuration(260L)
-                .setInterpolator(new OvershootInterpolator(0.7f))
-                .start();
-
-        handsView.setScaleX(HANDS_ENTRANCE_SCALE);
-        handsView.setScaleY(HANDS_ENTRANCE_SCALE);
-        handsView.animate()
-                .scaleX(HANDS_REST_SCALE)
-                .scaleY(HANDS_REST_SCALE)
-                .setDuration(220L)
-                .start();
+        List<BoopNotificationEnvelope> cards=cards();
+        if(cards.isEmpty())return;
+        String pkg=cards.get(0).packageName().toLowerCase(java.util.Locale.ROOT);
+        int style=pkg.contains("whatsapp")?0:pkg.contains("gmail")||pkg.endsWith(".gm")?1:pkg.contains("facebook")?2:3;
+        scene.identity(style,identityLabel(cards),loadAppIcon(cards.get(0).packageName()));
     }
 
     private Drawable loadAppIcon(String packageName) {

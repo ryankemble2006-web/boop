@@ -3,12 +3,14 @@ package com.boop.eyes;
 /** Production owner for the finished canonical animation catalogue. */
 public final class ProductionAnimationController {
     private final EyeMotion.Controller motion;
+    private final PuppetClock clock;
     private String steadyClipId;
     private String activeClipId;
     private long transientStartedMs = -1L;
     private float transientReturnBlendMs;
 
     public ProductionAnimationController(String initialClipId, long nowMs, long seed) {
+        clock = new PuppetClock(nowMs);
         EyeMotion.Clip initial = require(initialClipId);
         steadyClipId = initial.id;
         activeClipId = initial.id;
@@ -28,6 +30,7 @@ public final class ProductionAnimationController {
     }
 
     public void setState(String id, long nowMs, float blendMs) {
+        nowMs = clock.now(nowMs);
         EyeMotion.Clip clip = require(id);
         steadyClipId = clip.id;
         activeClipId = clip.id;
@@ -36,6 +39,7 @@ public final class ProductionAnimationController {
     }
 
     public void trigger(String id, long nowMs, float blendMs) {
+        nowMs = clock.now(nowMs);
         EyeMotion.Clip clip = require(id);
         if (clip.loop) throw new IllegalArgumentException("One-shot clip required: " + id);
         activeClipId = clip.id;
@@ -45,6 +49,7 @@ public final class ProductionAnimationController {
     }
 
     public EyeMotion.Pose sample(long nowMs) {
+        nowMs = clock.now(nowMs);
         if (transientStartedMs >= 0L) {
             EyeMotion.Clip transientClip = require(activeClipId);
             if (nowMs - transientStartedMs >= transientClip.duration) {
@@ -56,8 +61,9 @@ public final class ProductionAnimationController {
         return motion.sample(nowMs);
     }
 
-    public void pause(long nowMs) { motion.pause(nowMs); }
-    public void resume(long nowMs) { motion.resume(nowMs); }
+    public void pause(long nowMs) { clock.pause(nowMs); motion.pause(clock.now(nowMs)); }
+    public void resume(long nowMs) { clock.resume(nowMs); motion.resume(clock.now(nowMs)); }
+    public void setSpeed(double speed, long nowMs) { clock.setSpeed(speed, nowMs); }
     public void setAmbientBlinkEnabled(boolean enabled) { motion.setAmbientBlinkEnabled(enabled); }
     public String activeClipId() { return activeClipId; }
     public String steadyClipId() { return steadyClipId; }

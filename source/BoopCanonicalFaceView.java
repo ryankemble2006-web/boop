@@ -19,7 +19,7 @@ import com.boop.eyes.ProductionAnimationController;
 
 /** Production Wall face backed by the finished canonical Animation Lab engine. */
 final class BoopCanonicalFaceView extends FrameLayout {
-    private static final long FRAME_MS = 33L;
+    private static final long FRAME_MS = 16L;
     private static final String IDLE = "idle";
     private static final String WAKE = "wake";
     private static final String SLEEP = "sleep";
@@ -36,6 +36,8 @@ final class BoopCanonicalFaceView extends FrameLayout {
     private final CanonicalEyeRenderer renderer;
     private final ProductionAnimationController animation;
     private final PowerManager powerManager;
+    private final com.boop.eyes.PuppetCoverState cover = new com.boop.eyes.PuppetCoverState();
+    private Runnable unwatchStyle;
     private boolean frameScheduled;
     private boolean animationPaused;
     private java.util.function.BooleanSupplier idleBlinkAllowed = () -> true;
@@ -45,6 +47,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
         @Override public void run() {
             frameScheduled = false;
             if (!shouldAnimate()) return;
+            applyStyle();
             animation.setAmbientBlinkEnabled(idleBlinkAllowed == null || idleBlinkAllowed.getAsBoolean());
             renderer.pose = animation.sample(SystemClock.uptimeMillis());
             surface.requestRender();
@@ -195,6 +198,8 @@ final class BoopCanonicalFaceView extends FrameLayout {
     }
 
     private void renderNow(long now) {
+        applyStyle();
+        if (cover.covered()) { stopFrames(); pauseAnimation(); return; }
         if (!animationAllowed()) {
             EyeMotion.Clip steady = EyeCatalogue.find(animation.steadyClipId());
             renderer.pose = steady.sample(steady.loop ? 0 : steady.duration);
@@ -208,11 +213,12 @@ final class BoopCanonicalFaceView extends FrameLayout {
     }
 
     private boolean animationAllowed() {
-        return ValueAnimator.areAnimatorsEnabled()
+        return com.boop.eyes.PuppetPreferences.speed(getContext()) > 0
                 && (powerManager == null || !powerManager.isPowerSaveMode());
     }
     private boolean shouldAnimate() {
-        return isAttachedToWindow()
+        return isAttachedToWindow() && isShown() && !cover.covered()
+                && getWindowVisibility() == View.VISIBLE
                 && getVisibility() == View.VISIBLE
                 && animationAllowed();
     }
@@ -226,6 +232,24 @@ final class BoopCanonicalFaceView extends FrameLayout {
     private void stopFrames() {
         handler.removeCallbacks(frame);
         frameScheduled = false;
+    }
+
+    void setCovered(Object owner, boolean covered) {
+        cover.set(owner, covered);
+        surface.setVisibility(cover.covered() ? View.INVISIBLE : View.VISIBLE);
+        if (cover.covered()) { stopFrames(); pauseAnimation(); }
+        else { resumeAnimation(); if (getVisibility() == View.VISIBLE) renderNow(SystemClock.uptimeMillis()); }
+    }
+    private void applyStyle() {
+        animation.setSpeed(com.boop.eyes.PuppetPreferences.speed(getContext()), SystemClock.uptimeMillis());
+        int hue = com.boop.eyes.PuppetPreferences.hue(getContext());
+        if (hue != eyeHueDegrees) setEyeHueDegrees(hue);
+    }
+    @Override protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (surface == null || animation == null) return;
+        if (visibility != View.VISIBLE) { stopFrames(); pauseAnimation(); }
+        else if (!cover.covered()) { resumeAnimation(); scheduleFrame(); }
     }
 
     private void cancelSleepHide() {
@@ -246,11 +270,16 @@ final class BoopCanonicalFaceView extends FrameLayout {
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         surface.onResume();
+        unwatchStyle = com.boop.eyes.PuppetPreferences.watch(getContext(), () -> {
+            applyStyle(); if (!cover.covered() && getVisibility() == View.VISIBLE) renderNow(SystemClock.uptimeMillis());
+        });
+        applyStyle();
         resumeAnimation();
         if (getVisibility() == View.VISIBLE) scheduleFrame();
     }
 
     @Override protected void onDetachedFromWindow() {
+        if (unwatchStyle != null) { unwatchStyle.run(); unwatchStyle = null; }
         cancelSleepHide();
         stopFrames();
         pauseAnimation();
