@@ -1,36 +1,39 @@
-# Current task handoff: music audio permission prompt
+# BOOP Music Lab: signed side-by-side fork, no merge
 
-Updated 2026-09-13. This is the isolated `boop-unified-music-audio-prompt` task branch, based on LIVE Unified `593ad609ff87f651d5273bd17f5a2c0ca3ef5198`. The accepted combined app remains owned by `boop-unified-eye-sync-safe-v159`; this task branch has NOT replaced or merged into it.
+Updated 2026-09-13. This task belongs to `boop-music-lab-side-by-side-v161`. Ryan explicitly requested an entirely separate installable fork because other operations are continuing, with integration deferred until he asks. Do not merge this branch into Unified, main, Lyrics Lab or another operation.
 
-## Requested scope and implementation
+## Current result and exact identity
 
-Ryan first requested read-only feasibility for a simple VU-style music bounce, then explicitly asked: "if he dont ask permission, code a prompt to ask like before,". This task implements that conditional permission prompt only. It does not implement a Visualizer sampler, change bouncing, or alter blink timing.
+Built and downloaded the separate **BOOP Music Lab** APK. Package/application namespace `com.boop.musiclab`, independent lab version `1 / 0.1.1-v161-audio-prompt`. It is based on accepted Unified v161 plus the conditional music audio permission prompt, not an update to the installed `com.boop.alpha1` app. No installation, device input, permission grant, settings reset, data migration or emulator action occurred in this task.
 
-Production changes are confined to the current `unified/shield-home` module:
-- Added `MusicAudioPermissionActivity.java` and pure `MusicAudioPermissionFlow.java`.
-- Added a private activity registration in `unified/shield-home-manifest.xml`.
-- Added **Launcher Settings > Now Playing > Music audio access** in `ShieldHomeSettingsView.java`.
+Parent: `boop-unified-music-audio-prompt@174d492f36db80bc3da4036d9434ce1ec3c1582a`. That branch starts from `boop-unified-eye-sync-safe-v159@593ad609ff87f651d5273bd17f5a2c0ca3ef5198`, whose app version was 161 despite its branch name. Neither parent was advanced or merged by this fork task.
 
-The entry checks the actual RECORD_AUDIO grant. Already allowed returns without an Android permission request. Missing access gets a cancellable explanation, then Continue opens Android's own request. Not now/Back cancels. Denial does not retry automatically; Open settings is a separate explicit choice. Returning from settings rechecks the grant and closes rather than reopening a request. Pending request and dialog phase are saved across activity recreation.
+Build/source commit: `f613c5033e54b55bdbfe0087b0e253fd75efa7e9`.
+GitHub signed run: `34774532761`, job `103770090841`, SUCCESS.
+Artifact: `BOOP-Music-Lab`, ID `10322813560`.
+APK: `BOOP-Music-Lab-v1.apk`, 155257454 bytes.
+APK SHA256: `9e717f4c28abccb951d3c03831c8d08c794e50064d85ea43627607233d66e8cb`.
+Artifact ZIP SHA256: `27e9e146108ebf06370150727e20b0fc1198217b9e08aaa771cfcd76bc61fa82`.
+Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-This is intentionally not routed through the existing voice activity or voice permission callback. It creates no audio recorder/visualizer, starts no voice/service and makes no network call. RECORD_AUDIO and MODIFY_AUDIO_SETTINGS were already declared; no additional uses-permission was added. Android permission labels are not proof that the physical microphone is being used by this entry.
+## What is present, and what is not
 
-Implementation commit: `c1c53e84f20e2211b729dc2f5a541018fc2908b8`. Non-visual compile workflow at `746a7d3ab0c8601c174ca690c2b27397266e673e`. Read `docs/handoffs/2026-09-13-music-audio-permission.md` for exact red/green and compilation evidence. Do not substitute source inspection or a CI pass for real Android prompt acceptance.
+The existing v161 code and conditional permission entry are retained. Open Launcher Settings > Now Playing > Music audio access after choosing the Shield profile in this independently configured app. If RECORD_AUDIO is already granted, no Android request is made. Otherwise a cancellable explanation leads to Continue and the real OS permission request. Denial/Back/Not now does not repeatedly prompt; opening Android app settings is a separate choice. Granting music access is not routed through the voice callback. The permission activity itself creates no recorder, Visualizer, voice session, service or network request.
 
-## Music behaviour retained as the next design, not implemented
+**Real music-driven bounce is not implemented yet.** The agreed next design is a simple Android Visualizer loudness-to-height mapping: quick rise, softer fall, no BPM/beat detection and no physical-microphone fallback. Saved animation speed must continue to control blinks independently. Useful Deezer readings, real OS prompt handling and physical side-by-side behavior remain untested with Ryan; passing CI does not establish them.
 
-Animation speed continues to control blinks. Actual music loudness will separately control bounce height, with a quick rise and smoother fall. No BPM lookup, beat detection or full-animation restarts are wanted. Use Android Visualizer, not a physical-microphone fallback. Usable readings from Deezer on the Shield remain unproven. Preserve all approved artwork, coded animations, single-face ownership and exact original 1x timing.
+## Fork implementation and checks
 
-## Accepted installed baseline remains unchanged
+`scripts/materialize-music-lab.py` copies the prepared Unified tree into a separate fresh `boop-music-build/BOOP-Music-Lab` tree. It changes app namespace/package, matching internal references, label, task affinity, auth callback scheme and version, while leaving the parent tree unchanged. Library namespaces remain valid within the separate application sandbox. No shared UID is used. No user data or credentials are copied.
 
-The base handoff recorded Ryan's physical acceptance of v161 speed on BOTH Shield and Pixel 7, and automatic eye-colour delivery in BOTH directions. Speed remains device-local; colour is shared. Do not reopen these accepted repairs.
+The fork excludes HOME, ASSIST and BOOT_COMPLETED intent filters, RECEIVE_BOOT_COMPLETED permission and the Home override service registration so it is not another automatic Home/assistant/boot owner. Source Startup Manager protection for all `com.boop.*` packages remains intact. Approved images, shaders and other copied assets remain byte-identical. Existing permanent signer configuration is reused; no replacement key. Relay credentials were not injected into this lab build.
 
-Accepted app/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754`; package `com.boop.alpha1`; version `161 / 1.2.161-lab-scale-independent`; prior signed build `34770388933`, artifact `10321956422`. Accepted APK SHA256 `c68b81be9b7d3e10883d2aea52c05dc7b8c187fcd835eaddf73e25e91cb4acd6`. Permanent signer SHA256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+RED source `fafcc351c373c0591edcbf93d0ed9c0d20b7a9de`, run `34774429117`: four new fork checks failed because the separate generated app did not yet exist; parent preservation passed. The failure log was read before implementation.
 
-Those are inherited installation/acceptance facts, not new device checks in this task. Original acceptance and installation receipts remain at `docs/handoffs/2026-09-13-v161-speed-colour-accepted.md` and `docs/handoffs/2026-09-13-v161-installed-joint-testing.md`. The complete pre-task root handoff/status/memory remain available at base commit `593ad609ff87f651d5273bd17f5a2c0ca3ef5198`.
+GREEN run above: all five fork checks passed; four permission tests including 18 executed Java decisions passed; all six existing animation-speed functions passed, materialized speed/colour/master checks passed, and 11 focused canonical-owner/notification-manifest tests passed. Signed assembly completed with 104 tasks. Packaged ID, version, label, entry point, forbidden-role absence, permanent signature and ZIP integrity passed. Downloaded ZIP/APK hashes and embedded build commit were rechecked in the artifact sandbox; no app code was built or executed there. Existing nonfatal deprecation warnings remain. Detailed receipt: `docs/handoffs/2026-09-13-music-lab-fork.md`.
 
-## Workflow and next safe step
+## Next and boundaries
 
-GitHub owns source edits, non-visual checks and durable handoffs. This task did not edit/build laptop sources, operate emulators or devices, install an APK, grant permission, reset settings, access physical Pixel 10 or touch signing keys. Local worktrees are not claimed synchronized. No release/version bump was made, and no new signed APK is presented as accepted v161.
+The installable file has been prepared for side-by-side use; it has NOT been installed or launched. Any requested installation must target `com.boop.musiclab` only and preserve whatever Unified/other lab versions are live then. Do not grant its permissions with ADB. Test behavior together with Ryan. Do not automatically contact physical Pixel 10, operate emulators, replace HOME, or reopen accepted colour/speed repairs.
 
-For integration, fetch the LIVE Unified owner and reconcile this small feature against any concurrent changes; do not copy this branch over a newer Unified checkout. Preserve the current owner's handoff/acceptance record when merging. Use the existing permanent signed-build workflow before any requested delivery. Device permission/remote-navigation acceptance must be tested together with Ryan, not automatically granted. Actual music-driven bouncing needs its own implementation request. Main's workflow/ownership did not change.
+Keep source, tests, builds, permanent signing and handoffs on GitHub. No laptop source checkout was edited or synchronized. Fetch LIVE task HEAD before continuation, preserve concurrent work, and publish scoped handoff/status/memory changes with live branch verification. The pre-fork permission handoff is preserved at parent `174d492f36db80bc3da4036d9434ce1ec3c1582a`. Integration into the then-current Unified successor is deferred until explicitly requested, never a copy-over of this v161 base.

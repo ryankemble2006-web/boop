@@ -1,25 +1,15 @@
-# BOOP Unified: current startup and testing workflow
+# BOOP Music Lab: current task routing
 
-Updated 2026-09-13. Current owner: `boop-unified-eye-sync-safe-v159`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Do not infer the APK version from the branch's v159 name.
+Updated 2026-09-13. This branch owns the separate **BOOP Music Lab** fork, not production Unified.
 
-## Latest user rule: GitHub development, testing together
+Owner: `boop-music-lab-side-by-side-v161`.
+App: `com.boop.musiclab`, `1 / 0.1.1-v161-audio-prompt`.
+Parent: `boop-unified-music-audio-prompt@174d492f36db80bc3da4036d9434ce1ec3c1582a`, based on accepted Unified v161.
 
-Ryan explicitly requested the ready signed APK be installed for his own testing and set the ongoing workflow to development on GitHub plus device testing together with him. This supersedes older emulator-first rules, the cosmetic/substantive distinction, and the previous deployment hold in historical handoffs/context. Shared workflow is recorded in `main/BOOP_START_HERE.md` at `24a260b6e7cdd5aed792ccfbb683e8e495eb5f80`.
+Ryan explicitly said **do not merge** because other operations are continuing. This branch produces an independently installable app. Do not write to Unified, Lyrics Lab or main for ordinary Music Lab work, do not install over com.boop.alpha1, and do not treat this older base as the newest combined source.
 
-Use GitHub for source edits, non-visual code tests, builds, permanent signing and durable documentation. After the existing code/package/signer checks pass, provide the signed APK and perform the installation Ryan requests. No autonomous emulator run, emulator-first delivery gate or GitHub visual test. Test visible device behaviour with Ryan, guided by his observations and agreed next checks. Do not report CI, changed sliders or installation success as physical acceptance.
+Fetch LIVE task branch HEAD, then read `SESSION_HANDOFF.md`, `BOOP_STATUS.md`, `BOOP_UNIFIED_MEMORY.md` and `docs/handoffs/2026-09-13-music-lab-fork.md`. Current shared workflow is main's BOOP_START_HERE.md, last read at `24a260b6e7cdd5aed792ccfbb683e8e495eb5f80`; older inherited root maps are historical.
 
-Desktop Commander/ADB may stage the GitHub artifact, perform an explicitly requested installation on authorized devices and verify package/version/hash. Use further device inputs, captures or diagnosis only as part of the joint test. No local app-source edits/builds. Preserve dirty/concurrent work and existing AVDs; use an emulator only if Ryan explicitly requests it.
+Source edits, non-visual tests, builds, stable signing and handoffs stay on GitHub. Use the dedicated `.github/workflows/build-boop-music-lab.yml`. Do not edit/build app source on the laptop, operate emulators autonomously or run hosted visual tests. Devices are tested together with Ryan only as requested. Physical Pixel10 is excluded. Never silently grant permissions, clear data, replace the signer or change HOME/assistant choices.
 
-Current authorized physical targets: Shield and Pixel7. Leave physical Pixel10 alone. No permission changes, lock bypass, data clear, signing-key replacement, colour/settings reset or unrelated branch merge. Approved artwork, all coded animations, exact1x, single-face ownership, working Wall hue controls and accepted Shield polish remain protected.
-
-## Current delivery and evidence
-
-v161 from app/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754` is installed and identity-verified on Shield and Pixel7. Its on-screen speed acceptance is awaiting Ryan. Read `docs/handoffs/2026-09-13-v161-installed-joint-testing.md`. The separate Lab scale-zero source defect was already repaired and GitHub-tested; do not restart it from older notes.
-
-## Continuity
-
-Current user instructions and freshly fetched main decisions override inherited historical root maps/context. Do not restore the old separate-package roadmap over the current Unified lineage. Standalone Launcher, standalone Animation Lab and unrelated projects remain separate unless Ryan explicitly requests integration.
-
-After material results, update the current handoff/status/memory, review the exact diff, publish only relevant files and verify live GitHub HEAD. A GitHub-only session must not claim a laptop checkout was synchronized. Do not force-push or overwrite concurrent changes. Keep credentials, private addresses, raw device dumps and private captures out of this public repository. Preserve all previous acceptance/research receipts as history rather than current blockers.
-
-Known-good laptop transport remains `npx.cmd -y @wonderwhy-er/desktop-commander@0.2.47 remote`; do not change it while it works. Explicit tool denials are not permission to bypass them. The current requested ordinary v161 installations succeeded without changing the transport or permissions.
+The fork APK is built and artifact-verified, not installed or physically accepted. It contains the conditional music audio permission prompt; actual Visualizer-driven bounce is still unimplemented. Preserve artwork and independent blink-speed behavior. Publish scoped handoff/status/memory results and verify LIVE task branch after commits. Integration is deferred until Ryan explicitly requests it.

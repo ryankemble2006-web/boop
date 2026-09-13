@@ -1,29 +1,33 @@
-# Unified memory for the music audio permission task
+# Music Lab fork memory: preserve separation until Ryan requests integration
 
-## Current agreed music direction, 2026-09-13
+Updated 2026-09-13. Ryan's latest instruction: do not merge while other operations continue; fork this entirely to install side by side and combine the work later. This overrides inherited instructions suggesting immediate Unified integration.
 
-Ryan wants BOOP to be a simple VU-style puppet: actual music loudness drives vertical bounce; the saved animation-speed control still controls blinks independently. Quick upward response and a softer return are the intended motion. No BPM lookup, rhythm inference, song analysis or restarting whole coded clips on each hit. Keep the approved artwork and exact existing animation timings.
+## Identity and lineage
 
-Use Android's Visualizer data rather than listening through the physical microphone. Android's RECORD_AUDIO permission naming does not mean this feature should capture the room. Both RECORD_AUDIO and MODIFY_AUDIO_SETTINGS already exist in Unified's combined manifests. Whether Deezer on the physical Shield produces usable Visualizer levels is not established by permission access, metadata or CI.
+Task owner `boop-music-lab-side-by-side-v161`. Parent `boop-unified-music-audio-prompt@174d492f36db80bc3da4036d9434ce1ec3c1582a`, based on accepted Unified v161 at owner handoff `593ad609ff87f651d5273bd17f5a2c0ca3ef5198`. No merge or parent-branch write occurred. Do not restart from isolated old app branches or overwrite a newer Unified with this base.
 
-The feasibility discussion was read-only. Ryan then specifically authorized coding a prompt when permission is missing. This task implements only that prompt, not the audio-level sampler or bouncing. Do not infer authorization for installations, grants, voice changes or an automatic device test from this request.
+Separate app **BOOP Music Lab**, application ID/namespace `com.boop.musiclab`, independent versionCode1/versionName `0.1.1-v161-audio-prompt`. It is an installable full v161-derived fork plus the conditional music permission feature, not a new Unified version. Its app data and grants are separate; no settings, credentials or permission grants were copied from Unified. Original library class namespaces are retained where they do not represent app identity. App internal intents and auth callback scheme were adjusted for the fork.
 
-## Implemented permission entry
+Materializer copies to a fresh independent build tree and asserts the parent tree fingerprint is unchanged. App HOME, ASSIST and boot intent filters, boot permission and Home override service registration are excluded. All `com.boop.*` startup protection remains intact. Images, shaders, authored motion and copied assets remain unchanged. Existing permanent BOOP signer is reused entirely on GitHub. This is not permission to replace keys, select a default Home/assistant or edit device settings.
 
-Isolated branch `boop-unified-music-audio-prompt`, based on current accepted owner `boop-unified-eye-sync-safe-v159@593ad609ff87f651d5273bd17f5a2c0ca3ef5198`. Source change `c1c53e84f20e2211b729dc2f5a541018fc2908b8`.
+## Agreed music behavior
 
-The correct current screen is `unified/shield-home/.../ShieldHomeSettingsView.java`, not historical `shield-overlay/TvSettingsView.java`. A Music audio access row launches a private activity. The activity checks the actual grant, silently skips the Android request when allowed, explains the Android microphone label when missing, and requests only after Continue. Not now/Back cancels. Denial never loops automatically; an explicit Open settings choice can open BOOP's Android app settings, and returning rechecks then closes. Pending requests and dialog phase survive recreation.
+Ryan wants a VU-style bounce using Android Visualizer loudness, not clever beat detection: actual level determines vertical bounce height with quick rise and a softer return. Saved animation speed must continue to control blinks independently of audio. No BPM lookup, rhythm inference, whole-clip restarts or physical-microphone fallback. Artwork is locked.
 
-The new permission activity does not start recording, the Visualizer, speech, services or a network connection. The existing voice permission handler is deliberately not reused, because granting music access must not initiate voice recognition. No new manifest permission, version bump or signing change was made.
+The actual sampler/bounce is still unimplemented. The earlier feasibility discussion was read-only, followed by a narrow request to code the missing-permission prompt. Current work makes that already-implemented prompt and the v161 app independently installable. Do not misreport this packaging task as working music-reactive animation.
 
-Test-first commit `41fa671852f1ab3836ab44adf4a9a1d3a06984e9` and its failing run remain in branch history. Verification source `746a7d3ab0c8601c174ca690c2b27397266e673e` adds a dedicated non-visual workflow. See `docs/handoffs/2026-09-13-music-audio-permission.md` for exact outcomes and limits. Source correctness/compilation is not physical permission-dialog acceptance or proof of a useful Deezer audio signal.
+## Existing conditional permission entry
 
-## Preserve accepted Unified and joint-testing workflow
+Launcher Settings > Now Playing > Music audio access launches private `MusicAudioPermissionActivity`. It checks the live grant, skips an already-granted request, otherwise explains Android's microphone-labelled permission and requests only after Continue. Not now/Back cancels; denial does not loop; Android app settings are an explicit separate choice. Pending request/dialog state survives recreation. The prompt creates no audio capture, Visualizer, voice activity, service or network connection. Existing RECORD_AUDIO and MODIFY_AUDIO_SETTINGS declarations were already present.
 
-Before this task, Ryan physically accepted v161 animation speed on BOTH Shield and Pixel 7 and automatic eye-colour sharing in BOTH directions. Speed is device-local; colour is the shared preference. Do not reopen those repairs absent a new reported problem.
+## Verified candidate and limits
 
-The accepted APK identity is preserved in SESSION_HANDOFF.md and `docs/handoffs/2026-09-13-v161-speed-colour-accepted.md`. Full pre-task memory remains retrievable at `593ad609ff87f651d5273bd17f5a2c0ca3ef5198:BOOP_UNIFIED_MEMORY.md`; prior installation and Lab regression receipts remain in this tree. This feature branch is not a replacement accepted v161.
+Source `f613c5033e54b55bdbfe0087b0e253fd75efa7e9`; signed build `34774532761`/job `103770090841`; artifact `10322813560`. APK SHA256 `9e717f4c28abccb951d3c03831c8d08c794e50064d85ea43627607233d66e8cb`; ZIP SHA256 `27e9e146108ebf06370150727e20b0fc1198217b9e08aaa771cfcd76bc61fa82`; permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-GitHub owns development, non-visual tests, builds, permanent signing and handoffs. No local source edit/build, autonomous emulator gate or hosted visual acceptance. Shield and Pixel 7 are the jointly tested physical targets; Pixel 10 remains excluded. An in-app consent prompt must be operated by Ryan, not silently granted using ADB. Do not change locks, permissions, colour choices, data, artwork or signing keys. Source worktrees were not modified or synchronized in this task.
+GitHub test-first fork failures were observed before implementation. Final permission, timing, canonical ownership, five fork isolation checks, signed build and packaged identity/signature/integrity checks passed. Downloaded artifact identity and hashes were independently rechecked without executing the app. Full evidence is in `docs/handoffs/2026-09-13-music-lab-fork.md`; no independent reviewer or runtime visual acceptance is claimed.
 
-This branch has not been merged or installed. Before later integration, fetch LIVE owner HEAD and reconcile concurrent work, retaining its current handoff and acceptance state. Use existing signed-build/package checks for an authorized candidate; no signed artifact was generated by this prompt-only task. Main remains the shared context hub; no global app ownership or workflow was changed.
+NOT installed or launched. No device/emulator input, permission grant, HOME change, user data copying, laptop source edit/build or local sync occurred. Future tests are joint with Ryan, targeting the fork only. Physical Pixel10 remains excluded. A later merge needs the live then-current Unified successor and explicit authorization; preserve other ongoing operations.
+
+## Accepted original app context
+
+The parent records Ryan's physical acceptance of animation-speed controls on both Shield and Pixel7 and automatic colour sharing in both directions on installed Unified v161. Speed is local; colour is shared. That is inherited accepted evidence, not a test of this newly packaged lab. Do not reopen those repairs absent a new observation. Historical acceptance and permission-task receipts remain in Git history and docs/handoffs.

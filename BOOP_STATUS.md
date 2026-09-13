@@ -1,13 +1,13 @@
-# BOOP task status: conditional music audio permission prompt
+# BOOP Music Lab status: separate signed APK ready, not installed
 
-Updated 2026-09-13. Task branch: `boop-unified-music-audio-prompt`. Base: `boop-unified-eye-sync-safe-v159@593ad609ff87f651d5273bd17f5a2c0ca3ef5198`.
+Updated 2026-09-13. Owner: `boop-music-lab-side-by-side-v161`. No merge into any other branch is authorized. Other operations continue independently.
 
-The music-only permission entry is implemented in source at `c1c53e84f20e2211b729dc2f5a541018fc2908b8`: Launcher Settings > Now Playing > Music audio access. It checks the live grant, asks only when missing, preserves an in-flight request and leaves denial/cancellation optional. Existing uses-permission declarations are unchanged. No voice callback, audio capture, animation, artwork or playback code changed.
+**Built and artifact-verified:** BOOP Music Lab, `com.boop.musiclab`, `1 / 0.1.1-v161-audio-prompt`. Full v161-derived app plus conditional music permission entry, with separate application identity, storage and permissions. HOME/ASSIST/boot registration is excluded in the fork. Approved artwork and animation timing are retained. No physical-device acceptance is claimed.
 
-Verification source/CI configuration: `746a7d3ab0c8601c174ca690c2b27397266e673e`. Exact test/compile outcomes are recorded in `docs/handoffs/2026-09-13-music-audio-permission.md`. Android device prompt behaviour is NOT user-accepted or assistant-tested here. No emulator/hosted visual test was used.
+Source `f613c5033e54b55bdbfe0087b0e253fd75efa7e9`; signed GitHub run `34774532761`, SUCCESS; artifact `10322813560` / `BOOP-Music-Lab`. APK SHA256 `9e717f4c28abccb951d3c03831c8d08c794e50064d85ea43627607233d66e8cb`. Existing permanent signer verified, no replacement key. Downloaded APK and ZIP matched the published build receipt.
 
-NOT merged into the accepted owner branch. NOT installed. No APK produced or signed by this task; version/signing configuration unchanged. The historical accepted v161 APK/build identity and both-device speed/two-way-colour acceptance remain in SESSION_HANDOFF.md and the preserved acceptance receipt. No claim of a new physical checkpoint.
+Tests: five fork isolation checks; four permission tests with 18 Java decisions; six existing animation timing functions; materialized speed/colour/master checks; 11 canonical-owner/notification-manifest checks; signed assembly and packaged identity/signature/integrity checks all passed. This is focused non-visual build verification, not an assertion that the complete historical test suite or device UI was exercised.
 
-The desired bounce remains design-only: actual music level determines bounce; the existing animation-speed control still determines blinks. No BPM/beat tracking, microphone fallback or visualizer sampling added. Deezer/Shield audio-data availability remains to be tested jointly after authorized implementation.
+**Not done:** installation, device launch, OS permission grant, emulator use, microphone capture, Visualizer sampling or VU bounce. Nothing was merged or installed over working Unified. No user settings, data, artwork or laptop sources were modified.
 
-Source, tests and handoff publishing stay on GitHub. Preserve all concurrent work and fetch LIVE Unified before integration. Leave physical Pixel 10, device permissions, artwork, user settings and signing alone.
+Read `SESSION_HANDOFF.md` and `docs/handoffs/2026-09-13-music-lab-fork.md` for exact provenance, hashes and next boundaries. Permission entry: Launcher Settings > Now Playing > Music audio access. Actual bounce remains the agreed future design: music determines height; animation speed independently controls blinks. Only proceed to implementation/integration/installation within Ryan's next explicit request.
