@@ -202,7 +202,7 @@ public final class TvAppCardView extends FrameLayout {
         if (homeFavourite) {
             setForeground(null);
             iconView.setForeground(emphasized
-                    ? FocusChrome.outline(getContext(), HOME_ARTWORK_CORNER_DP)
+                    ? FocusChrome.artworkOutline(getContext(), HOME_ARTWORK_CORNER_DP)
                     : null);
         } else {
             iconView.setForeground(null);

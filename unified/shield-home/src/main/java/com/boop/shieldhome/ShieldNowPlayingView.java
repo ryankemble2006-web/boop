@@ -381,7 +381,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private void installFocusPop(View view) {
         view.setOnFocusChangeListener((v, focused) -> {
             if (v == artwork) {
-                v.setForeground(focused ? FocusChrome.outline(getContext(), ARTWORK_CORNER_DP) : null);
+                v.setForeground(focused ? FocusChrome.artworkOutline(getContext(), ARTWORK_CORNER_DP) : null);
             } else if (v instanceof TextView) {
                 v.setBackground(buttonBackground(focused));
             }
