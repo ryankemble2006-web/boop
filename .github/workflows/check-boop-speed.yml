@@ -1,0 +1,33 @@
+name: Check BOOP animation timing
+on:
+  push:
+    branches: [boop-unified-eye-sync-safe-v159]
+    paths:
+      - 'source/**'
+      - 'unified/**'
+      - 'tests/**'
+      - '.github/workflows/check-boop-speed.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boop-speed-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  timing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pytest
+      - name: Exact clock and authored-motion regression checks
+        run: python -m pytest -q tests/test_animation_speed.py
