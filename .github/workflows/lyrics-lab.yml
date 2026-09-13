@@ -1,0 +1,83 @@
+name: Build side-by-side BOOP Lyrics Lab
+on:
+  push:
+    branches: ['boop-lyrics-lab-side-by-side-v157']
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lyrics-lab-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  isolated-lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Test side-by-side identity and unchanged shared sources
+        run: python3 tests/test_lyrics_lab.py
+      - name: Test existing timed lyrics and entry behavior
+        run: |
+          set -euo pipefail
+          mkdir -p work/lyrics-core
+          curl --fail --silent --show-error --location --max-time 30 https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar -o work/lyrics-core/json.jar
+          echo '3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed  work/lyrics-core/json.jar' | sha256sum -c -
+          src=unified/shield-home/src/main/java/com/boop/shieldhome
+          javac -encoding UTF-8 -cp work/lyrics-core/json.jar -d work/lyrics-core "$src/DeezerLyricsDocument.java" "$src/LyricsRequestGate.java" "$src/DeezerLyricsClient.java" "$src/DeezerLyricsHttp.java" "$src/DeezerTimedLyricsClient.java" tests/canonical/NativeLyricsCoreCheck.java tests/canonical/NativeLyricsTransportCheck.java tests/canonical/NativeLyricsIncompleteCheck.java
+          for test in NativeLyricsCoreCheck NativeLyricsTransportCheck NativeLyricsIncompleteCheck; do java -cp work/lyrics-core:work/lyrics-core/json.jar "com.boop.shieldhome.$test"; done
+          python3 tests/test_native_lyrics_entry.py
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+      - name: Prepare existing permanent signer
+        env:
+          KEY: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+        run: |
+          test -n "$KEY"
+          printf '%s' "$KEY" | base64 --decode > "$RUNNER_TEMP/boop-lyrics-lab.jks"
+          chmod 600 "$RUNNER_TEMP/boop-lyrics-lab.jks"
+          echo "BOOP_SIGNING_STORE_FILE=$RUNNER_TEMP/boop-lyrics-lab.jks" >> "$GITHUB_ENV"
+      - name: Build separate lab only
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          python3 scripts/materialize-lyrics-lab.py
+          gradle --no-daemon -p lyrics-lab :app:assembleDebug --stacktrace
+      - name: Verify distinct identity, signature and archive
+        run: |
+          set -euo pipefail
+          APK=lyrics-lab/app/build/outputs/apk/debug/app-debug.apk
+          TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          "$TOOLS/aapt" dump badging "$APK" > work/lyrics-lab-badging.txt
+          grep -Fq "package: name='com.boop.lyricslab'" work/lyrics-lab-badging.txt
+          ! grep -Fq "package: name='com.boop.alpha1'" work/lyrics-lab-badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > work/lyrics-lab-manifest.txt
+          ! grep -Fq 'android.intent.category.HOME' work/lyrics-lab-manifest.txt
+          ! grep -Fq 'android.permission.RECORD_AUDIO' work/lyrics-lab-manifest.txt
+          ! grep -Fq 'android.permission.SYSTEM_ALERT_WINDOW' work/lyrics-lab-manifest.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > work/lyrics-lab-signer.txt
+          expected=$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt)
+          actual=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' work/lyrics-lab-signer.txt | tr -d '\r\n')
+          test "$expected" = "$actual"
+          unzip -tq "$APK"
+          sha256sum "$APK" > work/lyrics-lab-sha256.txt
+          git rev-parse HEAD > work/lyrics-lab-built-commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Lyrics-Lab
+          path: |
+            lyrics-lab/app/build/outputs/apk/debug/app-debug.apk
+            work/lyrics-lab-*.txt
+          if-no-files-found: error
+      - name: Remove temporary signer
+        if: always()
+        run: rm -f "$RUNNER_TEMP/boop-lyrics-lab.jks"
+      # Source/build/functional checks only. Runtime and appearance checks stay local.
