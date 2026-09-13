@@ -2,7 +2,7 @@ name: Build BOOP Unified APK
 
 on:
   push:
-    branches: [ "boop-unified", "boop-unified-notifications", "boop-v70-natural-voices", "boop-v85-natural-tablet", "boop-canonical-rebuild", "boop-v125-animation-integration" ]
+    branches: [ "boop-unified", "boop-unified-notifications", "boop-v70-natural-voices", "boop-v85-natural-tablet", "boop-canonical-rebuild", "boop-v125-animation-integration", "boop-unified-eye-sync-safe-v159" ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -168,7 +168,7 @@ jobs:
           java -cp work/startup-prevention-tests StartupCleanupPolicyTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupRecoveryPolicyTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupPackageRepositoryTest
-          java -cp work/startup-prevention-tests com.boop.shieldhome.StartupRestoreStoreTest
+          java -cp work/startup-prevention-tests com.boop.shieldhome/StartupRestoreStoreTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupPackageCommandsTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupPackageControllerTest
           java -cp work/startup-prevention-tests com.boop.shieldhome.StartupManagerMigrationTest
@@ -225,6 +225,9 @@ jobs:
             --tests '*BoopPcmRingBufferTest' --tests '*BoopDeviceProfileTest' \
             --tests '*ShieldEntryRouteTest' --tests '*BoopAssistant*' --tests '*LocalPlayerCloseClientTest' --tests '*HomeAssistantSavedConnectionTest' --tests '*HomeAssistantAuthUrlsTest' \
             --tests '*HomeAssistantRoomLookupTest' --tests '*LocalReplyTest' --tests '*BoopRoom*' --tests '*HomeAssistantEntityResolverTest' --tests '*HomeAssistantEntityDiscoveryProtocolTest' --tests '*Deezer*Test' --stacktrace
+
+      - name: Test shared eye colour and preserved Wall appearance
+        run: python tests/test_shared_eye_colour.py
 
       - name: Prepare permanent BOOP signer
         shell: bash
