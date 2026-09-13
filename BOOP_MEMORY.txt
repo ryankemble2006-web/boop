@@ -1,86 +1,64 @@
 BOOP LYRICS LAB DURABLE MEMORY
-Updated 2026-09-13. Owning branch: boop-lyrics-lab-side-by-side-v157.
+Updated 2026-09-13. Owner: boop-lyrics-lab-side-by-side-v157.
 
-LATEST USER-CONFIRMED RESULT
-Ryan clarified: "no i meant the adb is fine, ..... yes they do reload when skip is pressed inside the lab.."
-Record USER-CONFIRMED PASS on Shield: pressing Skip inside Lyrics Lab reloads
-lyrics without exiting/reopening. This closes the reported manual-Skip refresh
-regression for installed v158. Do not ask him to confirm that same result again.
-ADB is fine per Ryan. Do not turn the earlier connector timeout into an ongoing
-ADB diagnosis, ask for another reconnection or reinstall an already-working app.
-No fresh tool ping or physical test was performed in this documentation update.
+CURRENT APP / FOOTER REQUEST
+Separate app com.boop.lyricslab, 159 / 0.1.159-lyrics-footer.
+Ryan asked to stay in this lab while the other Unified branch finishes, remove
+Back to Now Playing, put the licence credit in its place, and halve that font.
+The licence/copyright credit is now passive at the former bottom-right footer
+inset with font 5 instead of 10. Main lyric text remains the same size. No other
+layout, artwork, timestamp, player-control, provider or subscription change.
+Existing hardware Back still belongs to the Activity; the removed footer is not
+replaced by another clickable/focusable control. Appearance awaits Ryan's look.
 
-CURRENT BOUNDARY
-The separate com.boop.lyricslab remains the app for this work. Ryan's earlier
-"do it" released the busy-Shield hold for that lab deployment/test, not for either
-phone or Unified. This new success confirmation does NOT authorize merging,
-new code, new permissions, signing changes or additional device interventions.
-GitHub owns source/builds. Preserve concurrent work and the approved design.
-
-PREVIOUS PHYSICAL DEPLOYMENT
-Exact v158 was installed only as com.boop.lyricslab. Physical package/version
-and installed base APK hash matched the tested artifact. Existing notification
-access was already enabled by Ryan; no grant was made. Launch succeeded and
-logged a 50-line timed document. Those deployment receipts precede this update.
-
-The automated capture/one-Next command later timed out without process/output;
-its execution remains UNKNOWN. Follow-up connector calls also timed out despite
-the registry listing Yoga online. No specific cause was established. Ryan's later
-Skip success is separate user evidence; do not claim the automated test passed.
-If that uncertain operation ever needs revisiting, inspect existing evidence
-before replaying it. It is not a blocker to accepting the user's confirmed result.
-Keep Desktop Commander pinned to 0.2.47 with its existing working command.
-
-APP, DESIGN AND REGRESSION HISTORY
-BOOP Lyrics Lab is not a HOME launcher or replacement Unified installation.
-Ryan approved the emulator design and enabled lab notification access himself.
-Initial lyrics and all player controls were user-confirmed. He then reported
-that lyrics did not reload until exit/reopen; that was a genuine v157 regression,
-not disproved by the first general success report. The v158 Skip path is now
-user-confirmed working. Preserve the full-screen composition, cyan styling,
-approved artwork and controls. No polling or Deezer menu/page-reload macro.
-
-WHY REFRESH BROKE
-The lab removed its only metadata/playback callback while the active session
-passed through temporary NONE/STOPPED/SKIPPING states. It could miss the next
-song until Activity restart. Observe the live token separately from displayable
-states, retain the callback through transitions, and clear stale content. Detach
-on real removal, permission loss and lab inactivity.
-
-TESTED FIX AND ARTIFACT
-Version 158 / 0.1.158-lyrics-session-sync.
-App source: 5970f59aa9173fd8171d2d370b856349d0cf4f17.
-Signed GitHub run 34766477538 SUCCESS; artifact BOOP-Lyrics-Lab / 10320107611.
-APK SHA256 c95bb9cc343ec9752fb2be610d0c61c0e4d01eb4faa3c62b8c6b28713db00c09.
+DELIVERY
+Source e6f9bbb736ac90287815bea3a9c48496505675ed.
+Signed GitHub run 34772352902 SUCCESS; artifact BOOP-Lyrics-Lab / 10322900224.
+APK SHA256 fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503.
 Signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
-Signed v157 reproduced the bug locally. Signed v158 passed 38 actual Android-
-session/production-presentation assertions twice, including track refresh,
-pause/resume, seek/cue updates, transient states, recovery and reopening.
-The provider/words were synthetic. Keep those checks distinct from the later
-real-Deezer user Skip result; do not extrapolate full catalogue/audio acceptance.
-CI tests passed. Renderer/artwork unchanged. Review was in-session, not independent.
+Downloaded source/package/version/digest/signature independently checked.
+Installed only Lyrics Lab on Shield; its base APK hash and version matched.
+Separate Unified reported 161 / 1.2.161-lab-scale-independent and its APK hash
+was identical before and after. No playback input, app launch, permission change,
+data clear, phone or emulator operation. No merge or local app-source/build work.
 
-PROTECTED STATE
-Dedicated AVD BOOP_Lyrics_157_8186447 was left with hash-verified v158. Its temporary
-synthetic player/instrumentation app was removed after checks. NEVER install that
-fixture on Shield or over real Deezer. No real Deezer install is assumed on the AVD.
-Shield Unified was v159 / 1.2.159-shared-eye-colour at lab deployment and was not
-an edit/install target. No final post-timeout hash was obtained. Phones untouched.
+USER-CONFIRMED RESULT TO PRESERVE
+Ryan: "yes they do reload when skip is pressed inside the lab.."
+The v158 manual-Skip refresh fix is USER-CONFIRMED PASS with real Deezer on Shield.
+He also said ADB is fine. Do not ask for repetition/reconnection merely because
+historical docs describe the old failure or a timed-out connector call. Initial
+lyrics and controls and the emulator design were accepted; only the explicit
+footer amendment above is authorized as a design change now.
 
-NEXT AND VERIFICATION LIMITS
-Await explicit merge approval, then integrate into the live verified Unified
-successor without overwriting concurrent work. The lab observer and Unified
-session manager are separate. Do not merge the whole old base or redesign the
-approved screen. User confirmation covers Skip inside the lab; natural track
-completion, both skip directions, missing-lyrics/offline and longer sessions
-were not individually confirmed. Do not silently upgrade those to passed tests.
+REGRESSION / TEST HISTORY
+v157 genuinely lost its per-session listener through temporary playback states,
+so the lyrics only returned after reopening. v158 retains active-token observation
+separately from presentation eligibility, without polling or page-reload macros.
+That observer is unchanged by v159. v158 passed 38 real Android runtime assertions
+twice locally with a synthetic provider and invented cached words, then Ryan
+confirmed the real-player Skip path. CI continuity/provider/entry checks remain green.
+Do not infer universal catalogue, both skip directions, natural completion,
+offline or long-session physical acceptance from the one Skip report.
+A prior automated capture/Next timed out with unknown execution outcome; it is
+not a passed test. Its history remains in the dated v158 installation receipt.
+
+WORKFLOW / MERGE BOUNDARY
+Current main BOOP_START_HERE supersedes emulator-first with GitHub development,
+non-visual tests/signing/builds and joint device testing. No automatic emulator or
+visual acceptance gate. Preserve local/concurrent work. Keep Desktop Commander
+0.2.47 pinned with the existing known-good command. No connection upgrades.
+Only the separate lab is this task's app; leave both phones and Unified alone.
+Wait for the other branch and Ryan's merge approval. Later integrate the feature
+into the then-current Unified source, not overwrite it with the original v156 base.
+Unified's session manager differs from this lab observer. Jointly check the merged
+build; do not require repeating already-confirmed lab tests merely to resume.
 
 REFERENCES
-SESSION_HANDOFF.md and BOOP_STATUS.md own the current checkpoint.
-Prior install/timeout: docs/handoffs/2026-09-13-lyrics-shield-v158-install.md.
-Its pending/reconnect instructions are historical and superseded by this result.
-Local proof: docs/handoffs/2026-09-13-lyrics-local-refresh-tests.md.
+SESSION_HANDOFF.md and BOOP_STATUS.md own current continuation.
+Current receipt: docs/handoffs/2026-09-13-lyrics-footer-v159.md.
+Earlier proof: docs/handoffs/2026-09-13-lyrics-local-refresh-tests.md.
+Earlier install/timeout: docs/handoffs/2026-09-13-lyrics-shield-v158-install.md.
 Earlier diagnosis: docs/handoffs/2026-09-13-lyrics-track-refresh.md.
-Full historical product memory: docs/history/lyrics-lab-pre-user-confirmation/.
-Private captures, raw dumps, addresses, tokens and third-party APKs stay off GitHub.
-This clarification update changes documentation only, not app code or devices.
+User-confirmation checkpoint before footer: 820c1621f3340b96a915b353b4ef8cc0d217bc97.
+Historical full product memory: docs/history/lyrics-lab-pre-user-confirmation/.
+Do not publish private captures, dumps, addresses, tokens or third-party APKs.
