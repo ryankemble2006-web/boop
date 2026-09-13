@@ -1,35 +1,34 @@
-# Unified memory: v164 installed for Ryan's music test
+# Unified memory: stronger v165 candidate after v164 music feedback
 
-Updated 2026-09-13. Task owner: `boop-unified-v164-music-bounce`.
+Updated 2026-09-13. Task owner remains `boop-unified-v164-music-bounce`.
 
-## Latest physical delivery
+## Latest user evidence
 
-Ryan explicitly requested installation on the now-free Shield. Exact signed v164 was installed in place with ordinary ADB install -r, Success/exit0. Independent readback verified the installed package/version/hash and unchanged HOME, app UID and first-install timestamp. RECORD_AUDIO was already granted and the Unified media listener already enabled; both remained unchanged. No grants, resets, data clears, uninstalls, explicit launch/playback commands, phones or emulators were involved. No app source edits/builds or branch merges occurred in this continuation.
+Ryan tested installed v164 and said "ha it kinda works :P make him bounce more obviously". This is positive but qualified feedback about movement. It does not establish perfect beat matching, every audio source, lyrics acceptance of v164, or appearance of the newly built v165.
 
-Preflight actually found `163 / 1.2.163-music-audio-access`, despite the earlier rollback report. This is an observation, not a diagnosis of why163 remained. Do not misreport a162-to164 physical install. The APK source lineage remains accepted v162 directly, not163.
+Keep the task narrow: actual music controls whole-puppet bounce; saved animation speed still controls blinks and expressions independently. No BPM analysis, synthetic beats, per-hit clip restarts or physical-microphone fallback. Keep the accepted art and native Lyrics button intact.
 
-Installed: `com.boop.alpha1`, `164 / 1.2.164-music-bounce`.
-Source: `f9f65569250b9dc02602101ef4d56195824e0380`; signed run `34778178916`; artifact `10323694771`.
-APK SHA256: `d7ae61fc956dddc064211b7e5b3c5197b1ce4e55800acd558cee4b9e622eb5c8`.
-Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Staged hash/source/package/signature and native Lyrics Activity were checked before installation. Installed base.apk matched the staged candidate afterwards. Installation receipt: `docs/handoffs/2026-09-13-v164-shield-install.md`.
+## v165 change and exact candidate
 
-## Preserve the confirmed work
+v165 is v164 plus a `* 2f` visible-lift multiplier in MusicBounceRenderer and the two version fields only. MusicBounceSource, MusicBounceEnvelope, rise 28 ms/fall 140 ms, permission flow, blink engine, viewport width/height and all native lyrics/launcher/voice/materialization inputs are unchanged. Silence and reset restore zero lift. Visible maximum offset rises from 0.14 to 0.28 of surface height. Stronger travel and clipping require Ryan's visual test; the bounds alone are not visual acceptance.
 
-Ryan had reported no movement and a broken new Lyrics button on163, then asked to start again from confirmed162. v164 starts directly at `boop-unified-native-lyrics-v162@112d09b5b446d6582954a6d89b3700fe16298ecb`. Do not reuse the v161 Music Lab or treat163 as this source baseline. The164 branch remains unmerged; no accepted-owner/main/lab advance is authorized merely by installation.
+Package/version `com.boop.alpha1`, `165 / 1.2.165-music-bounce-stronger`.
+Source `fe8c04274064643342734baaafb46077832f335c`.
+Signed run `34779552167`, job `103783924085`, SUCCESS; artifact `10325220435`.
+APK `BOOP-Unified-v165-Music-Bounce-Stronger.apk`, SHA256 `bbce760abc5f50fa68663c344fa9b75edfd9feb76559fe35c328c507af09bda2`.
+Existing signer SHA256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Downloaded artifact hashes, embedded source and package/signing receipts matched; no APK execution in the artifact sandbox.
 
-v162 native Lyrics and Skip were user-accepted with "perfection". Preserve internal ShieldLyricsActivity, matching button route, track observer, main lyric size and passive half-size bottom-right licence footer. The retired Lyrics Lab must not become a dependency or be reinstalled. v161 speed-on-Shield-and-Pixel7 and automatic two-way colour remain inherited acceptance. Speed is device-local; colour is shared. These are not fresh acceptance of164.
+## Preserved baseline and installation history
 
-The164 source preserves all existing lyrics files/callback, media manager, launcher route, startup/voice features, dependencies/materializers, artwork/shaders and shared animation engine. Existing input changes were confined to four adapters: version fields, one private Activity line, six settings lines and the Now Playing puppet host. Detailed provenance and the prior full root memory are retained at `677009e53c52df3ec6c92ea75214df5e7c4dba0a` and `docs/handoffs/2026-09-13-v164-music-bounce.md`.
+The previous v164 is the last verified Shield installation, source `f9f65569250b9dc02602101ef4d56195824e0380`, APK `d7ae61fc956dddc064211b7e5b3c5197b1ce4e55800acd558cee4b9e622eb5c8`. Its standard in-place install preserved HOME/UID/first-install timestamp and existing audio/media grants. No device was operated or updated during v165 tuning. Full prior root records remain at `95e2d153ac6e6b319f50284d4fbdb53bcb83c294`, and dated v164 receipts are retained.
 
-## Locked music behavior
+This lineage starts from accepted v162 at `boop-unified-native-lyrics-v162@112d09b5b446d6582954a6d89b3700fe16298ecb`, not old v161 Music Lab or v163. v162 native Lyrics and Skip were user-accepted with "perfection". Preserve internal ShieldLyricsActivity, button route, track observer, main lyric size and passive half-size licence footer. No retired Lyrics Lab dependency. Earlier v161 speed/colour acceptance remains inherited evidence; speed is local and colour shared. The v162 branch was live-checked unchanged; this task did not merge or write main, the accepted owner or other labs.
 
-Actual Android Visualizer output-mix loudness drives vertical bounce; saved animation speed independently controls blinks/expressions. No BPM analysis, synthetic beat, per-hit clip restart or physical-microphone fallback. Missing/stale/constant samples must not fabricate music response. MusicBounceSource polls transient levels on a short-lived background worker while visible/playing/permitted; it releases when inactive without changing audio focus, volume or playback. MusicBounceEnvelope removes DC and applies bounded fast-rise/soft-fall motion. MusicBounceRenderer shifts the GL viewport around the unchanged eye renderer, not the eye pose/artwork/shader.
+## Verification and delivery boundary
 
-The retained MusicAudioPermissionActivity/Flow and foreground-only once-off offer use explicit Continue/Not now and Android's permission UI. No ADB auto-grants, denial loops or voice callback reuse. Manual entry remains Launcher Settings > Now Playing > Music audio access. The installed Shield already had the necessary grant at this readback.
+Test-first red71942f8282c618e260864e9ff46a110906e63304 had expected missing-version/gain failures, including the production renderer yielding 1 pixel rather than the requested 2. Final six music test groups passed with 332 unchanged envelope assertions and 27 renderer amplitude/size/lifecycle checks. Source guards permit only the multiplier/version change from v164. Native lyrics routing/data/timing/transport/lifecycle, original timing/materialization and 10 owner/bay checks passed. Signed assembly, packaged classes/version, permanent signature and integrity passed. Two inherited one-time v162 freezes skip later versions; new guards provide current preservation evidence. No full historical-suite rerun or independent reviewer claimed.
 
-## Verification boundary and workflow
+v165 is signed for Ryan to test, not installed or physically accepted. Deliver the APK in chat; only install following a request, keeping normal package/hash/signature checks and data. No shell grants, permission reset, Home replacement or autonomous visual/emulator loop. No new main-phone access; leave physical Pixel 10 alone.
 
-v164 is INSTALLED, not yet physically accepted. Useful real Deezer levels, visible bounce, runtime permission behavior and runtime lyrics remain for Ryan's joint test. Prior nonvisual checks passed with332 envelope assertions, lyrics data/timing/transport/entry/lifecycle checks, six timing functions, materialized source/art checks,10 owner/bay checks, signed assembly and packaged identity/signature/classes. Two inherited v162-only freezes skip future versions; the new164 baseline guard passed. No full historical-suite rerun, independent reviewer or hosted visual test is claimed, and these tests were not rerun for this installation-only continuation.
-
-Keep development/build/signing/handoffs on GitHub and test behavior with Ryan. No automatic emulator gate or main-phone operation. Physical Pixel10 remains excluded. Keep the working Desktop Commander0.2.47 command unchanged. No local app checkout was modified or claimed synchronized; private staging/readback files remain under laptop Downloads. Preserve concurrent work and user settings; publish sanitized task evidence only. Fetch LIVE task HEAD before continuation and update handoff/status/memory after material results.
+Keep development, nonvisual tests, builds, signing and handoffs on GitHub. Desktop Commander0.2.47 stays unchanged. Laptop continuity reads are not source synchronization; no local app checkout was edited or built. Preserve other tasks and private artifacts. Fetch LIVE task HEAD before continuation and update handoff/status/memory after material results. Receipt: `docs/handoffs/2026-09-13-v165-stronger-bounce.md`.
