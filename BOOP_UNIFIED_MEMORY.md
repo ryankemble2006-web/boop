@@ -1,19 +1,31 @@
 ## Current continuation: v154 seek-layout flash (2026-09-13)
 
-Owner: `boop-unified-seekflash-v154`, from accepted v153 docs `1f314af6`.
-Ryan signed off 10-second seeking, Down from the progress bar to Pause, and the
-250 ms settings hold. The accepted thin corner geometry stays unchanged.
-Only remaining reported symptom: seeking left briefly moves Lyrics/Close player
-behind the eyes. A focused real-Shield seek reproduced a progress-area width
-change from 1082 to 1450 and back while the activity/view identities stayed fixed.
-The transient puppet was a direct row child; its GONE state released the bay.
-The fix gives that existing puppet a persistent, non-focusable row host, without
-changing media ownership, animation, seek commands, focus keys or accepted art.
-Two ownership checks failed before the fix and now pass; 10 existing focused
-contracts also pass. No CI visual checks or new dependencies were added.
-Full GitHub signing/build and Shield-only installation are pending this checkpoint.
-This is a small cosmetic repair: no emulator gate. Neither Pixel is in scope;
-Pixel 10 remains on hold. No grants, lock changes, data clearing or signer changes.
+Owner: `boop-unified-seekflash-v154`; signed source `66e93bc196ce5111321318c715ecb8fd5e8b6914`.
+Package/version: `com.boop.alpha1`, `154 / 1.2.154-seek-layout`.
+GitHub run `34748063810` completed SUCCESS; artifact `10315325483`, BOOP-Unified.
+APK SHA256 `d4e8d6f349405617ee2f66e5486d788b642972310c8719aee42b4d0794faeba0`.
+Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Source receipt, APK ZIP integrity, actual package/version, digest and signature
+were checked before Shield install. `adb install -r` returned Success; installed
+version 154 and on-device base APK digest matched the signed artifact exactly.
+
+Ryan signed off 10-second seeking, Down from the bar to Pause, the 250 ms hold,
+and v153 thin corners. Preserve them. v154 changes only the media row's parent
+for the existing puppet: a persistent non-focusable bay keeps its width when
+media ownership hides the child. No animation/ownership/seek/focus logic changes.
+The pre-fix, progress-focused real-Shield seek reproduced the reported jump:
+control width 1082 -> 1450 -> 1082; Lyrics/Close player shifted right by the same
+368 pixels. The activity and views were not recreated. Two structural ownership
+checks were red before the fix and green after; 10 existing focused guards passed.
+Full GitHub compilation/tests/signing succeeded; no visual CI checks were added.
+
+Shield launch returned to BOOP Home. The initial post-install width was 1082.
+The seek recheck was ABORTED when Johnny Castaway MainActivity became foreground;
+no post-fix seek/flash pass or final visual acceptance is claimed. Do not fight
+another foreground task. Next: Ryan checks the Left seek flash on Shield.
+Neither Pixel nor any emulator was queried or changed in this task. Pixel 10
+remains on hold. No permission changes, lock bypass, data clear or signer changes.
+Private captures/dumps and scratch checks remain ignored, not published.
 
 ## Current continuation: v153 artwork corners (2026-09-13)
 
