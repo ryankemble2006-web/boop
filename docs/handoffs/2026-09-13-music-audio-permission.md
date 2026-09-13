@@ -1,4 +1,4 @@
-# Music audio permission prompt: source and verification receipt
+# Music audio permission prompt: checked source and verification receipt
 
 Updated 2026-09-13. Scope: Ryan explicitly asked to code a permission prompt if audio access is missing. Earlier read-only discussion remains the boundary for the actual VU bounce. This work does not implement a Visualizer sampler or change motion.
 
@@ -18,12 +18,23 @@ After implementation, run `34773806856`, permission job `103768098656`: four tes
 
 The same run's compile job `103768116703` materialized all four changed production files byte-identically, then stopped before compilation because the new workflow used shallow Git history and the existing animation regression test could not read baseline `a901c1e9f31e55c710e31ac7ff4f5924c9769d56`. That file was independently fetched successfully from GitHub. No motion defect was demonstrated. Workflow-only correction `746a7d3ab0c8601c174ca690c2b27397266e673e` sets fetch-depth 0, matching the established full-build workflow; it changes no app source or existing tests.
 
-Final non-visual check run: `34773889717` at `746a7d3ab0c8601c174ca690c2b27397266e673e`. At this checkpoint, its permission job `103768324770` passed; compile job `103768342060` is still in progress. Compilation and final timing outcomes are not yet claimed in this receipt.
+## Final passing verification
+
+Run `34773889717` at `746a7d3ab0c8601c174ca690c2b27397266e673e`:
+
+- Permission job `103768324770`: SUCCESS. The four permission/integration tests pass with the unchanged 18-decision pure-Java harness.
+- Compile job `103768342060`: SUCCESS. Logs were read after completion. The four changed production files match their materialized counterparts byte-for-byte.
+- `tests/test_animation_speed.py`: all six functions pass. Log evidence includes 160720 timing checks, 1157272 edge checks, and 20920 Lab callback checks each for raw and materialized source. The 26 authored clips remain unchanged.
+- `tests/test_materialized_speed.py`: PASS; materialized Lab, speed, colour, authored motion and approved-master bytes match reviewed source.
+- Now Playing and notification canonical-owner contracts: four pytest tests passed, zero failures.
+- `gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:compileDebugSources --stacktrace`: BUILD SUCCESSFUL, 40 actionable tasks executed. This compiled the new permission activity inside Shield Home and the combined Unified application, not just the pure-Java harness. Existing Android/Gradle deprecation warnings were non-fatal and were not silently claimed fixed.
+
+No Android permission dialog was exercised on a device or emulator. These are code/compile/logic checks, not user acceptance of focus, Back behaviour or the OS prompt. No useful Deezer audio signal is implied by passing these checks.
 
 ## Review and publication boundaries
 
 Reviewed the source diff and Activity lifecycle/permission callback separation. The app changes are limited to two new permission classes, six settings lines and one private activity declaration. Animation/voice/media/artwork files are unchanged. No independent reviewer or physical acceptance is claimed.
 
-The compile job uses the existing materialization/build configuration and `:app:compileDebugSources`. It is not an APK assembly/signing job. No new signed artifact/version or installed checkpoint is produced here. No device operation, emulator launch, permission grant, settings reset or laptop source modification occurred.
+The compile job uses the existing materialization/build configuration and `:app:compileDebugSources`. It is not an APK assembly/signing job. No new signed artifact/version or installed checkpoint is produced here. No device operation, emulator launch, permission grant, settings reset or laptop source modification occurred. Root SESSION_HANDOFF.md, BOOP_STATUS.md and BOOP_UNIFIED_MEMORY.md were reconciled in documentation-only commit `31be9827460aeb49a0d65ebc37f4ee543f006ec3`; this final receipt also changes documentation only.
 
 The accepted v161 application and its speed/two-way-colour physical acceptance remain unchanged by this task. Next integration must reconcile the LIVE owner branch and preserve its current acceptance handoff. Only joint tests with Ryan can establish the actual Android prompt behaviour or later usable Deezer/Shield Visualizer readings. Blinks remain speed-controlled; music-driven bounce is still a future implementation.
