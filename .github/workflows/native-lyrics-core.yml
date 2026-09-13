@@ -26,8 +26,7 @@ jobs:
           set -euo pipefail
           mkdir -p work/native-lyrics-core
           curl --fail --silent --show-error --location --max-time 30 https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar -o work/native-lyrics-core/json.jar
-          curl --fail --silent --show-error --location --max-time 30 https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar.sha256 -o work/native-lyrics-core/json.sha256
-          echo "$(cat work/native-lyrics-core/json.sha256)  work/native-lyrics-core/json.jar" | sha256sum -c -
+          echo '3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed  work/native-lyrics-core/json.jar' | sha256sum -c -
           src=unified/shield-home/src/main/java/com/boop/shieldhome
           files=()
           for name in DeezerLyricsDocument LyricsRequestGate; do
