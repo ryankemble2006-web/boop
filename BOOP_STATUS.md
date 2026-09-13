@@ -1,29 +1,30 @@
-# Unified v162 status
+# Unified v162: native lyrics user-accepted; standalone Lab removed
 
-Updated 2026-09-13. Owner `boop-unified-eye-sync-safe-v159`; PR #10 merged the
-native lyrics integration at `0908d6955c90978e97dcbae9031f3f1de638bd9d`.
+Updated 2026-09-13. Owner: `boop-unified-eye-sync-safe-v159`.
+Package/version: `com.boop.alpha1`, `162 / 1.2.162-native-lyrics`.
 
-**Delivered on Shield:** `com.boop.alpha1`, `162 / 1.2.162-native-lyrics`.
-The existing Now Playing Lyrics button opens BOOP's private native screen, not
-a Deezer menu macro or the separate Lab. Includes the half-size bottom-right
-licence/copyright footer and no Back to Now Playing footer action.
+**Physical acceptance:** Ryan replied "perfection" to the integrated Now Playing
+-> Lyrics / Skip confirmation. The merged native feature is USER-ACCEPTED ON
+SHIELD, not awaiting another confirmation. The approved footer/presentation and
+all earlier accepted v161 colour/speed behavior remain protected.
 
-**Verified:** full signed run `34773509395` SUCCESS, app source
-`1e0136ffa9732353035f88ca7a7cb131f7481557`, artifact `10322553107` / BOOP-Unified.
-APK SHA256 `cef4527510d9856b669889abfc01c00e6f1a3819e1a28b5e05cee5d472df7171`.
-Downloaded signature/package/source and installed version/hash all matched.
-Shield was on the exact accepted v161 before the ordinary update. No downgrade,
-permissions, data reset, playback input, app launch, phone or emulator operation.
+**Conditional cleanup completed:** after that confirmation, only the separate
+`com.boop.lyricslab` was uninstalled on Shield. ADB returned Success/exit 0 and a
+fresh package query verified absence. Unified v162's version and installed APK
+hash were identical before/after. No phone/emulator operation, playback input,
+app launch, new install, manual permission/settings change or app-code edit.
+The standalone source branch and historical test/build evidence are retained.
 
-**Preserved:** v161's accepted colour/speed source, artwork, manager, launcher and
-other code; exact source-scope guards pass. New native checks and the original
-235 Unified / 68 Shield tests pass. New Activity tests use controlled boundaries;
-CI/install success is not new physical lyrics acceptance.
+**Exact installed APK:** SHA256
+`cef4527510d9856b669889abfc01c00e6f1a3819e1a28b5e05cee5d472df7171`.
+Built source `1e0136ffa9732353035f88ca7a7cb131f7481557`, signed run `34773509395`,
+artifact `BOOP-Unified` / `10322553107`. Permanent signer unchanged. PR #10 merge
+`0908d6955c90978e97dcbae9031f3f1de638bd9d`. Earlier source/functional/package checks
+passed; they were not rerun for this acceptance record. User acceptance is distinct
+from the previous CI evidence and today's package-only cleanup verification.
 
-**Pending user confirmation:** open Lyrics inside Unified and confirm the merged
-screen/Skip behavior. The Lab remains unchanged at v159 with its before/after APK
-hash verified. Remove ONLY com.boop.lyricslab from Shield after that confirmation,
-not now. Its source branch/history remains recovery provenance.
-
-Handoff/memory and detailed receipt: SESSION_HANDOFF.md, BOOP_UNIFIED_MEMORY.md,
-`docs/handoffs/2026-09-13-unified-v162-lyrics.md`.
+**Next:** keep the accepted native feature inside current Unified. Do not reinstall
+the retired Lab or reopen the confirmed integration gate. Unenumerated catalogue/
+offline cases remain unclaimed coverage, not a new automatic testing backlog.
+See `SESSION_HANDOFF.md`, `BOOP_UNIFIED_MEMORY.md`, and
+`docs/handoffs/2026-09-13-unified-v162-accepted-lab-retired.md`.
