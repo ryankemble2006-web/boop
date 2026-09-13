@@ -29,6 +29,16 @@ Keep it isolated from Unified and preserve original game folders/private packs.
 For any BOOP task, fetch the intended live branch, preserve dirty/concurrent work, and read only that branch's newest task-specific handoff or verification note when needed.
 Do not require the deleted historical root rule stack before planning or editing.
 
+## Laptop emulator-first testing
+
+On Ryan's laptop, use the local Android emulator as the default BOOP development/test loop before real-device checks whenever the behaviour can be reproduced there.
+For phone/Unified work, use `Pixel_10_Pro_XL_API_36`: official `pixel_10_pro_xl` hardware profile, Android 16 / API 36 Google APIs x86_64, 1344 x 2992.
+For Android TV-specific behaviour, use `BOOP_Android_TV_API_36` when appropriate.
+
+Build, install, launch, collect screenshots/logs, and run focused UI/animation/functional checks locally first. Avoid repeated physical-device deploy cycles for ordinary iteration unless the behaviour is genuinely device-specific or Ryan explicitly asks for it.
+Real Pixel/Shield hardware remains the acceptance gate for remote focus/navigation, real notifications/media integrations, HDMI/audio/display behaviour, sensors, performance and other hardware-specific paths.
+An emulator pass is `locally tested`; never relabel it as `physically tested` or `physically accepted`.
+
 ## Desktop Commander / ADB
 
 On Ryan's laptop, the known-good Desktop Commander remote command is:
