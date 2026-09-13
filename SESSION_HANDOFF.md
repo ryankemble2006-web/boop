@@ -1,3 +1,12 @@
+﻿# BOOP v148 single-face ownership checkpoint
+
+Updated 2026-09-13. Owner: `boop-unified-animation-v148`.
+
+Scoped source commit `80cd81c1` enforces one visible BOOP face owner across Voice Settings, Developer Menu and notification preview without changing any of the 26 canonical animation definitions or locked artwork. Four regression assertions were run red against untouched v147 and all four failed for the expected ownership gaps; the same assertions pass on v148. `BoopFacePresentationHarness` passes eight ownership scenarios, including delayed animation visibility not resurrecting an occluded face.
+
+A clean detached worktree at `80cd81c1` materialized successfully. Android Java compilation and the focused notification/dev-menu unit tests completed with `BUILD SUCCESSFUL`; local APK assembly correctly stopped at the absent private BOOP signing key, so no locally signed release is claimed. Three unrelated dirty Shield files in the working tree remain excluded from this commit.
+
+v148 is an intermediate checkpoint only. Unified's canonical face still consults Android animator scale, so the next isolated version will transplant the already-proven Animation Lab independent-motion policy before device installation/acceptance.
 # BOOP v147 duplicate-render cleanup: signed build published
 
 Updated 2026-09-13. Owner/worktree: `boop-unified-v146-integration`.
@@ -126,3 +135,4 @@ branch as the latest app. Current source is committed; future work must retain a
 three fixes. Private screenshots/logs, hash snapshots, rollback APKs, probe helpers
 and generated build/cache outputs remain ignored and unshared. No credentials or
 third-party inspection artifacts were published. No completion music skip sent.
+

@@ -1,3 +1,14 @@
+﻿# BOOP v148 status
+
+- Branch: `boop-unified-animation-v148`
+- Source checkpoint: `80cd81c1`
+- Scope: exclusive face ownership for Voice Settings, Developer Menu and notification preview
+- Red proof: four ownership tests fail on untouched v147
+- Green proof: four ownership tests pass on v148; Java ownership harness passes 8 scenarios
+- Clean detached build: materialization + Android compile + focused unit tests green
+- Local release APK: not produced because stable BOOP signing remains GitHub-owned
+- Preserve: three unrelated dirty Shield files remain local and excluded
+- Next: v149 independent BOOP animation timing, then signed install/physical checks on Pixel 10 + Shield
 # BOOP v147 current status: installed on both devices
 
 Updated 2026-09-13. Owner/worktree: `boop-unified-v146-integration`.
@@ -30,3 +41,4 @@ Updated 2026-09-13. Owner/worktree: `boop-unified-v146-integration`.
 Three unrelated dirty Shield overlay source files remain local and excluded from this delivery: `BoopHomeActivity.java`, `HomeDashboardController.java`, `TvSettingsView.java`. Preserve them as concurrent work.
 
 Use this v147 combined branch as the current Unified app. See `SESSION_HANDOFF.md` for the complete v146 history and exact v147 receipts.
+
