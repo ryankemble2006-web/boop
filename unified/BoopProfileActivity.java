@@ -52,6 +52,7 @@ public final class BoopProfileActivity extends Activity {
                         .setPositiveButton("OK",null).show(); }
             });
         }
+        add(column,"Eyes and animation", () -> startActivity(new Intent(this,BoopAppearanceActivity.class)));
         add(column,"Done", this::finish);
         setContentView(scroll);
     }

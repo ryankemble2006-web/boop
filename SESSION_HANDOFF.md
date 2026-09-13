@@ -1,12 +1,12 @@
-# WIP: shared eye colour, then animation speed
+# Shared eye colour implementation, then animation speed
 
-Updated 2026-09-13. Owner: `boop-unified-eye-sync-safe-v159` on GitHub.
-Accepted device source remains v156 `a901c1e9f31e55c710e31ac7ff4f5924c9769d56`. Shield sweep is complete and accepted. Its corrected handoff is on `boop-unified-artist-link-v156@086ae4d383c5c3f176baafe803d01628e30251a9`.
+Updated 2026-09-13. GitHub feature owner: `boop-unified-eye-sync-safe-v159`.
+Accepted device source remains v156 `a901c1e9`; its Shield sweep is complete. Both recovery branches remain preserved. No local draft is the source of truth for this continuation.
 
-Both interrupted drafts are preserved on GitHub: `wip/boop-colour-v158-recovery@484d292f` and `wip/boop-colour-v159-recovery@7ea7d26d`. Original local worktrees/indexes were left unchanged during their publication. The feature branch starts from v159 recovery.
+Current implementation completes appearance settings, private activity registration, Application startup and authenticated opt-in hue sharing. The runtime now guards invalid connection attempts and cancels stale authentication work. The existing local hue store, Wall hue controls, shader, approved eye master and all authored clips remain unchanged. Sharing remains OFF on upgrade.
 
-Current limits: `BoopSharedEyeColourRuntime.java` was truncated in the earlier session. App initialization and settings activity are missing. This snapshot is NOT buildable or deployable. Recovered protocol tests do not prove a finished runtime. The new appearance-logic GitHub workflow establishes a fresh red baseline before completion.
+GitHub's recovered baseline `04f7c10c` passed four tests and failed the missing Application/settings wiring contract. While completing it, live HEAD advanced to `9e452b43` with two additional settings tests only. Those tests were retained, not overwritten; this commit reconciles both changes. Fresh GitHub tests and full Android compilation/signing must now run. Nothing has been installed, and no runtime or visual pass is claimed.
 
-Research and exact preservation boundaries are in docs/superpowers/plans/2026-09-13-shared-colour-and-speed.md. Primary Android/HA docs and source were checked again this session. Reuse the existing local hue store and authenticated HA client. No unauthenticated UDP or old voice/blink modifications. Sharing is opt-in; app background/offline retains local hue and resynchronizes on foreground reconnect. 1x and all authored artwork/motion stay unchanged.
+Primary research retained in `docs/superpowers/plans/2026-09-13-shared-colour-and-speed.md`. Rechecked official Android SharedPreferences/GLSurfaceView and HA WebSocket/input_text/collection/entity-registry sources. The helper uses actual returned IDs, omits initial for restoration, and only explicit setup can create it. No unauthenticated UDP, replacement signer, new Android permission, voice changes or implicit native-lyrics merge.
 
-Next: complete tested colour runtime and settings, pass GitHub logic/build/signing, then emulator runtime checks. Only then move to animation speed and device acceptance. Pixel 10 is excluded; no device installs occurred during recovery. Native lyrics stays separate.
+Next: verify colour in GitHub and local emulators, then implement independent animation speed with exact 1x equivalence. Pixel 10 remains excluded. Shield/Pixel 7 deployment only after runtime gates; Ryan owns visual acceptance.

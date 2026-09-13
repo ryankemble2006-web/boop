@@ -82,6 +82,9 @@
         <activity
             android:name=".BoopNotificationInboxActivity"
             android:exported="false" />
+        <activity
+            android:name=".BoopAppearanceActivity"
+            android:exported="false" />
 
         <service
             android:name=".BoopNotificationListenerService"
