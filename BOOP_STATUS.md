@@ -1,6 +1,10 @@
 # BOOP Status
 
-## Current: Animation Lab v11 icon-only recovery - 2026-09-12
+## Current: Animation Lab v13 independent-motion POC - 2026-09-13
+
+`animation-lab-system-scale-poc`, current branch head before this documentation update `b5726be553ed7b2c065a9cc6348fdf5112998683`. Signed v13 package `com.boop.animationlab` keeps BOOP motion alive on the physical Shield while Android window, transition, and animator scales are all 0. Foreground was explicitly verified before capture; three Thinking frames changed over time. Live 2.0x and 1.0x controls reported Android UI scale 0.0x and restored BOOP's baseline speed. Existing 26 animations, master art, shaders and choreography remain unchanged. Emulator runtime is not green because System UI stalled with an ANR. Unified remains untouched.
+
+## Previous: Animation Lab v11 icon-only recovery - 2026-09-12
 
 `animation-lab-icons-v11`, built source `64d82eb2fc48d5ce85342a2afcc60a56eafa7bc9`.
 Signed run 34678462196 / artifact 10292949278: success. Already installed

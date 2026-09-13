@@ -1,6 +1,10 @@
 # Animation memory - 2026-09-12
 
-## Current icon-only task (separate from animation development)
+## Current system-scale POC - 2026-09-13
+
+Animation Lab v13 on `animation-lab-system-scale-poc` re-verified the independent BOOP clock on the physical Shield. With all three Android animation scales at 0, BOOP's Thinking motion continued while the lab had explicit foreground focus. Clickable 0.5x / 1.0x / 1.5x / 2.0x controls remain available; 1.0x preserves the existing clock delta. The current v13 LAN work did not alter any of the 26 clip definitions, master artwork, shaders, or sign choreography. The emulator remains non-green because Android System UI stalled with an ANR. Unified is still untouched by this POC.
+
+## Previous icon-only task (separate from animation development)
 
 The Shield Animation Lab is `com.boop.animationlab`, not Unified `com.boop.alpha1`.
 `animation-lab-icons-v11` at built source `64d82eb2fc48d5ce85342a2afcc60a56eafa7bc9`

@@ -15,6 +15,11 @@ The Pixel's test receiver was already running during this test and was left runn
 The receiver is explicitly opt-in. This v13 development transport is trusted-LAN-only in intended use,
 not a paired/encrypted production household-sync implementation; sender Sent is not a delivery acknowledgement.
 
+
+System-scale POC re-verified on the physical Shield against this current v13 APK: Android `window_animation_scale`, `transition_animation_scale`, and `animator_duration_scale` were all `0`, foreground focus was explicitly confirmed as `com.boop.animationlab`, and the Thinking clip produced different frame hashes across three 300 ms-spaced captures. The 2.0x speed button changed the live label to `Animation speed 2.0x | Android UI scale 0.0x`; 1.0x restored the baseline. Shield was left at BOOP 1.0x with Android animation scales still at 0.
+
+The first recheck capture was discarded because the Johnny Castaway dream still owned the focused window; no result from that capture is counted. The API36 emulator installed v13 successfully, but System UI took focus with an ANR, so no emulator runtime pass is claimed; its animation-scale settings were restored to their prior values.
+
 All 26 animation definitions, master artwork, shaders and choreography remain unchanged from v12.
 No Unified app code was changed during the Lab work.
 Actual Unified animation in response to these posts is NOT yet verified.
