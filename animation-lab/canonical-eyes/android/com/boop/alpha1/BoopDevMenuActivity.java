@@ -28,7 +28,9 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
     private double signStart;
     private TextView label;
     private EyeMotion.Controller controller;
-    private boolean resumed,focused,running,slow,motionOff;
+    private boolean resumed,focused,running,motionOff;
+    private double speedMultiplier=1.0;
+    private float androidAnimatorScale=1f;
     private long lastFrame;
     private double clock;
     private int freeze=-1;
@@ -56,7 +58,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
             scroll.addView(strip);root.addView(scroll,new LinearLayout.LayoutParams(-1,-2));
         }
         LinearLayout controls=new LinearLayout(this);
-        Button speed=button("Slow review");speed.setOnClickListener(v->{slow=!slow;speed.setText(slow?"Normal speed":"Slow review");});controls.addView(speed);
+        for(double value:new double[]{0.5,1.0,1.5,2.0}){final double speed=value;Button b=button(speed+"x");b.setOnClickListener(v->{speedMultiplier=speed;label.setText("BOOP | Animation speed "+speed+"x | Android UI scale "+androidAnimatorScale+"x");});controls.addView(b);}
         Button motion=button("Pause motion");motion.setOnClickListener(v->{motionOff=!motionOff;motion.setText(motionOff?"Resume motion":"Pause motion");});controls.addView(motion);
         root.addView(controls);
         HorizontalScrollView signScroll=new HorizontalScrollView(this);LinearLayout signButtons=new LinearLayout(this);
@@ -73,7 +75,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
         signActive=false;if(sign!=null){sign.setVisibility(View.GONE);resizeEyes();}
         freeze=-1;EyeMotion.Clip c=EyeCatalogue.find(id);
         controller.select(c,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
-        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v11 • Ryan review");
+        label.setText("BOOP | "+c.label+"  |  Canonical eye code | v12 | Ryan review");
         Log.i("BOOPEyes","clip="+c.id+" time="+(long)clock);
     }
     private void resizeEyes(){
@@ -83,18 +85,19 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
     private void showSign(int style){
         signStyle=Math.floorMod(style,4);signStart=clock;signActive=true;freeze=-1;
         sign.setVisibility(View.VISIBLE);resizeEyes();
-        label.setText("BOOP • Sign show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X"}[signStyle]+" • v11 • Demo only");
+        label.setText("BOOP | Sign show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X"}[signStyle]+" | v12 | Demo only");
         Log.i("BOOPEyes","sign="+signStyle+" time="+(long)clock);
     }
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);readIntent(intent);}
     private void readIntent(Intent intent){
         String id=intent==null?null:intent.getStringExtra("clip");select(id==null?"idle":id);
         if(intent!=null&&intent.hasExtra("sign"))showSign(intent.getIntExtra("sign",0));
-        if(intent!=null){freeze=intent.getIntExtra("freeze_ms",-1);slow=intent.getBooleanExtra("slow",false);}
+        if(intent!=null){freeze=intent.getIntExtra("freeze_ms",-1);if(intent.getBooleanExtra("slow",false))speedMultiplier=0.15;}
     }
     @Override protected void onResume(){super.onResume();resumed=true;surface.onResume();
         PowerManager power=(PowerManager)getSystemService(POWER_SERVICE);
-        reducedMotion=Settings.Global.getFloat(getContentResolver(),Settings.Global.ANIMATOR_DURATION_SCALE,1f)==0f||(power!=null&&power.isPowerSaveMode());
+        androidAnimatorScale=Settings.Global.getFloat(getContentResolver(),Settings.Global.ANIMATOR_DURATION_SCALE,1f);
+        reducedMotion=MotionPolicy.shouldReduce(power!=null&&power.isPowerSaveMode(),androidAnimatorScale);
         updateLoop();}
     @Override protected void onPause(){resumed=false;updateLoop();surface.onPause();super.onPause();}
     @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);focused=hasFocus;if(surface!=null)updateLoop();}
@@ -105,7 +108,7 @@ public final class BoopDevMenuActivity extends Activity implements Choreographer
     }
     @Override public void doFrame(long time){
         if(!running)return;
-        if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:1);
+        if(lastFrame!=0&&!motionOff)clock+=MotionPolicy.scaledDelta(Math.min(100,(time-lastFrame)/1000000.0),speedMultiplier);
         lastFrame=time;
         EyeMotion.Clip clip=controller.clip();
         if(signActive){
