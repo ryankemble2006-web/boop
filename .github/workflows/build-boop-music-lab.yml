@@ -1,0 +1,109 @@
+name: Build BOOP Music Lab
+on:
+  push:
+    branches: [boop-music-lab-side-by-side-v161]
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boop-music-lab-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: true
+      - name: Prepare the unchanged v161 plus permission source
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          python -m pip install pytest
+          python tests/test_music_audio_permission.py
+          bash scripts/materialize-unified.sh
+      - name: Check preserved base motion and source contracts
+        run: |
+          python tests/test_animation_speed.py
+          python tests/test_materialized_speed.py
+          python -m pytest -q tests/test_now_playing_canonical_only.py tests/test_notification_canonical_only.py tests/test_unified_face_ownership.py tests/test_unified_notification_manifest_contract.py
+      - name: Inspect package-dependent integration points
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for path in Path('boop-build/BOOP-Alpha1').rglob('*.java'):
+              if '/src/main/' not in str(path): continue
+              for number, line in enumerate(path.read_text().splitlines(), 1):
+                  if 'com.boop.alpha1' in line and not line.strip().startswith(('package ', 'import ')):
+                      print(f'{path}:{number}:{line[:500]}')
+          PY
+      - name: Materialize the separate application if implemented
+        run: |
+          if test -f scripts/materialize-music-lab.py; then python scripts/materialize-music-lab.py; fi
+      - name: Verify side-by-side identity and non-interference
+        run: python tests/test_music_lab_fork.py
+      - name: Prepare the existing permanent signer
+        env:
+          BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do test -n "${!name:-}"; done
+          printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
+          chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
+          keytool -list -keystore "${RUNNER_TEMP}/boop-dev.jks" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
+          echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
+      - name: Build signed Music Lab only
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: gradle --no-daemon -p boop-music-build/BOOP-Music-Lab :app:assembleDebug --stacktrace
+      - name: Verify fork APK identity and permanent signature
+        run: |
+          set -euo pipefail
+          APK=boop-music-build/BOOP-Music-Lab/app/build/outputs/apk/debug/app-debug.apk
+          TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
+          mkdir -p music-lab-artifact
+          "$TOOLS/aapt" dump badging "$APK" > music-lab-artifact/badging.txt
+          grep -Fq "package: name='com.boop.musiclab'" music-lab-artifact/badging.txt
+          grep -Fq "versionCode='1'" music-lab-artifact/badging.txt
+          grep -Fq "versionName='0.1.1-v161-audio-prompt'" music-lab-artifact/badging.txt
+          grep -Fq "application-label:'BOOP Music Lab'" music-lab-artifact/badging.txt
+          grep -Fq "launchable-activity: name='com.boop.musiclab.UnifiedEntryActivity'" music-lab-artifact/badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > music-lab-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' music-lab-artifact/manifest-tree.txt
+          if grep -Eq 'android.intent.category.HOME|android.intent.action.ASSIST|android.intent.action.BOOT_COMPLETED|android.permission.RECEIVE_BOOT_COMPLETED|com.boop.alpha1|sharedUserId' music-lab-artifact/manifest-tree.txt; then exit 1; fi
+          "$TOOLS/apksigner" verify --print-certs "$APK" > music-lab-artifact/signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' music-lab-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
+          test -n "$ACTUAL"; test "$ACTUAL" = "$EXPECTED"
+          unzip -tq "$APK"
+          cp "$APK" music-lab-artifact/BOOP-Music-Lab-v1.apk
+          (cd music-lab-artifact && sha256sum BOOP-Music-Lab-v1.apk > apk-sha256.txt)
+          git rev-parse HEAD > music-lab-artifact/built-commit.txt
+          printf '%s\n' 'Separate package com.boop.musiclab; source base v161 plus audio permission prompt.' 'No Unified merge, installation, permission grant, visual test or audio sampler.' > music-lab-artifact/verification.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Music-Lab
+          path: music-lab-artifact/
+          if-no-files-found: error
+      - name: Remove temporary signer
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/boop-dev.jks"
