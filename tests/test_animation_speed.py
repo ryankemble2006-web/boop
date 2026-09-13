@@ -53,6 +53,41 @@ def test_every_canonical_surface_uses_saved_speed_without_rewriting_clips():
         assert label in screen, label
 
 
+def test_irregular_rates_one_shot_boundaries_and_notification_pose_bits():
+    home = os.environ.get('JAVA_HOME')
+    def tool(name):
+        return str(Path(home) / 'bin' / (name + ('.exe' if os.name == 'nt' else ''))) if home else shutil.which(name)
+    with tempfile.TemporaryDirectory(prefix='boop-speed-edges-') as out:
+        references = []
+        for name in ['ProductionAnimationController', 'SignMotion']:
+            text = subprocess.check_output(['git', 'show', BASELINE + ':unified/animation/java/com/boop/eyes/' + name + '.java'], cwd=ROOT).decode('utf-8')
+            target = Path(out) / ('V156' + name + '.java')
+            target.write_text(text.replace(name, 'V156' + name), encoding='utf-8')
+            references.append(target)
+        names = ['EyeMotion.java', 'EyeCatalogue.java', 'ProductionAnimationController.java', 'AnimationClock.java', 'SignMotion.java']
+        files = [ENGINE / name for name in names] + references + [ROOT / 'tests/java/BoopAnimationSpeedEdgeHarness.java']
+        subprocess.run([tool('javac'), '-encoding', 'UTF-8', '-d', out, *map(str, files)], check=True)
+        subprocess.run([tool('java'), '-cp', out, 'com.boop.eyes.BoopAnimationSpeedEdgeHarness'], check=True)
+
+
+def test_authored_motion_still_matches_accepted_v156_bytes():
+    for name in ['EyeMotion.java', 'EyeCatalogue.java', 'SignMotion.java']:
+        expected = subprocess.check_output(['git', 'show', BASELINE + ':unified/animation/java/com/boop/eyes/' + name], cwd=ROOT)
+        assert (ENGINE / name).read_bytes() == expected, 'Authored motion changed: ' + name
+
+
+def test_signed_apk_requires_timing_and_materialized_source_checks():
+    workflow = (ROOT / '.github/workflows/build-boop-unified.yml').read_text(encoding='utf-8')
+    gate = ('      - name: Test exact BOOP animation speed before signing\n'
+            '        run: |\n'
+            '          python tests/test_animation_speed.py\n'
+            '          python tests/test_materialized_speed.py\n')
+    assert gate in workflow, 'Signed APK build does not require the exact speed and materialized-source gates'
+    assert workflow.index('      - name: Materialize one APK') < workflow.index(gate)
+    assert workflow.index(gate) < workflow.index('      - name: Prepare permanent BOOP signer')
+    assert 'continue-on-error:' not in workflow, 'Timing failures must prevent signing'
+
+
 if __name__ == '__main__':
     for name, test in list(globals().items()):
         if name.startswith('test_') and callable(test):
