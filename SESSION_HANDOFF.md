@@ -23,7 +23,16 @@ Fresh physical Shield screenshots were inspected locally: the white crescent
 visible outside the v152 cyan corner was absent in the captured v153 wide-icon
 and album-art corners. First post-launch unfocused captures were not used as
 proof. Screenshots stay private/ignored; no visual CI checks were added.
-Ryan's final visual verdict remains PENDING. Next: wait for his Shield feedback.
+Ryan accepted the v153 Shield corner fix: 'awesome onto next'. Preserve this geometry.
+Next on the existing polish list is acceptance of the already-implemented progress
+bar navigation: Up from transport controls focuses the bar, Left/Right request
+minus/plus 10 seconds, and Down returns to Play/Pause. Seeking is enabled only
+when the selected session advertises seek support and has a known duration.
+These controls landed in v151 and remain in installed v153; do not rebuild them
+as a new feature. Favourite right-edge stop and 250 ms settings hold are also
+already present. This continuation verified source wiring and Shield version,
+not a new physical seek/navigation pass. No new APK or device changes; Pixel 10
+remains on hold and Pixel 7/emulators were not accessed in this continuation.
 
 ﻿# BOOP v148 single-face ownership checkpoint
 
