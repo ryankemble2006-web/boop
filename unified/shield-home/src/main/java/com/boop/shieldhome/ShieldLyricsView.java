@@ -39,6 +39,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private boolean posted;
     private boolean snapClock = true;
     private float unit = 1f;
+    private int geometryWidth = -1, geometryHeight = -1;
     private long displayedSecond = Long.MIN_VALUE;
     private final Runnable frame = new Runnable() {
         @Override public void run() {
@@ -190,8 +191,18 @@ public final class ShieldLyricsView extends FrameLayout {
         super.onWindowVisibilityChanged(visibility);
         if (visibility == VISIBLE) schedule(); else { removeCallbacks(frame); posted = false; }
     }
-    @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
+    @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+        int height = MeasureSpec.getSize(heightMeasureSpec);
+        // Child constraints must exist BEFORE FrameLayout measures its children.
+        // Setting them from onSizeChanged leaves the first pass window-sized.
+        if (width > 0 && height > 0 && (geometryWidth != width || geometryHeight != height)) {
+            geometryWidth = width; geometryHeight = height;
+            measureGeometry(width, height);
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+    private void measureGeometry(int w, int h) {
         unit = Math.min(w / 1280f, h / 720f);
         float left = 66f * unit;
         float artSize = 302f * unit;
@@ -213,8 +224,9 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.invalidateOutline();
     }
     private void place(View view, float x, float y, float w, float h) {
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
-        params.leftMargin = Math.round(x); params.topMargin = Math.round(y); view.setLayoutParams(params);
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
+        params.width = Math.max(1, Math.round(w)); params.height = Math.max(1, Math.round(h));
+        params.leftMargin = Math.round(x); params.topMargin = Math.round(y);
     }
     private void size(TextView text, float pixels) {
         float scale = getResources().getDisplayMetrics().scaledDensity / getResources().getDisplayMetrics().density;

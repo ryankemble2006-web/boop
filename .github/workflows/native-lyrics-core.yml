@@ -32,3 +32,4 @@ jobs:
           java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsCoreCheck
           java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsTransportCheck
           java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsIncompleteCheck
+          python3 tests/test_native_lyrics_entry.py
