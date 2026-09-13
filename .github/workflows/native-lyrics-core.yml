@@ -1,0 +1,37 @@
+name: Native lyrics functional checks
+on:
+  push:
+    branches: ["boop-unified-native-lyrics-v157"]
+    paths:
+      - '.github/workflows/native-lyrics-core.yml'
+      - 'tests/canonical/NativeLyricsCoreCheck.java'
+      - 'unified/shield-home/src/main/java/com/boop/shieldhome/DeezerLyricsDocument.java'
+      - 'unified/shield-home/src/main/java/com/boop/shieldhome/LyricsRequestGate.java'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lyrics-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Compile and exercise timed data and request ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p work/native-lyrics-core
+          curl --fail --silent --show-error --location --max-time 30 https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar -o work/native-lyrics-core/json.jar
+          curl --fail --silent --show-error --location --max-time 30 https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar.sha256 -o work/native-lyrics-core/json.sha256
+          echo "$(cat work/native-lyrics-core/json.sha256)  work/native-lyrics-core/json.jar" | sha256sum -c -
+          src=unified/shield-home/src/main/java/com/boop/shieldhome
+          files=()
+          for name in DeezerLyricsDocument LyricsRequestGate; do
+            if [ -f "$src/$name.java" ]; then files+=("$src/$name.java"); fi
+          done
+          javac -encoding UTF-8 -cp work/native-lyrics-core/json.jar -d work/native-lyrics-core "${files[@]}" tests/canonical/NativeLyricsCoreCheck.java
+          java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsCoreCheck
