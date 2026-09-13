@@ -1,87 +1,44 @@
-# Unified v162 native lyrics: user-accepted, standalone Lab retired
+# Unified v164: music bounce candidate from accepted v162
 
-Updated 2026-09-13. Current Unified owner remains `boop-unified-eye-sync-safe-v159`.
-The branch name is not the APK version. Integration branch:
-`boop-unified-native-lyrics-v162`. PR #10 merged the feature at
-`0908d6955c90978e97dcbae9031f3f1de638bd9d`.
+Updated 2026-09-13. Task branch: `boop-unified-v164-music-bounce`. Signed candidate is delivered for Ryan's manual test. NOT installed or merged by this task. The accepted v162 branch remains `boop-unified-native-lyrics-v162@112d09b5b446d6582954a6d89b3700fe16298ecb`.
 
-## Latest acceptance and completed cleanup
+## Current request and starting point
 
-Ryan replied "perfection" after being asked to confirm the integrated Now Playing
--> Lyrics screen and Skip behavior in Unified v162. Record the integrated lyrics
-feature as USER-ACCEPTED ON SHIELD. This supersedes the previous pending Unified
-confirmation. Do not ask him to repeat that gate or confuse his acceptance with
-the earlier Lab-only result. It is user evidence, not a new assistant-run UI test.
+Ryan reported that v163 did not move and broke his new Lyrics button, then said he rolled back himself. His latest instruction is to start again from confirmed v162, leave its confirmed features alone, make v164 with actual music bounce, sign it and give him the APK to test rather than hosted visual acceptance. The reported rollback is user evidence; this task did not inspect or change the installed app. The exact cause of the reported v163 lyrics regression was not established here.
 
-His prior instruction was to bin the Lab once confirmed. After that confirmation,
-only `com.boop.lyricslab` was uninstalled from Shield. The ordinary ADB uninstall
-returned Success/exit 0; a fresh package-list query verified its absence. Before
-removal, its exact version159 and hash matched the known standalone Lab. Unified
-was v162 with the exact signed APK hash both before and after cleanup. No other
-Lab, Unified, Deezer, phone, emulator or source branch was removed or modified.
-No app launch, playback input, new installation, manual permission/settings change,
-rebuild or app-source edit was performed in this acceptance/cleanup continuation.
-Receipt: `docs/handoffs/2026-09-13-unified-v162-accepted-lab-retired.md`.
+This branch starts directly from the accepted v162 commit above. It does not merge the v161 Music Lab or v163 tree. The existing Unified owner, v162, main and lab branches were not written by this task. New v164 uses the normal Unified package, not a side-by-side lab.
 
-## Accepted feature and retained design
+## Exact signed candidate
 
-Now Playing's existing Lyrics action uses BOOP's private internal native Activity,
-not the Deezer foreground/menu macro and not the now-removed standalone Lab.
-The shared renderer/parser/client/loader and footer are exact source copies from
-lab lineage `5ce581be6f1da10eb47640c4c11636a4bfa9e330`.
-The Back to Now Playing footer is absent. Its area contains the passive licence/
-copyright credit at half its former size; main song lyrics keep their size.
-Unified's existing manager, state bus and launcher remain byte-for-byte v161.
-Its active-token observation already survives temporary non-displayable states;
-the Lab observer/notification listener/application was NOT imported.
+- Package/version: `com.boop.alpha1`, `164 / 1.2.164-music-bounce`.
+- Build/source commit: `f9f65569250b9dc02602101ef4d56195824e0380`.
+- Signed GitHub run `34778178916`, job `103780068294`: SUCCESS.
+- Artifact `BOOP-Unified-v164-Music-Bounce`, ID `10323694771`.
+- APK `BOOP-Unified-v164-Music-Bounce.apk`, 155290450 bytes.
+- APK SHA256 `d7ae61fc956dddc064211b7e5b3c5197b1ce4e55800acd558cee4b9e622eb5c8`.
+- Artifact ZIP SHA256 `0a08fcbd7ebb4144bd1ea275b33e92b4be42534981c1953671b39295eb856aca`.
+- Existing permanent signer SHA256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-## Exact build and physical identity
+The connector-downloaded ZIP and extracted APK were hash checked in the artifact sandbox. The embedded build commit, badging, public signing receipt and native lyrics/bounce class descriptors matched. Artifact extraction did not run the app or build laptop sources.
 
-Application/build source: `1e0136ffa9732353035f88ca7a7cb131f7481557`.
-Version/package: `162 / 1.2.162-native-lyrics`, `com.boop.alpha1`.
-GitHub full signed run `34773509395`: SUCCESS; artifact `BOOP-Unified` / `10322553107`.
-APK SHA256: `cef4527510d9856b669889abfc01c00e6f1a3819e1a28b5e05cee5d472df7171`.
-Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP digest: `112b5ba62aa365227f419a0e9e825ca648991f6fab936e8e90b1a083ad453bc9`.
-The ZIP digest is the archive identity, not the APK digest.
+## Implemented now
 
-The earlier ordinary installation upgraded exact accepted v161, verified package/
-version/source/signature/hash, and left the Lab for confirmation. The later cleanup
-above independently rechecked Unified's version/base-APK hash unchanged. The removed
-Lab was `159 / 0.1.159-lyrics-footer`, APK
-`fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503`.
-Its source and receipts remain recoverable on `boop-lyrics-lab-side-by-side-v157`.
-Do not reinstall that obsolete helper merely to resume native lyrics work.
+`MusicBounceSource` uses Android Visualizer output-mix waveform data on a short-lived worker. DC-rejected loudness drives `MusicBounceEnvelope`: quick rise, softer fall, bounded vertical height. `MusicBounceRenderer` offsets the Now Playing GL viewport, translating the whole existing puppet without changing the shared eye renderer or shaders. Sampling starts only while the puppet is visible, playing and permitted; it stops/releases on pause/hide/detach. Stale, missing and constant audio data produce no fabricated bounce.
 
-## Preserved verification and acceptance
+Saved animation speed still drives the unchanged canonical blink/expression clock. Audio level controls the added whole-puppet bounce independently. No BPM lookup, beat inference, physical-microphone fallback, recorder, media projection, audio-focus change, playback command or volume setting is added by the bounce implementation.
 
-Native routing/transplant tests were red on v161 in run `34773211530`, then green
-in `34773471412` and latest test-only revision `34773700715`. Four source/route
-checks, 61 timed-data/ownership, 35 transport, two incomplete-timing, seven entry,
-and 28 internal Activity/state/lifecycle/transport assertions passed. New Android/
-service/renderer boundaries were controlled doubles, not physical UI evidence.
-Full signed CI also passed 235 Unified and 68 Shield functional tests with zero
-failures/errors/skips and the existing colour/speed/source-artwork checks.
-Scoped in-session review was recorded on PR #10; no independent reviewer claimed.
+The earlier conditional permission Activity and flow were reused as exact source blobs, not a branch merge. Missing access is offered once from the foreground music screen; it never opens from a floating service. Ryan operates Continue and Android's permission choice. Manual retry remains Launcher Settings > Now Playing > Music audio access. Existing uses-permission declarations are unchanged. Permission UI, native audio availability and visual bounce remain for Ryan to test.
 
-After the APK build, `fad4ab24bc234e383f7b9ba22a22080eaf0f616d` changed only 12 test
-lines so v162's one-time byte-preservation guard does not freeze later releases.
-No compiled APK input changed after the signed build. These preserved test results
-were not rerun for this documentation-only source update.
+## Protect v162
 
-Accepted v161 base: `593ad609ff87f651d5273bd17f5a2c0ca3ef5198` (build `0b6ee6f9`).
-Ryan's speed-on-both-devices and automatic two-way colour acceptance is retained.
-Speed is local; colour shared. Neither phone was touched for this lyrics task.
-Do not infer every catalogue/offline/natural-completion scenario from the new
-acceptance, or make those unreported cases a reason to reopen his accepted result.
+The only modified existing app/build files are the version fields, one private permission-Activity manifest line, six settings-entry lines and the Now Playing puppet adapter. All v162 lyrics files, Lyrics-button callback, media-session manager, launcher routing, startup code, voice code, existing materialization scripts, dependencies, artwork, shaders, shared renderer and animation engine remain unchanged in source. The v162 ShieldLyricsActivity manifest registration is retained and was found in the actual APK. The accepted half-size passive licence footer is not changed. No retired Lyrics Lab dependency is introduced.
 
-## Next and continuity
+Historical accepted v162 APK: `cef4527510d9856b669889abfc01c00e6f1a3819e1a28b5e05cee5d472df7171`; build source `1e0136ffa9732353035f88ca7a7cb131f7481557`. Its accepted Lyrics/Skip report and earlier v161 speed/colour acceptance remain in `docs/handoffs/2026-09-13-unified-v162-accepted-lab-retired.md` and the full base root handoff at `112d09b5b446d6582954a6d89b3700fe16298ecb`. Do not reopen those accepted repairs absent a new report.
 
-Continue from the live Unified owner for the next requested change. Native lyrics
-and the conditional standalone-Lab cleanup are closed, not awaiting confirmation.
-No automatic emulator/hosted visual gate, local source edits, connection upgrade,
-settings resets or claimed checkout sync. Main still points to the same owner;
-no ordinary-progress main edit is needed. GitHub development and joint tests remain.
-Earlier integration receipt: `docs/handoffs/2026-09-13-unified-v162-lyrics.md`.
-The pre-acceptance handoff/status/memory remain at `978bf7df5e0759512b8a69807d9badeee7a8bb95`.
-Prior v161 and Lab evidence remains at its pinned input branches/commits.
+## Verification level and next step
+
+Read `docs/handoffs/2026-09-13-v164-music-bounce.md` for exact red/green, regression and package results. New tests passed with 332 numerical envelope checks. Native lyrics entry/data/transport/lifecycle checks, existing timing/materialization and 10 canonical-owner/bay checks passed. Two inherited one-time v162 source-freeze tests deliberately skip future versions; the new v164 source-preservation gate passed instead. Full signed assembly and package/signature/integrity/packaged-class checks passed. Existing nonfatal deprecation warnings remain. No complete historical test-suite rerun or independent reviewer is claimed.
+
+No Shield, phone or emulator operation, installation, permission grant, reset, data clear or playback input was performed. Useful real Deezer/Shield levels and visible timing are NOT established by these checks. Deliver the APK in chat for Ryan to test. Do not silently install, merge, advance an accepted owner or call v164 physically accepted. Any later requested install must retain package/signature/hash checks and user data; actual OS permission choices remain Ryan's.
+
+Source, nonvisual checks, builds, permanent signing and handoffs stay on GitHub. Laptop continuity files were read but no source worktree was changed or synchronized. Physical Pixel 10 remains excluded. Fetch the live task branch before further writes; preserve other operations. This final handoff/status/memory update changes documentation only, leaving the signed source commit above unchanged.
