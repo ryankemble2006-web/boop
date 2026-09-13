@@ -1,3 +1,15 @@
+# BLOCKER: Ryan reports eye colour is not working (2026-09-13)
+
+Latest user feedback: "stopping you quick.. i just tested eye change.. it isnt working.. did you finish ?" The failing device/surface and local-versus-cross-device symptom have not been identified. Colour is NOT signed off. Further speed development/deployment is paused while preserving all existing work.
+
+Full continuation prompt: `docs/handoffs/2026-09-13-colour-failure-continuation.md`. Ryan confirmed this continuation is primary; do not restart old ownership disputes or discard newer source.
+
+Fresh handover check: source HEAD `d149cb509ec376779daf84c50f621d8adcbacd24`, version `160 / 1.2.160-colour-animation-speed`. Appearance run `34760362361`, timing run `34760362356`, full build `34760362417`: all SUCCESS. Full-build artifact `10318393790` / `BOOP-Unified`. These are CI results, NOT a repair or physical acceptance of the reported colour failure. No v160 deployment is established by this handover. Last recorded device installs were v159; recheck live packages.
+
+This handover is documentation only. First next step: identify/reproduce the visible colour failure, trace setting/prefs/renderer separately from HA transport, then apply a tested minimal repair. Do not declare a changed slider value or HA-ready message sufficient proof. Preserve the speed implementation and its passing numerical tests for later runtime validation.
+
+---
+
 # Primary continuation: shared eye colour and animation speed
 
 2026-09-13. Ryan explicitly confirmed this work is primary; old recovery threads are not blockers. GitHub source owner remains `boop-unified-eye-sync-safe-v159`; next app version is 160. The v156 Shield sweep remains accepted.
