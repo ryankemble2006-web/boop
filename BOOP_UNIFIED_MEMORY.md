@@ -1,16 +1,17 @@
-# Latest user correction and continuation pointer
+# Current Unified memory: colour accepted, speed candidate preserved
 
-2026-09-13: Ryan says the eye change is not working. Do NOT label colour finished or signed off. We have not identified which device/surface failed. Do not presume Pixel 7 locking or a sharing toggle explains it. Identify/reproduce actual visible behavior before more speed work.
+2026-09-13 latest user confirmation: "it works btw, i just tested eye colour :) from wall to shield". Wall -> Shield is physically accepted by Ryan. This supersedes the earlier colour-failure note; do not re-open accepted work because a historical handoff says it was blocked.
 
-Full saved prompt and research/provenance: `docs/handoffs/2026-09-13-colour-failure-continuation.md`.
-The active work is primary by Ryan's explicit instruction. Preserve old snapshots but do not restart them or block on stale ownership notes.
-Current source `d149cb509ec376779daf84c50f621d8adcbacd24` includes v160 speed code. Its appearance, timing and full-build runs now succeeded (`34760362361`, `34760362356`, `34760362417`), artifact `10318393790`. Preserve this work; it is not proven installed or runtime-approved. Last recorded installs were v159. Physical Pixel 10 stays excluded. This handover is docs only.
+Current receipt: `docs/handoffs/2026-09-13-colour-accepted-wall-shield.md`. Keep the old failure-continuation and research plans for provenance, not as newer instructions than this confirmation.
 
----
+Visible runtime evidence now exists, not merely sliders or HA-ready text: local phone-emulator Wall 225 -> 122 -> 225; physical Shield Now Playing 80 -> 260 -> 80; Pixel 7 shared join to 80; physical Shield -> Pixel 7 purple at 260; physical Pixel 7 -> Shield green at 122. Both directions were captured and inspected. Ryan independently tested Wall -> Shield. A subsequent read-only receipt showed both physical devices on user hue 2 with sharing on; do not restore old fixture hues or turn sharing back off.
 
-# Current Unified memory
+No app repair was made during diagnosis. Pixel 7 sharing was initially off and was enabled using the normal confirmation UI; this observation is not proof of the original failure's root cause. A deliberate two-device offline/reconnect cycle remains coverage to finish separately. Earlier Shield HA read-before-write/rejoin proof remains narrower than that.
 
-Ryan: this work is primary; old recovery threads are irrelevant, preserve their work without stopping progress. Source/build/tests through GitHub; visual/runtime checks on local emulators, then Shield/Pixel 7. Physical Pixel 10 stays excluded.
-Accepted v156 sweep is finished. v159 shared colour source 0a4134eb passed GitHub, was installed/hash-verified on emulators and Shield/Pixel 7. Shield HA publishing/rejoin succeeded and shared hue restored to 190. Pixel 7 lock prevented two-device sharing verification; no bypass.
-Next candidate v160 adds saved device-local animation speed .5/1/1.5/2. 1x must match v156 exactly, no authored keyframe/blink/artwork changes. Preserve boop_eyes/hue_degrees range0..359/default190 and working Wall hue. Shared colour opt-in, authenticated HA only, no stale-default writes.
-Require both timing CI and full build success plus local runtime checks before deployment. Current speed implementation is not yet a passing build. No unrelated native-lyrics merge. Research and interrupted drafts remain preserved in Git history and docs/superpowers/plans/2026-09-13-shared-colour-and-speed.md.
+GitHub owner `boop-unified-eye-sync-safe-v159`; app source `d149cb509ec376779daf84c50f621d8adcbacd24`. Preserve published v160 speed and successful runs `34760362361`, `34760362356`, `34760362417`, artifact `10318393790`. Physical devices still have v159 from `0a4134ebfe8049254378b4706d2ee1df73cd7e87`. Existing main phone/TV emulators were already on v160 when checked; no v160 physical deployment or speed acceptance occurred here.
+
+Next work is runtime validation of existing device-local .5/1/1.5/2 speed, not another draft. Exact 1x must preserve v156. Keep authored animation, master assets, shaders, single-face ownership, working Wall controls and accepted Shield polish unchanged. Hue remains `boop_eyes/hue_degrees`, range 0..359/default190; sharing remains opt-in and authenticated HA only, with no stale-default writes. Keep speed deployment held until runtime gates pass.
+
+This session is primary. GitHub owns source/build/tests/permanent signing; laptop emulators own the first runtime loop, then authorized Shield/Pixel 7. Physical Pixel 10 is excluded. No permission changes, lock bypass, private data publication, unrelated branch merges, regenerated artwork or signing substitutions.
+
+The local task worktree remains dirty with historical recovery work and was preserved, not synchronized or edited. Private runtime captures remain in `work/colour-failure-20260913-primary/` there. Publish current handoff/status/memory after material work and verify live GitHub HEAD; never equate local files or green CI with user acceptance.
