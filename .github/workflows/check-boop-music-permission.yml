@@ -23,3 +23,44 @@ jobs:
           java-version: '17'
       - name: Test permission decisions and integration without a device
         run: python3 tests/test_music_audio_permission.py
+  compile:
+    needs: permission
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: true
+      - name: Prepare existing Unified sources
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          python -m pip install pytest
+          bash scripts/materialize-unified.sh
+      - name: Verify the materialized permission entry and preserved motion
+        run: |
+          cmp unified/shield-home/src/main/java/com/boop/shieldhome/MusicAudioPermissionActivity.java boop-build/BOOP-Alpha1/shield-home-lib/src/main/java/com/boop/shieldhome/MusicAudioPermissionActivity.java
+          cmp unified/shield-home/src/main/java/com/boop/shieldhome/MusicAudioPermissionFlow.java boop-build/BOOP-Alpha1/shield-home-lib/src/main/java/com/boop/shieldhome/MusicAudioPermissionFlow.java
+          cmp unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeSettingsView.java boop-build/BOOP-Alpha1/shield-home-lib/src/main/java/com/boop/shieldhome/ShieldHomeSettingsView.java
+          cmp unified/shield-home-manifest.xml boop-build/BOOP-Alpha1/shield-home-lib/src/main/AndroidManifest.xml
+          python tests/test_animation_speed.py
+          python tests/test_materialized_speed.py
+          python -m pytest -q tests/test_now_playing_canonical_only.py tests/test_notification_canonical_only.py
+      - name: Compile Unified sources without signing or installing an APK
+        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:compileDebugSources --stacktrace
+      - name: Summarize verification scope
+        run: |
+          echo "Compiled Unified Android sources including the new permission activity." >> "$GITHUB_STEP_SUMMARY"
+          echo "No APK signing, installation, device input, microphone use or visual acceptance was performed." >> "$GITHUB_STEP_SUMMARY"
