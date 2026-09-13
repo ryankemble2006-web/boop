@@ -1,72 +1,73 @@
-# Native Deezer lyrics v157: runtime verification in progress
+# BOOP Lyrics Lab: Shield user test succeeded
 
-Updated 2026-09-13. Owner: `boop-unified-native-lyrics-v157`.
-GitHub is the source authority. Ryan explicitly selected accepted v156 at
-`a901c1e9f31e55c710e31ac7ff4f5924c9769d56` as the base. Do not import the unfinished
-local v157 worktree or rebase onto an unrelated later experiment. Current main's
-v156 acceptance supersedes the inherited v156 handoff's old pending wording.
+Updated 2026-09-13. Owning branch: `boop-lyrics-lab-side-by-side-v157`.
+App: **BOOP Lyrics Lab**, package `com.boop.lyricslab`, version
+`157 / 0.1.157-lyrics-lab`. GitHub owns source and build evidence.
 
-## Approved behavior
+## Latest user result
 
-BOOP owns a borderless full-screen music/lyrics presentation. Deezer keeps playing
-in the background; no notification launch, UI clicking or foreground macro remains
-in the lyrics entry path. Exact recording identity comes from native Deezer's
-published MediaSession metadata. Timed text follows pause/resume/seek and automatic
-track changes while the lyrics screen is open. Missing/unknown lyrics never paint
-the previous song. Preserve artwork, canonical animation/hue, favourites, artist/
-album browsing, existing transport controls, 10-second seek and long-Back behavior.
-No new permissions, account credentials or permanent lyric cache. Neither phone
-is a deployment/test target. No GitHub visual checks; runtime checks happen locally.
+Ryan reported: "i tested for you and enabled notification.. it worked".
+Record this as USER-TESTED WORKING on the Shield after Ryan enabled the lab's
+notification access. It is a real-device user result, not merely the synthetic
+emulator preview or an API-only probe. Ryan enabled access himself; this report
+is not permission to change or import permissions in another app.
 
-## Evidence
+Ryan previously said: "keep going i like the design ya did in the emulator".
+The emulator presentation is user-approved. Preserve that design; do not
+redraw it, regenerate artwork or replace it with a modal text box.
 
-- Fresh anonymous Deezer probes returned text, millisecond timing and provider
-  credit for public recording IDs 3135556 and 3135553. Both standard and word-only
-  formats were checked. This is live technical evidence, not a supported API or
-  catalogue/licensing guarantee. The Cast receiver implementation was not copied.
-- GitHub `34756703301` recorded the genuine missing-document assertion before
-  implementation. An earlier checksum-URL 404 was setup failure, not TDD red.
-- Parser/request ownership: 61 checks. Timed transport: 35. Incomplete-timing
-  handling: 2. All 98 passed on application source `8186447a1e47fdcded2ac2d259f250024cdccca1`.
-- Original signed build run `34757490259`, artifact `10318200099`, passed 235 Unified
-  and 68 Shield tests plus the preserved non-visual pipeline. APK identity/signature/
-  hash/source were independently checked after download. **That initial APK is not
-  a deliverable:** local runtime testing found window-sized children due to applying
-  layout constraints after measurement. Do not install it on the Shield.
-- The layout failure was reproduced on the dedicated TV emulator with actual
-  screenshots/hierarchy: artwork and transport children retained viewport dimensions.
-  Source `f98d2a3b5f3c4b3a58868f1a9ee6856a5f750850` moves constraints before child measurement.
-  Its corrected isolated fixture build `34758695802` is green; reinspection is pending.
-- Entry control-flow test run `34758695805` correctly failed because a completed
-  hidden-host lookup left Lyrics entry busy. The current source clears that completed
-  request before checking focus, while still rejecting a late launch. Seven dedicated
-  real-entry control-flow assertions cover the correction; green rerun pending.
+The feedback confirms the successful tested lyrics path. It does not enumerate
+pause/resume, both seek directions, automatic track changes, no-lyrics tracks,
+leaving/reopening or long-session behavior individually. Keep those checks
+separate rather than treating this message as blanket acceptance of every case.
 
-## Local runtime isolation
+## Exact source and live build evidence
 
-The existing Android TV emulator had concurrent v159 installed. Android refused
-our v157 downgrade; no override, uninstall or data clear was attempted. A separate
-AVD `BOOP_Lyrics_157_8186447` was created from the already-installed API36 TV image.
-It booted and accepted v157 plus the separate `com.boop.lyricspreview` fixture.
-The fixture copies the exact production renderer with invented text and synthetic
-artwork. It has no production test hooks and must never be installed on the Shield.
-Initial Unified entry launches to its ordinary fresh-install profile chooser.
-Neither physical Pixel was touched. Shield remained on accepted v156 at the last
-check and was playing native Deezer. Recheck its version before any installation.
+- Lab application source: `9a52f1c66a6322584e99350056fb4b9bcb645a2b`.
+- Shared native-lyrics source: `9bb64285d3a3fb8d3cd1f4890931d7afdf74dfb9`.
+- Requested Unified base: accepted v156 at
+  `a901c1e9f31e55c710e31ac7ff4f5924c9769d56`.
+- GitHub run `34763076696`, **Build side-by-side BOOP Lyrics Lab**:
+  completed SUCCESS for the exact lab source above.
+- Artifact: `BOOP-Lyrics-Lab`, ID `10319767160`, not expired when read.
+- Artifact archive digest reported by GitHub:
+  `sha256:6f52e2fa4521980b8a06cc994b971c042684957b09f671d2cebfb818d2a9a29d`.
+  This is the artifact archive digest, NOT the installed APK hash.
 
-## Next gates
+The branch, source and CI artifact were checked live when recording this result.
+No fresh ADB/package-hash check was performed in this documentation update;
+do not manufacture an independent installed-artifact verification receipt.
+No new APK, app-code edit, permission change or deployment was performed.
 
-1. Confirm entry regression green and inspect the corrected fixture on the dedicated
-   TV emulator. Exercise pause/resume, seeking, track changes, blank states and Back.
-2. Run the complete existing signed Unified workflow against the corrected source.
-3. Verify exact downloaded signer/package/hash/source, then emulator launch and
-   Shield-only upgrade after a fresh installed-version check. Test actual native
-   Deezer with BOOP lyrics foreground, including leaving/reopening and track changes.
-4. Record final source/run/artifact/hash receipts, reconcile branch status/memory,
-   and verify the live feature branch. No accepted/main branch merge is authorized.
+## Isolation and merge boundary
 
-Prior protected delivery history remains in the parent v156 `SESSION_HANDOFF.md`
-at `a901c1e9f31e55c710e31ac7ff4f5924c9769d56`. See
-`docs/superpowers/plans/2026-09-13-native-lyrics.md` for scope and research references.
-Private local captures, raw diagnostics, downloaded APKs and credentials stay out
-of GitHub. Review/test success must never be relabelled as Ryan's visual acceptance.
+Ryan requested a side-by-side fork after other work collided, with merging
+later when the feature is complete. That fork already exists. Do not create a
+second fork, restart from a local draft, or install a v157 Unified downgrade.
+This lab is a separate music application, not a replacement HOME launcher.
+Only `com.boop.lyricslab` is the target for subsequent lab installs and testing.
+Do not install `com.boop.alpha1` or the synthetic `com.boop.lyricspreview` on the
+Shield in this task. Neither physical Pixel is a target. Preserve the existing
+Unified app and the other task's work regardless of their version numbers.
+No merge into Unified/main is authorized by this success report.
+
+## Next continuation
+
+Keep this working lab and approved presentation. When work resumes, fetch the
+live lab branch and continue any remaining focused playback/lifecycle checks
+on the dedicated local TV emulator and this separate Shield package. Do not
+rebuild the macro. Later integration must merge the native-lyrics feature into
+the then-current Unified source, not replace newer Unified with the old base.
+Physical confirmation remains Ryan-owned; non-visual GitHub checks remain
+separate from local runtime testing. No GitHub visual checks.
+
+## Preserved context
+
+The inherited pre-confirmation handoff, status and full historical memory were
+preserved byte-for-byte under `docs/history/lyrics-lab-pre-user-confirmation/`.
+Their old instructions to install a Unified candidate are superseded by the
+side-by-side boundary above. Earlier failed layout/API/macro experiments remain
+historical evidence, not the current tested lab state. The feature plan remains
+at `docs/superpowers/plans/2026-09-13-native-lyrics.md`; lab packaging and isolation
+are described in `lyrics-lab/README.md`. Keep private captures, diagnostics,
+account data and downloaded third-party material outside the public repository.
