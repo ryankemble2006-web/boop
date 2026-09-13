@@ -78,6 +78,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         setClipToPadding(true);
 
         powerManager = context.getSystemService(PowerManager.class);
+        com.boop.eyes.AnimationSpeedBinding.install(this,
+                speed -> animation.setSpeed(speed, SystemClock.uptimeMillis()));
         puppet = new LayeredPuppetView(context);
         puppet.setFocusable(false);
         puppet.setClickable(false);

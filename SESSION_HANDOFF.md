@@ -1,36 +1,15 @@
-# Shared eye colour: signed v159, emulator checkpoint; speed still next
+# Primary continuation: shared eye colour and animation speed
 
-Updated 2026-09-13. GitHub feature owner: `boop-unified-eye-sync-safe-v159`.
-Accepted physical-device source remains v156 `a901c1e9`; its Shield sweep, favourites and artist navigation are complete. Both old colour recovery branches remain preserved. GitHub, not a local draft, is the source of truth.
+2026-09-13. Ryan explicitly confirmed this work is primary; old recovery threads are not blockers. GitHub source owner remains `boop-unified-eye-sync-safe-v159`; next app version is 160. The v156 Shield sweep remains accepted.
 
-## Verified delivery
+## Verified colour delivery from the preceding continuation
+Signed v159 source `0a4134ebfe8049254378b4706d2ee1df73cd7e87`, full GitHub run `34757337845`, APK SHA256 `80e86119d4771624ff47617373df2cebc03c0454aa47f10a0996a6d507b68353`. Run passed 235 focused Unified and 68 Shield tests plus configured integration/asset/colour checks and permanent signing.
+That artifact was installed and hash-readback verified on both laptop emulators, Shield and Pixel 7. Pixel 10 physical phone remains excluded. Emulator checks covered preserved hue 73/288, settings entry, Cancel staying off, local slider changes, TV D-pad hue adjustment and persistence after reopening. Phone Wall awakened/rendered; crash buffer was empty.
+Shield actual HA sharing reached ready, published hue 195, then rejoined and restored shared 195 after a disconnected local edit to 289. The shared setting was restored to original 190. This proves Shield-to-HA state persistence and rejoin, NOT two-device delivery. Pixel 7 was locked; no unlock or credential bypass was attempted. End-to-end two-device sharing remains to verify when accessible.
 
-- Built source: `0a4134ebfe8049254378b4706d2ee1df73cd7e87` (implementation `dcebdedd251585e2dae0b414cb0c92fccf52f148`). Package `com.boop.alpha1`, version `159 / 1.2.159-shared-eye-colour`.
-- Full GitHub build `34757337845` succeeded, including existing non-visual integration/animation/ownership/media gates, compilation, signing and archive verification. Artifact `10317198102`, name `BOOP-Unified`.
-- APK SHA-256 `80e86119d4771624ff47617373df2cebc03c0454aa47f10a0996a6d507b68353`.
-- Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`, independently rechecked with the laptop SDK's apksigner before emulator installation. No replacement signer.
-- Focused functional report: 235 Unified tests and 68 Shield tests, zero failures/errors/skips. Appearance contracts also passed; they are not evidence of actual Home Assistant synchronization.
+## Current speed implementation awaiting GitHub and runtime gates
+Recovered staged GitHub tree now adds device-local 0.5x/1x/1.5x/2x settings, a monotonic delta clock and lifecycle speed listeners for Wall, Now Playing, notifications and embedded Lab. Authored motion, shaders, hue code and masters remain unchanged. Notification hands and eyes share one timeline; sleep-hide follows the remaining scaled duration. Existing Lab slow-review remains separate and no controller double-scaling is used.
+The test-first baseline at `3806cd34` failed the two expected missing-speed tests (run `34759118959`). The harness compares every authored clip and state/blend/trigger transitions to v156 at four rates, including exact 1x pose bits. No passing speed test or build is claimed until the new runs complete.
 
-## What is implemented
-
-Appearance settings, private activity registration, Application startup and authenticated opt-in hue sharing are wired. The runtime guards invalid connection attempts and stale authentication work. Existing `boop_eyes/hue_degrees`, Wall hue controls, shaders, approved eye master and authored clips remain unchanged. Sharing is OFF by default on upgrade. No new Android permission, voice changes, unauthenticated UDP or implicit native-lyrics merge.
-
-The recovered baseline `04f7c10c` passed four checks and failed the missing startup/settings wiring check. Its runtime file was complete; the earlier description of a truncated runtime was stale. The recovery window added tests at `9e452b43`, observed three expected failures, and another writer retained those tests in the completed implementation. Do not reapply the superseded, unreferenced competing implementation `c5016ef7`.
-
-## Emulator results actually observed
-
-The recovery window installed the verified signed APK with `adb install -r` on emulator-5570 (Pixel_10_Pro_XL_API_36) and emulator-5572 (BOOP_Android_TV_API_36), and read back version 159 on both. No `-g`, permission changes, data clearing or physical-device installation was performed by that window.
-
-Before upgrading, private rollback APKs were captured from phone v151 and TV v156. Both initially had no persisted hue/sharing XML. Deliberate migration fixtures used hue 73 on the phone and 288 on TV; both exact values survived the APK upgrade. Cold launches of MainActivity with the existing voice-settings extra returned Status: ok on both. The phone's voice settings screenshot was inspected locally; this is not full visual acceptance.
-
-Private receipts, rollback APKs, fixtures, downloaded artifact and screenshots are under `%TEMP%/boop-colour-v159-checks` on the laptop. The migration colours are test fixtures, not Ryan's personal colour preferences. Do not clear unrelated app data or tokens to remove them.
-
-## Remaining gates and coordination
-
-The branch advanced from another writer during recovery; those changes were preserved rather than overwritten. A later phone UI dump showed the profile screen after an attempted voice-settings scroll. That unexpected transition has not been attributed conclusively to another test session versus app routing. Avoid simultaneous emulator inputs; establish one test owner and investigate the transition.
-
-A final read-only device/log receipt request was blocked by the tool safety layer with an indeterminate safety status. It did NOT run. No bypass, permission change or reauthentication was attempted. This does not invalidate the earlier verified install/read-back/launch results, and does not mean GitHub source editing is blocked.
-
-Still unverified: appearance-screen interaction/Cancel/persistence after UI edits; actual two-device Home Assistant synchronization; disconnect/reconnect and server-change behaviour on Android; physical Shield/Pixel 7 acceptance. Pixel 10 physical deployment remains excluded. Do not describe colour as fully runtime-approved yet.
-
-Next: finish those controlled colour tests, then independent animation-speed work with exact 1x equivalence. Speed has not been implemented by this continuation. Ryan owns visual acceptance. Primary research and the approved scope remain in `docs/superpowers/plans/2026-09-13-shared-colour-and-speed.md`; recovery coordination details are alongside it in `2026-09-13-colour-recovery-validation.md`.
+## Boundaries and next
+No changes to Android global settings on physical devices, permissions, signing, voices, media transport or native-lyrics branch. Pixel 10 is untouched. GitHub owns source/build/logic tests; laptop emulators and Shield own runtime/visual checks. Preserve canonical visuals and current Wall hue. Follow the existing research plan; primary docs rechecked: Android SystemClock and SharedPreferences, HA input_text state restoration. Build and speed CI must both pass before deployment. Update this handoff with exact outcomes, not old pending statuses.

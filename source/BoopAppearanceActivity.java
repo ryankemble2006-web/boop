@@ -4,30 +4,39 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import com.boop.eyes.AnimationSpeedPreferences;
 
 /** Shared settings without constructing an additional face or animation renderer. */
 public final class BoopAppearanceActivity extends Activity {
+    private static final double[] SPEEDS = {.5, 1, 1.5, 2};
+    private static final String[] SPEED_LABELS = {"0.5x", "1x", "1.5x", "2x"};
     private BoopSharedEyeColourRuntime sharing;
-    private SharedPreferences eyes;
-    private TextView status, hueLabel;
+    private SharedPreferences eyes, appearance;
+    private TextView status, hueLabel, speedLabel;
     private SeekBar hue;
     private Button share, retry;
+    private final Button[] speedButtons = new Button[4];
     private Runnable unwatch;
     private boolean dragging;
     private final SharedPreferences.OnSharedPreferenceChangeListener hueListener = (store, key) -> {
         if (key == null || "hue_degrees".equals(key)) refresh();
+    };
+    private final SharedPreferences.OnSharedPreferenceChangeListener speedListener = (store, key) -> {
+        if (key == null || "animation_speed".equals(key)) refreshSpeed();
     };
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         sharing = BoopSharedEyeColourRuntime.get(this);
         eyes = getSharedPreferences("boop_eyes", MODE_PRIVATE);
+        appearance = getSharedPreferences("boop_appearance", MODE_PRIVATE);
         ScrollView scroll = new ScrollView(this);
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL);
@@ -59,9 +68,27 @@ public final class BoopAppearanceActivity extends Activity {
             else confirmSharing();
         });
         retry = button(column, "Retry sharing", this::confirmSharing);
+        speedLabel = text(column, "Animation speed: 1x", 20);
+        text(column, "BOOP only, on this device. 1x keeps the original timing. Android transitions, music and voice stay unchanged.", 18);
+        LinearLayout speeds = new LinearLayout(this);
+        speeds.setOrientation(LinearLayout.HORIZONTAL);
+        for (int i = 0; i < SPEEDS.length; i++) {
+            final int index = i;
+            Button button = new Button(this);
+            button.setText(SPEED_LABELS[i]); button.setTextSize(18); button.setAllCaps(false);
+            button.setMinWidth(0); button.setMinimumWidth(0); button.setMinHeight(dp(60));
+            button.setOnClickListener(v -> AnimationSpeedPreferences.save(this, SPEEDS[index]));
+            button.setOnFocusChangeListener((v, focused) -> refreshSpeed());
+            speedButtons[i] = button;
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dp(64), 1f);
+            params.setMargins(dp(3), dp(4), dp(3), dp(4));
+            speeds.addView(button, params);
+        }
+        column.addView(speeds, new LinearLayout.LayoutParams(-1, -2));
         button(column, "Done", this::finish);
         setContentView(scroll);
         refresh();
+        refreshSpeed();
     }
     private void confirmSharing() {
         new AlertDialog.Builder(this).setTitle("Share BOOP's eye colour?")
@@ -79,13 +106,34 @@ public final class BoopAppearanceActivity extends Activity {
         retry.setVisibility(sharing.enabled() && !sharing.ready()
                 ? android.view.View.VISIBLE : android.view.View.GONE);
     }
+    private void refreshSpeed() {
+        if (speedLabel == null) return;
+        double selected = AnimationSpeedPreferences.load(this);
+        for (int i = 0; i < SPEEDS.length; i++) {
+            Button button = speedButtons[i];
+            if (button == null) continue;
+            boolean chosen = SPEEDS[i] == selected;
+            if (chosen) speedLabel.setText("Animation speed: " + SPEED_LABELS[i]);
+            button.setSelected(chosen);
+            button.setTextColor(chosen || button.hasFocus() ? 0xff4db8ff : Color.WHITE);
+            button.setContentDescription("BOOP animation speed " + SPEED_LABELS[i] + (chosen ? ", selected" : ""));
+            GradientDrawable background = new GradientDrawable();
+            background.setColor(Color.rgb(42, 42, 42));
+            background.setCornerRadius(dp(10));
+            if (button.hasFocus() || chosen) background.setStroke(dp(button.hasFocus() ? 3 : 1), 0xff4db8ff);
+            button.setBackground(background);
+        }
+    }
     @Override protected void onStart() {
         super.onStart();
         eyes.registerOnSharedPreferenceChangeListener(hueListener);
+        appearance.registerOnSharedPreferenceChangeListener(speedListener);
         unwatch = sharing.observe(this::refresh);
+        refreshSpeed();
     }
     @Override protected void onStop() {
         eyes.unregisterOnSharedPreferenceChangeListener(hueListener);
+        appearance.unregisterOnSharedPreferenceChangeListener(speedListener);
         if (unwatch != null) { unwatch.run(); unwatch = null; }
         super.onStop();
     }

@@ -31,6 +31,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     private boolean resumed,focused,running,slow,motionOff;
     private long lastFrame;
     private double clock;
+    private double speedMultiplier = 1.0;
     private int freeze=-1;
     private boolean reducedMotion;
     @Override public void onCreate(Bundle state){
@@ -43,6 +44,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
         renderer=new CanonicalEyeRenderer(getAssets(),detail->runOnUiThread(()->label.setText("Renderer error: "+detail)));
         surface.setRenderer(renderer);surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         EyeColourBinding.install(surface, renderer);
+        AnimationSpeedBinding.install(surface, speed -> speedMultiplier = speed);
         stage=new FrameLayout(this);stage.addView(surface,new FrameLayout.LayoutParams(-1,-1));
         sign=new NotificationSignView(this);sign.setVisibility(View.GONE);
         stage.addView(sign,new FrameLayout.LayoutParams(-1,-1));
@@ -106,7 +108,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     }
     @Override public void doFrame(long time){
         if(!running)return;
-        if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:1);
+        if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:1)*speedMultiplier;
         lastFrame=time;
         EyeMotion.Clip clip=EyeCatalogue.find(controller.activeClipId());
         if(signActive){

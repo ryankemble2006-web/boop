@@ -3,6 +3,7 @@ package com.boop.eyes;
 /** Production owner for the finished canonical animation catalogue. */
 public final class ProductionAnimationController {
     private final EyeMotion.Controller motion;
+    private final AnimationClock clock;
     private String steadyClipId;
     private String activeClipId;
     private long transientStartedMs = -1L;
@@ -12,6 +13,7 @@ public final class ProductionAnimationController {
         EyeMotion.Clip initial = require(initialClipId);
         steadyClipId = initial.id;
         activeClipId = initial.id;
+        clock = new AnimationClock(nowMs);
         motion = new EyeMotion.Controller(initial, nowMs, seed);
     }
 
@@ -27,8 +29,15 @@ public final class ProductionAnimationController {
         return false;
     }
 
+    public void setSpeed(double multiplier, long nowMs) { clock.setSpeed(multiplier, nowMs); }
+    public long animationTime(long nowMs) { return clock.now(nowMs); }
+    public long realDelayUntil(long logicalDeadlineMs, long nowMs) {
+        return clock.realDelayUntil(logicalDeadlineMs, nowMs);
+    }
+
     public void setState(String id, long nowMs, float blendMs) {
         EyeMotion.Clip clip = require(id);
+        nowMs = clock.now(nowMs);
         steadyClipId = clip.id;
         activeClipId = clip.id;
         transientStartedMs = -1L;
@@ -38,6 +47,7 @@ public final class ProductionAnimationController {
     public void trigger(String id, long nowMs, float blendMs) {
         EyeMotion.Clip clip = require(id);
         if (clip.loop) throw new IllegalArgumentException("One-shot clip required: " + id);
+        nowMs = clock.now(nowMs);
         activeClipId = clip.id;
         transientStartedMs = nowMs;
         transientReturnBlendMs = blendMs;
@@ -45,6 +55,7 @@ public final class ProductionAnimationController {
     }
 
     public EyeMotion.Pose sample(long nowMs) {
+        nowMs = clock.now(nowMs);
         if (transientStartedMs >= 0L) {
             EyeMotion.Clip transientClip = require(activeClipId);
             if (nowMs - transientStartedMs >= transientClip.duration) {
@@ -56,8 +67,8 @@ public final class ProductionAnimationController {
         return motion.sample(nowMs);
     }
 
-    public void pause(long nowMs) { motion.pause(nowMs); }
-    public void resume(long nowMs) { motion.resume(nowMs); }
+    public void pause(long nowMs) { motion.pause(clock.now(nowMs)); }
+    public void resume(long nowMs) { motion.resume(clock.now(nowMs)); }
     public void setAmbientBlinkEnabled(boolean enabled) { motion.setAmbientBlinkEnabled(enabled); }
     public String activeClipId() { return activeClipId; }
     public String steadyClipId() { return steadyClipId; }

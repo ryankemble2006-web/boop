@@ -38,6 +38,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
     private final BoopFacePresentationState presentationState = new BoopFacePresentationState();
     private boolean frameScheduled;
     private boolean animationPaused;
+    private long sleepHideDeadlineMs = -1L;
     private java.util.function.BooleanSupplier idleBlinkAllowed = () -> true;
     private int eyeHueDegrees = BoopEyeHueMath.DEFAULT_HUE_DEGREES;
 
@@ -52,11 +53,19 @@ final class BoopCanonicalFaceView extends FrameLayout {
         }
     };
 
-    private final Runnable sleepHide = () -> {
+    private final Runnable sleepHide = this::finishSleepHide;
+
+    private void finishSleepHide() {
+        if (sleepHideDeadlineMs < 0L) return;
+        if (animation.realDelayUntil(sleepHideDeadlineMs, SystemClock.uptimeMillis()) > 0L) {
+            scheduleSleepHide();
+            return;
+        }
+        sleepHideDeadlineMs = -1L;
         setVisibility(View.INVISIBLE);
         stopFrames();
         pauseAnimation();
-    };
+    }
 
     BoopCanonicalFaceView(Context context) {
         super(context);
@@ -82,6 +91,10 @@ final class BoopCanonicalFaceView extends FrameLayout {
         surface.setRenderer(renderer);
         surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         com.boop.eyes.EyeColourBinding.install(surface, renderer);
+        com.boop.eyes.AnimationSpeedBinding.install(this, speed -> {
+            animation.setSpeed(speed, SystemClock.uptimeMillis());
+            scheduleSleepHide();
+        });
         surface.setFocusable(false);
         surface.setClickable(false);
         addView(surface, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -114,7 +127,8 @@ final class BoopCanonicalFaceView extends FrameLayout {
         animation.trigger(SLEEP, now, 0f);
         renderNow(now);
         long duration = Math.round(EyeCatalogue.find(SLEEP).duration);
-        handler.postDelayed(sleepHide, duration);
+        sleepHideDeadlineMs = animation.animationTime(SystemClock.uptimeMillis()) + duration;
+        scheduleSleepHide();
     }
 
     void playMemberBerry(int variant) {
@@ -276,7 +290,15 @@ final class BoopCanonicalFaceView extends FrameLayout {
         frameScheduled = false;
     }
 
+    private void scheduleSleepHide() {
+        if (sleepHideDeadlineMs < 0L) return;
+        handler.removeCallbacks(sleepHide);
+        handler.postDelayed(sleepHide,
+                animation.realDelayUntil(sleepHideDeadlineMs, SystemClock.uptimeMillis()));
+    }
+
     private void cancelSleepHide() {
+        sleepHideDeadlineMs = -1L;
         handler.removeCallbacks(sleepHide);
     }
 

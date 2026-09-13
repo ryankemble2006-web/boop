@@ -38,6 +38,8 @@ final class BoopNotificationPuppetView extends FrameLayout {
     private final com.boop.eyes.NotificationSignView signView;
     private final FrameLayout cardHost;
     private final PowerManager powerManager;
+    private final com.boop.eyes.AnimationClock signClock =
+            new com.boop.eyes.AnimationClock(SystemClock.uptimeMillis());
     private BoopNotificationPresentation presentation;
     private long signStartMs;
     private boolean frameScheduled;
@@ -59,6 +61,8 @@ final class BoopNotificationPuppetView extends FrameLayout {
         setClipToPadding(false);
 
         powerManager = context.getSystemService(PowerManager.class);
+        com.boop.eyes.AnimationSpeedBinding.install(this,
+                speed -> signClock.setSpeed(speed, SystemClock.uptimeMillis()));
         eyeSurface = new GLSurfaceView(context);
         eyeSurface.setEGLContextClientVersion(2);
         eyeSurface.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
@@ -96,7 +100,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
     void updatePresentation(BoopNotificationPresentation updated) {
         presentation = updated;
         rebuildCard();
-        signStartMs = SystemClock.uptimeMillis();
+        signStartMs = signClock.now(SystemClock.uptimeMillis());
         renderCanonical();
     }
 
@@ -186,7 +190,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
     }
 
     private void startEntrance() {
-        signStartMs = SystemClock.uptimeMillis();
+        signStartMs = signClock.now(SystemClock.uptimeMillis());
         renderCanonical();
     }
 
@@ -200,7 +204,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
 
     private void renderCanonical() {
         double elapsed = powerManager != null && powerManager.isPowerSaveMode()
-                ? 10000.0 : Math.max(0L, SystemClock.uptimeMillis() - signStartMs);
+                ? 10000.0 : Math.max(0L, signClock.now(SystemClock.uptimeMillis()) - signStartMs);
         int style = notificationStyle();
         com.boop.eyes.SignMotion.Pose pose = com.boop.eyes.SignMotion.sample(elapsed, style);
         eyeRenderer.pose = pose.eyes;
