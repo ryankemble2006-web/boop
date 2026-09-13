@@ -37,6 +37,9 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final LayeredPuppetView puppet;
     private final PowerManager powerManager;
+    private final MusicBounceSource musicSource;
+    private final MusicBounceEnvelope musicEnvelope = new MusicBounceEnvelope();
+    private boolean musicUnavailableNoticeShown;
     private final com.boop.eyes.ProductionAnimationController animation =
             new com.boop.eyes.ProductionAnimationController("idle", SystemClock.uptimeMillis(), 20260910L);
 
@@ -56,8 +59,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private final Runnable frame = new Runnable() {
         @Override public void run() {
             frameScheduled = false;
-            if (!shouldAnimateFrame()) return;
-            puppet.setCanonicalPose(animation.sample(SystemClock.uptimeMillis()));
+            if (!shouldAnimateFrame()) { stopFrames(); return; }
+            renderCanonicalFrame(SystemClock.uptimeMillis());
             scheduleFrame();
         }
     };
@@ -78,6 +81,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         setClipToPadding(true);
 
         powerManager = context.getSystemService(PowerManager.class);
+        musicSource = new MusicBounceSource(context);
         com.boop.eyes.AnimationSpeedBinding.install(this,
                 speed -> animation.setSpeed(speed, SystemClock.uptimeMillis()));
         puppet = new LayeredPuppetView(context);
@@ -123,7 +127,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private void applyCurrentState() {
-        boolean visible = homeVisible
+        boolean visible = isAttachedToWindow() && getWindowVisibility() == VISIBLE && homeVisible
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
                 && com.boop.shared.BoopState.INSTANCE.snapshot().owner == presentationOwner;
         if (!visible) {
@@ -143,8 +147,25 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             puppet.setCanonicalPose(steady.sample(steady.loop ? 0 : steady.duration));
             return;
         }
-        puppet.setCanonicalPose(animation.sample(now));
+        renderCanonicalFrame(now);
         scheduleFrame();
+    }
+
+    private void renderCanonicalFrame(long now) {
+        boolean playing = mode == NowPlayingPuppetPolicy.Mode.GROOVE;
+        boolean granted = MusicAudioPermissionActivity.hasAudioAccess(getContext());
+        musicSource.setActive(playing && granted && shouldAnimateFrame());
+        if (playing && !granted) MusicBouncePermission.promptOnce(getContext());
+        float height = musicEnvelope.update(musicSource.level(now), now);
+        puppet.setBounceHeight(height);
+        // Existing pose sampling and saved animation speed still own blinks and expressions.
+        puppet.setCanonicalPose(animation.sample(now));
+        if (!musicUnavailableNoticeShown && musicSource.unavailable()
+                && MusicBouncePermission.foregroundActivity(getContext()) != null) {
+            musicUnavailableNoticeShown = true;
+            android.widget.Toast.makeText(getContext(), "Android isn't sharing music levels right now.",
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     private void pauseCanonicalAnimation() {
@@ -157,6 +178,11 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         if (!animationPaused) return;
         animation.resume(SystemClock.uptimeMillis());
         animationPaused = false;
+    }
+
+    @Override protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        if (puppet != null) applyCurrentState();
     }
 
     @Override protected void onDetachedFromWindow() {
@@ -205,7 +231,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private boolean shouldAnimateFrame() {
-        return homeVisible
+        return isAttachedToWindow() && getWindowVisibility() == VISIBLE && homeVisible
                 && getVisibility() == VISIBLE
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
                 && animationAllowed();
@@ -224,6 +250,9 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private void stopFrames() {
         handler.removeCallbacks(frame);
         frameScheduled = false;
+        if (musicSource != null) musicSource.stop();
+        if (musicEnvelope != null) musicEnvelope.reset();
+        if (puppet != null) puppet.setBounceHeight(0f);
     }
 
     private int dp(int value) {
@@ -234,6 +263,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private static final class LayeredPuppetView extends FrameLayout {
         private final GLSurfaceView eyeSurface;
         private final com.boop.eyes.CanonicalEyeRenderer eyeRenderer;
+        private final MusicBounceRenderer musicRenderer;
 
         LayeredPuppetView(Context context) {
             super(context);
@@ -250,13 +280,17 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             eyeSurface.setPreserveEGLContextOnPause(true);
             eyeRenderer = new com.boop.eyes.CanonicalEyeRenderer(
                     context.getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
-            eyeSurface.setRenderer(eyeRenderer);
+            musicRenderer = new MusicBounceRenderer(eyeRenderer);
+            eyeSurface.setRenderer(musicRenderer);
             eyeSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
             com.boop.eyes.EyeColourBinding.install(eyeSurface, eyeRenderer);
             eyeSurface.setFocusable(false);
             eyeSurface.setClickable(false);
             addView(eyeSurface, new FrameLayout.LayoutParams(
                     LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
+        }
+        void setBounceHeight(float heightFraction) {
+            musicRenderer.setHeightFraction(heightFraction);
         }
         void setCanonicalPose(com.boop.eyes.EyeMotion.Pose pose) {
             eyeRenderer.pose = pose;
