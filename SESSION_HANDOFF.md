@@ -22,6 +22,14 @@ Ryan supplied screenshots showing repeated BOOP eye pairs on phone notification/
 - CI reports 235 focused Unified tests and 68 focused Shield tests, zero failures/errors/skips. Signed APK package identity, signature and ZIP integrity were verified.
 - Physical Shield/Pixel and visual acceptance remain pending. This task did not install the APK, grant permissions, clear data or alter signing configuration.
 
+## v147 device installation receipt
+
+- Explicit `adb install -r` returned `Success` on Nvidia Shield (`SHIELD Android TV`) and Pixel 10 Pro XL.
+- Both devices report package `com.boop.alpha1`, `versionCode=147`, `versionName=1.2.147-duplicate-cleanup`.
+- Each installed `base.apk` SHA256 is `2f56fc31645b34c69670d1b3abc4d3d63382d8bc762bf339151e43d59faa5db9`, exactly matching the signed GitHub artifact.
+- BOOP was launched on both with the normal launcher intent after installation. No uninstall, data clear, permission grant, signing change or unrelated device setting change was performed.
+- Visual acceptance of the duplicate-render cleanup remains Ryan-owned and pending; install/package/hash evidence does not claim the screens look correct.
+
 The v146 delivery record follows unchanged below.
 # BOOP v146 combined delivery: installed on Pixel and Shield
 

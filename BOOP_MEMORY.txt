@@ -1,9 +1,12 @@
-CURRENT DELIVERY: BOOP v146, 2026-09-12
-Owner: boop-unified-v146-integration. Same permanent-signed APK installed and
-hash-verified on Pixel 10 Pro XL and Shield. Phone iris/menu/crash repair, Lyrics
-preflight and visible Startup Manager/defaults are all included. Read current
-SESSION_HANDOFF.md for source/build/device receipts and acceptance limits.
-Do not resume an old isolated v142/v145 branch as the current combined app.
+CURRENT DELIVERY: BOOP v147, 2026-09-13
+Owner: boop-unified-v146-integration. Signed duplicate-render cleanup built from
+35bf096d and installed with `adb install -r` on Pixel 10 Pro XL and Shield. Both
+devices report 147 / 1.2.147-duplicate-cleanup and their installed base APK hash
+matches the signed artifact exactly. Phone portrait surfaces now draw one canonical
+eye pair; Shield Now Playing masks legacy baked-in eyes before canonical eyes draw.
+No animation clips were removed. Visual acceptance remains manual/pending. Read
+SESSION_HANDOFF.md for exact CI, artifact and device receipts. Do not resume v146
+or older isolated v142/v145 branches as the current combined app.
 
 CURRENT SCOPED LYRICS CONTINUATION - 2026-09-12
 Owner: boop-v142-lyrics-fastfail. Source fc0b552fe058cfaa0d29668cc1400d7fc8675ed5.
