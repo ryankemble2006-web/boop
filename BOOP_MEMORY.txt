@@ -1,64 +1,33 @@
-BOOP LYRICS LAB DURABLE MEMORY
-Updated 2026-09-13. Owner: boop-lyrics-lab-side-by-side-v157.
+BOOP LYRICS LAB MEMORY - INTEGRATED, RETIREMENT PENDING
+Updated 2026-09-13. Branch boop-lyrics-lab-side-by-side-v157.
 
-CURRENT APP / FOOTER REQUEST
-Separate app com.boop.lyricslab, 159 / 0.1.159-lyrics-footer.
-Ryan asked to stay in this lab while the other Unified branch finishes, remove
-Back to Now Playing, put the licence credit in its place, and halve that font.
-The licence/copyright credit is now passive at the former bottom-right footer
-inset with font 5 instead of 10. Main lyric text remains the same size. No other
-layout, artwork, timestamp, player-control, provider or subscription change.
-Existing hardware Back still belongs to the Activity; the removed footer is not
-replaced by another clickable/focusable control. Appearance awaits Ryan's look.
+Ryan authorized integration into Unified161 as162 and removal of the Lab once
+confirmed. PR10 is merged at0908d6955c90978e97dcbae9031f3f1de638bd9d into the current
+owner boop-unified-eye-sync-safe-v159. Its delivery docs are at978bf7df5e0759512b8a69807d9badeee7a8bb95.
+Use that owner's live handoff for further Unified work. Do not restart from this
+older Lab base or treat previous no-merge/wait wording as the current instruction.
 
-DELIVERY
-Source e6f9bbb736ac90287815bea3a9c48496505675ed.
-Signed GitHub run 34772352902 SUCCESS; artifact BOOP-Lyrics-Lab / 10322900224.
-APK SHA256 fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503.
-Signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
-Downloaded source/package/version/digest/signature independently checked.
-Installed only Lyrics Lab on Shield; its base APK hash and version matched.
-Separate Unified reported 161 / 1.2.161-lab-scale-independent and its APK hash
-was identical before and after. No playback input, app launch, permission change,
-data clear, phone or emulator operation. No merge or local app-source/build work.
+Unified162 is installed and package/hash-verified on Shield. The existing Lyrics
+button enters the internal native screen, not the Lab or a Deezer menu macro.
+Shared renderer/parser/loader and the half-size bottom-right credit were copied
+exactly. Main song lyrics retain their size. No Lab-specific observer or listener
+was imported; Unified keeps its existing manager. Accepted v161 colour/speed and
+unrelated source/artwork stay unchanged. Neither phone was touched.
 
-USER-CONFIRMED RESULT TO PRESERVE
-Ryan: "yes they do reload when skip is pressed inside the lab.."
-The v158 manual-Skip refresh fix is USER-CONFIRMED PASS with real Deezer on Shield.
-He also said ADB is fine. Do not ask for repetition/reconnection merely because
-historical docs describe the old failure or a timed-out connector call. Initial
-lyrics and controls and the emulator design were accepted; only the explicit
-footer amendment above is authorized as a design change now.
+KEEP LAB UNTIL USER CONFIRMS UNIFIED
+com.boop.lyricslab remains installed at159 /0.1.159-lyrics-footer, unchanged hash
+fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503.
+Wait for Ryan to confirm the new Unified route and desired refresh behavior.
+Then remove ONLY com.boop.lyricslab from Shield and verify absence. Preserve this
+source branch/history, Unified, Deezer and other Labs. Build/install success is
+not user confirmation and must not trigger early removal.
 
-REGRESSION / TEST HISTORY
-v157 genuinely lost its per-session listener through temporary playback states,
-so the lyrics only returned after reopening. v158 retains active-token observation
-separately from presentation eligibility, without polling or page-reload macros.
-That observer is unchanged by v159. v158 passed 38 real Android runtime assertions
-twice locally with a synthetic provider and invented cached words, then Ryan
-confirmed the real-player Skip path. CI continuity/provider/entry checks remain green.
-Do not infer universal catalogue, both skip directions, natural completion,
-offline or long-session physical acceptance from the one Skip report.
-A prior automated capture/Next timed out with unknown execution outcome; it is
-not a passed test. Its history remains in the dated v158 installation receipt.
-
-WORKFLOW / MERGE BOUNDARY
-Current main BOOP_START_HERE supersedes emulator-first with GitHub development,
-non-visual tests/signing/builds and joint device testing. No automatic emulator or
-visual acceptance gate. Preserve local/concurrent work. Keep Desktop Commander
-0.2.47 pinned with the existing known-good command. No connection upgrades.
-Only the separate lab is this task's app; leave both phones and Unified alone.
-Wait for the other branch and Ryan's merge approval. Later integrate the feature
-into the then-current Unified source, not overwrite it with the original v156 base.
-Unified's session manager differs from this lab observer. Jointly check the merged
-build; do not require repeating already-confirmed lab tests merely to resume.
-
-REFERENCES
-SESSION_HANDOFF.md and BOOP_STATUS.md own current continuation.
-Current receipt: docs/handoffs/2026-09-13-lyrics-footer-v159.md.
-Earlier proof: docs/handoffs/2026-09-13-lyrics-local-refresh-tests.md.
-Earlier install/timeout: docs/handoffs/2026-09-13-lyrics-shield-v158-install.md.
-Earlier diagnosis: docs/handoffs/2026-09-13-lyrics-track-refresh.md.
-User-confirmation checkpoint before footer: 820c1621f3340b96a915b353b4ef8cc0d217bc97.
-Historical full product memory: docs/history/lyrics-lab-pre-user-confirmation/.
-Do not publish private captures, dumps, addresses, tokens or third-party APKs.
+PREVIOUS ACCEPTANCE AND DURABLE HISTORY
+Ryan confirmed Skip refresh inside the Lab, player controls and emulator design.
+No need to repeat that old check. It is distinct from the new Unified integration.
+The previous complete memory ledger is preserved at
+5ce581be6f1da10eb47640c4c11636a4bfa9e330:BOOP_MEMORY.txt.
+Existing dated footer/refresh/device receipts and older product history remain.
+No app code, build, permission or device changes accompany this memory update.
+GitHub development and joint testing remain current; no autonomous emulator gate,
+local source builds, connection upgrades or private data publication.

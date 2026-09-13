@@ -1,31 +1,20 @@
-# BOOP Lyrics Lab v159 status
+# Lyrics Lab status: integrated, retained pending Unified confirmation
 
-Updated 2026-09-13. Branch: `boop-lyrics-lab-side-by-side-v157`.
-Package: `com.boop.lyricslab`; `159 / 0.1.159-lyrics-footer`.
+Updated 2026-09-13. The tested native feature and small bottom-right credit are
+merged into Unified v162 through PR #10 and installed on Shield. Current Unified
+owner: `boop-unified-eye-sync-safe-v159`; delivery documentation commit
+`978bf7df5e0759512b8a69807d9badeee7a8bb95`.
 
-**Requested UI:** removed the Back to Now Playing footer action. The existing
-licence/copyright attribution is now passive, bottom-right in that area and half
-its former font size. Actual lyrics, artwork, controls and Skip-refresh code are
-unchanged. Existing remote Back handling is not intercepted.
+Standalone Lab remains installed unchanged: `com.boop.lyricslab`,
+`159 / 0.1.159-lyrics-footer`, APK SHA256
+`fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503`.
+Before/after hash matched during the Unified update. It has NOT been removed.
 
-**Build and delivery:** GitHub `34772352902` SUCCESS, source
-`e6f9bbb736ac90287815bea3a9c48496505675ed`, artifact `BOOP-Lyrics-Lab` / `10322900224`.
-APK SHA256 `fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503`.
-Permanent signature and package/source/digest verified after download. Shield-only
-lab update succeeded; installed version and base APK hash match. Unified v161's
-APK hash was identical before/after. No launch, playback input or permission change.
-No phone/emulator operations, local source edits/builds, or Unified/main merge.
+Next: Ryan confirms Now Playing -> Lyrics inside Unified v162. Then remove ONLY
+this separate Lab from Shield and verify absence, retaining its GitHub history.
+No early cleanup, phone operations, permission changes or wholesale branch merge.
 
-**Checks:** new non-visual footer-wiring assertion red then green. Existing session,
-recording-identity, timing/ownership, transport, entry and packaging checks passed.
-No new visual/runtime pass is claimed. Ryan inspects the delivered UI together with
-us under current main's GitHub-development/joint-testing workflow.
-
-**Preserved acceptance:** Ryan confirmed v158 Skip reloads lyrics inside the lab on
-Shield, without exit/reopen. ADB is fine per Ryan. Neither is an unresolved gate.
-Do not enlarge that confirmation into every natural-completion/offline/long-session
-case. The v158 local 38x2 runtime evidence remains distinct and recorded.
-
-**Next:** keep polishing this separate lab while the other branch finishes; merge
-only when agreed, into the then-current Unified successor, followed by joint tests.
-See SESSION_HANDOFF.md and `docs/handoffs/2026-09-13-lyrics-footer-v159.md`.
+User-confirmed Lab Skip/control/design acceptance remains preserved. New Unified
+functional/build/package checks passed, but physical integration confirmation is
+pending. Read the current Unified handoff for exact evidence. Prior complete Lab
+status remains at `5ce581be6f1da10eb47640c4c11636a4bfa9e330:BOOP_STATUS.md`.
