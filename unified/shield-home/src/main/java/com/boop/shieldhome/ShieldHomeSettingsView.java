@@ -74,6 +74,12 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         access.setOnClickListener(v -> { if (callbacks != null) callbacks.onOpenNowPlayingAccess(); });
         addView(access, rowParams()); addSpacer(dp(10));
 
+        TextView musicAudio = action("Music audio access: "
+                + (MusicAudioPermissionActivity.hasAudioAccess(getContext()) ? "Allowed" : "Ask"));
+        musicAudio.setOnClickListener(v -> getContext().startActivity(
+                new Intent(getContext(), MusicAudioPermissionActivity.class)));
+        addView(musicAudio, rowParams()); addSpacer(dp(10));
+
         String playerLabel = nowPlayingPlayerLabel == null || nowPlayingPlayerLabel.trim().isEmpty() ? "Automatic" : nowPlayingPlayerLabel.trim();
         TextView player = action("Player: " + playerLabel);
         player.setOnClickListener(v -> { if (callbacks != null) callbacks.onChooseNowPlayingPlayer(); });
