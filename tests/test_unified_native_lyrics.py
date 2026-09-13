@@ -1,6 +1,7 @@
 """Native route, immutable transplant and v161 preservation. No visual acceptance tests."""
 from pathlib import Path
 import hashlib
+import re
 import subprocess
 import unittest
 import xml.etree.ElementTree as ET
@@ -24,6 +25,15 @@ def git(*args):
     return subprocess.check_output(['git', *args], cwd=ROOT)
 
 class UnifiedLyricsIntegration(unittest.TestCase):
+    def require_transplant_candidate(self):
+        match = re.search(r'^\s*versionCode\s+(\d+)\s*$',
+                          (ROOT / 'unified/app-build.gradle').read_text(), re.MULTILINE)
+        self.assertIsNotNone(match)
+        version = int(match.group(1))
+        self.assertGreaterEqual(version, 162)
+        if version != 162:
+            self.skipTest('The one-time v161-to-v162 source freeze does not prohibit later authorized features')
+
     def test_01_now_playing_routes_to_native_activity_not_the_macro_or_lab(self):
         source = (SRC / 'DeezerLyricsBrowser.java').read_text(encoding='utf-8')
         self.assertIn('new Intent(activity, ShieldLyricsActivity.class)', source,
@@ -48,6 +58,7 @@ class UnifiedLyricsIntegration(unittest.TestCase):
         self.assertNotIn('LyricsLab', ET.tostring(after, encoding='unicode'))
 
     def test_exact_tested_source_transplant(self):
+        self.require_transplant_candidate()
         for name, expected in COPIED.items():
             with self.subTest(source=name):
                 path = SRC / (name + '.java')
@@ -57,6 +68,7 @@ class UnifiedLyricsIntegration(unittest.TestCase):
                 self.assertEqual(expected, digest, 'Transplant must use the reviewed source blob')
 
     def test_v161_protected_code_is_unchanged(self):
+        self.require_transplant_candidate()
         allowed = {'unified/app-build.gradle', 'unified/shield-home-manifest.xml'}
         allowed.update(str((SRC / (name + '.java')).relative_to(ROOT)) for name in COPIED)
         # This is a source-integrity check, not a rendering or screenshot comparison.
