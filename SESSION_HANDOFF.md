@@ -1,73 +1,89 @@
-# BOOP Lyrics Lab: Shield user test succeeded
+# BOOP Lyrics Lab v158: refresh fix verified locally, Shield on hold
 
 Updated 2026-09-13. Owning branch: `boop-lyrics-lab-side-by-side-v157`.
-App: **BOOP Lyrics Lab**, package `com.boop.lyricslab`, version
-`157 / 0.1.157-lyrics-lab`. GitHub owns source and build evidence.
+Package: `com.boop.lyricslab`; fixed version `158 / 0.1.158-lyrics-session-sync`.
+GitHub remains the source/build authority. No merge into Unified or main.
 
-## Latest user result
+## Latest user instructions and acceptance
 
-Ryan reported: "i tested for you and enabled notification.. it worked".
-Record this as USER-TESTED WORKING on the Shield after Ryan enabled the lab's
-notification access. It is a real-device user result, not merely the synthetic
-emulator preview or an API-only probe. Ryan enabled access himself; this report
-is not permission to change or import permissions in another app.
+Ryan initially enabled notification access on Shield and confirmed lyrics worked.
+He approved the emulator design, then tested the lab player controls: all work,
+but lyrics do not reload until exiting and refreshing. Initial lyrics/controls
+and the existing design remain accepted; automatic refresh was NOT accepted.
 
-Ryan previously said: "keep going i like the design ya did in the emulator".
-The emulator presentation is user-approved. Preserve that design; do not
-redraw it, regenerate artwork or replace it with a modal text box.
+Latest instruction: continue with locals and stay off the busy Shield. This is
+an active deployment/testing hold. Do not query, install, issue media commands to,
+or otherwise touch the Shield until Ryan releases it. Neither phone is a target.
+Do not confuse this with permission to replace the installed Unified package.
 
-The feedback confirms the successful tested lyrics path. It does not enumerate
-pause/resume, both seek directions, automatic track changes, no-lyrics tracks,
-leaving/reopening or long-session behavior individually. Keep those checks
-separate rather than treating this message as blanket acceptance of every case.
+## Exact fix and signed artifact
 
-## Exact source and live build evidence
+App source: `5970f59aa9173fd8171d2d370b856349d0cf4f17`.
+The lab had detached its only per-session callback when a still-active player
+entered a temporary non-displayable state. The fix retains observation through
+NONE/STOPPED/SKIPPING and similar transitions while still clearing stale content.
+It detaches on real removal, lost access or lab pause. No polling, page-reload
+macro, renderer redesign, provider change, new app permission or signing change.
 
-- Lab application source: `9a52f1c66a6322584e99350056fb4b9bcb645a2b`.
-- Shared native-lyrics source: `9bb64285d3a3fb8d3cd1f4890931d7afdf74dfb9`.
-- Requested Unified base: accepted v156 at
-  `a901c1e9f31e55c710e31ac7ff4f5924c9769d56`.
-- GitHub run `34763076696`, **Build side-by-side BOOP Lyrics Lab**:
-  completed SUCCESS for the exact lab source above.
-- Artifact: `BOOP-Lyrics-Lab`, ID `10319767160`, not expired when read.
-- Artifact archive digest reported by GitHub:
-  `sha256:6f52e2fa4521980b8a06cc994b971c042684957b09f671d2cebfb818d2a9a29d`.
-  This is the artifact archive digest, NOT the installed APK hash.
+GitHub signed build `34766477538`: SUCCESS.
+Artifact: `BOOP-Lyrics-Lab`, ID `10320107611`.
+Exact APK SHA256:
+`c95bb9cc343ec9752fb2be610d0c61c0e4d01eb4faa3c62b8c6b28713db00c09`.
+Permanent signer SHA256:
+`f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Source receipt, actual package/version, signature and hash were checked after
+download. The dedicated emulator's installed base APK matches that hash exactly.
 
-The branch, source and CI artifact were checked live when recording this result.
-No fresh ADB/package-hash check was performed in this documentation update;
-do not manufacture an independent installed-artifact verification receipt.
-No new APK, app-code edit, permission change or deployment was performed.
+## Verification completed in the local-only continuation
 
-## Isolation and merge boundary
+The actual old v157 lab was exercised on the dedicated Android TV emulator using
+a real Android MediaSession and the production activity/controls/renderer. It
+reproduced the refresh failure after Previous: the session continued, but the lab
+lost the recording and showed its empty prompt. No activity restart occurred.
+Its installed hash matched the original `9a52f1c6` signed artifact exactly.
 
-Ryan requested a side-by-side fork after other work collided, with merging
-later when the feature is complete. That fork already exists. Do not create a
-second fork, restart from a local draft, or install a v157 Unified downgrade.
-This lab is a separate music application, not a replacement HOME launcher.
-Only `com.boop.lyricslab` is the target for subsequent lab installs and testing.
-Do not install `com.boop.alpha1` or the synthetic `com.boop.lyricspreview` on the
-Shield in this task. Neither physical Pixel is a target. Preserve the existing
-Unified app and the other task's work regardless of their version numbers.
-No merge into Unified/main is authorized by this success report.
+The exact v158 APK then passed **38 runtime assertions in each of two complete
+runs**, including automatic next/previous lyrics, 11 transitional states, pause/
+resume and frozen paused clock, remote ten-second seek in both directions with
+matching lyric cues, progress-bar navigation, missing/recovered metadata, replaced
+session, rapid changes, same visible activity and leave/reopen synchronization.
 
-## Next continuation
+These were not the old synthetic renderer preview: the real installed lab and
+Android Binder callbacks were exercised. The provider session and cached words
+were deliberately synthetic to isolate the refresh bug. This is local Android
+runtime evidence, NOT post-fix real-Deezer/Shield/audio/catalogue acceptance.
 
-Keep this working lab and approved presentation. When work resumes, fetch the
-live lab branch and continue any remaining focused playback/lifecycle checks
-on the dedicated local TV emulator and this separate Shield package. Do not
-rebuild the macro. Later integration must merge the native-lyrics feature into
-the then-current Unified source, not replace newer Unified with the old base.
-Physical confirmation remains Ryan-owned; non-visual GitHub checks remain
-separate from local runtime testing. No GitHub visual checks.
+GitHub additionally passed 73 session assertions, 19 identity assertions, 61
+timed-data/ownership checks, 35 transport checks, two incomplete-timing checks,
+seven real-entry control-flow checks, packaging and permanent-signer validation.
+The saved red regression on `5ad0746a` failed before the fix. All app presentation,
+artwork and shared renderer files are unchanged from the approved v157 lab.
 
-## Preserved context
+## Current local state and cleanup
 
-The inherited pre-confirmation handoff, status and full historical memory were
-preserved byte-for-byte under `docs/history/lyrics-lab-pre-user-confirmation/`.
-Their old instructions to install a Unified candidate are superseded by the
-side-by-side boundary above. Earlier failed layout/API/macro experiments remain
-historical evidence, not the current tested lab state. The feature plan remains
-at `docs/superpowers/plans/2026-09-13-native-lyrics.md`; lab packaging and isolation
-are described in `lyrics-lab/README.md`. Keep private captures, diagnostics,
-account data and downloaded third-party material outside the public repository.
+Dedicated AVD: `BOOP_Lyrics_157_8186447`. Lab v158 remains installed there.
+Lab notification access was enabled through normal Android Settings on this
+emulator only, without importing or changing physical-device permissions.
+The temporary emulator-only synthetic player/instrumentation APK was removed
+at the end after checking its exact package, test version, AVD and hash. Do not
+mistake it for a real Deezer install. Other emulators/worktrees remained untouched.
+Private artifact caches/logs remain on the laptop, outside the public repository.
+
+## Next safe step
+
+Do not rebuild or redesign this tested fix merely to resume. When Ryan releases
+the Shield, install ONLY the verified `com.boop.lyricslab` v158 artifact and
+confirm automatic new lyrics while staying on the real Deezer lyrics screen.
+Missing-lyrics/offline behavior and longer real-device sessions remain separate
+acceptance items; parser tests do not certify the entire remote catalogue.
+
+Only after the real-device refresh check and Ryan's merge approval should the
+native-lyrics feature be integrated into the then-current Unified successor.
+The lab-specific observer is not a replacement for Unified's own session manager.
+Keep unrelated eye-colour/speed work and existing Unified installations intact.
+
+Detailed receipts, setup exclusions and repeatable test instructions:
+`docs/handoffs/2026-09-13-lyrics-local-refresh-tests.md` and
+`tests/runtime/lyrics-session/README.md`. Earlier Shield investigation is in
+`docs/handoffs/2026-09-13-lyrics-track-refresh.md`. Historical product/checkpoint
+memory remains under `docs/history/lyrics-lab-pre-user-confirmation/`.

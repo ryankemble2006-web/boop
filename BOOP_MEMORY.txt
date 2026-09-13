@@ -1,42 +1,67 @@
 BOOP LYRICS LAB DURABLE MEMORY
-Updated 2026-09-13. Applies to boop-lyrics-lab-side-by-side-v157 only.
+Updated 2026-09-13. Owning branch: boop-lyrics-lab-side-by-side-v157.
 
-CURRENT APP AND WHY IT IS SEPARATE
-BOOP Lyrics Lab is com.boop.lyricslab, version 157 / 0.1.157-lyrics-lab.
-Ryan requested a side-by-side fork after concurrent work collided:
-"to speed things up, fork this to install side by side with whatever is on my shield.. we will merge later when we complete".
-The fork already exists. Do not overwrite the installed Unified package,
-create another lab unnecessarily, or silently merge back into Unified/main.
-Neither physical Pixel is a target. GitHub is the source authority; the laptop
-is for the explicitly authorized emulator/device test loop, not stale source.
+CURRENT BOUNDARY
+Ryan said: "continue but stay off the shield its busy, use locals".
+This continuation is LOCAL ONLY. Do not query or change the Shield or either
+phone, install over Unified, or merge without renewed user authorization.
+Source edits, tests and signing are GitHub-owned. Use the dedicated local TV
+AVD BOOP_Lyrics_157_8186447 for runtime work; preserve other tasks and emulators.
 
-APPROVED PRESENTATION
-Ryan said: "keep going i like the design ya did in the emulator".
-Keep that native full-screen composition and restrained cyan lyric styling.
-Do not regenerate approved artwork or redesign it into a dialog/text box.
-The direction is BOOP-rendered timed lyrics, not another Deezer menu macro.
+APP AND ACCEPTANCE
+BOOP Lyrics Lab is the separate com.boop.lyricslab app, not a HOME launcher.
+Ryan approved the emulator design and enabled the lab's notification access on
+Shield himself. Initial lyrics and all player controls were user-confirmed.
+He then reported: "all work but do not reload the page for lyrics until i exit out and refresh".
+Automatic refresh therefore was NOT accepted. Never turn the original success
+message into a claim that this regression did not exist.
+Keep the approved full-screen composition, cyan highlight, locked artwork and
+working controls. No page-reload/Deezer-clicking macro, new permissions or account
+credentials. The purpose of the fork is to avoid overwriting concurrent Unified.
 
-PHYSICAL RESULT
-Ryan reported: "i tested for you and enabled notification.. it worked".
-This is USER-TESTED WORKING on the Shield after Ryan enabled the lab's own
-notification access. Preserve this result; do not ask him to repeat it merely
-because an inherited handoff still called all physical testing pending.
-It is not blanket acceptance of every transport/lifecycle case and not a fresh
-independent verification of the installed APK hash. Do not silently grant
-permissions or propagate this consent to other packages/devices.
+WHY REFRESH BROKE
+The lab removed its only metadata/playback callback while the same active session
+passed through temporary NONE/STOPPED/SKIPPING states. Without that callback it
+could miss the next song until Activity restart. Observer lifetime must follow
+the live session token, separately from which states can display a music panel.
+Retain observation through transient states; still clear old content. Detach on
+actual removal, permission loss and the lab becoming inactive. Do not add polling
+or recreate the Activity to hide a broken subscription.
 
-EXACT REFERENCES
-Lab app source: 9a52f1c66a6322584e99350056fb4b9bcb645a2b.
-Shared feature source: 9bb64285d3a3fb8d3cd1f4890931d7afdf74dfb9.
-Accepted requested base: a901c1e9f31e55c710e31ac7ff4f5924c9769d56 (Unified v156).
-Live GitHub run 34763076696 completed SUCCESS for the lab app source.
-Artifact BOOP-Lyrics-Lab / 10319767160. See SESSION_HANDOFF.md for limits.
+TESTED FIX
+Version 158 / 0.1.158-lyrics-session-sync.
+App source: 5970f59aa9173fd8171d2d370b856349d0cf4f17.
+GitHub signed run 34766477538 SUCCESS; artifact BOOP-Lyrics-Lab / 10320107611.
+APK SHA256 c95bb9cc343ec9752fb2be610d0c61c0e4d01eb4faa3c62b8c6b28713db00c09.
+The exact signed v157 baseline reproduced the failure on a local real Android
+MediaSession. The exact signed v158 passed 38 real-session/production-presentation
+assertions in each of two complete emulator runs. This includes automatic lyrics
+replacement without leaving, pause/resume, ten-second seek/cue updates, transient
+states, metadata/session recovery, rapid changes and reopening.
+The provider and words were synthetic, while the installed activity, session
+observer, controls, loader and renderer were production. Do not call it post-fix
+physical Shield or full real-Deezer catalogue acceptance. CI logic tests are also
+green. Renderer/artwork did not change. Review was in-session, not independent.
 
-HISTORY IS RETAINED
-The full inherited BOOP memory ledger is preserved byte-for-byte at
+LOCAL STATE
+Lab v158 remains installed on the dedicated emulator with verified APK hash.
+Its own notification access was enabled through the emulator's Android Settings.
+No physical permission was changed or imported. The temporary test-only synthetic
+player/instrumentation APK was removed after its identity/hash were verified.
+Do not assume a real Deezer app is now installed on that AVD.
+
+NEXT
+Wait for Ryan to release the Shield. Then recheck only this separate lab's real
+track refresh; preserve the installed Unified app. Missing-lyrics/offline and
+longer real-device sessions remain separate checks. Merge only after acceptance
+and authorization, into the current Unified successor, not back over newer code.
+The refresh fix is lab-specific; Unified has its own session-binding manager.
+
+HISTORY AND RECEIPTS
+SESSION_HANDOFF.md and BOOP_STATUS.md own current implementation status.
+Detailed local evidence: docs/handoffs/2026-09-13-lyrics-local-refresh-tests.md.
+Earlier investigation: docs/handoffs/2026-09-13-lyrics-track-refresh.md.
+The full inherited product memory/checkpoints remain preserved byte-for-byte at
  docs/history/lyrics-lab-pre-user-confirmation/BOOP_MEMORY.txt
-alongside the inherited handoff and status. Product principles and protected
-checkpoints remain available there. Their dated CURRENT DELIVERY headlines
-and Unified install instructions do not override this lab's current boundary.
-No app code, builds, signing, permissions, installs or merges were changed by
-this confirmation-recording update. Continue from the live owning branch.
+No personal captures, raw dumps, private addresses, tokens or third-party APKs
+belong in the public repository.
