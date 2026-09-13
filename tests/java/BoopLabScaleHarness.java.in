@@ -1,0 +1,130 @@
+import com.boop.eyes.*;
+
+/** Verbatim production callback bodies with test-only platform/output adapters.
+ * This exercises Java control flow and pose data, not Android scheduling or pixels. */
+public final class BoopLabScaleHarness extends LabHostActivity implements LabHostFrameCallback {
+    // PRODUCTION_FIELDS
+    // PRODUCTION_CALLBACKS
+
+    private static int checks;
+    private static void check(boolean value, String context) {
+        checks++;
+        if (!value) throw new AssertionError(context);
+    }
+    private static void same(EyeMotion.Pose expected, EyeMotion.Pose actual, String context) {
+        check(actual != null && Float.floatToIntBits(expected.left) == Float.floatToIntBits(actual.left)
+                && Float.floatToIntBits(expected.right) == Float.floatToIntBits(actual.right)
+                && Float.floatToIntBits(expected.x) == Float.floatToIntBits(actual.x)
+                && Float.floatToIntBits(expected.y) == Float.floatToIntBits(actual.y), context);
+    }
+    private static void sameSign(SignMotion.Pose expected, SignMotion.Pose actual, String context) {
+        check(actual != null && Float.floatToIntBits(expected.lift) == Float.floatToIntBits(actual.lift)
+                && Float.floatToIntBits(expected.angle) == Float.floatToIntBits(actual.angle)
+                && Float.floatToIntBits(expected.sway) == Float.floatToIntBits(actual.sway)
+                && Float.floatToIntBits(expected.bob) == Float.floatToIntBits(actual.bob)
+                && Float.floatToIntBits(expected.wrist) == Float.floatToIntBits(actual.wrist), context);
+        same(expected.eyes, actual.eyes, context + " eyes");
+    }
+    private static BoopLabScaleHarness make(float scale, Boolean saver, double rate) {
+        Settings.Global.scale = scale;
+        BoopLabScaleHarness a = new BoopLabScaleHarness();
+        check(a.speedMultiplier == 1.0, "Lab default must remain original 1x");
+        a.fixturePower = saver == null ? null : new PowerManager(saver);
+        a.surface = new GLSurfaceView(); a.renderer = new CanonicalEyeRenderer();
+        a.sign = new NotificationSignView();
+        a.controller = new ProductionAnimationController("thinking", 0, 20260910L);
+        a.speedMultiplier = rate;
+        a.onWindowFocusChanged(true); a.onResume();
+        return a;
+    }
+    private static void tick(BoopLabScaleHarness a, long ms) {
+        a.doFrame(1_000_000_000L + ms * 1_000_000L);
+    }
+    public static void main(String[] args) {
+        for (float scale : new float[]{1, .5f, 2, 0}) {
+            for (double rate : new double[]{.5, 1, 1.5, 2}) {
+                BoopLabScaleHarness a = make(scale, false, rate);
+                ProductionAnimationController reference = new ProductionAnimationController("thinking", 0, 20260910L);
+                for (long ms = 0; ms <= 2000; ms += 50) {
+                    tick(a, ms);
+                    check(a.clock == ms * rate, "Lab delta must apply chosen rate exactly once");
+                    same(reference.sample((long)(ms * rate)), a.renderer.pose,
+                            "Lab pose freezes or diverges: Android scale=" + scale + ", rate=" + rate + ", ms=" + ms);
+                }
+                for (int style = 0; style < 5; style++) {
+                    a = make(scale, false, rate); a.signActive = true; a.signStyle = style;
+                    for (long ms = 0; ms <= 8000; ms += 100) {
+                        tick(a, ms);
+                        SignMotion.Pose expected = style == 4 ? FreddieMotion.sample(ms * rate) : SignMotion.sample(ms * rate, style);
+                        sameSign(expected, a.sign.last, "Lab sign at Android scale=" + scale + ", rate=" + rate + ", style=" + style);
+                        same(expected.eyes, a.renderer.pose, "Sign eye output uses the same logical time");
+                    }
+                }
+            }
+            for (Boolean saver : new Boolean[]{null, false, true}) {
+                BoopLabScaleHarness a = make(scale, saver, 1);
+                check(a.reducedMotion == Boolean.TRUE.equals(saver), "Only existing power saver policy may select reduced motion");
+                a.controller.setState("wake", 0, 0);
+                tick(a, 0); tick(a, 100);
+                if (Boolean.TRUE.equals(saver)) same(EyeCatalogue.find("wake").sample(EyeCatalogue.find("wake").duration), a.renderer.pose, "Power saver retains one-shot endpoint");
+                a.freeze = 73; tick(a, 200);
+                same(EyeCatalogue.find("wake").sample(73), a.renderer.pose, "Explicit freeze review remains authoritative");
+            }
+            BoopLabScaleHarness a = make(scale, false, 1);
+            tick(a, 0); tick(a, 100);
+            a.onPause(); a.speedMultiplier = 2; tick(a, 9000);
+            check(a.clock == 100 && !a.running, "Paused Lab cannot advance");
+            a.onResume(); tick(a, 10000);
+            check(a.clock == 100, "Resume must not catch up hidden time");
+            tick(a, 10050); check(a.clock == 200, "Resume uses the selected rate");
+            a.onWindowFocusChanged(false); tick(a, 11000);
+            check(a.clock == 200 && !a.running, "Focus loss stops the Lab loop");
+            a.onWindowFocusChanged(true); tick(a, 12000); tick(a, 12050);
+            check(a.clock == 300, "Focus return resets the frame anchor");
+            a.motionOff = true; tick(a, 13000);
+            check(a.clock == 300, "Pause motion remains usable");
+            a.motionOff = false; a.slow = true; tick(a, 13050);
+            check(Math.abs(a.clock - 315) < 1e-9, "Slow review composes once with selected speed");
+            System.out.println("PASS Lab host callbacks at Android animator scale " + scale);
+        }
+        System.out.println("BoopLabScaleHarness: " + checks + " numeric checks; no Android launch or visual judgement");
+    }
+    static final class PowerManager {
+        final boolean saver;
+        PowerManager(boolean saver) { this.saver = saver; }
+        boolean isPowerSaveMode() { return saver; }
+    }
+    static final class Settings {
+        static final class Global {
+            static float scale;
+            static final String ANIMATOR_DURATION_SCALE = "animator_duration_scale";
+            static float getFloat(Object resolver, String key, float fallback) { return scale; }
+        }
+    }
+    static final class GLSurfaceView { void onResume() {} void onPause() {} void requestRender() {} }
+    static final class CanonicalEyeRenderer { EyeMotion.Pose pose; }
+    static final class NotificationSignView {
+        SignMotion.Pose last;
+        void show(SignMotion.Pose pose, int style) { last = pose; }
+        void showFreddie(SignMotion.Pose pose) { last = pose; }
+    }
+    static final class FrameLayout {}
+    static final class TextView {}
+    static final class Log { static void i(String tag, String message) {} }
+    static final class Choreographer {
+        static final Choreographer INSTANCE = new Choreographer();
+        static Choreographer getInstance() { return INSTANCE; }
+        void postFrameCallback(Object callback) {}
+        void removeFrameCallback(Object callback) {}
+    }
+}
+class LabHostActivity {
+    static final String POWER_SERVICE = "power";
+    Object fixturePower;
+    Object getSystemService(String service) { return fixturePower; }
+    Object getContentResolver() { return null; }
+    protected void onResume() {}
+    protected void onPause() {}
+    public void onWindowFocusChanged(boolean focus) {}
+}
+interface LabHostFrameCallback { void doFrame(long time); }

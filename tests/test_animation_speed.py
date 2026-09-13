@@ -88,6 +88,23 @@ def test_signed_apk_requires_timing_and_materialized_source_checks():
     assert 'continue-on-error:' not in workflow, 'Timing failures must prevent signing'
 
 
+def test_embedded_lab_callbacks_ignore_android_animator_scale():
+    import runpy
+    run = runpy.run_path(str(ROOT / 'tests/boop_lab_scale_checks.py'))['run_lab_checks']
+    candidates = [(ROOT / 'source/BoopCanonicalAnimationActivity.java', ENGINE)]
+    built = ROOT / 'boop-build/BOOP-Alpha1'
+    if built.exists():
+        candidates.append((built / 'app/src/main/java/com/boop/alpha1/BoopCanonicalAnimationActivity.java',
+                           built / 'animation-lib/src/main/java/com/boop/eyes'))
+    failures = []
+    for activity, engine in candidates:
+        try:
+            run(activity, engine)
+        except subprocess.CalledProcessError:
+            failures.append(str(activity.relative_to(ROOT)))
+    assert not failures, 'Lab callback checks failed for: ' + ', '.join(failures)
+
+
 if __name__ == '__main__':
     for name, test in list(globals().items()):
         if name.startswith('test_') and callable(test):

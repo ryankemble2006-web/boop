@@ -10,7 +10,7 @@ def test_materialized_motion_and_bindings_are_the_reviewed_source():
     names = ['AnimationClock.java', 'AnimationSpeedPreferences.java',
              'AnimationSpeedBinding.java', 'ProductionAnimationController.java',
              'EyeColourBinding.java', 'CanonicalEyeRenderer.java',
-             'EyeMotion.java', 'EyeCatalogue.java', 'SignMotion.java']
+             'EyeMotion.java', 'EyeCatalogue.java', 'SignMotion.java', 'FreddieMotion.java']
     for name in names:
         path = BUILT / 'java/com/boop/eyes' / name
         assert path.is_file(), 'Missing materialized speed source: ' + str(path)
@@ -22,7 +22,9 @@ def test_materialized_motion_and_bindings_are_the_reviewed_source():
         ('boop-notification-hands.png', 'unified/assets/boop-notifications/boop-yellow-hands-approved.png'),
     ]:
         assert (BUILT / 'assets' / target).read_bytes() == (ROOT / source).read_bytes(), 'Materialized approved master changed: ' + target
-    print('Materialized speed, colour, authored-motion and approved-master bytes match reviewed GitHub source')
+    lab = ROOT / 'boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopCanonicalAnimationActivity.java'
+    assert lab.read_bytes() == (ROOT / 'source/BoopCanonicalAnimationActivity.java').read_bytes(), 'Materialization replaced reviewed Lab callbacks'
+    print('Materialized Lab, speed, colour, authored-motion and approved-master bytes match reviewed GitHub source')
 
 
 if __name__ == '__main__':
