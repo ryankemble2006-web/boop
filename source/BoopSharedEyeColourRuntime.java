@@ -16,31 +16,38 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.OkHttpClient;
 
-/** Opt-in foreground sharing. Existing Wall hue storage remains the local authority. */
+/** Opt-in foreground sharing. Does not replace Wall's local hue store or rendering. */
 final class BoopSharedEyeColourRuntime implements Application.ActivityLifecycleCallbacks {
     private static BoopSharedEyeColourRuntime instance;
     private final Context app;
     private final SharedPreferences settings, eyes;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
-    private final OkHttpClient http = new OkHttpClient.Builder().pingInterval(25, java.util.concurrent.TimeUnit.SECONDS).build();
+    private final OkHttpClient http = new OkHttpClient.Builder()
+            .pingInterval(25, java.util.concurrent.TimeUnit.SECONDS).build();
     private final Set<Activity> started = Collections.newSetFromMap(new IdentityHashMap<>());
     private final Set<Runnable> observers = new LinkedHashSet<>();
     private final SharedPreferences.OnSharedPreferenceChangeListener hueListener;
     private final SharedEyeColourState state;
     private HomeAssistantWebSocket socket;
     private SharedEyeColourLink link;
+    private Future<?> authenticationJob;
     private long generation;
     private int retrySeconds = 2;
     private boolean connecting, applying;
     private String status = "Eye colour stays on this device.";
     private final Runnable flush = this::flush;
     private final Runnable stopAfterBackground = () -> {
-        if (started.isEmpty()) { disconnect(); status("Sharing resumes when BOOP is open."); }
+        if (started.isEmpty()) {
+            disconnect();
+            status(enabled() ? "Sharing resumes when BOOP is open." : "Eye colour stays on this device.");
+        }
     };
+
     static void initialize(Application application) {
         if (instance != null) return;
         instance = new BoopSharedEyeColourRuntime(application);
@@ -68,23 +75,29 @@ final class BoopSharedEyeColourRuntime implements Application.ActivityLifecycleC
     boolean ready() { return state.isConnected(); }
     String status() { return status; }
     Runnable observe(Runnable observer) {
-        observers.add(observer); observer.run();
+        observers.add(observer);
+        observer.run();
         return () -> observers.remove(observer);
     }
     void setEnabled(boolean enabled) {
         settings.edit().putBoolean("shared_colour_enabled", enabled).apply();
-        disconnect(); retrySeconds = 2;
+        disconnect();
+        retrySeconds = 2;
         if (enabled) connect(true);
         else status("Eye colour stays on this device.");
     }
-    private boolean current(long request) { return request == generation && enabled() && !started.isEmpty(); }
+    // Allow replies during the short Activity-to-Activity handover. A real background
+    // stop closes the link and advances generation, invalidating every old callback.
+    private boolean current(long request) { return request == generation && enabled(); }
     private void connect(boolean explicitSetup) {
         if (!enabled() || started.isEmpty() || connecting || socket != null) return;
         connecting = true;
         final long request = ++generation;
         status("Connecting colour sharing...");
-        main.postDelayed(() -> { if (current(request) && connecting) failed("Colour sharing timed out. Local colour still works.", false); }, 15000);
-        worker.execute(() -> {
+        main.postDelayed(() -> {
+            if (current(request) && connecting) failed("Colour sharing timed out. Local colour still works.", true);
+        }, 15000);
+        authenticationJob = worker.submit(() -> {
             try {
                 SecureTokenStore tokens = BoopVoiceTokenStore.create(app);
                 if (!tokens.hasConnection()) throw new IllegalStateException("No paired Home Assistant");
@@ -92,7 +105,9 @@ final class BoopSharedEyeColourRuntime implements Application.ActivityLifecycleC
                 String scope = scope(base);
                 String saved = settings.getString("colour_server_scope", "");
                 if (!explicitSetup && !scope.equals(saved)) {
-                    main.post(() -> { if (current(request)) failed("Home Assistant changed. Turn sharing on again to choose this home.", false); });
+                    main.post(() -> {
+                        if (current(request)) failed("Home Assistant changed. Turn sharing on again to choose this home.", false);
+                    });
                     return;
                 }
                 String token = new HomeAssistantAuth(app, tokens).freshAccessToken();
@@ -102,41 +117,63 @@ final class BoopSharedEyeColourRuntime implements Application.ActivityLifecycleC
                     open(request, base, token, explicitSetup);
                 });
             } catch (Exception unavailable) {
-                main.post(() -> { if (current(request)) failed("Connect BOOP to Home Assistant, then retry colour sharing. Your local colour is unchanged.", false); });
+                final boolean retry = unavailable instanceof java.io.IOException;
+                main.post(() -> {
+                    if (current(request)) failed("Connect BOOP to Home Assistant, then retry colour sharing. Your local colour is unchanged.", retry);
+                });
             }
         });
     }
     private void open(long request, String base, String token, boolean explicitSetup) {
         final HomeAssistantWebSocket connection = new HomeAssistantWebSocket(http);
         socket = connection;
-        connection.connect(base, token, new HomeAssistantWebSocket.Listener() {
-            @Override public void onReady() {
-                main.post(() -> {
-                    if (!current(request)) return;
-                    prepareLink(request, connection);
-                    connection.subscribeStateChanges((entity, value) -> main.post(() -> {
-                        if (current(request) && link != null) link.event(entity, value);
-                    }), (subscription, error) -> main.post(() -> {
-                        if (!current(request)) { if (subscription != null) subscription.cancel(); return; }
-                        if (subscription == null) { failed("Home Assistant did not allow colour updates. Local colour still works.", false); return; }
-                        link.begin(explicitSetup);
-                    }));
-                });
-            }
-            @Override public void onOffline(String ignored) {
-                main.post(() -> { if (current(request)) failed("Sharing is offline. Keeping this device's last colour.", true); });
-            }
-            @Override public void onReauthRequired(String ignored) {
-                main.post(() -> { if (current(request)) failed("Home Assistant needs BOOP to reconnect before sharing colour.", false); });
-            }
-        });
+        try {
+            connection.connect(base, token, new HomeAssistantWebSocket.Listener() {
+                @Override public void onReady() {
+                    main.post(() -> {
+                        if (!current(request)) return;
+                        try {
+                            prepareLink(request, connection);
+                            connection.subscribeStateChanges((entity, value) -> main.post(() -> {
+                                if (current(request) && link != null) link.event(entity, value);
+                            }), (subscription, error) -> main.post(() -> {
+                                if (!current(request)) {
+                                    if (subscription != null) subscription.cancel();
+                                    return;
+                                }
+                                if (subscription == null) {
+                                    failed("Home Assistant did not allow colour updates. Local colour still works.", false);
+                                    return;
+                                }
+                                link.begin(explicitSetup);
+                            }));
+                        } catch (RuntimeException offline) {
+                            failed("Colour sharing disconnected. Local colour still works.", true);
+                        }
+                    });
+                }
+                @Override public void onOffline(String ignored) {
+                    main.post(() -> {
+                        if (current(request)) failed("Sharing is offline. Keeping this device's last colour.", true);
+                    });
+                }
+                @Override public void onReauthRequired(String ignored) {
+                    main.post(() -> {
+                        if (current(request)) failed("Home Assistant needs BOOP to reconnect before sharing colour.", false);
+                    });
+                }
+            });
+        } catch (RuntimeException invalid) {
+            failed("Colour sharing could not connect. Local colour still works.", false);
+        }
     }
     private void prepareLink(long request, HomeAssistantWebSocket connection) {
         link = new SharedEyeColourLink((type, body, reply) -> {
             if (!current(request)) return;
             AtomicBoolean completed = new AtomicBoolean();
             Runnable timeout = () -> {
-                if (current(request) && completed.compareAndSet(false, true)) failed("Colour sharing timed out. Local colour still works.", false);
+                if (current(request) && completed.compareAndSet(false, true))
+                    failed("Colour sharing timed out. Local colour still works.", true);
             };
             main.postDelayed(timeout, 8000);
             try {
@@ -145,16 +182,24 @@ final class BoopSharedEyeColourRuntime implements Application.ActivityLifecycleC
                     main.removeCallbacks(timeout);
                     reply.complete(success, result);
                 }));
-            } catch (RuntimeException offline) { main.removeCallbacks(timeout); failed("Colour sharing is offline. Local colour still works.", true); }
+            } catch (RuntimeException offline) {
+                main.removeCallbacks(timeout);
+                failed("Colour sharing is offline. Local colour still works.", true);
+            }
         }, new SharedEyeColourLink.Listener() {
             @Override public void ready(int hue) {
-                state.connected(hue); connecting = false; retrySeconds = 2;
-                applyShared(); status("Eye colour is shared through Home Assistant.");
+                state.connected(hue);
+                connecting = false;
+                retrySeconds = 2;
+                applyShared();
+                status("Eye colour is shared through Home Assistant.");
             }
             @Override public void colour(int hue) { state.remoteChanged(hue); applyShared(); }
             @Override public void confirmed(int hue) {
-                state.writeConfirmed(hue); applyShared();
-                main.removeCallbacks(flush); main.postDelayed(flush, 180);
+                state.writeConfirmed(hue);
+                applyShared();
+                main.removeCallbacks(flush);
+                main.postDelayed(flush, 180);
             }
             @Override public void failed(String message) { BoopSharedEyeColourRuntime.this.failed(message, false); }
         }, () -> BoopEyeHue.loadHue(app));
@@ -174,18 +219,23 @@ final class BoopSharedEyeColourRuntime implements Application.ActivityLifecycleC
         notifyObservers();
     }
     private void failed(String message, boolean retry) {
-        disconnect(); status(message);
+        disconnect();
+        status(message);
         if (!retry || !enabled() || started.isEmpty()) return;
         long request = generation;
-        int delay = retrySeconds; retrySeconds = Math.min(30, retrySeconds * 2);
+        int delay = retrySeconds;
+        retrySeconds = Math.min(30, retrySeconds * 2);
         main.postDelayed(() -> { if (current(request)) connect(false); }, delay * 1000L);
     }
     private void disconnect() {
-        generation++; connecting = false;
+        generation++;
+        connecting = false;
+        if (authenticationJob != null) { authenticationJob.cancel(true); authenticationJob = null; }
         main.removeCallbacksAndMessages(null);
         state.disconnected();
         if (link != null) { link.close(); link = null; }
-        HomeAssistantWebSocket old = socket; socket = null;
+        HomeAssistantWebSocket old = socket;
+        socket = null;
         if (old != null) old.close();
     }
     private void status(String value) { status = value; notifyObservers(); }
@@ -198,10 +248,14 @@ final class BoopSharedEyeColourRuntime implements Application.ActivityLifecycleC
         return out.toString();
     }
     @Override public void onActivityStarted(Activity activity) {
-        started.add(activity); main.removeCallbacks(stopAfterBackground); connect(false);
+        started.add(activity);
+        main.removeCallbacks(stopAfterBackground);
+        connect(false);
+        if (state.isConnected()) { main.removeCallbacks(flush); main.postDelayed(flush, 180); }
     }
     @Override public void onActivityStopped(Activity activity) {
-        started.remove(activity); if (started.isEmpty()) main.postDelayed(stopAfterBackground, 700);
+        started.remove(activity);
+        if (started.isEmpty()) main.postDelayed(stopAfterBackground, 700);
     }
     @Override public void onActivityCreated(Activity activity, Bundle state) { }
     @Override public void onActivityResumed(Activity activity) { }
