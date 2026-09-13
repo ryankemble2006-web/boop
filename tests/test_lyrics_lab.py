@@ -47,6 +47,19 @@ class LyricsLabChecks(unittest.TestCase):
             self.assertFalse((Path(folder) / 'java/com/boop/shieldhome/ShieldLauncherActivity.java').exists())
             self.assertFalse((Path(folder) / 'java/com/boop/shieldhome/ShieldNowPlayingManager.java').exists())
 
+    def test_footer_keeps_attribution_but_is_not_a_navigation_control(self):
+        # Source-wiring contract only. Appearance/font acceptance remains Ryan's.
+        source = (SHARED / 'ShieldLyricsView.java').read_text(encoding='utf-8')
+        self.assertFalse('Back to Now Playing' in source, 'The removed footer action is still constructed')
+        self.assertNotIn('hint.requestFocus()', source)
+        self.assertNotIn('hint.setOnClickListener', source)
+        self.assertIn('credit.setText(document == null ? "" : document.credit());', source)
+        self.assertIn('credit.setFocusable(false);', source)
+        self.assertIn('credit.setClickable(false);', source)
+        self.assertNotIn('credit.setOnClickListener', source)
+        # Back stays with the hosting Activity; no new interception in the view.
+        self.assertNotIn('KEYCODE_BACK', source)
+
     def test_only_exact_native_deezer_recordings_are_eligible(self):
         policy = ROOT / 'lyrics-lab/app/src/main/java/com/boop/shieldhome/LyricsLabMediaPolicy.java'
         self.assertTrue(policy.exists(), 'Lab media isolation policy is missing')
@@ -61,7 +74,7 @@ public class LabPolicyCheck {
   for(String id:new String[]{null,"","0","-1"," 123","123;456","123/4","9999999999999999999999"})
    same("",LyricsLabMediaPolicy.recordingId("deezer.android.app","TRACK",id));
   for(String type:new String[]{null,"","PODCAST","RADIO","track"})
-   same("",LyricsLabMediaPolicy.recordingId("deezer.android.app",type,"123"));
+   same("",LyricsLabMediaPolicy.recordingId("deezer.android.app",type,id));
   System.out.println("PASS: "+checks+" exact native Deezer identity checks.");
  }
 }'''
