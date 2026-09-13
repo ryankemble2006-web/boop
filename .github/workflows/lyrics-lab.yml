@@ -21,6 +21,8 @@ jobs:
           java-version: '17'
       - name: Test side-by-side identity and unchanged shared sources
         run: python3 tests/test_lyrics_lab.py
+      - name: Test session updates survive transport transitions
+        run: python3 tests/test_lyrics_lab_session.py
       - name: Test existing timed lyrics and entry behavior
         run: |
           set -euo pipefail

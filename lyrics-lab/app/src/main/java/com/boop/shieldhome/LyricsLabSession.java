@@ -95,9 +95,12 @@ final class LyricsLabSession {
             for (MediaController controller : all) {
                 if (!"deezer.android.app".equals(controller.getPackageName())) continue;
                 PlaybackState state = controller.getPlaybackState();
-                if (state == null || !eligible(state.getState())) continue;
+                // Observation follows the active token, not presentation eligibility.
+                // NONE/STOPPED/SKIPPING can occur between recordings. Dropping this
+                // callback then prevents us hearing the next metadata/PLAYING event.
+                // publish() still clears stale content during non-displayable states.
                 if (choice == null || sameSession(controller, selected)) choice = controller;
-                if (state.getState() == PlaybackState.STATE_PLAYING) { choice = controller; break; }
+                if (state != null && state.getState() == PlaybackState.STATE_PLAYING) { choice = controller; break; }
             }
             if (!sameSession(choice, selected)) {
                 if (selected != null) selected.unregisterCallback(callback);

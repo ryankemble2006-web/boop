@@ -6,8 +6,8 @@ android {
         applicationId 'com.boop.lyricslab'
         minSdk 29
         targetSdk 36
-        versionCode 157
-        versionName '0.1.157-lyrics-lab'
+        versionCode 158
+        versionName '0.1.158-lyrics-session-sync'
     }
     sourceSets.main {
         java.srcDirs += ['build/lyrics-shared/java']
