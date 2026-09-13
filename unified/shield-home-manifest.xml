@@ -8,6 +8,7 @@
         <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent>
     </queries>
     <application>
+        <activity android:name="com.boop.shieldhome.MusicAudioPermissionActivity" android:exported="false" android:excludeFromRecents="true" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />
         <activity android:name="com.boop.shieldhome.ShieldLauncherActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />
         <activity android:name="com.boop.shieldhome.ShieldStartupManagerActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />
         <receiver android:name="com.boop.shieldhome.StartupCleanupBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>
