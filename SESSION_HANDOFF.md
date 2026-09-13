@@ -1,4 +1,4 @@
-# BOOP v147 duplicate-render cleanup candidate
+# BOOP v147 duplicate-render cleanup: signed build published
 
 Updated 2026-09-13. Owner/worktree: `boop-unified-v146-integration`.
 
@@ -10,6 +10,17 @@ Ryan supplied screenshots showing repeated BOOP eye pairs on phone notification/
 - Regression guard: `tests/test_unified_duplicate_puppet_renderers.py`. A deliberate red run against the pre-fix sources failed for both duplicate paths; restoring the fix made both tests pass.
 - Fresh app unit tests and Java compilation passed locally. Full APK signing remains GitHub-owned. Visual acceptance is still manual and must not be inferred from source/CI checks.
 - Three unrelated Shield overlay files became dirty during existing materialisation patches. They are deliberately excluded from this scoped change and must be preserved as concurrent work.
+
+## v147 signed build receipt
+
+- App source commit: `35bf096d4efe5bf40990dbc12d493cd2372e7c33`.
+- GitHub Actions run: `34732219690`, conclusion SUCCESS.
+- Artifact: `BOOP-Unified`, artifact ID `10309931232`.
+- Package/version verified by CI: `com.boop.alpha1`, `147 / 1.2.147-duplicate-cleanup`.
+- Signed APK SHA256: `2f56fc31645b34c69670d1b3abc4d3d63382d8bc762bf339151e43d59faa5db9`.
+- Permanent signer SHA256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+- CI reports 235 focused Unified tests and 68 focused Shield tests, zero failures/errors/skips. Signed APK package identity, signature and ZIP integrity were verified.
+- Physical Shield/Pixel and visual acceptance remain pending. This task did not install the APK, grant permissions, clear data or alter signing configuration.
 
 The v146 delivery record follows unchanged below.
 # BOOP v146 combined delivery: installed on Pixel and Shield
