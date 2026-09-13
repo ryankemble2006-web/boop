@@ -1,0 +1,11 @@
+# Unified feature bumps recovery: validation coordination
+
+2026-09-13. A continuation window was opened after the chat failed. Live GitHub reads and writes work; the repository has not disappeared.
+
+This continuation added settings regression tests at `9e452b437fe3e05bf0d6847b4885b9afc23e54c6` and observed their red result in run `34756931958`: four passing checks, three expected failures for missing startup/settings wiring. Another writer incorporated those tests and completed the implementation at `dcebdedd251585e2dae0b414cb0c92fccf52f148`. Its appearance workflow `34757187401` succeeded. The continuation's competing implementation commit object `c5016ef7580cc142824511f6730b0ea4a164d506` was deliberately NOT installed onto any branch; it is superseded and must not replace the newer implementation.
+
+The continuation dispatched full GitHub build `34757274196`; it passed the early preservation/behaviour gates and was superseded/cancelled when the scoped workflow update `0a4134ebfe8049254378b4706d2ee1df73cd7e87` launched full build `34757337845`. Follow the newer run; do not repeatedly dispatch competing builds on the same branch.
+
+Laptop emulator identities verified: emulator-5570 is Pixel_10_Pro_XL_API_36 (installed BOOP v151); emulator-5572 is BOOP_Android_TV_API_36 (installed v156). Private rollback APKs and before-state receipts were captured in `%TEMP%/boop-colour-v159-checks`, under each emulator serial. Both had no persisted boop_eyes or boop_appearance XML before this continuation. No installs, permission grants, live Home Assistant helper writes, or physical-device mutations have happened in this continuation as of this note.
+
+Next validation is the signed GitHub artifact, emulator upgrade/open/colour persistence/opt-in-cancel checks, then controlled sharing tests. Coordinate emulator installs by rechecking installed version and foreground state first. No Pixel 10 physical deployment. No source/app edits from this continuation while the existing colour writer is active. Do not claim shared colour has passed real Home Assistant or visual acceptance from static contracts alone. Animation speed remains a separate, later step; no artwork or authored motion changes are approved.
