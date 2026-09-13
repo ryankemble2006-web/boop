@@ -1,15 +1,29 @@
 ## Current continuation: v153 artwork corners (2026-09-13)
 
-Active owner: `boop-unified-artframe-v153`, based on live v152 source
-`59deb49e57f95f5d4de7d02c1cb8a8d03c82dfe5`. v151 and v152 did NOT
-resolve corner bleed in Ryan's inspection; neither is visually accepted for this bug.
-v153 restores artwork focus to 4 dp and compensates the GradientDrawable
-stroke-centre radius by half the stroke width, matching the outer image clip.
-Only the shared artwork-frame method changes at runtime. Keep v151 10-second
-seeking, 250 ms settings hold, all animation designs and ordinary chrome unchanged.
-New geometry regression failed before the fix; 12 density/radius cases now pass.
-Signed GitHub build and Shield-only installation are pending at this checkpoint.
-User visual acceptance remains pending. Both Pixels and emulators are out of scope.
+Owner: `boop-unified-artframe-v153`; signed source `cb61f62a6c3a249fed82abfd9e629ffea0e70ea2`.
+Version: `153 / 1.2.153-artwork-corners`, package `com.boop.alpha1`.
+GitHub run `34745915929` succeeded; artifact `10313822926` (`BOOP-Unified`).
+APK SHA256: `61394f68a9ce06ae552be199fb67a95c5a1ee67048bff5385bca392492742dae`.
+Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Package/version, source receipt, ZIP
+integrity and signature independently verified before installation.
+
+Shield `adb install -r` returned Success; installed base APK hash matches exactly.
+BOOP Shield Home launch succeeded and resumed activity was verified. No emulator
+was used under the cosmetic-change override. Neither Pixel was queried, changed
+or installed in this task. No permission, lock, data-clear or signer changes.
+
+v151 and v152 did NOT fix the corner bleed in Ryan's inspection. v153 restores
+artwork frames from 8 dp to 4 dp and subtracts half the stroke width from the
+stroke-centre radius so the OUTER arc matches the image clip. Only FocusChrome
+changes at runtime; media seeking, 250 ms hold, normal chrome and animations remain.
+The regression failed before correction; 12 Java geometry cases and 10 focused
+source contracts passed locally, then the entire GitHub workflow passed.
+
+Fresh physical Shield screenshots were inspected locally: the white crescent
+visible outside the v152 cyan corner was absent in the captured v153 wide-icon
+and album-art corners. First post-launch unfocused captures were not used as
+proof. Screenshots stay private/ignored; no visual CI checks were added.
+Ryan's final visual verdict remains PENDING. Next: wait for his Shield feedback.
 
 # BOOP v146 combined continuation memory
 
