@@ -229,6 +229,11 @@ jobs:
       - name: Test shared eye colour and preserved Wall appearance
         run: python tests/test_shared_eye_colour.py
 
+      - name: Test exact BOOP animation speed before signing
+        run: |
+          python tests/test_animation_speed.py
+          python tests/test_materialized_speed.py
+
       - name: Prepare permanent BOOP signer
         shell: bash
         env:
