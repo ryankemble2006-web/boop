@@ -2,11 +2,7 @@ name: Native lyrics functional checks
 on:
   push:
     branches: ["boop-unified-native-lyrics-v157"]
-    paths:
-      - '.github/workflows/native-lyrics-core.yml'
-      - 'tests/canonical/NativeLyricsCoreCheck.java'
-      - 'unified/shield-home/src/main/java/com/boop/shieldhome/DeezerLyricsDocument.java'
-      - 'unified/shield-home/src/main/java/com/boop/shieldhome/LyricsRequestGate.java'
+    paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,7 +16,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Compile and exercise timed data and request ownership
+      - name: Compile and exercise timed data, request ownership and transport
         shell: bash
         run: |
           set -euo pipefail
@@ -29,8 +25,9 @@ jobs:
           echo '3cf6cd6892e32e2b4c1c39e0f52f5248a2f5b37646fdfbb79a66b46b618414ed  work/native-lyrics-core/json.jar' | sha256sum -c -
           src=unified/shield-home/src/main/java/com/boop/shieldhome
           files=()
-          for name in DeezerLyricsDocument LyricsRequestGate; do
+          for name in DeezerLyricsDocument LyricsRequestGate DeezerLyricsClient DeezerLyricsHttp DeezerTimedLyricsClient; do
             if [ -f "$src/$name.java" ]; then files+=("$src/$name.java"); fi
           done
-          javac -encoding UTF-8 -cp work/native-lyrics-core/json.jar -d work/native-lyrics-core "${files[@]}" tests/canonical/NativeLyricsCoreCheck.java
+          javac -encoding UTF-8 -cp work/native-lyrics-core/json.jar -d work/native-lyrics-core "${files[@]}" tests/canonical/NativeLyricsCoreCheck.java tests/canonical/NativeLyricsTransportCheck.java
           java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsCoreCheck
+          java -cp work/native-lyrics-core:work/native-lyrics-core/json.jar com.boop.shieldhome.NativeLyricsTransportCheck
