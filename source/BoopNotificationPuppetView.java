@@ -69,6 +69,10 @@ final class BoopNotificationPuppetView extends FrameLayout {
                 context.getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
         eyeSurface.setRenderer(eyeRenderer);
         eyeSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        com.boop.eyes.EyeColourBinding.install(this, hue -> {
+            eyeRenderer.setHueRotationDegrees(hue - 190);
+            eyeSurface.requestRender();
+        });
         eyeSurface.setFocusable(false);
         eyeSurface.setClickable(false);
         addView(eyeSurface, match());

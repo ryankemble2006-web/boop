@@ -81,6 +81,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
                 BoopEyeHueMath.rotationDegreesForHue(eyeHueDegrees));
         surface.setRenderer(renderer);
         surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        com.boop.eyes.EyeColourBinding.install(this, this::setEyeHueDegrees);
         surface.setFocusable(false);
         surface.setClickable(false);
         addView(surface, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));

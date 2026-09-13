@@ -42,6 +42,9 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
         surface=new GLSurfaceView(this);surface.setEGLContextClientVersion(2);surface.setPreserveEGLContextOnPause(true);
         renderer=new CanonicalEyeRenderer(getAssets(),detail->runOnUiThread(()->label.setText("Renderer error: "+detail)));
         surface.setRenderer(renderer);surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        EyeColourBinding.install(surface, hue -> {
+            renderer.setHueRotationDegrees(hue - 190); surface.requestRender();
+        });
         stage=new FrameLayout(this);stage.addView(surface,new FrameLayout.LayoutParams(-1,-1));
         sign=new NotificationSignView(this);sign.setVisibility(View.GONE);
         stage.addView(sign,new FrameLayout.LayoutParams(-1,-1));
