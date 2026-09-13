@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.PowerManager;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.Choreographer;
 import android.view.View;
@@ -97,7 +96,8 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     }
     @Override protected void onResume(){super.onResume();resumed=true;surface.onResume();
         PowerManager power=(PowerManager)getSystemService(POWER_SERVICE);
-        reducedMotion=Settings.Global.getFloat(getContentResolver(),Settings.Global.ANIMATOR_DURATION_SCALE,1f)==0f||(power!=null&&power.isPowerSaveMode());
+        // Android transition scales do not control BOOP's own frame clock.
+        reducedMotion=power!=null&&power.isPowerSaveMode();
         updateLoop();}
     @Override protected void onPause(){resumed=false;updateLoop();surface.onPause();super.onPause();}
     @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);focused=hasFocus;if(surface!=null)updateLoop();}
