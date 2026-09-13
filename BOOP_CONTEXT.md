@@ -1,3 +1,12 @@
+## Current cosmetic workflow override (2026-09-13)
+
+Small cosmetic changes: GitHub compilation, non-visual tests, permanent signing
+and integrity checks, then directly to the active physical device. No emulator gate.
+Substantive behavioural changes retain emulator-first testing. For the current
+list, use Shield or Pixel 7 only; leave Pixel 10 Pro XL alone until Ryan explicitly
+resumes its deployment. This v153 corner fix targets Shield only. No permission
+changes, lock bypass, data clear or signing-key substitutions. Ryan judges visuals.
+
 # Combined delivery scope, 2026-09-12
 
 Ryan authorized the finished phone hue/menu repairs, Lyrics preflight, and

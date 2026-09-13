@@ -1,3 +1,16 @@
+## Current continuation: v153 artwork corners (2026-09-13)
+
+Active owner: `boop-unified-artframe-v153`, based on live v152 source
+`59deb49e57f95f5d4de7d02c1cb8a8d03c82dfe5`. v151 and v152 did NOT
+resolve corner bleed in Ryan's inspection; neither is visually accepted for this bug.
+v153 restores artwork focus to 4 dp and compensates the GradientDrawable
+stroke-centre radius by half the stroke width, matching the outer image clip.
+Only the shared artwork-frame method changes at runtime. Keep v151 10-second
+seeking, 250 ms settings hold, all animation designs and ordinary chrome unchanged.
+New geometry regression failed before the fix; 12 density/radius cases now pass.
+Signed GitHub build and Shield-only installation are pending at this checkpoint.
+User visual acceptance remains pending. Both Pixels and emulators are out of scope.
+
 ﻿# BOOP v148 status
 
 - Branch: `boop-unified-animation-v148`

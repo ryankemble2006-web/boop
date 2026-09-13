@@ -11,7 +11,7 @@ import android.view.ViewOutlineProvider;
 /** Shared TV focus chrome so the Now Playing progress fill and focus outline use one accent. */
 final class FocusChrome {
     static final int BORDER_DP = 4;
-    static final int ARTWORK_BORDER_DP = 8;
+    static final int ARTWORK_BORDER_DP = 4;
 
     private FocusChrome() { }
 
@@ -49,9 +49,16 @@ final class FocusChrome {
     static GradientDrawable artworkOutline(Context context, int cornerRadiusDp) {
         GradientDrawable outline = new GradientDrawable();
         outline.setColor(Color.TRANSPARENT);
-        outline.setCornerRadius(dp(context, cornerRadiusDp));
-        outline.setStroke(dp(context, ARTWORK_BORDER_DP), accentColor(context));
+        int strokePx = dp(context, ARTWORK_BORDER_DP);
+        outline.setCornerRadius(artworkStrokeRadius(dp(context, cornerRadiusDp), strokePx));
+        outline.setStroke(strokePx, accentColor(context));
         return outline;
+    }
+
+    static float artworkStrokeRadius(float outerRadiusPx, float strokeWidthPx) {
+        // GradientDrawable insets its stroke centreline by half its width.
+        // Match the OUTER arc to clipRounded, not the centreline to the clip.
+        return Math.max(0f, outerRadiusPx - strokeWidthPx / 2f);
     }
 
     static GradientDrawable outline(Context context, int cornerRadiusDp) {
