@@ -6,23 +6,13 @@ import re
 def test_v85_combines_tablet_routing_with_natural_voice_install_flow():
     profile = Path("unified/BoopDeviceProfile.java").read_text(encoding="utf-8")
     downloader = Path("source/BoopNaturalVoiceDownloader.java").read_text(encoding="utf-8")
-
-    # The combined candidate must retain the already-accepted generic tablet route.
     assert "TABLET_MIN_SMALLEST_WIDTH_DP = 600" in profile
     assert "smallestScreenWidthDp >= TABLET_MIN_SMALLEST_WIDTH_DP" in profile
-
-    # Post-download verification must not reread the full ~350 MB archive while
-    # the UI sits on one static Verifying label. Digest the exact bytes as they
-    # are written, then expose extraction as a distinct install phase with life signs.
     assert "MessageDigest" in downloader
     assert "digest.update(buffer, 0, count)" in downloader
     assert "Installing natural voices" in downloader
     assert "default void onInstallProgress" in downloader
     assert 'onStatus("Installing natural voices… " + safePercent + "%")' in downloader
-
-    # Cancel from Voice Settings must be cooperative. It may set the cancellation
-    # flag / cancel the HTTP call, but must not synchronously enter pack cleanup
-    # while installVerifiedArchive owns the pack monitor.
     cancel_match = re.search(
         r"\n    void cancel\(\) \{(?P<body>.*?)\n    \}\n\n    boolean isRunning\(\)",
         downloader,
@@ -41,7 +31,6 @@ def test_existing_current_natural_pack_restores_verified_backend_before_preview(
     )
     assert startup, "Could not locate natural voice startup reconciliation"
     body = startup.group("body")
-
     assert "if (naturalPackReady)" in body
     assert "voiceController.onNaturalPackVerified(naturalVoiceManifest.version());" in body
 
@@ -55,13 +44,9 @@ def test_failed_preview_cannot_persist_a_dead_natural_backend_for_normal_speech(
     )
     assert handler, "Could not locate natural voice row handler"
     body = handler.group("body")
-
-    # Tapping asks to preview a candidate. Selection is committed only after the
-    # exact natural voice has successfully synthesized and played.
     assert "previewNaturalVoice(key, preview, naturalStatus, button)" in body
     assert "selectNaturalVoice(key)" not in body
     assert "speak(preview)" not in body
-
     preview = re.search(
         r"private void previewNaturalVoice\(String key, String text, TextView naturalStatus, Button button\) \{(?P<body>.*?)\n    \}\n\n    private void setNaturalVoiceChoicesVisible",
         patch,
@@ -84,7 +69,6 @@ def test_normal_natural_speech_requires_a_physically_proven_runtime_backend():
     assert '"natural_runtime_proven_version"' in controller
     assert "boolean naturalPackReadyForPreview()" in controller
     assert "void markNaturalPlaybackProven()" in controller
-
     gate = re.search(
         r"boolean naturalBackendSelectedAndUsable\(\) \{(?P<body>.*?)\n    \}",
         controller,
@@ -108,18 +92,19 @@ def test_android_kokoro_avoids_sherpa_jni_callback_crash_path():
     assert "tts.generateWithConfig(text, generation)" in backend
 
 
-def test_natural_playback_matches_sherpa_android_pcm16_path_without_playbackparams():
+def test_natural_playback_preserves_pcm16_path_with_optional_pitch():
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
-
-    # Sherpa's own Android TTS service feeds the platform signed 16-bit PCM.
-    # Keep BOOP on that conservative path instead of float PCM + PlaybackParams,
-    # which is the remaining device-specific layer after v87 removed JNI aborts.
+    # Keep the accepted PCM16/static playback. Only an explicit non-neutral pitch
+    # applies PlaybackParams; synthesis still owns cadence independently.
     assert "AudioFormat.ENCODING_PCM_16BIT" in backend
     assert "toPcm16" in backend
     assert "short[] pcm" in backend
     assert "track.write(pcm" in backend
     assert "AudioFormat.ENCODING_PCM_FLOAT" not in backend
-    assert "PlaybackParams" not in backend
+    assert "if (pitch != 1f)" in backend
+    assert ".setSpeed(1f).setPitch(pitch)" in backend
+    assert "AUDIO_FALLBACK_MODE_FAIL" in backend
+    assert "pitchForPlayback(pitch)" in backend
 
 
 def test_natural_failure_reports_whether_synthesis_or_playback_failed():
@@ -132,10 +117,6 @@ def test_v89_natural_runtime_diagnostics_split_failure_before_another_fix():
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
     diagnostics = Path("scripts/patch-v89-natural-diagnostics.py").read_text(encoding="utf-8")
     materialize = Path("scripts/materialize-unified.sh").read_text(encoding="utf-8")
-
-    # v88 proved Android TTS isolation but did not tell physical testing where
-    # Kokoro dies. The next build must distinguish file/runtime preparation,
-    # native/model construction, synthesis and playback before another repair.
     assert re.search(r'NaturalSpeechException\s*\(\s*"files"', backend)
     assert re.search(r'NaturalSpeechException\s*\(\s*"initialization"', backend)
     assert re.search(r'NaturalSpeechException\s*\(\s*"synthesis"', backend)
@@ -143,9 +124,6 @@ def test_v89_natural_runtime_diagnostics_split_failure_before_another_fix():
     assert "runtimeFilesReadyForSherpa" in backend
     assert "candidate.sampleRate()" in backend
     assert "candidate.numSpeakers()" in backend
-
-    # Debug APKs should give Ryan one photographable failure with a stable code,
-    # while release behaviour still keeps Android speech as the safe fallback.
     assert '"BOOP DEV E890"' in diagnostics
     assert '"BOOP DEV E891"' in diagnostics
     assert '"BOOP DEV E892"' in diagnostics
@@ -159,10 +137,6 @@ def test_v89_natural_runtime_diagnostics_split_failure_before_another_fix():
 def test_v90_preflight_accepts_exact_official_kokoro_runtime_inputs_only():
     manifest = json.loads(Path("natural-voices/manifest.json").read_text(encoding="utf-8"))
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
-
-    # The installed pack validator is authoritative for what BOOP downloads.
-    # Runtime preflight must not invent extra files that the official v1.0 pack
-    # does not ship, otherwise a valid installed pack is guaranteed to raise E890.
     expected_files = {
         item for item in manifest["requiredFiles"] if item != "espeak-ng-data"
     }
@@ -173,7 +147,6 @@ def test_v90_preflight_accepts_exact_official_kokoro_runtime_inputs_only():
     )
     assert list_match, "Could not locate Sherpa runtime file preflight list"
     actual_files = set(re.findall(r'"([^"]+)"', list_match.group("body")))
-
     assert actual_files == expected_files
     assert not any(path.startswith("inno/") for path in actual_files)
 
@@ -181,16 +154,12 @@ def test_v90_preflight_accepts_exact_official_kokoro_runtime_inputs_only():
 def test_v91_static_track_accepts_android_no_static_data_state_before_write():
     backend = Path("source/BoopNaturalSpeechBackend.java").read_text(encoding="utf-8")
     play = re.search(
-        r"private void play\(RequestState request, float\[\] samples, int sampleRate\).*?\{(?P<body>.*?)\n    \}\n\n    private void stopLocked",
+        r"private void play\(RequestState request, float\[\] samples, int sampleRate, float pitch\).*?\{(?P<body>.*?)\n    \}\n\n    private void stopLocked",
         backend,
         re.DOTALL,
     )
     assert play, "Could not locate natural playback method"
     body = play.group("body")
-
-    # Android documents STATE_NO_STATIC_DATA as the successful pre-write state
-    # for MODE_STATIC. v90 incorrectly required STATE_INITIALIZED before write(),
-    # guaranteeing E893 even when AudioTrack construction had actually succeeded.
     assert ".setTransferMode(AudioTrack.MODE_STATIC)" in body
     assert "track.getState() == AudioTrack.STATE_UNINITIALIZED" in body
     assert "track.getState() != AudioTrack.STATE_INITIALIZED" not in body
