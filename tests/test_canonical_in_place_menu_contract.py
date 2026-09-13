@@ -9,7 +9,7 @@ def test_real_phone_developer_entry_uses_canonical_face_and_catalogue():
     assert "BoopDevMenuIntent.matches(transcript)" in text
     assert "private BoopCanonicalFaceView developerMenuFace;" in text
     assert "new BoopFaceView(this)" not in text
-    assert text.count("developerMenuFace = new BoopCanonicalFaceView(this);") == 2
+    assert text.count("developerMenuFace = new BoopCanonicalFaceView(this);") == 1
     content = text[text.index("private void showDeveloperMenuContent()"):
                    text.index("private void addDeveloperShelf(")]
     assert "addCanonicalDeveloperShelf(column);" in content

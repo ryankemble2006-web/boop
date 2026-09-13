@@ -10,6 +10,7 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable timeoutRunnable;
     private BoopNotificationPuppetView currentView;
+    private final java.util.List<BoopCanonicalFaceView> hiddenFaces = new java.util.ArrayList<>();
 
     BoopNotificationInPlaceController(FrameLayout parent) {
         if (parent == null) throw new IllegalArgumentException("parent required");
@@ -43,11 +44,25 @@ final class BoopNotificationInPlaceController implements BoopNotificationHost {
             parent.removeView(currentView);
             currentView = null;
         }
+        for (BoopCanonicalFaceView face : hiddenFaces) face.setOccluded("notification", false);
+        hiddenFaces.clear();
+    }
+
+    private void hideUnderlay(android.view.View view) {
+        if (view instanceof BoopCanonicalFaceView) {
+            BoopCanonicalFaceView face = (BoopCanonicalFaceView) view;
+            face.setOccluded("notification", true);
+            hiddenFaces.add(face);
+        } else if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) hideUnderlay(group.getChildAt(i));
+        }
     }
 
     private void renderNew(BoopNotificationPresentation presentation, long timeoutMs) {
         hide();
         if (presentation == null || presentation.cards().isEmpty()) return;
+        hideUnderlay(parent);
         currentView = new BoopNotificationPuppetView(
                 parent.getContext(),
                 presentation,

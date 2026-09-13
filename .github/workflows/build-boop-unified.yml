@@ -104,6 +104,13 @@ jobs:
           java -cp work/canonical-animation-tests CanonicalAnimationRouterTest
           java -cp work/canonical-animation-tests com.boop.alpha1.BoopIdleBlinkExactTest
           java -cp work/canonical-animation-tests com.boop.shieldhome.NowPlayingPuppetBlinkExactTest
+      - name: Verify exclusive face ownership
+        run: |
+          python -m pytest -q tests/test_unified_face_ownership.py
+          mkdir -p work/face-ownership-tests
+          javac -d work/face-ownership-tests source/BoopFacePresentationState.java tests/java/BoopFacePresentationHarness.java
+          java -cp work/face-ownership-tests com.boop.alpha1.BoopFacePresentationHarness
+
       - name: Test shared state and media command behaviour
         run: python scripts/test-canonical-core.py
 

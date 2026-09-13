@@ -36,6 +36,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
     private final CanonicalEyeRenderer renderer;
     private final ProductionAnimationController animation;
     private final PowerManager powerManager;
+    private final BoopFacePresentationState presentationState = new BoopFacePresentationState();
     private boolean frameScheduled;
     private boolean animationPaused;
     private java.util.function.BooleanSupplier idleBlinkAllowed = () -> true;
@@ -61,6 +62,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
     BoopCanonicalFaceView(Context context) {
         super(context);
         setBackgroundColor(Color.BLACK);
+        setContentDescription("BOOP eyes");
         setClipChildren(false);
         setClipToPadding(false);
         powerManager = context.getSystemService(PowerManager.class);
@@ -195,6 +197,11 @@ final class BoopCanonicalFaceView extends FrameLayout {
     }
 
     private void renderNow(long now) {
+        if (!isShown() || getWindowVisibility() != View.VISIBLE) {
+            stopFrames();
+            pauseAnimation();
+            return;
+        }
         if (!animationAllowed()) {
             EyeMotion.Clip steady = EyeCatalogue.find(animation.steadyClipId());
             renderer.pose = steady.sample(steady.loop ? 0 : steady.duration);
@@ -207,13 +214,55 @@ final class BoopCanonicalFaceView extends FrameLayout {
         scheduleFrame();
     }
 
+    /** Modal owners cannot be undone by a queued wake or animation state change. */
+    void setOccluded(String owner, boolean hidden) {
+        presentationState.occlude(owner, hidden);
+        applyPresentationVisibility();
+    }
+
+    @Override public void setVisibility(int visibility) {
+        if (presentationState == null) {
+            super.setVisibility(visibility);
+            return;
+        }
+        presentationState.request(visibility);
+        applyPresentationVisibility();
+    }
+
+    private void applyPresentationVisibility() {
+        super.setVisibility(presentationState.effective());
+        updateVisibleLifecycle();
+    }
+
+    private void updateVisibleLifecycle() {
+        if (surface == null || animation == null) return;
+        if (isAttachedToWindow() && isShown() && getWindowVisibility() == View.VISIBLE) {
+            resumeAnimation();
+            scheduleFrame();
+        } else {
+            stopFrames();
+            pauseAnimation();
+        }
+    }
+
+    @Override protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        updateVisibleLifecycle();
+    }
+
+    @Override protected void onWindowVisibilityChanged(int visibility) {
+        super.onWindowVisibilityChanged(visibility);
+        updateVisibleLifecycle();
+    }
+
     private boolean animationAllowed() {
         return ValueAnimator.areAnimatorsEnabled()
                 && (powerManager == null || !powerManager.isPowerSaveMode());
     }
     private boolean shouldAnimate() {
         return isAttachedToWindow()
-                && getVisibility() == View.VISIBLE
+                && isShown()
+                && getWindowVisibility() == View.VISIBLE
                 && animationAllowed();
     }
 
@@ -246,8 +295,7 @@ final class BoopCanonicalFaceView extends FrameLayout {
     @Override protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         surface.onResume();
-        resumeAnimation();
-        if (getVisibility() == View.VISIBLE) scheduleFrame();
+        updateVisibleLifecycle();
     }
 
     @Override protected void onDetachedFromWindow() {
