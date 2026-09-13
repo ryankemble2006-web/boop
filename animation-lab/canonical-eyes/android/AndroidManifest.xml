@@ -1,7 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.boop.animationlab" android:versionCode="12" android:versionName="0.12-independent-motion-poc">
+    package="com.boop.animationlab" android:versionCode="13" android:versionName="0.13-lan-notification-tester">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <application android:label="BOOP Animation Lab" android:allowBackup="false"
         android:theme="@android:style/Theme.Material.NoActionBar" android:hardwareAccelerated="true"
         android:icon="@drawable/boop_animation_lab_icon" android:banner="@drawable/boop_animation_lab_banner">
@@ -15,5 +19,7 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name="com.boop.lab.LabNotificationReceiverService" android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 </manifest>
