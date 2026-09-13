@@ -1,47 +1,79 @@
-# Unified memory: v161 speed and bidirectional colour user-accepted
+# Unified memory: v162 native lyrics integrated, Lab retirement pending confirmation
 
-## Latest physical result, 2026-09-13
+## Current delivery and ownership
 
-After v161 was installed and identity-verified on Shield and Pixel 7, Ryan reported: "both devices, speed change working also colour is automagically changing from device to device, to and from both in both directions."
+2026-09-13. Ryan requested: roll the tested Lyrics Lab into Unified161 as162,
+replace the Now Playing Lyrics route, and bin the Lab once confirmed.
+PR #10 merged `boop-unified-native-lyrics-v162` into the existing Unified owner
+`boop-unified-eye-sync-safe-v159` at `0908d6955c90978e97dcbae9031f3f1de638bd9d`.
+Main remains the context hub and already points to that owner. Do not mistake
+its v159 branch suffix for the installed application version.
 
-Record this as physical USER ACCEPTANCE of animation-speed changes on BOTH Nvidia Shield Android TV and Pixel 7 Pro / Wall, and automatic eye-colour delivery in BOTH directions between them. This is not inferred from a slider, HA ready message, package-manager success or CI. It is the user's actual device test result. The former speed-awaiting-test and old colour-failure blockers are superseded. Do not reopen either repair or demand another acceptance loop without new contrary evidence.
+Shield is installation-verified on com.boop.alpha1 / 162 / 1.2.162-native-lyrics.
+Build source 1e0136ffa9732353035f88ca7a7cb131f7481557; signed run34773509395;
+artifact10322553107; APK cef4527510d9856b669889abfc01c00e6f1a3819e1a28b5e05cee5d472df7171.
+Permanent signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+An ordinary adb install -r upgraded the exact accepted v161; resulting package,
+version and base-APK hash matched. Neither phone was queried or updated.
+No launch, media key, permission grant, data clear or emulator operation occurred.
 
-Speed remains device-local. Colour is the shared preference. The report does not establish speed synchronization or enumerate all rates, all surfaces, mid-clip changes, sleep/wake, zero-scale settings or a deliberate offline/reconnect cycle. Do not fabricate those results or make unreported coverage an automatic gate. Follow the next task Ryan chooses.
+## Native lyrics, not the old macro
 
-Acceptance receipt: `docs/handoffs/2026-09-13-v161-speed-colour-accepted.md`. This acceptance continuation is documentation-only; no new build, test execution, installation, device query/input, capture, permission action or settings change occurred.
+The existing Now Playing button enters the internal unexported ShieldLyricsActivity
+through exact-ID native preflight. It does not launch Deezer's menus or another app.
+Shared data/renderer/loader and the footer are byte-identical copies from the lab
+input 5ce581be6f1da10eb47640c4c11636a4bfa9e330. The passive licence/copyright credit
+sits bottom-right at half its previous size; main song lyrics remain unchanged.
+No Back to Now Playing footer control. Remote Back follows the Activity path.
 
-## Ongoing workflow
+Unified retains its own unchanged manager/state bus, with callbacks for active
+tokens independently of displayable playback state. Do not import the separate
+Lab observer, listener or package. The Lab's old skip regression was caused by
+dropping that callback during temporary states; it was fixed and user-confirmed.
+There is no new permission, account credential, dependency or persistent lyric store.
 
-Ryan requested that development stay on GitHub and device behaviour be tested together with him. This replaces earlier emulator-first defaults and physical-deployment holds. GitHub owns source edits, non-visual tests, builds, permanent signing and handoffs. Once existing code/package/signer checks pass, deliver the candidate and perform the installation he requests; do not add a local emulator hurdle or hosted visual test.
+## Conditional Lab removal is still pending
 
-Desktop Commander/ADB may stage a GitHub-built APK, perform requested installation and identity readback, and assist with diagnosis agreed during joint testing. No local source edit/build loop or autonomous runtime acceptance. Emulators are optional only on explicit request. Keep existing AVDs/worktrees unchanged otherwise. Physical Pixel10 remains excluded; authorized physical targets are Shield and Pixel 7. No permissions, locks, data clears, key replacement or settings resets are implied.
+com.boop.lyricslab remains installed on Shield at159 / 0.1.159-lyrics-footer,
+APK fb373b09572379976dcf6b15dd54ce307f7153933ca61cd3d7f8a9204d716503,
+verified unchanged before/after the Unified update. Ryan's earlier confirmation
+was for Skip inside the Lab, NOT this new integrated route.
+Wait for Ryan to confirm Unified's Now Playing -> Lyrics and refresh behavior.
+Then uninstall ONLY the separate Lyrics Lab on Shield and verify it is absent;
+do not remove Unified, other Labs, Deezer or source history. The user's conditional
+cleanup request does not authorize early removal on the strength of a CI pass.
 
-Shared rule: `main@24a260b6e7cdd5aed792ccfbb683e8e495eb5f80:BOOP_START_HERE.md`. Fetch live main and the current app handoff on continuation, not stale root maps. This result changes acceptance state, not ownership or the shared workflow; ordinary progress stays on the app branch.
+## Verification boundaries
 
-## Installed and accepted application
+New routing/transplant regression red:34773211530. Native green:34773471412 and
+latest test-only head fad4ab24 in34773700715. Four source/route tests plus61 timed,
+35 transport,2 incomplete,7 entry and28 Activity/state/lifecycle assertions pass.
+Full pipeline also passed235 Unified and68 Shield functional tests with no failures,
+errors or skips, plus preserved colour/speed/source-asset checks. This is not hosted
+visual acceptance. New Android/service/view boundaries are controlled doubles.
+In-session scope review is recorded on PR10, not an independent reviewer.
 
-Owner `boop-unified-eye-sync-safe-v159`. App/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754`, package `com.boop.alpha1`, version161 / `1.2.161-lab-scale-independent`.
+The merge differs from app build1e0136ff only by12 test lines allowing later version
+bumps beyond162 to evolve source. No compiled input changed after the signed build.
+Documentation updates do not change the APK. Separate deployment identity from
+Ryan's pending physical confirmation; do not manufacture all-catalogue/offline or
+natural-track-completion outcomes from the earlier Lab Skip confirmation.
 
-Both devices were previously identified live on v159, then updated with exact signed GitHub APK using ordinary `adb install -r`. Both returned Success/exit0. Readback confirmed version161/expected name and each installed-base-APK SHA256 matching GitHub. Physical Pixel10 was not targeted. The installation-only state was followed by Ryan's speed/two-way-colour acceptance above.
+## Accepted v161 foundation remains intact
 
-Build `34770388933`, artifact `10321956422`. APK SHA256 `c68b81be9b7d3e10883d2aea52c05dc7b8c187fcd835eaddf73e25e91cb4acd6`. ZIP SHA256 `623805381b04c2ce61a8a5bfcb56e663a9a2fc8eddbc1b9eb9b98ed987ccdf3b`. Permanent signer SHA256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. Artifact hashes matched before installation. Receipt: `docs/handoffs/2026-09-13-v161-installed-joint-testing.md`.
+Base593ad609 / build0b6ee6f9 carries Ryan's accepted speed changes on BOTH Shield
+and Pixel7, and automatic colour delivery in BOTH directions. Speed remains local;
+colour is shared. All unrelated v161 app source/artwork is unchanged by integration.
+Do not reopen those accepted repairs or reset his preferences. Previous acceptance
+and installation receipts remain under docs/handoffs and at the base commit.
 
-The laptop was used only for the requested installation and identity checks in that earlier continuation. Its dirty source worktree was not touched or synchronized. The earlier denied combined test request was not forced through or disguised; the later explicitly requested normal installation succeeded.
+## Workflow and history
 
-## Preserved implementation and evidence
-
-v161 preserves v160's .5/1/1.5/2 device-local speed implementation. Its sole behaviour repair removes the embedded Lab's zero Android animator-duration-scale condition for reduced motion, retaining the power-saving condition. Manual Pause motion, Slow review, explicit freeze, frame clock, coded motion and original1x are unchanged.
-
-Prior CI timing `34770388848`, appearance `34770388845` and signed build `34770388933` succeeded. Six timing functions included 160720 timing/1157272 edge checks and 20920 Lab assertions per raw/materialized path, plus 235 Unified and 68 Shield functional tests with zero failures/errors/skips. All 13 packaged assets matched v160. These historical results were not rerun for documentation. Numerical/source evidence remains distinct from Ryan's new physical acceptance.
-
-Full Lab red/green evidence: `docs/handoffs/2026-09-13-lab-scale-zero-verification.md`; test-first `fc9e6633ca7b578b7729cc5ee0e134294969075a`, red branch `wip/boop-lab-scale-zero-red-fc9e663`, failed timing `34770049893` and build `34770049896` remain provenance. Do not restart that repaired diagnosis from an old note.
-
-Original v160 source `d149cb509ec376779daf84c50f621d8adcbacd24`, gate-build source `1d8bf3d39a0858aa0c4f2b435fc92b1b16ef486a`, build `34769075927`, artifact `10321686042`, APK `a584381d10ebb220ab686acec22f7668384e240f39ade052e4177583aa4adc7b` and older research/acceptance receipts remain preserved.
-
-## Colour, preservation and next work
-
-Earlier Wall -> Shield acceptance and controlled captures of both directions are now supplemented by Ryan confirming automatic colour delivery BOTH ways on v161. The historical hue2/sharing-on receipt is not permission to reset his newer choices. This documentation update did not read or change any colour/speed preference. Colour sharing remains opt-in with saved/authenticated Home Assistant access; speed remains local.
-
-Speed changes and live bidirectional colour are complete for the reported physical acceptance scope. Wait for Ryan's next requested feature or a specific new issue and test it together. Do not autonomously reinstall, perform another acceptance sweep, add an emulator gate, merge unrelated branches or reopen colour because an old recovery note reports failure.
-
-Preserve approved eye/hand masters and shaders, all coded clips, exact original1x, existing Wall hue controls, accepted v156 Shield polish, voice/media behaviour and single-face ownership. This session is primary. Publish material handoff/status/memory updates through GitHub, verify LIVE HEAD, and do not imply unattended inputs, background monitoring or local synchronization that did not occur.
+GitHub source/non-visual tests/build/permanent signing, requested installation,
+then joint testing with Ryan. No automatic emulator gate or local source/build loop.
+Physical Pixel10 remains excluded; this lyrics delivery did not touch Pixel7 either.
+Keep Desktop Commander0.2.47 unchanged while it works; ADB is fine per Ryan.
+No private addresses, raw device data, screenshots, keys or APKs in public source.
+No local source checkout was changed or claimed synchronized.
+Read SESSION_HANDOFF.md and docs/handoffs/2026-09-13-unified-v162-lyrics.md.
+Lab acceptance/provenance remains in boop-lyrics-lab-side-by-side-v157; do not erase it.
