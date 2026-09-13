@@ -1,0 +1,37 @@
+name: Check BOOP appearance logic
+on:
+  push:
+    branches: [boop-unified-eye-sync-safe-v159]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boop-appearance-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Resolve the existing pinned JSON test dependency
+        run: |
+          mkdir -p "$HOME/.gradle/caches/modules-2/files-2.1/org.json/json/20240303/boop-check"
+          curl --fail --silent --show-error --location --retry 2 \
+            https://repo.maven.apache.org/maven2/org/json/json/20240303/json-20240303.jar \
+            -o "$HOME/.gradle/caches/modules-2/files-2.1/org.json/json/20240303/boop-check/json-20240303.jar"
+          echo "ebb88e8fb5122b7506d5cf1d69f1ccdb790d22a  $HOME/.gradle/caches/modules-2/files-2.1/org.json/json/20240303/boop-check/json-20240303.jar" | sha1sum --check
+          python -m pip install pytest
+      - name: Test colour protocol, state and runtime contracts
+        run: python -m pytest -q tests/test_shared_eye_colour.py
+      - name: Preserve accepted Shield logic
+        run: |
+          python tests/test_deezer_artist.py
+          python tests/test_favourites_picker.py
