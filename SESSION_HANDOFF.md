@@ -1,3 +1,44 @@
+# PAUSED: concurrent publisher on the colour feature branch
+
+This isolated WIP snapshot preserves the local draft from this session, not a
+build or runtime acceptance. The installed Wall app was not changed here.
+While this session was writing v159, another publishing pass advanced the same
+feature branch to 04f7c10cd6c1c1efb07d915eb223c7b544b6c89c using an earlier
+incomplete snapshot. Its handoff says it will complete the same feature.
+Do not run two writers or deployments for the same feature.
+
+Original v158/v159 local branches and indexes are preserved. This is a separate
+snapshot, not a force-push over the concurrent branch. Local tests pass: 397
+colour/state checks, 25 HA-flow checks, 16 protected file hashes, and wiring.
+Android compile, emulator runtime and live HA sharing remain unverified.
+Animation speed is not started. Nothing was installed. Do not deploy this WIP.
+Next: establish one owning session, reconcile this local colour draft with the
+remote recovery workflow, complete build/runtime gates, then animation speed.
+Pixel 10 remains excluded; no physical devices were accessed in this session.
+
+## Active work: shared eye colour, then animation speed (2026-09-13)
+
+Owner: `boop-unified-eye-sync-safe-v159`, based on accepted v156 at
+`a901c1e9f31e55c710e31ac7ff4f5924c9769d56`. The Shield polish sweep,
+favourites selector and artist navigation are already user-accepted.
+The v158 draft contained overlapping writes with incompatible binding APIs;
+it remains preserved. This isolated branch owns the reviewed continuation.
+
+Colour implementation: all existing canonical eye surfaces observe the same
+`boop_eyes/hue_degrees` key. Working Wall hue classes, master, shaders and all
+26 authored clips are pinned unchanged. Sharing is OFF on upgrade. Explicit
+opt-in reuses paired HA OAuth and one marked persistent input_text helper;
+ordinary startup cannot create helpers or overwrite a stale shared value.
+No UDP receiver, new service, permission, voice or artwork change is included.
+
+Verification so far: tests were red before implementation; 397 colour/state
+checks and 25 HA-flow checks now pass, alongside protected-file integrity and
+lifecycle/source wiring checks. No Android compile or runtime pass is claimed
+at this checkpoint. Full signed CI build and local emulator tests are next.
+Animation speed is NOT implemented yet. No physical device has been queried
+or changed in this work. Pixel 10 remains excluded. Do not deploy before gates.
+Research/design: docs/superpowers/plans/2026-09-13-shared-colour-and-speed.md.
+
 ## Current continuation: v156 Now Playing artist link (2026-09-13)
 
 Owner: `boop-unified-artist-link-v156`, based on v155 at

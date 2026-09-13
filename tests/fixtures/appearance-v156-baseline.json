@@ -1,0 +1,18 @@
+{
+  "source/BoopEyeHue.java": "bc183cca405a47bc1c0b6a7f2d8fc63553989e4e937bd40a55f754b3139fc5a9",
+  "source/BoopEyeHueMath.java": "b45f8896cf1ab657dbbd5e6610a417af2ef177fd4edca8afdb585005f91ae403",
+  "source/BoopEyeHueOverlay.java": "1ac00b573ba299d90844001abf7fc008b8565507903c70eca63f0586ad1b1cad",
+  "source/BoopEyeHueSettings.java": "5fa7547230ca2517f7b374b49c2176ec1b909e3a9692ffc628ed5c1f38c23763",
+  "source/BoopIrisTint.java": "332d98052c7691694495cbf13d545acdff557dfae1b1f43a34e04edda2583909",
+  "source/BoopIrisTintMath.java": "93c3ccb02cd77527739a6467f4cb47d4e0b054b69bc760b1550eabdb3bd3eff4",
+  "unified/animation/assets/eyes.frag": "27897fc551839d216a6f0f640a86d1b8c509904dbec4df86d5a99c9a068ff222",
+  "unified/animation/assets/eyes.vert": "dcfa8eb87ec160ef3249ed2f91e5bcfcd503696ae8079e584ef636698fdaabe9",
+  "unified/animation/assets/lid-rig.png": "38eafd6c687a1b242304b8c58db92d192a6ffe177662f702293a33881b7fe741",
+  "unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java": "6686c8692ba719ff6d23ab690285810c25c47ad2f970cd5c2891e4bc281c4b21",
+  "unified/animation/java/com/boop/eyes/EyeCatalogue.java": "4aada71946733016e44dc64b20e59bd4d0ec6289effb759eea627eecd480a8f9",
+  "unified/animation/java/com/boop/eyes/EyeMotion.java": "d5f87a445a32a088d05253c2bfc2bddd1ced12d99f4d44d9f84fe2d6205b280b",
+  "unified/animation/java/com/boop/eyes/FreddieMotion.java": "581a3f3f60603189d7b6e0b8d4d9692848197880b3398c0132a65f136e9c0756",
+  "unified/animation/java/com/boop/eyes/NotificationSignView.java": "268437904a4d64f230ce8d2f5aa1eee3282d199dabe1c7859edaeb2bd882339c",
+  "unified/animation/java/com/boop/eyes/SignMotion.java": "06892e13ca164d7de265bb6b773204caccda7023c0d659d83e57040a9edf1cca",
+  "unified/assets/boop-eyes/boopApprovedEyes.png": "ffbd67af22c2f11b4a109bd83e8c5197c266a777df2fbc97ce1ab5163e9fed22"
+}

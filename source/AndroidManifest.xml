@@ -91,5 +91,6 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <activity android:name=".BoopAppearanceActivity" android:exported="false" />
     </application>
 </manifest>
