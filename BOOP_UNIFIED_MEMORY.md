@@ -1,22 +1,45 @@
 ## Current continuation: v155 Add favourites selector (2026-09-13)
 
-Owner: `boop-unified-add-favourites-v155`, based on accepted v154 at
-`1a3fdae692bf4186b1bcbc5d37e08d73537ffd80`. Ryan approved an end-of-row
-+ Add favourites tile and BOOP-owned selector, not importing or reopening Nvidia Home.
-The installed-app picker omits saved favourites and duplicate components. OK adds
-only the selected app at the end of the saved order, before the persistent + tile.
-Back/Cancel do not write preferences. The new app receives Home focus. The + tile
-is not a saved app, cannot be reordered, and owns the row's right-hand stop.
-An empty row still offers +; an exhausted picker explains that all apps are added.
+Owner: `boop-unified-add-favourites-v155`. Signed source `dbb00edff3e9d7cd46e8a80fa0152678e1e5a179`.
+Package/version: `com.boop.alpha1`, `155 / 1.2.155-add-favourites`.
+GitHub run `34749730386` completed SUCCESS; artifact `10315522619` (`BOOP-Unified`).
+APK SHA256: `603ef36c811c101b9137f8010a2126d532e4680e3b6d9452b9d53e9667912fe7`.
+Permanent signer: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Source, actual package/version, APK ZIP integrity, digest and signature were verified.
 
-Preserve accepted v153 thin corners, v154 seek-layout bay, the 26 animation designs,
-10-second seeking, Down-to-Pause and 250 ms settings hold. No Nvidia package,
-permission, default-Home or signing changes. Physical deployment targets Shield
-only; both Pixels remain untouched. This is behavioural: test on the local TV
-emulator after GitHub's non-visual test/build/sign/integrity gates, before Shield.
+Approved feature: a persistent + Add favourites tile after the last favourite.
+OK opens BOOP's own installed-app selector. Saved and duplicate components are
+omitted; choosing one app appends it without launching it, preserves the existing
+order, returns Home and focuses the added app. Back/Cancel makes no saved change
+and returns focus to +. The + tile stays last after reordering, is not saved as
+an app, and owns the right-edge stop. Empty/all-added states remain usable.
+No Nvidia launcher, database or external picker is required.
 
-The new model harness and two wiring tests failed against v154, then passed with
-the implementation (17 Java behaviour checks). Full CI/runtime acceptance pending.
+Verification: new model/wiring checks were red on v154 and green on v155.
+Seventeen Java favourite behaviour checks and the focused source regression
+suite passed, followed by the complete non-visual GitHub build/test/sign pipeline.
+The exact signed APK was exercised on the local Android TV AVD before deployment:
+reaching +, repeated Right stopping there, opening the selector, cancellation
+with unchanged preferences, adding one app, focusing the new favourite, excluding
+it afterward, all-added messaging, and reordering while + remains last passed.
+The emulator fixture order was restored through the app UI. Restart persistence
+passed. An initial rapid post-restart key batch did not reach +; that attempt
+was not counted. A repeat checked first-card focus before navigating and passed.
+No additional production changes were made for that test sequencing.
+
+Shield-only `adb install -r` returned Success after emulator checks. Installed
+version and base APK SHA256 match the signed artifact above. All 23 existing
+Shield favourites and their order match the pre-install values exactly. BOOP
+Home launch returned Status ok. Final physical selector/visual acceptance remains
+Ryan-owned and PENDING. Both physical Pixels were left untouched. No permission,
+lock, signing, data-clear or stock-launcher restoration changes were made.
+The desktop connection briefly rate-limited an install request before execution;
+the later successful retry was verified rather than assumed.
+
+Preserve accepted v153 thin cyan corners, v154 seek-flash bay, all animation
+designs, 10-second seek, Down-to-Pause and 250 ms hold. Media/art paths were not
+edited. Next: Ryan inspects + and the selector on Shield. Private logs, dumps,
+emulator fixture backup and the signed artifact cache remain ignored.
 
 ## Current continuation: v154 seek-layout flash (2026-09-13)
 
