@@ -21,8 +21,11 @@ Full GitHub compilation/tests/signing succeeded; no visual CI checks were added.
 
 Shield launch returned to BOOP Home. The initial post-install width was 1082.
 The seek recheck was ABORTED when Johnny Castaway MainActivity became foreground;
-no post-fix seek/flash pass or final visual acceptance is claimed. Do not fight
-another foreground task. Next: Ryan checks the Left seek flash on Shield.
+The automated post-fix seek check was not completed. Ryan subsequently confirmed
+the fix on Shield: "sweet fix.. nice" (2026-09-13). The v154 seek-flash fix is now
+USER-ACCEPTED; do not relabel the interrupted automated check as a pass. Preserve
+this bay fix alongside the accepted thin corners, 10-second seeking, Down to
+Pause and 250 ms settings hold. Continue only with the next user-directed item.
 Neither Pixel nor any emulator was queried or changed in this task. Pixel 10
 remains on hold. No permission changes, lock bypass, data clear or signer changes.
 Private captures/dumps and scratch checks remain ignored, not published.
