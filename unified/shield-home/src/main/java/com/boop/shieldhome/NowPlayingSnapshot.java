@@ -89,6 +89,7 @@ public final class NowPlayingSnapshot {
     }
     public boolean canFastForward() { return NowPlayingActionPolicy.canFastForward(actions); }
     public boolean canNext() { return NowPlayingActionPolicy.canNext(actions); }
+    public boolean canSeek() { return (actions & PlaybackState.ACTION_SEEK_TO) != 0L; }
 
     /** Position suitable for a lightweight progress ticker between media-session callbacks. */
     public long estimatedPositionMs(long nowElapsedRealtimeMs) {

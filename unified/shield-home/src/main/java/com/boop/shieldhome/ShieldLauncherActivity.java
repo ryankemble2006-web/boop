@@ -313,6 +313,10 @@ public final class ShieldLauncherActivity extends Activity {
                 if (nowPlayingManager != null) nowPlayingManager.next();
             }
 
+            @Override public void onNowPlayingSeekBy(long deltaMs) {
+                if (nowPlayingManager != null) nowPlayingManager.seekBy(deltaMs);
+            }
+
             @Override public void onOpenNowPlayingLyrics() {
                 if (nowPlayingManager == null) return;
                 NowPlayingSnapshot current = nowPlayingManager.state().current();

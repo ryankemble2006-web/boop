@@ -80,7 +80,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         artwork = new ImageView(context);
         artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
         artwork.setBackground(artworkBackground());
-        artwork.setClipToOutline(true);
+        FocusChrome.clipRounded(artwork, ARTWORK_CORNER_DP);
         artwork.setContentDescription("Open source player");
         artwork.setFocusable(true);
         artwork.setClickable(true);
@@ -151,6 +151,13 @@ public final class ShieldNowPlayingView extends FrameLayout {
         progress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(1000);
         progress.setProgressTintList(ColorStateList.valueOf(FocusChrome.accentColor(context)));
+        progress.setFocusable(true);
+        progress.setClickable(false);
+        progress.setContentDescription("Track position");
+        progress.setOnFocusChangeListener((v, focused) -> v.animate()
+                .scaleY(focused ? 1.8f : 1f)
+                .setDuration(TvAppCardView.FOCUS_DURATION_MS).start());
+        progress.setOnKeyListener(this::handleProgressKey);
         LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(8));
         progressParams.topMargin = dp(9);
@@ -248,9 +255,12 @@ public final class ShieldNowPlayingView extends FrameLayout {
         if (duration <= 0L) {
             progress.setProgress(0);
             progress.setVisibility(INVISIBLE);
+            progress.setFocusable(false);
             return;
         }
         progress.setVisibility(VISIBLE);
+        progress.setEnabled(current.canSeek());
+        progress.setFocusable(current.canSeek());
         long position = current.estimatedPositionMs(nowElapsedRealtimeMs);
         int scaled = (int) Math.max(0L, Math.min(1000L, (position * 1000L) / duration));
         progress.setProgress(scaled);
@@ -273,8 +283,42 @@ public final class ShieldNowPlayingView extends FrameLayout {
         row.addView(button, params);
     }
 
+    private boolean handleProgressKey(View v, int keyCode, KeyEvent event) {
+        if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+            if (callbacks != null) callbacks.onNowPlayingSeekBy(-10_000L);
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            if (callbacks != null) callbacks.onNowPlayingSeekBy(10_000L);
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            playPauseButton.requestFocus();
+            return true;
+        }
+        return false;
+    }
+
     private void installEdgeFocusNavigation() {
+        View.OnKeyListener upToProgress = (v, keyCode, event) -> {
+            if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                    && keyCode == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable()) {
+                progress.requestFocus();
+                return true;
+            }
+            return false;
+        };
+        previousButton.setOnKeyListener(upToProgress);
+        rewindButton.setOnKeyListener(upToProgress);
+        playPauseButton.setOnKeyListener(upToProgress);
+        fastForwardButton.setOnKeyListener(upToProgress);
         nextButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                    && keyCode == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable()) {
+                progress.requestFocus();
+                return true;
+            }
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
@@ -287,6 +331,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { nextButton.requestFocus(); return true; }
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { sourceButton.requestFocus(); return true; }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) { progress.requestFocus(); return true; }
             return false;
         });
         sourceButton.setOnKeyListener((v, keyCode, event) -> {
@@ -294,6 +339,11 @@ public final class ShieldNowPlayingView extends FrameLayout {
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                 (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : nextButton).requestFocus();
+                return true;
+            }
+            if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                    && keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) {
+                progress.requestFocus();
                 return true;
             }
             return false;

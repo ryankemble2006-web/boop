@@ -97,7 +97,8 @@ public final class TvAppCardView extends FrameLayout {
         grabbed = false;
         this.favourite = favourite;
         homeFavourite = preferBanner;
-        iconView.setClipToOutline(homeFavourite);
+        if (homeFavourite) FocusChrome.clipRounded(iconView, HOME_ARTWORK_CORNER_DP);
+        else iconView.setClipToOutline(false);
         iconView.setBackground(homeFavourite
                 ? homeArtworkBackground()
                 : new ColorDrawable(Color.TRANSPARENT));

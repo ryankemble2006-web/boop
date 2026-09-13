@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 
@@ -207,6 +208,19 @@ public final class ShieldNowPlayingManager {
 
     public void next() {
         runTransport(NowPlayingSnapshot::canNext, controls -> controls.skipToNext());
+    }
+
+    public void seekBy(long deltaMs) {
+        runOnMain(() -> {
+            NowPlayingSnapshot snapshot = state.current();
+            MediaController controller = selectedController;
+            if (snapshot == null || controller == null || snapshot.durationMs() <= 0L
+                    || !snapshot.canSeek()) return;
+            long position = snapshot.estimatedPositionMs(SystemClock.elapsedRealtime());
+            long target = Math.max(0L, Math.min(snapshot.durationMs(), position + deltaMs));
+            try { controller.getTransportControls().seekTo(target); }
+            catch (RuntimeException ignored) { }
+        });
     }
 
     public MediaSession.Token sessionToken(long id) {
