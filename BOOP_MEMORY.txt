@@ -1,67 +1,75 @@
 BOOP LYRICS LAB DURABLE MEMORY
 Updated 2026-09-13. Owning branch: boop-lyrics-lab-side-by-side-v157.
 
-CURRENT BOUNDARY
-Ryan said: "continue but stay off the shield its busy, use locals".
-This continuation is LOCAL ONLY. Do not query or change the Shield or either
-phone, install over Unified, or merge without renewed user authorization.
-Source edits, tests and signing are GitHub-owned. Use the dedicated local TV
-AVD BOOP_Lyrics_157_8186447 for runtime work; preserve other tasks and emulators.
+CURRENT BOUNDARY AND PHYSICAL STATE
+Ryan's "do it" after the proposed real-player test released the previous busy-Shield
+hold for this specific Lyrics Lab deployment and validation. Neither physical phone
+or Unified is a target. No merge is authorized. GitHub owns app source/builds;
+local tools own explicitly authorized device/runtime tests, not stale app drafts.
+
+The tested v158 was successfully installed on Shield ONLY as com.boop.lyricslab.
+Physical package/version and installed base APK hash matched the candidate exactly.
+Existing notification access was already enabled by Ryan; no new grant was made.
+Launch succeeded and the app logged a 50-line timed document. This is a real initial
+load, NOT a passed automatic track-change test.
+
+Desktop Commander timed out when an initial capture, one Next and a second capture
+were submitted. No process ID/output returned, so the execution outcome is UNKNOWN.
+Do not blindly repeat the key. Inspect owned sessions/private captures once the
+connection responds. Subsequent session-list and ping requests also timed out.
+The device registry still listed Yoga online on 0.2.47, which did not prove a live
+ping. No moved-file, revoked-permission, SDK or app regression cause was established.
+Keep the existing pinned command/version. Do not reinstall the already-verified
+lab or change unrelated code to work around a transport timeout.
 
 APP AND ACCEPTANCE
 BOOP Lyrics Lab is the separate com.boop.lyricslab app, not a HOME launcher.
 Ryan approved the emulator design and enabled the lab's notification access on
 Shield himself. Initial lyrics and all player controls were user-confirmed.
 He then reported: "all work but do not reload the page for lyrics until i exit out and refresh".
-Automatic refresh therefore was NOT accepted. Never turn the original success
-message into a claim that this regression did not exist.
-Keep the approved full-screen composition, cyan highlight, locked artwork and
-working controls. No page-reload/Deezer-clicking macro, new permissions or account
-credentials. The purpose of the fork is to avoid overwriting concurrent Unified.
+Automatic refresh was NOT accepted. Never turn the original success report into
+a claim that the regression did not exist. Keep the native full-screen composition,
+cyan styling, approved artwork and controls. No page-reload or Deezer-clicking macro,
+new app permissions or account credentials. The fork protects concurrent Unified.
 
 WHY REFRESH BROKE
 The lab removed its only metadata/playback callback while the same active session
-passed through temporary NONE/STOPPED/SKIPPING states. Without that callback it
-could miss the next song until Activity restart. Observer lifetime must follow
-the live session token, separately from which states can display a music panel.
-Retain observation through transient states; still clear old content. Detach on
-actual removal, permission loss and the lab becoming inactive. Do not add polling
-or recreate the Activity to hide a broken subscription.
+passed through temporary NONE/STOPPED/SKIPPING states. It could then miss the next
+song until Activity restart. Observe the live token separately from displayable
+states. Retain the callback through transitions; still clear stale content. Detach
+on real removal, permission loss and lab inactivity. Do not add polling or reloads.
 
-TESTED FIX
+TESTED FIX AND ARTIFACT
 Version 158 / 0.1.158-lyrics-session-sync.
 App source: 5970f59aa9173fd8171d2d370b856349d0cf4f17.
 GitHub signed run 34766477538 SUCCESS; artifact BOOP-Lyrics-Lab / 10320107611.
 APK SHA256 c95bb9cc343ec9752fb2be610d0c61c0e4d01eb4faa3c62b8c6b28713db00c09.
-The exact signed v157 baseline reproduced the failure on a local real Android
-MediaSession. The exact signed v158 passed 38 real-session/production-presentation
-assertions in each of two complete emulator runs. This includes automatic lyrics
-replacement without leaving, pause/resume, ten-second seek/cue updates, transient
-states, metadata/session recovery, rapid changes and reopening.
-The provider and words were synthetic, while the installed activity, session
-observer, controls, loader and renderer were production. Do not call it post-fix
-physical Shield or full real-Deezer catalogue acceptance. CI logic tests are also
-green. Renderer/artwork did not change. Review was in-session, not independent.
+Signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+The exact signed v157 reproduced the failure on a local real Android MediaSession.
+v158 passed 38 actual-session/production-presentation assertions twice: automatic
+lyrics replacement, pause/resume, ten-second seek/cue changes, transient states,
+metadata/session recovery, rapid changes and reopening. Provider and words were
+synthetic, not a post-fix physical-Deezer catalogue/audio acceptance. CI tests passed.
+Renderer/artwork unchanged. Review was in-session, not independent.
 
-LOCAL STATE
-Lab v158 remains installed on the dedicated emulator with verified APK hash.
-Its own notification access was enabled through the emulator's Android Settings.
-No physical permission was changed or imported. The temporary test-only synthetic
-player/instrumentation APK was removed after its identity/hash were verified.
-Do not assume a real Deezer app is now installed on that AVD.
+PROTECTED STATE
+Dedicated local AVD BOOP_Lyrics_157_8186447 retains hash-verified v158. Its temporary
+synthetic player/instrumentation app was removed after checks. NEVER install that
+fixture on Shield or over real Deezer. No real Deezer install is assumed on the AVD.
+The Shield's Unified baseline was v159 / 1.2.159-shared-eye-colour, not an update
+or edit target. No final post-timeout hash was obtained. Both phones untouched.
 
-NEXT
-Wait for Ryan to release the Shield. Then recheck only this separate lab's real
-track refresh; preserve the installed Unified app. Missing-lyrics/offline and
-longer real-device sessions remain separate checks. Merge only after acceptance
-and authorization, into the current Unified successor, not back over newer code.
-The refresh fix is lab-specific; Unified has its own session-binding manager.
-
-HISTORY AND RECEIPTS
-SESSION_HANDOFF.md and BOOP_STATUS.md own current implementation status.
-Detailed local evidence: docs/handoffs/2026-09-13-lyrics-local-refresh-tests.md.
-Earlier investigation: docs/handoffs/2026-09-13-lyrics-track-refresh.md.
-The full inherited product memory/checkpoints remain preserved byte-for-byte at
- docs/history/lyrics-lab-pre-user-confirmation/BOOP_MEMORY.txt
-No personal captures, raw dumps, private addresses, tokens or third-party APKs
-belong in the public repository.
+NEXT AND REFERENCES
+After connection recovery, first inspect the uncertain test, then finish real-player
+track refresh in the separate lab. Do not rebuild/redesign/reinstall for resumption.
+No merge until physical validation and Ryan's separate approval, then integrate
+into the current Unified successor; its session manager differs from this lab.
+Missing-lyrics/offline and longer sessions remain separate checks.
+Current receipt: docs/handoffs/2026-09-13-lyrics-shield-v158-install.md.
+Local proof: docs/handoffs/2026-09-13-lyrics-local-refresh-tests.md.
+Earlier diagnosis: docs/handoffs/2026-09-13-lyrics-track-refresh.md.
+SESSION_HANDOFF.md and BOOP_STATUS.md own the current checkpoint. Full historical
+product/checkpoint memory remains in docs/history/lyrics-lab-pre-user-confirmation/.
+Private captures, raw dumps, addresses, tokens and third-party APKs do not belong
+in the public repository. No app code, signing, permission or merge changed in this
+physical-install documentation update.
