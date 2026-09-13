@@ -37,6 +37,31 @@ public final class FavouriteOrder {
         return out;
     }
 
+    /** Available choices are installed components, never a stock launcher's database. */
+    public static List<TvAppEntry> availableToAdd(List<TvAppEntry> installed, List<String> current) {
+        Set<String> seen = new HashSet<>(current == null ? List.of() : current);
+        ArrayList<TvAppEntry> choices = new ArrayList<>();
+        if (installed != null) {
+            for (TvAppEntry entry : installed) {
+                if (entry != null && !entry.component().isEmpty() && seen.add(entry.component())) {
+                    choices.add(entry);
+                }
+            }
+        }
+        return choices;
+    }
+
+    /** Add only. A cancelled/stale choice must never remove or reorder favourites. */
+    public static List<String> addInstalled(
+            List<String> current, List<TvAppEntry> installed, String component) {
+        if (component != null && !component.isEmpty() && installed != null) {
+            for (TvAppEntry entry : installed) {
+                if (entry != null && component.equals(entry.component())) return add(current, component);
+            }
+        }
+        return copy(current);
+    }
+
     public static List<String> remove(List<String> current, String component) {
         ArrayList<String> out = copy(current);
         out.removeIf(value -> value != null && value.equals(component));

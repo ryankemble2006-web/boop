@@ -24,6 +24,7 @@ public final class ShieldHomeView extends LinearLayout {
         void onAppSelected(TvAppEntry entry);
         void onFavouriteOrderCommitted(List<String> components);
         void onOpenApps();
+        default void onAddFavourite() { onOpenApps(); }
         void onOpenHomeRows();
         void onOpenSystemSettings();
         void onContentSelected(HomeContentCard card);
@@ -43,6 +44,7 @@ public final class ShieldHomeView extends LinearLayout {
     private FavouriteGrabSession grabSession;
     private HorizontalScrollView favouriteScroller;
     private LinearLayout favouriteRow;
+    private View addFavouriteTile;
     private TvAppCardView grabbedCard;
     private ShieldNowPlayingView nowPlayingView;
     private View nowPlayingSpacer;
@@ -77,6 +79,7 @@ public final class ShieldHomeView extends LinearLayout {
         nowPlayingSnapshot = snapshot;
         favouriteScroller = null;
         favouriteRow = null;
+        addFavouriteTile = null;
         nowPlayingView = null;
         nowPlayingSpacer = null;
 
@@ -103,14 +106,8 @@ public final class ShieldHomeView extends LinearLayout {
         addView(sectionTitle("Favourite apps"), wrap());
         addSpacer(dp(16));
 
-        if (safeFavourites.isEmpty()) {
-            TextView add = actionButton("Add favourites");
-            add.setOnClickListener(v -> callbacks.onOpenApps());
-            addView(add, new LayoutParams(dp(260), dp(72)));
-        } else {
-            addView(appRow(safeFavourites, callbacks), new LayoutParams(
-                    LayoutParams.MATCH_PARENT, dp(215)));
-        }
+        addView(appRow(safeFavourites, callbacks), new LayoutParams(
+                LayoutParams.MATCH_PARENT, dp(215)));
 
         for (HomeRow row : safeOptionalRows) {
             if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
@@ -215,6 +212,73 @@ public final class ShieldHomeView extends LinearLayout {
         return requested || first.hasFocus();
     }
 
+    boolean focusAddFavourite() {
+        return focusFavouriteView(addFavouriteTile);
+    }
+
+    boolean focusFavourite(String component) {
+        if (favouriteRow == null || component == null) return false;
+        return focusFavouriteView(favouriteRow.findViewWithTag(component));
+    }
+
+    private boolean focusFavouriteView(View target) {
+        if (target == null || favouriteScroller == null) return false;
+        boolean focused = target.requestFocus();
+        target.post(() -> {
+            if (target.getParent() == favouriteRow) {
+                favouriteScroller.smoothScrollTo(Math.max(0, target.getRight()
+                        - favouriteScroller.getWidth() + dp(16)), 0);
+            }
+        });
+        return focused;
+    }
+
+    private View createAddFavouriteTile(Callbacks callbacks) {
+        LinearLayout tile = new LinearLayout(getContext());
+        tile.setOrientation(VERTICAL);
+        tile.setGravity(Gravity.CENTER);
+        tile.setPadding(0, dp(14), 0, dp(12));
+        tile.setClipChildren(false);
+        tile.setClipToPadding(false);
+        tile.setFocusable(true);
+        tile.setClickable(true);
+        tile.setContentDescription("Add favourites");
+        TextView plus = new TextView(getContext());
+        plus.setText("+");
+        plus.setTextSize(TypedValue.COMPLEX_UNIT_SP, 52);
+        plus.setTextColor(FocusChrome.accentColor(getContext()));
+        plus.setGravity(Gravity.CENTER);
+        plus.setBackground(FocusChrome.filled(getContext(), Color.rgb(28, 28, 28), 8, false));
+        LayoutParams art = new LayoutParams(dp(230), dp(129));
+        art.bottomMargin = dp(6);
+        tile.addView(plus, art);
+        TextView caption = new TextView(getContext());
+        caption.setText("Add favourites");
+        caption.setTextColor(Color.WHITE);
+        caption.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
+        caption.setGravity(Gravity.CENTER);
+        caption.setSingleLine(true);
+        tile.addView(caption, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        tile.setOnClickListener(v -> { if (callbacks != null) callbacks.onAddFavourite(); });
+        tile.setOnFocusChangeListener((v, focused) -> {
+            plus.setForeground(focused ? FocusChrome.artworkOutline(getContext(), 8) : null);
+            plus.animate().scaleX(focused ? 1.05f : 1f).scaleY(focused ? 1.05f : 1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS).start();
+        });
+        tile.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) return true;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && favouriteRow != null) {
+                int previous = favouriteRow.indexOfChild(v) - 1;
+                if (previous >= 0 && event != null && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    favouriteRow.getChildAt(previous).requestFocus();
+                }
+                return true;
+            }
+            return false;
+        });
+        return tile;
+    }
+
     private View navRow(Callbacks callbacks) {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(HORIZONTAL);
@@ -263,7 +327,6 @@ public final class ShieldHomeView extends LinearLayout {
         String grabbedComponent = grabSession == null ? null : grabSession.grabbedComponent();
         for (int index = 0; index < favourites.size(); index++) {
             TvAppEntry entry = favourites.get(index);
-            boolean isLastFavourite = index == favourites.size() - 1;
             TvAppCardView card = new TvAppCardView(getContext());
             card.bindFavourite(entry);
             card.setTag(entry.component());
@@ -279,9 +342,12 @@ public final class ShieldHomeView extends LinearLayout {
                 return true;
             });
             card.setOnKeyListener((v, keyCode, event) -> {
-                if (grabSession == null
-                        && isLastFavourite
+                // Resolve position at key time: a grabbed card may have moved.
+                boolean isLastFavourite = favouriteRow != null
+                        && favouriteRow.indexOfChild(v) == favouriteRow.getChildCount() - 2;
+                if (grabSession == null && isLastFavourite
                         && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                    if (event != null && event.getAction() == KeyEvent.ACTION_DOWN) focusAddFavourite();
                     return true;
                 }
                 return false;
@@ -296,6 +362,10 @@ public final class ShieldHomeView extends LinearLayout {
                 card.post(card::requestFocus);
             }
         }
+        addFavouriteTile = createAddFavouriteTile(callbacks);
+        LayoutParams addParams = new LayoutParams(dp(240), dp(185));
+        addParams.rightMargin = dp(16);
+        favouriteRow.addView(addFavouriteTile, addParams);
         favouriteScroller.addView(favouriteRow, new HorizontalScrollView.LayoutParams(
                 LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         return favouriteScroller;
@@ -351,6 +421,7 @@ public final class ShieldHomeView extends LinearLayout {
                 favouriteRow.addView(child);
             }
         }
+        if (addFavouriteTile != null) favouriteRow.addView(addFavouriteTile);
         if (grabbedCard != null) {
             grabbedCard.requestFocus();
             scrollGrabbedIntoView();

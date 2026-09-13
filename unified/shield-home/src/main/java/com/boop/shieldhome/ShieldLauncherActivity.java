@@ -67,6 +67,7 @@ public final class ShieldLauncherActivity extends Activity {
     private ExecutorService executor;
     private FrameLayout root;
     private View currentView;
+    private AlertDialog favouritePicker;
 
     private List<TvAppEntry> installedApps = List.of();
     private List<String> favouriteComponents = List.of();
@@ -199,6 +200,11 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showHome(boolean focusFirstFavourite) {
+        showHome(focusFirstFavourite, null);
+    }
+
+    private void showHome(boolean focusFirstFavourite, String focusComponent) {
+        if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
         lyricsBrowser.cancel();
         currentPage = Page.HOME;
@@ -210,7 +216,9 @@ public final class ShieldLauncherActivity extends Activity {
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
         view.render(favourites, List.of(), nowPlayingSnapshot, callbacks);
         transitionTo(view);
-        if (focusFirstFavourite) {
+        if (focusComponent != null) {
+            view.post(() -> view.focusFavourite(focusComponent));
+        } else if (focusFirstFavourite) {
             view.post(view::resetToFirstFavourite);
         }
 
@@ -256,7 +264,9 @@ public final class ShieldLauncherActivity extends Activity {
                     return;
                 }
                 view.render(favouriteEntries(), readyRows, nowPlayingSnapshot, homeCallbacks());
-                if (focusFirstFavourite) {
+                if (focusComponent != null) {
+                    view.post(() -> view.focusFavourite(focusComponent));
+                } else if (focusFirstFavourite) {
                     view.post(view::resetToFirstFavourite);
                 }
             });
@@ -279,6 +289,10 @@ public final class ShieldLauncherActivity extends Activity {
 
             @Override public void onOpenApps() {
                 showApps();
+            }
+
+            @Override public void onAddFavourite() {
+                showFavouritePicker();
             }
 
             @Override public void onOpenHomeRows() {
@@ -489,6 +503,59 @@ public final class ShieldLauncherActivity extends Activity {
                     showSettings();
                 }));
         dialog.show();
+    }
+
+    private void showFavouritePicker() {
+        if (destroyed || isFinishing() || currentPage != Page.HOME
+                || !(currentView instanceof ShieldHomeView)) return;
+        if (favouritePicker != null && favouritePicker.isShowing()) return;
+        ShieldHomeView host = (ShieldHomeView) currentView;
+        // Fresh PackageManager discovery, not Nvidia Home data or an external intent.
+        try { installedApps = List.copyOf(repository.load()); }
+        catch (RuntimeException unavailable) {
+            android.widget.Toast.makeText(this, "Apps are not available right now.",
+                    android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        List<TvAppEntry> choices = FavouriteOrder.availableToAdd(installedApps, favouriteComponents);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle("Add favourites")
+                .setNegativeButton("Cancel", null);
+        if (choices.isEmpty()) {
+            builder.setMessage("All your available apps are already in favourites.");
+        } else {
+            CharSequence[] labels = new CharSequence[choices.size()];
+            for (int i = 0; i < choices.size(); i++) {
+                TvAppEntry entry = choices.get(i);
+                labels[i] = entry.label().isEmpty() ? entry.packageName() : entry.label();
+            }
+            builder.setItems(labels, (dialog, position) -> addFavouriteFromPicker(choices.get(position)));
+        }
+        AlertDialog dialog = builder.create();
+        favouritePicker = dialog;
+        dialog.setOnDismissListener(ignored -> {
+            if (favouritePicker == dialog) favouritePicker = null;
+            if (!destroyed && resumed && currentView == host) host.post(host::focusAddFavourite);
+        });
+        dialog.setOnShowListener(ignored -> {
+            if (!choices.isEmpty() && dialog.getListView() != null) {
+                dialog.getListView().requestFocus();
+                dialog.getListView().setSelection(0);
+            }
+        });
+        dialog.show();
+    }
+
+    private void addFavouriteFromPicker(TvAppEntry choice) {
+        if (choice == null || destroyed) return;
+        // The app may have been removed while its picker row was on screen.
+        try { installedApps = List.copyOf(repository.load()); }
+        catch (RuntimeException unavailable) { return; }
+        List<String> next = FavouriteOrder.addInstalled(
+                favouriteComponents, installedApps, choice.component());
+        if (next.equals(favouriteComponents)) return;
+        saveFavouriteEdit(next);
+        showHome(false, choice.component());
     }
 
     private void toggleFavourite(TvAppEntry entry) {
@@ -916,6 +983,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onDestroy() {
         destroyed = true;
+        if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
         lyricsBrowser.destroy();
         ++optionalGeneration;
@@ -943,6 +1011,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onPause() {
         resumed = false;
+        if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
         lyricsBrowser.onHostPaused();
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);

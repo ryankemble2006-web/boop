@@ -4,7 +4,7 @@ Small cosmetic changes: GitHub compilation, non-visual tests, permanent signing
 and integrity checks, then directly to the active physical device. No emulator gate.
 Substantive behavioural changes retain emulator-first testing. For the current
 list, use Shield or Pixel 7 only; leave Pixel 10 Pro XL alone until Ryan explicitly
-resumes its deployment. This v154 seek-layout repair targets Shield only. The v153 corners, 10-second seeking, Down-to-Pause and 250 ms hold are user-approved and must be preserved. No permission
+resumes its deployment. The v155 Add favourites selector targets Shield only, after local TV-emulator testing. The selector belongs to BOOP and does not require Nvidia Home. The v153 corners, 10-second seeking, Down-to-Pause and 250 ms hold are user-approved and must be preserved. No permission
 changes, lock bypass, data clear or signing-key substitutions. Ryan judges visuals.
 
 # Combined delivery scope, 2026-09-12
