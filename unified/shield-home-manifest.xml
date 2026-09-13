@@ -9,6 +9,7 @@
     </queries>
     <application>
         <activity android:name="com.boop.shieldhome.ShieldLauncherActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />
+        <activity android:name="com.boop.shieldhome.ShieldLyricsActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />
         <activity android:name="com.boop.shieldhome.ShieldStartupManagerActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />
         <receiver android:name="com.boop.shieldhome.StartupCleanupBootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/></intent-filter></receiver>
         <service android:name="com.boop.shieldhome.StartupCleanupJobService" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
@@ -19,11 +20,11 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="user_enabled_noninteractive_media_puppet"/>
         </service>
         <service android:name="com.boop.shieldhome.BoopCastVisibilityService" android:label="@string/boop_cast_visibility_label" android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/boop_cast_visibility" />
         </service>
         <service android:name="com.boop.alpha1.BoopHomeOverrideService" android:label="@string/boop_unified_home_label" android:exported="true" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
+            <intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/boop_home_override_service" />
         </service>
     </application>

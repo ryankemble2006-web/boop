@@ -67,7 +67,11 @@ public final class DeezerLyricsDocument {
             if (lyrics == null || !lyrics.has("synchronizedLines") || !lyrics.has("synchronizedWordByWordLines"))
                 return unknown(expectedId);
             List<Line> timed = readLines(lyrics);
-            if (timed.isEmpty()) timed = readWordLines(lyrics);
+            if (timed.isEmpty()) {
+                timed = readWordLines(lyrics);
+                if (timed.isEmpty() && array(lyrics, "synchronizedLines").length() > 0)
+                    return unknown(expectedId);
+            }
             if (timed.isEmpty()) return unavailable(expectedId);
             timed.sort(Comparator.comparingLong(Line::startMs));
             List<Line> merged = new ArrayList<>();
