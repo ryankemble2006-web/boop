@@ -1,0 +1,4 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="#071216" /><size android:width="320dp" android:height="180dp" /></shape></item>
+    <item android:left="55dp" android:right="55dp" android:top="35dp" android:bottom="35dp" android:drawable="@drawable/boop_eyes" />
+</layer-list>

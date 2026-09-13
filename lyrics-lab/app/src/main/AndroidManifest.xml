@@ -1,0 +1,23 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <queries><package android:name="deezer.android.app" /></queries>
+    <application android:label="BOOP Lyrics Lab" android:icon="@drawable/boop_eyes"
+        android:banner="@drawable/lyrics_lab_banner" android:allowBackup="false"
+        android:usesCleartextTraffic="false" android:enableOnBackInvokedCallback="false"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity android:name="com.boop.shieldhome.LyricsLabActivity" android:exported="true"
+            android:screenOrientation="landscape" android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service android:name="com.boop.shieldhome.LyricsLabMediaListener" android:exported="false"
+            android:label="BOOP Lyrics Lab" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
+        </service>
+    </application>
+</manifest>

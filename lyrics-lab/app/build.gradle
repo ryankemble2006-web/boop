@@ -1,0 +1,29 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.boop.shieldhome'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'com.boop.lyricslab'
+        minSdk 29
+        targetSdk 36
+        versionCode 157
+        versionName '0.1.157-lyrics-lab'
+    }
+    sourceSets.main {
+        java.srcDirs += ['build/lyrics-shared/java']
+        res.srcDirs += ['build/lyrics-shared/res']
+    }
+    signingConfigs {
+        boopDev {
+            def key = System.getenv('BOOP_SIGNING_STORE_FILE')
+            if (key) {
+                storeFile file(key)
+                storePassword System.getenv('BOOP_DEV_STORE_PASSWORD')
+                keyAlias 'boop-dev'
+                keyPassword System.getenv('BOOP_DEV_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes { debug { signingConfig signingConfigs.boopDev } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
