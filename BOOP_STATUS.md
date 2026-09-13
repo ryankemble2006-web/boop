@@ -1,15 +1,22 @@
-# BOOP status: colour accepted; v160 GitHub speed verification passed
+# BOOP status: v161 Lab scale-zero fix built; colour remains accepted
 
-Updated 2026-09-13. Latest scope is GitHub work only. No laptop/device execution or deployment occurred in this continuation.
+Updated 2026-09-13. Current scope: GitHub source/tests/build/permanent signing only. No laptop, emulator or physical-device operations ran in this continuation.
 
-Wall -> Shield eye colour is physically accepted by Ryan. Prior captures verified visible delivery in both directions with Pixel 7. Preserve the last recorded user hue2 and enabled sharing; do not restore old test values. Physical devices were last verified on v159. Physical Pixel 10 remains excluded.
+Engineering/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754` on `boop-unified-eye-sync-safe-v159` is version161 / `1.2.161-lab-scale-independent`. It retains v160 speed and changes only the embedded Lab's Android-scale freeze condition plus the APK version. No artwork, authored motion, hue, permissions or signer changes.
 
-Engineering commit `1d8bf3d39a0858aa0c4f2b435fc92b1b16ef486a` adds a mandatory timing/materialized-source gate before APK signing. The app itself remains the unchanged published v160 implementation. Tests were expanded without changing artwork, motion, hue, settings permissions or signing.
+Test-first checkpoint `fc9e6633ca7b578b7729cc5ee0e134294969075a`: standalone timing `34770049893` had the expected zero-scale Lab sign failure with five other tests passing. Full build `34770049896` reproduced it in raw AND materialized callbacks and stopped before signing. Red branch: `wip/boop-lab-scale-zero-red-fc9e663`.
 
-Test-first timing run `34768979364` at `ca6cd34af50c42dfb5606053b5d27fde7128eaea`: expected missing-gate failure, four other tests passed. Five-line workflow repair then passed in full build `34769075927`. Appearance run `34769075918` passed. Permanent-signed artifact `10321686042` / `BOOP-Unified`, built from `1d8bf3d39a0858aa0c4f2b435fc92b1b16ef486a`, is available.
+At the repair commit, timing `34770388848`, appearance `34770388845` and full build `34770388933` all succeeded. All six timing functions passed; new Lab checks passed 20920 assertions per source path. Receipts report 235 Unified and 68 Shield functional tests with zero failures/errors/skips. All required preservation, colour, permanent-signing, package and archive checks passed.
 
-APK SHA256 `a584381d10ebb220ab686acec22f7668384e240f39ade052e4177583aa4adc7b` matches the existing v160 candidate exactly. Build receipts report 235 Unified and 68 Shield functional tests with zero failures/errors/skips, plus timing and preservation gates.
+Artifact `10321956422` / `BOOP-Unified`:
+- APK SHA256 `c68b81be9b7d3e10883d2aea52c05dc7b8c187fcd835eaddf73e25e91cb4acd6`.
+- ZIP SHA256 `623805381b04c2ce61a8a5bfcb56e663a9a2fc8eddbc1b9eb9b98ed987ccdf3b`.
+- Same permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
 
-Speed remains pending runtime/visual acceptance and physical deployment. Next coverage is the existing emulator-first speed plan when permitted. Raw embedded Lab scale-zero handling needs a materialized-path check; the existing scale-independence contract is Wall-only. Do not report all-surface runtime success from green CI.
+Artifact hashes/receipts were checked in the chat sandbox; all 13 packaged asset entries are byte-identical to v160. The APK itself differs because this is a real Lab repair/version bump, not another identical v160 rebuild.
 
-Details: `SESSION_HANDOFF.md` and `docs/handoffs/2026-09-13-speed-github-verification.md`. Owner remains `boop-unified-eye-sync-safe-v159`. No local synchronization, no new app repair and no bypass of the prior laptop block are claimed.
+Wall -> Shield eye colour remains physically accepted by Ryan. Prior captures demonstrated both directions with Pixel7. Last recorded physical state remains v159, user hue2, sharing on; no fresh device query or mutation here. Physical Pixel10 stays excluded.
+
+Remaining: actual v161 runtime/visual speed checks on permitted laptop emulators, then authorized physical-device validation. No v161 installation or on-screen acceptance is claimed, and physical deployment remains held. The source-level Lab concern is now reproduced and repaired, not still an uninvestigated hypothesis. Two-device colour offline/reconnect is separate outstanding coverage.
+
+Current details: `SESSION_HANDOFF.md` and `docs/handoffs/2026-09-13-lab-scale-zero-verification.md`. Preserve the v160 and colour receipts as historical evidence. No local synchronization, unrelated merge, permission change or bypass of the prior laptop block occurred.
