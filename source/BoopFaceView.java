@@ -237,24 +237,12 @@ final class BoopFaceView extends View {
 
         BoopEyeLayout.Layout layout = BoopEyeLayout.calculate(getWidth(), getHeight());
         if (shakeMuppetActive) {
-            EyeGeometry leftBase;
-            EyeGeometry rightBase;
-            if (layout.landscape()) {
-                leftBase = EyeGeometry.from(layout.left());
-                rightBase = EyeGeometry.from(layout.right());
-            } else {
-                leftBase = portraitEyeGeometry(LEFT_SOURCE);
-                rightBase = portraitEyeGeometry(RIGHT_SOURCE);
-            }
+            EyeGeometry leftBase = EyeGeometry.from(layout.left());
+            EyeGeometry rightBase = EyeGeometry.from(layout.right());
             drawShakeEye(canvas, LEFT_SOURCE, leftBase, true);
             drawShakeEye(canvas, RIGHT_SOURCE, rightBase, false);
             return;
         }
-        if (!layout.landscape()) {
-            drawPortraitFace(canvas);
-            return;
-        }
-
         drawEye(canvas, LEFT_SOURCE, layout.left());
         drawEye(canvas, RIGHT_SOURCE, layout.right());
     }

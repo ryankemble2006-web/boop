@@ -1,3 +1,17 @@
+# BOOP v147 duplicate-render cleanup candidate
+
+Updated 2026-09-13. Owner/worktree: `boop-unified-v146-integration`.
+
+Ryan supplied screenshots showing repeated BOOP eye pairs on phone notification/dev/voice surfaces and two BOOP eye layers inside the Shield Now Playing headphones. The duplicate sources were traced without changing the canonical animation catalogue or approved animation timings.
+
+- Phone portrait rendering no longer draws the entire approved eye atlas. `BoopEyeLayout` now supplies a single portrait eye-pair geometry and `BoopFaceView` draws only the two canonical cropped eyes.
+- Shield Now Playing retains the approved headphones artwork but masks its legacy baked-in eye slots before the canonical GLES eye surface is drawn. No animation clip, canonical eye renderer, headphone artwork file, permission, signing setting, or unrelated feature logic was removed.
+- Unified version candidate is `147 / 1.2.147-duplicate-cleanup`.
+- Regression guard: `tests/test_unified_duplicate_puppet_renderers.py`. A deliberate red run against the pre-fix sources failed for both duplicate paths; restoring the fix made both tests pass.
+- Fresh app unit tests and Java compilation passed locally. Full APK signing remains GitHub-owned. Visual acceptance is still manual and must not be inferred from source/CI checks.
+- Three unrelated Shield overlay files became dirty during existing materialisation patches. They are deliberately excluded from this scoped change and must be preserved as concurrent work.
+
+The v146 delivery record follows unchanged below.
 # BOOP v146 combined delivery: installed on Pixel and Shield
 
 Updated 2026-09-12. Owner/worktree: `boop-unified-v146-integration`.

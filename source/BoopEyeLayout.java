@@ -10,11 +10,18 @@ final class BoopEyeLayout {
     private BoopEyeLayout() { }
 
     static Layout calculate(int width, int height) {
+        float baseScale = Math.min(width, height) / SOURCE_WIDTH;
         if (width <= height) {
-            return new Layout(false, null, null);
+            float centreDistance = SOURCE_EYE_CENTRE_DISTANCE * baseScale;
+            float eyeWidth = SOURCE_EYE_WIDTH * baseScale;
+            float eyeHeight = SOURCE_EYE_HEIGHT * baseScale;
+            float centreX = width / 2f;
+            float centreY = height / 2f;
+            return new Layout(false,
+                    new Eye(centreX - centreDistance / 2f, centreY, eyeWidth, eyeHeight),
+                    new Eye(centreX + centreDistance / 2f, centreY, eyeWidth, eyeHeight));
         }
 
-        float baseScale = Math.min(width, height) / SOURCE_WIDTH;
         float centreDistance = SOURCE_EYE_CENTRE_DISTANCE * baseScale * LANDSCAPE_EYE_SCALE;
         float eyeWidth = SOURCE_EYE_WIDTH * baseScale * LANDSCAPE_EYE_SCALE;
         float eyeHeight = SOURCE_EYE_HEIGHT * baseScale * LANDSCAPE_EYE_SCALE;

@@ -252,6 +252,12 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             headphonesLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             addView(headphonesLayer, fillLayout());
 
+            LegacyEyeMaskView legacyEyeMask = new LegacyEyeMaskView(context);
+            legacyEyeMask.setFocusable(false);
+            legacyEyeMask.setClickable(false);
+            legacyEyeMask.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            addView(legacyEyeMask, fillLayout());
+
             eyeSurface = new GLSurfaceView(context);
             eyeSurface.setEGLContextClientVersion(2);
             eyeSurface.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
@@ -293,6 +299,27 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             params.leftMargin = Math.round(pair.left);
             params.topMargin = Math.round(pair.top);
             eyeSurface.setLayoutParams(params);
+        }
+
+        private static final class LegacyEyeMaskView extends View {
+            private final Paint maskPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+            LegacyEyeMaskView(Context context) {
+                super(context);
+                maskPaint.setColor(Color.BLACK);
+                setWillNotDraw(false);
+            }
+
+            @Override protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                if (getWidth() <= 0 || getHeight() <= 0) return;
+                RectF left = PuppetArtGeometry.mapRect(
+                        PuppetArtGeometry.LEFT_OLD_EYE_SLOT, getWidth(), getHeight());
+                RectF right = PuppetArtGeometry.mapRect(
+                        PuppetArtGeometry.RIGHT_OLD_EYE_SLOT, getWidth(), getHeight());
+                canvas.drawOval(left, maskPaint);
+                canvas.drawOval(right, maskPaint);
+            }
         }
 
         private FrameLayout.LayoutParams fillLayout() {
