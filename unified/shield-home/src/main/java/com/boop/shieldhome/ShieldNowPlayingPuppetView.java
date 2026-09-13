@@ -2,7 +2,6 @@ package com.boop.shieldhome;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -211,8 +210,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private boolean animationAllowed() {
-        return ValueAnimator.areAnimatorsEnabled()
-                && (powerManager == null || !powerManager.isPowerSaveMode());
+        return powerManager == null || !powerManager.isPowerSaveMode();
     }
 
     private void scheduleFrame() {
@@ -230,7 +228,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
-    /** Headphones remain approved artwork; the eye surface is the Animation Lab renderer. */
+    /** Canonical Animation Lab face only. No legacy Now Playing mascot layer is constructed. */
     private static final class LayeredPuppetView extends FrameLayout {
         private final GLSurfaceView eyeSurface;
         private final com.boop.eyes.CanonicalEyeRenderer eyeRenderer;
@@ -238,25 +236,9 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         LayeredPuppetView(Context context) {
             super(context);
             setBackgroundColor(Color.TRANSPARENT);
-            setClipChildren(false);
-            setClipToPadding(false);
             setFocusable(false);
             setClickable(false);
             setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-
-            ImageView headphonesLayer = new ImageView(context);
-            headphonesLayer.setImageResource(com.boop.shieldhome.R.drawable.boop_headphones);
-            headphonesLayer.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            headphonesLayer.setFocusable(false);
-            headphonesLayer.setClickable(false);
-            headphonesLayer.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            addView(headphonesLayer, fillLayout());
-
-            LegacyEyeMaskView legacyEyeMask = new LegacyEyeMaskView(context);
-            legacyEyeMask.setFocusable(false);
-            legacyEyeMask.setClickable(false);
-            legacyEyeMask.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            addView(legacyEyeMask, fillLayout());
 
             eyeSurface = new GLSurfaceView(context);
             eyeSurface.setEGLContextClientVersion(2);
@@ -270,9 +252,9 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             eyeSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
             eyeSurface.setFocusable(false);
             eyeSurface.setClickable(false);
-            addView(eyeSurface, new FrameLayout.LayoutParams(1, 1));
+            addView(eyeSurface, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
         }
-
         void setCanonicalPose(com.boop.eyes.EyeMotion.Pose pose) {
             eyeRenderer.pose = pose;
             eyeSurface.requestRender();
@@ -286,93 +268,6 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         @Override protected void onDetachedFromWindow() {
             eyeSurface.onPause();
             super.onDetachedFromWindow();
-        }
-
-        @Override protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-            super.onSizeChanged(w, h, oldw, oldh);
-            if (w <= 0 || h <= 0) return;
-            RectF pair = PuppetArtGeometry.mapBox(
-                    NowPlayingPuppetEyePlacement.pairInHeadphoneSource(), w, h);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                    Math.max(1, Math.round(pair.width())),
-                    Math.max(1, Math.round(pair.height())));
-            params.leftMargin = Math.round(pair.left);
-            params.topMargin = Math.round(pair.top);
-            eyeSurface.setLayoutParams(params);
-        }
-
-        private static final class LegacyEyeMaskView extends View {
-            private final Paint maskPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-
-            LegacyEyeMaskView(Context context) {
-                super(context);
-                maskPaint.setColor(Color.BLACK);
-                setWillNotDraw(false);
-            }
-
-            @Override protected void onDraw(Canvas canvas) {
-                super.onDraw(canvas);
-                if (getWidth() <= 0 || getHeight() <= 0) return;
-                RectF left = PuppetArtGeometry.mapRect(
-                        PuppetArtGeometry.LEFT_OLD_EYE_SLOT, getWidth(), getHeight());
-                RectF right = PuppetArtGeometry.mapRect(
-                        PuppetArtGeometry.RIGHT_OLD_EYE_SLOT, getWidth(), getHeight());
-                canvas.drawOval(left, maskPaint);
-                canvas.drawOval(right, maskPaint);
-            }
-        }
-
-        private FrameLayout.LayoutParams fillLayout() {
-            return new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    Gravity.CENTER);
-        }
-    }
-
-    private static final class PuppetArtGeometry {
-        static final float HEADPHONES_WIDTH = 1536f;
-        static final float HEADPHONES_HEIGHT = 1024f;
-        static final RectF LEFT_OLD_EYE_SLOT = new RectF(395f, 465f, 711f, 790f);
-        static final RectF RIGHT_OLD_EYE_SLOT = new RectF(757f, 515f, 1075f, 850f);
-
-        private PuppetArtGeometry() { }
-
-        static RectF mapRect(RectF source, int width, int height) {
-            return mapBox(source.left, source.top, source.right, source.bottom, width, height);
-        }
-
-        static RectF mapBox(NowPlayingPuppetEyePlacement.Box source, int width, int height) {
-            return mapBox(source.left, source.top, source.right, source.bottom, width, height);
-        }
-
-        private static RectF mapBox(
-                float sourceLeft,
-                float sourceTop,
-                float sourceRight,
-                float sourceBottom,
-                int width,
-                int height) {
-            float sourceAspect = HEADPHONES_WIDTH / HEADPHONES_HEIGHT;
-            float viewAspect = width / (float) height;
-            float contentWidth;
-            float contentHeight;
-            if (viewAspect > sourceAspect) {
-                contentHeight = height;
-                contentWidth = contentHeight * sourceAspect;
-            } else {
-                contentWidth = width;
-                contentHeight = contentWidth / sourceAspect;
-            }
-            float left = (width - contentWidth) / 2f;
-            float top = (height - contentHeight) / 2f;
-            float scaleX = contentWidth / HEADPHONES_WIDTH;
-            float scaleY = contentHeight / HEADPHONES_HEIGHT;
-            return new RectF(
-                    left + sourceLeft * scaleX,
-                    top + sourceTop * scaleY,
-                    left + sourceRight * scaleX,
-                    top + sourceBottom * scaleY);
         }
     }
 

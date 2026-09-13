@@ -37,11 +37,7 @@ if '// BOOP_SINGLE_FACE_OWNERSHIP_V148' not in text:
 
 puppet = ROOT / 'BoopNotificationPuppetView.java'
 text = puppet.read_text(encoding='utf-8')
-old = '        faceView.setVisibility(visible ? View.VISIBLE : View.GONE);'
-new = '        faceView.setOccluded("notification_host", !visible);'
-if old in text:
-    puppet.write_text(replace_one(text, old, new), encoding='utf-8')
-elif new not in text:
-    raise SystemExit('Notification face visibility anchor missing')
+if 'com.boop.eyes.NotificationSignView' not in text:
+    raise SystemExit('Notification stage is not Animation Lab canonical')
 
-print('Single face ownership: voice hidden, one developer face, one notification face')
+print('Single face ownership: voice hidden, one developer face, Animation Lab notifications')

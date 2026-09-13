@@ -118,6 +118,9 @@ jobs:
           javac -d work/motion-policy-tests source/BoopMotionPolicy.java tests/java/BoopMotionPolicyHarness.java
           java -cp work/motion-policy-tests com.boop.alpha1.BoopMotionPolicyHarness
 
+      - name: Verify canonical notification and Now Playing ownership
+        run: python -m pytest -q tests/test_notification_canonical_only.py tests/test_now_playing_canonical_only.py
+
       - name: Test shared state and media command behaviour
         run: python scripts/test-canonical-core.py
 

@@ -7,9 +7,14 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
-import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.opengl.GLSurfaceView;
+import android.graphics.PixelFormat;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -18,11 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 final class BoopNotificationPuppetView extends FrameLayout {
-    // BOOP_NOTIFICATION_PUPPET_EMPHASIZED_POSE_V1
-    private static final float HANDS_REST_SCALE = 1.12f;
-    private static final float HANDS_ENTRANCE_SCALE = HANDS_REST_SCALE * 0.96f;
-    private static final int BANNER_REST_LIFT_DP = 36;
-    private static final int BANNER_ENTRANCE_OFFSET_DP = 16;
+    private static final long FRAME_MS = 33L;
 
     interface Callback {
         void onOpen(String notificationKey);
@@ -31,10 +32,15 @@ final class BoopNotificationPuppetView extends FrameLayout {
     }
 
     private final Callback callback;
-    private final BoopFaceView faceView;
-    private final ImageView handsView;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final GLSurfaceView eyeSurface;
+    private final com.boop.eyes.CanonicalEyeRenderer eyeRenderer;
+    private final com.boop.eyes.NotificationSignView signView;
     private final FrameLayout cardHost;
+    private final PowerManager powerManager;
     private BoopNotificationPresentation presentation;
+    private long signStartMs;
+    private boolean frameScheduled;
 
     BoopNotificationPuppetView(
             Context context,
@@ -52,24 +58,33 @@ final class BoopNotificationPuppetView extends FrameLayout {
         setClipChildren(false);
         setClipToPadding(false);
 
-        faceView = new BoopFaceView(context);
-        addView(faceView, match());
+        powerManager = context.getSystemService(PowerManager.class);
+        eyeSurface = new GLSurfaceView(context);
+        eyeSurface.setEGLContextClientVersion(2);
+        eyeSurface.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        eyeSurface.getHolder().setFormat(PixelFormat.TRANSLUCENT);
+        eyeSurface.setZOrderOnTop(true);
+        eyeSurface.setPreserveEGLContextOnPause(true);
+        eyeRenderer = new com.boop.eyes.CanonicalEyeRenderer(
+                context.getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
+        eyeSurface.setRenderer(eyeRenderer);
+        eyeSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        eyeSurface.setFocusable(false);
+        eyeSurface.setClickable(false);
+        addView(eyeSurface, match());
 
-        handsView = new ImageView(context);
-        handsView.setImageResource(R.drawable.boop_notification_hands);
-        handsView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        handsView.setAdjustViewBounds(false);
-        handsView.setContentDescription(null);
-        addView(handsView, match());
+        signView = new com.boop.eyes.NotificationSignView(context);
+        signView.setFocusable(false);
+        signView.setClickable(false);
+        addView(signView, match());
 
         cardHost = new FrameLayout(context);
         FrameLayout.LayoutParams hostParams = new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER);
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
         int margin = dp(28);
         hostParams.setMargins(margin, margin, margin, margin);
         addView(cardHost, hostParams);
+        addOnLayoutChangeListener((v,l,top,r,b,ol,ot,or,ob)->resizeCanonicalEyes());
 
         rebuildCard();
         setOnClickListener(v -> openCurrentPresentation());
@@ -80,10 +95,13 @@ final class BoopNotificationPuppetView extends FrameLayout {
     void updatePresentation(BoopNotificationPresentation updated) {
         presentation = updated;
         rebuildCard();
+        signStartMs = SystemClock.uptimeMillis();
+        renderCanonical();
     }
 
     void setFaceVisible(boolean visible) {
-        faceView.setVisibility(visible ? View.VISIBLE : View.GONE);
+        eyeSurface.setVisibility(visible ? View.VISIBLE : View.GONE);
+        signView.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     private void openCurrentPresentation() {
@@ -167,27 +185,66 @@ final class BoopNotificationPuppetView extends FrameLayout {
     }
 
     private void startEntrance() {
-        faceView.post(() -> {
-            faceView.showIdleBlackImmediately();
-            faceView.wakeFromIdle();
-        });
+        signStartMs = SystemClock.uptimeMillis();
+        renderCanonical();
+    }
 
-        cardHost.setAlpha(0f);
-        cardHost.setTranslationY(-dp(BANNER_REST_LIFT_DP + BANNER_ENTRANCE_OFFSET_DP));
-        cardHost.animate()
-                .alpha(1f)
-                .translationY(-dp(BANNER_REST_LIFT_DP))
-                .setDuration(260L)
-                .setInterpolator(new OvershootInterpolator(0.7f))
-                .start();
+    private final Runnable frame = new Runnable() {
+        @Override public void run() {
+            frameScheduled = false;
+            if (!isShown()) return;
+            renderCanonical();
+        }
+    };
 
-        handsView.setScaleX(HANDS_ENTRANCE_SCALE);
-        handsView.setScaleY(HANDS_ENTRANCE_SCALE);
-        handsView.animate()
-                .scaleX(HANDS_REST_SCALE)
-                .scaleY(HANDS_REST_SCALE)
-                .setDuration(220L)
-                .start();
+    private void renderCanonical() {
+        double elapsed = powerManager != null && powerManager.isPowerSaveMode()
+                ? 10000.0 : Math.max(0L, SystemClock.uptimeMillis() - signStartMs);
+        int style = notificationStyle();
+        com.boop.eyes.SignMotion.Pose pose = com.boop.eyes.SignMotion.sample(elapsed, style);
+        eyeRenderer.pose = pose.eyes;
+        signView.show(pose, style);
+        eyeSurface.requestRender();
+        scheduleFrame();
+    }
+
+    private int notificationStyle() {
+        List<BoopNotificationEnvelope> list = cards();
+        if (list.isEmpty()) return 0;
+        String pkg = list.get(0).packageName();
+        if (pkg == null) return 0;
+        String value = pkg.toLowerCase(java.util.Locale.ROOT);
+        if (value.contains("gmail") || value.contains("mail")) return 1;
+        if (value.contains("facebook")) return 2;
+        if (value.equals("x") || value.contains("twitter")) return 3;
+        return 0;
+    }
+
+    private void resizeCanonicalEyes() {
+        int h = Math.max(1, Math.round(getHeight() * 0.64f));
+        if (eyeSurface.getLayoutParams().height != h) {
+            FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, h);
+            eyeSurface.setLayoutParams(p);
+        }
+    }
+
+    private void scheduleFrame() {
+        if (frameScheduled || !isShown()) return;
+        frameScheduled = true;
+        handler.postDelayed(frame, FRAME_MS);
+    }
+
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        eyeSurface.onResume();
+        scheduleFrame();
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        handler.removeCallbacks(frame);
+        frameScheduled = false;
+        eyeSurface.onPause();
+        super.onDetachedFromWindow();
     }
 
     private Drawable loadAppIcon(String packageName) {

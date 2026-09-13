@@ -149,22 +149,8 @@ hue.write_text(text, encoding="utf-8")
 
 notice = MAIN / "BoopNotificationPuppetView.java"
 text = notice.read_text(encoding="utf-8")
-text = replace_once(text, "    private final BoopFaceView faceView;",
-                    "    private final BoopCanonicalFaceView faceView;", "canonical notification face field")
-text = replace_once(text, "        faceView = new BoopFaceView(context);",
-                    "        faceView = new BoopCanonicalFaceView(context);", "canonical notification face constructor")
-old_entrance = '''        faceView.post(() -> {
-            faceView.showIdleBlackImmediately();
-            faceView.wakeFromIdle();
-        });
-'''
-new_entrance = '''        faceView.post(() -> {
-            faceView.showIdleBlackImmediately();
-            faceView.playNotification();
-        });
-'''
-text = replace_once(text, old_entrance, new_entrance, "canonical notification clip")
-notice.write_text(text, encoding="utf-8")
+if "com.boop.eyes.NotificationSignView" not in text:
+    raise SystemExit("Notification stage is not Animation Lab canonical")
 
 required = [
     JAVA / "EyeMotion.java",

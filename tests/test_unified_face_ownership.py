@@ -19,7 +19,9 @@ def test_notification_preview_owns_exactly_one_face():
     assert 'new BoopCanonicalFaceView' not in preview
     assert 'puppet.setFaceVisible(false)' not in preview
     puppet = (BUILT / 'BoopNotificationPuppetView.java').read_text(encoding='utf-8')
-    assert 'faceView.setOccluded("notification_host", !visible)' in puppet
+    assert 'com.boop.eyes.NotificationSignView' in puppet
+    assert 'new BoopFaceView' not in puppet
+    assert 'boop_notification_hands' not in puppet
 
 def test_hidden_face_cannot_be_reopened_by_queued_animation():
     text = (BUILT / 'BoopCanonicalFaceView.java').read_text(encoding='utf-8')
