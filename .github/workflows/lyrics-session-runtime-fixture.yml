@@ -1,0 +1,63 @@
+name: Build LOCAL-only lyrics session fixture
+on:
+  push:
+    branches: ['boop-lyrics-lab-side-by-side-v157']
+    paths: ['tests/runtime/lyrics-session/**', '.github/workflows/lyrics-session-runtime-fixture.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+      - name: Prepare existing signer for local instrumentation
+        env:
+          KEY: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+        run: |
+          test -n "$KEY"
+          printf '%s' "$KEY" | base64 --decode > "$RUNNER_TEMP/boop-local-fixture.jks"
+          chmod 600 "$RUNNER_TEMP/boop-local-fixture.jks"
+          echo "BOOP_SIGNING_STORE_FILE=$RUNNER_TEMP/boop-local-fixture.jks" >> "$GITHUB_ENV"
+      - name: Compile emulator fixture, never execute it on GitHub
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: gradle --no-daemon -p tests/runtime/lyrics-session :app:assembleDebug --stacktrace
+      - name: Verify test artifact
+        run: |
+          set -euo pipefail
+          APK=tests/runtime/lyrics-session/app/build/outputs/apk/debug/app-debug.apk
+          TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          mkdir -p work
+          "$TOOLS/aapt" dump badging "$APK" > work/local-fixture-badging.txt
+          grep -Fq "versionName='BOOP-EMULATOR-ONLY-session-fixture'" work/local-fixture-badging.txt
+          "$TOOLS/aapt" dump permissions "$APK" > work/local-fixture-permissions.txt
+          ! grep -Fq 'android.permission.INTERNET' work/local-fixture-permissions.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > work/local-fixture-signer.txt
+          expected=$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt)
+          grep -Fq "$expected" work/local-fixture-signer.txt
+          unzip -tq "$APK"
+          sha256sum "$APK" > work/local-fixture-sha256.txt
+          git rev-parse HEAD > work/local-fixture-commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-EMULATOR-ONLY-Session-Fixture
+          path: |
+            tests/runtime/lyrics-session/app/build/outputs/apk/debug/app-debug.apk
+            work/local-fixture-*.txt
+          if-no-files-found: error
+      - name: Remove temporary signer
+        if: always()
+        run: rm -f "$RUNNER_TEMP/boop-local-fixture.jks"
+      # No emulator, instrumentation, screenshots or visual tests execute here.
