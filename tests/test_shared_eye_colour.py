@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -77,6 +78,31 @@ def test_runtime_is_opt_in_and_reuses_saved_home_assistant_auth():
         assert forbidden not in text, forbidden
     assert 'BoopSharedEyeColourRuntime.initialize(this)' in (ROOT / 'unified/UnifiedApplication.java').read_text()
     assert 'BoopAppearanceActivity.class' in (ROOT / 'unified/BoopProfileActivity.java').read_text()
+
+
+def test_appearance_screen_is_private_and_available_in_the_apk():
+    path = ROOT / 'source/BoopAppearanceActivity.java'
+    assert path.is_file(), 'The appearance settings screen is missing'
+    manifest = ET.parse(ROOT / 'source/AndroidManifest.xml').getroot()
+    ns = '{http://schemas.android.com/apk/res/android}'
+    entries = [a for a in manifest.findall('application/activity')
+               if a.get(ns + 'name') == '.BoopAppearanceActivity']
+    assert len(entries) == 1, 'Register exactly one appearance activity'
+    assert entries[0].get(ns + 'exported') == 'false', 'Settings are an internal app screen'
+
+
+def test_appearance_screen_reuses_wall_hue_and_does_not_enable_sharing_on_open():
+    path = ROOT / 'source/BoopAppearanceActivity.java'
+    assert path.is_file(), 'The appearance settings screen is missing'
+    text = path.read_text()
+    for needed in ['BoopEyeHue.loadHue', 'BoopEyeHue.saveHue', 'setMax(359)',
+                   'if (fromUser)', 'setNegativeButton("Cancel"', 'onStart()', 'onStop()',
+                   'registerOnSharedPreferenceChangeListener', 'unregisterOnSharedPreferenceChangeListener']:
+        assert needed in text, needed
+    creation = text.split('void onCreate(', 1)[1].split('private ', 1)[0]
+    assert 'setEnabled(true)' not in creation, 'Opening settings must not enable HA sharing'
+    assert 'new BoopCanonicalFaceView' not in text, 'Do not add duplicate decorative eyes to settings'
+    assert 'hue_degrees' not in text.split('putInt(', 1)[-1] or 'putInt(' not in text
 
 
 if __name__ == '__main__':
