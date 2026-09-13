@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 /** Standalone Shield launcher surface. */
 public final class ShieldLauncherActivity extends Activity {
     private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
+    private final DeezerArtistBrowser artistBrowser = new DeezerArtistBrowser();
     private final DeezerLyricsBrowser lyricsBrowser = new DeezerLyricsBrowser();
 
     public static final long PAGE_TRANSITION_MS = 140L;
@@ -142,6 +143,7 @@ public final class ShieldLauncherActivity extends Activity {
             return;
         }
         nowPlayingSnapshot = snapshot;
+        artistBrowser.onTrackChanged(snapshot);
         lyricsBrowser.onTrackChanged(nowPlayingManager);
         if (destroyed || currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) {
             return;
@@ -206,6 +208,7 @@ public final class ShieldLauncherActivity extends Activity {
     private void showHome(boolean focusFirstFavourite, String focusComponent) {
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
+        artistBrowser.cancel();
         lyricsBrowser.cancel();
         currentPage = Page.HOME;
         com.boop.shared.BoopState.INSTANCE.homeVisible(resumed);
@@ -332,13 +335,23 @@ public final class ShieldLauncherActivity extends Activity {
             }
 
             @Override public void onOpenNowPlayingLyrics() {
+                artistBrowser.cancel();
                 if (nowPlayingManager == null) return;
                 NowPlayingSnapshot current = nowPlayingManager.state().current();
                 if (current != null) lyricsBrowser.open(
                         ShieldLauncherActivity.this, nowPlayingManager, current);
             }
 
+            @Override public void onBrowseNowPlayingArtist() {
+                if (nowPlayingManager == null) return;
+                albumBrowser.cancel();
+                lyricsBrowser.cancel();
+                NowPlayingSnapshot current = nowPlayingManager.state().current();
+                if (current != null) artistBrowser.open(ShieldLauncherActivity.this, nowPlayingManager, current);
+            }
+
             @Override public void onBrowseNowPlayingAlbum() {
+                artistBrowser.cancel();
                 if (nowPlayingManager == null) return;
                 NowPlayingSnapshot current = nowPlayingManager.state().current();
                 if (current != null && "deezer.android.app".equals(current.packageName()))
@@ -361,6 +374,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void showApps() {
         albumBrowser.cancel();
+        artistBrowser.cancel();
         lyricsBrowser.cancel();
         currentPage = Page.APPS;
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
@@ -381,6 +395,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void showSettings() {
         albumBrowser.cancel();
+        artistBrowser.cancel();
         lyricsBrowser.cancel();
         currentPage = Page.SETTINGS;
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
@@ -463,6 +478,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void showNowPlayingPlayerChooser() {
         albumBrowser.cancel();
+        artistBrowser.cancel();
         ArrayList<String> packages = new ArrayList<>();
         ArrayList<String> labels = new ArrayList<>();
         HashSet<String> seenPackages = new HashSet<>();
@@ -966,6 +982,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     private void handleShortBack() {
         albumBrowser.cancel();
+        artistBrowser.cancel();
         if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
             ((ShieldHomeView) currentView).resetToFirstFavourite();
             return;
@@ -985,6 +1002,7 @@ public final class ShieldLauncherActivity extends Activity {
         destroyed = true;
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
+        artistBrowser.cancel();
         lyricsBrowser.destroy();
         ++optionalGeneration;
         if (unsubscribeNowPlaying != null) {
@@ -1013,6 +1031,7 @@ public final class ShieldLauncherActivity extends Activity {
         resumed = false;
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
+        artistBrowser.cancel();
         lyricsBrowser.onHostPaused();
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         super.onPause();

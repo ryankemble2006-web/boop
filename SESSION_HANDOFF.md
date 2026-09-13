@@ -1,3 +1,25 @@
+## Current continuation: v156 Now Playing artist link (2026-09-13)
+
+Owner: `boop-unified-artist-link-v156`, based on v155 at
+`d168925998c77d59875d15e3402b01e55ec41bc8`. Ryan accepted the favourites
+selector: "your favs button is lush ta". Preserve it and all earlier approvals.
+Artist text now accepts D-pad focus and turns cyan only while focused. From
+Pause, Up reaches progress and Up again reaches the artist; Right from album
+art also reaches it. OK opens that exact artist in the installed Deezer app.
+Artist Down returns to the progress bar; bar Down still goes to Pause.
+
+Browsing uses public recording metadata only on click, preferring Deezer's
+validated recording ID. Otherwise exact title/artist/album matching must yield
+one artist ID, never a name-only guess. No autoplay or transport command.
+Cancelled, stale-track or background-host requests cannot open a late page.
+No artwork, animation definitions, corner geometry, seek deltas, 250 ms hold,
+favourites, permissions or signing policy are changed.
+
+Three feature tests were red on v155, then green. Eighteen artist identity
+cases and the existing seventeen favourite behaviour checks passed locally.
+GitHub signed build, local TV runtime checks and Shield delivery are pending.
+Both physical Pixels remain untouched; Pixel 10 remains on hold.
+
 ## Current continuation: v155 Add favourites selector (2026-09-13)
 
 Owner: `boop-unified-add-favourites-v155`. Signed source `dbb00edff3e9d7cd46e8a80fa0152678e1e5a179`.

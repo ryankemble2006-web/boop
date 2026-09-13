@@ -120,6 +120,14 @@ public final class ShieldNowPlayingView extends FrameLayout {
         subtitle = text(18, Color.LTGRAY);
         subtitle.setSingleLine(true);
         subtitle.setEllipsize(TextUtils.TruncateAt.END);
+        subtitle.setFocusable(true);
+        subtitle.setClickable(true);
+        subtitle.setOnFocusChangeListener((v, focused) -> subtitle.setTextColor(
+                focused ? FocusChrome.accentColor(getContext()) : Color.LTGRAY));
+        subtitle.setOnKeyListener(this::handleArtistKey);
+        subtitle.setOnClickListener(v -> {
+            if (callbacks != null && v.isEnabled()) callbacks.onBrowseNowPlayingArtist();
+        });
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         subtitleParams.topMargin = dp(2);
@@ -229,6 +237,11 @@ public final class ShieldNowPlayingView extends FrameLayout {
         artwork.setImageBitmap(snapshot.artwork());
         title.setText(snapshot.title().isEmpty() ? "Now Playing" : snapshot.title());
         subtitle.setText(snapshot.subtitle());
+        boolean artistAvailable = !snapshot.subtitle().isEmpty() && !snapshot.title().isEmpty();
+        subtitle.setEnabled(artistAvailable);
+        subtitle.setFocusable(artistAvailable);
+        subtitle.setClickable(artistAvailable);
+        subtitle.setContentDescription("Browse artist " + snapshot.subtitle() + " in Deezer");
         stateLabel.setText(stateText(snapshot.playbackState()));
         playPauseButton.setText(snapshot.isPlaying() ? "Pause" : "Play");
         boolean deezerLyrics = DeezerLyricsPolicy.available(snapshot.packageName());
@@ -298,6 +311,9 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (callbacks != null) callbacks.onNowPlayingSeekBy(10_000L);
             return true;
         }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_UP && subtitle.isFocusable()) {
+            return subtitle.requestFocus();
+        }
         if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
             playPauseButton.requestFocus();
             return true;
@@ -305,7 +321,24 @@ public final class ShieldNowPlayingView extends FrameLayout {
         return false;
     }
 
+    private boolean handleArtistKey(View v, int keyCode, KeyEvent event) {
+        if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return artwork.requestFocus();
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            return (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : sourceButton).requestFocus();
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            if (progress.isFocusable()) return progress.requestFocus();
+            return (playPauseButton.isFocusable() ? playPauseButton : artwork).requestFocus();
+        }
+        return false;
+    }
+
     private void installEdgeFocusNavigation() {
+        artwork.setOnKeyListener((v, keyCode, event) -> event != null
+                && event.getAction() == KeyEvent.ACTION_DOWN
+                && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && subtitle.isFocusable()
+                && subtitle.requestFocus());
         View.OnKeyListener upToProgress = (v, keyCode, event) -> {
             if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable()) {
