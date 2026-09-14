@@ -71,8 +71,8 @@ public class SpeechStartupHarness extends StubActivity implements TextToSpeech.O
  boolean assistantFollowUpAfterTts,sleepFaceAfterTts,assistantFollowUpListening,faceTouchActive;
  String latestAssistantFollowUpPartial;
  final Noop shakeDetector=new Noop(),recipeSession=new Noop();
- Noop sensorManager,recipePanel,notificationInPlaceController,presencePeekController,mirrorController,dockModeController,chatModeDialog;
- static class Noop {void reset(){}void cancel(){}void cancelPending(){}void close(){}void dismiss(){}void onPause(){}void unregisterListener(Object x){}}
+ Noop face,sensorManager,recipePanel,notificationInPlaceController,presencePeekController,mirrorController,dockModeController,chatModeDialog;
+ static class Noop {void stopListeningCue(){}void reset(){}void cancel(){}void cancelPending(){}void close(){}void dismiss(){}void onPause(){}void unregisterListener(Object x){}}
  static class BoopNotificationRuntime {static BoopNotificationRuntime get(Object x){return new BoopNotificationRuntime();}void unregisterWallHost(Object x){}}
  void cancelAssistantFollowUpSilenceTimeout(){}void closeWakeAudioSession(){}void cancelFaceHolds(){}void wakeFaceForInteraction(){}
  final Wake wakeCoordinator=new Wake();
@@ -93,7 +93,7 @@ public class SpeechStartupHarness extends StubActivity implements TextToSpeech.O
  static class VoiceController {
   float pitch(){return 1.12f;} float speechRate(){return .96f;}
   void initialize(TextToSpeech t,Locale l){}
-  boolean naturalBackendSelectedAndUsable(){return false;}
+  boolean natural; boolean naturalBackendSelectedAndUsable(){return natural;}
   BoopVoiceController.NaturalVoice selectedNaturalVoice(){return new BoopVoiceController.NaturalVoice();}
  }
  boolean isFinishing(){return finishing;} boolean isDestroyed(){return destroyed;}
@@ -159,6 +159,25 @@ public class SpeechStartupHarness extends StubActivity implements TextToSpeech.O
   SpeechStartupHarness a=fresh();a.tts.reject=true;a.speakWithAndroidTts("Done");a.ready();
   check(a.completions==1,"rejected queued speech left assistant waiting");
  }
+ static class Natural implements BoopSpeechBackend {
+  Callback callback;String text;int sid;float pitch,rate;
+  public boolean speak(String text,int sid,float pitch,float rate,Callback cb){this.text=text;this.sid=sid;this.pitch=pitch;this.rate=rate;this.callback=cb;return true;}
+  public void stop(){}public void release(){}
+ }
+ static void natural(){
+  SpeechStartupHarness a=fresh();Natural n=new Natural();a.naturalSpeechBackend=n;a.voiceController.natural=true;
+  a.speak("Natural reply");
+  check("Natural reply".equals(n.text)&&n.sid==21&&n.pitch==1.12f&&n.rate==.96f,"selected natural reply/tuning was not preserved");
+  check(a.tts.calls==0&&a.completions==0,"natural reply used Android or finished early");
+  n.callback.onDone();check(a.completions==1,"natural completion boundary was lost");
+ }
+ static void naturalFallback(){
+  SpeechStartupHarness a=fresh();Natural n=new Natural();a.naturalSpeechBackend=n;a.voiceController.natural=true;
+  a.speak("Same reply");n.callback.onError(new IllegalStateException("test platform failure"));
+  check(a.completions==0&&a.tts.calls==0,"natural fallback was discarded before Android initialization");
+  a.ready();check("Same reply".equals(a.tts.spoken),"natural fallback changed or lost reply");
+  a.tts.complete();Handler.advance(0);check(a.completions==1,"fallback completion failed");
+ }
  static void paused(){
   SpeechStartupHarness a=fresh();a.speak("Done");
   check(a.wakeCoordinator.state.state()==BoopWakeSessionState.State.SPEAKING,"test did not enter speaking state");
@@ -174,12 +193,12 @@ public class SpeechStartupHarness extends StubActivity implements TextToSpeech.O
  }
  public static void main(String[] args){
   int failures=0;
-  for(String name:new String[]{"cold","warm","timeout","initFailure","languageFailure","replace","cancel","release","stale","rejected","paused","late"}){
+  for(String name:new String[]{"cold","warm","timeout","initFailure","languageFailure","replace","cancel","release","stale","rejected","paused","late","natural","naturalFallback"}){
    try{SpeechStartupHarness.class.getDeclaredMethod(name).invoke(null);System.out.println("PASS "+name);}
    catch(Throwable x){failures++;System.out.println("FAIL "+name+": "+x.getCause());}
   }
   if(failures>0)throw new AssertionError(failures+" speech lifecycle regressions");
-  System.out.println("12 speech startup/playback scenarios passed");
+  System.out.println("14 speech startup/playback scenarios passed");
  }
 }
 """

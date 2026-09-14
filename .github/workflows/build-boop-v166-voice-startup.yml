@@ -43,6 +43,7 @@ jobs:
           python -m pip install pytest
       - name: Preserve native lyrics and independent blink timing
         run: |
+          python -m pytest -q tests/test_unified_v70_natural_voices_contract.py
           bash scripts/test-unified-native-lyrics.sh
           python tests/test_animation_speed.py
           python tests/test_materialized_speed.py

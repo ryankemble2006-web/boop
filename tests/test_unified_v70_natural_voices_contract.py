@@ -113,7 +113,7 @@ def test_speak_remains_single_lifecycle_entry_and_natural_failure_falls_back_sam
     assert "finishTtsUtterance()" in source
 
     android = ANDROID_BACKEND.read_text(encoding="utf-8")
-    assert "tts.speak(text" in android
+    assert "tts.speak(" in android
     assert "UtteranceProgressListener" in android
 
 
