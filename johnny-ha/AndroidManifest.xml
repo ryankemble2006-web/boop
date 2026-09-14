@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="local.johnnycastaway.halab" android:versionCode="11" android:versionName="1.10-reborn-ha-lab">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="local.johnnycastaway.halab" android:versionCode="12" android:versionName="1.11-reborn-ha-lab">
  <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="30"/>
  <uses-permission android:name="android.permission.INTERNET"/>
  <uses-feature android:name="android.software.leanback" android:required="false"/>

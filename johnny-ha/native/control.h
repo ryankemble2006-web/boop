@@ -4,18 +4,20 @@
 #include <stdatomic.h>
 #include <stdint.h>
 #include <stddef.h>
+#include "wind_episode.h"
 typedef struct {
  atomic_int stop, night, fan_playing, oi_lock, wind_on, wind_playing, wind_ready;
  atomic_uint pending;
  unsigned oi_generation, oi_active_generation;
  int oi_pending, oi_playing;
+ HaWindEpisode wind_episode;
 } HaControl;
 static inline void ha_control_init(HaControl *c) {
  atomic_init(&c->stop,0); atomic_init(&c->night,0); atomic_init(&c->fan_playing,0); atomic_init(&c->pending,0);
+ c->wind_episode=(HaWindEpisode){0};
  atomic_init(&c->wind_on,0); atomic_init(&c->wind_playing,0); atomic_init(&c->wind_ready,0);
  atomic_init(&c->oi_lock,0); c->oi_generation=1; c->oi_active_generation=0; c->oi_pending=c->oi_playing=0;
 }
-static inline void ha_set_wind_level(HaControl *c,int on) { atomic_store(&c->wind_on,!!on); }
 static inline int ha_queue_fan(HaControl *c) {
  if(atomic_load(&c->stop)) return 0;
  unsigned p=atomic_load(&c->pending);
@@ -31,6 +33,15 @@ static inline void ha_oi_lock(HaControl *c) {
  while(atomic_exchange_explicit(&c->oi_lock,1,memory_order_acquire)) {}
 }
 static inline void ha_oi_unlock(HaControl *c) { atomic_store_explicit(&c->oi_lock,0,memory_order_release); }
+static inline void ha_set_wind_level(HaControl *c,int on) {
+ ha_oi_lock(c);
+ atomic_store(&c->wind_on,!!on);ha_episode_level(&c->wind_episode,on);
+ ha_oi_unlock(c);
+}
+static inline int ha_wind_episode_target(HaControl *c,uint32_t now,uint32_t *transition) {
+ ha_oi_lock(c);int target=ha_episode_target(&c->wind_episode,now,transition);
+ ha_oi_unlock(c);return target;
+}
 static inline int ha_queue_oi(HaControl *c) {
  ha_oi_lock(c);
  int accepted=atomic_load(&c->night) && !atomic_load(&c->stop);
@@ -43,10 +54,11 @@ static inline void ha_cancel_oi(HaControl *c) {
 static inline int ha_oi_is_pending(HaControl *c) {
  ha_oi_lock(c); int result=c->oi_pending; ha_oi_unlock(c); return result;
 }
-static inline int ha_try_begin_wind(HaControl *c) {
+static inline int ha_try_begin_wind(HaControl *c,uint32_t now) {
  ha_oi_lock(c);
  int result=atomic_load(&c->wind_ready) && atomic_load(&c->wind_on) && !atomic_load(&c->stop) &&
      !atomic_load(&c->wind_playing) && !c->oi_playing && !c->oi_pending;
+ if(result)result=ha_episode_begin(&c->wind_episode,now);
  if(result)atomic_store(&c->wind_playing,1);
  ha_oi_unlock(c);return result;
 }
@@ -79,7 +91,7 @@ static inline int ha_preempt_normal(HaControl *c) {
  ha_oi_lock(c);
  int result=!atomic_load(&c->fan_playing) && !atomic_load(&c->wind_playing) && !c->oi_playing &&
      (atomic_load(&c->pending)>0 || (c->oi_pending && atomic_load(&c->night)) ||
-      (atomic_load(&c->wind_on) && atomic_load(&c->wind_ready)));
+      (c->wind_episode.armed && atomic_load(&c->wind_on) && atomic_load(&c->wind_ready)));
  ha_oi_unlock(c); return result;
 }
 static inline int ha_preempt_wait(HaControl *c) {
@@ -90,7 +102,7 @@ static inline int ha_preempt_wait(HaControl *c) {
    result=c->oi_active_generation!=c->oi_generation || !atomic_load(&c->night) || atomic_load(&c->pending)>0;
   else if(atomic_load(&c->wind_playing)) result=c->oi_pending && atomic_load(&c->night);
   else result=atomic_load(&c->pending)>0 || (c->oi_pending && atomic_load(&c->night)) ||
-      (atomic_load(&c->wind_on) && atomic_load(&c->wind_ready));
+      (c->wind_episode.armed && atomic_load(&c->wind_on) && atomic_load(&c->wind_ready));
  }
  ha_oi_unlock(c); return result;
 }

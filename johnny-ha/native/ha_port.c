@@ -246,7 +246,7 @@ JNIEXPORT void JNICALL JNI_NAME(nDestroy)(JNIEnv *e,jclass c,jlong h) {
 int ha_wind_requested(void) {return atomic_load(&active->controls.wind_ready)&&atomic_load(&active->controls.wind_on);}
 int ha_wind_active(void) {return atomic_load(&active->controls.wind_playing);}
 int ha_begin_wind(void) {
- if(!ha_try_begin_wind(&active->controls))return 0;
+ if(!ha_try_begin_wind(&active->controls,ticks()))return 0;
  unsigned now=ticks();active->wind_epoch=active->wind_last=now;
  ha_wind_init(&active->wind,now);ha_wind_set(&active->wind,1,now);
  active->wind_flow=active->wind_power=active->wind_seconds=0;
@@ -256,7 +256,9 @@ int ha_begin_wind(void) {
 int ha_wind_step(void) {
  if(ha_oi_is_pending(&active->controls)&&ha_night())return 0;
  unsigned now=ticks();
- ha_wind_set(&active->wind,atomic_load(&active->controls.wind_on),now);
+ uint32_t transition;
+ int target=ha_wind_episode_target(&active->controls,now,&transition);
+ ha_wind_set(&active->wind,target,transition);
  active->wind_power=ha_wind_strength(&active->wind,now);
  active->wind_flow+=(uint32_t)(now-active->wind_last)/1000.0*active->wind_power*180;
  active->wind_last=now;
