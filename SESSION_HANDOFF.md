@@ -1,3 +1,17 @@
+# v175 Johnny HA state bridge installed; native lab integration in progress
+
+Updated 2026-09-14. Owner branch `boop-johnny-state-bridge-v175`; native player branch `johnny-ha-native-v8`.
+
+BOOP source `a909907502eceec86483972c770e647f9b3826c6`, signed run `34875906124` SUCCESS, artifact `10360637578`. APK SHA256 `0898a1a2261cc99fbd0267b781d19015d6ff6d1d51df92a41892b024ae5a45f0`. Permanent signer verified locally, installed on physical Shield and installed APK hash matched. All 16 existing preference hashes unchanged; DIRECT 44100 output remains present. Phone untouched.
+
+Read-only provider `com.boop.alpha1.johnny_states` accepts only the exact HA lab package with its pinned current signer. It exposes fixed Living Room fan/light states, never credentials or general HA access. Actual unsigned shell call was rejected as expected. Pairing changes invalidate cached access tokens. Empty/missing/unavailable lights are not treated as off; any confirmed on means day, all confirmed off means night. Multiple candidate fans yield unknown pending explicit resolution.
+
+New JVM policy tests first failed for missing implementation, then passed. Signed CI retained voice startup, relaxed groove, routing, lyrics and animation checks. Review found credential-cache issue, fixed and re-reviewed; no source blocker remains. No claim yet of actual HA entity discovery or fan/light physical acceptance: that requires the separately signed native Johnny candidate.
+
+Keep accepted v174 groove/voice/audio behavior. Original Johnny variants remain installed; original remains selected screensaver until HA lab passes joint tests. User authorized cleaning up other installed Shield Johnny variants afterward, while preserving local original resources, scene-board labels and rollback/source. Original resource files and Johnny signing key remain private and are never uploaded.
+
+---
+
 # v174 accepted for now
 
 Ryan's physical verdict: "yeh it will do for now at least ... shows hes listening at least." Keep installed v174 relaxed simulatedgroove. This is provisional acceptance of its playback indication, not beat synchronization. No further dance changes requested. Capture remains off; phone untouched.
