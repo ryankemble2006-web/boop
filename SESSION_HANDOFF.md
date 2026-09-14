@@ -1,3 +1,15 @@
+# v176 lyrics album navigation physically accepted
+
+Updated 2026-09-14. Owner branch `boop-lyrics-album-v176`; separate native player work remains on `johnny-ha-native-v8`.
+
+Source `8918a596eeb8bcc17f37fd5344ca7d4ed69793d9`, signed run `34877467478` SUCCESS, artifact `10361900900`. APK SHA256 `f686ca98e3f58d84d5adab3d7bd0647136e9117c290330c6a473c0223b59977e` matches installed Shield package; permanent signer verified. All 16 preferences unchanged, DIRECT 44100 and animator scale 0 preserved. Phone untouched.
+
+Lyrics artwork now accepts Up/OK and opens the current album through the existing album browser; lifecycle cancellation, focus geometry, initial transport focus and seek controls are preserved. User physically confirmed it opened the intended anthology. Test-first failure run34877370210 observed missing action and fan mapping; final source/CI checks and review passed.
+
+Fan classification now excludes oscillation switches, retaining living-room power switch. Actual HA off/on states and one original fan routine were confirmed; native v8 delay prompted separate v9 safe routine interruption. Native v9 is installed with matching APK hash, faster fan physical timing still pending. Original night/day physically accepted. Latest native OI Shrug integration is in progress; consult that branch's current handoff rather than this historical snapshot. Other installed Johnny variants/default screensaver cleanup remains pending final native tests.
+
+---
+
 # v175 Johnny HA state bridge installed; native lab integration in progress
 
 Updated 2026-09-14. Owner branch `boop-johnny-state-bridge-v175`; native player branch `johnny-ha-native-v8`.
