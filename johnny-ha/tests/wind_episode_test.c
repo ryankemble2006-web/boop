@@ -32,7 +32,7 @@ int main(void){
  ha_episode_level(&e,1);drive(&e,&w,20850);
  assert(ha_wind_strength(&w,20850)==halfway);
  assert(e.begin==20850);
- // Missed rendering frames cannot push lowering beyond the five-second deadline.
+ // Missed rendering frames cannot push lowering beyond the eight-second deadline.
  drive(&e,&w,29000);assert(ha_wind_strength(&w,29000)==0);
  ha_episode_level(&e,0);ha_episode_level(&e,1);
  assert(ha_episode_begin(&e,UINT32_MAX-2000));

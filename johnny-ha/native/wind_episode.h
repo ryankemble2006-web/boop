@@ -12,7 +12,7 @@ static inline int ha_episode_begin(HaWindEpisode *e,uint32_t now) {
  if(!e->armed || !e->on)return 0;
  if(!e->started){e->started=1;e->begin=now;}
  /* No fresh lift if OI used the remainder of this episode. */
- if((uint32_t)(now-e->begin)>=4150){e->armed=0;return 0;}
+ if((uint32_t)(now-e->begin)>=7150){e->armed=0;return 0;}
  return 1;
 }
 static inline int ha_episode_target(HaWindEpisode *e,uint32_t now,uint32_t *transition) {
@@ -20,9 +20,9 @@ static inline int ha_episode_target(HaWindEpisode *e,uint32_t now,uint32_t *tran
  if(!e->armed || !e->on)return 0;
  if(!e->started){e->started=1;e->begin=now;}
  uint32_t elapsed=now-e->begin;
- if(elapsed<4150)return 1;
- *transition=e->begin+4150;
- if(elapsed>=5000)e->armed=0;
+ if(elapsed<7150)return 1;
+ *transition=e->begin+7150;
+ if(elapsed>=8000)e->armed=0;
  return 0;
 }
 #endif
