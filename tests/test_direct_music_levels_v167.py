@@ -126,3 +126,16 @@ public class WorkerHarness {
 
 if __name__=="__main__":
     lifecycle()
+
+def preservation():
+    allowed = {
+      "unified/app-build.gradle",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/MusicBounceSource.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/MusicBounceRenderer.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/DirectMusicSource.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/DirectMusicLevels.java",
+    }
+    changed = subprocess.check_output(["git","diff","--name-only","9acfd266e394a0a9fa6b8b16910628fba5f24179","HEAD","--","source","unified","scripts","launcher","shield-overlay","shield-clean-launcher"],cwd=ROOT,text=True).splitlines()
+    assert set(changed)<=allowed, "Unexpected change outside dance input: "+str(set(changed)-allowed)
+    print("Accepted voice, audio routing, artwork and independent animation sources preserved")
+if __name__=="__main__": preservation()

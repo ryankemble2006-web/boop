@@ -14,7 +14,6 @@ import android.util.Log;
 final class MusicBounceSource {
     private static final String TAG = "BOOP-MusicBounce";
     private static final long POLL_MS = 33L;
-    private static final long RETRY_MS = 2500L;
     private static final long STALE_MS = 250L;
     private final Context context;
     private Session session;
@@ -65,6 +64,7 @@ final class MusicBounceSource {
         volatile boolean closed;
         volatile boolean unavailable;
         long retryAtMs;
+        long silentSinceMs = -1L;
         final DirectMusicSource direct;
         boolean diagnosticMode;
         boolean reportedSignal;
@@ -84,6 +84,7 @@ final class MusicBounceSource {
                 if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     sample = Sample.SILENT;
                     diagnosticMode = false;
+                    silentSinceMs = -1L;
                     release();
                 } else if (!diagnosticMode || now >= retryAtMs) {
                     if (visualizer == null) open();
@@ -93,6 +94,16 @@ final class MusicBounceSource {
                     sample = new Sample(level, now);
                     unavailable = false;
                     diagnosticMode = false;
+                    if (level > 0f) silentSinceMs = -1L;
+                    else {
+                        if (silentSinceMs < 0L) silentSinceMs = now;
+                        if (now - silentSinceMs >= 1000L) {
+                            // Some vendor routes leave an enabled Visualizer returning only silence.
+                            release();
+                            diagnosticMode = true;
+                            retryAtMs = now + 10000L;
+                        }
+                    }
                     if (level > 0f && !reportedSignal) {
                         reportedSignal = true;
                         Log.i(TAG, "Actual output-mix music levels received");
