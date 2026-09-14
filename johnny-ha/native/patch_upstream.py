@@ -54,7 +54,7 @@ s=function(s,"cfgFullPath",'    return ".jc_reborn.cfg";')
 write("config.c",s)
 # Reset the resource index before each generation. Files use context-relative paths.
 s=read("resource.c")
-s=once(s,"void parseResourceFiles(char *fileName)\n{","void parseResourceFiles(char *fileName)\n{\n    numAdsResources=numBmpResources=numPalResources=numScrResources=numTtmResources=0;")
+s=once(s,"void parseResourceFiles(char * filename)\n{","void parseResourceFiles(char * filename)\n{\n    numAdsResources=numBmpResources=numPalResources=numScrResources=numTtmResources=0;")
 write("resource.c",s)
 # Live environmental update on a frame boundary, without restarting ADS/TTM routine state.
 s=read("ads.c")
