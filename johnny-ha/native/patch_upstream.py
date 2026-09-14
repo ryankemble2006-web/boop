@@ -21,7 +21,7 @@ s=once(s,"static SDL_Window *sdl_window;","static SDL_Surface *ha_frame;")
 s=function(s,"graphicsInit",'''    ha_frame = ha_surface(0,640,480,32,0x00ff0000,0x0000ff00,0x000000ff,0);
     if (!ha_frame) ha_fail("framebuffer allocation failed");
     grBackgroundSfc = NULL; grSavedZonesLayer = NULL;
-    grDx=grDy=0; grUpdateDelay=0;
+    grDx=grDy=0; grUpdateDelay=0; ha_rebuilding_island=0;
     grLoadPalette(palResources[0]);
     srand(time(NULL));
     eventsInit();''')
@@ -50,7 +50,7 @@ s=read("utils.c")
 s=once(s,"exit(1);",'ha_fail("resource or engine error; see native log");')
 write("utils.c",s)
 s=read("config.c")
-s=function(s,"cfgFullPath",'    return ".jc_reborn.cfg";')
+s=function(s,"cfgFullPath",'    return CFG_FILENAME;')
 write("config.c",s)
 # Reset the resource index before each generation. Files use context-relative paths.
 s=read("resource.c")
