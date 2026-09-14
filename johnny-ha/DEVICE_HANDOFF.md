@@ -6,7 +6,7 @@ Signed and installed Shield APK SHA256 `8c7f4a95dcca4bc23da2e46e8bc45ac34a10dac9
 
 Confirmed play/pause edges produce original-resource cameos:4.8-second JOHNWALK shuffle/hops,2.6-second MJTELE puzzled shrug/question. No generated artwork or audio capture.900ms stable-state debounce, same-kind8sec cooldown, global1.5sec gap. Startup/new sessions establish a baseline without a reaction. Metadata cannot restart it; buffering cancels candidates while retaining the prior confirmed state. Native events expire after1.5sec; wind/OI preempt and clear music without stale replay. Existing eight-second wind and3150ms OI remain unchanged.
 
-Technical evidence: Java edge tests, native policies/timing, actual ADS cleanup under sanitizers, Android/native builds passed; independent Java/native review found no blockers. Installed preview running with live HA and NowPlaying. Physical play/pause appeal and combined recovery verdict requested; pending. Do not label technical checks physical acceptance.
+Technical evidence: Java edge tests, native policies/timing, actual ADS cleanup under sanitizers, Android/native builds passed; independent Java/native review found no blockers. Installed preview running with live HA and NowPlaying. User physically tested pause/play on Shield and accepted the reactions as “perfectly janky”. Keep the deliberate original-pixel character. Combined music with wind/OI interruption is technically tested/reviewed; a separate physical combined test has not been reported.
 
 ## Prior accepted v13 behavior and evidence
 
