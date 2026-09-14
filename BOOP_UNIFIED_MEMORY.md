@@ -1,3 +1,13 @@
+# v174 relaxed playback groove — build pending
+
+Ryan rejected v173 as sharper but unfocused and explicitly selected relaxed, varied simulated movement: sways, nods and occasional flourishes. v173 capture stopped; MediaProjection confirmed null.
+
+Candidate source `e375800a58839df466e155476e2a6729b082545a`, run34874180697 pending. Pure-clock PlaybackGroove replaces audio-dependent movement in NowPlaying view. No automatic audio sampler/permission prompt; obsolete ten-minute Settings entry removed. Smooth small sway, varied lift, occasional flourish;700ms entrance/350ms settle on pause, reset hidden/detached/clock reversal. Existing canonical expressions/colour/art/speed untouched; Android animation0 independence retained. No audio routing changes.
+
+RED34874091551 observed missinggrooveclass. New bounds/continuity/pause/restart tests passed in ongoingbuild, finalreviewno blocker. No visual acceptance implied. v173 remains installed until completedbuildandverifiedupdate; phoneuntouched.
+
+---
+
 # v173 musical verdict — capture stopped
 
 Ryan reports v173 is sharper but not focused on the desired musical accents; varied music makes universal beat matching unsuitable. This is NOT physical rhythm acceptance. User is considering simulated dance. Proposed next direction: varied, non-metronomic sways/nods/flourishes gated by playback; awaiting preference before implementation. Do not restore the rejected regular clock-hop unchanged or describe it as beat-synchronized.
