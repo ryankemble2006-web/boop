@@ -1,4 +1,14 @@
-# Johnny HA Lab v13 — eight-second wind cameo
+# Johnny HA Lab v14 — original-pixel music reactions
+
+Updated 2026-09-14. Owner `johnny-ha-native-v8`. Source `cf6977a047ccafed3feb936003ce54fc5532f442`; CI `34884205277` SUCCESS, artifact `10364182755`. Native SHA256 `9b73985f83e8f085447a860f8fdf7029026e4c1b8e35d2069d646c8ec9d15b94`.
+
+Signed and installed Shield APK SHA256 `8c7f4a95dcca4bc23da2e46e8bc45ac34a10dac92a9504ad28bc555c7a2daf2c` matches installed base.apk; existing signer retained. All110 packaged private assets match approved packaging copies (108 reaction PNGs and2 original resources). Both HA preferences unchanged and active DIRECT44100 output4565 retained. V13 rollback retained privately.
+
+Confirmed play/pause edges produce original-resource cameos:4.8-second JOHNWALK shuffle/hops,2.6-second MJTELE puzzled shrug/question. No generated artwork or audio capture.900ms stable-state debounce, same-kind8sec cooldown, global1.5sec gap. Startup/new sessions establish a baseline without a reaction. Metadata cannot restart it; buffering cancels candidates while retaining the prior confirmed state. Native events expire after1.5sec; wind/OI preempt and clear music without stale replay. Existing eight-second wind and3150ms OI remain unchanged.
+
+Technical evidence: Java edge tests, native policies/timing, actual ADS cleanup under sanitizers, Android/native builds passed; independent Java/native review found no blockers. Installed preview running with live HA and NowPlaying. Physical play/pause appeal and combined recovery verdict requested; pending. Do not label technical checks physical acceptance.
+
+## Prior accepted v13 behavior and evidence
 
 Updated 2026-09-14. Owner `johnny-ha-native-v8`. Source `b3f507db6435988adc4c7ac8d8cec46e3dea0c67`; CI `34882049647` SUCCESS, artifact `10362924070`. Native SHA256 `62b663294e3f771cfc895f357d4fec6bf280e489d7728babe1749c0a5cc921d2`.
 
