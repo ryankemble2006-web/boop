@@ -9,6 +9,7 @@ import javax.microedition.khronos.opengles.GL10;
 final class MusicBounceRenderer implements GLSurfaceView.Renderer {
     private final GLSurfaceView.Renderer delegate;
     private volatile float heightFraction;
+    private volatile float swayFraction;
     private int width = 1, height = 1;
 
     MusicBounceRenderer(GLSurfaceView.Renderer delegate) { this.delegate = delegate; }
@@ -16,6 +17,10 @@ final class MusicBounceRenderer implements GLSurfaceView.Renderer {
     void setHeightFraction(float value) {
         heightFraction = Float.isFinite(value)
                 ? Math.max(0f, Math.min(MusicBounceEnvelope.MAX_HEIGHT_FRACTION, value)) * 2f : 0f;
+    }
+
+    void setSwayFraction(float value) {
+        swayFraction = Float.isFinite(value) ? Math.max(-.03f, Math.min(.03f, value)) : 0f;
     }
 
     @Override public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -30,7 +35,7 @@ final class MusicBounceRenderer implements GLSurfaceView.Renderer {
 
     @Override public void onDrawFrame(GL10 gl) {
         // A zero offset is the exact original viewport. Surface bounds still clip the mascot bay.
-        GLES20.glViewport(0, Math.round(heightFraction * height), width, height);
+        GLES20.glViewport(Math.round(swayFraction * width), Math.round(heightFraction * height), width, height);
         delegate.onDrawFrame(gl);
     }
 }

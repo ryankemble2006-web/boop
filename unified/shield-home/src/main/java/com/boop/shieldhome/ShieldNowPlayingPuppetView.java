@@ -37,9 +37,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final LayeredPuppetView puppet;
     private final PowerManager powerManager;
-    private final MusicBounceSource musicSource;
-    private final MusicBounceEnvelope musicEnvelope = new MusicBounceEnvelope();
-    private boolean musicUnavailableNoticeShown;
+    private final PlaybackGroove groove = new PlaybackGroove();
     private final com.boop.eyes.ProductionAnimationController animation =
             new com.boop.eyes.ProductionAnimationController("idle", SystemClock.uptimeMillis(), 20260910L);
 
@@ -81,7 +79,6 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         setClipToPadding(true);
 
         powerManager = context.getSystemService(PowerManager.class);
-        musicSource = new MusicBounceSource(context);
         com.boop.eyes.AnimationSpeedBinding.install(this,
                 speed -> animation.setSpeed(speed, SystemClock.uptimeMillis()));
         puppet = new LayeredPuppetView(context);
@@ -153,21 +150,11 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
     private void renderCanonicalFrame(long now) {
         boolean playing = mode == NowPlayingPuppetPolicy.Mode.GROOVE;
-        boolean granted = MusicAudioPermissionActivity.hasAudioAccess(getContext());
-        musicSource.setActive(playing && granted && shouldAnimateFrame());
-        if (playing && !granted) MusicBouncePermission.promptOnce(getContext());
-        float level = musicSource.level(now);
-        float height = BassCaptureState.running ? musicEnvelope.updateFast(level, now)
-                : musicEnvelope.update(level, now);
-        puppet.setBounceHeight(height);
+        groove.update(playing, now);
+        puppet.setBounceHeight(groove.level() * MusicBounceEnvelope.MAX_HEIGHT_FRACTION);
+        puppet.setSway(groove.sway());
         // Existing pose sampling and saved animation speed still own blinks and expressions.
         puppet.setCanonicalPose(animation.sample(now));
-        if (!musicUnavailableNoticeShown && musicSource.unavailable()
-                && MusicBouncePermission.foregroundActivity(getContext()) != null) {
-            musicUnavailableNoticeShown = true;
-            android.widget.Toast.makeText(getContext(), "Android isn't sharing music levels right now.",
-                    android.widget.Toast.LENGTH_LONG).show();
-        }
     }
 
     private void pauseCanonicalAnimation() {
@@ -252,9 +239,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private void stopFrames() {
         handler.removeCallbacks(frame);
         frameScheduled = false;
-        if (musicSource != null) musicSource.stop();
-        if (musicEnvelope != null) musicEnvelope.reset();
-        if (puppet != null) puppet.setBounceHeight(0f);
+        groove.reset();
+        if (puppet != null) { puppet.setBounceHeight(0f); puppet.setSway(0f); }
     }
 
     private int dp(int value) {
@@ -294,6 +280,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         void setBounceHeight(float heightFraction) {
             musicRenderer.setHeightFraction(heightFraction);
         }
+        void setSway(float fraction) { musicRenderer.setSwayFraction(fraction); }
         void setCanonicalPose(com.boop.eyes.EyeMotion.Pose pose) {
             eyeRenderer.pose = pose;
             eyeSurface.requestRender();

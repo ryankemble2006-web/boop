@@ -80,9 +80,6 @@ public final class ShieldHomeSettingsView extends LinearLayout {
                 new Intent(getContext(), MusicAudioPermissionActivity.class)));
         addView(musicAudio, rowParams()); addSpacer(dp(10));
 
-        TextView bassCapture = action("Deezer bass bounce test (10 minutes)");
-        bassCapture.setOnClickListener(v -> getContext().startActivity(new Intent(getContext(), BassCaptureActivity.class)));
-        addView(bassCapture, rowParams()); addSpacer(dp(10));
 
         String playerLabel = nowPlayingPlayerLabel == null || nowPlayingPlayerLabel.trim().isEmpty() ? "Automatic" : nowPlayingPlayerLabel.trim();
         TextView player = action("Player: " + playerLabel);
