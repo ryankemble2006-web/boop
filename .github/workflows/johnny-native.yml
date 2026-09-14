@@ -34,6 +34,12 @@ jobs:
           cp /tmp/reborn/LICENSE /tmp/deliverable/JOHNNY-REBORN-LICENSE
           cp -r johnny-ha /tmp/deliverable/source
           sha256sum /tmp/deliverable/arm64-v8a/libjohnny.so
+      - name: Compile Android View
+        run: |
+          mkdir /tmp/java-classes
+          javac -source 8 -target 8 -bootclasspath "$ANDROID_HOME/platforms/android-35/android.jar" -d /tmp/java-classes johnny-ha/java/local/johnnycastaway/shield/NativeJohnnyView.java
+          jar cf /tmp/deliverable/johnny-view.jar -C /tmp/java-classes .
+          "$ANDROID_HOME/build-tools/35.0.0/d8" --lib "$ANDROID_HOME/platforms/android-35/android.jar" --min-api 26 --output /tmp/deliverable /tmp/deliverable/johnny-view.jar
       - uses: actions/upload-artifact@v4
         with:
           name: johnny-native-arm64
