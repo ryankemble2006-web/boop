@@ -1,3 +1,11 @@
+# Current voice repair checkpoint — 14 September 2026
+
+v166 on `boop-voice-ack-v166` is signed and installed on Shield and the explicitly substituted Pixel 10 Pro XL. Automated regression/build/package checks passed. Physical test is UNRESOLVED: user reports flash-and-ignore; recorded Shield attempt returned NO_SPEECH_DETECTED before reply dispatch. Do not claim voice acceptance. See `docs/handoffs/2026-09-14-v166-voice-startup.md` for exact evidence and next action.
+
+---
+
+## Prior branch history (historical)
+
 # Unified v162: native lyrics user-accepted; standalone Lab removed
 
 Updated 2026-09-13. Owner: `boop-unified-eye-sync-safe-v159`.
