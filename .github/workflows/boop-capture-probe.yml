@@ -1,0 +1,55 @@
+name: BOOP playback capture feasibility probe
+on:
+  push:
+    branches: [boop-dance-levels-v167]
+    paths: ['research/playback-capture-probe/**', '.github/workflows/boop-capture-probe.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: true
+      - name: Compile isolated audio-only probe
+        run: |
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+          gradle --no-daemon -p research/playback-capture-probe assembleDebug
+      - name: Verify probe boundaries and APK
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as E
+          root=Path('research/playback-capture-probe')
+          manifest=E.parse(root/'src/main/AndroidManifest.xml')
+          ns='{http://schemas.android.com/apk/res/android}'
+          assert not any(e.get(ns+'name')=='android.permission.INTERNET' for e in manifest.findall('uses-permission'))
+          service=(root/'src/main/java/local/boop/captureprobe/ProbeService.java').read_text()
+          assert '.setAudioPlaybackCaptureConfig(capture)' in service
+          assert '.addMatchingUid(uid)' in service and '.addMatchingUsage(AudioAttributes.USAGE_MEDIA)' in service
+          assert 'postDelayed(timeout,60000)' in service
+          for forbidden in ('setAudioSource(', 'AudioTrack.Builder', 'createVirtualDisplay(', 'setParameters(', 'FileOutputStream'):
+              assert forbidden not in service, forbidden
+          print('Probe: UID/media-only, one-minute lifetime, no audio output, video capture or saved PCM')
+          PY
+          mkdir -p probe-artifact
+          cp research/playback-capture-probe/build/outputs/apk/debug/playback-capture-probe-debug.apk probe-artifact/BOOP-Audio-Probe.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs probe-artifact/BOOP-Audio-Probe.apk > probe-artifact/signer.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging probe-artifact/BOOP-Audio-Probe.apk > probe-artifact/badging.txt
+          git rev-parse HEAD > probe-artifact/built-commit.txt
+          sha256sum probe-artifact/BOOP-Audio-Probe.apk > probe-artifact/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Audio-Probe
+          path: probe-artifact/
+          if-no-files-found: error
