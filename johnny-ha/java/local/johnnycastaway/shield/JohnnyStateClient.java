@@ -23,12 +23,16 @@ final class JohnnyStateClient {
   if(worker!=null)return;
   final long session=++generation;edges.reset();
   worker=Executors.newSingleThreadScheduledExecutor(r->{Thread t=new Thread(r,"JohnnyHaState");t.setDaemon(true);return t;});
+  final int[] skip={0};
   worker.scheduleWithFixedDelay(()->{
+   if(skip[0]>0){skip[0]--;return;}
    String json;
    try{
     Bundle b=context.getContentResolver().call(Uri.parse("content://com.boop.alpha1.johnny_states"),"snapshot",null,null);
     json=b==null?null:b.getString("json");
    }catch(RuntimeException ignored){json=null;}
+   try{if(json==null||!"ok".equals(new JSONObject(json).optString("status")))skip[0]=4;}
+   catch(Exception ignored){skip[0]=4;}
    final String result=json;
    main.post(()->{
     if(worker==null||generation!=session)return;
