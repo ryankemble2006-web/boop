@@ -35,10 +35,27 @@ public class StateEdgeHarness {
   check(!e.lightsOff("off"),"fan tracking does not overwrite light tracking");
   check(JohnnyStateEdges.night("unavailable")==-1,"unavailable preserves scenery");
   check(JohnnyStateEdges.night("")==-1,"missing preserves scenery");
+  JohnnyFanState f=new JohnnyFanState();
+  check(!f.update("unknown"),"unknown startup must not choose off");
+  check(f.update("on") && f.on(),"initial on synchronizes sustained wind");
+  check(!f.update("on") && f.on(),"repeated on does not restart");
+  check(!f.update("unavailable") && f.on(),"unavailable holds last confirmed on");
+  check(!f.update("unknown") && f.on(),"unknown holds wind");
+  check(!f.update("on"),"same state on reconnect does not restart");
+  check(f.update("off") && !f.on(),"confirmed off lowers wind");
+  check(!f.update("off"),"repeated off does not lower twice");
+  check(!f.update("") && !f.on(),"missing state preserves off");
+  check(f.update("on") && f.on(),"rapid re-on changes target");
+  check(f.update("off") && !f.on(),"rapid re-off changes target");
+  f.reset();
+  check(!f.update("unknown"),"new session unknown no invented off");
+  check(f.update("on") && f.on(),"new session resynchronizes on");
+  f.reset();
+  check(f.update("off") && !f.on(),"new session resynchronizes off");
   System.out.println("Johnny reconnect, fan edges and light policy passed");
  }
 }'''
 with tempfile.TemporaryDirectory() as d:
  p=pathlib.Path(d)/"StateEdgeHarness.java";p.write_text(test)
- subprocess.run(["javac","-d",d,str(root/"java/local/johnnycastaway/shield/JohnnyStateEdges.java"),str(p)],check=True)
+ subprocess.run(["javac","-d",d,str(root/"java/local/johnnycastaway/shield/JohnnyStateEdges.java"),str(root/"java/local/johnnycastaway/shield/JohnnyFanState.java"),str(p)],check=True)
  subprocess.run(["java","-cp",d,"local.johnnycastaway.shield.StateEdgeHarness"],check=True)
