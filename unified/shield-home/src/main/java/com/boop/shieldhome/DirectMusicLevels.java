@@ -12,12 +12,13 @@ final class DirectMusicLevels {
     static float parse(String dump, long wallNowMs) {
         if (dump == null || dump.length() > 256 * 1024) return -1f;
         boolean output = false, active = false, history = false;
-        float latest = -1f, result = -1f;
+        float result = -1f;
+        String stamp = null, values = null;
         for (String line : dump.split("\\r?\\n")) {
             if (line.startsWith("Historical Thread Log") || line.startsWith("Input thread")) break;
             if (line.startsWith("Output thread")) {
-                if (output && active && latest >= 0f) result = Math.max(result, latest);
-                output = true; active = false; history = false; latest = -1f;
+                if (output && active) result = Math.max(result, level(stamp, values, wallNowMs));
+                output = true; active = false; history = false; stamp = null; values = null;
                 continue;
             }
             if (!output) continue;
@@ -26,21 +27,25 @@ final class DirectMusicLevels {
             if (!history) continue;
             Matcher row = ROW.matcher(line);
             if (!row.matches()) { if (!line.trim().isEmpty()) history = false; continue; }
-            latest = -1f;
-            if (!fresh(row.group(1), wallNowMs)) continue;
-            String values = row.group(2).split("\\]", 2)[0].replace("[", "").trim();
-            if (values.isEmpty()) continue;
-            String[] tokens = values.split("\\s+");
-            try {
-                float db = Float.parseFloat(tokens[tokens.length - 1]);
-                if (!Float.isFinite(db) || db < -120f || db > 0f) continue;
-                // Same RMS response curve as the waveform source; -60 dB is silence.
-                latest = db <= -60f ? 0f
-                        : (float) Math.min(1.0, Math.sqrt(Math.pow(10.0, db / 20.0) * 1.5));
-            } catch (NumberFormatException ignored) { }
+            stamp = row.group(1);
+            values = row.group(2);
         }
-        if (output && active && latest >= 0f) result = Math.max(result, latest);
+        if (output && active) result = Math.max(result, level(stamp, values, wallNowMs));
         return result;
+    }
+
+    private static float level(String stamp, String row, long wallNowMs) {
+        // Historical rows can be numerous. Parse dates only for each active output's final row.
+        if (stamp == null || row == null || !fresh(stamp, wallNowMs)) return -1f;
+        String values = row.split("\\]", 2)[0].replace("[", "").trim();
+        if (values.isEmpty()) return -1f;
+        String[] tokens = values.split("\\s+");
+        try {
+            float db = Float.parseFloat(tokens[tokens.length - 1]);
+            if (!Float.isFinite(db) || db < -120f || db > 0f) return -1f;
+            return db <= -60f ? 0f
+                    : (float) Math.min(1.0, Math.sqrt(Math.pow(10.0, db / 20.0) * 1.5));
+        } catch (NumberFormatException ignored) { return -1f; }
     }
 
     private static boolean fresh(String timestamp, long now) {

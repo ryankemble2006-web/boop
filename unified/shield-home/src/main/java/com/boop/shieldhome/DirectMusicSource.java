@@ -14,6 +14,8 @@ final class DirectMusicSource {
     private volatile boolean closed;
     private long retryAt;
     private boolean reported;
+    private int reads;
+    private long totalReadMs, worstReadMs;
 
     DirectMusicSource(Context context) {
         identityFile = new File(context.getNoBackupFilesDir(), "boop-unified-local-adb.key");
@@ -38,10 +40,21 @@ final class DirectMusicSource {
             if (closed) return -1f;
             if (dump.exitCode != 0) throw new IOException("Audio diagnostic unavailable");
             float level = DirectMusicLevels.parse(dump.output, System.currentTimeMillis());
+            long elapsed = SystemClock.uptimeMillis() - start;
             if (level >= 0f && !reported) {
                 reported = true;
                 Log.i("BOOP-MusicBounce", "Fresh direct-output power received; readMs="
                         + (SystemClock.uptimeMillis() - start));
+            }
+            if (level >= 0f) {
+                reads++;
+                totalReadMs += elapsed;
+                worstReadMs = Math.max(worstReadMs, elapsed);
+                if (reads == 40) {
+                    Log.i("BOOP-MusicBounce", "Direct power read timing: meanMs="
+                            + totalReadMs / reads + " maxMs=" + worstReadMs);
+                    reads = 0; totalReadMs = 0; worstReadMs = 0;
+                }
             }
             return level;
         } catch (Exception failure) {
