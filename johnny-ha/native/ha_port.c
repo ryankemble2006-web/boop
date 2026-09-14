@@ -25,6 +25,8 @@ typedef struct Player {
  uint32_t oi_pixels[HA_OI_PIXELS];
  atomic_int oi_ready;
  unsigned oi_token, oi_started, oi_completed;
+ unsigned music_token,music_started,music_completed;
+ int music_kind;
  int oi_frame;
  uint32_t *wind_pixels;
  unsigned wind_loaded,wind_epoch,wind_last;
@@ -126,6 +128,18 @@ void ha_end_oi(int completed,int interrupted_by_fan) {
  ha_finish_oi(&active->controls,active->oi_token,interrupted_by_fan);
  active->oi_frame=-1;
 }
+int ha_begin_music_request(void) {
+ if(!ha_begin_music(&active->controls,ticks(),&active->music_kind,&active->music_token))return 0;
+ pthread_mutex_lock(&active->frame_lock);active->music_started++;pthread_mutex_unlock(&active->frame_lock);
+ return active->music_kind;
+}
+int ha_music_active(void) {return ha_music_current(&active->controls,active->music_token);}
+void ha_end_music(int completed) {
+ if(completed&&ha_music_active()){
+  pthread_mutex_lock(&active->frame_lock);active->music_completed++;pthread_mutex_unlock(&active->frame_lock);
+ }
+ ha_finish_music(&active->controls,active->music_token);
+}
 int ha_should_preempt(void) { return ha_preempt_normal(&active->controls); }
 int ha_night(void) { return atomic_load(&active->controls.night); }
 int ha_fan_pending(void) { return atomic_load(&active->controls.pending)>0; }
@@ -207,6 +221,12 @@ JNIEXPORT jboolean JNICALL JNI_NAME(nOi)(JNIEnv *e,jclass c,jlong h) {
 JNIEXPORT void JNICALL JNI_NAME(nCancelOi)(JNIEnv *e,jclass c,jlong h) {
  (void)e;(void)c; ha_cancel_oi(&((Player *)(intptr_t)h)->controls);
 }
+JNIEXPORT jboolean JNICALL JNI_NAME(nMusic)(JNIEnv *e,jclass c,jlong h,jint kind) {
+ (void)e;(void)c;return ha_queue_music(&((Player *)(intptr_t)h)->controls,kind,ticks())?JNI_TRUE:JNI_FALSE;
+}
+JNIEXPORT void JNICALL JNI_NAME(nCancelMusic)(JNIEnv *e,jclass c,jlong h) {
+ (void)e;(void)c;ha_cancel_music(&((Player *)(intptr_t)h)->controls);
+}
 JNIEXPORT void JNICALL JNI_NAME(nFanState)(JNIEnv *e,jclass c,jlong h,jboolean on) {
  (void)e;(void)c; ha_set_wind_level(&((Player *)(intptr_t)h)->controls,on);
 }
@@ -235,7 +255,7 @@ JNIEXPORT jboolean JNICALL JNI_NAME(nCopy)(JNIEnv *e,jclass c,jlong h,jintArray 
 JNIEXPORT jstring JNICALL JNI_NAME(nStatus)(JNIEnv *e,jclass c,jlong h) {
  (void)c; Player *p=(Player *)(intptr_t)h; char text[320];
  pthread_mutex_lock(&p->frame_lock);
- snprintf(text,sizeof(text),"%s frames=%u fan=%u/%u queued=%u night=%d oi=%u/%u oiPending=%d oiReady=%d windOn=%d windActive=%d windPct=%d windReady=%d",p->status,p->frames,p->completed,p->started,atomic_load(&p->controls.pending),atomic_load(&p->controls.night),p->oi_completed,p->oi_started,ha_oi_is_pending(&p->controls),atomic_load(&p->oi_ready),atomic_load(&p->controls.wind_on),atomic_load(&p->controls.wind_playing),atomic_load(&p->wind_percent),atomic_load(&p->controls.wind_ready));
+ snprintf(text,sizeof(text),"%s frames=%u fan=%u/%u queued=%u night=%d oi=%u/%u oiPending=%d oiReady=%d windOn=%d windActive=%d windPct=%d windReady=%d music=%u/%u",p->status,p->frames,p->completed,p->started,atomic_load(&p->controls.pending),atomic_load(&p->controls.night),p->oi_completed,p->oi_started,ha_oi_is_pending(&p->controls),atomic_load(&p->oi_ready),atomic_load(&p->controls.wind_on),atomic_load(&p->controls.wind_playing),atomic_load(&p->wind_percent),atomic_load(&p->controls.wind_ready),p->music_completed,p->music_started);
  pthread_mutex_unlock(&p->frame_lock); return (*e)->NewStringUTF(e,text);
 }
 JNIEXPORT void JNICALL JNI_NAME(nDestroy)(JNIEnv *e,jclass c,jlong h) {

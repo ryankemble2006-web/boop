@@ -36,4 +36,7 @@ double ha_wind_power(void);
 double ha_wind_travel(void);
 double ha_wind_seconds(void);
 void ha_wind_gusts(SDL_Surface *);
+int ha_begin_music_request(void);
+int ha_music_active(void);
+void ha_end_music(int completed);
 #endif

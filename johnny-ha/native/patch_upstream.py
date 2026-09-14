@@ -292,3 +292,56 @@ s=once(s,"        int requestedFan=ha_take_fan_request();",
         int requestedFan=0; // old one-shot fan path is retired; wind is a level
 """)
 write("story.c",s)
+
+# Music surprises reuse untouched original sprites; no extra artwork payload.
+s=read("ads.c")
+s += """
+#include "music_pose.h"
+static void adsClearMusicActor(void) {
+    if(ttmThreads[0].isRunning) adsStopScene(0);
+    ttmResetSlot(ttmSlots);
+}
+void adsPlayMusic(int kind) {
+    adsAddScene(0,0,0);
+    grLoadBmp(ttmSlots,0,kind==1 ? "JOHNWALK.BMP" : "MJTELE.BMP");
+    unsigned start=ha_clock_ms(),last_wave=0;
+    int completed=0;
+    while(ha_music_active()) {
+        ha_check_stop();
+        unsigned elapsed=ha_clock_ms()-start;
+        HaMusicPose pose=ha_music_pose(kind,elapsed);
+        if(pose.sprite<0){completed=1;break;}
+        grClearScreen(ttmThreads[0].ttmLayer);
+        grDx=grDy=0;
+        if(pose.sprite>=ttmSlots[0].numSprites[0])ha_fail("music sprite missing from original archive");
+        SDL_Surface *sprite=ttmSlots[0].sprites[0][pose.sprite];
+        // Bottom-center alignment keeps the original feet on the same sand pixel.
+        grDrawSprite(ttmThreads[0].ttmLayer,ttmSlots,
+                     380-sprite->w/2+pose.shift,299-sprite->h-pose.hop,pose.sprite,0);
+        if(pose.question)grDrawSprite(ttmThreads[0].ttmLayer,ttmSlots,415,210,16,0);
+        if(elapsed-last_wave>=160){islandAnimate(&ttmBackgroundThread);last_wave=elapsed;}
+        grUpdateDelay=0;
+        grUpdateDisplay(&ttmBackgroundThread,ttmThreads,&ttmHolidayThread);
+        ha_wait(33);
+    }
+    adsClearMusicActor();
+    ha_end_music(completed);
+    grUpdateDelay=0;
+    grUpdateDisplay(&ttmBackgroundThread,ttmThreads,&ttmHolidayThread);
+}
+"""
+write("ads.c",s)
+s=read("story.c")
+s=once(s,"        int requestedFan=0; // old one-shot fan path is retired; wind is a level",
+"""        int musicKind=ha_begin_music_request();
+        if(musicKind) {
+            extern void adsPlayMusic(int);
+            islandState.xPos=islandState.yPos=0;
+            islandState.lowTide=0;
+            adsInitIsland();
+            adsPlayMusic(musicKind);
+            adsReleaseIsland();
+            continue;
+        }
+        int requestedFan=0; // old one-shot fan path is retired; wind is a level""")
+write("story.c",s)

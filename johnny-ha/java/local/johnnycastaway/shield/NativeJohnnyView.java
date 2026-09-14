@@ -81,6 +81,13 @@ public final class NativeJohnnyView extends View {
             if (handle != 0) nFanState(handle, on);
         }
     }
+    /** Original-frame play(1)/pause(2) surprise; rejected events are never queued behind HA. */
+    public boolean requestMusic(int kind) {
+        synchronized (guard) { return desiredRunning && handle != 0 && nMusic(handle, kind); }
+    }
+    public void cancelMusic() {
+        synchronized (guard) { if (handle != 0) nCancelMusic(handle); }
+    }
     public boolean requestOi() {
         synchronized (guard) { return desiredRunning && handle != 0 && nOi(handle); }
     }
@@ -176,6 +183,8 @@ public final class NativeJohnnyView extends View {
     private static native boolean nWindAsset(long handle, int index, int[] pixels);
     private static native boolean nOiAssets(long handle, int[] pixels);
     private static native boolean nOi(long handle);
+    private static native boolean nMusic(long handle, int kind);
+    private static native void nCancelMusic(long handle);
     private static native void nCancelOi(long handle);
     private static native boolean nCopy(long handle, int[] pixels);
     private static native String nStatus(long handle);

@@ -11,10 +11,13 @@ typedef struct {
  unsigned oi_generation, oi_active_generation;
  int oi_pending, oi_playing;
  HaWindEpisode wind_episode;
+ unsigned music_generation,music_active_generation,music_queued_at;
+ int music_pending,music_playing;
 } HaControl;
 static inline void ha_control_init(HaControl *c) {
  atomic_init(&c->stop,0); atomic_init(&c->night,0); atomic_init(&c->fan_playing,0); atomic_init(&c->pending,0);
  c->wind_episode=(HaWindEpisode){0};
+ c->music_generation=1;c->music_active_generation=c->music_queued_at=0;c->music_pending=c->music_playing=0;
  atomic_init(&c->wind_on,0); atomic_init(&c->wind_playing,0); atomic_init(&c->wind_ready,0);
  atomic_init(&c->oi_lock,0); c->oi_generation=1; c->oi_active_generation=0; c->oi_pending=c->oi_playing=0;
 }
@@ -33,8 +36,49 @@ static inline void ha_oi_lock(HaControl *c) {
  while(atomic_exchange_explicit(&c->oi_lock,1,memory_order_acquire)) {}
 }
 static inline void ha_oi_unlock(HaControl *c) { atomic_store_explicit(&c->oi_lock,0,memory_order_release); }
+static inline void ha_cancel_music_locked(HaControl *c) {c->music_pending=0;c->music_generation++;}
+static inline void ha_cancel_music(HaControl *c) {
+ ha_oi_lock(c);ha_cancel_music_locked(c);ha_oi_unlock(c);
+}
+static inline int ha_music_ha_priority(HaControl *c) {
+ return c->oi_pending||c->oi_playing||atomic_load(&c->wind_playing)||
+     (c->wind_episode.armed&&atomic_load(&c->wind_ready)&&atomic_load(&c->wind_on))||
+     atomic_load(&c->fan_playing)||atomic_load(&c->pending);
+}
+static inline int ha_queue_music(HaControl *c,int kind,uint32_t now) {
+ ha_oi_lock(c);
+ int accepted=(kind==1||kind==2)&&!atomic_load(&c->stop)&&!ha_music_ha_priority(c);
+ if(accepted) {
+  if(!((c->music_playing==kind&&c->music_active_generation==c->music_generation)||c->music_pending==kind)) {
+   c->music_generation++;c->music_pending=kind;c->music_queued_at=now;
+  }
+ }
+ ha_oi_unlock(c);return accepted;
+}
+static inline int ha_begin_music(HaControl *c,uint32_t now,int *kind,unsigned *token) {
+ ha_oi_lock(c);
+ if(c->music_pending && ((uint32_t)(now-c->music_queued_at)>=1500||ha_music_ha_priority(c)||atomic_load(&c->stop)))
+  ha_cancel_music_locked(c);
+ int result=c->music_pending&&!c->music_playing;
+ if(result) {
+  *kind=c->music_playing=c->music_pending;c->music_pending=0;
+  *token=c->music_active_generation=c->music_generation;
+ }
+ ha_oi_unlock(c);return result;
+}
+static inline int ha_music_current(HaControl *c,unsigned token) {
+ ha_oi_lock(c);
+ int result=c->music_playing&&c->music_active_generation==token&&c->music_generation==token&&!atomic_load(&c->stop);
+ ha_oi_unlock(c);return result;
+}
+static inline void ha_finish_music(HaControl *c,unsigned token) {
+ ha_oi_lock(c);
+ if(c->music_playing&&c->music_active_generation==token)c->music_playing=0;
+ ha_oi_unlock(c);
+}
 static inline void ha_set_wind_level(HaControl *c,int on) {
  ha_oi_lock(c);
+ if(on&&!atomic_load(&c->wind_on))ha_cancel_music_locked(c);
  atomic_store(&c->wind_on,!!on);ha_episode_level(&c->wind_episode,on);
  ha_oi_unlock(c);
 }
@@ -45,6 +89,7 @@ static inline int ha_wind_episode_target(HaControl *c,uint32_t now,uint32_t *tra
 static inline int ha_queue_oi(HaControl *c) {
  ha_oi_lock(c);
  int accepted=atomic_load(&c->night) && !atomic_load(&c->stop);
+ if(accepted)ha_cancel_music_locked(c);
  if(accepted && !(c->oi_playing && c->oi_active_generation==c->oi_generation)) c->oi_pending=1;
  ha_oi_unlock(c); return accepted;
 }
@@ -57,14 +102,14 @@ static inline int ha_oi_is_pending(HaControl *c) {
 static inline int ha_try_begin_wind(HaControl *c,uint32_t now) {
  ha_oi_lock(c);
  int result=atomic_load(&c->wind_ready) && atomic_load(&c->wind_on) && !atomic_load(&c->stop) &&
-     !atomic_load(&c->wind_playing) && !c->oi_playing && !c->oi_pending;
+     !atomic_load(&c->wind_playing) && !c->oi_playing && !c->oi_pending && !c->music_playing;
  if(result)result=ha_episode_begin(&c->wind_episode,now);
  if(result)atomic_store(&c->wind_playing,1);
  ha_oi_unlock(c);return result;
 }
 static inline int ha_begin_oi(HaControl *c,unsigned *generation) {
  ha_oi_lock(c);
- int result=c->oi_pending && !c->oi_playing && !atomic_load(&c->wind_playing) && atomic_load(&c->night) &&
+ int result=c->oi_pending && !c->oi_playing && !c->music_playing && !atomic_load(&c->wind_playing) && atomic_load(&c->night) &&
      !atomic_load(&c->stop) && !atomic_load(&c->fan_playing) && !atomic_load(&c->pending);
  if(result) {
   c->oi_pending=0; c->oi_playing=1;
@@ -89,8 +134,8 @@ static inline void ha_finish_oi(HaControl *c,unsigned generation,int interrupted
 }
 static inline int ha_preempt_normal(HaControl *c) {
  ha_oi_lock(c);
- int result=!atomic_load(&c->fan_playing) && !atomic_load(&c->wind_playing) && !c->oi_playing &&
-     (atomic_load(&c->pending)>0 || (c->oi_pending && atomic_load(&c->night)) ||
+ int result=!atomic_load(&c->fan_playing) && !atomic_load(&c->wind_playing) && !c->oi_playing && !c->music_playing &&
+     (c->music_pending || atomic_load(&c->pending)>0 || (c->oi_pending && atomic_load(&c->night)) ||
       (c->wind_episode.armed && atomic_load(&c->wind_on) && atomic_load(&c->wind_ready)));
  ha_oi_unlock(c); return result;
 }
@@ -101,7 +146,8 @@ static inline int ha_preempt_wait(HaControl *c) {
   if(c->oi_playing)
    result=c->oi_active_generation!=c->oi_generation || !atomic_load(&c->night) || atomic_load(&c->pending)>0;
   else if(atomic_load(&c->wind_playing)) result=c->oi_pending && atomic_load(&c->night);
-  else result=atomic_load(&c->pending)>0 || (c->oi_pending && atomic_load(&c->night)) ||
+  else if(c->music_playing) result=c->music_active_generation!=c->music_generation;
+  else result=c->music_pending || atomic_load(&c->pending)>0 || (c->oi_pending && atomic_load(&c->night)) ||
       (c->wind_episode.armed && atomic_load(&c->wind_on) && atomic_load(&c->wind_ready));
  }
  ha_oi_unlock(c); return result;
