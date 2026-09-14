@@ -80,6 +80,12 @@ write("graphics.c",s)
 # Use original scene descriptor for fan. A queued request replaces only the next
 # final routine; the currently executing routine always reaches its natural end.
 s=read("story.c")
+s=once(s, "        struct TStoryScene scene = storyScenes[i];",
+"""        struct TStoryScene scene = storyScenes[i];
+        // The living-room fan is HA-owned; retain its original explicit routine.
+        if (!strcmp(scene.adsName, "MISCGAG.ADS") && scene.adsTagNo == 1)
+            continue;
+""")
 s=s.replace("islandState.night = (hour == 0 || hour == 7);","islandState.night = ha_night();\n    (void)hour;")
 s=once(s,"void storyPlay()","""static struct TStoryScene *ha_fan_scene(void) {
     for(int i=0;i<NUM_SCENES;i++)
