@@ -33,6 +33,8 @@ jobs:
           sudo apt-get install -y -qq libsdl2-dev
           cc -std=c11 -D_POSIX_C_SOURCE=200809L -g -fsanitize=address,undefined -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" -I/tmp/reborn -Ijohnny-ha/native $(sdl2-config --cflags) johnny-ha/tests/runtime_test.c $(sdl2-config --libs) -lpthread -o /tmp/runtime-test
           ASAN_OPTIONS=detect_leaks=1 /tmp/runtime-test
+          cc -std=c11 -g -fsanitize=address,undefined -ffunction-sections -fdata-sections -I/tmp/reborn -Ijohnny-ha/native $(sdl2-config --cflags) johnny-ha/tests/ads_preemption_test.c /tmp/reborn/ttm.c /tmp/reborn/graphics.c $(sdl2-config --libs) -Wl,--gc-sections -o /tmp/ads-preemption-test
+          ASAN_OPTIONS=detect_leaks=1 /tmp/ads-preemption-test
       - name: Install pinned NDK
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" > /dev/null
       - name: Build silent software engine
