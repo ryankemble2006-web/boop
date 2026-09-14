@@ -15,6 +15,7 @@ final class JohnnyStateClient {
  private final NativeJohnnyView player;
  private final Handler main=new Handler(Looper.getMainLooper());
  private final JohnnyStateEdges edges=new JohnnyStateEdges();
+ private final JohnnyFanState fanState=new JohnnyFanState();
  private ScheduledExecutorService worker;
  private long generation;
  private String previous="";
@@ -22,7 +23,7 @@ final class JohnnyStateClient {
  JohnnyStateClient(Context c,NativeJohnnyView p){context=c.getApplicationContext();player=p;}
  void start(){
   if(worker!=null)return;
-  final long session=++generation;edges.reset();observations=0;
+  final long session=++generation;edges.reset();fanState.reset();observations=0;
   worker=Executors.newSingleThreadScheduledExecutor(r->{Thread t=new Thread(r,"JohnnyHaState");t.setDaemon(true);return t;});
   final int[] skip={0};
   worker.scheduleWithFixedDelay(()->{
@@ -48,9 +49,9 @@ final class JohnnyStateClient {
       boolean accepted=player.requestOi();
       Log.i("JohnnyHA","Lights-off edge: "+(accepted?"OI queued":"OI unavailable"));
      }
-     if(edges.update(snapshot.optString("fan"))){
-      boolean accepted=player.requestFan();
-      Log.i("JohnnyHA","Fan edge: "+(accepted?"queued":"busy"));
+     if(fanState.update(snapshot.optString("fan"))){
+      player.setFanState(fanState.on());
+      Log.i("JohnnyHA","Fan level: "+(fanState.on()?"on":"off"));
      }
      String summary="lights="+snapshot.optString("lights")+" fan="+snapshot.optString("fan")
        +" lightEntities="+snapshot.optJSONArray("lightEntities")+" fanEntities="+snapshot.optJSONArray("fanEntities");
@@ -62,5 +63,5 @@ final class JohnnyStateClient {
    });
   },0,2,TimeUnit.SECONDS);
  }
- void stop(){generation++;edges.reset();player.cancelOi();if(worker!=null){worker.shutdownNow();worker=null;}main.removeCallbacksAndMessages(null);}
+ void stop(){generation++;edges.reset();fanState.reset();player.cancelOi();if(worker!=null){worker.shutdownNow();worker=null;}main.removeCallbacksAndMessages(null);}
 }
