@@ -18,10 +18,11 @@ final class JohnnyStateClient {
  private ScheduledExecutorService worker;
  private long generation;
  private String previous="";
+ private int observations;
  JohnnyStateClient(Context c,NativeJohnnyView p){context=c.getApplicationContext();player=p;}
  void start(){
   if(worker!=null)return;
-  final long session=++generation;edges.reset();
+  final long session=++generation;edges.reset();observations=0;
   worker=Executors.newSingleThreadScheduledExecutor(r->{Thread t=new Thread(r,"JohnnyHaState");t.setDaemon(true);return t;});
   final int[] skip={0};
   worker.scheduleWithFixedDelay(()->{
@@ -36,6 +37,7 @@ final class JohnnyStateClient {
    final String result=json;
    main.post(()->{
     if(worker==null||generation!=session)return;
+    if(++observations%5==1)Log.i("JohnnyNative",player.getStatus());
     try{
      JSONObject snapshot=new JSONObject(result==null?"{}":result);
      if(!"ok".equals(snapshot.optString("status")))throw new IllegalStateException();
