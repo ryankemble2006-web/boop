@@ -9,6 +9,7 @@ static int controlled_rand(void) { return next_index; }
 #define rand controlled_rand
 #include "story.c"
 #undef rand
+void ha_fail(const char *why) { fprintf(stderr,"%s\\n",why); abort(); }
 static int is_fan(struct TStoryScene *s) {
  return !strcmp(s->adsName,"MISCGAG.ADS") && s->adsTagNo==1;
 }
