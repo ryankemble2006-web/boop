@@ -7,7 +7,10 @@
         <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LEANBACK_LAUNCHER"/></intent>
         <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent>
     </queries>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <application>
+        <activity android:name="com.boop.shieldhome.BassCaptureActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
+        <service android:name="com.boop.shieldhome.BassCaptureService" android:exported="false" android:foregroundServiceType="mediaProjection" />
         <activity android:name="com.boop.shieldhome.MusicAudioPermissionActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
         <activity android:name="com.boop.shieldhome.ShieldLauncherActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />
         <activity android:name="com.boop.shieldhome.ShieldLyricsActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" />

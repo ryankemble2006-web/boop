@@ -18,17 +18,21 @@ final class MusicBounceSource {
     private static final long STALE_MS = 250L;
     private final Context context;
     private Session session;
+    private boolean active;
 
     MusicBounceSource(Context context) { this.context = context.getApplicationContext(); }
 
     void setActive(boolean active) {
-        if (!active) { stop(); return; }
+        this.active = active;
+        if (!active || BassCaptureState.running) { stopNative(); return; }
         if (session != null) return;
         session = new Session(context);
         session.start();
     }
 
     float level(long nowMs) {
+        if (!active) return 0f;
+        if (BassCaptureState.running) return BassCaptureState.level(nowMs);
         Session current = session;
         if (current == null) return 0f;
         if (current.playbackMode) return PlaybackMusicDance.level(nowMs, current.playbackStartMs);
@@ -37,9 +41,11 @@ final class MusicBounceSource {
                 ? 0f : sample.level;
     }
 
-    boolean unavailable() { return session != null && session.unavailable; }
+    boolean unavailable() { return !BassCaptureState.running && session != null && session.unavailable; }
 
-    void stop() {
+    void stop() { active = false; stopNative(); }
+
+    private void stopNative() {
         Session previous = session;
         session = null;
         if (previous != null) previous.stop();

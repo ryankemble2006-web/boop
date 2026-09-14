@@ -47,6 +47,12 @@ public class PlaybackDanceHarness {
   stop(s);
   check(PlaybackMusicDance.level(10,20)==0,"backwards clock is safe");
   for(long t=0;t<10000;t+=7){float v=PlaybackMusicDance.level(t,0);check(Float.isFinite(v)&&v>=0&&v<=1,"bounded clock curve");}
+  long owner=BassCaptureState.start();s.setActive(true);
+  BassCaptureState.publish(owner,.6f,40000);
+  check(s.level(40000)==.6f && Handler.q.isEmpty(),"capture bypasses native sampler and synthetic fallback");
+  check(s.level(40151)==0,"capture freshness guard");
+  s.setActive(false);check(s.level(40000)==0,"paused view gates live capture");
+  BassCaptureState.stop(owner);
   System.out.println(checks+" native/playback worker and curve checks passed");
  }
 }'''
@@ -55,17 +61,16 @@ public class PlaybackDanceHarness {
         files=[]
         for path,content in stubs.items():
             p=pathlib.Path(d)/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content);files.append(str(p))
-        files += [str(SRC/x) for x in ["MusicBounceSource.java","MusicBounceEnvelope.java","PlaybackMusicDance.java"]]
+        files += [str(SRC/x) for x in ["MusicBounceSource.java","MusicBounceEnvelope.java","PlaybackMusicDance.java","BassCaptureState.java"]]
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
-    allowed={"unified/app-build.gradle"}|{str((SRC/x).relative_to(ROOT)).replace("\\","/") for x in ["MusicBounceSource.java","PlaybackMusicDance.java","DirectMusicSource.java","DirectMusicLevels.java","MusicBeatPulse.java"]}
-    policy_path=str((SRC/"AudioModePolicy.java").relative_to(ROOT)).replace("\\","/")
-    before=subprocess.check_output(["git","show","01f0053b922a8c344d5534b17cf342c1c657703c:"+policy_path],cwd=ROOT,text=True)
-    expected=before.replace('    private static final String DEEZER', '    private static final String SILENT_JOHNNY = "local.johnnycastaway.shield";\n    private static final String DEEZER').replace('        if (DEEZER.equals(clean(packageName)))', '        // A silent screensaver must not reconfigure the current audio route.\n        if (SILENT_JOHNNY.equals(clean(packageName))) return Mode.IGNORE;\n        if (DEEZER.equals(clean(packageName)))')
-    expected=expected.replace('    private static final String SILENT_JOHNNY =', '    private static final String SILENT_JOHNNY_HA_LAB = "local.johnnycastaway.halab";\n    private static final String SILENT_JOHNNY =').replace('if (SILENT_JOHNNY.equals(clean(packageName)))', 'if (SILENT_JOHNNY.equals(clean(packageName)) || SILENT_JOHNNY_HA_LAB.equals(clean(packageName)))')
-    assert (SRC/"AudioModePolicy.java").read_text()==expected,"Only the approved silent Johnny exclusion may change routing"
-    allowed.add(policy_path)
-    changed=subprocess.check_output(["git","diff","--name-only","b7539d8bc1afbd9b2ec77833a6918a3224212755","HEAD","--","source","unified","scripts","launcher","shield-overlay"],cwd=ROOT,text=True).splitlines()
-    assert set(changed)<=allowed,"Unexpected non-dance production changes: "+str(set(changed)-allowed)
-    print("Only silent Johnny routing exclusion changed; voice repair, renderer, artwork and animation preserved")
+    allowed={
+      "unified/app-build.gradle","unified/shield-home-manifest.xml",
+      *{str((SRC/x).relative_to(ROOT)).replace("\\","/") for x in [
+       "BassEnergy.java","BassCaptureState.java","BassCaptureActivity.java","BassCaptureService.java",
+       "MusicBounceSource.java","MusicBounceEnvelope.java","ShieldNowPlayingPuppetView.java","ShieldHomeSettingsView.java"]}
+    }
+    changed=subprocess.check_output(["git","diff","--name-only","33f3a77dd5c52f9ddfe3427ade66103ca4fcaa62","HEAD","--","source","unified","scripts","launcher","shield-overlay"],cwd=ROOT,text=True).splitlines()
+    assert set(changed)<=allowed,"Unexpected production changes: "+str(set(changed)-allowed)
+    print("Audio routing including HA lab, voice repair, renderer and approved artwork preserved")
 if __name__=="__main__": main()

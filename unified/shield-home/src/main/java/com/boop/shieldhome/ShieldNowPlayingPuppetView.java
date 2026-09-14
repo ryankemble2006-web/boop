@@ -26,7 +26,7 @@ import java.util.Random;
 
 /** Transparent launcher-owned headphones BOOP layer. It never participates in remote focus. */
 public final class ShieldNowPlayingPuppetView extends FrameLayout {
-    private static final long FRAME_MS = 33L;
+    private static final long FRAME_MS = 16L;
 
     // These match ShieldHomeView's fixed HOME/nav/card geometry and ShieldNowPlayingView's
     // reserved right-hand mascot bay. The bay itself clips motion, so BOOP can never cover media UI.
@@ -156,7 +156,9 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         boolean granted = MusicAudioPermissionActivity.hasAudioAccess(getContext());
         musicSource.setActive(playing && granted && shouldAnimateFrame());
         if (playing && !granted) MusicBouncePermission.promptOnce(getContext());
-        float height = musicEnvelope.update(musicSource.level(now), now);
+        float level = musicSource.level(now);
+        float height = BassCaptureState.running ? musicEnvelope.updateFast(level, now)
+                : musicEnvelope.update(level, now);
         puppet.setBounceHeight(height);
         // Existing pose sampling and saved animation speed still own blinks and expressions.
         puppet.setCanonicalPose(animation.sample(now));
