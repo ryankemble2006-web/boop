@@ -1,6 +1,14 @@
-# v169 native bounce with playback fallback: installed on Shield
+# v169 installed: rhythm rejected; real capture feasibility next
 
 Updated 2026-09-14. Owner remains `boop-dance-levels-v167`; branch name does not determine version.
+
+## Latest verdict and capture investigation (2026-09-14)
+
+Ryan reports v169 is smoother but far off the beat. This is not final rhythm acceptance. He asks how to enable real capture for Deezer/Chromecast/direct output while preserving native music/video switching.
+
+Read-only device evidence: BOOP already has RECORD_AUDIO and MODIFY_AUDIO_SETTINGS. Both installed Deezer and built-in Chromecast declare ALLOW_AUDIO_PLAYBACK_CAPTURE; Deezer's current MEDIA player flags do not include the no-projection/no-system-capture bits and no per-app override was listed. Live Chromecast capture policy has not been tested. Shield runs Android11 production firmware with ordinary ADB shell access.
+
+The original Visualizer fails at AudioFlinger's DIRECT-output effect check, not an ordinary app permission. The next proposed canary is the separate AudioPlaybackCapture API, with actual MediaProjection consent, to test real-time samples and verify that direct44.1kHz output remains unchanged. This is not yet implemented or proven. No permissions/root/system/audio changes. See [Android playback capture documentation](https://developer.android.com/media/platform/av-capture). v169 remains installed; neither diagnostic onset dance nor independent playback rhythm met Ryan's beat-sync requirement.
 
 ## User verdict and current behavior
 
@@ -30,4 +38,4 @@ No local app source builds/tests, emulator/hosted visual tests, permission/role/
 
 ## Pending acceptance
 
-Asked Ryan whether v169 movement is smooth and enjoyable, explicitly explaining that fallback is not beat-synchronized. His physical verdict is pending. Do not call fallback beat sync or final visual acceptance proven. The accepted v166 speech fix remains inherited and covered by regression tests. Phone remains v166. No unrelated merge or main/other-owner advancement.
+Asked Ryan whether v169 movement is smooth and enjoyable, explicitly explaining that fallback is not beat-synchronized. His later verdict above supersedes this pending test: smoother, but off beat. Do not call fallback beat sync or final visual acceptance proven. The accepted v166 speech fix remains inherited and covered by regression tests. Phone remains v166. No unrelated merge or main/other-owner advancement.
