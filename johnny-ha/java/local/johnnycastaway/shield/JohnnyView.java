@@ -11,6 +11,7 @@ public final class JohnnyView extends FrameLayout {
  private final NowPlayingObserver media;
  private final NowPlayingView card;
  private final JohnnyStateClient states;
+ private final JohnnyMusicReactions reactions;
  private final Handler main=new Handler(Looper.getMainLooper());
  private static final Object RESOURCE_LOCK=new Object();
  private boolean running;private long generation;
@@ -18,10 +19,11 @@ public final class JohnnyView extends FrameLayout {
   super(c);setBackgroundColor(Color.BLACK);
   nativePlayer=new NativeJohnnyView(c);addView(nativePlayer,new FrameLayout.LayoutParams(-1,-1));
   card=new NowPlayingView(c);addView(card,new FrameLayout.LayoutParams(-1,-1));
-  media=new NowPlayingObserver(c,card);states=new JohnnyStateClient(c,nativePlayer);
+  reactions=new JohnnyMusicReactions(nativePlayer);
+  media=new NowPlayingObserver(c,card,reactions::observe);states=new JohnnyStateClient(c,nativePlayer);
  }
  public void start(){
-  if(running)return;running=true;final long session=++generation;media.start();
+  if(running)return;running=true;final long session=++generation;reactions.start();media.start();
   Thread preparation=new Thread(()->{
    try{
     synchronized(RESOURCE_LOCK){
@@ -46,6 +48,6 @@ public final class JohnnyView extends FrameLayout {
  public void clearAlbumArtFocus(){card.clearAlbumArtFocus();}
  public NowPlayingTrack currentTrack(){return card.currentTrack();}
  public NowPlayingView nowPlayingView(){return card;}
- public void stop(){if(!running)return;running=false;generation++;states.stop();media.stop();nativePlayer.stop();main.removeCallbacksAndMessages(null);}
+ public void stop(){if(!running)return;running=false;generation++;states.stop();reactions.stop();media.stop();nativePlayer.stop();main.removeCallbacksAndMessages(null);}
  @Override protected void onDetachedFromWindow(){stop();super.onDetachedFromWindow();}
 }
