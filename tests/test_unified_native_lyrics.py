@@ -44,7 +44,7 @@ class UnifiedLyricsIntegration(unittest.TestCase):
         self.assertIn('onOpenNowPlayingLyrics()', launcher)
         self.assertIn('lyricsBrowser.open(', launcher)
 
-    def test_private_activity_no_new_permissions_no_lab_dependency(self):
+    def test_private_lyrics_activity_with_only_authorized_capture_permission(self):
         before = ET.fromstring(git('show', BASE + ':unified/shield-home-manifest.xml'))
         after = ET.parse(ROOT / 'unified/shield-home-manifest.xml').getroot()
         activities = [a for a in after.findall('application/activity')
@@ -52,8 +52,12 @@ class UnifiedLyricsIntegration(unittest.TestCase):
         self.assertEqual(1, len(activities))
         self.assertEqual('false', activities[0].get(ANDROID + 'exported'))
         self.assertEqual([], activities[0].findall('intent-filter'))
-        self.assertEqual({e.get(ANDROID + 'name') for e in before.findall('uses-permission')},
+        self.assertEqual({e.get(ANDROID + 'name') for e in before.findall('uses-permission')} | {'android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION'},
                          {e.get(ANDROID + 'name') for e in after.findall('uses-permission')})
+        capture = [s for s in after.findall('application/service') if s.get(ANDROID + 'name') == 'com.boop.shieldhome.BassCaptureService']
+        self.assertEqual(1, len(capture))
+        self.assertEqual('false', capture[0].get(ANDROID + 'exported'))
+        self.assertEqual('mediaProjection', capture[0].get(ANDROID + 'foregroundServiceType'))
         self.assertEqual(ET.tostring(before.find('queries')), ET.tostring(after.find('queries')))
         self.assertNotIn('LyricsLab', ET.tostring(after, encoding='unicode'))
 
