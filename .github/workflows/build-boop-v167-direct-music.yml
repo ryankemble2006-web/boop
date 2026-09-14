@@ -85,7 +85,7 @@ jobs:
           mkdir -p v170-artifact
           "$TOOLS/aapt" dump badging "$APK" > v170-artifact/badging.txt
           grep -Fq "package: name='com.boop.alpha1'" v170-artifact/badging.txt
-          grep -Fq "versionCode='169'" v170-artifact/badging.txt
+          grep -Fq "versionCode='170'" v170-artifact/badging.txt
           grep -Fq "versionName='1.2.170-johnny-audio-neutral'" v170-artifact/badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v170-artifact/manifest-tree.txt
           grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v170-artifact/manifest-tree.txt
