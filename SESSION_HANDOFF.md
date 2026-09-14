@@ -1,12 +1,19 @@
-# v173 bass attack canary — build pending
+# v173 bass attack canary installed — physical verdict pending
 
-Updated 2026-09-14. Owner branch `boop-dance-levels-v167`.
+Updated 2026-09-14. Branch `boop-dance-levels-v167`.
 
-Ryan authorized studying Velo Visualiser and implementing an inspired detector after rejecting v172 continuous bass response for trance. Independently written adaptive onset detector uses unclipped35–120Hz energy, relative rise/baseline gates,200ms repeat suppression and100ms pulse. Capture reads256stereo frames at44100Hz with urgent-audio scheduling. Detector timing counts audio frames; display freshness retains uptime. No Velo source copied; reference https://github.com/rorygallagher2024/velo-visualiser . No driver latency bypass or universal kick separation claim.
+Ryan authorized Velo-inspired bass attack experiment. Independent implementation (no GPL source copied) uses35–120Hz unclippedenergy, adaptive relative-rise gating,200ms repeat suppression,100ms pulse,256-frame stereo44100 reads and urgent-audio scheduling. Audio sample count drives detection; uptime drives freshness/display. Review caught wall-clock batching issue and confirmed final correction, no remaining blocker. No universal kick separation or end-to-end latency claim.
 
-Source `fb6855422f072392edab7bd25376f14969768237`, run34873273139 pending. Missing implementation RED34873058675 observed. New steady PCM40/60/100Hz and pulsed60Hz multiplegain/phase fixtures pass; full build still running. Review caught per-read wall-clock batching loss; fixed to sample time, follow-up review pending. Preserve native routing, both Johnny exclusions, voice, artwork and explicit ten-minute consent. No phone changes.
+Source `fb6855422f072392edab7bd25376f14969768237`; run34873273139 SUCCESS; artifact10359554377 `BOOP-Unified-v173-Bass-Attacks`.
+Version173 /1.2.173-bass-attacks; APK SHA256 `f32e40078aa5192616407cc3b97d73b4fadb0164c812e49b6749d45eff4983f7`; permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` verified locally.
 
-NOT installed yet. Shield remains v172, captureOFF, musical response rejected. Next: complete checks/review, verify permanent signer/APK, install Shield only, confirmactualnative44100 capture, then request Ryan's judgement.
+Test-first missing detector RED34873058675. Final CI passed steady PCM40/60/100Hz, pulsed60Hz at two gains/phases with one timely hit per synthetic kick, ideal onset/noise/silence/gap tests,410priorDSP/state assertions,1444workerchecks and inherited voice/routing/lyrics/animation checks. Two inherited historical skips remain skipped. Physical trance timing is unverified.
+
+Initial install failed INSUFFICIENT_STORAGE with819MB free. Three historical BOOP download installers backed up privately to laptop and hashes verified before exact device copies removed, freeing about406MiB. No installed apps/settings removed. Retry succeeded; installed APK hash matches; all16preferences unchanged. Phone untouched.
+
+Actual Android consent granted; v173 capture active18:17, about860–863reads/5sec,13–17detectedattacks/5sec on current music. SAME direct44100HDMI output retained, separate44100remote submix. Returned BOOPHome for Ryan test. Capture remains explicit ten-minute canary with auto-stop; old fallback remains outside capture, do not confuse it with new detector. Physical verdict pending.
+
+Prior v172 rejection and Johnny HA-lab verification retained below.
 
 ---
 
