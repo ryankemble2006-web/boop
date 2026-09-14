@@ -43,6 +43,11 @@ final class JohnnyStateClient {
      if(!"ok".equals(snapshot.optString("status")))throw new IllegalStateException();
      int night=JohnnyStateEdges.night(snapshot.optString("lights"));
      if(night>=0)player.setNight(night==1);
+     else player.cancelOi();
+     if(edges.lightsOff(snapshot.optString("lights"))){
+      boolean accepted=player.requestOi();
+      Log.i("JohnnyHA","Lights-off edge: "+(accepted?"OI queued":"OI unavailable"));
+     }
      if(edges.update(snapshot.optString("fan"))){
       boolean accepted=player.requestFan();
       Log.i("JohnnyHA","Fan edge: "+(accepted?"queued":"busy"));
@@ -51,11 +56,11 @@ final class JohnnyStateClient {
        +" lightEntities="+snapshot.optJSONArray("lightEntities")+" fanEntities="+snapshot.optJSONArray("fanEntities");
      if(!previous.equals(summary)){previous=summary;Log.i("JohnnyHA",summary);}
     }catch(Exception ignored){
-     edges.reset();
+     edges.reset();player.cancelOi();
      if(!"unavailable".equals(previous)){previous="unavailable";Log.i("JohnnyHA","State connection unavailable");}
     }
    });
   },0,2,TimeUnit.SECONDS);
  }
- void stop(){generation++;edges.reset();if(worker!=null){worker.shutdownNow();worker=null;}main.removeCallbacksAndMessages(null);}
+ void stop(){generation++;edges.reset();player.cancelOi();if(worker!=null){worker.shutdownNow();worker=null;}main.removeCallbacksAndMessages(null);}
 }
