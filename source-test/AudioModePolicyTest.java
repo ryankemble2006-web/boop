@@ -6,6 +6,10 @@ public final class AudioModePolicyTest {
     }
 
     public static void main(String[] args) {
+        check(AudioModePolicy.forLaunch("local.johnnycastaway.halab") == AudioModePolicy.Mode.IGNORE,
+                "Silent Johnny HA lab must preserve the current audio mode");
+        check(AudioModePolicy.forLaunch(" local.johnnycastaway.halab ") == AudioModePolicy.Mode.IGNORE,
+                "HA lab exclusion must normalize package names");
         check(AudioModePolicy.forLaunch("local.johnnycastaway.shield") == AudioModePolicy.Mode.IGNORE,
                 "Silent Johnny must preserve the current music or video audio mode");
         check(AudioModePolicy.forLaunch("  local.johnnycastaway.shield  ") == AudioModePolicy.Mode.IGNORE,
