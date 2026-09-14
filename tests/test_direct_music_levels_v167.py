@@ -97,6 +97,10 @@ public class WorkerHarness {
   check(s.level(SystemClock.now)>0,"real diagnostic onset reaches renderer-facing pulse");
   SystemClock.now+=300; check(s.level(SystemClock.now)==0,"stale worker sample expires");
   Handler.next(); check(AdbWire.connections==1,"connection reused");
+  AdbWire.db=-30f; Handler.next(); s.level(SystemClock.now);
+  SystemClock.now+=350; check(s.level(SystemClock.now)==0,"aged input cannot keep puppet raised");
+  AdbWire.db=-2f; Handler.next();
+  check(s.level(SystemClock.now)>0,"spaced diagnostic measurements retain onset baseline");
   Context.permission=-1; int before=AdbWire.dumps; Handler.next();
   check(AdbWire.dumps==before && s.level(SystemClock.now)==0,"revoked audio access stops diagnostic reads");
   Context.permission=0; Handler.next();
@@ -111,7 +115,7 @@ public class WorkerHarness {
   Visualizer.silent=true; Handler.next(); SystemClock.now+=1200; Handler.next();
   check(AdbWire.dumps>before && !s.unavailable(),"silent visualizer after route switch recovers real direct levels");
   stop(s);
-  System.out.println("11 actual worker/transport lifecycle scenarios passed");
+  System.out.println("13 actual worker/transport lifecycle scenarios passed");
  }
 }'''
     }
