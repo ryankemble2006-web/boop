@@ -83,6 +83,7 @@ final class MusicBounceSource {
             try {
                 if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     sample = Sample.SILENT;
+                    diagnosticMode = false;
                     release();
                 } else if (!diagnosticMode || now >= retryAtMs) {
                     if (visualizer == null) open();

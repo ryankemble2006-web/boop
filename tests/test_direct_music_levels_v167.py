@@ -62,7 +62,7 @@ def lifecycle():
       "android/os/HandlerThread.java": 'package android.os; public class HandlerThread { public HandlerThread(String n,int p){} public void start(){} public Object getLooper(){return null;} public void quitSafely(){} }',
       "android/os/Handler.java": 'package android.os; public class Handler { public static java.util.ArrayDeque<Runnable> q=new java.util.ArrayDeque<>(); public Handler(Object o){} public void post(Runnable r){q.add(r);} public void postDelayed(Runnable r,long n){q.add(r);} public void removeCallbacks(Runnable r){q.removeIf(x->x==r);} public static void next(){q.remove().run();} }',
       "android/util/Log.java": 'package android.util; public class Log { public static int i(String t,String m){return 0;} public static int w(String t,String m){return 0;} }',
-      "android/media/audiofx/Visualizer.java": 'package android.media.audiofx; public class Visualizer { public static boolean fail=true; public static final int SUCCESS=0,SCALING_MODE_AS_PLAYED=1; public Visualizer(int s){if(fail)throw new RuntimeException("DIRECT");} public static int[] getCaptureSizeRange(){return new int[]{8,512};} public boolean getEnabled(){return false;} public int setEnabled(boolean b){return 0;} public int setCaptureSize(int s){return 0;} public int setScalingMode(int s){return 0;} public int getWaveForm(byte[] a){for(int i=0;i<a.length;i++)a[i]=(byte)(i%2==0?90:166); return 0;} public void release(){} }',
+      "android/media/audiofx/Visualizer.java": 'package android.media.audiofx; public class Visualizer { public static boolean fail=true, silent=false; public static final int SUCCESS=0,SCALING_MODE_AS_PLAYED=1; public Visualizer(int s){if(fail)throw new RuntimeException("DIRECT");} public static int[] getCaptureSizeRange(){return new int[]{8,512};} public boolean getEnabled(){return false;} public int setEnabled(boolean b){return 0;} public int setCaptureSize(int s){return 0;} public int setScalingMode(int s){return 0;} public int getWaveForm(byte[] a){for(int i=0;i<a.length;i++)a[i]=(byte)(silent?128:(i%2==0?90:166)); return 0;} public void release(){} }',
       "com/boop/shieldturbo/power/AdbWire.java": '''package com.boop.shieldturbo.power;
 import java.io.*; import java.security.*;
 public class AdbWire implements Closeable {
@@ -97,6 +97,8 @@ public class WorkerHarness {
   Handler.next(); check(AdbWire.connections==1,"connection reused");
   Context.permission=-1; int before=AdbWire.dumps; Handler.next();
   check(AdbWire.dumps==before && s.level(SystemClock.now)==0,"revoked audio access stops diagnostic reads");
+  Context.permission=0; Handler.next();
+  check(AdbWire.dumps==before+1 && s.level(SystemClock.now)>0,"regrant resumes real levels");
   stop(s); check(s.level(SystemClock.now)==0 && AdbWire.closes>0,"stop closes diagnostic transport");
   Context.permission=0; AdbWire.stale=true;
   s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
@@ -104,8 +106,10 @@ public class WorkerHarness {
   stop(s); AdbWire.stale=false; Visualizer.fail=false; before=AdbWire.dumps;
   s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
   check(s.level(SystemClock.now)>0 && AdbWire.dumps==before,"working visualizer retains existing path");
+  Visualizer.silent=true; Handler.next(); SystemClock.now+=1200; Handler.next();
+  check(AdbWire.dumps>before && s.level(SystemClock.now)>0,"silent visualizer after route switch recovers real direct levels");
   stop(s);
-  System.out.println("8 actual worker/transport lifecycle scenarios passed");
+  System.out.println("10 actual worker/transport lifecycle scenarios passed");
  }
 }'''
     }
