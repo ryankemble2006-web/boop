@@ -1,0 +1,40 @@
+name: Johnny native arm64
+on:
+  push:
+    branches: [johnny-ha-native-v8]
+    paths: ['johnny-ha/**', '.github/workflows/johnny-native.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native policy tests
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/control_test.c -o /tmp/control-test
+          /tmp/control-test
+      - name: Fetch pinned open source
+        run: |
+          git clone https://github.com/jno6809/jc_reborn.git /tmp/reborn
+          git -C /tmp/reborn checkout 524a5803e4fa65f840379c781f40ce39a927032e
+          curl --fail --location https://github.com/libsdl-org/SDL/releases/download/release-2.30.11/SDL2-2.30.11.tar.gz -o /tmp/sdl.tar.gz
+          mkdir /tmp/sdl
+          tar xzf /tmp/sdl.tar.gz -C /tmp/sdl --strip-components=1
+          python3 johnny-ha/native/patch_upstream.py /tmp/reborn
+      - name: Install pinned NDK
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" > /dev/null
+      - name: Build silent software engine
+        run: |
+          cmake -S johnny-ha/native -B /tmp/native-build -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-26 -DREBORN_SOURCE=/tmp/reborn -DSDL_SOURCE=/tmp/sdl -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/native-build --parallel 2
+          mkdir -p /tmp/deliverable/arm64-v8a
+          cp /tmp/native-build/libjohnny.so /tmp/deliverable/arm64-v8a/
+          cp /tmp/reborn/LICENSE /tmp/deliverable/JOHNNY-REBORN-LICENSE
+          cp -r johnny-ha /tmp/deliverable/source
+          sha256sum /tmp/deliverable/arm64-v8a/libjohnny.so
+      - uses: actions/upload-artifact@v4
+        with:
+          name: johnny-native-arm64
+          path: /tmp/deliverable
