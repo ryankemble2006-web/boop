@@ -13,7 +13,7 @@ STUBS = {
 'android/app/Activity.java': '''package android.app;
 public class Activity {
  private boolean finishing;
- protected void onPause(){} protected void onCreate(android.os.Bundle state){} protected void onStart(){} protected void onStop(){} protected void onDestroy(){}
+ public void dispatchPause(){onPause();} protected void onPause(){} protected void onCreate(android.os.Bundle state){} protected void onStart(){} protected void onStop(){} protected void onDestroy(){}
  public android.view.Window getWindow(){return new android.view.Window();}
  public void setContentView(android.view.View view){} public boolean isFinishing(){return finishing;}
  public void finish(){finishing=true;} public void overridePendingTransition(int a,int b){}
@@ -131,7 +131,7 @@ public final class UnifiedLyricsActivityCheck {
   eq(2,DeezerAlbumBrowser.opens,"Null selection cannot browse stale album");
   manager.bus.update(new NowPlayingSnapshot("707","other.player",3,2));view.controls.browseAlbum();
   eq(1,manager.sourceOpens,"Other player uses source fallback");
-  int cancelled=DeezerAlbumBrowser.cancellations;activity.onPause();
+  int cancelled=DeezerAlbumBrowser.cancellations;activity.dispatchPause();
   eq(cancelled+1,DeezerAlbumBrowser.cancellations,"Pause cancels pending album lookup");
   cancelled=DeezerAlbumBrowser.cancellations;activity.onStop();
   eq(cancelled+1,DeezerAlbumBrowser.cancellations,"Stop cancels pending album lookup");
