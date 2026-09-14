@@ -33,8 +33,11 @@ final class MusicBounceSource {
         Session current = session;
         if (current == null) return 0f;
         Sample sample = current.sample;
-        return sample.timeMs < 0 || nowMs < sample.timeMs || nowMs - sample.timeMs > STALE_MS
-                ? 0f : sample.level;
+        if (sample.timeMs < 0 || nowMs < sample.timeMs || nowMs - sample.timeMs > STALE_MS) {
+            current.pulse.reset();
+            return 0f;
+        }
+        return current.pulse.update(sample.level, sample.timeMs, nowMs);
     }
 
     boolean unavailable() {
@@ -56,6 +59,7 @@ final class MusicBounceSource {
 
     private static final class Session implements Runnable {
         final Context context;
+        final MusicBeatPulse pulse = new MusicBeatPulse();
         final HandlerThread thread = new HandlerThread("BOOP-MusicLevels", Process.THREAD_PRIORITY_BACKGROUND);
         Handler handler;
         Visualizer visualizer;

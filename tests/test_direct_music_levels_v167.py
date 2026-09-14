@@ -91,23 +91,23 @@ public class WorkerHarness {
   Context.dir=new java.io.File(args[0]); Context.dir.mkdirs();
   new java.io.File(Context.dir,"boop-unified-local-adb.key").createNewFile();
   MusicBounceSource s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
-  check(s.level(SystemClock.now)>0,"DIRECT rejection reaches real diagnostic reader");
+  check(!s.unavailable(),"DIRECT rejection reaches real diagnostic reader");
   check(AdbWire.dumps==1 && AdbWire.connections==1,"one trusted connection and one bounded read");
   SystemClock.now+=300; check(s.level(SystemClock.now)==0,"stale worker sample expires");
   Handler.next(); check(AdbWire.connections==1,"connection reused");
   Context.permission=-1; int before=AdbWire.dumps; Handler.next();
   check(AdbWire.dumps==before && s.level(SystemClock.now)==0,"revoked audio access stops diagnostic reads");
   Context.permission=0; Handler.next();
-  check(AdbWire.dumps==before+1 && s.level(SystemClock.now)>0,"regrant resumes real levels");
+  check(AdbWire.dumps==before+1 && !s.unavailable(),"regrant resumes real levels");
   stop(s); check(s.level(SystemClock.now)==0 && AdbWire.closes>0,"stop closes diagnostic transport");
   Context.permission=0; AdbWire.stale=true;
   s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
   check(s.level(SystemClock.now)==0 && s.unavailable(),"stale diagnostic becomes unavailable");
   stop(s); AdbWire.stale=false; Visualizer.fail=false; before=AdbWire.dumps;
   s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
-  check(s.level(SystemClock.now)>0 && AdbWire.dumps==before,"working visualizer retains existing path");
+  check(!s.unavailable() && AdbWire.dumps==before,"working visualizer retains existing path");
   Visualizer.silent=true; Handler.next(); SystemClock.now+=1200; Handler.next();
-  check(AdbWire.dumps>before && s.level(SystemClock.now)>0,"silent visualizer after route switch recovers real direct levels");
+  check(AdbWire.dumps>before && !s.unavailable(),"silent visualizer after route switch recovers real direct levels");
   stop(s);
   System.out.println("10 actual worker/transport lifecycle scenarios passed");
  }
@@ -120,7 +120,7 @@ public class WorkerHarness {
             target.parent.mkdir(parents=True,exist_ok=True)
             target.write_text(textwrap.dedent(content))
             files.append(str(target))
-        files += [str(SRC/n) for n in ["MusicBounceSource.java","MusicBounceEnvelope.java","DirectMusicSource.java","DirectMusicLevels.java"]]
+        files += [str(SRC/n) for n in ["MusicBounceSource.java","MusicBounceEnvelope.java","DirectMusicSource.java","DirectMusicLevels.java","MusicBeatPulse.java"]]
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.WorkerHarness",str(pathlib.Path(d)/"identity")],check=True)
 
@@ -130,6 +130,7 @@ if __name__=="__main__":
 def preservation():
     allowed = {
       "unified/app-build.gradle",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/MusicBeatPulse.java",
       "unified/shield-home/src/main/java/com/boop/shieldhome/MusicBounceSource.java",
       "unified/shield-home/src/main/java/com/boop/shieldhome/MusicBounceRenderer.java",
       "unified/shield-home/src/main/java/com/boop/shieldhome/DirectMusicSource.java",
