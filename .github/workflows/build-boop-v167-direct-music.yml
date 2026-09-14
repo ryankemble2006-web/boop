@@ -1,0 +1,112 @@
+name: Build BOOP v167 direct music levels
+on:
+  push:
+    branches: [boop-dance-levels-v167]
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boop-v167-music-bounce
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test real direct-output music levels
+        run: python tests/test_direct_music_levels_v167.py
+      - name: Reproduce and verify reply startup lifecycle
+        run: |
+          python tests/test_voice_startup_v166.py --source-only
+          bash scripts/materialize-unified.sh
+          python tests/test_voice_startup_v166.py
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: true
+      - name: Prepare Android SDK and test tools
+        run: |
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+          python -m pip install pytest
+      - name: Preserve native lyrics and independent blink timing
+        run: |
+          python -m pytest -q tests/test_unified_v70_natural_voices_contract.py
+          bash scripts/test-unified-native-lyrics.sh
+          python tests/test_animation_speed.py
+          python tests/test_materialized_speed.py
+          python -m pytest -q tests/test_now_playing_canonical_only.py tests/test_notification_canonical_only.py tests/test_unified_face_ownership.py tests/test_now_playing_bay_ownership.py
+          cmp unified/shield-home/src/main/java/com/boop/shieldhome/MusicBounceSource.java boop-build/BOOP-Alpha1/shield-home-lib/src/main/java/com/boop/shieldhome/MusicBounceSource.java
+          cmp unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java boop-build/BOOP-Alpha1/shield-home-lib/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java
+      - name: Prepare existing permanent BOOP signer
+        env:
+          BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do test -n "${!name:-}"; done
+          printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
+          chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
+          echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
+      - name: Build signed direct music levels repair for device testing
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+          BOOP_RELAY_URL: ${{ secrets.BOOP_RELAY_URL }}
+          BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
+        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
+      - name: Verify signed APK identity, lyrics activity and bounce bytecode
+        run: |
+          set -euo pipefail
+          APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
+          TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
+          mkdir -p v167-artifact
+          "$TOOLS/aapt" dump badging "$APK" > v167-artifact/badging.txt
+          grep -Fq "package: name='com.boop.alpha1'" v167-artifact/badging.txt
+          grep -Fq "versionCode='167'" v167-artifact/badging.txt
+          grep -Fq "versionName='1.2.167-direct-music-levels'" v167-artifact/badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v167-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v167-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v167-artifact/manifest-tree.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > v167-artifact/signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v167-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
+          test -n "$ACTUAL"; test "$ACTUAL" = "$EXPECTED"
+          unzip -tq "$APK"
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile
+          apk=Path('boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk')
+          with zipfile.ZipFile(apk) as z:
+              dex=b''.join(z.read(n) for n in z.namelist() if n.startswith('classes') and n.endswith('.dex'))
+          for cls in ('MusicBounceSource','MusicBounceEnvelope','MusicBounceRenderer','ShieldLyricsActivity'):
+              assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, 'Missing packaged class: '+cls
+          print('Actual APK contains native lyrics and music sampler/envelope/renderer bytecode')
+          PY
+          cp "$APK" v167-artifact/BOOP-Unified-v167-Direct-Music-Levels.apk
+          (cd v167-artifact && sha256sum BOOP-Unified-v167-Direct-Music-Levels.apk > apk-sha256.txt)
+          git rev-parse HEAD > v167-artifact/built-commit.txt
+          printf '%s\n' 'Based directly on accepted v162. Native lyrics source preserved.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v167-artifact/verification.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Unified-v167-Direct-Music-Levels
+          path: v167-artifact/
+          if-no-files-found: error
+      - name: Remove temporary signer
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/boop-dev.jks"
