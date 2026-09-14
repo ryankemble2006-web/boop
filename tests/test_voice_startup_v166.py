@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""Execute materialized reply/onInit methods and the real Android backend with a delayed platform TTS."""
+from pathlib import Path
+import subprocess
+import tempfile
+
+ROOT = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1")
+def method(text, signature):
+    start = text.index(signature)
+    brace = text.index("{", start)
+    depth = 1
+    end = brace + 1
+    while depth:
+        depth += (text[end] == "{") - (text[end] == "}")
+        end += 1
+    return text[start:end]
+
+STUBS = {
+"android/os/Looper.java": """package android.os;
+public class Looper { public static Looper getMainLooper() { return new Looper(); } }""",
+"android/os/Handler.java": """package android.os;
+import java.util.*;
+public class Handler {
+  static long now;
+  static class Task { Runnable r; long at; Task(Runnable r,long at){this.r=r;this.at=at;} }
+  static final List<Task> tasks=new ArrayList<>();
+  public Handler(Looper l){}
+  public boolean post(Runnable r){tasks.add(new Task(r,now));return true;}
+  public boolean postDelayed(Runnable r,long ms){tasks.add(new Task(r,now+ms));return true;}
+  public void removeCallbacks(Runnable r){tasks.removeIf(t->t.r==r);}
+  public void removeCallbacksAndMessages(Object token){tasks.clear();}
+  public static void advance(long ms){now+=ms;for(;;){Task found=null;for(Task t:tasks)if(t.at<=now){found=t;break;}if(found==null)return;tasks.remove(found);found.r.run();}}
+  public static void reset(){now=0;tasks.clear();}
+}""",
+"android/util/Log.java": """package android.util;
+public class Log {public static int i(String t,String s){return 0;} public static int w(String t,String s){return 0;} public static int w(String t,String s,Throwable x){return 0;}}""",
+"android/speech/tts/UtteranceProgressListener.java": """package android.speech.tts;
+public abstract class UtteranceProgressListener {
+ public abstract void onStart(String id); public abstract void onDone(String id);
+ public abstract void onError(String id); public void onError(String id,int code){onError(id);}
+ public void onStop(String id,boolean interrupted){}
+}""",
+"android/speech/tts/TextToSpeech.java": """package android.speech.tts;
+import java.util.*;
+public class TextToSpeech {
+ public interface OnInitListener {void onInit(int status);}
+ public static final int SUCCESS=0, ERROR=-1, LANG_MISSING_DATA=-1, LANG_NOT_SUPPORTED=-2, QUEUE_FLUSH=0;
+ public boolean ready, reject, missing; public int calls; public float pitch,rate;
+ public String spoken,id; public UtteranceProgressListener listener;
+ public int setOnUtteranceProgressListener(UtteranceProgressListener l){listener=l;return 0;}
+ public int setLanguage(Locale l){return missing ? LANG_MISSING_DATA : ready ? 0 : ERROR;}
+ public int setPitch(float p){pitch=p;return 0;} public int setSpeechRate(float r){rate=r;return 0;}
+ public int speak(String s,int q,Object p,String id){calls++;if(!ready||reject)return ERROR;this.spoken=s;this.id=id;listener.onStart(id);return SUCCESS;}
+ public int stop(){if(id!=null)listener.onStop(id,true);return 0;}
+ public void complete(){listener.onDone(id);}
+}""",
+}
+HARNESS = r"""
+package com.boop.alpha1;
+import android.speech.tts.TextToSpeech;
+import android.os.Handler;
+import java.util.Locale;
+public class SpeechStartupHarness implements TextToSpeech.OnInitListener {
+ boolean ttsReady, finishing, destroyed;
+ final TextToSpeech tts=new TextToSpeech();
+ final BoopAndroidSpeechBackend androidSpeechBackend=new BoopAndroidSpeechBackend(tts);
+ final VoiceController voiceController=new VoiceController();
+ int completions;
+ static class VoiceController {
+  float pitch(){return 1.12f;} float speechRate(){return .96f;}
+  void initialize(TextToSpeech t,Locale l){}
+ }
+ boolean isFinishing(){return finishing;} boolean isDestroyed(){return destroyed;}
+ void runOnUiThread(Runnable r){r.run();}
+ void finishTtsUtterance(){completions++;}
+ __METHODS__
+ static void check(boolean yes,String message){if(!yes)throw new AssertionError(message);}
+ void ready(){tts.ready=true;onInit(TextToSpeech.SUCCESS);Handler.advance(0);}
+ static SpeechStartupHarness fresh(){Handler.reset();return new SpeechStartupHarness();}
+ static void cold(){
+  SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Done");
+  check(a.completions==0,"reply discarded before speech engine became ready");
+  check(a.tts.calls==0,"platform speak called before initialization");
+  Handler.advance(3600);a.ready();
+  check("Done".equals(a.tts.spoken),"queued reply was not played after readiness");
+  check(a.completions==0,"assistant closed before playback completed");
+  a.tts.complete();Handler.advance(0);
+  check(a.completions==1,"completion was not delivered exactly once");
+  a.tts.complete();Handler.advance(0);check(a.completions==1,"duplicate callback finished twice");
+ }
+ static void warm(){
+  SpeechStartupHarness a=fresh();a.ready();a.speakWithAndroidTts("Done");
+  check(a.tts.calls==1&&"Done".equals(a.tts.spoken),"ready engine failed to speak immediately");
+  check(a.tts.pitch==1.12f&&a.tts.rate==.96f,"saved voice tuning was lost");
+  check(a.completions==0,"warm reply completed before playback");
+  a.tts.complete();Handler.advance(0);check(a.completions==1,"warm playback never completed");
+ }
+ static void timeout(){
+  SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Done");Handler.advance(11000);
+  check(a.completions==1,"engine timeout did not end the reply once");
+  a.ready();check(a.tts.calls==0,"timed-out reply replayed after late readiness");
+  a.speakWithAndroidTts("Next");check("Next".equals(a.tts.spoken),"late ready engine cannot handle a new reply");
+ }
+ static void initFailure(){
+  SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Done");a.onInit(TextToSpeech.ERROR);Handler.advance(0);
+  check(a.completions==1,"initialization failure did not end waiting reply");
+  Handler.advance(11000);check(a.completions==1,"failure and timeout both finished reply");
+ }
+ static void languageFailure(){
+  SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Done");a.tts.missing=true;a.ready();
+  check(a.completions==1&&a.tts.calls==0,"missing language did not fail safely");
+ }
+ static void replace(){
+  SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Old");a.speakWithAndroidTts("New");a.ready();
+  check(a.tts.calls==1&&"New".equals(a.tts.spoken),"superseded pending reply was played");
+  check(a.completions==0,"superseded reply closed the assistant");
+ }
+ static void cancel(){
+  SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Done");a.androidSpeechBackend.stop();a.ready();Handler.advance(11000);
+  check(a.tts.calls==0&&a.completions==0,"cancelled reply spoke or completed later");
+ }
+ static void release(){
+  SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Done");a.destroyed=true;a.androidSpeechBackend.release();a.ready();Handler.advance(11000);
+  check(a.tts.calls==0&&a.completions==0,"destroyed activity received a reply");
+ }
+ static void stale(){
+  SpeechStartupHarness a=fresh();a.ready();a.speakWithAndroidTts("Old");String old=a.tts.id;
+  a.speakWithAndroidTts("New");a.tts.listener.onDone(old);Handler.advance(0);
+  check(a.completions==0,"stale playback callback closed newer reply");
+  a.tts.complete();Handler.advance(0);check(a.completions==1,"new playback did not finish");
+ }
+ static void rejected(){
+  SpeechStartupHarness a=fresh();a.tts.reject=true;a.speakWithAndroidTts("Done");a.ready();
+  check(a.completions==1,"rejected queued speech left assistant waiting");
+ }
+ public static void main(String[] args){
+  int failures=0;
+  for(String name:new String[]{"cold","warm","timeout","initFailure","languageFailure","replace","cancel","release","stale","rejected"}){
+   try{SpeechStartupHarness.class.getDeclaredMethod(name).invoke(null);System.out.println("PASS "+name);}
+   catch(Throwable x){failures++;System.out.println("FAIL "+name+": "+x.getCause());}
+  }
+  if(failures>0)throw new AssertionError(failures+" speech lifecycle regressions");
+  System.out.println("10 speech startup/playback scenarios passed");
+ }
+}
+"""
+with tempfile.TemporaryDirectory() as folder:
+    out = Path(folder)
+    for path, content in STUBS.items():
+        target=out/path
+        target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_text(content)
+    pkg=out/"com/boop/alpha1"
+    pkg.mkdir(parents=True)
+    for name in ("BoopAndroidSpeechBackend.java","BoopSpeechBackend.java","BoopVoiceTuning.java"):
+        (pkg/name).write_text((ROOT/name).read_text())
+    main=(ROOT/"MainActivity.java").read_text()
+    methods=method(main,"private void speakWithAndroidTts(String text)")+"\n"+method(main,"public void onInit(int status)")
+    (pkg/"SpeechStartupHarness.java").write_text(HARNESS.replace("__METHODS__",methods))
+    subprocess.run(["javac","-d",str(out),*[str(p) for p in out.rglob("*.java")]],check=True)
+    subprocess.run(["java","-cp",str(out),"com.boop.alpha1.SpeechStartupHarness"],check=True)
