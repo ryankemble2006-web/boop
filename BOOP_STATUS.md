@@ -1,3 +1,7 @@
+# v174 accepted for now
+
+Ryan's physical verdict: "yeh it will do for now at least ... shows hes listening at least." Keep installed v174 relaxed simulatedgroove. This is provisional acceptance of its playback indication, not beat synchronization. No further dance changes requested. Capture remains off; phone untouched.
+
 # v174 relaxed playback groove installed — visual verdict pending
 
 Updated2026-09-14. Owner branch `boop-dance-levels-v167`.
