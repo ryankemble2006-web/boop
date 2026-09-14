@@ -10,17 +10,16 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.util.Log;
 
-/** Output-mix visualization only. No room microphone, audio focus changes or saved audio. */
+/** Original fast visualizer response, with an explicitly playback-driven fallback. */
 final class MusicBounceSource {
     private static final String TAG = "BOOP-MusicBounce";
     private static final long POLL_MS = 33L;
+    private static final long RETRY_MS = 10000L;
     private static final long STALE_MS = 250L;
     private final Context context;
     private Session session;
 
-    MusicBounceSource(Context context) {
-        this.context = context.getApplicationContext();
-    }
+    MusicBounceSource(Context context) { this.context = context.getApplicationContext(); }
 
     void setActive(boolean active) {
         if (!active) { stop(); return; }
@@ -32,24 +31,17 @@ final class MusicBounceSource {
     float level(long nowMs) {
         Session current = session;
         if (current == null) return 0f;
+        if (current.playbackMode) return PlaybackMusicDance.level(nowMs, current.playbackStartMs);
         Sample sample = current.sample;
-        if (sample.timeMs < 0 || nowMs < sample.timeMs) {
-            current.pulse.reset();
-            return 0f;
-        }
-        // Suppress aged output, but retain the measured baseline across a slow diagnostic read.
-        // MusicBeatPulse itself refuses to compare measurements more than one second apart.
-        if (nowMs - sample.timeMs > STALE_MS) return 0f;
-        return current.pulse.update(sample.level, sample.timeMs, nowMs);
+        return sample.timeMs < 0 || nowMs < sample.timeMs || nowMs - sample.timeMs > STALE_MS
+                ? 0f : sample.level;
     }
 
-    boolean unavailable() {
-        return session != null && session.unavailable;
-    }
+    boolean unavailable() { return session != null && session.unavailable; }
 
     void stop() {
         Session previous = session;
-        session = null; // An old worker can never deliver a level to a later playback session.
+        session = null;
         if (previous != null) previous.stop();
     }
 
@@ -62,21 +54,17 @@ final class MusicBounceSource {
 
     private static final class Session implements Runnable {
         final Context context;
-        final MusicBeatPulse pulse = new MusicBeatPulse();
         final HandlerThread thread = new HandlerThread("BOOP-MusicLevels", Process.THREAD_PRIORITY_BACKGROUND);
         Handler handler;
         Visualizer visualizer;
         byte[] waveform;
         volatile Sample sample = Sample.SILENT;
-        volatile boolean closed;
-        volatile boolean unavailable;
-        long retryAtMs;
+        volatile boolean closed, unavailable, playbackMode;
+        volatile long playbackStartMs;
         long silentSinceMs = -1L;
-        final DirectMusicSource direct;
-        boolean diagnosticMode;
         boolean reportedSignal;
 
-        Session(Context context) { this.context = context; direct = new DirectMusicSource(context); }
+        Session(Context context) { this.context = context; }
 
         void start() {
             thread.start();
@@ -90,46 +78,47 @@ final class MusicBounceSource {
             try {
                 if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     sample = Sample.SILENT;
-                    diagnosticMode = false;
+                    playbackMode = false;
+                    unavailable = true;
                     silentSinceMs = -1L;
                     release();
-                } else if (!diagnosticMode || now >= retryAtMs) {
+                } else {
                     if (visualizer == null) open();
                     int result = visualizer.getWaveForm(waveform);
                     if (result != Visualizer.SUCCESS) throw new IllegalStateException("waveform status " + result);
                     float level = MusicBounceEnvelope.levelOf(waveform);
                     sample = new Sample(level, now);
                     unavailable = false;
-                    diagnosticMode = false;
-                    if (level > 0f) silentSinceMs = -1L;
-                    else {
+                    if (level > 0f) {
+                        silentSinceMs = -1L;
+                        playbackMode = false;
+                        if (!reportedSignal) {
+                            reportedSignal = true;
+                            Log.i(TAG, "Original fast output-mix bounce active");
+                        }
+                    } else {
                         if (silentSinceMs < 0L) silentSinceMs = now;
                         if (now - silentSinceMs >= 1000L) {
-                            // Some vendor routes leave an enabled Visualizer returning only silence.
                             release();
-                            diagnosticMode = true;
-                            retryAtMs = now + 10000L;
-                        }
-                    }
-                    if (level > 0f && !reportedSignal) {
-                        reportedSignal = true;
-                        Log.i(TAG, "Actual output-mix music levels received");
+                            usePlaybackDance(now);
+                        } else playbackMode = false;
                     }
                 }
             } catch (RuntimeException | LinkageError failure) {
                 sample = Sample.SILENT;
                 release();
-                retryAtMs = now + 10000L;
-                diagnosticMode = true;
-                if (!unavailable) Log.w(TAG, "Android output visualization unavailable: " + failure.getClass().getSimpleName());
-                unavailable = true;
+                usePlaybackDance(now);
             }
-            if (!closed && diagnosticMode) {
-                float level = direct.read();
-                sample = level >= 0f ? new Sample(level, SystemClock.uptimeMillis()) : Sample.SILENT;
-                unavailable = level < 0f;
+            if (!closed) handler.postDelayed(this, playbackMode ? RETRY_MS : POLL_MS);
+        }
+
+        private void usePlaybackDance(long now) {
+            if (!playbackMode) {
+                playbackStartMs = now;
+                playbackMode = true;
+                Log.i(TAG, "Playback-driven dance active; output visualizer unavailable");
             }
-            if (!closed) handler.postDelayed(this, diagnosticMode ? 150L : POLL_MS);
+            unavailable = false;
         }
 
         private void open() {
@@ -147,24 +136,17 @@ final class MusicBounceSource {
 
         void stop() {
             closed = true;
-            direct.close();
             sample = Sample.SILENT;
             handler.removeCallbacks(this);
-            // All native access and release stay on the same worker, not the remote/UI thread.
-            handler.post(() -> {
-                release();
-                thread.quitSafely();
-            });
+            handler.post(() -> { release(); thread.quitSafely(); });
         }
 
         private void release() {
             Visualizer old = visualizer;
             visualizer = null;
             waveform = null;
-            if (old != null) {
-                try { old.release(); }
-                catch (RuntimeException | LinkageError ignored) { }
-            }
+            if (old != null) try { old.release(); }
+            catch (RuntimeException | LinkageError ignored) { }
         }
     }
 }
