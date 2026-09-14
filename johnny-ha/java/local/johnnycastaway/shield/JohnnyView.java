@@ -12,6 +12,7 @@ public final class JohnnyView extends FrameLayout {
  private final NowPlayingView card;
  private final JohnnyStateClient states;
  private final Handler main=new Handler(Looper.getMainLooper());
+ private static final Object RESOURCE_LOCK=new Object();
  private boolean running;private long generation;
  public JohnnyView(Context c){
   super(c);setBackgroundColor(Color.BLACK);
@@ -23,6 +24,7 @@ public final class JohnnyView extends FrameLayout {
   if(running)return;running=true;final long session=++generation;media.start();
   Thread preparation=new Thread(()->{
    try{
+    synchronized(RESOURCE_LOCK){
     File dir=new File(getContext().getFilesDir(),"johnny");
     if(!dir.isDirectory()&&!dir.mkdirs())throw new IOException("Resource directory");
     for(String name:new String[]{"RESOURCE.MAP","RESOURCE.001"}){
@@ -33,6 +35,7 @@ public final class JohnnyView extends FrameLayout {
       byte[] buf=new byte[8192];int n;while((n=in.read(buf))!=-1)out.write(buf,0,n);
      }
      if(!temporary.renameTo(target))throw new IOException("Resource install");
+    }
     }
     main.post(()->{if(running&&generation==session){nativePlayer.start();states.start();}});
    }catch(IOException e){main.post(()->{if(running&&generation==session)Log.e("JohnnyHA","Original resources unavailable");});}

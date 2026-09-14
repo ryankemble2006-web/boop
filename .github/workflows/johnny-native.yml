@@ -40,22 +40,7 @@ jobs:
           mkdir -p /tmp/deliverable/arm64-v8a
           cp /tmp/native-build/libjohnny.so /tmp/deliverable/arm64-v8a/
           "$ANDROID_HOME/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-nm" -D --defined-only /tmp/native-build/libjohnny.so > /tmp/deliverable/native-symbols.txt
-          if grep -Eq '[[:space:]]JNI_OnLoad
-          cp /tmp/reborn/LICENSE /tmp/deliverable/JOHNNY-REBORN-LICENSE
-          cp /tmp/sdl/LICENSE.txt /tmp/deliverable/SDL-LICENSE.txt
-          cp -r johnny-ha /tmp/deliverable/source
-          sha256sum /tmp/deliverable/arm64-v8a/libjohnny.so
-      - name: Compile Android View
-        run: |
-          mkdir /tmp/java-classes
-          javac -source 8 -target 8 -classpath "$ANDROID_HOME/platforms/android-35/android.jar" -d /tmp/java-classes johnny-ha/java/local/johnnycastaway/shield/*.java
-          jar cf /tmp/deliverable/johnny-view.jar -C /tmp/java-classes .
-          "$ANDROID_HOME/build-tools/35.0.0/d8" --lib "$ANDROID_HOME/platforms/android-35/android.jar" --min-api 26 --output /tmp/deliverable /tmp/deliverable/johnny-view.jar
-      - uses: actions/upload-artifact@v4
-        with:
-          name: johnny-native-arm64
-          path: /tmp/deliverable
- /tmp/deliverable/native-symbols.txt; then echo "Unexpected SDL JNI loader"; exit 1; fi
+          if grep -Eq '[[:space:]]JNI_OnLoad$' /tmp/deliverable/native-symbols.txt; then echo "Unexpected SDL JNI loader"; exit 1; fi
           tar --exclude=.git -czf /tmp/deliverable/johnny-reborn-patched-source.tar.gz -C /tmp/reborn .
           cp /tmp/sdl.tar.gz /tmp/deliverable/SDL2-2.30.11-source.tar.gz
           git rev-parse HEAD > /tmp/deliverable/built-commit.txt
