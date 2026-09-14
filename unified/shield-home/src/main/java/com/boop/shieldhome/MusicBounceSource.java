@@ -33,10 +33,13 @@ final class MusicBounceSource {
         Session current = session;
         if (current == null) return 0f;
         Sample sample = current.sample;
-        if (sample.timeMs < 0 || nowMs < sample.timeMs || nowMs - sample.timeMs > STALE_MS) {
+        if (sample.timeMs < 0 || nowMs < sample.timeMs) {
             current.pulse.reset();
             return 0f;
         }
+        // Suppress aged output, but retain the measured baseline across a slow diagnostic read.
+        // MusicBeatPulse itself refuses to compare measurements more than one second apart.
+        if (nowMs - sample.timeMs > STALE_MS) return 0f;
         return current.pulse.update(sample.level, sample.timeMs, nowMs);
     }
 
