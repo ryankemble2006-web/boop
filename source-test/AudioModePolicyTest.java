@@ -6,6 +6,12 @@ public final class AudioModePolicyTest {
     }
 
     public static void main(String[] args) {
+        check(AudioModePolicy.forLaunch("local.johnnycastaway.shield") == AudioModePolicy.Mode.IGNORE,
+                "Silent Johnny must preserve the current music or video audio mode");
+        check(AudioModePolicy.forLaunch("  local.johnnycastaway.shield  ") == AudioModePolicy.Mode.IGNORE,
+                "Johnny exclusion must use the same package normalization");
+        check(AudioModePolicy.forLaunch("com.google.android.youtube.tv") == AudioModePolicy.Mode.NORMAL_VIDEO,
+                "YouTube must retain normal video audio mode");
         check(AudioModePolicy.forLaunch("deezer.android.app") == AudioModePolicy.Mode.NATIVE_MUSIC,
                 "Native Deezer should enable native sample-rate matching");
         check(AudioModePolicy.forLaunch("org.xbmc.kodi") == AudioModePolicy.Mode.NORMAL_VIDEO,
