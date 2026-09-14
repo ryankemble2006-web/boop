@@ -1,4 +1,4 @@
-name: Build BOOP v169 playback dance
+name: Build BOOP v170 silent Johnny audio routing
 on:
   push:
     branches: [boop-dance-levels-v167]
@@ -82,16 +82,16 @@ jobs:
           set -euo pipefail
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
-          mkdir -p v169-artifact
-          "$TOOLS/aapt" dump badging "$APK" > v169-artifact/badging.txt
-          grep -Fq "package: name='com.boop.alpha1'" v169-artifact/badging.txt
-          grep -Fq "versionCode='169'" v169-artifact/badging.txt
-          grep -Fq "versionName='1.2.169-playback-dance'" v169-artifact/badging.txt
-          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v169-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v169-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v169-artifact/manifest-tree.txt
-          "$TOOLS/apksigner" verify --print-certs "$APK" > v169-artifact/signer.txt
-          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v169-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          mkdir -p v170-artifact
+          "$TOOLS/aapt" dump badging "$APK" > v170-artifact/badging.txt
+          grep -Fq "package: name='com.boop.alpha1'" v170-artifact/badging.txt
+          grep -Fq "versionCode='169'" v170-artifact/badging.txt
+          grep -Fq "versionName='1.2.170-johnny-audio-neutral'" v170-artifact/badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v170-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v170-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v170-artifact/manifest-tree.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > v170-artifact/signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v170-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           test -n "$ACTUAL"; test "$ACTUAL" = "$EXPECTED"
           unzip -tq "$APK"
@@ -105,14 +105,14 @@ jobs:
               assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, 'Missing packaged class: '+cls
           print('Actual APK contains native lyrics and music sampler/envelope/renderer bytecode')
           PY
-          cp "$APK" v169-artifact/BOOP-Unified-v169-Playback-Dance.apk
-          (cd v169-artifact && sha256sum BOOP-Unified-v169-Playback-Dance.apk > apk-sha256.txt)
-          git rev-parse HEAD > v169-artifact/built-commit.txt
-          printf '%s\n' 'Based directly on accepted v162. Native lyrics source preserved.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v169-artifact/verification.txt
+          cp "$APK" v170-artifact/BOOP-Unified-v170-Johnny-Audio-Neutral.apk
+          (cd v170-artifact && sha256sum BOOP-Unified-v170-Johnny-Audio-Neutral.apk > apk-sha256.txt)
+          git rev-parse HEAD > v170-artifact/built-commit.txt
+          printf '%s\n' 'Based directly on accepted v162. Native lyrics source preserved.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v170-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Unified-v169-Playback-Dance
-          path: v169-artifact/
+          name: BOOP-Unified-v170-Johnny-Audio-Neutral
+          path: v170-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
         if: always()

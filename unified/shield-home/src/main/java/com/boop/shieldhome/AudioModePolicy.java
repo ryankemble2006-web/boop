@@ -3,6 +3,7 @@ package com.boop.shieldhome;
 final class AudioModePolicy {
     enum Mode { IGNORE, NATIVE_MUSIC, NORMAL_VIDEO }
 
+    private static final String SILENT_JOHNNY = "local.johnnycastaway.shield";
     private static final String DEEZER = "deezer.android.app";
     private static final String MEDIA_SHELL = "com.google.android.apps.mediashell";
     private static final int CONTENT_TYPE_MUSIC = 2;
@@ -12,6 +13,8 @@ final class AudioModePolicy {
     private static final long ACTION_SKIP_TO_NEXT = 32L;
 
     static Mode forLaunch(String packageName) {
+        // A silent screensaver must not reconfigure the playing app\'s audio route.
+        if (SILENT_JOHNNY.equals(clean(packageName))) return Mode.IGNORE;
         if (DEEZER.equals(clean(packageName))) return Mode.NATIVE_MUSIC;
         return Mode.NORMAL_VIDEO;
     }
