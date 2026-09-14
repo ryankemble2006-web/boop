@@ -50,14 +50,15 @@ public final class BassCaptureService extends Service {
  private void measure(AudioRecord active,int startId,long token){
   android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
   short[] block=new short[512];BassEnergy bass=new BassEnergy(44100);BassOnset onset=new BassOnset();
-  long hitAt=Long.MIN_VALUE,hits=0;
+  long hitAt=Long.MIN_VALUE,hits=0,frames=0;
   long last=SystemClock.uptimeMillis(),reads=0;float maximum=0;
   try{
    while(!stopped){
     int count=active.read(block,0,block.length,AudioRecord.READ_BLOCKING);
     if(count<=0){if(!stopped)throw new IllegalStateException("Read "+count);break;}
     long now=SystemClock.uptimeMillis();float energy=bass.raw(block,count);
-    if(onset.update(energy,now)){hitAt=now;hits++;}
+    frames+=count/2;
+    if(onset.update(energy,frames*1000/44100)){hitAt=now;hits++;}
     float level=hitAt==Long.MIN_VALUE?0:Math.max(0,1-(now-hitAt)/100f);
     BassCaptureState.publish(token,level,now);reads++;maximum=Math.max(maximum,level);
     if(now-last>=5000){Log.i("BOOP-BassCapture","Bass attacks: reads="+reads+" hits="+hits+" peakLevel="+maximum);last=now;reads=0;hits=0;maximum=0;}
