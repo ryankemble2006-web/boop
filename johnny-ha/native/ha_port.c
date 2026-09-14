@@ -92,18 +92,22 @@ void ha_wait(unsigned delay) {
  unsigned left;
  while((left=ha_remaining_ms(last_tick,ticks(),delay))) {
    ha_check_stop();
+   if(ha_should_preempt()) break;
    struct timespec t={0,(long)(left>5?5:left)*1000000L};
    nanosleep(&t,NULL);
  }
  last_tick=ticks(); ha_check_stop();
 }
+int ha_should_preempt(void) { return ha_preempt_normal(&active->controls); }
 int ha_night(void) { return atomic_load(&active->controls.night); }
 int ha_fan_pending(void) { return atomic_load(&active->controls.pending)>0; }
 int ha_take_fan_request(void) { return ha_take_fan(&active->controls); }
 void ha_fan_started(void) {
+ atomic_store(&active->controls.fan_playing,1);
  pthread_mutex_lock(&active->frame_lock); active->started++; pthread_mutex_unlock(&active->frame_lock);
 }
 void ha_fan_finished(void) {
+ atomic_store(&active->controls.fan_playing,0);
  pthread_mutex_lock(&active->frame_lock); active->completed++; pthread_mutex_unlock(&active->frame_lock);
 }
 void ha_present(SDL_Surface *s) {

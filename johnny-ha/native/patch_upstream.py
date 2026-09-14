@@ -122,3 +122,52 @@ for p in root.glob("*.c"):
     p.write_text(s)
 for p in root.glob("*.h"):
     p.write_text(p.read_text().replace("#include <SDL2/SDL.h>","#include <SDL.h>"))
+
+# Fan urgency: leave normal routines at a frame boundary through their normal
+# cleanup path. Never unwind past live scene allocations or restart the intro.
+s=read("ads.c")
+finish_body="""    for (int i=0; i < MAX_TTM_SLOTS; i++)
+        ttmResetSlot(&ttmSlots[i]);
+
+    grRestoreZone(NULL, 0, 0, 0, 0);
+
+    adsReleaseAds();"""
+s=once(s,finish_body,"    adsFinishRoutine();")
+helpers="""static void adsStopAllThreads(void) {
+    for(int i=0;i<MAX_TTM_THREADS;i++)
+        if(ttmThreads[i].isRunning) adsStopScene(i);
+}
+static int adsPollFanInterrupt(void) {
+    if(!ha_should_preempt()) return 0;
+    adsStopRequested=1;
+    adsStopAllThreads();
+    return 1;
+}
+static void adsFinishRoutine(void) {
+    adsStopAllThreads();
+"""+finish_body+"""
+}
+
+"""
+s=once(s,"void adsPlay(char *adsName, uint16 adsTag)",helpers+"void adsPlay(char *adsName, uint16 adsTag)")
+s=once(s,"    ha_check_stop();\n    uint32 offset;","    ha_check_stop();\n    if(ha_should_preempt()) return;\n    uint32 offset;")
+s=once(s,"    // Main ADS loop\n    while (numThreads) {","    // Main ADS loop\n    while (numThreads) {\n        if(adsPollFanInterrupt()) break;")
+s=once(s,"        // Determine min timer through all threads","        if(adsPollFanInterrupt()) break;\n\n        // Determine min timer through all threads")
+s=once(s,"void adsPlayWalk(int fromSpot, int fromHdg, int toSpot, int toHdg)\n{",
+"""void adsPlayWalk(int fromSpot, int fromHdg, int toSpot, int toHdg)
+{
+    if(ha_should_preempt()) return;
+    int interrupted=0;""")
+s=once(s,"    while (ttmThreads[0].delay) {","    while (ttmThreads[0].delay) {\n        if(ha_should_preempt()) { interrupted=1; break; }")
+s=once(s,"        // Determine min timer from the two threads","        if(ha_should_preempt()) { interrupted=1; break; }\n\n        // Determine min timer from the two threads")
+walk_start=s.index("void adsPlayWalk(")
+s=s[:walk_start]+once(s[walk_start:],"    adsStopScene(0);",
+"    adsStopScene(0);\n    if(interrupted) ttmResetSlot(&ttmSlots[0]);")
+write("ads.c",s)
+s=read("story.c")
+s=once(s,"        if (prevSpot != -1)\n            adsPlayWalk(prevSpot, prevHdg, finalScene->spotStart, finalScene->hdgStart);",
+"        if (!requestedFan && prevSpot != -1)\n            adsPlayWalk(prevSpot, prevHdg, finalScene->spotStart, finalScene->hdgStart);")
+write("story.c",s)
+s=read("graphics.c")
+s=once(s,"void grFadeOut()\n{","void grFadeOut()\n{\n    if(ha_should_preempt()) return;")
+write("graphics.c",s)

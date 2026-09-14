@@ -36,6 +36,19 @@ int main(void) {
    assert(owned==NULL);
  }
  assert(p->frames==100);
+ atomic_store(&p->controls.stop,0);
+ assert(ha_queue_fan(&p->controls));
+ last_tick=ticks();
+ uint32_t began=last_tick;
+ ha_wait(1000);
+ assert(ticks()-began<500); // queued fan wakes a long normal-scene delay
+ assert(atomic_load(&p->controls.pending)==1);
+ atomic_store(&p->controls.fan_playing,1);
+ last_tick=ticks(); began=last_tick;
+ ha_wait(40);
+ assert(ticks()-began>=40); // same queued request cannot shorten active fan timing
+ atomic_store(&p->controls.fan_playing,0);
+ assert(ha_take_fan(&p->controls));
  assert(SDL_WasInit(SDL_INIT_VIDEO|SDL_INIT_AUDIO)==0);
  int reason=setjmp(unwind);
  if(!reason) ha_fail("expected failure");

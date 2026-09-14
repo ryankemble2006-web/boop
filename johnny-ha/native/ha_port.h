@@ -14,6 +14,7 @@ void ha_free_surface(SDL_Surface *);
 void ha_check_stop(void);
 void ha_fail(const char *);
 int ha_night(void);
+int ha_should_preempt(void);
 int ha_fan_pending(void);
 int ha_take_fan_request(void);
 void ha_fan_started(void);
