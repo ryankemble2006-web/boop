@@ -176,6 +176,7 @@ write("graphics.c",s)
 # The standing lead-in comes from the original archive, not an extra PNG.
 s=read("ads.c")
 s += """
+#include "control.h"
 void adsPlayOi(void) {
     adsAddScene(0,0,0);
     grLoadBmp(ttmSlots,0,"SHKNFIST.BMP");
@@ -183,9 +184,9 @@ void adsPlayOi(void) {
     int completed=0, interrupted_by_fan=0;
     while(ha_oi_active()) {
         ha_check_stop();
-        if(ha_fan_pending()) { interrupted_by_fan=1; break; }
         unsigned elapsed=ha_clock_ms()-start;
-        if(elapsed>=3150) { completed=1; break; }
+        int reason=ha_oi_exit_reason(elapsed,ha_fan_pending());
+        if(reason) { completed=(reason==1); interrupted_by_fan=(reason==2); break; }
         ha_set_oi_frame(elapsed);
         grClearScreen(ttmThreads[0].ttmLayer);
         grDx=grDy=0;
@@ -204,6 +205,9 @@ void adsPlayOi(void) {
     adsStopScene(0);
     ttmResetSlot(ttmSlots);
     ha_end_oi(completed,interrupted_by_fan);
+    // Publish without the old actor/overlay before releasing the island.
+    grUpdateDelay=0;
+    grUpdateDisplay(&ttmBackgroundThread,ttmThreads,&ttmHolidayThread);
 }
 """
 write("ads.c",s)

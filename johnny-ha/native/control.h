@@ -82,6 +82,10 @@ static inline int ha_preempt_wait(HaControl *c) {
  }
  ha_oi_unlock(c); return result;
 }
+/* Completion wins over a simultaneous fan edge: a finished reaction cannot replay. */
+static inline int ha_oi_exit_reason(unsigned elapsed_ms,int fan_pending) {
+ return elapsed_ms>=3150 ? 1 : (fan_pending ? 2 : 0);
+}
 static inline int ha_oi_frame(unsigned elapsed_ms) {
  if(elapsed_ms<250 || elapsed_ms>=3150) return -1;
  if(elapsed_ms<350) return 2;
