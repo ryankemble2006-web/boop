@@ -38,6 +38,23 @@ public class OnsetHarness {
    }
    check(count==0,"steady PCM "+hz+"Hz falsely hits "+count);
   }
+  for(double gain:new double[]{.2,.8})for(double offset:new double[]{0,1.2}){
+   BassEnergy filter=new BassEnergy(44100);BassOnset detector=new BassOnset();int count=0;
+   short[] pcm=new short[512];
+   for(int b=0;b<1033;b++){
+    for(int i=0;i<256;i++){
+     double ms=(b*256+i)*1000.0/44100,phase=ms%432;
+     double amp=gain*(.08+.7*Math.exp(-phase/45));
+     short v=(short)(32767*amp*Math.sin(2*Math.PI*60*ms/1000+offset));
+     pcm[2*i]=v;pcm[2*i+1]=v;
+    }
+    long audioMs=(long)((b+1)*256000.0/44100);
+    if(detector.update(filter.raw(pcm,512),audioMs)){
+     count++;check(audioMs%432<75,"PCM late hit "+audioMs);
+    }
+   }
+   check(count>=13&&count<=14,"PCM kicks gain="+gain+" phase="+offset+" hits="+count);
+  }
   System.out.println("Onset fixtures passed: steady bass, gain range, 139 bpm, silence, gap, double trigger");
  }
 }''';
