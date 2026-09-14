@@ -19,6 +19,8 @@ jobs:
           /tmp/control-test
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/wind_state_test.c -lm -o /tmp/wind-test
           /tmp/wind-test
+          cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/wind_episode_test.c -lm -o /tmp/wind-episode-test
+          /tmp/wind-episode-test
           cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined johnny-ha/tests/wind_render_test.c -lm -o /tmp/wind-render-test
           /tmp/wind-render-test
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/oi_scheduler_test.c -o /tmp/oi-test
