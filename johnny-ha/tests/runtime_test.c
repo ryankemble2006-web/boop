@@ -11,6 +11,7 @@ int main(void) {
  Player *p=calloc(1,sizeof(*p)); assert(p);
  ha_control_init(&p->controls);
  atomic_init(&p->oi_ready,0);
+ atomic_init(&p->wind_percent,0);
  pthread_mutex_init(&p->frame_lock,NULL);
  strcpy(p->path,"/tmp");
  active=p;
@@ -50,6 +51,27 @@ int main(void) {
  assert(ticks()-began>=40); // same queued request cannot shorten active fan timing
  atomic_store(&p->controls.fan_playing,0);
  assert(ha_take_fan(&p->controls));
+ JNI_NAME(nFanState)(NULL,0,(jlong)(intptr_t)p,JNI_TRUE);
+ assert(!ha_begin_wind()); // initial level arrives before asset readiness
+ atomic_store(&p->controls.wind_ready,1);
+ for(int i=0;i<100;i++) {
+  assert(ha_begin_wind());
+  assert(ha_wind_step() && ha_wind_power()<0.02);
+  p->wind.changed-=1000;
+  assert(ha_wind_step() && ha_wind_power()==1);
+  atomic_store(&p->controls.night,1);
+  assert(ha_queue_oi(&p->controls));
+  assert(!ha_wind_step()); // wind yields before drawing next actor
+  ha_end_wind();
+  atomic_store(&p->oi_ready,1);
+  assert(ha_begin_oi_request());
+  assert(!ha_begin_wind());
+  JNI_NAME(nFanState)(NULL,0,(jlong)(intptr_t)p,JNI_FALSE);
+  assert(ha_oi_active()); // wind level does not truncate OI
+  ha_end_oi(1,0);
+  assert(!ha_begin_wind()); // off during OI prevents return
+  JNI_NAME(nFanState)(NULL,0,(jlong)(intptr_t)p,JNI_TRUE);
+ }
  assert(SDL_WasInit(SDL_INIT_VIDEO|SDL_INIT_AUDIO)==0);
  int reason=setjmp(unwind);
  if(!reason) ha_fail("expected failure");

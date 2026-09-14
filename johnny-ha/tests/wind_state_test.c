@@ -29,7 +29,10 @@ int main(void){
  }
  assert(ha_wind_flap(0.19,1)==1);
  assert(ha_wind_round(2.5)==2 && ha_wind_round(3.5)==4 && ha_wind_round(-2.5)==-2);
- HaControl c; ha_control_init(&c); atomic_store(&c.wind_ready,1);
+ HaControl c; ha_control_init(&c);
+ ha_set_wind_level(&c,1); assert(!ha_preempt_normal(&c)); // early level retained while assets load
+ assert(atomic_load(&c.wind_on)==1);
+ atomic_store(&c.wind_ready,1);
  ha_set_wind_level(&c,1); assert(ha_preempt_normal(&c));
  atomic_store(&c.wind_playing,1); assert(!ha_preempt_normal(&c));
  atomic_store(&c.night,1); assert(ha_queue_oi(&c)); assert(ha_preempt_wait(&c));
