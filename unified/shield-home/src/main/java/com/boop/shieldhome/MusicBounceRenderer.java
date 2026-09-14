@@ -15,7 +15,7 @@ final class MusicBounceRenderer implements GLSurfaceView.Renderer {
 
     void setHeightFraction(float value) {
         heightFraction = Float.isFinite(value)
-                ? Math.max(0f, Math.min(MusicBounceEnvelope.MAX_HEIGHT_FRACTION, value)) : 0f;
+                ? Math.max(0f, Math.min(MusicBounceEnvelope.MAX_HEIGHT_FRACTION, value)) * 2f : 0f;
     }
 
     @Override public void onSurfaceCreated(GL10 gl, EGLConfig config) {

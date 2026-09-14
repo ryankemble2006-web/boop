@@ -65,9 +65,11 @@ final class MusicBounceSource {
         volatile boolean closed;
         volatile boolean unavailable;
         long retryAtMs;
+        final DirectMusicSource direct;
+        boolean diagnosticMode;
         boolean reportedSignal;
 
-        Session(Context context) { this.context = context; }
+        Session(Context context) { this.context = context; direct = new DirectMusicSource(context); }
 
         void start() {
             thread.start();
@@ -82,13 +84,14 @@ final class MusicBounceSource {
                 if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     sample = Sample.SILENT;
                     release();
-                } else if (now >= retryAtMs) {
+                } else if (!diagnosticMode || now >= retryAtMs) {
                     if (visualizer == null) open();
                     int result = visualizer.getWaveForm(waveform);
                     if (result != Visualizer.SUCCESS) throw new IllegalStateException("waveform status " + result);
                     float level = MusicBounceEnvelope.levelOf(waveform);
                     sample = new Sample(level, now);
                     unavailable = false;
+                    diagnosticMode = false;
                     if (level > 0f && !reportedSignal) {
                         reportedSignal = true;
                         Log.i(TAG, "Actual output-mix music levels received");
@@ -97,11 +100,17 @@ final class MusicBounceSource {
             } catch (RuntimeException | LinkageError failure) {
                 sample = Sample.SILENT;
                 release();
-                retryAtMs = now + RETRY_MS;
+                retryAtMs = now + 10000L;
+                diagnosticMode = true;
                 if (!unavailable) Log.w(TAG, "Android output visualization unavailable: " + failure.getClass().getSimpleName());
                 unavailable = true;
             }
-            if (!closed) handler.postDelayed(this, POLL_MS);
+            if (!closed && diagnosticMode) {
+                float level = direct.read();
+                sample = level >= 0f ? new Sample(level, SystemClock.uptimeMillis()) : Sample.SILENT;
+                unavailable = level < 0f;
+            }
+            if (!closed) handler.postDelayed(this, diagnosticMode ? 150L : POLL_MS);
         }
 
         private void open() {
@@ -119,6 +128,7 @@ final class MusicBounceSource {
 
         void stop() {
             closed = true;
+            direct.close();
             sample = Sample.SILENT;
             handler.removeCallbacks(this);
             // All native access and release stay on the same worker, not the remote/UI thread.
