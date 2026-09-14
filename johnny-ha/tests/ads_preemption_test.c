@@ -51,6 +51,9 @@ int main(void) {
   assert(!ha_take_fan(&control));
  }
  seed();
+ adsClearMusicActor();
+ assert(!ttmThreads[0].isRunning && !ttmSlots[0].data && !ttmSlots[0].numSprites[0]);
+ assert(numThreads==2); // music cleanup releases only its owned actor
  adsFinishRoutine(); // common finish path also releases any still-live scene
  assert(!numThreads && !allocations && !surfaces);
  puts("100 ADS interruptions release TTM layers, tags, sprites, saved zones and ADS tags; active fan protected and queued command retained");
