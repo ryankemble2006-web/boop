@@ -160,3 +160,18 @@ python3 scripts/patch-unified-v148-single-face.py
 
 # Retain queued acknowledgements until speech initialization completes.
 python3 scripts/patch-unified-voice-startup.py
+
+# Fixed-scope read-only state bridge for the separately signed Johnny HA lab.
+cp unified/JohnnyStatePolicy.java "$MAIN/JohnnyStatePolicy.java"
+cp unified/JohnnyStateProvider.java "$MAIN/JohnnyStateProvider.java"
+python3 - <<'PY'
+from pathlib import Path
+p=Path('boop-build/BOOP-Alpha1/app/src/main/AndroidManifest.xml')
+s=p.read_text()
+assert s.count('</application>') == 1
+s=s.replace('</application>', '<provider android:name=".JohnnyStateProvider" android:authorities="com.boop.alpha1.johnny_states" android:exported="true" android:grantUriPermissions="false" />\n    </application>')
+# Package visibility is needed to validate the caller certificate on Android 11+.
+assert s.count('</manifest>') == 1
+s=s.replace('</manifest>', '<queries><package android:name="local.johnnycastaway.halab" /></queries>\n</manifest>')
+p.write_text(s)
+PY
