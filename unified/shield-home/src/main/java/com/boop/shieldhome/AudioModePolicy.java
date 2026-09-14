@@ -13,7 +13,7 @@ final class AudioModePolicy {
     private static final long ACTION_SKIP_TO_NEXT = 32L;
 
     static Mode forLaunch(String packageName) {
-        // A silent screensaver must not reconfigure the playing app\'s audio route.
+        // A silent screensaver must not reconfigure the current audio route.
         if (SILENT_JOHNNY.equals(clean(packageName))) return Mode.IGNORE;
         if (DEEZER.equals(clean(packageName))) return Mode.NATIVE_MUSIC;
         return Mode.NORMAL_VIDEO;

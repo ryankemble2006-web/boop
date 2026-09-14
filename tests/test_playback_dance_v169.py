@@ -59,7 +59,12 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={"unified/app-build.gradle"}|{str((SRC/x).relative_to(ROOT)).replace("\\","/") for x in ["MusicBounceSource.java","PlaybackMusicDance.java","DirectMusicSource.java","DirectMusicLevels.java","MusicBeatPulse.java"]}
+    policy_path=str((SRC/"AudioModePolicy.java").relative_to(ROOT)).replace("\\","/")
+    before=subprocess.check_output(["git","show","01f0053b922a8c344d5534b17cf342c1c657703c:"+policy_path],cwd=ROOT,text=True)
+    expected=before.replace('    private static final String DEEZER', '    private static final String SILENT_JOHNNY = "local.johnnycastaway.shield";\n    private static final String DEEZER').replace('        if (DEEZER.equals(clean(packageName)))', '        // A silent screensaver must not reconfigure the current audio route.\n        if (SILENT_JOHNNY.equals(clean(packageName))) return Mode.IGNORE;\n        if (DEEZER.equals(clean(packageName)))')
+    assert (SRC/"AudioModePolicy.java").read_text()==expected,"Only the approved silent Johnny exclusion may change routing"
+    allowed.add(policy_path)
     changed=subprocess.check_output(["git","diff","--name-only","b7539d8bc1afbd9b2ec77833a6918a3224212755","HEAD","--","source","unified","scripts","launcher","shield-overlay"],cwd=ROOT,text=True).splitlines()
     assert set(changed)<=allowed,"Unexpected non-dance production changes: "+str(set(changed)-allowed)
-    print("Audio routing, voice repair, renderer, artwork and animation sources preserved")
+    print("Only silent Johnny routing exclusion changed; voice repair, renderer, artwork and animation preserved")
 if __name__=="__main__": main()
