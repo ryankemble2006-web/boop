@@ -4,11 +4,15 @@ final class BassEnergy {
  private final Filter[] high=new Filter[2],low=new Filter[2];
  BassEnergy(int rate){for(int c=0;c<2;c++){high[c]=new Filter(rate,35,true);low[c]=new Filter(rate,120,false);}}
  float process(short[] pcm,int count){
+  double rms=raw(pcm,count);
+  return rms<0.0005?0:(float)Math.min(1,Math.sqrt(rms*3));
+ }
+ float raw(short[] pcm,int count){
   if(pcm==null||count<2)return 0;
   int end=Math.min(count,pcm.length)&~1;double power=0;
   for(int i=0;i<end;i++){int c=i&1;double v=low[c].run(high[c].run(pcm[i]/32768.0));power+=v*v;}
   double rms=Math.sqrt(power/end);
-  return rms<0.0005?0:(float)Math.min(1,Math.sqrt(rms*3));
+  return (float)rms;
  }
  private static final class Filter{
   final double b0,b1,b2,a1,a2;double z1,z2;

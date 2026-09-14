@@ -41,23 +41,26 @@ public final class BassCaptureService extends Service {
    if(active.getState()!=AudioRecord.STATE_INITIALIZED)throw new IllegalStateException("Recorder uninitialized");
    active.startRecording();
    owner=BassCaptureState.start();status="Deezer bass capture active";
-   Log.i("BOOP-BassCapture",status+"; requested 44100 stereo, 35-120Hz");
+   Log.i("BOOP-BassCapture",status+"; requested 44100 stereo, 35-120Hz attacks, 256-frame reads");
    main.postDelayed(timeout,600000);
    worker=new Thread(()->measure(active,id,owner),"BOOP-BassCapture");worker.start();
   }catch(Exception e){status="Capture unavailable: "+e.getMessage();Log.i("BOOP-BassCapture",status);stopSelf();}
   return START_NOT_STICKY;
  }
  private void measure(AudioRecord active,int startId,long token){
-  android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
-  short[] block=new short[882];BassEnergy bass=new BassEnergy(44100);
+  android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+  short[] block=new short[512];BassEnergy bass=new BassEnergy(44100);BassOnset onset=new BassOnset();
+  long hitAt=Long.MIN_VALUE,hits=0;
   long last=SystemClock.uptimeMillis(),reads=0;float maximum=0;
   try{
    while(!stopped){
     int count=active.read(block,0,block.length,AudioRecord.READ_BLOCKING);
     if(count<=0){if(!stopped)throw new IllegalStateException("Read "+count);break;}
-    long now=SystemClock.uptimeMillis();float level=bass.process(block,count);
+    long now=SystemClock.uptimeMillis();float energy=bass.raw(block,count);
+    if(onset.update(energy,now)){hitAt=now;hits++;}
+    float level=hitAt==Long.MIN_VALUE?0:Math.max(0,1-(now-hitAt)/100f);
     BassCaptureState.publish(token,level,now);reads++;maximum=Math.max(maximum,level);
-    if(now-last>=5000){Log.i("BOOP-BassCapture","Bass samples: reads="+reads+" peakLevel="+maximum);last=now;reads=0;maximum=0;}
+    if(now-last>=5000){Log.i("BOOP-BassCapture","Bass attacks: reads="+reads+" hits="+hits+" peakLevel="+maximum);last=now;reads=0;hits=0;maximum=0;}
    }
   }catch(Exception e){if(!stopped){status="Capture ended: "+e.getMessage();Log.i("BOOP-BassCapture",status);}}
   finally{
