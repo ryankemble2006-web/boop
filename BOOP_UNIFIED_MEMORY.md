@@ -1,10 +1,17 @@
-# v174 relaxed playback groove — build pending
+# v174 relaxed playback groove installed — visual verdict pending
 
-Ryan rejected v173 as sharper but unfocused and explicitly selected relaxed, varied simulated movement: sways, nods and occasional flourishes. v173 capture stopped; MediaProjection confirmed null.
+Updated2026-09-14. Owner branch `boop-dance-levels-v167`.
 
-Candidate source `e375800a58839df466e155476e2a6729b082545a`, run34874180697 pending. Pure-clock PlaybackGroove replaces audio-dependent movement in NowPlaying view. No automatic audio sampler/permission prompt; obsolete ten-minute Settings entry removed. Smooth small sway, varied lift, occasional flourish;700ms entrance/350ms settle on pause, reset hidden/detached/clock reversal. Existing canonical expressions/colour/art/speed untouched; Android animation0 independence retained. No audio routing changes.
+Ryan explicitly chose relaxed, varied simulated groove after v173 was sharper but unfocused on musical accents. PlaybackGroove provides gentle bounded sway/lift and occasional flourish from its own clock. No beat-sync claim.700ms entrance,350ms pause settle; hidden/detached resets. NowPlaying no longer starts audio sampling or prompts for audio access; temporary bass-test Settings entry removed. Canonical art/headphones/expressions/colour and existing speed scope preserved. Android animation0 independence retained. No audio routing or voice changes.
 
-RED34874091551 observed missinggrooveclass. New bounds/continuity/pause/restart tests passed in ongoingbuild, finalreviewno blocker. No visual acceptance implied. v173 remains installed until completedbuildandverifiedupdate; phoneuntouched.
+Signed source `e375800a58839df466e155476e2a6729b082545a`; run34874180697 SUCCESS; artifact10360545388 `BOOP-Unified-v174-Relaxed-Groove`.
+Packagecom.boop.alpha1 version174 /1.2.174-relaxed-groove.
+APK SHA256 `4448a2881f54e9f0fade089434bbba72a3358d340524941f58d19b80c896112d`.
+Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` verified.
+
+RED34874091551 observed missinggroove implementation. Finalbounds/continuity/pause/restart/reversal tests passed, plus inherited DSP/worker/voice/routing/lyrics/animation checks; two inherited historicalskips remain skipped. Source review found no blocking issue; physical appeal belongs to Ryan.
+
+Shield update succeeded; installed hash matches. All16preferences unchanged; animator_duration_scale0. No MediaProjection, noBOOP-MusicLevels orBOOP-BassCapture worker. LiveDeezer DIRECT44100 HDMI active. ReturnedHome and asked Ryan to judge gentlegroove; verdict pending. Phone untouched. v173 rollback retained privately; earlier installer recovery backups retained.
 
 ---
 
