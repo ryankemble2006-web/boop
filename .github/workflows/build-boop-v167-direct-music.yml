@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify relaxed playback groove
+        run: python tests/test_relaxed_groove_v174.py
       - name: Verify bass attack detection
         run: python tests/test_bass_onset_v173.py
       - name: Verify bass energy and capture lifetime
