@@ -1,13 +1,13 @@
-name: Build BOOP v174 relaxed groove
+name: Build BOOP v175 Johnny state bridge
 on:
   push:
-    branches: [boop-dance-levels-v167]
+    branches: [boop-johnny-state-bridge-v175]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: boop-v167-music-bounce
+  group: boop-v175-johnny
   cancel-in-progress: true
 jobs:
   build:
@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify Johnny state isolation
+        run: python tests/test_johnny_states_v175.py
       - name: Verify relaxed playback groove
         run: python tests/test_relaxed_groove_v174.py
       - name: Verify bass attack detection
