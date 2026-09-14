@@ -107,7 +107,9 @@ final class BoopAndroidSpeechBackend implements BoopSpeechBackend {
         return false;
     }
 
-    /** Cancel only startup work when the owning screen leaves the foreground. */
+    boolean hasSpeech() { return pending != null || !callbacks.isEmpty(); }
+
+    /** Clear startup work without emitting a completion for a cancelled request. */
     void cancelPending() {
         pending = null;
         handler.removeCallbacks(startupTimeout);

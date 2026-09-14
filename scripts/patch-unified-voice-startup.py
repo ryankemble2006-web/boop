@@ -9,9 +9,9 @@ def once(old,new):
         raise SystemExit(f"Speech startup anchor count {text.count(old)}: {old[:80]}")
     text=text.replace(old,new,1)
 once("    private void speak(String text) {",
-     "    private void speak(String text) {\n        if (isFinishing() || isDestroyed()) return;")
+     "    private void speak(String text) {\n        if (!activityInForeground || isFinishing() || isDestroyed()) return;")
 once("    private void speakWithAndroidTts(String text) {\n        if (ttsReady && androidSpeechBackend != null && voiceController != null) {",
-     "    private void speakWithAndroidTts(String text) {\n        if (isFinishing() || isDestroyed()) return;\n        if (androidSpeechBackend != null && voiceController != null) {")
+     "    private void speakWithAndroidTts(String text) {\n        if (!activityInForeground || isFinishing() || isDestroyed()) return;\n        if (androidSpeechBackend != null && voiceController != null) {")
 once("""    public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS && tts != null) {
             int result = tts.setLanguage(Locale.getDefault());
@@ -34,6 +34,14 @@ once("""    public void onInit(int status) {
         if (androidSpeechBackend != null) androidSpeechBackend.onInitializationFinished(ttsReady);
     }""")
 once("    protected void onPause() {",
-     "    protected void onPause() {\n        if (androidSpeechBackend != null) androidSpeechBackend.cancelPending();")
+     """    protected void onPause() {
+        boolean cancelledAndroidSpeech = androidSpeechBackend != null && androidSpeechBackend.hasSpeech();
+        if (androidSpeechBackend != null) androidSpeechBackend.stop();""")
+once("            wakeCoordinator.endForegroundSession();",
+     """            wakeCoordinator.endForegroundSession();
+            if (cancelledAndroidSpeech) wakeCoordinator.onTtsFinished();""")
+once("        super.onPause();",
+     """        if (cancelledAndroidSpeech) com.boop.shared.BoopState.INSTANCE.speech(false, false);
+        super.onPause();""")
 MAIN.write_text(text)
 print("Reply startup waiting and lifecycle cancellation integrated; natural voice route preserved")
