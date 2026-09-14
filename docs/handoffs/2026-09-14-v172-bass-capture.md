@@ -30,6 +30,10 @@ RED34869904428 failed missing bass implementation. Green410 DSP/state/fast-attac
 
 Shield install succeeded and installed APK hash matches. All16 saved preference hashes unchanged. Phone remains acceptedv166. Android animator scale remains0. Live BOOP log reports Deezer bass capture active,44100stereo,35–120Hz; about501reads/5seconds. Only bass worker exists during capture; old music poller absent. HDMI remainsDIRECT44100 with separate44100remote submix. Capture started after actual consent and Home was restored for Ryan's visual test.
 
-## Acceptance pending
+## User verdict and final device checks
 
-Ryan's report of no-bass/slow dancing DURING the build referred to still-installedv170 fallback, confirmed by device version; it is not a v172 verdict. Requested fresh visual timing/no-bass test only AFTER verifying v172 and actual live capture. Final integrated rhythm acceptance and HA-lab tile runtime check remain pending.
+Ryan's report of no-bass/slow dancing DURING the build referred to still-installedv170 fallback, confirmed by device version; it is not a v172 verdict. Requested fresh visual timing/no-bass test only AFTER verifying v172 and actual live capture. Ryan reports it is better, but picks up too much and is unsuitable for active trance. This is a rejected musical-response result, not final acceptance. The implementation measures bass energy; rolling bass lines can therefore drive it between kicks. A kick-attack detector is only a possible next experiment, not implemented or accepted.
+
+Stopped the integrated service explicitly after the verdict; dumpsys confirmed no active MediaProjection. Launched the actual Johnny HA Lab tile from BOOP Apps and verified the resumed package local.johnnycastaway.halab. HDMI remained DIRECT44100 and there was no BOOP native-mode0 write. Returned Home with Deezer playing. Removed temporary device UI captures. No Johnny app edits or phone operations.
+
+v172 remains installed, with opt-in bass capture OFF. Its old fallback can still animate without music-band information when capture is off; do not present that as the bass test. The ten-minute setting is a canary, not a permanent user-approved dance solution.
