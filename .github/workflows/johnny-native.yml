@@ -12,7 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: HA state edge tests
-        run: python3 johnny-ha/tests/state_edges_test.py
+        run: |
+          python3 johnny-ha/tests/state_edges_test.py
+          python3 johnny-ha/tests/music_edges_test.py
       - name: Native policy tests
         run: |
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/control_test.c -o /tmp/control-test
