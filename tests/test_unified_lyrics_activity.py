@@ -13,7 +13,7 @@ STUBS = {
 'android/app/Activity.java': '''package android.app;
 public class Activity {
  private boolean finishing;
- protected void onCreate(android.os.Bundle state){} protected void onStart(){} protected void onStop(){} protected void onDestroy(){}
+ protected void onPause(){} protected void onCreate(android.os.Bundle state){} protected void onStart(){} protected void onStop(){} protected void onDestroy(){}
  public android.view.Window getWindow(){return new android.view.Window();}
  public void setContentView(android.view.View view){} public boolean isFinishing(){return finishing;}
  public void finish(){finishing=true;} public void overridePendingTransition(int a,int b){}
@@ -63,9 +63,14 @@ final class NativeLyricsLoader {
  void cancel(){cancellations++;} void destroy(){destroyed=true;}
  void reply(int index,DeezerLyricsDocument.Status result){callbacks.get(index).accept(new DeezerLyricsDocument(ids.get(index),result));}
 }
+final class DeezerAlbumBrowser {
+ static int opens,cancellations; static NowPlayingSnapshot requested;
+ void open(android.app.Activity a,ShieldNowPlayingManager m,NowPlayingSnapshot s){opens++;requested=s;}
+ void cancel(){cancellations++;}
+}
 final class ShieldNowPlayingManager {
  static ShieldNowPlayingManager instance; final NowPlayingState bus=new NowPlayingState();
- int refreshes,previous,next,toggle; long seek;
+ int refreshes,previous,next,toggle,sourceOpens; boolean openSource(android.app.Activity activity){sourceOpens++;return true;} long seek;
  static ShieldNowPlayingManager get(android.app.Activity activity){return instance;}
  NowPlayingState state(){return bus;} void refreshAccess(){refreshes++;}
  String deezerLyricsTrackId(NowPlayingSnapshot snapshot){return DeezerLyricsPolicy.available(snapshot.pkg)?snapshot.track:"";}
@@ -73,7 +78,7 @@ final class ShieldNowPlayingManager {
  void previous(){previous++;} void next(){next++;} void togglePlayPause(){toggle++;} void seekBy(long delta){seek=delta;}
 }
 final class ShieldLyricsView extends android.view.View {
- interface Controls {void previous();void playPause();void next();void seek(long delta);void close();}
+ interface Controls {void previous();void playPause();void next();void seek(long delta);void close();default void browseAlbum(){} }
  static ShieldLyricsView latest; final Controls controls; NowPlayingSnapshot snapshot; DeezerLyricsDocument document;
  String status=""; boolean running; int updates;
  ShieldLyricsView(android.app.Activity activity,int accent,Controls controls){latest=this;this.controls=controls;}
@@ -118,6 +123,18 @@ public final class UnifiedLyricsActivityCheck {
   eq(1,manager.toggle,"Play/Pause uses Unified manager");eq(10000L,manager.seek,"Seek delta preserved");
   activity.dispatchKeyEvent(new android.view.KeyEvent(87,0));eq(2,manager.next,"Hardware Next forwarded");
   activity.dispatchKeyEvent(new android.view.KeyEvent(87,1));eq(2,manager.next,"Repeated hardware event not duplicated");
+  view.controls.browseAlbum();eq(1,DeezerAlbumBrowser.opens,"Album click reaches existing browser");
+  eq("505",DeezerAlbumBrowser.requested.track,"Album uses current selected recording");
+  manager.bus.update(track("606"));view.controls.browseAlbum();
+  eq("606",DeezerAlbumBrowser.requested.track,"Album click reads latest snapshot");
+  manager.bus.update(null);view.controls.browseAlbum();
+  eq(2,DeezerAlbumBrowser.opens,"Null selection cannot browse stale album");
+  manager.bus.update(new NowPlayingSnapshot("707","other.player",3,2));view.controls.browseAlbum();
+  eq(1,manager.sourceOpens,"Other player uses source fallback");
+  int cancelled=DeezerAlbumBrowser.cancellations;activity.onPause();
+  eq(cancelled+1,DeezerAlbumBrowser.cancellations,"Pause cancels pending album lookup");
+  cancelled=DeezerAlbumBrowser.cancellations;activity.onStop();
+  eq(cancelled+1,DeezerAlbumBrowser.cancellations,"Stop cancels pending album lookup");
   activity.dispatchKeyEvent(new android.view.KeyEvent(4,0));eq(true,activity.isFinishing(),"Back retains Activity default path");
   activity.onStop();activity.onDestroy();eq(true,loader.destroyed,"Destroyed owner releases loader");
   System.out.println("PASS: "+checks+" internal Unified lyrics Activity/state/lifecycle/transport assertions.");

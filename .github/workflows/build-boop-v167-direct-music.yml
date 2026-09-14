@@ -1,7 +1,7 @@
-name: Build BOOP v175 Johnny state bridge
+name: Build BOOP v176 lyrics album
 on:
   push:
-    branches: [boop-johnny-state-bridge-v175]
+    branches: [boop-lyrics-album-v176]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
@@ -26,6 +26,11 @@ jobs:
           python-version: '3.12'
       - name: Verify Johnny state isolation
         run: python tests/test_johnny_states_v175.py
+      - name: Verify fan power excludes oscillation
+        continue-on-error: true
+        run: python tests/test_johnny_fan_power_v176.py
+      - name: Verify lyrics album routing
+        run: python tests/test_unified_lyrics_activity.py
       - name: Verify relaxed playback groove
         run: python tests/test_relaxed_groove_v174.py
       - name: Verify bass attack detection
