@@ -139,3 +139,35 @@ def preservation():
     assert set(changed)<=allowed, "Unexpected change outside dance input: "+str(set(changed)-allowed)
     print("Accepted voice, audio routing, artwork and independent animation sources preserved")
 if __name__=="__main__": preservation()
+
+def beat_pulses():
+    source=SRC/"MusicBeatPulse.java"
+    assert source.exists(), "Music still tracks continuous loudness instead of distinct onset-driven hops"
+    harness=r'''
+package com.boop.shieldhome;
+public class BeatPulseHarness {
+ static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
+ public static void main(String[] args){
+  MusicBeatPulse p=new MusicBeatPulse();
+  check(p.update(.2f,1000,1000)==0,"first level establishes baseline");
+  check(p.update(.6f,1100,1100)>.5f,"sharp real rise makes a hop");
+  check(p.update(.6f,1100,1250)>0,"hop decays between input samples");
+  check(p.update(.6f,1350,1350)==0,"steady loud music does not hold puppet up");
+  check(p.update(.1f,1400,1400)==0,"falling volume does not trigger");
+  check(p.update(.7f,1500,1500)>.5f,"next rising beat makes new hop");
+  float before=p.update(.1f,1520,1520);
+  check(p.update(.9f,1540,1540)<=before,"refractory window rejects rapid double triggers");
+  check(p.update(.9f,1540,1800)==0,"same sample cannot retrigger");
+  check(p.update(Float.NaN,1810,1810)==0,"invalid level clears pulse");
+  check(p.update(.8f,1400,2000)==0,"old sample ignored");
+  p.reset();
+  check(p.update(.8f,2010,2010)==0,"reset discards prior musical state");
+  System.out.println("11 actual onset-hop scenarios passed");
+ }
+}
+'''
+    with tempfile.TemporaryDirectory() as d:
+        h=pathlib.Path(d)/"BeatPulseHarness.java"; h.write_text(harness)
+        subprocess.run(["javac","-d",d,str(source),str(h)],check=True)
+        subprocess.run(["java","-cp",d,"com.boop.shieldhome.BeatPulseHarness"],check=True)
+if __name__=="__main__": beat_pulses()
