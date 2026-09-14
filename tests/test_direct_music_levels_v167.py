@@ -66,7 +66,7 @@ def lifecycle():
       "com/boop/shieldturbo/power/AdbWire.java": '''package com.boop.shieldturbo.power;
 import java.io.*; import java.security.*;
 public class AdbWire implements Closeable {
- public static int dumps,connections,closes; public static boolean stale,allow;
+ public static int dumps,connections,closes; public static float db=-30f; public static boolean stale,allow;
  public static KeyPair identity(File f){return null;}
  public void connect(int port,KeyPair k,int timeout,Runnable prompt,boolean newApproval) throws Exception {
    if(port!=5555||newApproval)throw new AssertionError("must reuse trusted loopback identity"); connections++;
@@ -77,7 +77,7 @@ public class AdbWire implements Closeable {
   if(!command.equals("dumpsys media.audio_flinger"))throw new AssertionError("unexpected command");
   dumps++;
   String stamp=new java.text.SimpleDateFormat("MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis()-(stale?5000:50)));
-  return new Result("Output thread x, type 1 (DIRECT):\\n Standby: no\\n Signal power history:\\n "+stamp+": -30.0 -10.0\\n");
+  return new Result("Output thread x, type 1 (DIRECT):\\n Standby: no\\n Signal power history:\\n "+stamp+": -30.0 "+db+"\\n");
  }
  public void close() throws IOException {closes++;}
 }''',
@@ -93,6 +93,8 @@ public class WorkerHarness {
   MusicBounceSource s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
   check(!s.unavailable(),"DIRECT rejection reaches real diagnostic reader");
   check(AdbWire.dumps==1 && AdbWire.connections==1,"one trusted connection and one bounded read");
+  s.level(SystemClock.now); AdbWire.db=-10f; SystemClock.now+=150; Handler.next();
+  check(s.level(SystemClock.now)>0,"real diagnostic onset reaches renderer-facing pulse");
   SystemClock.now+=300; check(s.level(SystemClock.now)==0,"stale worker sample expires");
   Handler.next(); check(AdbWire.connections==1,"connection reused");
   Context.permission=-1; int before=AdbWire.dumps; Handler.next();
@@ -109,7 +111,7 @@ public class WorkerHarness {
   Visualizer.silent=true; Handler.next(); SystemClock.now+=1200; Handler.next();
   check(AdbWire.dumps>before && !s.unavailable(),"silent visualizer after route switch recovers real direct levels");
   stop(s);
-  System.out.println("10 actual worker/transport lifecycle scenarios passed");
+  System.out.println("11 actual worker/transport lifecycle scenarios passed");
  }
 }'''
     }
