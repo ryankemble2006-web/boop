@@ -68,7 +68,7 @@ public class PlaybackDanceHarness {
       "unified/JohnnyStatePolicy.java","unified/JohnnyStateProvider.java","scripts/materialize-unified.sh",
       "unified/app-build.gradle","unified/shield-home-manifest.xml",
       *{str((SRC/x).relative_to(ROOT)).replace("\\","/") for x in [
-       "BassEnergy.java","BassOnset.java","PlaybackGroove.java","MusicBounceRenderer.java","BassCaptureState.java","BassCaptureActivity.java","BassCaptureService.java",
+       "ShieldLyricsView.java","ShieldLyricsActivity.java","BassEnergy.java","BassOnset.java","PlaybackGroove.java","MusicBounceRenderer.java","BassCaptureState.java","BassCaptureActivity.java","BassCaptureService.java",
        "MusicBounceSource.java","MusicBounceEnvelope.java","ShieldNowPlayingPuppetView.java","ShieldHomeSettingsView.java"]}
     }
     changed=subprocess.check_output(["git","diff","--name-only","33f3a77dd5c52f9ddfe3427ade66103ca4fcaa62","HEAD","--","source","unified","scripts","launcher","shield-overlay"],cwd=ROOT,text=True).splitlines()

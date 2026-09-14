@@ -11,6 +11,7 @@ import android.view.WindowManager;
 
 /** BOOP-owned presentation following the existing media session, without taking audio focus. */
 public final class ShieldLyricsActivity extends Activity {
+    private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
     private final NativeLyricsLoader loader = new NativeLyricsLoader();
     private ShieldNowPlayingManager manager;
     private ShieldLyricsView presentation;
@@ -32,6 +33,14 @@ public final class ShieldLyricsActivity extends Activity {
             @Override public void next() { manager.next(); }
             @Override public void seek(long milliseconds) { manager.seekBy(milliseconds); }
             @Override public void close() { finish(); }
+            @Override public void browseAlbum() {
+                if (!started || isFinishing()) return;
+                NowPlayingSnapshot current = manager.state().current();
+                if (current == null) return;
+                if ("deezer.android.app".equals(current.packageName()))
+                    albumBrowser.open(ShieldLyricsActivity.this, manager, current);
+                else manager.openSource(ShieldLyricsActivity.this);
+            }
         });
         setContentView(presentation);
     }
@@ -81,7 +90,12 @@ public final class ShieldLyricsActivity extends Activity {
             return state != null && state.getPosition() >= 0 && state.getLastPositionUpdateTime() > 0;
         } catch (RuntimeException unavailable) { return false; }
     }
+    @Override protected void onPause() {
+        albumBrowser.cancel();
+        super.onPause();
+    }
     @Override protected void onStop() {
+        albumBrowser.cancel();
         started = false;
         loader.cancel();
         if (unsubscribe != null) unsubscribe.run();
@@ -89,7 +103,7 @@ public final class ShieldLyricsActivity extends Activity {
         presentation.setRunning(false);
         super.onStop();
     }
-    @Override protected void onDestroy() { loader.destroy(); super.onDestroy(); }
+    @Override protected void onDestroy() { albumBrowser.cancel(); loader.destroy(); super.onDestroy(); }
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
         if (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
             switch (event.getKeyCode()) {

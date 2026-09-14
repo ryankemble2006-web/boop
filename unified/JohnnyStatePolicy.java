@@ -16,7 +16,9 @@ final class JohnnyStatePolicy {
         return allOff ? "off" : "unknown";
     }
     static boolean isFan(String id, String name) {
-        return id.startsWith("fan.") || (id.startsWith("switch.")
+        if (id.startsWith("fan.")) return true;
+        String control = (id + " " + name).toLowerCase(java.util.Locale.ROOT);
+        return !control.contains("oscillat") && (id.startsWith("switch.")
                 && java.util.regex.Pattern.compile("(?i)\\bfan\\b").matcher(name).find());
     }
     static String state(String raw) {

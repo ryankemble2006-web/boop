@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: boop-v175-johnny
+  group: boop-v176-johnny
   cancel-in-progress: true
 jobs:
   build:
@@ -27,7 +27,6 @@ jobs:
       - name: Verify Johnny state isolation
         run: python tests/test_johnny_states_v175.py
       - name: Verify fan power excludes oscillation
-        continue-on-error: true
         run: python tests/test_johnny_fan_power_v176.py
       - name: Verify lyrics album routing
         run: python tests/test_unified_lyrics_activity.py
@@ -95,17 +94,17 @@ jobs:
           set -euo pipefail
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
-          mkdir -p v175-artifact
-          "$TOOLS/aapt" dump badging "$APK" > v175-artifact/badging.txt
-          grep -Fq "package: name='com.boop.alpha1'" v175-artifact/badging.txt
-          grep -Fq "versionCode='175'" v175-artifact/badging.txt
-          grep -Fq "versionName='1.2.175-johnny-state-bridge'" v175-artifact/badging.txt
-          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v175-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.alpha1.johnny_states' v175-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v175-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v175-artifact/manifest-tree.txt
-          "$TOOLS/apksigner" verify --print-certs "$APK" > v175-artifact/signer.txt
-          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v175-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          mkdir -p v176-artifact
+          "$TOOLS/aapt" dump badging "$APK" > v176-artifact/badging.txt
+          grep -Fq "package: name='com.boop.alpha1'" v176-artifact/badging.txt
+          grep -Fq "versionCode='176'" v176-artifact/badging.txt
+          grep -Fq "versionName='1.2.176-lyrics-album'" v176-artifact/badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v176-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.alpha1.johnny_states' v176-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v176-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v176-artifact/manifest-tree.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > v176-artifact/signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v176-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           test -n "$ACTUAL"; test "$ACTUAL" = "$EXPECTED"
           unzip -tq "$APK"
@@ -119,14 +118,14 @@ jobs:
               assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, 'Missing packaged class: '+cls
           print('Actual APK contains native lyrics and music sampler/envelope/renderer bytecode')
           PY
-          cp "$APK" v175-artifact/BOOP-Unified-v175-Johnny-State-Bridge.apk
-          (cd v175-artifact && sha256sum BOOP-Unified-v175-Johnny-State-Bridge.apk > apk-sha256.txt)
-          git rev-parse HEAD > v175-artifact/built-commit.txt
-          printf '%s\n' 'Based directly on accepted v162. Native lyrics source preserved.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v175-artifact/verification.txt
+          cp "$APK" v176-artifact/BOOP-Unified-v176-Lyrics-Album.apk
+          (cd v176-artifact && sha256sum BOOP-Unified-v176-Lyrics-Album.apk > apk-sha256.txt)
+          git rev-parse HEAD > v176-artifact/built-commit.txt
+          printf '%s\n' 'Based directly on accepted v162. Native lyrics source preserved.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v176-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Unified-v175-Johnny-State-Bridge
-          path: v175-artifact/
+          name: BOOP-Unified-v176-Lyrics-Album
+          path: v176-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
         if: always()

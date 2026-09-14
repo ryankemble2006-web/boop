@@ -24,7 +24,7 @@ import java.util.Locale;
 /** Borderless TV music composition. No dialog chrome, external player or audio-focus ownership. */
 public final class ShieldLyricsView extends FrameLayout {
     public interface Controls {
-        void previous(); void playPause(); void next(); void seek(long milliseconds); void close();
+        void previous(); void playPause(); void next(); void seek(long milliseconds); void close(); void browseAlbum();
     }
     private final int accent;
     private final Controls controls;
@@ -67,7 +67,25 @@ public final class ShieldLyricsView extends FrameLayout {
                 new int[]{Color.rgb(11, 18, 22), Color.rgb(3, 5, 7), Color.BLACK}));
         eyebrow = label("NOW PLAYING", 14, Color.rgb(151, 169, 178), true);
         eyebrow.setLetterSpacing(0.18f);
-        artwork = new ImageView(context);
+        artwork = new ImageView(context) {
+            private final Paint focusPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            @Override protected void onFocusChanged(boolean gain, int direction, android.graphics.Rect previous) {
+                super.onFocusChanged(gain, direction, previous);
+                invalidate();
+            }
+            @Override protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                if (hasFocus()) {
+                    float inset = 2f * unit;
+                    focusPaint.setStyle(Paint.Style.STROKE);
+                    focusPaint.setStrokeWidth(3f * unit);
+                    focusPaint.setColor(accent);
+                    canvas.drawRoundRect(inset, inset, getWidth() - inset, getHeight() - inset,
+                            9f * unit, 9f * unit, focusPaint);
+                }
+            }
+        };
+        artwork.setOnClickListener(v -> { if (v.isEnabled()) controls.browseAlbum(); });
         artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
         artwork.setBackgroundColor(Color.rgb(16, 24, 29));
         artwork.setOutlineProvider(new ViewOutlineProvider() {
@@ -104,10 +122,16 @@ public final class ShieldLyricsView extends FrameLayout {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (key == KeyEvent.KEYCODE_DPAD_LEFT) { controls.seek(-10000L); return true; }
             if (key == KeyEvent.KEYCODE_DPAD_RIGHT) { controls.seek(10000L); return true; }
-            if (key == KeyEvent.KEYCODE_DPAD_DOWN) return buttons[2].requestFocus();
+            if (key == KeyEvent.KEYCODE_DPAD_UP) return artwork.isFocusable() && artwork.requestFocus();
+            if (key == KeyEvent.KEYCODE_DPAD_DOWN) return focusTransport();
             return false;
         });
         addView(progress);
+        artwork.setOnKeyListener((v, key, event) -> {
+            if (event.getAction() != KeyEvent.ACTION_DOWN || key != KeyEvent.KEYCODE_DPAD_DOWN) return false;
+            return progress.isFocusable() ? progress.requestFocus() : focusTransport();
+        });
+
         String[] descriptions = {"Previous track", "Rewind ten seconds", "Pause", "Forward ten seconds", "Next track"};
         for (int i = 0; i < buttons.length; i++) {
             final int kind = i;
@@ -128,7 +152,9 @@ public final class ShieldLyricsView extends FrameLayout {
                 }
             });
             button.setOnKeyListener((v, key, event) -> event.getAction() == KeyEvent.ACTION_DOWN
-                    && key == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable() && progress.requestFocus());
+                    && key == KeyEvent.KEYCODE_DPAD_UP
+                    && (progress.isFocusable() ? progress.requestFocus()
+                            : artwork.isFocusable() && artwork.requestFocus()));
             addView(button);
         }
         post(() -> { if (buttons[2].isFocusable()) buttons[2].requestFocus(); });
@@ -141,6 +167,12 @@ public final class ShieldLyricsView extends FrameLayout {
         snapshot = next;
         clockKnown = knownClock;
         artwork.setImageBitmap(next == null ? null : next.artwork());
+        boolean albumAvailable = next != null && NowPlayingSelectionPolicy.eligible(next.playbackState());
+        artwork.setEnabled(albumAvailable);
+        artwork.setFocusable(albumAvailable);
+        artwork.setClickable(albumAvailable);
+        artwork.setContentDescription(next != null && "deezer.android.app".equals(next.packageName())
+                ? "Browse album in Deezer" : "Open source player");
         title.setText(next == null ? "Now Playing" : next.title());
         artist.setText(next == null ? "" : next.subtitle());
         duration.setText(next == null ? "" : time(next.durationMs()));
@@ -157,6 +189,11 @@ public final class ShieldLyricsView extends FrameLayout {
         buttons[2].setContentDescription(next != null && next.isPlaying() ? "Pause" : "Play");
         displayedSecond = Long.MIN_VALUE;
         schedule();
+    }
+    private boolean focusTransport() {
+        if (buttons[2].isFocusable()) return buttons[2].requestFocus();
+        for (TransportButton button : buttons) if (button.isFocusable()) return button.requestFocus();
+        return false;
     }
     public void setDocument(DeezerLyricsDocument document) {
         lyrics.setDocument(document);
