@@ -2,6 +2,7 @@
 #include "ha_port.h"
 #include "control.h"
 #include "oi_render.h"
+#include "wind_render.h"
 #include <jni.h>
 #include <pthread.h>
 #include <setjmp.h>
@@ -25,6 +26,12 @@ typedef struct Player {
  atomic_int oi_ready;
  unsigned oi_token, oi_started, oi_completed;
  int oi_frame;
+ uint32_t *wind_pixels;
+ unsigned wind_loaded,wind_epoch,wind_last;
+ HaWind wind;
+ double wind_power,wind_flow,wind_seconds;
+ int wind_frame,wind_flap;
+ atomic_int wind_percent;
  char path[1024], status[192];
 } Player;
 static pthread_mutex_t engine_lock=PTHREAD_MUTEX_INITIALIZER;
@@ -140,6 +147,8 @@ void ha_present(SDL_Surface *s) {
    uint32_t *row=(uint32_t *)((uint8_t *)s->pixels+y*s->pitch);
    for(unsigned x=0;x<640;x++) active->frame[y*640+x]=row[x]|0xff000000u;
  }
+ if(atomic_load(&active->controls.wind_playing) && atomic_load(&active->controls.wind_ready))
+   ha_wind_pose(active->frame,active->wind_pixels+(active->wind_frame*3+active->wind_flap)*HA_WIND_FRAME_PIXELS,1);
  if(atomic_load(&active->oi_ready) && ha_oi_active())
    ha_oi_compose(active->frame,active->oi_pixels,active->oi_frame);
  active->frames++;
@@ -156,6 +165,7 @@ JNIEXPORT jlong JNICALL JNI_NAME(nCreate)(JNIEnv *env,jclass cls,jstring path,jb
  (*env)->ReleaseStringUTFChars(env,path,s);
  if(length>=(int)sizeof(p->path)) { free(p); return 0; }
  ha_control_init(&p->controls); atomic_store(&p->controls.night,night?1:0);
+ atomic_init(&p->wind_percent,0);
  atomic_init(&p->oi_ready,0); p->oi_frame=-1;
  pthread_mutex_init(&p->frame_lock,NULL); strcpy(p->status,"starting");
  return (jlong)(intptr_t)p;
@@ -197,8 +207,22 @@ JNIEXPORT jboolean JNICALL JNI_NAME(nOi)(JNIEnv *e,jclass c,jlong h) {
 JNIEXPORT void JNICALL JNI_NAME(nCancelOi)(JNIEnv *e,jclass c,jlong h) {
  (void)e;(void)c; ha_cancel_oi(&((Player *)(intptr_t)h)->controls);
 }
-JNIEXPORT jboolean JNICALL JNI_NAME(nFan)(JNIEnv *e,jclass c,jlong h) {
- (void)e;(void)c; return ha_queue_fan(&((Player *)(intptr_t)h)->controls)?JNI_TRUE:JNI_FALSE;
+JNIEXPORT void JNICALL JNI_NAME(nFanState)(JNIEnv *e,jclass c,jlong h,jboolean on) {
+ (void)e;(void)c; ha_set_wind_level(&((Player *)(intptr_t)h)->controls,on);
+}
+JNIEXPORT jboolean JNICALL JNI_NAME(nWindAsset)(JNIEnv *e,jclass c,jlong h,jint index,jintArray pixels) {
+ (void)c;Player *p=(Player *)(intptr_t)h;
+ if(index<0 || index>=HA_WIND_FRAMES || (unsigned)index!=p->wind_loaded ||
+    !pixels || (*e)->GetArrayLength(e,pixels)!=HA_WIND_FRAME_PIXELS) return JNI_FALSE;
+ if(!p->wind_pixels) {
+  p->wind_pixels=calloc(HA_WIND_FRAMES*HA_WIND_FRAME_PIXELS,sizeof(uint32_t));
+  if(!p->wind_pixels)return JNI_FALSE;
+ }
+ (*e)->GetIntArrayRegion(e,pixels,0,HA_WIND_FRAME_PIXELS,(jint *)(p->wind_pixels+index*HA_WIND_FRAME_PIXELS));
+ if((*e)->ExceptionCheck(e))return JNI_FALSE;
+ p->wind_loaded++;
+ if(p->wind_loaded==HA_WIND_FRAMES)atomic_store(&p->controls.wind_ready,1);
+ return JNI_TRUE;
 }
 JNIEXPORT jboolean JNICALL JNI_NAME(nCopy)(JNIEnv *e,jclass c,jlong h,jintArray pixels) {
  (void)c; Player *p=(Player *)(intptr_t)h;
@@ -211,10 +235,44 @@ JNIEXPORT jboolean JNICALL JNI_NAME(nCopy)(JNIEnv *e,jclass c,jlong h,jintArray 
 JNIEXPORT jstring JNICALL JNI_NAME(nStatus)(JNIEnv *e,jclass c,jlong h) {
  (void)c; Player *p=(Player *)(intptr_t)h; char text[320];
  pthread_mutex_lock(&p->frame_lock);
- snprintf(text,sizeof(text),"%s frames=%u fan=%u/%u queued=%u night=%d oi=%u/%u oiPending=%d oiReady=%d",p->status,p->frames,p->completed,p->started,atomic_load(&p->controls.pending),atomic_load(&p->controls.night),p->oi_completed,p->oi_started,ha_oi_is_pending(&p->controls),atomic_load(&p->oi_ready));
+ snprintf(text,sizeof(text),"%s frames=%u fan=%u/%u queued=%u night=%d oi=%u/%u oiPending=%d oiReady=%d windOn=%d windActive=%d windPct=%d windReady=%d",p->status,p->frames,p->completed,p->started,atomic_load(&p->controls.pending),atomic_load(&p->controls.night),p->oi_completed,p->oi_started,ha_oi_is_pending(&p->controls),atomic_load(&p->oi_ready),atomic_load(&p->controls.wind_on),atomic_load(&p->controls.wind_playing),atomic_load(&p->wind_percent),atomic_load(&p->controls.wind_ready));
  pthread_mutex_unlock(&p->frame_lock); return (*e)->NewStringUTF(e,text);
 }
 JNIEXPORT void JNICALL JNI_NAME(nDestroy)(JNIEnv *e,jclass c,jlong h) {
  (void)e;(void)c; Player *p=(Player *)(intptr_t)h;
- pthread_mutex_destroy(&p->frame_lock); free(p);
+ pthread_mutex_destroy(&p->frame_lock); free(p->wind_pixels); free(p);
+}
+
+int ha_wind_requested(void) {return atomic_load(&active->controls.wind_ready)&&atomic_load(&active->controls.wind_on);}
+int ha_wind_active(void) {return atomic_load(&active->controls.wind_playing);}
+int ha_begin_wind(void) {
+ if(!ha_try_begin_wind(&active->controls))return 0;
+ unsigned now=ticks();active->wind_epoch=active->wind_last=now;
+ ha_wind_init(&active->wind,now);ha_wind_set(&active->wind,1,now);
+ active->wind_flow=active->wind_power=active->wind_seconds=0;
+ active->wind_frame=0;active->wind_flap=1;
+ return 1;
+}
+int ha_wind_step(void) {
+ if(ha_oi_is_pending(&active->controls)&&ha_night())return 0;
+ unsigned now=ticks();
+ ha_wind_set(&active->wind,atomic_load(&active->controls.wind_on),now);
+ active->wind_power=ha_wind_strength(&active->wind,now);
+ active->wind_flow+=(uint32_t)(now-active->wind_last)/1000.0*active->wind_power*180;
+ active->wind_last=now;
+ active->wind_seconds=(uint32_t)(now-active->wind_epoch)/1000.0;
+ active->wind_frame=ha_wind_frame(active->wind_power,active->wind_seconds);
+ active->wind_flap=ha_wind_flap(active->wind_power,active->wind_seconds);
+ atomic_store(&active->wind_percent,(int)(active->wind_power*100));
+ return 1;
+}
+int ha_wind_settled(void) {return !active->wind.target && active->wind_power<=0;}
+void ha_end_wind(void) {atomic_store(&active->controls.wind_playing,0);atomic_store(&active->wind_percent,0);}
+double ha_wind_power(void) {return active->wind_power;}
+double ha_wind_travel(void) {return active->wind_flow;}
+double ha_wind_seconds(void) {return active->wind_seconds;}
+void ha_wind_gusts(SDL_Surface *surface) {
+ if(SDL_LockSurface(surface))ha_fail("wind surface lock failed");
+ ha_wind_gust_pixels(surface->pixels,surface->pitch/4,active->wind_power,active->wind_flow,1);
+ SDL_UnlockSurface(surface);
 }

@@ -23,7 +23,7 @@ public final class NativeJohnnyView extends View {
     private final Paint paint = new Paint();
     private final Rect destination = new Rect();
     private long handle;
-    private boolean desiredRunning, night;
+    private boolean desiredRunning, night, fanOn;
     private String lastStatus = "stopped";
 
     public NativeJohnnyView(Context context) {
@@ -38,9 +38,11 @@ public final class NativeJohnnyView extends View {
             final long generation = nCreate(new File(getContext().getFilesDir(), "johnny").getAbsolutePath(), night);
             if (generation == 0) { lastStatus = "native allocation failed"; return; }
             handle = generation;
+            nFanState(generation, fanOn);
             new Thread(() -> {
                 try {
                     loadOiAssets(generation);
+                    loadWindAssets(generation);
                     nRun(generation);
                 }
                 finally {
@@ -72,10 +74,11 @@ public final class NativeJohnnyView extends View {
             if (handle != 0) nNight(handle, value);
         }
     }
-    /** One full fan routine for this request; false if stopped or queue (8) is full. */
-    public boolean requestFan() {
+    /** Confirmed level; unknown observations leave this untouched. */
+    public void setFanState(boolean on) {
         synchronized (guard) {
-            return desiredRunning && handle != 0 && nFan(handle);
+            fanOn = on;
+            if (handle != 0) nFanState(handle, on);
         }
     }
     public boolean requestOi() {
@@ -113,6 +116,36 @@ public final class NativeJohnnyView extends View {
             Log.e("JohnnyHA", "OI assets unavailable; original story remains enabled");
         }
     }
+    private void loadWindAssets(long generation) {
+        int[] assetPixels = new int[240 * 240];
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        try {
+            for (int d = 0; d < 2; d++) for (int lift = 0; lift < 17; lift++) for (int flap = 0; flap < 3; flap++) {
+                synchronized (guard) { if (handle != generation || !desiredRunning) return; }
+                String number = lift < 10 ? "0" + lift : Integer.toString(lift);
+                String name = "wind/WIND-" + (d == 0 ? "R" : "L") + "-" + number + "-" + flap + ".png";
+                Bitmap pose;
+                try (InputStream stream = getContext().getAssets().open(name)) {
+                    pose = BitmapFactory.decodeStream(stream, null, options);
+                }
+                if (pose == null) throw new IOException("Invalid wind asset");
+                try {
+                    if (pose.getWidth() != 240 || pose.getHeight() != 240)
+                        throw new IOException("Unexpected wind asset dimensions");
+                    pose.getPixels(assetPixels, 0, 240, 0, 0, 240, 240);
+                } finally { pose.recycle(); }
+                synchronized (guard) {
+                    if (handle != generation || !desiredRunning) return;
+                    if (!nWindAsset(generation, (d * 17 + lift) * 3 + flap, assetPixels))
+                        throw new IOException("Native wind asset rejected");
+                }
+            }
+        } catch (IOException | RuntimeException error) {
+            Log.e("JohnnyHA", "Wind assets unavailable; original story remains enabled");
+        }
+    }
     public String getStatus() {
         synchronized (guard) { return handle == 0 ? lastStatus : nStatus(handle); }
     }
@@ -139,7 +172,8 @@ public final class NativeJohnnyView extends View {
     private static native void nRun(long handle);
     private static native void nStop(long handle);
     private static native void nNight(long handle, boolean night);
-    private static native boolean nFan(long handle);
+    private static native void nFanState(long handle, boolean on);
+    private static native boolean nWindAsset(long handle, int index, int[] pixels);
     private static native boolean nOiAssets(long handle, int[] pixels);
     private static native boolean nOi(long handle);
     private static native void nCancelOi(long handle);

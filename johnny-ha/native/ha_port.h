@@ -26,4 +26,14 @@ int ha_begin_oi_request(void);
 int ha_oi_active(void);
 void ha_set_oi_frame(unsigned);
 void ha_end_oi(int completed,int interrupted_by_fan);
+int ha_wind_requested(void);
+int ha_wind_active(void);
+int ha_begin_wind(void);
+int ha_wind_step(void);
+int ha_wind_settled(void);
+void ha_end_wind(void);
+double ha_wind_power(void);
+double ha_wind_travel(void);
+double ha_wind_seconds(void);
+void ha_wind_gusts(SDL_Surface *);
 #endif

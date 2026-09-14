@@ -225,3 +225,70 @@ s=once(s,"        ha_check_stop();\n        int requestedFan=ha_take_fan_request
         }
         int requestedFan=ha_take_fan_request();""")
 write("story.c",s)
+
+# Sustained wind replaces the old one-shot command on the active story path.
+s=read("ads.c")
+s=once(s,"void ha_refresh_island(void) {","void ha_refresh_island(void) {\n    if(ha_wind_active()) return;")
+s += """
+#include "wind_state.h"
+static void adsWindOcean(SDL_Surface *base) {
+    islandState.night=ha_night();
+    grLoadScreen(islandState.night ? "NIGHT.SCR" : "OCEAN00.SCR");
+    ttmBackgroundThread.ttmLayer=grBackgroundSfc;
+    grDx=grDy=0;
+    if(islandState.raft>=1 && islandState.raft<=5)
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,512,266,islandState.raft-1,1);
+    SDL_BlitSurface(grBackgroundSfc,NULL,base,NULL);
+}
+void adsPlayWind(void) {
+    SDL_Surface *base=ha_surface(0,640,480,32,0x00ff0000,0x0000ff00,0x000000ff,0);
+    grLoadBmp(&ttmBackgroundSlot,1,"MRAFT.BMP");
+    adsWindOcean(base);
+    while(ha_wind_step()) {
+        ha_check_stop();
+        if(islandState.night!=ha_night()) adsWindOcean(base);
+        SDL_BlitSurface(base,NULL,grBackgroundSfc,NULL);
+        grDx=grDy=0;
+        double travel=ha_wind_travel(),seconds=ha_wind_seconds(),power=ha_wind_power();
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,ha_wind_wrap(55+travel*0.06,820)-150,54,15,0);
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,ha_wind_wrap(580+travel*0.035,880)-180,40,16,0);
+        ha_wind_gusts(grBackgroundSfc);
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,288,279,0,0);
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,396,279,14,0);
+        int wave=(int)(seconds/0.20)%3;
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,270,306,3+wave,0);
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,364,319,6+wave,0);
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,518,303,9+wave,0);
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,442,148,13,0);
+        int sway=ha_wind_round(power*(2+2*sin(seconds*8)));
+        grDrawSprite(grBackgroundSfc,&ttmBackgroundSlot,365+sway,122,12,0);
+        grUpdateDelay=0;
+        grUpdateDisplay(&ttmBackgroundThread,ttmThreads,&ttmHolidayThread);
+        if(ha_wind_settled())break;
+        ha_wait(33);
+    }
+    ha_end_wind();
+    ha_free_surface(base);
+    // Drop all wind effects before OI or normal story can take ownership.
+    islandState.night=ha_night();
+    islandInit(&ttmBackgroundThread);
+    grUpdateDelay=0;
+    grUpdateDisplay(&ttmBackgroundThread,ttmThreads,&ttmHolidayThread);
+}
+"""
+write("ads.c",s)
+s=read("story.c")
+s=once(s,"        if(!ha_fan_pending() && ha_begin_oi_request()) {","        if(ha_begin_oi_request()) {")
+s=once(s,"        int requestedFan=ha_take_fan_request();",
+"""        if(ha_begin_wind()) {
+            extern void adsPlayWind(void);
+            islandState.xPos=islandState.yPos=0;
+            islandState.lowTide=0;
+            adsInitIsland();
+            adsPlayWind();
+            adsReleaseIsland();
+            continue;
+        }
+        int requestedFan=0; // old one-shot fan path is retired; wind is a level
+""")
+write("story.c",s)
