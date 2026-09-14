@@ -17,6 +17,8 @@ jobs:
         run: |
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/control_test.c -o /tmp/control-test
           /tmp/control-test
+          cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/music_test.c -o /tmp/music-test
+          /tmp/music-test
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/wind_state_test.c -lm -o /tmp/wind-test
           /tmp/wind-test
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/wind_episode_test.c -lm -o /tmp/wind-episode-test
