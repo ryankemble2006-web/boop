@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include "../native/control.h"
 int main(void) {
+ assert(ha_oi_exit_reason(3149,0)==0);
+ assert(ha_oi_exit_reason(3149,1)==2);
+ assert(ha_oi_exit_reason(3150,1)==1);
+ assert(ha_oi_exit_reason(3151,1)==1);
  HaControl c; ha_control_init(&c); unsigned token=0;
  assert(!ha_queue_oi(&c));
  atomic_store(&c.night,1);
