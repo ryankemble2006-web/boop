@@ -1,3 +1,9 @@
+# v173 musical verdict — capture stopped
+
+Ryan reports v173 is sharper but not focused on the desired musical accents; varied music makes universal beat matching unsuitable. This is NOT physical rhythm acceptance. User is considering simulated dance. Proposed next direction: varied, non-metronomic sways/nods/flourishes gated by playback; awaiting preference before implementation. Do not restore the rejected regular clock-hop unchanged or describe it as beat-synchronized.
+
+Stopped capture explicitly after verdict and confirmed MediaProjection null. v173 remains installed; old fallback may move outside capture. No v174 changes yet.
+
 # v173 bass attack canary installed — physical verdict pending
 
 Updated 2026-09-14. Branch `boop-dance-levels-v167`.
