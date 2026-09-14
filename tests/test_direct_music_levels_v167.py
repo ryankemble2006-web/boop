@@ -49,3 +49,76 @@ def main():
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.DirectLevelsHarness"],check=True)
     # Exact existing renderer behavior is covered by the inherited Java harness.
 if __name__=="__main__": main()
+
+# Compile production worker and diagnostic transport adapter against deterministic platform boundaries.
+def lifecycle():
+    import textwrap
+    stubs = {
+      "android/Manifest.java": 'package android; public class Manifest { public static class permission { public static final String RECORD_AUDIO="record"; }}',
+      "android/content/pm/PackageManager.java": 'package android.content.pm; public class PackageManager { public static final int PERMISSION_GRANTED=0; }',
+      "android/content/Context.java": 'package android.content; public class Context { public static int permission=0; public static java.io.File dir; public Context getApplicationContext(){return this;} public int checkSelfPermission(String x){return permission;} public java.io.File getNoBackupFilesDir(){return dir;} }',
+      "android/os/SystemClock.java": 'package android.os; public class SystemClock { public static long now=1000; public static long uptimeMillis(){return now;} }',
+      "android/os/Process.java": 'package android.os; public class Process { public static final int THREAD_PRIORITY_BACKGROUND=10; }',
+      "android/os/HandlerThread.java": 'package android.os; public class HandlerThread { public HandlerThread(String n,int p){} public void start(){} public Object getLooper(){return null;} public void quitSafely(){} }',
+      "android/os/Handler.java": 'package android.os; public class Handler { public static java.util.ArrayDeque<Runnable> q=new java.util.ArrayDeque<>(); public Handler(Object o){} public void post(Runnable r){q.add(r);} public void postDelayed(Runnable r,long n){q.add(r);} public void removeCallbacks(Runnable r){q.removeIf(x->x==r);} public static void next(){q.remove().run();} }',
+      "android/util/Log.java": 'package android.util; public class Log { public static int i(String t,String m){return 0;} public static int w(String t,String m){return 0;} }',
+      "android/media/audiofx/Visualizer.java": 'package android.media.audiofx; public class Visualizer { public static boolean fail=true; public static final int SUCCESS=0,SCALING_MODE_AS_PLAYED=1; public Visualizer(int s){if(fail)throw new RuntimeException("DIRECT");} public static int[] getCaptureSizeRange(){return new int[]{8,512};} public boolean getEnabled(){return false;} public int setEnabled(boolean b){return 0;} public int setCaptureSize(int s){return 0;} public int setScalingMode(int s){return 0;} public int getWaveForm(byte[] a){for(int i=0;i<a.length;i++)a[i]=(byte)(i%2==0?90:166); return 0;} public void release(){} }',
+      "com/boop/shieldturbo/power/AdbWire.java": '''package com.boop.shieldturbo.power;
+import java.io.*; import java.security.*;
+public class AdbWire implements Closeable {
+ public static int dumps,connections,closes; public static boolean stale,allow;
+ public static KeyPair identity(File f){return null;}
+ public void connect(int port,KeyPair k,int timeout,Runnable prompt,boolean newApproval) throws Exception {
+   if(port!=5555||newApproval)throw new AssertionError("must reuse trusted loopback identity"); connections++;
+ }
+ public static class Result { public int exitCode=0; public String output; Result(String s){output=s;} }
+ public Result execute(String command,int timeout) throws IOException {
+  if(command.equals("id -u")) return new Result("2000");
+  if(!command.equals("dumpsys media.audio_flinger"))throw new AssertionError("unexpected command");
+  dumps++;
+  String stamp=new java.text.SimpleDateFormat("MM-dd HH:mm:ss.SSS").format(new java.util.Date(System.currentTimeMillis()-(stale?5000:50)));
+  return new Result("Output thread x, type 1 (DIRECT):\\n Standby: no\\n Signal power history:\\n "+stamp+": -30.0 -10.0\\n");
+ }
+ public void close() throws IOException {closes++;}
+}''',
+      "com/boop/shieldhome/WorkerHarness.java": '''package com.boop.shieldhome;
+import android.content.Context; import android.os.Handler; import android.os.SystemClock;
+import android.media.audiofx.Visualizer; import com.boop.shieldturbo.power.AdbWire;
+public class WorkerHarness {
+ static void check(boolean b,String name){if(!b)throw new AssertionError(name);}
+ static void stop(MusicBounceSource s){s.stop(); while(!Handler.q.isEmpty())Handler.next();}
+ public static void main(String[] args) throws Exception {
+  Context.dir=new java.io.File(args[0]); Context.dir.mkdirs();
+  new java.io.File(Context.dir,"boop-unified-local-adb.key").createNewFile();
+  MusicBounceSource s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
+  check(s.level(SystemClock.now)>0,"DIRECT rejection reaches real diagnostic reader");
+  check(AdbWire.dumps==1 && AdbWire.connections==1,"one trusted connection and one bounded read");
+  SystemClock.now+=300; check(s.level(SystemClock.now)==0,"stale worker sample expires");
+  Handler.next(); check(AdbWire.connections==1,"connection reused");
+  Context.permission=-1; int before=AdbWire.dumps; Handler.next();
+  check(AdbWire.dumps==before && s.level(SystemClock.now)==0,"revoked audio access stops diagnostic reads");
+  stop(s); check(s.level(SystemClock.now)==0 && AdbWire.closes>0,"stop closes diagnostic transport");
+  Context.permission=0; AdbWire.stale=true;
+  s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
+  check(s.level(SystemClock.now)==0 && s.unavailable(),"stale diagnostic becomes unavailable");
+  stop(s); AdbWire.stale=false; Visualizer.fail=false; before=AdbWire.dumps;
+  s=new MusicBounceSource(new Context()); s.setActive(true); Handler.next();
+  check(s.level(SystemClock.now)>0 && AdbWire.dumps==before,"working visualizer retains existing path");
+  stop(s);
+  System.out.println("8 actual worker/transport lifecycle scenarios passed");
+ }
+}'''
+    }
+    with tempfile.TemporaryDirectory() as d:
+        files=[]
+        for path,content in stubs.items():
+            target=pathlib.Path(d)/path
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_text(textwrap.dedent(content))
+            files.append(str(target))
+        files += [str(SRC/n) for n in ["MusicBounceSource.java","MusicBounceEnvelope.java","DirectMusicSource.java","DirectMusicLevels.java"]]
+        subprocess.run(["javac","-d",d,*files],check=True)
+        subprocess.run(["java","-cp",d,"com.boop.shieldhome.WorkerHarness",str(pathlib.Path(d)/"identity")],check=True)
+
+if __name__=="__main__":
+    lifecycle()
