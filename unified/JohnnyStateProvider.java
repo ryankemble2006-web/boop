@@ -22,7 +22,7 @@ import java.util.HashSet;
 
 /** Read-only, fixed-area bridge. Credentials and arbitrary HA access never leave BOOP. */
 public final class JohnnyStateProvider extends ContentProvider {
-    private String token, base;
+    private String token, base, credential;
     private long tokenTime, snapshotTime;
     private String cached;
     @Override public boolean onCreate() { return true; }
@@ -62,9 +62,12 @@ public final class JohnnyStateProvider extends ContentProvider {
         if (cached != null && now - snapshotTime < 1500) return cached;
         try {
             SecureTokenStore store = BoopVoiceTokenStore.create(getContext());
-            if (!store.hasConnection()) throw new IllegalStateException();
+            if (!store.hasConnection()) { token = null; credential = null; throw new IllegalStateException(); }
+            String currentCredential = store.getRefreshToken();
             String currentBase = HomeAssistantAuthUrls.trim(store.getBaseUrl());
-            if (!currentBase.equals(base)) { base = currentBase; token = null; }
+            if (!currentBase.equals(base) || !java.util.Objects.equals(currentCredential, credential)) {
+                base = currentBase; credential = currentCredential; token = null;
+            }
             if (token == null || now - tokenTime > 20 * 60 * 1000) {
                 token = new HomeAssistantAuth(getContext(), store).freshAccessToken();
                 tokenTime = now;
