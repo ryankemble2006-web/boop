@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <android/log.h>
 #include "mytypes.h"
 #include "resource.h"
 #include "graphics.h"
