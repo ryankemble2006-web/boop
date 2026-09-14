@@ -1,3 +1,15 @@
+# v173 bass attack canary — build pending
+
+Updated 2026-09-14. Owner branch `boop-dance-levels-v167`.
+
+Ryan authorized studying Velo Visualiser and implementing an inspired detector after rejecting v172 continuous bass response for trance. Independently written adaptive onset detector uses unclipped35–120Hz energy, relative rise/baseline gates,200ms repeat suppression and100ms pulse. Capture reads256stereo frames at44100Hz with urgent-audio scheduling. Detector timing counts audio frames; display freshness retains uptime. No Velo source copied; reference https://github.com/rorygallagher2024/velo-visualiser . No driver latency bypass or universal kick separation claim.
+
+Source `fb6855422f072392edab7bd25376f14969768237`, run34873273139 pending. Missing implementation RED34873058675 observed. New steady PCM40/60/100Hz and pulsed60Hz multiplegain/phase fixtures pass; full build still running. Review caught per-read wall-clock batching loss; fixed to sample time, follow-up review pending. Preserve native routing, both Johnny exclusions, voice, artwork and explicit ten-minute consent. No phone changes.
+
+NOT installed yet. Shield remains v172, captureOFF, musical response rejected. Next: complete checks/review, verify permanent signer/APK, install Shield only, confirmactualnative44100 capture, then request Ryan's judgement.
+
+---
+
 ## v172 bass capture canary installed (2026-09-14)
 
 Controlled playback-capture probe preserved DIRECT44100 HDMI while delivering real PCM; pause/resume/one-minute cleanup verified. Temporary probe removed. v172 integrates explicit ten-minute Deezer35–120Hz capture with4msattack/90msrelease and16msviewupdates. Old fallback remains when capture is off; it is not bass-driven.
