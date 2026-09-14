@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify bass energy and capture lifetime
+        run: python tests/test_bass_capture_v172.py
       - name: Verify silent screensaver preserves audio routing
         run: |
           mkdir -p "$RUNNER_TEMP/audio-policy"
