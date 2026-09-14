@@ -20,7 +20,7 @@ printf '%s  %s\n' "$AAR_SHA256" "$CACHE/$AAR" | sha256sum -c -
 if [ ! -f "$CACHE/$MODEL_ARCHIVE" ]; then
   curl -fL --retry 3 -o "$CACHE/$MODEL_ARCHIVE" "$BASE/kws-models/$MODEL_ARCHIVE"
 fi
-curl -fsSL "$BASE/kws-models/checksum.txt" -o "$CACHE/checksum.txt"
+curl -fsSL --retry 3 "$BASE/kws-models/checksum.txt?build=${GITHUB_RUN_ID:-local}" -o "$CACHE/checksum.txt"
 MODEL_SHA256="$(awk -v name="$MODEL_ARCHIVE" '$1 == name {print $2; exit} $2 == name {print $1; exit}' "$CACHE/checksum.txt")"
 test -n "$MODEL_SHA256"
 printf '%s' "$MODEL_SHA256" | grep -Eq '^[0-9a-fA-F]{64}$'

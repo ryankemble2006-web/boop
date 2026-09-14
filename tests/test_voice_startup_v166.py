@@ -18,6 +18,9 @@ def method(text, signature):
     return text[start:end]
 
 STUBS = {
+"com/boop/shared/BoopState.java": """package com.boop.shared;
+public class BoopState {public static final BoopState INSTANCE=new BoopState();public void speech(boolean listening,boolean speaking){}}""",
+
 "android/os/Looper.java": """package android.os;
 public class Looper { public static Looper getMainLooper() { return new Looper(); } }""",
 "android/os/Handler.java": """package android.os;
@@ -62,7 +65,26 @@ package com.boop.alpha1;
 import android.speech.tts.TextToSpeech;
 import android.os.Handler;
 import java.util.Locale;
-public class SpeechStartupHarness implements TextToSpeech.OnInitListener {
+class StubActivity {protected void onPause(){}}
+public class SpeechStartupHarness extends StubActivity implements TextToSpeech.OnInitListener {
+ boolean activityInForeground=true;
+ boolean assistantFollowUpAfterTts,sleepFaceAfterTts,assistantFollowUpListening,faceTouchActive;
+ String latestAssistantFollowUpPartial;
+ final Noop shakeDetector=new Noop(),recipeSession=new Noop();
+ Noop sensorManager,recipePanel,notificationInPlaceController,presencePeekController,mirrorController,dockModeController,chatModeDialog;
+ static class Noop {void reset(){}void cancel(){}void cancelPending(){}void close(){}void dismiss(){}void onPause(){}void unregisterListener(Object x){}}
+ static class BoopNotificationRuntime {static BoopNotificationRuntime get(Object x){return new BoopNotificationRuntime();}void unregisterWallHost(Object x){}}
+ void cancelAssistantFollowUpSilenceTimeout(){}void closeWakeAudioSession(){}void cancelFaceHolds(){}void wakeFaceForInteraction(){}
+ final Wake wakeCoordinator=new Wake();
+ static class Wake {
+  final BoopWakeSessionState state=new BoopWakeSessionState();
+  void onTtsStarting(){state.setTtsSpeaking(true);}
+  void onTtsFinished(){state.setTtsSpeaking(false);}
+  void endForegroundSession(){state.endForegroundSession();}
+  void resume(){state.beginForegroundSession();state.setWakeAllowed(true);state.setMicrophonePermission(true);state.setRecognitionSupported(true);}
+ }
+ BoopSpeechBackend naturalSpeechBackend;
+
  boolean ttsReady, finishing, destroyed;
  final TextToSpeech tts=new TextToSpeech();
  final BoopAndroidSpeechBackend androidSpeechBackend=new BoopAndroidSpeechBackend(tts);
@@ -71,14 +93,16 @@ public class SpeechStartupHarness implements TextToSpeech.OnInitListener {
  static class VoiceController {
   float pitch(){return 1.12f;} float speechRate(){return .96f;}
   void initialize(TextToSpeech t,Locale l){}
+  boolean naturalBackendSelectedAndUsable(){return false;}
+  BoopVoiceController.NaturalVoice selectedNaturalVoice(){return new BoopVoiceController.NaturalVoice();}
  }
  boolean isFinishing(){return finishing;} boolean isDestroyed(){return destroyed;}
  void runOnUiThread(Runnable r){r.run();}
- void finishTtsUtterance(){completions++;}
+ void finishTtsUtterance(){completions++;wakeCoordinator.onTtsFinished();}
  __METHODS__
  static void check(boolean yes,String message){if(!yes)throw new AssertionError(message);}
  void ready(){tts.ready=true;onInit(TextToSpeech.SUCCESS);Handler.advance(0);}
- static SpeechStartupHarness fresh(){Handler.reset();return new SpeechStartupHarness();}
+ static SpeechStartupHarness fresh(){Handler.reset();SpeechStartupHarness a=new SpeechStartupHarness();a.wakeCoordinator.resume();return a;}
  static void cold(){
   SpeechStartupHarness a=fresh();a.speakWithAndroidTts("Done");
   check(a.completions==0,"reply discarded before speech engine became ready");
@@ -135,14 +159,27 @@ public class SpeechStartupHarness implements TextToSpeech.OnInitListener {
   SpeechStartupHarness a=fresh();a.tts.reject=true;a.speakWithAndroidTts("Done");a.ready();
   check(a.completions==1,"rejected queued speech left assistant waiting");
  }
+ static void paused(){
+  SpeechStartupHarness a=fresh();a.speak("Done");
+  check(a.wakeCoordinator.state.state()==BoopWakeSessionState.State.SPEAKING,"test did not enter speaking state");
+  a.activityInForeground=false;a.onPause();a.ready();Handler.advance(11000);
+  a.activityInForeground=true;a.wakeCoordinator.resume();
+  check(a.wakeCoordinator.state.state()==BoopWakeSessionState.State.ARMED,"cancelled reply left wake recognition stuck speaking");
+  check(a.tts.calls==0&&a.completions==0,"paused reply spoke or fired completion");
+ }
+ static void late(){
+  SpeechStartupHarness a=fresh();a.activityInForeground=false;a.onPause();
+  a.speak("Late result");a.speakWithAndroidTts("Late fallback");a.ready();Handler.advance(11000);
+  check(a.tts.calls==0&&a.completions==0,"late response played or completed while backgrounded");
+ }
  public static void main(String[] args){
   int failures=0;
-  for(String name:new String[]{"cold","warm","timeout","initFailure","languageFailure","replace","cancel","release","stale","rejected"}){
+  for(String name:new String[]{"cold","warm","timeout","initFailure","languageFailure","replace","cancel","release","stale","rejected","paused","late"}){
    try{SpeechStartupHarness.class.getDeclaredMethod(name).invoke(null);System.out.println("PASS "+name);}
    catch(Throwable x){failures++;System.out.println("FAIL "+name+": "+x.getCause());}
   }
   if(failures>0)throw new AssertionError(failures+" speech lifecycle regressions");
-  System.out.println("10 speech startup/playback scenarios passed");
+  System.out.println("12 speech startup/playback scenarios passed");
  }
 }
 """
@@ -172,9 +209,10 @@ with tempfile.TemporaryDirectory() as folder:
         target.write_text(content)
     pkg=out/"com/boop/alpha1"
     pkg.mkdir(parents=True)
-    for name in ("BoopAndroidSpeechBackend.java","BoopSpeechBackend.java","BoopVoiceTuning.java"):
+    for name in ("BoopAndroidSpeechBackend.java","BoopSpeechBackend.java","BoopVoiceTuning.java","BoopWakeSessionState.java"):
         (pkg/name).write_text((ROOT/name).read_text())
-    methods=method(main,"private void speakWithAndroidTts(String text)")+"\n"+method(main,"public void onInit(int status)")
+    (pkg/"BoopVoiceController.java").write_text("package com.boop.alpha1;class BoopVoiceController {static class NaturalVoice {int sid(){return 21;}}}")
+    methods=method(main,"private void speakWithAndroidTts(String text)")+"\n"+method(main,"public void onInit(int status)")+"\n"+method(main,"private void speak(String text)")+"\n"+method(main,"protected void onPause()")
     (pkg/"SpeechStartupHarness.java").write_text(HARNESS.replace("__METHODS__",methods))
     subprocess.run(["javac","-d",str(out),*[str(p) for p in out.rglob("*.java")]],check=True)
     subprocess.run(["java","-cp",str(out),"com.boop.alpha1.SpeechStartupHarness"],check=True)

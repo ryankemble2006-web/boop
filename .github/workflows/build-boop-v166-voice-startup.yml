@@ -37,7 +37,7 @@ jobs:
         with:
           gradle-version: '9.6.0'
           cache-read-only: true
-      - name: Materialize the v162-derived candidate
+      - name: Prepare Android SDK and test tools
         run: |
           sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
           python -m pip install pytest
@@ -60,7 +60,7 @@ jobs:
           printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
           chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
-      - name: Build signed v166 for Ryan to test
+      - name: Build signed voice startup repair for device testing
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
