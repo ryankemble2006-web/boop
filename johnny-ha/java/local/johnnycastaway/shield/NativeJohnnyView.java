@@ -3,6 +3,10 @@ package local.johnnycastaway.shield;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
+import java.io.InputStream;
+import java.io.IOException;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -35,7 +39,10 @@ public final class NativeJohnnyView extends View {
             if (generation == 0) { lastStatus = "native allocation failed"; return; }
             handle = generation;
             new Thread(() -> {
-                try { nRun(generation); }
+                try {
+                    loadOiAssets(generation);
+                    nRun(generation);
+                }
                 finally {
                     synchronized (guard) {
                         lastStatus = nStatus(generation);
@@ -71,6 +78,41 @@ public final class NativeJohnnyView extends View {
             return desiredRunning && handle != 0 && nFan(handle);
         }
     }
+    public boolean requestOi() {
+        synchronized (guard) { return desiredRunning && handle != 0 && nOi(handle); }
+    }
+    public void cancelOi() {
+        synchronized (guard) { if (handle != 0) nCancelOi(handle); }
+    }
+    private void loadOiAssets(long generation) {
+        int[] assetPixels = new int[5 * 80 * 90 + 92 * 64];
+        int offset = 0;
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        try {
+            for (int i = 0; i < 6; i++) {
+                String name = i == 5 ? "OI-BUBBLE.png" : "SHRUG.00" + i + ".png";
+                int width = i == 5 ? 92 : 80, height = i == 5 ? 64 : 90;
+                Bitmap pose;
+                try (InputStream stream = getContext().getAssets().open("oi/" + name)) {
+                    pose = BitmapFactory.decodeStream(stream, null, options);
+                }
+                if (pose == null) throw new IOException("Invalid OI asset");
+                try {
+                    if (pose.getWidth() != width || pose.getHeight() != height)
+                        throw new IOException("Unexpected OI asset dimensions");
+                    pose.getPixels(assetPixels, offset, width, 0, 0, width, height);
+                    offset += width * height;
+                } finally { pose.recycle(); }
+            }
+            synchronized (guard) {
+                if (handle == generation && desiredRunning) nOiAssets(generation, assetPixels);
+            }
+        } catch (IOException | RuntimeException error) {
+            Log.e("JohnnyHA", "OI assets unavailable; original story remains enabled");
+        }
+    }
     public String getStatus() {
         synchronized (guard) { return handle == 0 ? lastStatus : nStatus(handle); }
     }
@@ -98,6 +140,9 @@ public final class NativeJohnnyView extends View {
     private static native void nStop(long handle);
     private static native void nNight(long handle, boolean night);
     private static native boolean nFan(long handle);
+    private static native boolean nOiAssets(long handle, int[] pixels);
+    private static native boolean nOi(long handle);
+    private static native void nCancelOi(long handle);
     private static native boolean nCopy(long handle, int[] pixels);
     private static native String nStatus(long handle);
     private static native void nDestroy(long handle);

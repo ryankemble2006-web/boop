@@ -21,4 +21,9 @@ void ha_fan_started(void);
 void ha_fan_finished(void);
 void ha_present(SDL_Surface *);
 void ha_wait(unsigned);
+unsigned ha_clock_ms(void);
+int ha_begin_oi_request(void);
+int ha_oi_active(void);
+void ha_set_oi_frame(unsigned);
+void ha_end_oi(int completed,int interrupted_by_fan);
 #endif

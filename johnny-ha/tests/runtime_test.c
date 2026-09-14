@@ -10,6 +10,7 @@ void storyPlay(void) {}
 int main(void) {
  Player *p=calloc(1,sizeof(*p)); assert(p);
  ha_control_init(&p->controls);
+ atomic_init(&p->oi_ready,0);
  pthread_mutex_init(&p->frame_lock,NULL);
  strcpy(p->path,"/tmp");
  active=p;

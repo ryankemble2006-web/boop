@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "ha_port.h"
 #include "control.h"
+#include "oi_render.h"
 #include <jni.h>
 #include <pthread.h>
 #include <setjmp.h>
@@ -20,6 +21,10 @@ typedef struct Player {
  pthread_mutex_t frame_lock;
  uint32_t frame[640*480];
  unsigned frames, started, completed;
+ uint32_t oi_pixels[HA_OI_PIXELS];
+ atomic_int oi_ready;
+ unsigned oi_token, oi_started, oi_completed;
+ int oi_frame;
  char path[1024], status[192];
 } Player;
 static pthread_mutex_t engine_lock=PTHREAD_MUTEX_INITIALIZER;
@@ -92,11 +97,27 @@ void ha_wait(unsigned delay) {
  unsigned left;
  while((left=ha_remaining_ms(last_tick,ticks(),delay))) {
    ha_check_stop();
-   if(ha_should_preempt()) break;
+   if(ha_preempt_wait(&active->controls)) break;
    struct timespec t={0,(long)(left>5?5:left)*1000000L};
    nanosleep(&t,NULL);
  }
  last_tick=ticks(); ha_check_stop();
+}
+unsigned ha_clock_ms(void) { return ticks(); }
+int ha_begin_oi_request(void) {
+ if(!atomic_load(&active->oi_ready) || !ha_begin_oi(&active->controls,&active->oi_token)) return 0;
+ active->oi_frame=-1;
+ pthread_mutex_lock(&active->frame_lock); active->oi_started++; pthread_mutex_unlock(&active->frame_lock);
+ return 1;
+}
+int ha_oi_active(void) { return ha_oi_is_current(&active->controls,active->oi_token); }
+void ha_set_oi_frame(unsigned elapsed) { active->oi_frame=ha_oi_frame(elapsed); }
+void ha_end_oi(int completed,int interrupted_by_fan) {
+ if(completed && ha_oi_active()) {
+  pthread_mutex_lock(&active->frame_lock); active->oi_completed++; pthread_mutex_unlock(&active->frame_lock);
+ }
+ ha_finish_oi(&active->controls,active->oi_token,interrupted_by_fan);
+ active->oi_frame=-1;
 }
 int ha_should_preempt(void) { return ha_preempt_normal(&active->controls); }
 int ha_night(void) { return atomic_load(&active->controls.night); }
@@ -119,6 +140,8 @@ void ha_present(SDL_Surface *s) {
    uint32_t *row=(uint32_t *)((uint8_t *)s->pixels+y*s->pitch);
    for(unsigned x=0;x<640;x++) active->frame[y*640+x]=row[x]|0xff000000u;
  }
+ if(atomic_load(&active->oi_ready) && ha_oi_active())
+   ha_oi_compose(active->frame,active->oi_pixels,active->oi_frame);
  active->frames++;
  pthread_mutex_unlock(&active->frame_lock);
  SDL_UnlockSurface(s);
@@ -133,6 +156,7 @@ JNIEXPORT jlong JNICALL JNI_NAME(nCreate)(JNIEnv *env,jclass cls,jstring path,jb
  (*env)->ReleaseStringUTFChars(env,path,s);
  if(length>=(int)sizeof(p->path)) { free(p); return 0; }
  ha_control_init(&p->controls); atomic_store(&p->controls.night,night?1:0);
+ atomic_init(&p->oi_ready,0); p->oi_frame=-1;
  pthread_mutex_init(&p->frame_lock,NULL); strcpy(p->status,"starting");
  return (jlong)(intptr_t)p;
 }
@@ -157,6 +181,21 @@ JNIEXPORT void JNICALL JNI_NAME(nStop)(JNIEnv *e,jclass c,jlong h) {
 }
 JNIEXPORT void JNICALL JNI_NAME(nNight)(JNIEnv *e,jclass c,jlong h,jboolean night) {
  (void)e;(void)c; atomic_store(&((Player *)(intptr_t)h)->controls.night,night?1:0);
+ if(!night) ha_cancel_oi(&((Player *)(intptr_t)h)->controls);
+}
+JNIEXPORT jboolean JNICALL JNI_NAME(nOiAssets)(JNIEnv *e,jclass c,jlong h,jintArray pixels) {
+ (void)c; Player *p=(Player *)(intptr_t)h;
+ if(!pixels || (*e)->GetArrayLength(e,pixels)!=HA_OI_PIXELS) return JNI_FALSE;
+ (*e)->GetIntArrayRegion(e,pixels,0,HA_OI_PIXELS,(jint *)p->oi_pixels);
+ if((*e)->ExceptionCheck(e)) return JNI_FALSE;
+ atomic_store(&p->oi_ready,1); return JNI_TRUE;
+}
+JNIEXPORT jboolean JNICALL JNI_NAME(nOi)(JNIEnv *e,jclass c,jlong h) {
+ (void)e;(void)c; Player *p=(Player *)(intptr_t)h;
+ return atomic_load(&p->oi_ready) && ha_queue_oi(&p->controls) ? JNI_TRUE : JNI_FALSE;
+}
+JNIEXPORT void JNICALL JNI_NAME(nCancelOi)(JNIEnv *e,jclass c,jlong h) {
+ (void)e;(void)c; ha_cancel_oi(&((Player *)(intptr_t)h)->controls);
 }
 JNIEXPORT jboolean JNICALL JNI_NAME(nFan)(JNIEnv *e,jclass c,jlong h) {
  (void)e;(void)c; return ha_queue_fan(&((Player *)(intptr_t)h)->controls)?JNI_TRUE:JNI_FALSE;
@@ -172,7 +211,7 @@ JNIEXPORT jboolean JNICALL JNI_NAME(nCopy)(JNIEnv *e,jclass c,jlong h,jintArray 
 JNIEXPORT jstring JNICALL JNI_NAME(nStatus)(JNIEnv *e,jclass c,jlong h) {
  (void)c; Player *p=(Player *)(intptr_t)h; char text[320];
  pthread_mutex_lock(&p->frame_lock);
- snprintf(text,sizeof(text),"%s frames=%u fan=%u/%u queued=%u night=%d",p->status,p->frames,p->completed,p->started,atomic_load(&p->controls.pending),atomic_load(&p->controls.night));
+ snprintf(text,sizeof(text),"%s frames=%u fan=%u/%u queued=%u night=%d oi=%u/%u oiPending=%d oiReady=%d",p->status,p->frames,p->completed,p->started,atomic_load(&p->controls.pending),atomic_load(&p->controls.night),p->oi_completed,p->oi_started,ha_oi_is_pending(&p->controls),atomic_load(&p->oi_ready));
  pthread_mutex_unlock(&p->frame_lock); return (*e)->NewStringUTF(e,text);
 }
 JNIEXPORT void JNICALL JNI_NAME(nDestroy)(JNIEnv *e,jclass c,jlong h) {

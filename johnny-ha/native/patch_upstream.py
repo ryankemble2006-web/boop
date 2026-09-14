@@ -171,3 +171,53 @@ write("story.c",s)
 s=read("graphics.c")
 s=once(s,"void grFadeOut()\n{","void grFadeOut()\n{\n    if(ha_should_preempt()) return;")
 write("graphics.c",s)
+
+# OI uses the same source-level cleanup boundary, then a dedicated single actor.
+# The standing lead-in comes from the original archive, not an extra PNG.
+s=read("ads.c")
+s += """
+void adsPlayOi(void) {
+    adsAddScene(0,0,0);
+    grLoadBmp(ttmSlots,0,"SHKNFIST.BMP");
+    unsigned start=ha_clock_ms(), last_wave=0;
+    int completed=0, interrupted_by_fan=0;
+    while(ha_oi_active()) {
+        ha_check_stop();
+        if(ha_fan_pending()) { interrupted_by_fan=1; break; }
+        unsigned elapsed=ha_clock_ms()-start;
+        if(elapsed>=3150) { completed=1; break; }
+        ha_set_oi_frame(elapsed);
+        grClearScreen(ttmThreads[0].ttmLayer);
+        grDx=grDy=0;
+        if(elapsed<250)
+            grDrawSprite(ttmThreads[0].ttmLayer,ttmSlots,365,226,0,0);
+        if(elapsed-last_wave>=160) {
+            islandAnimate(&ttmBackgroundThread);
+            last_wave=elapsed;
+        }
+        grUpdateDelay=0;
+        grUpdateDisplay(&ttmBackgroundThread,ttmThreads,&ttmHolidayThread);
+        unsigned remaining=3150-(ha_clock_ms()-start);
+        if(remaining>3150) remaining=0;
+        ha_wait(remaining<40?remaining:40);
+    }
+    adsStopScene(0);
+    ttmResetSlot(ttmSlots);
+    ha_end_oi(completed,interrupted_by_fan);
+}
+"""
+write("ads.c",s)
+s=read("story.c")
+s=once(s,"        ha_check_stop();\n        int requestedFan=ha_take_fan_request();",
+"""        ha_check_stop();
+        if(!ha_fan_pending() && ha_begin_oi_request()) {
+            extern void adsPlayOi(void);
+            islandState.xPos=islandState.yPos=0;
+            islandState.lowTide=0;
+            adsInitIsland();
+            adsPlayOi();
+            adsReleaseIsland();
+            continue;
+        }
+        int requestedFan=ha_take_fan_request();""")
+write("story.c",s)
