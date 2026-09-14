@@ -3,6 +3,8 @@
 from pathlib import Path
 import subprocess
 import tempfile
+import sys
+import ast
 
 ROOT = Path("boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1")
 def method(text, signature):
@@ -144,6 +146,24 @@ public class SpeechStartupHarness implements TextToSpeech.OnInitListener {
  }
 }
 """
+if "--source-only" in sys.argv:
+    ROOT = Path("source")
+    main = (ROOT/"MainActivity.java").read_text()
+    nodes = ast.parse(Path("scripts/patch-unified-natural-voices.py").read_text()).body
+    speech = next(ast.literal_eval(n.value) for n in nodes if isinstance(n, ast.Assign)
+                  and any(isinstance(x, ast.Name) and x.id == "new_speak" for x in n.targets))
+    main = main.replace(method(main, "private void speak(String text)"), speech.strip(), 1)
+    patch = Path("scripts/patch-unified-voice-startup.py").resolve()
+    if patch.exists():
+        with tempfile.TemporaryDirectory() as fixture:
+            target = Path(fixture)/"boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/MainActivity.java"
+            target.parent.mkdir(parents=True)
+            target.write_text(main)
+            subprocess.run([sys.executable,str(patch)],cwd=fixture,check=True)
+            main = target.read_text()
+else:
+    main = (ROOT/"MainActivity.java").read_text()
+
 with tempfile.TemporaryDirectory() as folder:
     out = Path(folder)
     for path, content in STUBS.items():
@@ -154,7 +174,6 @@ with tempfile.TemporaryDirectory() as folder:
     pkg.mkdir(parents=True)
     for name in ("BoopAndroidSpeechBackend.java","BoopSpeechBackend.java","BoopVoiceTuning.java"):
         (pkg/name).write_text((ROOT/name).read_text())
-    main=(ROOT/"MainActivity.java").read_text()
     methods=method(main,"private void speakWithAndroidTts(String text)")+"\n"+method(main,"public void onInit(int status)")
     (pkg/"SpeechStartupHarness.java").write_text(HARNESS.replace("__METHODS__",methods))
     subprocess.run(["javac","-d",str(out),*[str(p) for p in out.rglob("*.java")]],check=True)

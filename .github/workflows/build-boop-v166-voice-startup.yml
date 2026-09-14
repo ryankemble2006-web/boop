@@ -26,6 +26,7 @@ jobs:
           python-version: '3.12'
       - name: Reproduce and verify reply startup lifecycle
         run: |
+          python tests/test_voice_startup_v166.py --source-only
           bash scripts/materialize-unified.sh
           python tests/test_voice_startup_v166.py
       - uses: android-actions/setup-android@v3
