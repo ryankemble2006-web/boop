@@ -1,4 +1,4 @@
-# v166 voice startup: installed, physical retest unresolved
+# v166 voice startup: installed and command/reply accepted on Shield and Pixel 10 Pro XL
 
 Updated 2026-09-14. Task owner `boop-voice-ack-v166`.
 
@@ -18,6 +18,12 @@ User authorized Shield and Pixel 7 installation/testing, then explicitly substit
 
 Shield uses Android speech; phone has its existing Emma selection. Natural voice code/selection/tuning was preserved. This does not establish physical audio acceptance.
 
-## Unresolved physical test
+## Physical acceptance — 14 September 2026
 
-After installation the user reported BOOP flashed and ignored the request; clarification of which device is pending. The captured Shield attempt opened recognition, reached Android speech readiness, then the system recognizer returned empty results and NO_SPEECH_DETECTED. No reply was queued or played in that attempt. This does not prove the original command-and-acknowledgement symptom fixed and must not be recorded as success. Phone acoustic result remains unconfirmed. Next: identify the reported device, repeat a coordinated real command with fresh logs, then resolve the observed failure before claiming acceptance. Preserve logs privately; do not publish raw device dumps, addresses or voice profiles.
+User confirmed Pixel 10 Pro XL "is saying done. and actually doing it". This accepts the tested phone command and spoken acknowledgement using its preserved voice selection.
+
+The first post-install Shield attempt returned empty recognition results / NO_SPEECH_DETECTED; retain it as a failed input attempt, not a successful command or proof of the cause of the original intermittent issue.
+
+A coordinated Shield retest detected speech, returned withSpeech=true, submitted the Android reply, then logged playback started and completed. User confirmed "she did it that time and stayed up longer to listen", and explicitly answered "Yes, she spoke" when asked about the acknowledgement. This accepts the tested real-remote candle command and audible reply on installed v166.
+
+Both requested targets are installed and the requested command/reply path is physically accepted. This is not an extended microphone-reliability soak, a blanket acceptance of all commands, or a claim that every no-speech event has been eliminated. No settings or app changes were made between the first failed Shield input attempt and the successful retest. Keep rollback APKs and raw diagnostics private. No additional deployment or unrelated merge is pending for this task.

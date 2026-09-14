@@ -1,6 +1,6 @@
-# Current voice repair checkpoint — 14 September 2026
+# Current voice repair acceptance — 14 September 2026
 
-v166 on `boop-voice-ack-v166` is signed and installed on Shield and the explicitly substituted Pixel 10 Pro XL. Automated regression/build/package checks passed. Physical test is UNRESOLVED: user reports flash-and-ignore; recorded Shield attempt returned NO_SPEECH_DETECTED before reply dispatch. Do not claim voice acceptance. See `docs/handoffs/2026-09-14-v166-voice-startup.md` for exact evidence and next action.
+v166 on `boop-voice-ack-v166` is signed, installed and command/spoken-reply USER-ACCEPTED on Shield and the explicitly substituted Pixel 10 Pro XL. Final tested source `982a2ddeed73d673be6fe0fe2251a74d290c07c5`, successful run `34861777001`, artifact `10355475599`. Preserve the first Shield NO_SPEECH_DETECTED attempt as historical failed input; the coordinated retest succeeded and the user explicitly confirmed hearing speech. Voice choices, colour, HOME/assistant and permission settings were preserved. Scope is the tested command/reply path, not long-running microphone reliability. Exact receipts: `docs/handoffs/2026-09-14-v166-voice-startup.md`.
 
 ---
 
