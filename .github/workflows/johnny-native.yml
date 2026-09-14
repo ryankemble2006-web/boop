@@ -17,6 +17,8 @@ jobs:
         run: |
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/control_test.c -o /tmp/control-test
           /tmp/control-test
+          cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/wind_state_test.c -lm -o /tmp/wind-test
+          /tmp/wind-test
           cc -std=c11 -Wall -Wextra -Werror johnny-ha/tests/oi_scheduler_test.c -o /tmp/oi-test
           /tmp/oi-test
           cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined johnny-ha/tests/oi_render_test.c -o /tmp/oi-render-test
