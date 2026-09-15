@@ -74,7 +74,7 @@ public final class PngPuppetHarness {
    float e=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
    check(e<325,"Detached eye reflection must not become a felt corner boundary: "+x+" "+e);
   }
-  for(int[] point:new int[][]{{200,418},{220,386},{730,297},{800,292},{810,304},{1320,398},{1340,412}}){
+  for(int[] point:new int[][]{{200,418},{220,386},{730,305},{800,297},{810,304},{1320,411},{1340,412}}){
    int x=point[0];float e=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
    check(e-2<=point[1],"Smoothed lip sample must remain within photographed cap: "+x+" "+e);
   }

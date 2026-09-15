@@ -93,6 +93,13 @@ public final class PngPuppetRig {
    for(int k=x-10;k<=x+10;k++)if(joined[k]<h)nearby[n++]=joined[k];
    if(n>=5){java.util.Arrays.sort(nearby,0,n);edges[x]=Math.min(nearby[n/2],capBottom[x]+1);}
   }
+  // A dark gap can shorten a single column. Ease neighbouring corner samples
+  // toward that conservative limit instead of introducing a vertical texture cut.
+  // These passes only shorten corner edges, so samples remain inside their cap.
+  for(int x=1;x<w;x++)if(corner[x]&&edges[x-1]<h)
+   edges[x]=Math.min(edges[x],edges[x-1]+8);
+  for(int x=w-2;x>=0;x--)if(corner[x]&&edges[x+1]<h)
+   edges[x]=Math.min(edges[x],edges[x+1]+8);
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
    int edge=edges[x]*32;
