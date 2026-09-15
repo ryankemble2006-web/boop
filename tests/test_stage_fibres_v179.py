@@ -19,6 +19,12 @@ class StageFibres(unittest.TestCase):
   draw=renderer.split("public void onDrawFrame")[1]
   self.assertLess(draw.index("GL_TRIANGLE_STRIP"),draw.index("drawFringe()"))
   self.assertIn("width*x/1774f",renderer)
+ def test_gpu_attributes_match_seven_float_mesh_records(self):
+  renderer=(ROOT/"unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java").read_text()
+  for location,size,offset in [("fringePosition",2,0),("fringeOffset",2,2),("fringeInk",3,4)]:
+   self.assertIn("fringe.position("+str(offset)+")",renderer)
+   self.assertIn("glVertexAttribPointer("+location+","+str(size)+",GLES20.GL_FLOAT,false,28,fringe)",renderer)
+  self.assertIn("fringeVertexCount=mesh.length/7",renderer)
  def test_accepted_lighting_preview_motion_and_hue_are_unchanged(self):
   paths=["unified/animation/assets/eyes.frag","source/BoopAppearanceActivity.java",
    "unified/animation/java/com/boop/eyes/EyeColourBinding.java",

@@ -121,7 +121,7 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
         fringe.position(2);GLES20.glEnableVertexAttribArray(fringeOffset);
         GLES20.glVertexAttribPointer(fringeOffset,2,GLES20.GL_FLOAT,false,28,fringe);
         fringe.position(4);GLES20.glEnableVertexAttribArray(fringeInk);
-        GLES20.glVertexAttribPointer(fringeInk,3,GLES20.GL_FLOAT,false,16,fringe);
+        GLES20.glVertexAttribPointer(fringeInk,3,GLES20.GL_FLOAT,false,28,fringe);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,fringeVertexCount);
     }
     @Override public void onDrawFrame(GL10 unused){
