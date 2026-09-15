@@ -1,3 +1,7 @@
+# Current: v180 Build a Boop (2026-09-15)
+
+Owner `boop-build-a-boop-v180`. Free felt colour below eye colour, fixed live preview, independent opt-in felt sharing, sparse worn fibres with lower small-scale coverage. Built source `4fa906d8e374f628459c50860356efcb27bffb30`; GitHub run34932494089 passed. Permanent-signed version180 installed and hash-verified on Shield and Pixel7Pro. **Physical visual and live felt-sharing verdict pending.** See [receipt](docs/handoffs/2026-09-15-v180-build-a-boop.md). Preserve original artwork, accepted preview interaction, default charcoal lighting and v178 rollback. Earlier entries below are historical.
+
 ## v179 physical verdict — 15 September 2026
 
 Ryan reports phone widescreen felt texture is acceptable, but hairs look insufficiently random compared with the approved PNG. Shield now looks overexposed, as though stage lighting increased. v179 is **not visually accepted**. This supersedes the pending-verdict entries below.
