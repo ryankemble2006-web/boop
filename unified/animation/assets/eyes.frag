@@ -45,8 +45,8 @@ void main(){
   // Sample only interior cloth, never the generated reference's backdrop.
   // Fixed destination coordinates keep individual wear marks stable while closing.
   float localX=clamp((p.x-(left?220.0:815.0))/510.0,0.0,1.0);
-  float clothX=left?mix(.14,.46,localX):mix(.56,.88,localX);
-  float clothY=mix(.46,.79,clamp((p.y-180.0)/460.0,0.0,1.0));
+  float clothX=left?mix(.22,.40,localX):mix(.63,.80,localX);
+  float clothY=mix(.48,.72,clamp((p.y-180.0)/460.0,0.0,1.0));
   vec3 cloth=texture2D(uCloth,vec2(clothX,clothY)).rgb;
   rgb=mix(rgb,fabric(cloth),cover);
  }
