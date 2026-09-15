@@ -14,13 +14,15 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-## Latest: v191 hand colour installed — 2026-09-15
+## Latest: v191 hand colour accepted — 2026-09-15
 
 Owner `boop-hand-colour-v191`; reviewed/built `32f7d34bd58e1f0ae58134326e2881ba0456f75c`, signed run34946949843 passed. Version191 installed and actual APK hash/version verified on Shield and Pixel7Pro.
 
 Build a Boop now has independent hand colour below felt, an exact Original yellow reset, a fixed canonical-eye/sign preview and separate optional hand sharing. V189's twelve-file accepted default lock and v190's artwork/anatomy/scale remain intact. All code/package/signer checks passed; two historical skips remain explicit.
 
-Actual phone UI shows the new controls and original yellow sign. Ryan is interacting with colours/sharing on the devices; do not overwrite his choices or fight concurrent taps. Later phone UI reports hand sharing connected; full custom-colour and cross-device visual verdict is pending. Source/CI/install/observed UI are distinct from physical acceptance.
+Ryan confirms hand sharing worked first time and, to his eyes, no stray pixels are visible. **V191 hand appearance and cross-device sharing are physically accepted.** Preserve this checkpoint; further character changes require his new direction.
+
+Source, CI, signer and both installed APK identities were previously verified. This acceptance is Ryan's subsequent real-device verdict, not an inference from those checks.
 
 See [v191 receipt](docs/handoffs/2026-09-15-v191-hand-colour.md). Preserve v190 rollback. Fake-notification diagnostic remains later work. Earlier notes below are historical.
 
