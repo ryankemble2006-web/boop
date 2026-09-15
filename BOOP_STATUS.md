@@ -1,3 +1,10 @@
+# Current: v188 whole photographic lid outline — 2026-09-15
+
+Owner `boop-whole-lid-motion-v188`; reviewed/built `a50482170261e61894c9100ba49bdee7b0b41b13`, run34942957660 passed. Permanent-signed188 installed and actual APK-hash verified on Shield and Pixel7Pro.
+The held77% frame exposed fixed silhouette clipping at all four ends. The shader now moves the transparency outline with the same photographic sample as the felt, using premultiplied replacement. Original PNG, rig bytes, palette, motion and lab preserved.
+**Actual phone capture at77% shows all four ends lowered with the lid; assistant observation only. Ryan's full animation verdict remains pending.** Phone left paused in Felt animation lab. Shield Home restored. Saved settings and rollback artifacts retained.
+See [v188 receipt](docs/handoffs/2026-09-15-v188-whole-lid-outline.md). Earlier entries are historical.
+
 # Current: v187 felt review lab — 2026-09-15
 
 Owner `boop-felt-review-lab-v187`; reviewed/built `b8308f4a18237b6d97ecab38ee3fd9de64ff7b6a`, run34941872719 passed. Permanent-signed187 installed and actual APK-hash verified on Shield and Pixel7Pro.

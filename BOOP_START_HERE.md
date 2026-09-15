@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-felt-review-lab-v187`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-whole-lid-motion-v188`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -14,10 +14,10 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-Owner `boop-felt-review-lab-v187`; reviewed/built `b8308f4a18237b6d97ecab38ee3fd9de64ff7b6a`, run34941872719 passed. Permanent-signed187 installed and actual APK-hash verified on Shield and Pixel7Pro.
-**Eyes and animation → Felt animation lab** now exposes current felt art with Pause/Resume, Slow review, a timeline, one-ms steps, Half blink and hide/show controls. Phone held50%/50% at36.6ms; stepping and landscape rotation preserved state in the actual joint-device check. Device rotation and saved appearance settings preserved.
-**V186's few stationary pixels remain unresolved. Ryan requested this lab to freeze and identify them; this build does not change the rig or artwork.** Original standalone reference lab and rollback APKs preserved.
-See [v187 receipt](docs/handoffs/2026-09-15-v187-felt-review-lab.md). Earlier entries are historical.
+Owner `boop-whole-lid-motion-v188`; reviewed/built `a50482170261e61894c9100ba49bdee7b0b41b13`, run34942957660 passed. Permanent-signed188 installed and actual APK-hash verified on Shield and Pixel7Pro.
+The held77% frame exposed fixed silhouette clipping at all four ends. The shader now moves the transparency outline with the same photographic sample as the felt, using premultiplied replacement. Original PNG, rig bytes, palette, motion and lab preserved.
+**Actual phone capture at77% shows all four ends lowered with the lid; assistant observation only. Ryan's full animation verdict remains pending.** Phone left paused in Felt animation lab. Shield Home restored. Saved settings and rollback artifacts retained.
+See [v188 receipt](docs/handoffs/2026-09-15-v188-whole-lid-outline.md). Earlier entries are historical.
 
 ## Continuity
 
