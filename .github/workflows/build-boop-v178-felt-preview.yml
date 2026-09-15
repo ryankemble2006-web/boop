@@ -119,17 +119,20 @@ jobs:
           import zipfile
           apk=Path('boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk')
           with zipfile.ZipFile(apk) as z:
+              for name in ('felt-fringe.vert','felt-fringe.frag'):
+                  assert z.read('assets/'+name) == Path('unified/animation/assets/'+name).read_bytes(), 'Fringe shader packaging mismatch'
               assert z.read('assets/eyes.frag') == Path('unified/animation/assets/eyes.frag').read_bytes(), 'Packaged shader differs from source'
               assert z.read('assets/boopApprovedEyes.png') == Path('unified/assets/boop-eyes/boopApprovedEyes.png').read_bytes(), 'Packaged eye master differs from source'
               dex=b''.join(z.read(n) for n in z.namelist() if n.startswith('classes') and n.endswith('.dex'))
           for cls in ('BassCaptureService','BassEnergy','BassOnset','PlaybackGroove','PlaybackMusicDance','MusicBounceSource','MusicBounceEnvelope','MusicBounceRenderer','ShieldLyricsActivity'):
               assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, 'Missing packaged class: '+cls
+          assert b'Lcom/boop/eyes/FeltFringeMesh;' in dex, 'Fringe mesh missing from APK'
           print('Actual APK contains native lyrics and music sampler/envelope/renderer bytecode')
           PY
           cp "$APK" v178-artifact/BOOP-Unified-v178-Felt-Preview.apk
           (cd v178-artifact && sha256sum BOOP-Unified-v178-Felt-Preview.apk > apk-sha256.txt)
           git rev-parse HEAD > v178-artifact/built-commit.txt
-          printf '%s\n' 'Based directly on v176. Native lyrics, voice and motion source preserved.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v178-artifact/verification.txt
+          printf '%s\n' 'Based directly on v177. Accepted stage lighting preserved; fringe and live colour preview added.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v178-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
           name: BOOP-Unified-v178-Felt-Preview

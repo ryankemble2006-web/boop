@@ -65,6 +65,12 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v178 authorized fringe renderer and live appearance preview.
+      "source/BoopAppearanceActivity.java",
+      "unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java",
+      "unified/animation/java/com/boop/eyes/FeltFringeMesh.java",
+      "unified/animation/assets/felt-fringe.vert",
+      "unified/animation/assets/felt-fringe.frag",
       # v177 user-approved lid material; scoped separately by test_felt_eyelids_v177.py.
       "unified/animation/assets/eyes.frag",
       "unified/JohnnyStatePolicy.java","unified/JohnnyStateProvider.java","scripts/materialize-unified.sh",

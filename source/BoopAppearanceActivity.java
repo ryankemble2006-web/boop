@@ -12,8 +12,11 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import com.boop.eyes.AnimationSpeedPreferences;
+import com.boop.eyes.CanonicalEyeRenderer;
+import com.boop.eyes.EyeColourBinding;
+import android.opengl.GLSurfaceView;
 
-/** Shared settings without constructing an additional face or animation renderer. */
+/** Shared settings with one canonical, live iris-colour preview. */
 public final class BoopAppearanceActivity extends Activity {
     private static final double[] SPEEDS = {.5, 1, 1.5, 2};
     private static final String[] SPEED_LABELS = {"0.5x", "1x", "1.5x", "2x"};
@@ -21,6 +24,7 @@ public final class BoopAppearanceActivity extends Activity {
     private SharedPreferences eyes, appearance;
     private TextView status, hueLabel, speedLabel;
     private SeekBar hue;
+    private GLSurfaceView preview;
     private Button share, retry;
     private final Button[] speedButtons = new Button[4];
     private Runnable unwatch;
@@ -37,6 +41,24 @@ public final class BoopAppearanceActivity extends Activity {
         sharing = BoopSharedEyeColourRuntime.get(this);
         eyes = getSharedPreferences("boop_eyes", MODE_PRIVATE);
         appearance = getSharedPreferences("boop_appearance", MODE_PRIVATE);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.BLACK);
+        preview = new GLSurfaceView(this);
+        preview.setEGLContextClientVersion(2);
+        preview.setPreserveEGLContextOnPause(true);
+        preview.setFocusable(false);
+        preview.setClickable(false);
+        preview.setContentDescription("BOOP live eye colour preview");
+        CanonicalEyeRenderer previewRenderer = new CanonicalEyeRenderer(
+                getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
+        preview.setRenderer(previewRenderer);
+        preview.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        EyeColourBinding.install(preview, previewRenderer);
+        // Fixed above the scrolling controls: slider edits never scroll BOOP away.
+        int previewHeight = Math.min(dp(200), Math.max(dp(96),
+                getResources().getDisplayMetrics().heightPixels / 4));
+        root.addView(preview, new LinearLayout.LayoutParams(-1, previewHeight));
         ScrollView scroll = new ScrollView(this);
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL);
@@ -86,7 +108,8 @@ public final class BoopAppearanceActivity extends Activity {
         }
         column.addView(speeds, new LinearLayout.LayoutParams(-1, -2));
         button(column, "Done", this::finish);
-        setContentView(scroll);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
+        setContentView(root);
         refresh();
         refreshSpeed();
     }
@@ -123,6 +146,15 @@ public final class BoopAppearanceActivity extends Activity {
             if (button.hasFocus() || chosen) background.setStroke(dp(button.hasFocus() ? 3 : 1), 0xff4db8ff);
             button.setBackground(background);
         }
+    }
+    @Override protected void onResume() {
+        super.onResume();
+        preview.onResume();
+        preview.requestRender();
+    }
+    @Override protected void onPause() {
+        preview.onPause();
+        super.onPause();
     }
     @Override protected void onStart() {
         super.onStart();

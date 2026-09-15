@@ -24,6 +24,9 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
     private int program, positionLocation, uvLocation, poseLocation, hueLocation;
     private int[] textures=new int[2];
     private boolean ready;
+    private int fringeProgram,fringePosition,fringeInk,fringeScale,fringeVertexCount;
+    private FloatBuffer fringe;
+    private float scaleX=1f,scaleY=1f;
     public volatile EyeMotion.Pose pose=EyeMotion.OPEN;
     private volatile float hueRotationRadians;
     public CanonicalEyeRenderer(AssetManager assets,Failure failure){
@@ -58,12 +61,17 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
             GLES20.glUseProgram(program);
             positionLocation=GLES20.glGetAttribLocation(program,"aPosition");uvLocation=GLES20.glGetAttribLocation(program,"aUv");poseLocation=GLES20.glGetUniformLocation(program,"uPose");hueLocation=GLES20.glGetUniformLocation(program,"uHueRadians");
             GLES20.glGenTextures(2,textures,0);
+            int[][] bitmapPixels=new int[2][];
+            int[] bitmapWidths=new int[2],bitmapHeights=new int[2];
             String[] names={"boopApprovedEyes.png","lid-rig.png"};
             for(int i=0;i<2;i++){
                 BitmapFactory.Options options=new BitmapFactory.Options();options.inScaled=false;
                 Bitmap bitmap;
                 try(InputStream stream=assets.open(names[i])){bitmap=BitmapFactory.decodeStream(stream,null,options);}
                 if(bitmap==null)throw new IllegalStateException("Missing texture "+names[i]);
+                bitmapWidths[i]=bitmap.getWidth();bitmapHeights[i]=bitmap.getHeight();
+                bitmapPixels[i]=new int[bitmapWidths[i]*bitmapHeights[i]];
+                bitmap.getPixels(bitmapPixels[i],0,bitmapWidths[i],0,0,bitmapWidths[i],bitmapHeights[i]);
                 GLES20.glActiveTexture(GLES20.GL_TEXTURE0+i);GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,textures[i]);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MIN_FILTER,GLES20.GL_LINEAR);
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_MAG_FILTER,GLES20.GL_LINEAR);
@@ -71,6 +79,19 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
                 GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_CLAMP_TO_EDGE);
                 GLUtils.texImage2D(GLES20.GL_TEXTURE_2D,0,bitmap,0);bitmap.recycle();
             }
+            float[] mesh=FeltFringeMesh.create(bitmapPixels[0],bitmapWidths[0],bitmapHeights[0],
+                    bitmapPixels[1],bitmapWidths[1],bitmapHeights[1]);
+            fringe=buffer(mesh.length);fringe.put(mesh).position(0);fringeVertexCount=mesh.length/4;
+            int fringeVertex=shader(GLES20.GL_VERTEX_SHADER,read("felt-fringe.vert"));
+            int fringeFragment=shader(GLES20.GL_FRAGMENT_SHADER,read("felt-fringe.frag"));
+            fringeProgram=GLES20.glCreateProgram();
+            GLES20.glAttachShader(fringeProgram,fringeVertex);GLES20.glAttachShader(fringeProgram,fringeFragment);
+            GLES20.glLinkProgram(fringeProgram);GLES20.glGetProgramiv(fringeProgram,GLES20.GL_LINK_STATUS,result,0);
+            GLES20.glDeleteShader(fringeVertex);GLES20.glDeleteShader(fringeFragment);
+            if(result[0]==0)throw new IllegalStateException(GLES20.glGetProgramInfoLog(fringeProgram));
+            fringePosition=GLES20.glGetAttribLocation(fringeProgram,"aPosition");
+            fringeInk=GLES20.glGetAttribLocation(fringeProgram,"aInk");
+            fringeScale=GLES20.glGetUniformLocation(fringeProgram,"uScale");
             GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"uMaster"),0);
             GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"uRig"),1);
             GLES20.glEnable(GLES20.GL_BLEND);GLES20.glBlendFunc(GLES20.GL_ONE,GLES20.GL_ONE_MINUS_SRC_ALPHA);
@@ -82,11 +103,22 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
         GLES20.glViewport(0,0,width,height);
         float viewAspect=width/(float)Math.max(1,height);
         float x=Math.min(1f,2f/viewAspect)*0.94f,y=Math.min(1f,viewAspect/2f)*0.94f;
+        scaleX=x;scaleY=y;
         positions.clear();positions.put(new float[]{-x,-y,x,-y,-x,y,x,y}).position(0);
+    }
+    private void drawFringe(){
+        if(fringeVertexCount==0)return;
+        GLES20.glUseProgram(fringeProgram);GLES20.glUniform2f(fringeScale,scaleX,scaleY);
+        fringe.position(0);GLES20.glEnableVertexAttribArray(fringePosition);
+        GLES20.glVertexAttribPointer(fringePosition,2,GLES20.GL_FLOAT,false,16,fringe);
+        fringe.position(2);GLES20.glEnableVertexAttribArray(fringeInk);
+        GLES20.glVertexAttribPointer(fringeInk,2,GLES20.GL_FLOAT,false,16,fringe);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES,0,fringeVertexCount);
     }
     @Override public void onDrawFrame(GL10 unused){
         GLES20.glClearColor(0,0,0,0);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         if(!ready)return;
+        drawFringe();
         EyeMotion.Pose current=pose;
         GLES20.glUseProgram(program);GLES20.glUniform4f(poseLocation,current.left,current.right,current.x,current.y);GLES20.glUniform1f(hueLocation,hueRotationRadians);
         positions.position(0);uv.position(0);

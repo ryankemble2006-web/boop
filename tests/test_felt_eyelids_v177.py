@@ -23,7 +23,13 @@ class FeltLidContract(unittest.TestCase):
             "source", "unified", "scripts", "launcher", "shield-overlay"
         ], cwd=ROOT, text=True).splitlines()
         self.assertLessEqual(set(changed), {
-            "unified/animation/assets/eyes.frag", "unified/app-build.gradle"
+            "unified/animation/assets/eyes.frag", "unified/app-build.gradle",
+            # v178 outer fibres and user-requested settings preview.
+            "source/BoopAppearanceActivity.java",
+            "unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java",
+            "unified/animation/java/com/boop/eyes/FeltFringeMesh.java",
+            "unified/animation/assets/felt-fringe.vert",
+            "unified/animation/assets/felt-fringe.frag"
         })
 
     def test_original_art_and_motion_are_unchanged(self):
@@ -35,7 +41,6 @@ class FeltLidContract(unittest.TestCase):
             "unified/animation/java/com/boop/eyes/AnimationClock.java",
             "unified/animation/java/com/boop/eyes/ProductionAnimationController.java",
             "unified/animation/java/com/boop/eyes/SignMotion.java",
-            "unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java",
             "source/BoopSharedEyeColourRuntime.java",
             "unified/animation/assets/lid-rig.png",
         ]
