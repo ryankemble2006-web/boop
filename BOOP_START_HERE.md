@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-inner-fringe-v186`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-felt-review-lab-v187`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -14,10 +14,10 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-Owner `boop-inner-fringe-v186`; built `be42043a818d17b0af63bc549613e276efe95c0f`, run34940304639 passed. Permanent-signed186 installed and APK-hash verified on Shield and Pixel7Pro.
-Thin previously unrigged bright fragments inherit nearby cap motion; every v185 opacity byte and valid body geometry value is preserved.
-**Ryan reports a few stationary pixels remain. V186 is not fully visually accepted. His requested next step is the current felt renderer in an accessible animation lab, with pause/half-blink inspection.** Preserve accepted vivid palette, sharing and preview. Production/reference speeds and phone rotation restored.
-See [v186 receipt](docs/handoffs/2026-09-15-v186-inner-fringe.md). Earlier entries are historical.
+Owner `boop-felt-review-lab-v187`; reviewed/built `b8308f4a18237b6d97ecab38ee3fd9de64ff7b6a`, run34941872719 passed. Permanent-signed187 installed and actual APK-hash verified on Shield and Pixel7Pro.
+**Eyes and animation → Felt animation lab** now exposes current felt art with Pause/Resume, Slow review, a timeline, one-ms steps, Half blink and hide/show controls. Phone held50%/50% at36.6ms; stepping and landscape rotation preserved state in the actual joint-device check. Device rotation and saved appearance settings preserved.
+**V186's few stationary pixels remain unresolved. Ryan requested this lab to freeze and identify them; this build does not change the rig or artwork.** Original standalone reference lab and rollback APKs preserved.
+See [v187 receipt](docs/handoffs/2026-09-15-v187-felt-review-lab.md). Earlier entries are historical.
 
 ## Continuity
 

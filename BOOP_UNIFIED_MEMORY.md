@@ -1,3 +1,10 @@
+# Current: v187 felt review lab — 2026-09-15
+
+Owner `boop-felt-review-lab-v187`; reviewed/built `b8308f4a18237b6d97ecab38ee3fd9de64ff7b6a`, run34941872719 passed. Permanent-signed187 installed and actual APK-hash verified on Shield and Pixel7Pro.
+**Eyes and animation → Felt animation lab** now exposes current felt art with Pause/Resume, Slow review, a timeline, one-ms steps, Half blink and hide/show controls. Phone held50%/50% at36.6ms; stepping and landscape rotation preserved state in the actual joint-device check. Device rotation and saved appearance settings preserved.
+**V186's few stationary pixels remain unresolved. Ryan requested this lab to freeze and identify them; this build does not change the rig or artwork.** Original standalone reference lab and rollback APKs preserved.
+See [v187 receipt](docs/handoffs/2026-09-15-v187-felt-review-lab.md). Earlier entries are historical.
+
 # Current: v186 inner photographic fringe — 2026-09-15
 
 Owner `boop-inner-fringe-v186`; built `be42043a818d17b0af63bc549613e276efe95c0f`, run34940304639 passed. Permanent-signed186 installed and APK-hash verified on Shield and Pixel7Pro.
