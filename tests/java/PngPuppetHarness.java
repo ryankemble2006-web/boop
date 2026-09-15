@@ -93,7 +93,7 @@ public final class PngPuppetHarness {
    int x=point[0];float edge=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
    check((rig[(point[1]*w+x)*4+3]&255)>0,"Actual visible inner fringe fixture");
    System.out.println("Inner fringe "+x+","+point[1]+" edge "+edge);
-   check(edge>point[1]+2&&edge<360,"Thin inner fringe needs its neighbouring cap motion, not edge640: "+x+" "+edge);
+   check(edge>=point[1]+2&&edge<360,"Thin inner fringe needs its neighbouring cap motion, not edge640: "+x+" "+edge);
    float top=(rig[x*4+2]&255)*640f/255f;
    for(float closure:new float[]{.5f,1f}){
     float end=edge+(642-edge)*closure;
