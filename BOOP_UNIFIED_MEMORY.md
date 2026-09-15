@@ -1,3 +1,13 @@
+# v178 user verdict: colour preview accepted; felt depth unresolved
+
+2026-09-15. Ryan explicitly approves the Eyes and animation preview placement and immediate colour changes. Preserve this accepted interaction. Earlier stage-lighting approval remains valid.
+
+Ryan reports very little visible change to the fibres and says the image feels flattened in transit. v178 fringe geometry passes source/numeric checks but has NOT achieved the desired physical depth/fibre appearance. Device fault, display scaling and rendering causes are not established. Do not call the fibre repair physically accepted or blame the devices. Next visual work should investigate actual displayed scale and material detail while protecting the accepted preview, immediate hue response, lighting, artwork and motion. No new app change or installation accompanies this verdict.
+
+Product direction remains whimsical puppet performance with capable assistance behind it. Approved five-digit hand grip and fake-notification diagnostic remain subsequent work.
+
+---
+
 # v178 installed: loose fibres and live eye-colour preview
 
 Updated 2026-09-15. Current owner `boop-felt-preview-v178`. Built source `4f873eadaf65c1fb954aa95e68b5da966263a94d`, signed run34930044029 SUCCESS; installed/hash-verified on Shield and Pixel7Pro. Physical verdict pending.
