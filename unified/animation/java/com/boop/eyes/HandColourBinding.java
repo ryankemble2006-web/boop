@@ -14,11 +14,12 @@ final class HandColourBinding implements View.OnAttachStateChangeListener {
  });
  private final View view;
  private final Bitmap[] originals;
+ private final int signIndex;
  private final SharedPreferences prefs;
  private final HandColourWork<Bitmap[]> work;
  private final SharedPreferences.OnSharedPreferenceChangeListener listener;
- HandColourBinding(View view,Bitmap[] originals,Consumer<Bitmap[]> apply){
-  this.view=view;this.originals=originals.clone();
+ HandColourBinding(View view,Bitmap[] originals,int signIndex,Consumer<Bitmap[]> apply){
+  this.view=view;this.originals=originals.clone();this.signIndex=signIndex;
   prefs=view.getContext().getSharedPreferences("boop_eyes",0);
   Handler main=new Handler(Looper.getMainLooper());
   work=new HandColourWork<>(this.originals,WORKER,command->main.post(command),this::recolour,apply);
@@ -32,7 +33,8 @@ final class HandColourBinding implements View.OnAttachStateChangeListener {
   for(int i=0;i<originals.length;i++){
    Bitmap source=originals[i];int w=source.getWidth(),h=source.getHeight();
    int[] pixels=new int[w*h];source.getPixels(pixels,0,w,0,0,w,h);
-   for(int n=0;n<pixels.length;n++)pixels[n]=HandColourPixels.apply(pixels[n],hue);
+   for(int n=0;n<pixels.length;n++)pixels[n]=i==signIndex
+    ?HandColourPixels.applySign(pixels[n],hue,n%w,w):HandColourPixels.apply(pixels[n],hue);
    result[i]=Bitmap.createBitmap(pixels,w,h,Bitmap.Config.ARGB_8888);
   }
   return result;

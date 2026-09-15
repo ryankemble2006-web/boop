@@ -36,7 +36,7 @@ public final class NotificationSignView extends View {
             for(int digit=0;digit<4;digit++)originals[1+side*4+digit]=fingers[side][digit];
             originals[9+side]=thumbs[side];
         }
-        handColour=new HandColourBinding(this,originals,colours->{
+        handColour=new HandColourBinding(this,originals,11,colours->{
             hands=colours[0];
             for(int side=0;side<2;side++){
                 for(int digit=0;digit<4;digit++)fingers[side][digit]=colours[1+side*4+digit];

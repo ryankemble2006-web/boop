@@ -21,7 +21,8 @@ public final class HandColourHarness {
   for(String file:args){
    BufferedImage im=ImageIO.read(new File(file)); int changedLeft=0,changedRight=0;
    for(int y=0;y<im.getHeight();y++)for(int x=0;x<im.getWidth();x++){
-    int original=im.getRGB(x,y), green=HandColourPixels.apply(original,120);
+    int original=im.getRGB(x,y), green=file.contains("sign-blank")
+     ?HandColourPixels.applySign(original,120,x,im.getWidth()):HandColourPixels.apply(original,120);
     check(HandColourPixels.apply(original,0)==original,"Reset preserves every pixel");
     check((green>>>24)==(original>>>24),"Alpha and fibre silhouette exact");
     if(green!=original){if(x<im.getWidth()/2)changedLeft++;else changedRight++;}

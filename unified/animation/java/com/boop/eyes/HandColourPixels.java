@@ -2,6 +2,12 @@ package com.boop.eyes;
 /** Hue-only recolouring of original yellow felt; other materials and alpha stay exact. */
 public final class HandColourPixels {
  private HandColourPixels(){}
+ public static int applySign(int argb,int selected,int x,int width){
+  // The approved 1774px photo has gloves only at the two ends. Protect the
+  // complete central board, including low-alpha yellow contamination in its fringe.
+  float sourceX=x*1774f/width;
+  return sourceX>=390&&sourceX<=1380?argb:apply(argb,selected);
+ }
  public static int apply(int argb,int selected){
   if(selected==0 || (argb>>>24)==0)return argb;
   if(selected<0||selected>359)throw new IllegalArgumentException("Hand hue");
