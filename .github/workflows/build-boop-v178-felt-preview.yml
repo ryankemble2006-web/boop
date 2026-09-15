@@ -71,6 +71,11 @@ jobs:
       - name: Preserve native lyrics and independent blink timing
         run: |
           python -m pytest -q tests/test_unified_v70_natural_voices_contract.py
+          python -m pytest -q tests/test_shared_eye_colour.py::test_colour_state_and_protocol tests/test_shared_eye_colour.py::test_colour_binding_covers_existing_renderers_without_replacements tests/test_shared_eye_colour.py::test_runtime_is_opt_in_and_reuses_saved_home_assistant_auth tests/test_shared_eye_colour.py::test_appearance_screen_is_private_and_available_in_the_apk tests/test_shared_eye_colour.py::test_appearance_screen_reuses_wall_hue_and_does_not_enable_sharing_on_open
+          cmp source/BoopAppearanceActivity.java boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1/BoopAppearanceActivity.java
+          cmp unified/animation/java/com/boop/eyes/FeltFringeMesh.java boop-build/BOOP-Alpha1/animation-lib/src/main/java/com/boop/eyes/FeltFringeMesh.java
+          cmp unified/animation/assets/felt-fringe.vert boop-build/BOOP-Alpha1/animation-lib/src/main/assets/felt-fringe.vert
+          cmp unified/animation/assets/felt-fringe.frag boop-build/BOOP-Alpha1/animation-lib/src/main/assets/felt-fringe.frag
           bash scripts/test-unified-native-lyrics.sh
           python tests/test_animation_speed.py
           python tests/test_materialized_speed.py
