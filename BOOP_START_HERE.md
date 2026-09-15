@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-13. Current owner: `boop-unified-eye-sync-safe-v159`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Do not infer the APK version from the branch's v159 name.
+Updated 2026-09-15. Current candidate owner: `boop-felt-eyelids-v177`; accepted rollback owner: `boop-lyrics-album-v176`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -10,11 +10,11 @@ Use GitHub for source edits, non-visual code tests, builds, permanent signing an
 
 Desktop Commander/ADB may stage the GitHub artifact, perform an explicitly requested installation on authorized devices and verify package/version/hash. Use further device inputs, captures or diagnosis only as part of the joint test. No local app-source edits/builds. Preserve dirty/concurrent work and existing AVDs; use an emulator only if Ryan explicitly requests it.
 
-Current authorized physical targets: Shield and Pixel7. Leave physical Pixel10 alone. No permission changes, lock bypass, data clear, signing-key replacement, colour/settings reset or unrelated branch merge. Approved artwork, all coded animations, exact1x, single-face ownership, working Wall hue controls and accepted Shield polish remain protected.
+Device operations remain scoped to Ryan's current joint-test request and current handoff. Historical device choices are not a new installation request. Preserve settings, permissions, approved artwork, coded animations, exact1x, single-face ownership, working hue controls and accepted Shield polish.
 
 ## Current delivery and evidence
 
-v161 from app/build commit `0b6ee6f91e05f00138a94ec2c9fd846117020754` is installed and identity-verified on Shield and Pixel7. Its on-screen speed acceptance is awaiting Ryan. Read `docs/handoffs/2026-09-13-v161-installed-joint-testing.md`. The separate Lab scale-zero source defect was already repaired and GitHub-tested; do not restart it from older notes.
+v177 felt eyelids is built and signed from `55feb6e3e83d16d8c27b20cad225c24b2ab472f3`, run34928908920; package/hash/signer and packaged shader verified. It is not installed or physically accepted yet. See `docs/handoffs/2026-09-15-v177-felt-eyelids.md`. The accepted v176 rollback is retained; older acceptance receipts remain history.
 
 ## Continuity
 

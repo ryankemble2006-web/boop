@@ -1,3 +1,15 @@
+# v177 felt eyelids: signed candidate, device verdict pending
+
+Updated 2026-09-15. Current candidate owner: `boop-felt-eyelids-v177`, based on accepted v176 `f64d49b3`. Source `55feb6e3e83d16d8c27b20cad225c24b2ab472f3`; signed [run34928908920](https://github.com/ryankemble2006-web/boop/actions/runs/34928908920) SUCCESS; artifact `10381345601`.
+
+Approved charcoal felt and soft crown light are implemented in the shared upper-lid shader. Original eye/hand assets, silhouette, hue sharing and motion remain protected. Independent source review found no blocker. APK identity/hash/permanent signer and packaged shader verified. No install or physical acceptance yet. Two inherited historical freeze tests remain skipped.
+
+[Full v177 receipt and rollback](docs/handoffs/2026-09-15-v177-felt-eyelids.md). New approved hand-grip integration and fake-notification diagnostic remain next work; Wall notifications are user-reported broken. No notification repair or voice feature is included here.
+
+Prior entries below are historical; current Johnny state belongs to `johnny-ha-native-v8`, whose v14 acceptance supersedes older pending notes.
+
+---
+
 # v176 lyrics album navigation physically accepted
 
 Updated 2026-09-14. Owner branch `boop-lyrics-album-v176`; separate native player work remains on `johnny-ha-native-v8`.
