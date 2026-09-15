@@ -65,6 +65,14 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v190 user-approved coherent felt signs; v189 default now separately hash-locked.
+      "unified/animation/java/com/boop/eyes/NotificationSignView.java",
+      "unified/animation/java/com/boop/eyes/FeltSignProp.java",
+      "unified/animation/java/com/boop/eyes/FeltSignRig.java",
+      "unified/animation/assets/boop-felt-sign-blank.png",
+      "unified/animation/accepted-felt-v189.json",
+      "scripts/verify-accepted-felt.py",
+      "scripts/patch-unified-canonical-animations.py",
       # v187 user-requested current felt lab pause/seek; production animation remains unchanged.
       "source/AnimationReviewTimeline.java",
       "source/BoopCanonicalAnimationActivity.java",

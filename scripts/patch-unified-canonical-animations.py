@@ -2,6 +2,10 @@
 from pathlib import Path
 import hashlib
 import shutil
+import subprocess
+import sys
+
+subprocess.run([sys.executable, 'scripts/verify-accepted-felt.py'], check=True)
 
 ROOT = Path("boop-build/BOOP-Alpha1")
 APP = ROOT / "app"

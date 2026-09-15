@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "boop-felt-default-v189",
+  "accepted_source": "470bb4b471e7e452b29b6a3a437bea0fa4a0904e",
+  "approved_on": "2026-09-15",
+  "default": true,
+  "change_policy": "Preserve this accepted default. Only Ryan's explicit direction may revise it; retain this snapshot and document any new approval. Saved eye/felt colours remain user choices.",
+  "files": {
+    "assets/boop-png-study.png": "5292ca014dd2704014f15662c54fc2c9d7a2bcde",
+    "assets/eyes.frag": "651e74774168f98756d16eb5f897df9fc63b4432",
+    "assets/eyes.vert": "082fa1eb32f9243e23b1d7ed10127b7033d134f2",
+    "java/com/boop/eyes/CanonicalEyeRenderer.java": "1846dc1cf976d980b1da0ef9ecde7f64ec00a927",
+    "java/com/boop/eyes/EyeCatalogue.java": "04f0fcac4659731fdaa5c790857527ed5d873b6f",
+    "java/com/boop/eyes/EyeMotion.java": "f72f2b6b52759453891c0696301275e19e11c050",
+    "java/com/boop/eyes/FeltPalette.java": "8f6dbe9f2e34b53076181f4450e707cf1ad0ff1b",
+    "java/com/boop/eyes/PngPuppetRig.java": "9c9f008be939ab8a07d0f55f00368385641df55a",
+    "java/com/boop/eyes/AnimationClock.java": "d99b1e384c9e0fd7a6351f20d1384d8598c277d1",
+    "java/com/boop/eyes/EyeColourBinding.java": "05414c4de803188e1e90ea0a0116211401743ba3",
+    "java/com/boop/eyes/FeltColourPreferences.java": "b40aa7e844fbe3d36062384a20bdb7a22b3f997d",
+    "java/com/boop/eyes/ProductionAnimationController.java": "d38f112b1f0f253ae60bcbcb327b5fdf8122be1a"
+  }
+}

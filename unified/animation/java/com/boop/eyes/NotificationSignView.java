@@ -5,19 +5,17 @@ import android.graphics.*;
 import android.view.View;
 import java.io.InputStream;
 
-/** Local demo prop. Independent original hand layers and a vector sign, no notification access. */
+/** Shared felt notification prop and separate original Freddie performance. */
 public final class NotificationSignView extends View {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
     private final Bitmap hands;
+    private final FeltSignProp feltSign;
     private final Bitmap[][] fingers=new Bitmap[2][4];
     private final Bitmap[] thumbs=new Bitmap[2];
     private final float[] mesh=new float[9*17*2];
     private SignMotion.Pose pose=SignMotion.sample(0,0);
     private int style;
     private boolean freddie;
-    private static final String[] NAMES={"WHATSAPP","GMAIL","FACEBOOK","X"};
-    private static final String[] WORDS={"MESSAGE!","MAIL'S HERE!","OVER HERE!","SOMETHING NEW!"};
-    private static final int[] COLOURS={0xff16a66c,0xffd84a40,0xff2875df,0xff323b52};
     public NotificationSignView(Context context){
         super(context);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         try(InputStream in=context.getAssets().open("boop-notification-hands.png")){
@@ -31,12 +29,10 @@ public final class NotificationSignView extends View {
         for(int side=0;side<2;side++)for(int digit=0;digit<4;digit++)
             fingers[side][digit]=sampleFinger(digits[digit],side==1);
         for(int side=0;side<2;side++)thumbs[side]=sampleFinger(new float[]{696,425,769,282,174},side==1);
+        feltSign=new FeltSignProp(context,thumbs);
     }
     public void show(SignMotion.Pose pose,int style){this.pose=pose;this.style=Math.floorMod(style,4);freddie=false;invalidate();}
     public void showFreddie(SignMotion.Pose pose){this.pose=pose;freddie=true;invalidate();}
-    private void text(Canvas c,String value,float x,float y,float size,int colour){
-        paint.setShader(null);paint.setColor(colour);paint.setTextSize(size);paint.setTypeface(Typeface.create("sans-serif-black",Typeface.BOLD));paint.setTextAlign(Paint.Align.CENTER);c.drawText(value,x,y,paint);
-    }
     private Bitmap sampleFinger(float[] digit,boolean mirror){
         float rx=digit[0],ry=digit[1],tx=digit[2],ty=digit[3],width=digit[4];
         float dx=tx-rx,dy=ty-ry,len=(float)Math.hypot(dx,dy);
@@ -108,19 +104,8 @@ public final class NotificationSignView extends View {
         c.save();c.translate(getWidth()/2f,(getHeight()-680*scale)/2f);c.scale(scale,scale);
         if(freddie){drawFreddie(c);c.restore();return;}
         c.translate(pose.sway,510+250*(1-pose.lift)+pose.bob);c.rotate(pose.angle);
-        // The prop and wrists share the same parent transform: grips cannot drift.
-        rearHand(c,true);rearHand(c,false);
-        Path arrow=new Path();arrow.moveTo(-292,-86);arrow.lineTo(229,-86);arrow.lineTo(229,-124);arrow.lineTo(357,0);arrow.lineTo(229,124);arrow.lineTo(229,86);arrow.lineTo(-292,86);arrow.close();
-        c.save();c.translate(0,9);paint.setColor(0xff071018);c.drawPath(arrow,paint);c.restore();
-        paint.setShader(new LinearGradient(0,-100,0,110,0xffffffff,0xffdce9eb,Shader.TileMode.CLAMP));c.drawPath(arrow,paint);paint.setShader(null);
-        paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(7);paint.setColor(COLOURS[style]);c.drawPath(arrow,paint);paint.setStyle(Paint.Style.FILL);
-        paint.setColor(COLOURS[style]);c.drawRoundRect(new RectF(-188,-57,-83,57),20,20,paint);
-        text(c,style==0?"W":style==1?"M":style==2?"f":"X",-135,24,76,Color.WHITE);
-        text(c,NAMES[style],70,-22,25,COLOURS[style]);
-        text(c,WORDS[style],70,27,style==3?24:31,0xff13202d);
-        // Four individually sampled, foreshortened digits wrap across the front surface.
-        handBridge(c,true);handBridge(c,false);
-        frontFingers(c,true);frontFingers(c,false);
+        // Board, connected palms, four front fingers and rear thumbs share this transform.
+        feltSign.draw(c,style);
         c.restore();
     }
     private void micHand(Canvas c,boolean left,float y,boolean front){
