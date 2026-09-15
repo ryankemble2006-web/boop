@@ -108,8 +108,8 @@ jobs:
           mkdir -p v185-artifact
           "$TOOLS/aapt" dump badging "$APK" > v185-artifact/badging.txt
           grep -Fq "package: name='com.boop.alpha1'" v185-artifact/badging.txt
-          grep -Fq "versionCode='184'" v185-artifact/badging.txt
-          grep -Fq "versionName='1.2.184-png-puppet'" v185-artifact/badging.txt
+          grep -Fq "versionCode='185'" v185-artifact/badging.txt
+          grep -Fq "versionName='1.2.185-png-puppet'" v185-artifact/badging.txt
           "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v185-artifact/manifest-tree.txt
           grep -Fq 'com.boop.alpha1.johnny_states' v185-artifact/manifest-tree.txt
           grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v185-artifact/manifest-tree.txt

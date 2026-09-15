@@ -57,8 +57,16 @@ public final class PngPuppetHarness {
     int at=x*4;float e=((rig[at]&255)*256+(rig[at+1]&255))/32f,t=(rig[at+2]&255)*640f/255f;
     float half=Math.min(e-2,t+(450-t)*(e-t)/((e+642)/2-t));
     float full=Math.min(e-2,t+(450-t)*(e-t)/(642-t));
+    if(x>range[0]){
+     int prior=(x-1)*4;float pe=((rig[prior]&255)*256+(rig[prior+1]&255))/32f;
+     check(Math.abs(e-pe)<=20,"Adjacent photographed corner boundaries must join without a crease: "+x+" "+pe+" -> "+e);
+    }
     System.out.printf(java.util.Locale.ROOT,"Join x%d edge%.1f top%.1f half%.1f full%.1f alpha300=%d alpha380=%d%n",x,e,t,half,full,rig[(300*w+x)*4+3]&255,rig[(380*w+x)*4+3]&255);
    }
+  }
+  for(int x:new int[]{720,722,809,811,812,814}){
+   float e=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
+   check(e<325,"Detached eye reflection must not become a felt corner boundary: "+x+" "+e);
   }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){

@@ -53,21 +53,45 @@ public final class PngPuppetRig {
   java.util.Arrays.fill(bodyBottom,-1);
   for(int x=0;x<w;x++){
    int run=0;
-   // No-white cap ends include deep photographed shadows (background peak <= 1).
-   int threshold=edges[x]>=h?2:16;
    for(int y=0;y<h;y++){
-    run=peak(pixels[y*w+x])>threshold?run+1:0;
+    run=peak(pixels[y*w+x])>16?run+1:0;
     if(run>=12){
      if(bodyTop[x]==h)bodyTop[x]=y-11;
      bodyBottom[x]=y;
     }
    }
   }
-  // A real felt corner can extend beyond the eye whites. The old h sentinel
-  // made its end move by only two pixels while the neighbouring lid stretched.
-  // Use sustained photographed material here; do not bridge empty eye-gap columns.
+  // Follow the first sustained cap component, allowing short dark texture gaps.
+  // Detached reflections below a corner are not part of that felt component.
+  int[] capTop=new int[w],capBottom=new int[w];
+  boolean[] corner=new boolean[w];
+  java.util.Arrays.fill(capTop,h);
+  java.util.Arrays.fill(capBottom,-1);
   for(int x=0;x<w;x++){
-   if(edges[x]>=h&&bodyBottom[x]-bodyTop[x]>=11)edges[x]=bodyBottom[x]+1;
+   int run=0,dark=0;
+   for(int y=0;y<h;y++){
+    boolean visible=peak(pixels[y*w+x])>2;
+    if(capTop[x]==h){
+     run=visible?run+1:0;
+     if(run==12){capTop[x]=y-11;capBottom[x]=y;}
+    }else{
+     if(visible){capBottom[x]=y;dark=0;}
+     else if(++dark==12)break;
+    }
+   }
+   if(capBottom[x]-capTop[x]>=11&&(edges[x]>=h||capBottom[x]+1<edges[x]-4)){
+    corner[x]=true;
+    edges[x]=Math.min(edges[x],capBottom[x]+1);
+   }
+  }
+  // The photo's lower lip is a broad curve. Reject isolated corner reflections
+  // using valid neighbouring cap boundaries, without crossing an empty eye gap.
+  int[] joined=edges.clone();
+  for(int x=10;x<w-10;x++){
+   if(!corner[x])continue;
+   int[] nearby=new int[21];int n=0;
+   for(int k=x-10;k<=x+10;k++)if(joined[k]<h)nearby[n++]=joined[k];
+   if(n>=5){java.util.Arrays.sort(nearby,0,n);edges[x]=nearby[n/2];}
   }
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
@@ -76,7 +100,8 @@ public final class PngPuppetRig {
     int i=y*w+x,at=i*4;
     out[at]=(byte)(edge>>>8);out[at+1]=(byte)edge;
     out[at+2]=(byte)Math.min(255,Math.round(tops[x]*255f/h));
-    boolean solid=y>=bodyTop[x]&&y<=bodyBottom[x];
+    boolean solid=(y>=bodyTop[x]&&y<=bodyBottom[x])
+     ||(corner[x]&&y>=capTop[x]&&y<=capBottom[x]);
     out[at+3]=(byte)(solid||!exterior[i]?255:Math.min(255,peak(pixels[i])*255/16));
    }
   }
