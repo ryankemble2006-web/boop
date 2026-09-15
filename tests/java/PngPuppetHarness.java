@@ -78,6 +78,12 @@ public final class PngPuppetHarness {
    int x=point[0];float e=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
    check(e-2<=point[1],"Smoothed lip sample must remain within photographed cap: "+x+" "+e);
   }
+  for(int[] point:new int[][]{{739,251},{740,267},{741,268},{742,269},{743,262},{744,262},{790,264},{791,264},{792,263},{793,263},{794,262},{795,288},{796,264}}){
+   int x=point[0];float edge=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
+   check((rig[(point[1]*w+x)*4+3]&255)>0,"Actual visible inner fringe fixture");
+   System.out.println("Inner fringe "+x+","+point[1]+" edge "+edge);
+   check(edge>point[1]+2&&edge<360,"Thin inner fringe needs its neighbouring cap motion, not edge640: "+x+" "+edge);
+  }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){
    int at=(y*w+x)*4,col=p[y*w+x],red=(col>>>16)&255,green=(col>>>8)&255,blue=col&255;
