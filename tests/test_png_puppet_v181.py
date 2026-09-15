@@ -26,6 +26,14 @@ class PngPuppet(unittest.TestCase):
    for x in bounds:
     for y in yvals:
      self.assertLess(((x*1536-cx)/280)**2+((y*1024-625)/210)**2,1,"Cloth sample rectangle reaches backdrop")
+ def test_photo_iris_colour_coverage(self):
+  code=(ROOT/"unified/animation/assets/eyes.frag").read_text()
+  centres=re.search(r"vec2 centre=left[?]vec2[(]([0-9.]+),([0-9.]+)[)]:vec2[(]([0-9.]+),([0-9.]+)[)]",code)
+  shape=re.search(r"float iris=1.0-smoothstep[(]([0-9.]+),([0-9.]+),length[(][(]source-centre[)]/vec2[(]([0-9.]+)[)]",code)
+  self.assertIsNotNone(centres);self.assertIsNotNone(shape)
+  with tempfile.TemporaryDirectory() as out:
+   subprocess.run(["javac","-d",out,str(ROOT/"tests/java/PngIrisHarness.java")],check=True)
+   subprocess.run(["java","-Djava.awt.headless=true","-cp",out,"com.boop.eyes.PngIrisHarness",str(ROOT/"unified/animation/assets/boop-png-study.png"),*centres.groups(),shape.group(3),shape.group(1)],check=True)
  def test_shader_links(self):
   subprocess.run(["glslangValidator","-l",str(ROOT/"unified/animation/assets/eyes.vert"),str(ROOT/"unified/animation/assets/eyes.frag")],check=True)
 if __name__=="__main__":unittest.main()
