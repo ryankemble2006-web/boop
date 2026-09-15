@@ -53,13 +53,21 @@ public final class PngPuppetRig {
   java.util.Arrays.fill(bodyBottom,-1);
   for(int x=0;x<w;x++){
    int run=0;
+   // No-white cap ends include deep photographed shadows (background peak <= 1).
+   int threshold=edges[x]>=h?2:16;
    for(int y=0;y<h;y++){
-    run=peak(pixels[y*w+x])>16?run+1:0;
+    run=peak(pixels[y*w+x])>threshold?run+1:0;
     if(run>=12){
      if(bodyTop[x]==h)bodyTop[x]=y-11;
      bodyBottom[x]=y;
     }
    }
+  }
+  // A real felt corner can extend beyond the eye whites. The old h sentinel
+  // made its end move by only two pixels while the neighbouring lid stretched.
+  // Use sustained photographed material here; do not bridge empty eye-gap columns.
+  for(int x=0;x<w;x++){
+   if(edges[x]>=h&&bodyBottom[x]-bodyTop[x]>=11)edges[x]=bodyBottom[x]+1;
   }
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
