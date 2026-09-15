@@ -26,6 +26,15 @@ public final class PngPuppetRig {
     if(run==12){edges[x]=Math.max(140,y-11-3);break;}
    }
   }
+  // Thin bright fibre runs are not eye whites. Reject narrow boundary spikes
+  // against nearby columns, retaining the photographed curve everywhere else.
+  int[] measured=edges.clone();
+  for(int x=10;x<w-10;x++){
+   int[] nearby=new int[21];
+   for(int n=0;n<21;n++)nearby[n]=measured[x+n-10];
+   java.util.Arrays.sort(nearby);
+   if(measured[x]<h&&nearby[10]<h&&Math.abs(measured[x]-nearby[10])>30)edges[x]=nearby[10];
+  }
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
    int edge=edges[x]*32;
