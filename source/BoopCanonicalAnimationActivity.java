@@ -5,117 +5,253 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.os.PowerManager;
-import android.util.Log;
 import android.view.Choreographer;
+import android.view.Gravity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.FrameLayout;
 import com.boop.eyes.*;
+import java.util.Locale;
 
-/** Embedded canonical animation lab; no production services, permissions or network access. */
+/** Current production artwork and catalogue, with local controls for joint device inspection. */
 public final class BoopCanonicalAnimationActivity extends Activity implements Choreographer.FrameCallback {
+    private final AnimationReviewTimeline timeline = new AnimationReviewTimeline();
     private GLSurfaceView surface;
     private CanonicalEyeRenderer renderer;
     private FrameLayout stage;
     private NotificationSignView sign;
-    private boolean signActive;
-    private int signStyle;
-    private double signStart;
+    private LinearLayout panel;
     private TextView label;
-    private ProductionAnimationController controller;
-    private boolean resumed,focused,running,slow,motionOff;
+    private SeekBar position;
+    private Button pause, slow, reveal;
+    private boolean resumed, focused, running, signActive, controlsHidden;
+    private int signStyle;
     private long lastFrame;
-    private double clock;
-    private double speedMultiplier = 1.0;
-    private int freeze=-1;
-    private boolean reducedMotion;
-    @Override public void onCreate(Bundle state){
+    private double signTime;
+    private String rendererError;
+
+    @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        controller=new ProductionAnimationController("idle",0,20260910);
-        LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.BLACK);
-        label=new TextView(this);label.setTextColor(Color.WHITE);label.setTextSize(20);label.setPadding(24,12,24,8);
-        root.addView(label,new LinearLayout.LayoutParams(-1,-2));
-        surface=new GLSurfaceView(this);surface.setEGLContextClientVersion(2);surface.setPreserveEGLContextOnPause(true);
-        renderer=new CanonicalEyeRenderer(getAssets(),detail->runOnUiThread(()->label.setText("Renderer error: "+detail)));
-        surface.setRenderer(renderer);surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        FrameLayout frame = new FrameLayout(this);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.BLACK);
+        frame.addView(root, new FrameLayout.LayoutParams(-1, -1));
+        label = new TextView(this);
+        label.setTextColor(Color.WHITE); label.setTextSize(15);
+        label.setPadding(dp(12), dp(4), dp(12), dp(4));
+        root.addView(label, new LinearLayout.LayoutParams(-1, -2));
+
+        surface = new GLSurfaceView(this);
+        surface.setEGLContextClientVersion(2);
+        surface.setPreserveEGLContextOnPause(true);
+        renderer = new CanonicalEyeRenderer(getAssets(), detail -> runOnUiThread(() -> {
+            rendererError = detail; updateControls();
+        }));
+        surface.setRenderer(renderer);
+        surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         EyeColourBinding.install(surface, renderer);
-        AnimationSpeedBinding.install(surface, speed -> speedMultiplier = speed);
-        stage=new FrameLayout(this);stage.addView(surface,new FrameLayout.LayoutParams(-1,-1));
-        sign=new NotificationSignView(this);sign.setVisibility(View.GONE);
-        stage.addView(sign,new FrameLayout.LayoutParams(-1,-1));
-        stage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->resizeEyes());
-        root.addView(stage,new LinearLayout.LayoutParams(-1,0,1));
-        for(int row=0;row<2;row++){
-            HorizontalScrollView scroll=new HorizontalScrollView(this);LinearLayout strip=new LinearLayout(this);
-            for(int i=row*13;i<Math.min((row+1)*13,EyeCatalogue.ALL.length);i++){
-                final EyeMotion.Clip clip=EyeCatalogue.ALL[i];Button button=button(clip.label);
-                button.setOnClickListener(v->select(clip.id));strip.addView(button,new LinearLayout.LayoutParams(dp(180),dp(62)));
+        stage = new FrameLayout(this);
+        stage.addView(surface, new FrameLayout.LayoutParams(-1, -1));
+        sign = new NotificationSignView(this); sign.setVisibility(View.GONE);
+        stage.addView(sign, new FrameLayout.LayoutParams(-1, -1));
+        stage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> resizeEyes());
+        root.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        panel = new LinearLayout(this); panel.setOrientation(LinearLayout.VERTICAL);
+        root.addView(panel, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout clips = strip(panel);
+        for (EyeMotion.Clip clip : EyeCatalogue.ALL) add(clips, clip.label, () -> select(clip.id));
+
+        position = new SeekBar(this);
+        position.setMax(10000); position.setKeyProgressIncrement(25);
+        position.setContentDescription("Animation position");
+        position.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (fromUser && !signActive) {
+                    timeline.seek(timeline.clip().duration * value / 10000.0);
+                    lastFrame = 0; renderFrame();
+                }
             }
-            scroll.addView(strip);root.addView(scroll,new LinearLayout.LayoutParams(-1,-2));
+            @Override public void onStartTrackingTouch(SeekBar bar) {
+                timeline.setPaused(true); lastFrame = 0; updateControls();
+            }
+            @Override public void onStopTrackingTouch(SeekBar bar) { }
+        });
+        panel.addView(position, new LinearLayout.LayoutParams(-1, dp(38)));
+        LinearLayout controls = strip(panel);
+        pause = add(controls, "Pause", () -> {
+            timeline.setPaused(!timeline.isPaused()); lastFrame = 0; updateControls();
+        });
+        slow = add(controls, "Slow review", () -> {
+            timeline.setSlow(!timeline.isSlow()); lastFrame = 0; updateControls();
+        });
+        add(controls, "Half blink", () -> {
+            leaveSign(); timeline.halfBlink(); lastFrame = 0; renderFrame();
+        });
+        add(controls, "-1 ms", () -> step(-1));
+        add(controls, "+1 ms", () -> step(1));
+        add(controls, "Hide controls", () -> setControlsHidden(true));
+        add(controls, "Done", this::finish);
+
+        LinearLayout signs = strip(panel);
+        String[] signNames = {"WhatsApp sign", "Gmail sign", "Facebook sign", "X sign", "Freddie"};
+        for (int i = 0; i < signNames.length; i++) {
+            final int style = i; add(signs, signNames[i], () -> showSign(style));
         }
-        LinearLayout controls=new LinearLayout(this);
-        Button speed=button("Slow review");speed.setOnClickListener(v->{slow=!slow;speed.setText(slow?"Normal speed":"Slow review");});controls.addView(speed);
-        Button motion=button("Pause motion");motion.setOnClickListener(v->{motionOff=!motionOff;motion.setText(motionOff?"Resume motion":"Pause motion");});controls.addView(motion);
-        root.addView(controls);
-        HorizontalScrollView signScroll=new HorizontalScrollView(this);LinearLayout signButtons=new LinearLayout(this);
-        String[] signNames={"WhatsApp sign","Gmail sign","Facebook sign","X sign","Freddie"};
-        for(int i=0;i<signNames.length;i++){final int style=i;Button b=button(signNames[i]);b.setOnClickListener(v->showSign(style));signButtons.addView(b,new LinearLayout.LayoutParams(dp(200),dp(54)));}
-        signScroll.addView(signButtons);root.addView(signScroll);setContentView(root);
-        // Content is attached before applying immersive flags (v0.4 lifecycle lesson).
-        root.post(()->getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY));
+        reveal = new Button(this); reveal.setText("Show controls"); reveal.setAllCaps(false);
+        reveal.setOnClickListener(v -> setControlsHidden(false));
+        FrameLayout.LayoutParams revealParams = new FrameLayout.LayoutParams(dp(145), dp(48), Gravity.TOP | Gravity.END);
+        frame.addView(reveal, revealParams);
+        setContentView(frame);
         readIntent(getIntent());
+        if (state != null) {
+            timeline.select(state.getString("clip", "idle"));
+            timeline.seek(state.getDouble("position"));
+            timeline.setPaused(state.getBoolean("paused"));
+            timeline.setSlow(state.getBoolean("slow"));
+            signStyle = state.getInt("sign_style"); signTime = state.getDouble("sign_time");
+            signActive = state.getBoolean("sign_active");
+            sign.setVisibility(signActive ? View.VISIBLE : View.GONE);
+            resizeEyes();
+        }
+        setControlsHidden(state != null && state.getBoolean("controls_hidden"));
+        root.post(this::immersive);
+        renderFrame();
     }
-    private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
-    private Button button(String title){Button b=new Button(this);b.setText(title);b.setTextSize(16);b.setFocusable(true);return b;}
-    private void select(String id){
-        signActive=false;if(sign!=null){sign.setVisibility(View.GONE);resizeEyes();}
-        freeze=-1;EyeMotion.Clip c=EyeCatalogue.find(id);
-        controller.setState(c.id,(long)clock,(id.equals("blink")||id.equals("double_blink")||id.equals("wake"))?0:160);
-        label.setText("BOOP • "+c.label+"  |  Canonical eye code • v12 • Ryan review");
-        Log.i("BOOPEyes","clip="+c.id+" time="+(long)clock);
+
+    private LinearLayout strip(LinearLayout parent) {
+        HorizontalScrollView scroll = new HorizontalScrollView(this);
+        scroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout row = new LinearLayout(this);
+        scroll.addView(row);
+        parent.addView(scroll, new LinearLayout.LayoutParams(-1, dp(48)));
+        return row;
     }
-    private void resizeEyes(){
-        int h=signActive?Math.max(1,(int)(stage.getHeight()*0.64f)):-1;
-        if(surface.getLayoutParams().height!=h){FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(-1,h);surface.setLayoutParams(p);}
+    private Button add(LinearLayout row, String text, Runnable action) {
+        Button button = new Button(this); button.setText(text); button.setTextSize(14);
+        button.setAllCaps(false); button.setFocusable(true);
+        button.setOnClickListener(v -> action.run());
+        row.addView(button, new LinearLayout.LayoutParams(dp(130), dp(48)));
+        return button;
     }
-    private void showSign(int style){
-        signStyle=Math.floorMod(style,5);signStart=clock;signActive=true;freeze=-1;
-        sign.setVisibility(View.VISIBLE);resizeEyes();
-        label.setText("BOOP • Puppet show  |  "+new String[]{"WhatsApp","Gmail","Facebook","X","Freddie"}[signStyle]+" • v12 • Demo only");
-        Log.i("BOOPEyes","sign="+signStyle+" time="+(long)clock);
+    private void select(String id) {
+        leaveSign(); timeline.select(id); lastFrame = 0; renderFrame();
     }
-    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);readIntent(intent);}
-    private void readIntent(Intent intent){
-        String id=intent==null?null:intent.getStringExtra("clip");select(id==null?"idle":id);
-        if(intent!=null&&intent.hasExtra("sign"))showSign(intent.getIntExtra("sign",0));
-        if(intent!=null){freeze=intent.getIntExtra("freeze_ms",-1);slow=intent.getBooleanExtra("slow",false);}
+    private void leaveSign() {
+        signActive = false;
+        if (sign != null) { sign.setVisibility(View.GONE); resizeEyes(); }
     }
-    @Override protected void onResume(){super.onResume();resumed=true;surface.onResume();
-        PowerManager power=(PowerManager)getSystemService(POWER_SERVICE);
-        // Android transition scales do not control BOOP's own frame clock.
-        reducedMotion=power!=null&&power.isPowerSaveMode();
-        updateLoop();}
-    @Override protected void onPause(){resumed=false;updateLoop();surface.onPause();super.onPause();}
-    @Override public void onWindowFocusChanged(boolean hasFocus){super.onWindowFocusChanged(hasFocus);focused=hasFocus;if(surface!=null)updateLoop();}
-    private void updateLoop(){
-        boolean shouldRun=resumed&&focused;
-        if(shouldRun&&!running){running=true;lastFrame=0;Choreographer.getInstance().postFrameCallback(this);Log.i("BOOPEyes","clock-resumed");}
-        else if(!shouldRun&&running){running=false;Choreographer.getInstance().removeFrameCallback(this);lastFrame=0;Log.i("BOOPEyes","clock-paused");}
+    private void step(double delta) {
+        if (signActive) { signTime = Math.max(0, signTime + delta); timeline.setPaused(true); }
+        else timeline.step(delta);
+        lastFrame = 0; renderFrame();
     }
-    @Override public void doFrame(long time){
-        if(!running)return;
-        if(lastFrame!=0&&!motionOff)clock+=Math.min(100,(time-lastFrame)/1000000.0)*(slow?0.15:1)*speedMultiplier;
-        lastFrame=time;
-        EyeMotion.Clip clip=EyeCatalogue.find(controller.activeClipId());
-        if(signActive){
-            double elapsed=freeze>=0?freeze:reducedMotion?10000:clock-signStart;
-            SignMotion.Pose p=signStyle==4?FreddieMotion.sample(elapsed):SignMotion.sample(elapsed,signStyle);
-            renderer.pose=p.eyes;if(signStyle==4)sign.showFreddie(p);else sign.show(p,signStyle);
-        }else renderer.pose=freeze>=0?clip.sample(freeze):reducedMotion?clip.sample(clip.loop?0:clip.duration):controller.sample((long)clock);
-        surface.requestRender();Choreographer.getInstance().postFrameCallback(this);
+    private void showSign(int style) {
+        signStyle = Math.floorMod(style, 5); signTime = 0; signActive = true;
+        timeline.setPaused(false); lastFrame = 0;
+        sign.setVisibility(View.VISIBLE); resizeEyes(); renderFrame();
     }
+    private void resizeEyes() {
+        if (surface == null || stage == null) return;
+        int height = signActive ? Math.max(1, (int)(stage.getHeight() * .64f)) : -1;
+        if (surface.getLayoutParams().height != height)
+            surface.setLayoutParams(new FrameLayout.LayoutParams(-1, height));
+    }
+    private void setControlsHidden(boolean hidden) {
+        controlsHidden = hidden;
+        label.setVisibility(hidden ? View.GONE : View.VISIBLE);
+        panel.setVisibility(hidden ? View.GONE : View.VISIBLE);
+        reveal.setVisibility(hidden ? View.VISIBLE : View.GONE);
+        if (hidden) reveal.requestFocus(); else pause.requestFocus();
+    }
+    @Override public void onBackPressed() {
+        if (controlsHidden) setControlsHidden(false); else super.onBackPressed();
+    }
+    @Override protected void onSaveInstanceState(Bundle state) {
+        super.onSaveInstanceState(state);
+        state.putString("clip", timeline.clip().id);
+        state.putDouble("position", timeline.positionMs());
+        state.putBoolean("paused", timeline.isPaused());
+        state.putBoolean("slow", timeline.isSlow());
+        state.putBoolean("controls_hidden", controlsHidden);
+        state.putBoolean("sign_active", signActive);
+        state.putInt("sign_style", signStyle); state.putDouble("sign_time", signTime);
+    }
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent); setIntent(intent); readIntent(intent);
+    }
+    private void readIntent(Intent intent) {
+        select(intent == null ? "idle" : intent.getStringExtra("clip"));
+        if (intent != null) {
+            timeline.setSlow(intent.getBooleanExtra("slow", false));
+            if (intent.hasExtra("sign")) showSign(intent.getIntExtra("sign", 0));
+            if (intent.hasExtra("freeze_ms")) {
+                if (signActive) { signTime = Math.max(0, intent.getIntExtra("freeze_ms", 0)); timeline.setPaused(true); }
+                else timeline.seek(intent.getIntExtra("freeze_ms", 0));
+            }
+        }
+        renderFrame();
+    }
+    private void immersive() {
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+    }
+    @Override protected void onResume() {
+        super.onResume(); resumed = true; surface.onResume(); lastFrame = 0; updateLoop();
+    }
+    @Override protected void onPause() {
+        resumed = false; updateLoop(); surface.onPause(); super.onPause();
+    }
+    @Override public void onWindowFocusChanged(boolean value) {
+        super.onWindowFocusChanged(value); focused = value;
+        if (surface != null) { if (value) immersive(); updateLoop(); }
+    }
+    private void updateLoop() {
+        boolean shouldRun = resumed && focused;
+        if (shouldRun && !running) {
+            running = true; lastFrame = 0; Choreographer.getInstance().postFrameCallback(this);
+        } else if (!shouldRun && running) {
+            running = false; Choreographer.getInstance().removeFrameCallback(this); lastFrame = 0;
+        }
+    }
+    @Override public void doFrame(long now) {
+        if (!running) return;
+        if (lastFrame != 0) {
+            double elapsed = Math.min(100, Math.max(0, (now - lastFrame) / 1000000.0));
+            if (signActive) {
+                if (!timeline.isPaused()) signTime += elapsed * (timeline.isSlow() ? .15 : 1);
+            } else timeline.advance(elapsed);
+        }
+        lastFrame = now; renderFrame();
+        Choreographer.getInstance().postFrameCallback(this);
+    }
+    private void renderFrame() {
+        if (renderer == null) return;
+        if (signActive) {
+            SignMotion.Pose pose = signStyle == 4 ? FreddieMotion.sample(signTime) : SignMotion.sample(signTime, signStyle);
+            renderer.pose = pose.eyes;
+            if (signStyle == 4) sign.showFreddie(pose); else sign.show(pose, signStyle);
+        } else renderer.pose = timeline.pose();
+        surface.requestRender(); updateControls();
+    }
+    private void updateControls() {
+        if (pause == null || position == null) return;
+        pause.setText(timeline.isPaused() ? "Resume" : "Pause");
+        slow.setText(timeline.isSlow() ? "Normal speed" : "Slow review");
+        position.setEnabled(!signActive);
+        position.setProgress((int)Math.round(10000 * timeline.positionMs() / timeline.clip().duration));
+        EyeMotion.Pose pose = renderer.pose;
+        label.setText(rendererError != null ? "Renderer error: " + rendererError : String.format(Locale.US,
+            "BOOP Felt Lab · %s · %.1f ms · lids %.0f%% / %.0f%%%s",
+            signActive ? "Sign" : timeline.clip().label, signActive ? signTime : timeline.positionMs(),
+            pose.left * 100, pose.right * 100, timeline.isPaused() ? " · Paused" : ""));
+    }
+    private int dp(int n) { return Math.round(n * getResources().getDisplayMetrics().density); }
 }

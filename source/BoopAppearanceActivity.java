@@ -136,6 +136,8 @@ public final class BoopAppearanceActivity extends Activity {
             speeds.addView(button, params);
         }
         column.addView(speeds, new LinearLayout.LayoutParams(-1, -2));
+        button(column, "Felt animation lab", () -> startActivity(
+                new android.content.Intent(this, BoopCanonicalAnimationActivity.class)));
         button(column, "Done", this::finish);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
         setContentView(root);
