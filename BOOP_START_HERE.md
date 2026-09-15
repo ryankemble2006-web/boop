@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-felt-signs-v190`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-hand-colour-v191`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -13,6 +13,17 @@ Desktop Commander/ADB may stage the GitHub artifact, perform an explicitly reque
 Device operations remain scoped to Ryan's current joint-test request and current handoff. Historical device choices are not a new installation request. Preserve settings, permissions, approved artwork, coded animations, exact1x, single-face ownership, working hue controls and accepted Shield polish.
 
 ## Current delivery and evidence
+
+## Latest: v191 hand colour installed — 2026-09-15
+
+Owner `boop-hand-colour-v191`; reviewed/built `32f7d34bd58e1f0ae58134326e2881ba0456f75c`, signed run34946949843 passed. Version191 installed and actual APK hash/version verified on Shield and Pixel7Pro.
+
+Build a Boop now has independent hand colour below felt, an exact Original yellow reset, a fixed canonical-eye/sign preview and separate optional hand sharing. V189's twelve-file accepted default lock and v190's artwork/anatomy/scale remain intact. All code/package/signer checks passed; two historical skips remain explicit.
+
+Actual phone UI shows the new controls and original yellow sign. Ryan is interacting with colours/sharing on the devices; do not overwrite his choices or fight concurrent taps. Later phone UI reports hand sharing connected; full custom-colour and cross-device visual verdict is pending. Source/CI/install/observed UI are distinct from physical acceptance.
+
+See [v191 receipt](docs/handoffs/2026-09-15-v191-hand-colour.md). Preserve v190 rollback. Fake-notification diagnostic remains later work. Earlier notes below are historical.
+
 
 ## Latest: v190 felt signs accepted; hand colour requested (2026-09-15)
 
