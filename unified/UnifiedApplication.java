@@ -56,5 +56,6 @@ public final class UnifiedApplication extends Application {
         new com.boop.shieldoverlay.LaunchCrashRecorder(this).installAsDefaultHandler();
         BoopSharedEyeColourRuntime.initialize(this);
         BoopSharedFeltColourRuntime.initialize(this);
+        BoopSharedHandColourRuntime.initialize(this);
     }
 }

@@ -20,8 +20,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 190
-        versionName "1.2.190-felt-signs"
+        versionCode 191
+        versionName "1.2.191-hand-colour"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }

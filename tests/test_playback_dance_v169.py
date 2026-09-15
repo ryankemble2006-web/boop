@@ -65,6 +65,15 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v191 requested independent hand colour; locked eyes and sign geometry unchanged.
+      "unified/animation/java/com/boop/eyes/HandColourPixels.java",
+      "unified/animation/java/com/boop/eyes/HandColourWork.java",
+      "unified/animation/java/com/boop/eyes/HandColourPreferences.java",
+      "unified/animation/java/com/boop/eyes/HandColourBinding.java",
+      "source/BoopSharedHandColourRuntime.java",
+      "source/SharedHandColourProtocol.java",
+      "source/SharedHandColourHaProtocol.java",
+      "source/SharedHandColourLink.java",
       # v190 user-approved coherent felt signs; v189 default now separately hash-locked.
       "unified/animation/java/com/boop/eyes/NotificationSignView.java",
       "unified/animation/java/com/boop/eyes/FeltSignProp.java",

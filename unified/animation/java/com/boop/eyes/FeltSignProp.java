@@ -4,7 +4,7 @@ import android.graphics.*;
 import java.io.InputStream;
 /** One connected photographed prop. Text changes; hand anatomy and grip never drift. */
 final class FeltSignProp {
- private final Bitmap sign;
+ private Bitmap sign;
  private final Bitmap[] thumbs;
  private final BitmapShader letterFelt;
  private final Paint art=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
@@ -24,6 +24,11 @@ final class FeltSignProp {
   Matrix materialScale=new Matrix();materialScale.setScale(.45f,.45f);letterFelt.setLocalMatrix(materialScale);
   lettering.setTypeface(Typeface.create("sans-serif-black",Typeface.BOLD));
   lettering.setTextAlign(Paint.Align.CENTER);
+ }
+ Bitmap artwork(){return sign;}
+ void setArtwork(Bitmap image,Bitmap[] colouredThumbs){
+  sign=image;
+  System.arraycopy(colouredThumbs,0,thumbs,0,2);
  }
  void draw(Canvas canvas,int style){
   // A thumb still exists on each hand: its original felt bitmap is rendered at

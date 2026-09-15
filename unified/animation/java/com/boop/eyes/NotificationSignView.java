@@ -8,7 +8,8 @@ import java.io.InputStream;
 /** Shared felt notification prop and separate original Freddie performance. */
 public final class NotificationSignView extends View {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
-    private final Bitmap hands;
+    private Bitmap hands;
+    private final HandColourBinding handColour;
     private final FeltSignProp feltSign;
     private final Bitmap[][] fingers=new Bitmap[2][4];
     private final Bitmap[] thumbs=new Bitmap[2];
@@ -30,6 +31,20 @@ public final class NotificationSignView extends View {
             fingers[side][digit]=sampleFinger(digits[digit],side==1);
         for(int side=0;side<2;side++)thumbs[side]=sampleFinger(new float[]{696,425,769,282,174},side==1);
         feltSign=new FeltSignProp(context,thumbs);
+        Bitmap[] originals=new Bitmap[12];originals[0]=hands;originals[11]=feltSign.artwork();
+        for(int side=0;side<2;side++){
+            for(int digit=0;digit<4;digit++)originals[1+side*4+digit]=fingers[side][digit];
+            originals[9+side]=thumbs[side];
+        }
+        handColour=new HandColourBinding(this,originals,colours->{
+            hands=colours[0];
+            for(int side=0;side<2;side++){
+                for(int digit=0;digit<4;digit++)fingers[side][digit]=colours[1+side*4+digit];
+                thumbs[side]=colours[9+side];
+            }
+            feltSign.setArtwork(colours[11],thumbs);
+            invalidate();
+        });
     }
     public void show(SignMotion.Pose pose,int style){this.pose=pose;this.style=Math.floorMod(style,4);freddie=false;invalidate();}
     public void showFreddie(SignMotion.Pose pose){this.pose=pose;freddie=true;invalidate();}

@@ -15,6 +15,10 @@ import com.boop.eyes.AnimationSpeedPreferences;
 import com.boop.eyes.CanonicalEyeRenderer;
 import com.boop.eyes.EyeColourBinding;
 import com.boop.eyes.FeltColourPreferences;
+import com.boop.eyes.HandColourPreferences;
+import com.boop.eyes.NotificationSignView;
+import com.boop.eyes.SignMotion;
+import android.widget.FrameLayout;
 import android.opengl.GLSurfaceView;
 
 /** Shared settings with one canonical, live iris-colour preview. */
@@ -28,6 +32,12 @@ public final class BoopAppearanceActivity extends Activity {
     private Button feltShare, feltRetry;
     private boolean feltDragging;
     private Runnable unwatchFelt;
+    private BoopSharedHandColourRuntime handSharing;
+    private SeekBar hand;
+    private TextView handLabel, handStatus;
+    private Button handShare, handRetry;
+    private boolean handDragging;
+    private Runnable unwatchHand;
     private SharedPreferences eyes, appearance;
     private TextView status, hueLabel, speedLabel;
     private SeekBar hue;
@@ -39,6 +49,7 @@ public final class BoopAppearanceActivity extends Activity {
     private final SharedPreferences.OnSharedPreferenceChangeListener hueListener = (store, key) -> {
         if (key == null || "hue_degrees".equals(key)) refresh();
         if (key == null || FeltColourPreferences.KEY.equals(key)) refreshFelt();
+        if (key == null || HandColourPreferences.KEY.equals(key)) refreshHand();
     };
     private final SharedPreferences.OnSharedPreferenceChangeListener speedListener = (store, key) -> {
         if (key == null || "animation_speed".equals(key)) refreshSpeed();
@@ -48,6 +59,7 @@ public final class BoopAppearanceActivity extends Activity {
         super.onCreate(state);
         sharing = BoopSharedEyeColourRuntime.get(this);
         feltSharing = BoopSharedFeltColourRuntime.get(this);
+        handSharing = BoopSharedHandColourRuntime.get(this);
         eyes = getSharedPreferences("boop_eyes", MODE_PRIVATE);
         appearance = getSharedPreferences("boop_appearance", MODE_PRIVATE);
         LinearLayout root = new LinearLayout(this);
@@ -58,7 +70,7 @@ public final class BoopAppearanceActivity extends Activity {
         preview.setPreserveEGLContextOnPause(true);
         preview.setFocusable(false);
         preview.setClickable(false);
-        preview.setContentDescription("BOOP live eye colour preview");
+        preview.setContentDescription("BOOP live eye, felt and hand colour preview");
         CanonicalEyeRenderer previewRenderer = new CanonicalEyeRenderer(
                 getAssets(), detail -> android.util.Log.e("BOOPEyes", detail));
         preview.setRenderer(previewRenderer);
@@ -67,7 +79,12 @@ public final class BoopAppearanceActivity extends Activity {
         // Fixed above the scrolling controls: slider edits never scroll BOOP away.
         int previewHeight = Math.min(dp(200), Math.max(dp(96),
                 getResources().getDisplayMetrics().heightPixels / 4));
-        root.addView(preview, new LinearLayout.LayoutParams(-1, previewHeight));
+        FrameLayout previewStage = new FrameLayout(this);
+        previewStage.addView(preview, new FrameLayout.LayoutParams(-1, Math.round(previewHeight * .64f)));
+        NotificationSignView previewHands = new NotificationSignView(this);
+        previewHands.show(SignMotion.sample(10000, 0), 0);
+        previewStage.addView(previewHands, new FrameLayout.LayoutParams(-1, -1));
+        root.addView(previewStage, new LinearLayout.LayoutParams(-1, previewHeight));
         ScrollView scroll = new ScrollView(this);
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL);
@@ -107,6 +124,26 @@ public final class BoopAppearanceActivity extends Activity {
         });
         column.addView(felt, new LinearLayout.LayoutParams(-1, dp(60)));
         button(column, "Original charcoal", () -> FeltColourPreferences.save(this, 0));
+        handLabel = text(column, "Hand colour", 20);
+        hand = new SeekBar(this);
+        hand.setMax(359); hand.setKeyProgressIncrement(5);
+        hand.setContentDescription("Hand colour, zero is original yellow");
+        hand.setProgress(HandColourPreferences.load(this));
+        hand.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (fromUser) HandColourPreferences.save(BoopAppearanceActivity.this, value);
+                handLabel.setText(value == 0 ? "Hand colour: Original yellow" : "Hand colour: " + value);
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { handDragging = true; }
+            @Override public void onStopTrackingTouch(SeekBar bar) { handDragging = false; refreshHand(); }
+        });
+        column.addView(hand, new LinearLayout.LayoutParams(-1, dp(60)));
+        button(column, "Original yellow", () -> HandColourPreferences.save(this, 0));
+        handStatus = text(column, "", 18);
+        handShare = button(column, "Share hand colour: Off", () -> {
+            if (handSharing.enabled()) handSharing.setEnabled(false); else confirmHandSharing();
+        });
+        handRetry = button(column, "Retry hand sharing", this::confirmHandSharing);
         feltStatus = text(column, "", 18);
         feltShare = button(column, "Share felt colour: Off", () -> {
             if (feltSharing.enabled()) feltSharing.setEnabled(false); else confirmFeltSharing();
@@ -143,7 +180,24 @@ public final class BoopAppearanceActivity extends Activity {
         setContentView(root);
         refresh();
         refreshFelt();
+        refreshHand();
         refreshSpeed();
+    }
+    private void confirmHandSharing() {
+        new AlertDialog.Builder(this).setTitle("Share BOOP's hand colour?")
+                .setMessage("Use the same hand colour on your BOOPs through your paired Home Assistant. BOOP may create a separate hand-colour setting using administrator access. Existing shared hand colour is used first; offline edits stay local.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Share", (dialog, which) -> handSharing.setEnabled(true)).show();
+    }
+    private void refreshHand() {
+        if (hand == null || handShare == null) return;
+        int value = HandColourPreferences.load(this);
+        if (!handDragging) hand.setProgress(value);
+        handLabel.setText(value == 0 ? "Hand colour: Original yellow" : "Hand colour: " + value);
+        handShare.setText("Share hand colour: " + (handSharing.enabled() ? "On" : "Off"));
+        handStatus.setText(handSharing.status());
+        handRetry.setVisibility(handSharing.enabled() && !handSharing.ready()
+                ? android.view.View.VISIBLE : android.view.View.GONE);
     }
     private void confirmFeltSharing() {
         new AlertDialog.Builder(this).setTitle("Share BOOP's felt colour?")
@@ -210,6 +264,7 @@ public final class BoopAppearanceActivity extends Activity {
         appearance.registerOnSharedPreferenceChangeListener(speedListener);
         unwatch = sharing.observe(this::refresh);
         unwatchFelt = feltSharing.observe(this::refreshFelt);
+        unwatchHand = handSharing.observe(this::refreshHand);
         refreshSpeed();
     }
     @Override protected void onStop() {
@@ -217,6 +272,7 @@ public final class BoopAppearanceActivity extends Activity {
         appearance.unregisterOnSharedPreferenceChangeListener(speedListener);
         if (unwatch != null) { unwatch.run(); unwatch = null; }
         if (unwatchFelt != null) { unwatchFelt.run(); unwatchFelt = null; }
+        if (unwatchHand != null) { unwatchHand.run(); unwatchHand = null; }
         super.onStop();
     }
     private TextView text(LinearLayout column, String value, int size) {
