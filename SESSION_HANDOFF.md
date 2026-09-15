@@ -1,3 +1,9 @@
+# v180 physical feedback and proposed PNG rig — 2026-09-15
+
+User confirms felt colour sharing worked first attempt. Preserve it. Colour is too subdued: requested full bright fabric colours, including vivid green/blue. User reports no visible hairs; fibre appearance remains unaccepted. App stays v180.
+
+Inspection confirms current app never loaded the approved generated felt study as its material. It approximates felt over the original master. v180 fades strands in small views; palette preserves dark charcoal luminance. Proposed next step is a layered PNG puppet rig and fabric recolouring separated from illumination. See [design proposal](docs/handoffs/2026-09-15-png-puppet-rig-proposal.md). Proposal only; no new source build/install in this feedback turn. Earlier pending sharing verdict is superseded by this user report.
+
 # Current: v180 Build a Boop (2026-09-15)
 
 Owner `boop-build-a-boop-v180`. Free felt colour below eye colour, fixed live preview, independent opt-in felt sharing, sparse worn fibres with lower small-scale coverage. Built source `4fa906d8e374f628459c50860356efcb27bffb30`; GitHub run34932494089 passed. Permanent-signed version180 installed and hash-verified on Shield and Pixel7Pro. **Physical visual and live felt-sharing verdict pending.** See [receipt](docs/handoffs/2026-09-15-v180-build-a-boop.md). Preserve original artwork, accepted preview interaction, default charcoal lighting and v178 rollback. Earlier entries below are historical.
