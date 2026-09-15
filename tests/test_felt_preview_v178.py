@@ -9,11 +9,11 @@ class FeltPreview(unittest.TestCase):
   with tempfile.TemporaryDirectory() as out:
    subprocess.run(["javac","-d",out,str(ENGINE/"FeltFringeMesh.java"),str(ROOT/"tests/java/FeltFringeHarness.java")],check=True)
    subprocess.run(["java","-Djava.awt.headless=true","-cp",out,"com.boop.eyes.FeltFringeHarness",str(ROOT/"unified/assets/boop-eyes/boopApprovedEyes.png"),str(ROOT/"unified/animation/assets/lid-rig.png")],check=True)
- def test_fringe_glsl_link_and_back_to_front_compositing(self):
+ def test_fringe_glsl_link_and_masked_surface_compositing(self):
   subprocess.run(["glslangValidator","-l",str(ROOT/"unified/animation/assets/felt-fringe.vert"),str(ROOT/"unified/animation/assets/felt-fringe.frag")],check=True)
   renderer=(ENGINE/"CanonicalEyeRenderer.java").read_text()
   draw=renderer.split("public void onDrawFrame")[1]
-  self.assertLess(draw.index("drawFringe()"),draw.index("glUseProgram(program)"))
+  self.assertGreater(draw.index("drawFringe()"),draw.index("GL_TRIANGLE_STRIP"))
   self.assertIn("FeltFringeMesh.create(",renderer)
  def test_accepted_stage_lighting_and_colour_transport_unchanged(self):
   for path in ["unified/animation/assets/eyes.frag","unified/animation/assets/eyes.vert","unified/animation/java/com/boop/eyes/EyeColourBinding.java","source/BoopSharedEyeColourRuntime.java","source/BoopEyeHue.java"]:

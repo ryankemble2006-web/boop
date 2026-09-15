@@ -138,7 +138,7 @@ jobs:
           cp "$APK" v179-artifact/BOOP-Unified-v179-Stage-Fibres.apk
           (cd v179-artifact && sha256sum BOOP-Unified-v179-Stage-Fibres.apk > apk-sha256.txt)
           git rev-parse HEAD > v179-artifact/built-commit.txt
-          printf '%s\n' 'Based directly on v177. Accepted stage lighting preserved; fringe and live colour preview added.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v179-artifact/verification.txt
+          printf '%s\n' 'Based directly on v178. Accepted lighting and colour preview preserved; screen-width surface fibres added.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v179-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
           name: BOOP-Unified-v179-Stage-Fibres
