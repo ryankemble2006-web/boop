@@ -45,6 +45,22 @@ public final class PngPuppetRig {
     if(darkRun==3){edges[x]=y+3;break;}
    }
   }
+  // A dark felt seam can connect to the black backdrop through the cap ends.
+  // It is still solid material. Bound each column's body by sustained visible
+  // runs; leave isolated outer wisps and their soft exterior alpha untouched.
+  int[] bodyTop=new int[w],bodyBottom=new int[w];
+  java.util.Arrays.fill(bodyTop,h);
+  java.util.Arrays.fill(bodyBottom,-1);
+  for(int x=0;x<w;x++){
+   int run=0;
+   for(int y=0;y<h;y++){
+    run=peak(pixels[y*w+x])>16?run+1:0;
+    if(run>=12){
+     if(bodyTop[x]==h)bodyTop[x]=y-11;
+     bodyBottom[x]=y;
+    }
+   }
+  }
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
    int edge=edges[x]*32;
@@ -52,7 +68,8 @@ public final class PngPuppetRig {
     int i=y*w+x,at=i*4;
     out[at]=(byte)(edge>>>8);out[at+1]=(byte)edge;
     out[at+2]=(byte)Math.min(255,Math.round(tops[x]*255f/h));
-    out[at+3]=(byte)(exterior[i]?Math.min(255,peak(pixels[i])*255/16):255);
+    boolean solid=y>=bodyTop[x]&&y<=bodyBottom[x];
+    out[at+3]=(byte)(solid||!exterior[i]?255:Math.min(255,peak(pixels[i])*255/16));
    }
   }
   return out;
