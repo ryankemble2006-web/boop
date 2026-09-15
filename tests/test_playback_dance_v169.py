@@ -65,6 +65,8 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v177 user-approved lid material; scoped separately by test_felt_eyelids_v177.py.
+      "unified/animation/assets/eyes.frag",
       "unified/JohnnyStatePolicy.java","unified/JohnnyStateProvider.java","scripts/materialize-unified.sh",
       "unified/app-build.gradle","unified/shield-home-manifest.xml",
       *{str((SRC/x).relative_to(ROOT)).replace("\\","/") for x in [

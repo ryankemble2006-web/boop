@@ -17,6 +17,15 @@ class FeltLidContract(unittest.TestCase):
         subprocess.run(["glslangValidator", "-l",
             str(ROOT / "unified/animation/assets/eyes.vert"), str(SHADER)], check=True)
 
+    def test_only_lid_shader_and_version_change_in_production(self):
+        changed = subprocess.check_output([
+            "git", "diff", "--name-only", BASE, "HEAD", "--",
+            "source", "unified", "scripts", "launcher", "shield-overlay"
+        ], cwd=ROOT, text=True).splitlines()
+        self.assertLessEqual(set(changed), {
+            "unified/animation/assets/eyes.frag", "unified/app-build.gradle"
+        })
+
     def test_original_art_and_motion_are_unchanged(self):
         paths = [
             "unified/assets/boop-eyes/boopApprovedEyes.png",
