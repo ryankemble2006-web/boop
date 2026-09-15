@@ -1,3 +1,9 @@
+# Current: v182 original PNG eyelids — 2026-09-15
+
+Owner `boop-moving-png-lids-v182`. Built/reviewed source `66cc6d44e61339bbaeade1a9c67be88f088154ce`, run34934919950 passed; signed version182 installed/hash-verified on Shield and Pixel7Pro.
+V181 vivid felt colour is physically accepted; preserve palette, preview and sharing. V181 doubled eyelids and both green-visible scars rejected. V182 moves the original photographic lid and rejects measured false boundary spikes; original PNG unchanged. **User verdict on v182 blink and scars pending.**
+See [v182 receipt](docs/handoffs/2026-09-15-v182-moving-png-lids.md). Prior entries below are historical.
+
 # v180 physical feedback and proposed PNG rig — 2026-09-15
 
 User confirms felt colour sharing worked first attempt. Preserve it. Colour is too subdued: requested full bright fabric colours, including vivid green/blue. User reports no visible hairs; fibre appearance remains unaccepted. App stays v180.

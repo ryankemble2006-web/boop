@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-build-a-boop-v180`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-moving-png-lids-v182`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
