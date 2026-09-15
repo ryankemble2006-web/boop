@@ -7,7 +7,7 @@ mix=lambda a,b,t:a*(1-t)+b*t
 
 def evaluate(expression, values):
  assert re.fullmatch(r'[A-Za-z0-9_ .,+*/()\-]+',expression),expression
- return eval(expression,{'__builtins__':{}},{'mix':mix,'min':min,'max':max,**values})
+ return eval(expression,{'__builtins__':{}},{'mix':mix,'min':min,'max':max,'sqrt':math.sqrt,**values})
 
 def split_args(expression):
  level=0
@@ -30,6 +30,13 @@ else:
  assert 'gl_FragColor=vec4(rgb*alpha,alpha);' in shader
  rgb_expr='mix(baseRgb,lidRgb,cover)*baseAlpha'
  alpha_expr='baseAlpha'
+closed_helper=re.search(r'float lidClosedY[^{}]+[{]\s*float dx=([^;]+);\s*return ([^;]+);',shader)
+centres=re.search(r'float lidCentre=left[?]([0-9.]+):([0-9.]+);',shader)
+def closed(x):
+ if not closed_helper:return 642.
+ centre=float(centres.group(1 if x<768 else 2))
+ dx=evaluate(closed_helper.group(1),dict(x=x,centre=centre))
+ return evaluate(closed_helper.group(2),dict(dx=dx))
 warp=re.search(r'float lidSampleY[^{}]+[{]\s*return ([^;]+);',shader).group(1)
 with tempfile.TemporaryDirectory() as tmp:
  subprocess.run(['javac','-d',tmp,str(ROOT/'unified/animation/java/com/boop/eyes/PngPuppetRig.java'),str(ROOT/'tests/java/PngCoverageData.java')],check=True)
@@ -51,7 +58,7 @@ for closure in (.5,.77,1.):
    edge=(rig[x*4]*256+rig[x*4+1])/32
    top=min(rig[x*4+2]*640/255,edge-3)
    if edge>=640 or top<=0:continue
-   end=mix(edge,642,closure)
+   end=mix(edge,closed(x+.5) if edge<640 else 642.,closure)
    for sy in range(math.ceil(top+4),math.floor(edge-3)):
     target=top+(sy+.5-top)*(end-top)/(edge-top)
     if not 0<target<640 or target>=end-2:continue

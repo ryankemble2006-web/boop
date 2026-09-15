@@ -14,7 +14,7 @@ if helper:
  centres=re.search(r'float lidCentre=left[?]([0-9.]+):([0-9.]+);',shader)
  assert centres,'Actual target centres must be explicit'
  centres=tuple(map(float,centres.groups()))
- assert 'float end=mix(edge,lidClosedY(p.x,lidCentre),closure);' in shader
+ assert 'float end=mix(edge,edge<640.0?lidClosedY(p.x,lidCentre):642.0,closure);' in shader
  def closed(x,centre):
   dx=evaluate(helper.group(1),dict(x=x,centre=centre))
   return evaluate(helper.group(2),dict(dx=dx))

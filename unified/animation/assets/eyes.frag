@@ -19,6 +19,12 @@ vec3 fabric(vec3 photo){
  float shade=clamp(1.9*pow(max(light,0.0),.45),.025,.95);
  return mix(photo,uFeltTint*shade,uFeltAmount);
 }
+// Soft oval lower edge stays above the hero crop and outside the photographed
+// eye. The existing cap and its transparency both stretch to this same contour.
+float lidClosedY(float x,float centre){
+ float dx=(x-centre)/320.0;
+ return 410.0+226.0*sqrt(max(0.0,1.0-dx*dx));
+}
 // Stretch the existing cap from its crown to its moving lower lip.
 float lidSampleY(float y,float top,float edge,float end){
  return min(edge-2.0, top+(y-top)*(edge-top)/max(end-top,1.0));
@@ -44,7 +50,8 @@ void main(){
  float iris=1.0-smoothstep(1.0,1.08,length((source-centre)/vec2(174.0)));
  rgb=mix(rgb,hueRotate(rgb,uHueRadians),iris);
  float closure=clamp(left?uPose.x:uPose.y,0.0,1.0);
- float end=mix(edge,642.0,closure);
+ float lidCentre=left?470.0:1066.0;
+ float end=mix(edge,edge<640.0?lidClosedY(p.x,lidCentre):642.0,closure);
  float top=min(rig.b*640.0,edge-3.0);
  float sampleY=closure>0.000001?lidSampleY(p.y,top,edge,end):p.y;
  vec3 lid=texture2D(uMaster,vec2(p.x,sampleY)/vec2(1536.0,1024.0)).rgb;
