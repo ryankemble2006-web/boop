@@ -1,6 +1,6 @@
 # BOOP - current notes only
 
-Updated 2026-09-13. This file intentionally contains only the newest routing notes.
+Updated 2026-09-15. This file intentionally contains only the newest routing notes.
 Old startup-rule/context stacks were removed because they had become stale and slowed down work.
 Current user instructions always win.
 
@@ -16,9 +16,17 @@ Desktop Commander/ADB may stage the GitHub-built APK, perform an explicitly requ
 
 Current authorized physical BOOP targets are Shield and Pixel 7. Leave physical Pixel 10 alone unless Ryan explicitly changes that boundary. No permission changes, lock bypass, data clear, signing-key substitution or reset of his colour/settings choices. Keep the approved artwork, coded animations, exact original 1x timing and accepted Shield polish. Tool denials must not be bypassed; they are not evidence that animation controls themselves are dangerous. Distinguish a denied operation from an independently authorized later request.
 
+## Accepted default character: photographic felt Boop
+
+Ryan permanently selected the accepted v189 felt Boop as the default on 2026-09-15. Preserve his rounded single moving eyelids, whole-cap motion, photographic fibres and lighting. The existing free eye/felt colour controls and saved choices remain available. Do not regenerate or replace this character during unrelated work. Only Ryan's explicit new direction can revise the accepted default, retaining this checkpoint.
+
+Frozen reference: tag `boop-felt-default-v189`, built source `470bb4b471e7e452b29b6a3a437bea0fa4a0904e`. Signed v189 was installed and physically accepted before the default lock. Current signs/hands work continues from it on `boop-felt-signs-v190`; consult that branch's latest receipt for candidate build/install status. The new build lock protects exact default files plus materialized renderer routes; default means the shared photographic renderer, not forcing everyone's saved colour to charcoal.
+
+Every hand has exactly five digits: four fingers and one opposing thumb. The approved notification grip shows four curled fingers in front and hides the existing thumb behind the sign. Keep connected palms, short cuffs and yellow felt. Hiding a digit does not remove it from the model. Reuse one coherent grip across notification styles; the pose is not validated ASL/BSL.
+
 ## Unified app
 
-Current combined app work is owned by `boop-unified-eye-sync-safe-v159`. Fetch its LIVE HEAD and read its current `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for exact build, installation and user-acceptance state. The branch name does not determine the APK version. Main is the shared context hub, not the latest app source.
+Current combined app work is owned by `boop-felt-signs-v190`. Fetch its LIVE HEAD and read its current `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for exact build, installation and user-acceptance state. The branch name does not determine the APK version. Main is the shared context hub, not the latest app source.
 
 Preserve the earlier `boop-unified-v146-integration` combined lineage and the accepted v156 Shield polish at `a901c1e9f31e55c710e31ac7ff4f5924c9769d56`. Do not restart from isolated v142/v145 work or unpublished local colour drafts. Standalone Animation Lab and unrelated projects remain separate unless Ryan explicitly requests integration.
 

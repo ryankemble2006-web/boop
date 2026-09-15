@@ -2,6 +2,12 @@
 
 Approved by Ryan on 2026-09-07 after the side-by-side, hands-only transparent PNG was shown. Ryan explicitly made this pair the official yellow hands for BOOP everywhere and requested the reference in the all-in-one APK project and the animation folder.
 
+## Current notification grip decision (2026-09-15)
+
+Exactly four curled fingers are visible on the front of each sign grip, with one opposing thumb behind the board. Both hands always retain five digits. Preserve the accepted connected palm/cuff proportions and yellow felt; do not assemble a grip from disconnected finger strips. The photographic grip may be reused as one coherent prop across styles, with thumb geometry retained at rear depth. This is a fixed prop pose, not validated ASL/BSL.
+
+The older transfer records below are historical. Current Unified master provenance and implementation live in the owning branch's latest receipt. The current task is `boop-felt-signs-v190`, based on the accepted v189 default character.
+
 ## Design lock
 
 - Use the exact approved left/right pair as the reference across the unified Wall, Launcher and Shield bodies and every BOOP animation or Easter egg.
