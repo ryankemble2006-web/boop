@@ -29,7 +29,15 @@ class FeltLidContract(unittest.TestCase):
             "unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java",
             "unified/animation/java/com/boop/eyes/FeltFringeMesh.java",
             "unified/animation/assets/felt-fringe.vert",
-            "unified/animation/assets/felt-fringe.frag"
+            "unified/animation/assets/felt-fringe.frag",
+            "source/SharedFeltColourProtocol.java",
+            "source/SharedFeltColourHaProtocol.java",
+            "source/SharedFeltColourLink.java",
+            "source/BoopSharedFeltColourRuntime.java",
+            "unified/UnifiedApplication.java",
+            "unified/animation/java/com/boop/eyes/EyeColourBinding.java",
+            "unified/animation/java/com/boop/eyes/FeltPalette.java",
+            "unified/animation/java/com/boop/eyes/FeltColourPreferences.java"
         })
 
     def test_original_art_and_motion_are_unchanged(self):

@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.boop.eyes.AnimationSpeedPreferences;
 import com.boop.eyes.CanonicalEyeRenderer;
 import com.boop.eyes.EyeColourBinding;
+import com.boop.eyes.FeltColourPreferences;
 import android.opengl.GLSurfaceView;
 
 /** Shared settings with one canonical, live iris-colour preview. */
@@ -21,6 +22,12 @@ public final class BoopAppearanceActivity extends Activity {
     private static final double[] SPEEDS = {.5, 1, 1.5, 2};
     private static final String[] SPEED_LABELS = {"0.5x", "1x", "1.5x", "2x"};
     private BoopSharedEyeColourRuntime sharing;
+    private BoopSharedFeltColourRuntime feltSharing;
+    private SeekBar felt;
+    private TextView feltLabel, feltStatus;
+    private Button feltShare, feltRetry;
+    private boolean feltDragging;
+    private Runnable unwatchFelt;
     private SharedPreferences eyes, appearance;
     private TextView status, hueLabel, speedLabel;
     private SeekBar hue;
@@ -31,6 +38,7 @@ public final class BoopAppearanceActivity extends Activity {
     private boolean dragging;
     private final SharedPreferences.OnSharedPreferenceChangeListener hueListener = (store, key) -> {
         if (key == null || "hue_degrees".equals(key)) refresh();
+        if (key == null || FeltColourPreferences.KEY.equals(key)) refreshFelt();
     };
     private final SharedPreferences.OnSharedPreferenceChangeListener speedListener = (store, key) -> {
         if (key == null || "animation_speed".equals(key)) refreshSpeed();
@@ -39,6 +47,7 @@ public final class BoopAppearanceActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         sharing = BoopSharedEyeColourRuntime.get(this);
+        feltSharing = BoopSharedFeltColourRuntime.get(this);
         eyes = getSharedPreferences("boop_eyes", MODE_PRIVATE);
         appearance = getSharedPreferences("boop_appearance", MODE_PRIVATE);
         LinearLayout root = new LinearLayout(this);
@@ -65,8 +74,8 @@ public final class BoopAppearanceActivity extends Activity {
         column.setPadding(dp(28), dp(24), dp(28), dp(24));
         column.setBackgroundColor(Color.BLACK);
         scroll.addView(column);
-        text(column, "Eyes and animation", 28);
-        text(column, "Only the iris colour changes. BOOP's artwork stays the same.", 18);
+        text(column, "Build a Boop", 28);
+        text(column, "A little colour. A lot of character. Yours to make, for free.", 18);
         hueLabel = text(column, "Eye colour", 20);
         hue = new SeekBar(this);
         hue.setMax(359);
@@ -83,6 +92,26 @@ public final class BoopAppearanceActivity extends Activity {
         });
         column.addView(hue, new LinearLayout.LayoutParams(-1, dp(60)));
         button(column, "Original blue", () -> BoopEyeHue.saveHue(this, BoopEyeHueMath.DEFAULT_HUE_DEGREES));
+        feltLabel = text(column, "Felt colour", 20);
+        felt = new SeekBar(this);
+        felt.setMax(359); felt.setKeyProgressIncrement(5);
+        felt.setContentDescription("Felt colour, zero is original charcoal");
+        felt.setProgress(FeltColourPreferences.load(this));
+        felt.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (fromUser) FeltColourPreferences.save(BoopAppearanceActivity.this, value);
+                feltLabel.setText(value == 0 ? "Felt colour: Original charcoal" : "Felt colour: " + value);
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { feltDragging = true; }
+            @Override public void onStopTrackingTouch(SeekBar bar) { feltDragging = false; refreshFelt(); }
+        });
+        column.addView(felt, new LinearLayout.LayoutParams(-1, dp(60)));
+        button(column, "Original charcoal", () -> FeltColourPreferences.save(this, 0));
+        feltStatus = text(column, "", 18);
+        feltShare = button(column, "Share felt colour: Off", () -> {
+            if (feltSharing.enabled()) feltSharing.setEnabled(false); else confirmFeltSharing();
+        });
+        feltRetry = button(column, "Retry felt sharing", this::confirmFeltSharing);
         text(column, "Share the same eye colour with your other BOOPs using the same Home Assistant. Sharing works while BOOP is open; the last colour stays available offline.", 18);
         status = text(column, "", 18);
         share = button(column, "Share eye colour: Off", () -> {
@@ -111,7 +140,24 @@ public final class BoopAppearanceActivity extends Activity {
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1f));
         setContentView(root);
         refresh();
+        refreshFelt();
         refreshSpeed();
+    }
+    private void confirmFeltSharing() {
+        new AlertDialog.Builder(this).setTitle("Share BOOP's felt colour?")
+                .setMessage("Use the same felt colour on your BOOPs through your paired Home Assistant. BOOP may create a separate felt-colour setting using administrator access. Existing shared felt is used first; offline edits stay local.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Share", (dialog, which) -> feltSharing.setEnabled(true)).show();
+    }
+    private void refreshFelt() {
+        if (felt == null || feltShare == null) return;
+        int value = FeltColourPreferences.load(this);
+        if (!feltDragging) felt.setProgress(value);
+        feltLabel.setText(value == 0 ? "Felt colour: Original charcoal" : "Felt colour: " + value);
+        feltShare.setText("Share felt colour: " + (feltSharing.enabled() ? "On" : "Off"));
+        feltStatus.setText(feltSharing.status());
+        feltRetry.setVisibility(feltSharing.enabled() && !feltSharing.ready()
+                ? android.view.View.VISIBLE : android.view.View.GONE);
     }
     private void confirmSharing() {
         new AlertDialog.Builder(this).setTitle("Share BOOP's eye colour?")
@@ -161,12 +207,14 @@ public final class BoopAppearanceActivity extends Activity {
         eyes.registerOnSharedPreferenceChangeListener(hueListener);
         appearance.registerOnSharedPreferenceChangeListener(speedListener);
         unwatch = sharing.observe(this::refresh);
+        unwatchFelt = feltSharing.observe(this::refreshFelt);
         refreshSpeed();
     }
     @Override protected void onStop() {
         eyes.unregisterOnSharedPreferenceChangeListener(hueListener);
         appearance.unregisterOnSharedPreferenceChangeListener(speedListener);
         if (unwatch != null) { unwatch.run(); unwatch = null; }
+        if (unwatchFelt != null) { unwatchFelt.run(); unwatchFelt = null; }
         super.onStop();
     }
     private TextView text(LinearLayout column, String value, int size) {

@@ -81,6 +81,7 @@ jobs:
           bash scripts/test-unified-native-lyrics.sh
           python tests/test_animation_speed.py
           python tests/test_materialized_speed.py
+          python tests/test_felt_sharing_v180.py
           python -m pytest -q tests/test_now_playing_canonical_only.py tests/test_notification_canonical_only.py tests/test_unified_face_ownership.py tests/test_now_playing_bay_ownership.py
           cmp unified/shield-home/src/main/java/com/boop/shieldhome/MusicBounceSource.java boop-build/BOOP-Alpha1/shield-home-lib/src/main/java/com/boop/shieldhome/MusicBounceSource.java
           cmp unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java boop-build/BOOP-Alpha1/shield-home-lib/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java
@@ -139,7 +140,7 @@ jobs:
           cp "$APK" v180-artifact/BOOP-Unified-v180-Build-a-Boop.apk
           (cd v180-artifact && sha256sum BOOP-Unified-v180-Build-a-Boop.apk > apk-sha256.txt)
           git rev-parse HEAD > v180-artifact/built-commit.txt
-          printf '%s\n' 'Based directly on v178. Accepted lighting and colour preview preserved; screen-width surface fibres added.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v180-artifact/verification.txt
+          printf '%s\n' 'Based on v179. Sparse worn fibres, scale-aware coverage, independent free felt colour and opt-in sharing.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v180-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
           name: BOOP-Unified-v180-Build-a-Boop

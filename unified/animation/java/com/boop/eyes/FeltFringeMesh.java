@@ -33,17 +33,19 @@ public final class FeltFringeMesh {
             travelled+=(float)Math.sqrt(1+step*step);
             if(travelled<spacing)continue;
             travelled=0;
-            spacing=5+5*random(x,19);
+            spacing=4+24*random(x,19);
+            // Coherent bare patches and tufts, rather than one strand per contour step.
+            if(random(x/73,353)<.36f || random(x,367)<.24f)continue;
             float slope=(top[x+3]-top[x-3])/6f;
             float inv=1f/(float)Math.sqrt(1+slope*slope);
             float tx=inv,ty=slope*inv,nx=ty,ny=-tx;
-            float length=10+13*random(x,41);
-            float bend=(random(x,73)-.5f)*7;
-            float curl=(random(x,101)-.5f)*3;
+            float length=6+17*random(x,41);
+            float bend=(random(x,73)-.5f)*24;
+            float curl=(random(x,101)-.5f)*12;
             float thickness=2.2f+random(x,131); // Soft ribbon width in screen pixels.
             // Neutral stage light catches upward-facing fibres most strongly.
-            float light=(.42f+.16f*random(x,157))*(.68f+.32f*Math.max(0,-ny));
-            float opacity=.60f+.18f*random(x,179);
+            float light=(.16f+.14f*random(x,157))*(.68f+.32f*Math.max(0,-ny));
+            float opacity=.18f+.18f*random(x,179);
             float[] cx=new float[5],cy=new float[5],sx=new float[5],sy=new float[5],alpha=new float[5];
             for(int k=0;k<=4;k++){
                 float t=k/4f;
@@ -54,17 +56,19 @@ public final class FeltFringeMesh {
             }
             ribbon(out,cx,cy,sx,sy,alpha,thickness,light,width,height);
             // Loose curved wisps lie on the lit cloth, not just beyond its edge.
-            if(random(x,211)>.25f){
+            if(random(x,211)>.38f){
                 float depth=10+60*random(x,227);
                 float ax=x-nx*depth,ay=top[x]-ny*depth;
-                float span=12+22*random(x,241),bow=(random(x,257)-.5f)*12;
-                float wispLight=.30f+.18f*random(x,271);
-                float wispAlpha=.44f+.18f*random(x,283);
+                float span=8+24*random(x,241),bow=(random(x,257)-.5f)*16;
+                float angle=6.2831853f*random(x,397);
+                float ux=(float)Math.cos(angle),uy=(float)Math.sin(angle);
+                float wispLight=.12f+.16f*random(x,271);
+                float wispAlpha=.12f+.16f*random(x,283);
                 for(int k=0;k<=4;k++){
                     float t=k/4f,along=(t-.5f)*span;
                     float arc=bow*(float)Math.sin(Math.PI*t);
-                    cx[k]=ax+tx*along+nx*arc;
-                    cy[k]=ay+ty*along+ny*arc;
+                    cx[k]=ax+ux*along-uy*arc;
+                    cy[k]=ay+uy*along+ux*arc;
                     alpha[k]=wispAlpha*(float)Math.sin(Math.PI*t);
                 }
                 ribbon(out,cx,cy,sx,sy,alpha,1.9f+.6f*random(x,307),wispLight,width,height);

@@ -1,5 +1,6 @@
 precision highp float;
 uniform sampler2D uMaster;
+uniform vec3 uFeltTint;
 uniform sampler2D uRig;
 varying mediump vec3 vInk;
 varying highp vec2 vUv;
@@ -12,5 +13,5 @@ void main(){
     float above=1.0-smoothstep(-1.0,1.0,vUv.y*887.0-edge);
     float solid=step(.01,texture2D(uMaster,vUv).a);
     alpha*=mix(1.0,above,solid);
-    gl_FragColor=vec4(vec3(vInk.x)*alpha,alpha);
+    gl_FragColor=vec4(vec3(vInk.x)*uFeltTint*alpha,alpha);
 }

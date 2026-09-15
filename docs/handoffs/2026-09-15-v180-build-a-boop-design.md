@@ -1,0 +1,5 @@
+# Build a Boop v180
+User-approved seasoned felt: irregular persistent tufts and bare patches, no frame-random shimmer. Reduce v179's dense bright surface/fringe, particularly in small Shield views. Preserve charcoal material formula, original assets, motion and accepted preview placement.
+Free felt-colour slider directly below eye-colour control; zero/default/reset is original charcoal. Independent iris and felt colours. Existing preview updates both immediately. Palette preserves material luminance.
+Reuse the existing foreground Home Assistant sharing pattern in an isolated felt channel with its own opt-in, helper ownership marker and local key. Opening/upgrading never enables it or alters existing iris sharing. Both devices use last local value offline. No new payment or account flow.
+Numeric mesh/colour checks, inherited preservation and protocol tests, signed GitHub artifact; user judges physical result. No visual CI/emulator. v178 rollback retained. Current v179 installed until verified candidate.

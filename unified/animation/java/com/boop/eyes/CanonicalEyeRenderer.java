@@ -29,6 +29,9 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
     private float scaleX=1f,scaleY=1f,pixelScale=1f;
     public volatile EyeMotion.Pose pose=EyeMotion.OPEN;
     private volatile float hueRotationRadians;
+    private volatile float[] feltTint=FeltPalette.tint(0);
+    private int feltLocation,fringeFeltLocation;
+    public void setFeltColour(int value){feltTint=FeltPalette.tint(value);}
     public CanonicalEyeRenderer(AssetManager assets,Failure failure){
         this.assets=assets;this.failure=failure;
         uv.put(new float[]{0,1,1,1,0,0,1,0}).position(0);
@@ -60,6 +63,7 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
             if(result[0]==0)throw new IllegalStateException(GLES20.glGetProgramInfoLog(program));
             GLES20.glUseProgram(program);
             positionLocation=GLES20.glGetAttribLocation(program,"aPosition");uvLocation=GLES20.glGetAttribLocation(program,"aUv");poseLocation=GLES20.glGetUniformLocation(program,"uPose");hueLocation=GLES20.glGetUniformLocation(program,"uHueRadians");
+            feltLocation=GLES20.glGetUniformLocation(program,"uFeltTint");
             GLES20.glGenTextures(2,textures,0);
             int[][] bitmapPixels=new int[2][];
             int[] bitmapWidths=new int[2],bitmapHeights=new int[2];
@@ -93,6 +97,7 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
             fringeOffset=GLES20.glGetAttribLocation(fringeProgram,"aOffset");
             fringeInk=GLES20.glGetAttribLocation(fringeProgram,"aInk");
             fringeScale=GLES20.glGetUniformLocation(fringeProgram,"uScale");
+            fringeFeltLocation=GLES20.glGetUniformLocation(fringeProgram,"uFeltTint");
             fringePixelScale=GLES20.glGetUniformLocation(fringeProgram,"uPixelScale");
             GLES20.glUseProgram(fringeProgram);
             GLES20.glUniform1i(GLES20.glGetUniformLocation(fringeProgram,"uMaster"),0);
@@ -112,10 +117,11 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
         scaleX=x;scaleY=y;pixelScale=Math.max(.05f,width*x/1774f);
         positions.clear();positions.put(new float[]{-x,-y,x,-y,-x,y,x,y}).position(0);
     }
-    private void drawFringe(){
+    private void drawFringe(float[] tint){
         if(fringeVertexCount==0)return;
         GLES20.glUseProgram(fringeProgram);GLES20.glUniform2f(fringeScale,scaleX,scaleY);
         GLES20.glUniform1f(fringePixelScale,pixelScale);
+        GLES20.glUniform3f(fringeFeltLocation,tint[0],tint[1],tint[2]);
         fringe.position(0);GLES20.glEnableVertexAttribArray(fringePosition);
         GLES20.glVertexAttribPointer(fringePosition,2,GLES20.GL_FLOAT,false,28,fringe);
         fringe.position(2);GLES20.glEnableVertexAttribArray(fringeOffset);
@@ -128,12 +134,14 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
         GLES20.glClearColor(0,0,0,0);GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         if(!ready)return;
         EyeMotion.Pose current=pose;
+        float[] tint=feltTint;
         GLES20.glUseProgram(program);GLES20.glUniform4f(poseLocation,current.left,current.right,current.x,current.y);GLES20.glUniform1f(hueLocation,hueRotationRadians);
+        GLES20.glUniform3f(feltLocation,tint[0],tint[1],tint[2]);
         positions.position(0);uv.position(0);
         GLES20.glEnableVertexAttribArray(positionLocation);GLES20.glEnableVertexAttribArray(uvLocation);
         GLES20.glVertexAttribPointer(positionLocation,2,GLES20.GL_FLOAT,false,0,positions);
         GLES20.glVertexAttribPointer(uvLocation,2,GLES20.GL_FLOAT,false,0,uv);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP,0,4);
-        drawFringe();
+        drawFringe(tint);
     }
 }

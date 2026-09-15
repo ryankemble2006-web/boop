@@ -3,6 +3,7 @@ uniform sampler2D uMaster;
 uniform sampler2D uRig;
 uniform vec4 uPose;
 uniform float uHueRadians;
+uniform vec3 uFeltTint;
 varying vec2 vUv;
 const vec2 SIZE=vec2(1774.0,887.0);
 
@@ -29,12 +30,12 @@ vec3 feltMaterial(vec3 skin,vec2 p){
     float strandA=1.0-smoothstep(0.07,0.26,abs(feltNoise(a/vec2(13.0,2.5)+pile)-0.5));
     float strandB=1.0-smoothstep(0.06,0.24,abs(feltNoise(b/vec2(10.0,3.0)-pile)-0.5));
     // Compress the old plastic specular into a broad charcoal-felt crown light.
-    // Hue belongs to the iris; all cloth lighting remains neutral.
+    // Tint changes cloth colour while preserving the original material luminance.
     float crown=sqrt(light);
     float charcoal=0.025+0.25*crown;
     float fibres=(0.65*strandA+0.35*strandB-0.43)*(0.045+0.10*crown);
     float nap=(pile-0.5)*0.035;
-    return vec3(clamp(charcoal+fibres+nap,0.012,0.42));
+    return vec3(clamp(charcoal+fibres+nap,0.012,0.42))*uFeltTint;
 }
 vec3 hueRotate(vec3 c,float a){
     float co=cos(a),si=sin(a);

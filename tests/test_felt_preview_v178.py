@@ -13,10 +13,10 @@ class FeltPreview(unittest.TestCase):
   subprocess.run(["glslangValidator","-l",str(ROOT/"unified/animation/assets/felt-fringe.vert"),str(ROOT/"unified/animation/assets/felt-fringe.frag")],check=True)
   renderer=(ENGINE/"CanonicalEyeRenderer.java").read_text()
   draw=renderer.split("public void onDrawFrame")[1]
-  self.assertGreater(draw.index("drawFringe()"),draw.index("GL_TRIANGLE_STRIP"))
+  self.assertGreater(draw.index("drawFringe(tint)"),draw.index("GL_TRIANGLE_STRIP"))
   self.assertIn("FeltFringeMesh.create(",renderer)
  def test_accepted_stage_lighting_and_colour_transport_unchanged(self):
-  for path in ["unified/animation/assets/eyes.frag","unified/animation/assets/eyes.vert","unified/animation/java/com/boop/eyes/EyeColourBinding.java","source/BoopSharedEyeColourRuntime.java","source/BoopEyeHue.java"]:
+  for path in ["unified/animation/assets/eyes.vert","source/BoopSharedEyeColourRuntime.java","source/BoopEyeHue.java"]:
    self.assertEqual((ROOT/path).read_bytes(),subprocess.check_output(["git","show",BASE+":"+path],cwd=ROOT),path)
  def test_preview_is_live_nonfocusable_and_pauses_with_activity(self):
   text=(ROOT/"source/BoopAppearanceActivity.java").read_text()
@@ -32,6 +32,6 @@ class FeltPreview(unittest.TestCase):
   self.assertIn("BoopEyeHue.saveHue",text)
  def test_production_scope(self):
   changed=subprocess.check_output(["git","diff","--name-only",BASE,"HEAD","--","source","unified","scripts","launcher","shield-overlay"],cwd=ROOT,text=True).splitlines()
-  allowed={"source/BoopAppearanceActivity.java","unified/app-build.gradle","unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java","unified/animation/java/com/boop/eyes/FeltFringeMesh.java","unified/animation/assets/felt-fringe.vert","unified/animation/assets/felt-fringe.frag"}
+  allowed={"source/BoopAppearanceActivity.java","unified/app-build.gradle","unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java","unified/animation/java/com/boop/eyes/FeltFringeMesh.java","unified/animation/assets/felt-fringe.vert","unified/animation/assets/felt-fringe.frag","unified/animation/assets/eyes.frag","source/SharedFeltColourProtocol.java","source/SharedFeltColourHaProtocol.java","source/SharedFeltColourLink.java","source/BoopSharedFeltColourRuntime.java","unified/UnifiedApplication.java","unified/animation/java/com/boop/eyes/EyeColourBinding.java","unified/animation/java/com/boop/eyes/FeltPalette.java","unified/animation/java/com/boop/eyes/FeltColourPreferences.java"}
   self.assertLessEqual(set(changed),allowed)
 if __name__=="__main__": unittest.main()
