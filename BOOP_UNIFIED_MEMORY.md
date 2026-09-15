@@ -1,3 +1,9 @@
+# Current: v183 eye-shadow boundary correction — 2026-09-15
+
+Owner `boop-felt-shadow-boundary-v183`. Reviewed/built source `d06c49358b941b160d17e8a061d6bbafb3fc808c`; run34935869282 passed. Permanent-signed version183 installed and APK-hash verified on Shield and Pixel7Pro.
+**V182 was rejected on both devices for a remaining second lid/faint line beneath the shadow. V183 visual verdict is pending.** The coarse felt boundary included neutral eye-shadow pixels, which vivid recolouring made into a bright strip and blink mapping stretched. V183 excludes that shadow and confines edge feathering to the felt.
+Preserve accepted vivid palette, sharing and preview; original PNG unchanged. See [v183 receipt](docs/handoffs/2026-09-15-v183-shadow-boundary.md). Earlier entries are historical.
+
 # Current: v182 original PNG eyelids — 2026-09-15
 
 Owner `boop-moving-png-lids-v182`. Built/reviewed source `66cc6d44e61339bbaeade1a9c67be88f088154ce`, run34934919950 passed; signed version182 installed/hash-verified on Shield and Pixel7Pro.

@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-moving-png-lids-v182`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-felt-shadow-boundary-v183`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -14,7 +14,7 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-v180 Build a Boop is built/signed from `4fa906d8e374f628459c50860356efcb27bffb30`, run34932494089, installed/hash-verified on Shield and Pixel7Pro. Free independent felt colour, fixed live preview and opt-in felt sharing; sparse seasoned fibres and reduced small-scale coverage. User physical verdict pending. See `docs/handoffs/2026-09-15-v180-build-a-boop.md`. v178 signed rollback retained.
+V183 built/reviewed source `d06c49358b941b160d17e8a061d6bbafb3fc808c`, run34935869282, signed version183 installed/hash-verified on Shield and Pixel7Pro. Felt boundary excludes neutral eye shadow; original PNG, accepted vivid colour, preview and sharing preserved. V182 second-lid appearance was rejected on both devices. **V183 visual verdict pending.** See `docs/handoffs/2026-09-15-v183-shadow-boundary.md`. Previous APKs retained.
 
 ## Continuity
 
