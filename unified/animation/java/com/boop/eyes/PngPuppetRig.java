@@ -100,6 +100,22 @@ public final class PngPuppetRig {
    edges[x]=Math.min(edges[x],edges[x-1]+8);
   for(int x=w-2;x>=0;x--)if(corner[x]&&edges[x+1]<h)
    edges[x]=Math.min(edges[x],edges[x+1]+8);
+  // Tiny photographic fringe fragments cannot form a twelve-pixel body run.
+  // Attach both their lip and crown to an existing same-eye cap. Immutable
+  // donors keep inheritance bounded and cannot grow a bridge across the gap.
+  int[] donorEdges=edges.clone(),donorTops=tops.clone();
+  for(int x=0;x<w;x++){
+   if(donorEdges[x]<h||donorTops[x]<=0)continue;
+   int donor=-1;
+   for(int distance=1;distance<=12&&donor<0;distance++){
+    for(int side:new int[]{-1,1}){
+     int other=x+side*distance;
+     if(other>=0&&other<w&&(other<w/2)==(x<w/2)&&donorEdges[other]<h
+       &&capBottom[other]-capTop[other]>=11){donor=other;break;}
+    }
+   }
+   if(donor>=0){edges[x]=donorEdges[donor];tops[x]=donorTops[donor];}
+  }
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
    int edge=edges[x]*32;

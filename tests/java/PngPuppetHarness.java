@@ -12,6 +12,17 @@ public final class PngPuppetHarness {
    check(rig[at]==baseline[at],"Accepted v184 central rig must remain byte-identical: "+x+","+y+" channel"+c);
   }
   System.out.println("PASS exact v184 central rig comparison");
+  byte[] accepted185=PngPuppetRigV185.create(p,w,640);
+  for(int x=0;x<w;x++){
+   float oldEdge=((accepted185[x*4]&255)*256+(accepted185[x*4+1]&255))/32f;
+   for(int y=0;y<640;y++){
+    int at=(y*w+x)*4;
+    check(rig[at+3]==accepted185[at+3],"Every v185 silhouette/opacity pixel stays exact: "+x+","+y);
+    if(oldEdge<640)for(int c=0;c<3;c++)
+     check(rig[at+c]==accepted185[at+c],"Existing v185 body geometry stays exact: "+x+","+y);
+   }
+  }
+  System.out.println("PASS all v185 opacity and valid body geometry preserved");
   check(java.util.Arrays.equals(rig,PngPuppetRig.create(p,w,640)),"Stable photographic silhouette");
   check((rig[(440*w+470)*4+3]&255)==255,"Black pupil is opaque inside silhouette");
   check((rig[3]&255)==0,"Black exterior is transparent");
@@ -83,6 +94,12 @@ public final class PngPuppetHarness {
    check((rig[(point[1]*w+x)*4+3]&255)>0,"Actual visible inner fringe fixture");
    System.out.println("Inner fringe "+x+","+point[1]+" edge "+edge);
    check(edge>point[1]+2&&edge<360,"Thin inner fringe needs its neighbouring cap motion, not edge640: "+x+" "+edge);
+   float top=(rig[x*4+2]&255)*640f/255f;
+   for(float closure:new float[]{.5f,1f}){
+    float end=edge+(642-edge)*closure;
+    float sample=Math.min(edge-2,top+(point[1]-top)*(edge-top)/(end-top));
+    check(Math.abs(sample-point[1])>2,"Actual bright tip must move off its own old anchor: "+x+","+point[1]+" -> "+sample);
+   }
   }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){

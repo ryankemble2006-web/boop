@@ -10,7 +10,10 @@ class PngPuppet(unittest.TestCase):
    baseline=Path(out)/"PngPuppetRigBaseline.java"
    original=subprocess.run(["git","show","ab2bd9759bd120b762c6651b148191754d4314d2:unified/animation/java/com/boop/eyes/PngPuppetRig.java"],cwd=ROOT,check=True,capture_output=True,text=True).stdout
    baseline.write_text(original.replace("PngPuppetRig","PngPuppetRigBaseline"))
-   subprocess.run(["javac","-d",out,str(baseline),str(rig),str(ROOT/"unified/animation/java/com/boop/eyes/FeltPalette.java"),str(ROOT/"tests/java/PngPuppetHarness.java")],check=True)
+   accepted185=Path(out)/"PngPuppetRigV185.java"
+   prior=subprocess.run(["git","show","a4df9e4154a7e1fd0fda843af7af09106d6691a2:unified/animation/java/com/boop/eyes/PngPuppetRig.java"],cwd=ROOT,check=True,capture_output=True,text=True).stdout
+   accepted185.write_text(prior.replace("PngPuppetRig","PngPuppetRigV185"))
+   subprocess.run(["javac","-d",out,str(accepted185),str(baseline),str(rig),str(ROOT/"unified/animation/java/com/boop/eyes/FeltPalette.java"),str(ROOT/"tests/java/PngPuppetHarness.java")],check=True)
    subprocess.run(["java","-Djava.awt.headless=true","-cp",out,"com.boop.eyes.PngPuppetHarness",str(ROOT/"unified/animation/assets/boop-png-study.png")],check=True)
  def test_approved_source_pixels_are_used(self):
   path=ROOT/"unified/animation/assets/boop-png-study.png"
