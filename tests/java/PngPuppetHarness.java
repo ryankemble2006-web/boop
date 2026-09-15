@@ -15,6 +15,10 @@ public final class PngPuppetHarness {
    check((rig[i+2]&255)>0,"Original lid crown anchor required");
    check(edge>140&&edge<310,"Open lid follows actual white boundary: "+edge);
   }
+  for(int x:new int[]{242,243,1280,1281,1282,1284,1286}){
+   int i=x*4;float edge=((rig[i]&255)*256+(rig[i+1]&255))/32f;
+   check(edge>300&&edge<420,"Bright felt fibres must not cut a scar into coloured cap: "+x+" edge "+edge);
+  }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){
    int at=(y*w+x)*4,col=p[y*w+x],red=(col>>>16)&255,green=(col>>>8)&255,blue=col&255;

@@ -16,10 +16,10 @@ class PngPuppet(unittest.TestCase):
  def test_existing_lid_moves_as_one_surface(self):
   code=(ROOT/"unified/animation/assets/eyes.frag").read_text()
   self.assertNotIn("uCloth",code,"A second felt surface must not appear under the existing lid")
-  match=re.search(r"float lidSampleY[^{}]+[{]\\s*return ([^;]+);",code)
+  match=re.search(r"float lidSampleY[^{}]+[{]\s*return ([^;]+);",code)
   self.assertIsNotNone(match,"Existing lid needs an explicit continuous material mapping")
   expression=match.group(1)
-  self.assertRegex(expression,r"^[a-zA-Z0-9_ .,+*/()\\-]+$")
+  self.assertRegex(expression,r"^[a-zA-Z0-9_ .,+*/()\-]+$")
   for top,edge in [(80.,250.),(140.,290.),(200.,320.)]:
    for closure in [0.,.1,.5,1.]:
     end=edge+(642.-edge)*closure
