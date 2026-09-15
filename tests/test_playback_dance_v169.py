@@ -65,6 +65,9 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v187 user-requested current felt lab pause/seek; production animation remains unchanged.
+      "source/AnimationReviewTimeline.java",
+      "source/BoopCanonicalAnimationActivity.java",
       # v181 authorized photographic PNG rig.
       "unified/animation/java/com/boop/eyes/PngPuppetRig.java",
       "unified/animation/assets/boop-png-study.png",
