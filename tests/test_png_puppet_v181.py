@@ -18,8 +18,8 @@ class PngPuppet(unittest.TestCase):
   photo=ROOT/"unified/animation/assets/boop-hidden-felt.png"
   self.assertEqual(hashlib.sha256(photo.read_bytes()).hexdigest(),"9f4bede5c59f55a067888779fa2d121484d902b1388b110a25cae0dbc48fb728")
   code=(ROOT/"unified/animation/assets/eyes.frag").read_text()
-  xs=re.search(r"float clothX=left\\?mix\\(([^,]+),([^,]+),localX\\):mix\\(([^,]+),([^,]+),localX\\)",code)
-  ys=re.search(r"float clothY=mix\\(([^,]+),([^,]+),",code)
+  xs=re.search(r"float clothX=left[?]mix[(]([^,]+),([^,]+),localX[)]:mix[(]([^,]+),([^,]+),localX[)]",code)
+  ys=re.search(r"float clothY=mix[(]([^,]+),([^,]+),",code)
   self.assertIsNotNone(xs);self.assertIsNotNone(ys)
   vals=list(map(float,xs.groups())); yvals=list(map(float,ys.groups()))
   for bounds,cx in [(vals[:2],420),(vals[2:],1100)]:
