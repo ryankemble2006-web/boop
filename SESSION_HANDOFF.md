@@ -1,3 +1,11 @@
+## v179 physical verdict — 15 September 2026
+
+Ryan reports phone widescreen felt texture is acceptable, but hairs look insufficiently random compared with the approved PNG. Shield now looks overexposed, as though stage lighting increased. v179 is **not visually accepted**. This supersedes the pending-verdict entries below.
+
+Source inspection: strands have randomized parameters but remain contour-spaced and directionally constrained. Width is kept in screen pixels while positions shrink with the face; this increases relative bright coverage at small sizes. The added forward fibre layer is the leading explanation for the Shield brightness regression, despite byte-preserved core lighting. This is source-supported diagnosis, not a controlled device comparison proving the complete cause. Do not blame display capability or change device brightness.
+
+Next design direction: preserve accepted phone material, shared-colour preview and v177 soft lighting; reconsider the fibre layer with irregular sparse clumps, broader direction/length variation and reduced coverage at small scales. No new app revision or rollback installed in this feedback turn. Installed v179 remains unchanged; v178 rollback retained. Agree the revised visual approach before another fibre implementation.
+
 # Current delivery: v179 stage fibres (2026-09-15)
 
 Owner `boop-stage-fibres-v179`; built source `e8b7ed4045c0ed7c1eb06b9f2a02da0a5ddf8c16`. GitHub run34931180380 passed; permanent-signed version179 installed and APK-hash verified on Shield and Pixel7Pro. Screen-width loose fibres and crown wisps replace the too-small v178 fringe. Accepted lighting and colour preview preserved. **User visual verdict pending**, including visible phone-face check. See [full receipt](docs/handoffs/2026-09-15-v179-stage-fibres.md). v178 signed rollback retained. Historical entries below describe earlier state.

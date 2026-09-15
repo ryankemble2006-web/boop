@@ -14,7 +14,7 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-v179 screen-width stage fibres is built/signed from `e8b7ed4045c0ed7c1eb06b9f2a02da0a5ddf8c16`, run34931180380, and installed/hash-verified on Shield and Pixel7Pro. User visual verdict pending. See `docs/handoffs/2026-09-15-v179-stage-fibres.md`. Accepted lighting and live colour preview are preserved; v178 signed rollback retained.
+v179 screen-width stage fibres is built/signed from `e8b7ed4045c0ed7c1eb06b9f2a02da0a5ddf8c16`, run34931180380, and installed/hash-verified on Shield and Pixel7Pro. User verdict: phone widescreen texture acceptable, hairs too regular; Shield overexposed. v179 is not visually accepted. See latest owner handoff. See `docs/handoffs/2026-09-15-v179-stage-fibres.md`. Accepted lighting and live colour preview are preserved; v178 signed rollback retained.
 
 ## Continuity
 
