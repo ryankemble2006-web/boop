@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.view.Choreographer;
 import android.view.Gravity;
 import android.view.View;
@@ -33,6 +34,8 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     private int signStyle;
     private long lastFrame;
     private double signTime;
+    private double speedMultiplier = 1.0;
+    private boolean reducedMotion;
     private String rendererError;
 
     @Override public void onCreate(Bundle state) {
@@ -57,6 +60,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
         surface.setRenderer(renderer);
         surface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         EyeColourBinding.install(surface, renderer);
+        AnimationSpeedBinding.install(surface, speed -> speedMultiplier = speed);
         stage = new FrameLayout(this);
         stage.addView(surface, new FrameLayout.LayoutParams(-1, -1));
         sign = new NotificationSignView(this); sign.setVisibility(View.GONE);
@@ -204,7 +208,10 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
     @Override protected void onResume() {
-        super.onResume(); resumed = true; surface.onResume(); lastFrame = 0; updateLoop();
+        super.onResume(); resumed = true; surface.onResume(); lastFrame = 0;
+        PowerManager power = (PowerManager)getSystemService(POWER_SERVICE);
+        reducedMotion = power != null && power.isPowerSaveMode();
+        updateLoop();
     }
     @Override protected void onPause() {
         resumed = false; updateLoop(); surface.onPause(); super.onPause();
@@ -224,7 +231,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     @Override public void doFrame(long now) {
         if (!running) return;
         if (lastFrame != 0) {
-            double elapsed = Math.min(100, Math.max(0, (now - lastFrame) / 1000000.0));
+            double elapsed = Math.min(100, Math.max(0, (now - lastFrame) / 1000000.0)) * speedMultiplier;
             if (signActive) {
                 if (!timeline.isPaused()) signTime += elapsed * (timeline.isSlow() ? .15 : 1);
             } else timeline.advance(elapsed);
@@ -235,10 +242,12 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
     private void renderFrame() {
         if (renderer == null) return;
         if (signActive) {
-            SignMotion.Pose pose = signStyle == 4 ? FreddieMotion.sample(signTime) : SignMotion.sample(signTime, signStyle);
+            double time = reducedMotion && !timeline.isPaused() ? 10000 : signTime;
+            SignMotion.Pose pose = signStyle == 4 ? FreddieMotion.sample(time) : SignMotion.sample(time, signStyle);
             renderer.pose = pose.eyes;
             if (signStyle == 4) sign.showFreddie(pose); else sign.show(pose, signStyle);
-        } else renderer.pose = timeline.pose();
+        } else renderer.pose = reducedMotion && !timeline.isPaused()
+                ? timeline.clip().sample(timeline.clip().loop ? 0 : timeline.clip().duration) : timeline.pose();
         surface.requestRender(); updateControls();
     }
     private void updateControls() {

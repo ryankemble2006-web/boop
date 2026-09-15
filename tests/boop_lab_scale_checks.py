@@ -39,5 +39,5 @@ def run_lab_checks(activity: Path, engine: Path) -> None:
         harness = Path(out) / 'BoopLabScaleHarness.java'
         harness.write_text(program, encoding='utf-8')
         subprocess.run([tool('javac'), '-encoding', 'UTF-8', '-d', out,
-                        *[str(engine / name) for name in names], str(harness)], check=True, timeout=90)
+                        *[str(engine / name) for name in names], str(activity.parent / "AnimationReviewTimeline.java"), str(harness)], check=True, timeout=90)
         subprocess.run([tool('java'), '-cp', out, 'BoopLabScaleHarness'], check=True, timeout=30)

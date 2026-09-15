@@ -1,4 +1,6 @@
 import com.boop.eyes.*;
+import com.boop.alpha1.AnimationReviewTimeline;
+import java.util.Locale;
 
 /** Verbatim production callback bodies with test-only platform/output adapters.
  * This exercises Java control flow and pose data, not Android scheduling or pixels. */
@@ -32,7 +34,7 @@ public final class BoopLabScaleHarness extends LabHostActivity implements LabHos
         a.fixturePower = saver == null ? null : new PowerManager(saver);
         a.surface = new GLSurfaceView(); a.renderer = new CanonicalEyeRenderer();
         a.sign = new NotificationSignView();
-        a.controller = new ProductionAnimationController("thinking", 0, 20260910L);
+        a.timeline.select("thinking");
         a.speedMultiplier = rate;
         a.onWindowFocusChanged(true); a.onResume();
         return a;
@@ -44,11 +46,11 @@ public final class BoopLabScaleHarness extends LabHostActivity implements LabHos
         for (float scale : new float[]{1, .5f, 2, 0}) {
             for (double rate : new double[]{.5, 1, 1.5, 2}) {
                 BoopLabScaleHarness a = make(scale, false, rate);
-                ProductionAnimationController reference = new ProductionAnimationController("thinking", 0, 20260910L);
+                EyeMotion.Clip reference = EyeCatalogue.find("thinking");
                 for (long ms = 0; ms <= 2000; ms += 50) {
                     tick(a, ms);
-                    check(a.clock == ms * rate, "Lab delta must apply chosen rate exactly once");
-                    same(reference.sample((long)(ms * rate)), a.renderer.pose,
+                    check(a.timeline.positionMs() == (ms * rate) % reference.duration, "Lab delta must apply chosen rate exactly once");
+                    same(reference.sample(ms * rate), a.renderer.pose,
                             "Lab pose freezes or diverges: Android scale=" + scale + ", rate=" + rate + ", ms=" + ms);
                 }
                 for (int style = 0; style < 5; style++) {
@@ -64,27 +66,27 @@ public final class BoopLabScaleHarness extends LabHostActivity implements LabHos
             for (Boolean saver : new Boolean[]{null, false, true}) {
                 BoopLabScaleHarness a = make(scale, saver, 1);
                 check(a.reducedMotion == Boolean.TRUE.equals(saver), "Only existing power saver policy may select reduced motion");
-                a.controller.setState("wake", 0, 0);
+                a.timeline.select("wake");
                 tick(a, 0); tick(a, 100);
                 if (Boolean.TRUE.equals(saver)) same(EyeCatalogue.find("wake").sample(EyeCatalogue.find("wake").duration), a.renderer.pose, "Power saver retains one-shot endpoint");
-                a.freeze = 73; tick(a, 200);
+                a.timeline.seek(73); tick(a, 200);
                 same(EyeCatalogue.find("wake").sample(73), a.renderer.pose, "Explicit freeze review remains authoritative");
             }
             BoopLabScaleHarness a = make(scale, false, 1);
             tick(a, 0); tick(a, 100);
             a.onPause(); a.speedMultiplier = 2; tick(a, 9000);
-            check(a.clock == 100 && !a.running, "Paused Lab cannot advance");
+            check(a.timeline.positionMs() == 100 && !a.running, "Paused Lab cannot advance");
             a.onResume(); tick(a, 10000);
-            check(a.clock == 100, "Resume must not catch up hidden time");
-            tick(a, 10050); check(a.clock == 200, "Resume uses the selected rate");
+            check(a.timeline.positionMs() == 100, "Resume must not catch up hidden time");
+            tick(a, 10050); check(a.timeline.positionMs() == 200, "Resume uses the selected rate");
             a.onWindowFocusChanged(false); tick(a, 11000);
-            check(a.clock == 200 && !a.running, "Focus loss stops the Lab loop");
+            check(a.timeline.positionMs() == 200 && !a.running, "Focus loss stops the Lab loop");
             a.onWindowFocusChanged(true); tick(a, 12000); tick(a, 12050);
-            check(a.clock == 300, "Focus return resets the frame anchor");
-            a.motionOff = true; tick(a, 13000);
-            check(a.clock == 300, "Pause motion remains usable");
-            a.motionOff = false; a.slow = true; tick(a, 13050);
-            check(Math.abs(a.clock - 315) < 1e-9, "Slow review composes once with selected speed");
+            check(a.timeline.positionMs() == 300, "Focus return resets the frame anchor");
+            a.timeline.setPaused(true); tick(a, 13000);
+            check(a.timeline.positionMs() == 300, "Pause motion remains usable");
+            a.timeline.setPaused(false); a.timeline.setSlow(true); tick(a, 13050);
+            check(Math.abs(a.timeline.positionMs() - 315) < 1e-9, "Slow review composes once with selected speed");
             System.out.println("PASS Lab host callbacks at Android animator scale " + scale);
         }
         System.out.println("BoopLabScaleHarness: " + checks + " numeric checks; no Android launch or visual judgement");
@@ -109,7 +111,11 @@ public final class BoopLabScaleHarness extends LabHostActivity implements LabHos
         void showFreddie(SignMotion.Pose pose) { last = pose; }
     }
     static final class FrameLayout {}
-    static final class TextView {}
+    static final class TextView { void setText(String text) {} }
+    static final class LinearLayout {}
+    static final class SeekBar { void setEnabled(boolean value) {} void setProgress(int value) {} }
+    static final class Button { void setText(String text) {} }
+    private void immersive() { }
     static final class Log { static void i(String tag, String message) {} }
     static final class Choreographer {
         static final Choreographer INSTANCE = new Choreographer();
@@ -123,6 +129,9 @@ class LabHostActivity {
     Object fixturePower;
     Object getSystemService(String service) { return fixturePower; }
     Object getContentResolver() { return null; }
+    Resources getResources() { return new Resources(); }
+    static class Resources { Metrics getDisplayMetrics() { return new Metrics(); } }
+    static class Metrics { float density = 1; }
     protected void onResume() {}
     protected void onPause() {}
     public void onWindowFocusChanged(boolean focus) {}
