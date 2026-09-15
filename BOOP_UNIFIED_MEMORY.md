@@ -1,3 +1,10 @@
+# Current: v185 moving photographic corners — 2026-09-15
+
+Owner `boop-moving-corners-v185`; built/reviewed `a4df9e4154a7e1fd0fda843af7af09106d6691a2`, run34939256214 passed. Signed185 installed and APK-hash verified on Shield and Pixel7Pro.
+Connected cap boundaries and solid corner masks remove the larger stationary strips; v184 central RGBA is verified unchanged.
+**User reports much better; tiny stationary green remnants remain on both inner eye edges. Next investigate those pixels while preserving this improved baseline.** Accepted vivid palette, sharing and preview remain unchanged. Temporary speed/rotation settings restored and verified.
+See [v185 receipt](docs/handoffs/2026-09-15-v185-moving-corners.md). Previous entries are historical.
+
 # Current: v184 solid photographic lid — 2026-09-15
 
 Owner `boop-solid-felt-lid-v184`. Built source `ab2bd9759bd120b762c6651b148191754d4314d2`; run34937571488 passed. Permanent-signed version184 installed and APK-hash verified on Shield and Pixel7Pro.
