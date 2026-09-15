@@ -13,6 +13,9 @@ public final class SharedFeltColourHarness {
         throw new AssertionError(message);
     }
     public static void main(String[] args) {
+        check(SharedFeltColourProtocol.decode(SharedEyeColourProtocol.encode(190)) == null, "Felt rejects iris payload");
+        check(SharedEyeColourProtocol.decode(SharedFeltColourProtocol.encode(0)) == null, "Iris rejects felt payload");
+        check(!SharedFeltColourProtocol.isOwnedHelper(SharedEyeColourProtocol.MARKER,0,32,"text",false), "Felt never claims iris helper");
         for (int hue = 0; hue < 360; hue++) {
             check(SharedFeltColourProtocol.decode(SharedFeltColourProtocol.encode(hue)) == hue,
                     "Every saved hue must round-trip exactly");

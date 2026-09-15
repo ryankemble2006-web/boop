@@ -65,6 +65,15 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v180 explicitly authorized independent felt colour channel.
+      "source/SharedFeltColourProtocol.java",
+      "source/SharedFeltColourHaProtocol.java",
+      "source/SharedFeltColourLink.java",
+      "source/BoopSharedFeltColourRuntime.java",
+      "unified/UnifiedApplication.java",
+      "unified/animation/java/com/boop/eyes/EyeColourBinding.java",
+      "unified/animation/java/com/boop/eyes/FeltPalette.java",
+      "unified/animation/java/com/boop/eyes/FeltColourPreferences.java",
       # v178 authorized fringe renderer and live appearance preview.
       "source/BoopAppearanceActivity.java",
       "unified/animation/java/com/boop/eyes/CanonicalEyeRenderer.java",
