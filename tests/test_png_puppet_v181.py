@@ -30,6 +30,12 @@ class PngPuppet(unittest.TestCase):
     self.assertEqual(values,sorted(values))
     self.assertTrue(all(top<=v<=edge-2 for v in values))
     if closure>.1:self.assertLess(sample(edge),edge-2,"Old lip must move away, not remain above another lid")
+ def test_felt_blend_stops_before_eye_shadow(self):
+  code=(ROOT/"unified/animation/assets/eyes.frag").read_text()
+  match=re.search(r"float cover=1.0-smoothstep[(]([-0-9.]+),([-0-9.]+),p.y-end[)]",code)
+  self.assertIsNotNone(match)
+  self.assertLess(float(match.group(1)),0.)
+  self.assertEqual(float(match.group(2)),0.,"Material feather must not spill into the eye shadow")
  def test_photo_iris_colour_coverage(self):
   code=(ROOT/"unified/animation/assets/eyes.frag").read_text()
   centres=re.search(r"vec2 centre=left[?]vec2[(]([0-9.]+),([0-9.]+)[)]:vec2[(]([0-9.]+),([0-9.]+)[)]",code)

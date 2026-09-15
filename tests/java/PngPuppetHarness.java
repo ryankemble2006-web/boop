@@ -19,6 +19,12 @@ public final class PngPuppetHarness {
    int i=x*4;float edge=((rig[i]&255)*256+(rig[i+1]&255))/32f;
    check(edge>300&&edge<420,"Bright felt fibres must not cut a scar into coloured cap: "+x+" edge "+edge);
   }
+  // These samples belong to the neutral eye shadow, not to the felt cap.
+  int[][] shadow={{250,340},{400,204},{503,180},{550,183},{600,201},{880,241},{940,199},{1030,180},{1140,204},{1290,350}};
+  for(int[] point:shadow){
+   int i=point[0]*4;float edge=((rig[i]&255)*256+(rig[i+1]&255))/32f;
+   check(edge<=point[1],"Sclera shadow must stay outside fabric recolour/warp: "+point[0]+","+point[1]+" edge "+edge);
+  }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){
    int at=(y*w+x)*4,col=p[y*w+x],red=(col>>>16)&255,green=(col>>>8)&255,blue=col&255;
