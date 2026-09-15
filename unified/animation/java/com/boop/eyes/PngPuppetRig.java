@@ -15,9 +15,10 @@ public final class PngPuppetRig {
    if(y>0)tail=seed(i-w,pixels,exterior,queue,tail);
    if(y<h-1)tail=seed(i+w,pixels,exterior,queue,tail);
   }
-  int[] edges=new int[w];
+  int[] edges=new int[w],tops=new int[w];
   for(int x=0;x<w;x++){
    edges[x]=h;int run=0;
+   for(int y=0;y<h;y++){if(!exterior[y*w+x]){tops[x]=y;break;}}
    for(int y=Math.min(140,h-1);y<h;y++){
     int p=pixels[y*w+x],r=(p>>>16)&255,g=(p>>>8)&255,b=p&255;
     boolean white=Math.min(r,Math.min(g,b))>88 && Math.max(r,Math.max(g,b))-Math.min(r,Math.min(g,b))<58;
@@ -31,7 +32,7 @@ public final class PngPuppetRig {
    for(int y=0;y<h;y++){
     int i=y*w+x,at=i*4;
     out[at]=(byte)(edge>>>8);out[at+1]=(byte)edge;
-    out[at+2]=0;
+    out[at+2]=(byte)Math.min(255,Math.round(tops[x]*255f/h));
     out[at+3]=(byte)(exterior[i]?Math.min(255,peak(pixels[i])*255/16):255);
    }
   }

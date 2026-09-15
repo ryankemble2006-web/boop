@@ -20,7 +20,7 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
  private final AssetManager assets;private final Failure failure;
  private final FloatBuffer positions=buffer(8),uv=buffer(8);
  private int program,positionLocation,uvLocation,poseLocation,hueLocation,feltLocation,feltAmount;
- private final int[] textures=new int[3];
+ private final int[] textures=new int[2];
  private boolean ready;
  public volatile EyeMotion.Pose pose=EyeMotion.OPEN;
  private volatile float hueRotationRadians;
@@ -60,9 +60,9 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
    positionLocation=GLES20.glGetAttribLocation(program,"aPosition");uvLocation=GLES20.glGetAttribLocation(program,"aUv");
    poseLocation=GLES20.glGetUniformLocation(program,"uPose");hueLocation=GLES20.glGetUniformLocation(program,"uHueRadians");
    feltLocation=GLES20.glGetUniformLocation(program,"uFeltTint");feltAmount=GLES20.glGetUniformLocation(program,"uFeltAmount");
-   GLES20.glGenTextures(3,textures,0);
+   GLES20.glGenTextures(2,textures,0);
    byte[] rig=null;
-   String[] names={"boop-png-study.png","boop-hidden-felt.png"};
+   String[] names={"boop-png-study.png"};
    for(int i=0;i<names.length;i++){
     BitmapFactory.Options opts=new BitmapFactory.Options();opts.inScaled=false;
     Bitmap bitmap;try(InputStream in=assets.open(names[i])){bitmap=BitmapFactory.decodeStream(in,null,opts);}
@@ -73,13 +73,12 @@ public final class CanonicalEyeRenderer implements GLSurfaceView.Renderer {
     }
     bindTexture(i);GLUtils.texImage2D(GLES20.GL_TEXTURE_2D,0,bitmap,0);bitmap.recycle();
    }
-   bindTexture(2);
+   bindTexture(1);
    ByteBuffer data=ByteBuffer.allocateDirect(rig.length);data.put(rig).position(0);
    // Encoded geometry must be uploaded raw; Bitmap premultiplication corrupts RG at fuzzy edges.
    GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D,0,GLES20.GL_RGBA,1536,640,0,GLES20.GL_RGBA,GLES20.GL_UNSIGNED_BYTE,data);
    GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"uMaster"),0);
-   GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"uCloth"),1);
-   GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"uRig"),2);
+   GLES20.glUniform1i(GLES20.glGetUniformLocation(program,"uRig"),1);
    GLES20.glEnable(GLES20.GL_BLEND);GLES20.glBlendFunc(GLES20.GL_ONE,GLES20.GL_ONE_MINUS_SRC_ALPHA);
    int error=GLES20.glGetError();if(error!=GLES20.GL_NO_ERROR)throw new IllegalStateException("GL setup "+error);
    ready=true;Log.i("BOOPEyes","renderer-ready PNG photographic puppet");
