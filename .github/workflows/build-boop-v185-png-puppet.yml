@@ -1,7 +1,7 @@
 name: Build BOOP v185 PNG puppet
 on:
   push:
-    branches: [boop-solid-felt-lid-v185]
+    branches: [boop-moving-corners-v185]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
@@ -141,7 +141,7 @@ jobs:
           cp "$APK" v185-artifact/BOOP-Unified-v185-PNG-Puppet.apk
           (cd v185-artifact && sha256sum BOOP-Unified-v185-PNG-Puppet.apk > apk-sha256.txt)
           git rev-parse HEAD > v185-artifact/built-commit.txt
-          printf '%s\n' 'Based on v182. Original PNG felt boundary excludes sclera shadow; vivid palette and sharing unchanged.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v185-artifact/verification.txt
+          printf '%s\n' 'Based on v184. Outer felt corners receive measured boundaries and solid interior opacity; palette and sharing unchanged.' 'No device, emulator or hosted visual tests. Ryan owns audio/visual acceptance.' > v185-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
           name: BOOP-Unified-v185-PNG-Puppet
