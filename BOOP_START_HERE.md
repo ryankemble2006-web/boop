@@ -24,6 +24,12 @@ Frozen reference: tag `boop-felt-default-v189`, built source `470bb4b471e7e452b2
 
 Every hand has exactly five digits: four fingers and one opposing thumb. The approved notification grip shows four curled fingers in front and hides the existing thumb behind the sign. Keep connected palms, short cuffs and the original yellow felt default; Ryan explicitly authorized runtime hand recolouring in Build a Boop. Hiding a digit does not remove it from the model. Reuse one coherent grip across notification styles; the pose is not validated ASL/BSL.
 
+## Puppet identity and next personality work
+
+Ryan defines Boop as a genderless, raceless felt puppet that can belong in any household. Custom colours express felt and character styling. Preserve five digits per hand, connected anatomy and the accepted material; future ASL/BSL needs its own implementation and validation.
+
+Next requested work after the usage reset: playful, deliberately silly voice/personality controls in Build a Boop, with voice choices carried to the Shield like colour choices. Preserve optional natural-language/voice download direction and the pause/scrub lab for shared inspection. This is upcoming work; consult the owning branch's [recorded next direction](https://github.com/ryankemble2006-web/boop/blob/805a4e6ed88eb9dd221d8fc421c839c3e79c8489/docs/handoffs/2026-09-15-puppet-personality-next.md).
+
 ## Unified app
 
 Current combined app work is owned by `boop-hand-colour-v191`. Fetch its LIVE HEAD and read its current `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for exact build, installation and user-acceptance state. The branch name does not determine the APK version. Main is the shared context hub, not the latest app source.
