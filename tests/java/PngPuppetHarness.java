@@ -32,7 +32,9 @@ public final class PngPuppetHarness {
    check(alpha==255,"Dark felt underside must not remain a transparent fixed seam during stretch");
   }
   for(int y=0;y<640;y++){
-   check((rig[(y*w+768)*4+3]&255)==0,"Between-eye gap must remain transparent");
+   int pixel=p[y*w+768],peak=Math.max((pixel>>>16)&255,Math.max((pixel>>>8)&255,pixel&255));
+   check(peak<=16,"Gap fixture remains background");
+   check((rig[(y*w+768)*4+3]&255)==Math.min(255,peak*255/16),"Between-eye gap retains original soft transparency");
   }
   for(int y=0;y<20;y++)for(int x=0;x<w;x++){
    int pixel=p[y*w+x],peak=Math.max((pixel>>>16)&255,Math.max((pixel>>>8)&255,pixel&255));
