@@ -1,3 +1,7 @@
+# Current delivery: v179 stage fibres (2026-09-15)
+
+Owner `boop-stage-fibres-v179`; built source `e8b7ed4045c0ed7c1eb06b9f2a02da0a5ddf8c16`. GitHub run34931180380 passed; permanent-signed version179 installed and APK-hash verified on Shield and Pixel7Pro. Screen-width loose fibres and crown wisps replace the too-small v178 fringe. Accepted lighting and colour preview preserved. **User visual verdict pending**, including visible phone-face check. See [full receipt](docs/handoffs/2026-09-15-v179-stage-fibres.md). v178 signed rollback retained. Historical entries below describe earlier state.
+
 # v178 user verdict: colour preview accepted; felt depth unresolved
 
 2026-09-15. Ryan explicitly approves the Eyes and animation preview placement and immediate colour changes. Preserve this accepted interaction. Earlier stage-lighting approval remains valid.
