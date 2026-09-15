@@ -6,6 +6,12 @@ public final class PngPuppetHarness {
   BufferedImage b=ImageIO.read(new File(args[0]));
   int w=b.getWidth();int[] p=b.getRGB(0,0,w,640,null,0,w);
   byte[] rig=PngPuppetRig.create(p,w,640);
+  byte[] baseline=PngPuppetRigBaseline.create(p,w,640);
+  for(int[] range:new int[][]{{300,690},{845,1240}})for(int x=range[0];x<=range[1];x++)for(int y=0;y<640;y++)for(int c=0;c<4;c++){
+   int at=(y*w+x)*4+c;
+   check(rig[at]==baseline[at],"Accepted v184 central rig must remain byte-identical: "+x+","+y+" channel"+c);
+  }
+  System.out.println("PASS exact v184 central rig comparison");
   check(java.util.Arrays.equals(rig,PngPuppetRig.create(p,w,640)),"Stable photographic silhouette");
   check((rig[(440*w+470)*4+3]&255)==255,"Black pupil is opaque inside silhouette");
   check((rig[3]&255)==0,"Black exterior is transparent");
@@ -67,6 +73,10 @@ public final class PngPuppetHarness {
   for(int x:new int[]{720,722,809,811,812,814}){
    float e=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
    check(e<325,"Detached eye reflection must not become a felt corner boundary: "+x+" "+e);
+  }
+  for(int[] point:new int[][]{{200,418},{220,386},{730,297},{800,292},{810,304},{1320,398},{1340,412}}){
+   int x=point[0];float e=((rig[x*4]&255)*256+(rig[x*4+1]&255))/32f;
+   check(e-2<=point[1],"Smoothed lip sample must remain within photographed cap: "+x+" "+e);
   }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){

@@ -91,7 +91,7 @@ public final class PngPuppetRig {
    if(!corner[x])continue;
    int[] nearby=new int[21];int n=0;
    for(int k=x-10;k<=x+10;k++)if(joined[k]<h)nearby[n++]=joined[k];
-   if(n>=5){java.util.Arrays.sort(nearby,0,n);edges[x]=nearby[n/2];}
+   if(n>=5){java.util.Arrays.sort(nearby,0,n);edges[x]=Math.min(nearby[n/2],capBottom[x]+1);}
   }
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
