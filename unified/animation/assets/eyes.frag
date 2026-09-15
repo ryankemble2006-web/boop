@@ -23,13 +23,17 @@ vec3 fabric(vec3 photo){
 float lidSampleY(float y,float top,float edge,float end){
  return min(edge-2.0, top+(y-top)*(edge-top)/max(end-top,1.0));
 }
+// RGB and silhouette use the same moving photographic sample. Blend their
+// premultiplied contributions so neither the old cutout nor dark backdrop leaks.
+vec4 puppetComposite(vec3 baseRgb,float baseAlpha,vec3 lidRgb,float lidAlpha,float cover){
+ return vec4(mix(baseRgb*baseAlpha,lidRgb*lidAlpha,cover),mix(baseAlpha,lidAlpha,cover));
+}
 void main(){
  // Preserve the hero's aspect with padding; never sample the smaller study variants.
  vec2 p=vUv*vec2(1536.0,768.0)-vec2(0.0,64.0);
  if(p.y<0.0||p.y>=640.0){gl_FragColor=vec4(0.0);return;}
  vec4 rig=texture2D(uRig,p/vec2(1536.0,640.0));
  float alpha=rig.a;
- if(alpha<.00001){gl_FragColor=vec4(0.0);return;}
  float edge=(rig.r*65280.0+rig.g*255.0)/32.0;
  bool left=p.x<768.0;
  vec2 centre=left?vec2(503.0,415.0):vec2(1030.0,415.0);
@@ -45,6 +49,12 @@ void main(){
  float sampleY=closure>0.000001?lidSampleY(p.y,top,edge,end):p.y;
  vec3 lid=texture2D(uMaster,vec2(p.x,sampleY)/vec2(1536.0,1024.0)).rgb;
  float cover=1.0-smoothstep(-2.0,0.0,p.y-end);
- rgb=mix(rgb,fabric(lid),cover);
- gl_FragColor=vec4(rgb*alpha,alpha);
+ if(closure<=0.000001){
+  // Keep the approved open frame's arithmetic exactly unchanged.
+  rgb=mix(rgb,fabric(lid),cover);
+  gl_FragColor=vec4(rgb*alpha,alpha);
+ }else{
+  float lidAlpha=texture2D(uRig,vec2(p.x,sampleY)/vec2(1536.0,640.0)).a;
+  gl_FragColor=puppetComposite(rgb,alpha,fabric(lid),lidAlpha,cover);
+ }
 }
