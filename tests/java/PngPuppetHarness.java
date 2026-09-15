@@ -31,6 +31,13 @@ public final class PngPuppetHarness {
    System.out.println("Dark felt alpha "+point[0]+","+point[1]+" = "+alpha);
    check(alpha==255,"Dark felt underside must not remain a transparent fixed seam during stretch");
   }
+  for(int y=0;y<640;y++){
+   check((rig[(y*w+768)*4+3]&255)==0,"Between-eye gap must remain transparent");
+  }
+  for(int y=0;y<20;y++)for(int x=0;x<w;x++){
+   int pixel=p[y*w+x],peak=Math.max((pixel>>>16)&255,Math.max((pixel>>>8)&255,pixel&255));
+   check((rig[(y*w+x)*4+3]&255)==Math.min(255,peak*255/16),"Outer background and distant fibres retain soft alpha");
+  }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){
    int at=(y*w+x)*4,col=p[y*w+x],red=(col>>>16)&255,green=(col>>>8)&255,blue=col&255;
