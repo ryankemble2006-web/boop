@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-felt-shadow-boundary-v183`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-solid-felt-lid-v184`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -14,7 +14,10 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-V183 built/reviewed source `d06c49358b941b160d17e8a061d6bbafb3fc808c`, run34935869282, signed version183 installed/hash-verified on Shield and Pixel7Pro. Felt boundary excludes neutral eye shadow; original PNG, accepted vivid colour, preview and sharing preserved. V182 second-lid appearance was rejected on both devices. **V183 visual verdict pending.** See `docs/handoffs/2026-09-15-v183-shadow-boundary.md`. Previous APKs retained.
+Owner `boop-solid-felt-lid-v184`. Built source `ab2bd9759bd120b762c6651b148191754d4314d2`; run34937571488 passed. Permanent-signed version184 installed and APK-hash verified on Shield and Pixel7Pro.
+V183 was rejected for a second lid. Confirmed cause: flood-filled backdrop produced a stationary partly transparent seam through dark felt. V184 makes that interior solid; preserves PNG, shader, stretch mapping, accepted vivid palette, sharing and preview.
+**User reports a huge improvement; outer-corner stationary shadowing still looks disjointed during movement. Investigate that remaining defect next.** Slow actual-device frames confirm central seam improvement. Both temporary review speeds restored to1x and verified. See [v184 receipt](docs/handoffs/2026-09-15-v184-solid-lid.md). Prior entries below are historical and their pending verdicts are superseded by this latest report.
+
 
 ## Continuity
 
