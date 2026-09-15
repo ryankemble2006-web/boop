@@ -1,3 +1,15 @@
+# v178 installed: loose fibres and live eye-colour preview
+
+Updated 2026-09-15. Current owner `boop-felt-preview-v178`. Built source `4f873eadaf65c1fb954aa95e68b5da966263a94d`, signed run34930044029 SUCCESS; installed/hash-verified on Shield and Pixel7Pro. Physical verdict pending.
+
+Ryan likes v177 stage lighting; v178 keeps that shader byte-identical and adds actual loose fibres outside the upper-lid silhouette. Eyes and animation now contains a fixed live BOOP colour preview using the existing hue binding. No timing, voice or sharing-transport change.
+
+[Full v178 source/test/install receipt](docs/handoffs/2026-09-15-v178-felt-preview.md). v177 rollback retained. Shield16of16 saved preference hashes unchanged; phone10of11 unchanged, with notification bookkeeping the only changed file. Original artwork and user eye/voice choices preserved.
+
+Prior entries below are historical.
+
+---
+
 # v177 installed on Shield and Pixel 7 Pro
 
 2026-09-15. Ryan requested both installations and gave go for the phone. Shield updated176to177; Pixel7Pro updated161to177. Both installed packages report `com.boop.alpha1`, version177 / `1.2.177-felt-eyelids`, and APK SHA256 `e8d082480e63fd02f6b391e6a362a1b71fb529061614c36ed821770347a68c8c`, matching signed run34928908920. Existing BOOP entry opened on both. Physical felt appearance and smoothness verdict pending.

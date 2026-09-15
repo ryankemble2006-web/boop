@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current candidate owner: `boop-felt-eyelids-v177`; accepted rollback owner: `boop-lyrics-album-v176`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-felt-preview-v178`; rollback owner: `boop-felt-eyelids-v177`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -14,7 +14,7 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-v177 felt eyelids is built and signed from `55feb6e3e83d16d8c27b20cad225c24b2ab472f3`, run34928908920; package/hash/signer and packaged shader verified. It is not installed or physically accepted yet. See `docs/handoffs/2026-09-15-v177-felt-eyelids.md`. The accepted v176 rollback is retained; older acceptance receipts remain history.
+v178 loose felt fibres and live eye-colour menu preview is built/signed from `4f873eadaf65c1fb954aa95e68b5da966263a94d`, run34930044029, and installed/hash-verified on Shield and Pixel7Pro. Physical verdict pending. See `docs/handoffs/2026-09-15-v178-felt-preview.md`. v177 stage lighting is preserved and its signed rollback retained.
 
 ## Continuity
 
