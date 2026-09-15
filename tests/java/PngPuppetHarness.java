@@ -25,6 +25,12 @@ public final class PngPuppetHarness {
    int i=point[0]*4;float edge=((rig[i]&255)*256+(rig[i+1]&255))/32f;
    check(edge<=point[1],"Sclera shadow must stay outside fabric recolour/warp: "+point[0]+","+point[1]+" edge "+edge);
   }
+  // The photographed dark underside belongs to the solid puppet, not its backdrop.
+  for(int[] point:new int[][]{{503,160},{503,174},{1030,170},{400,180},{600,183}}){
+   int alpha=rig[(point[1]*w+point[0])*4+3]&255;
+   System.out.println("Dark felt alpha "+point[0]+","+point[1]+" = "+alpha);
+   check(alpha==255,"Dark felt underside must not remain a transparent fixed seam during stretch");
+  }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){
    int at=(y*w+x)*4,col=p[y*w+x],red=(col>>>16)&255,green=(col>>>8)&255,blue=col&255;
