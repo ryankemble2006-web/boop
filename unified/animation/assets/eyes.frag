@@ -44,7 +44,7 @@ void main(){
  float top=min(rig.b*640.0,edge-3.0);
  float sampleY=closure>0.000001?lidSampleY(p.y,top,edge,end):p.y;
  vec3 lid=texture2D(uMaster,vec2(p.x,sampleY)/vec2(1536.0,1024.0)).rgb;
- float cover=1.0-smoothstep(-2.0,2.0,p.y-end);
+ float cover=1.0-smoothstep(-2.0,0.0,p.y-end);
  rgb=mix(rgb,fabric(lid),cover);
  gl_FragColor=vec4(rgb*alpha,alpha);
 }

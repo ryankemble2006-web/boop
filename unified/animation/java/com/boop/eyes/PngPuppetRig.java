@@ -35,6 +35,16 @@ public final class PngPuppetRig {
    java.util.Arrays.sort(nearby);
    if(measured[x]<h&&nearby[10]<h&&Math.abs(measured[x]-nearby[10])>30)edges[x]=nearby[10];
   }
+  // White onset locates the eye, but its soft grey shadow is NOT felt.
+  // Find the last sustained dark lip before that rise, never an isolated fibre.
+  for(int x=0;x<w;x++){
+   if(edges[x]>=h)continue;
+   int darkRun=0;
+   for(int y=edges[x]-1;y>=Math.max(140,edges[x]-32);y--){
+    darkRun=peak(pixels[y*w+x])<=24?darkRun+1:0;
+    if(darkRun==3){edges[x]=y+3;break;}
+   }
+  }
   byte[] out=new byte[w*h*4];
   for(int x=0;x<w;x++){
    int edge=edges[x]*32;
