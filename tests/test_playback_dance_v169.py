@@ -65,6 +65,10 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v181 authorized photographic PNG rig.
+      "unified/animation/java/com/boop/eyes/PngPuppetRig.java",
+      "unified/animation/assets/boop-png-study.png",
+      "unified/animation/assets/boop-hidden-felt.png",
       # v180 explicitly authorized independent felt colour channel.
       "source/SharedFeltColourProtocol.java",
       "source/SharedFeltColourHaProtocol.java",
