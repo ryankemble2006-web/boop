@@ -40,6 +40,18 @@ public final class PngPuppetHarness {
    int pixel=p[y*w+x],peak=Math.max((pixel>>>16)&255,Math.max((pixel>>>8)&255,pixel&255));
    check((rig[(y*w+x)*4+3]&255)==Math.min(255,peak*255/16),"Outer background and distant fibres retain soft alpha");
   }
+  // Outer cap columns have no eye whites: they still need a moving lower lip.
+  int[][] corners={{200,350},{210,360},{220,350},{730,275},{800,270},{1320,360},{1340,390},{1360,380}};
+  for(int[] point:corners){
+   int x=point[0],i=x*4;
+   float edge=((rig[i]&255)*256+(rig[i+1]&255))/32f;
+   System.out.println("Corner "+x+" edge "+edge+" alpha "+(rig[(point[1]*w+x)*4+3]&255));
+   check(edge>250&&edge<440,"Photographed outer cap needs a real edge, not stationary 640 sentinel: "+x+" = "+edge);
+   check((rig[(point[1]*w+x)*4+3]&255)==255,"Dark corner body is solid material: "+x+","+point[1]);
+   float top=(rig[i+2]&255)*640f/255f;
+   float sourceAtHalf=top+(edge-4-top)*(edge-top)/((edge+642)/2-top);
+   check(sourceAtHalf<edge-20,"Corner material must move with closure: "+x);
+  }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){
    int at=(y*w+x)*4,col=p[y*w+x],red=(col>>>16)&255,green=(col>>>8)&255,blue=col&255;
