@@ -52,6 +52,14 @@ public final class PngPuppetHarness {
    float sourceAtHalf=top+(edge-4-top)*(edge-top)/((edge+642)/2-top);
    check(sourceAtHalf<edge-20,"Corner material must move with closure: "+x);
   }
+  for(int[] range:new int[][]{{218,232},{718,732},{808,822},{1303,1322}}){
+   for(int x=range[0];x<=range[1];x++){
+    int at=x*4;float e=((rig[at]&255)*256+(rig[at+1]&255))/32f,t=(rig[at+2]&255)*640f/255f;
+    float half=Math.min(e-2,t+(450-t)*(e-t)/((e+642)/2-t));
+    float full=Math.min(e-2,t+(450-t)*(e-t)/(642-t));
+    System.out.printf(java.util.Locale.ROOT,"Join x%d edge%.1f top%.1f half%.1f full%.1f alpha300=%d alpha380=%d%n",x,e,t,half,full,rig[(300*w+x)*4+3]&255,rig[(380*w+x)*4+3]&255);
+   }
+  }
   int whites=0,irises=0;
   for(int y=140;y<640;y++)for(int x=0;x<w;x++){
    int at=(y*w+x)*4,col=p[y*w+x],red=(col>>>16)&255,green=(col>>>8)&255,blue=col&255;
