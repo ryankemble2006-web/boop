@@ -1,5 +1,13 @@
 # Current: v188 whole photographic lid outline — 2026-09-15
 
+## Latest: v189 rounded photographic lids accepted (2026-09-15)
+
+Owner `boop-rounded-lids-v189`; built/reviewed `470bb4b471e7e452b29b6a3a437bea0fa4a0904e`. GitHub run34944002348 passed; permanent-signed189 installed with actual APK hash/version verified on Shield and Pixel7Pro.
+Ryan accepted v188's whole-lid movement, then requested a gently rounded lower edge. V189 replaces the flat endpoint with a soft oval while retaining the same moving felt/transparency sample. Original PNG, rig, palette, fibres, timing and187lab preserved.
+**Ryan accepted the result: the eyes now morph like an eye beneath the felt. This is the accepted felt-lid movement and rounding checkpoint.** Actual phone near-closed99% frame shows rounded bottoms and covered whites. Shield Home restored; phone left in Ryan's selected95.6ms/95% paused pose in Felt animation lab. Saved settings and rollback artifacts retained.
+See [v189 receipt](docs/handoffs/2026-09-15-v189-rounded-lower-lids.md). Earlier entries below are historical.
+
+
 Owner `boop-whole-lid-motion-v188`; reviewed/built `a50482170261e61894c9100ba49bdee7b0b41b13`, run34942957660 passed. Permanent-signed188 installed and actual APK-hash verified on Shield and Pixel7Pro.
 The held77% frame exposed fixed silhouette clipping at all four ends. The shader now moves the transparency outline with the same photographic sample as the felt, using premultiplied replacement. Original PNG, rig bytes, palette, motion and lab preserved.
 **Actual phone capture at77% shows all four ends lowered with the lid; assistant observation only. Ryan's full animation verdict remains pending.** Phone left paused in Felt animation lab. Shield Home restored. Saved settings and rollback artifacts retained.
