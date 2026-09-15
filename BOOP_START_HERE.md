@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-moving-corners-v185`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-inner-fringe-v186`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -14,11 +14,10 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-Owner `boop-moving-corners-v185`; built/reviewed `a4df9e4154a7e1fd0fda843af7af09106d6691a2`, run34939256214 passed. Signed185 installed and APK-hash verified on Shield and Pixel7Pro.
-Connected cap boundaries and solid corner masks remove the larger stationary strips; v184 central RGBA is verified unchanged.
-**User reports much better; tiny stationary green remnants remain on both inner eye edges. Next investigate those pixels while preserving this improved baseline.** Accepted vivid palette, sharing and preview remain unchanged. Temporary speed/rotation settings restored and verified.
-See [v185 receipt](docs/handoffs/2026-09-15-v185-moving-corners.md). Previous entries are historical.
-
+Owner `boop-inner-fringe-v186`; built `be42043a818d17b0af63bc549613e276efe95c0f`, run34940304639 passed. Permanent-signed186 installed and APK-hash verified on Shield and Pixel7Pro.
+Thin previously unrigged bright fragments inherit nearby cap motion; every v185 opacity byte and valid body geometry value is preserved.
+**Ryan reports a few stationary pixels remain. V186 is not fully visually accepted. His requested next step is the current felt renderer in an accessible animation lab, with pause/half-blink inspection.** Preserve accepted vivid palette, sharing and preview. Production/reference speeds and phone rotation restored.
+See [v186 receipt](docs/handoffs/2026-09-15-v186-inner-fringe.md). Earlier entries are historical.
 
 ## Continuity
 

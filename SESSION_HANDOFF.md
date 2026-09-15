@@ -1,3 +1,10 @@
+# Current: v186 inner photographic fringe — 2026-09-15
+
+Owner `boop-inner-fringe-v186`; built `be42043a818d17b0af63bc549613e276efe95c0f`, run34940304639 passed. Permanent-signed186 installed and APK-hash verified on Shield and Pixel7Pro.
+Thin previously unrigged bright fragments inherit nearby cap motion; every v185 opacity byte and valid body geometry value is preserved.
+**Ryan reports a few stationary pixels remain. V186 is not fully visually accepted. His requested next step is the current felt renderer in an accessible animation lab, with pause/half-blink inspection.** Preserve accepted vivid palette, sharing and preview. Production/reference speeds and phone rotation restored.
+See [v186 receipt](docs/handoffs/2026-09-15-v186-inner-fringe.md). Earlier entries are historical.
+
 # Current: v185 moving photographic corners — 2026-09-15
 
 Owner `boop-moving-corners-v185`; built/reviewed `a4df9e4154a7e1fd0fda843af7af09106d6691a2`, run34939256214 passed. Signed185 installed and APK-hash verified on Shield and Pixel7Pro.
