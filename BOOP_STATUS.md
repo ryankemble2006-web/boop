@@ -1,5 +1,11 @@
 # Current: v188 whole photographic lid outline — 2026-09-15
 
+## Latest: v190 felt signs accepted; hand colour requested (2026-09-15)
+
+Owner `boop-felt-signs-v190`; reviewed/built97ac4f54bd38ea385622ce7f97df85fd5593e0cc, run34945220479 passed. Permanent-signed190 installed and actual APK hash/version verified on Shield and Pixel7Pro. Ryan accepted the connected felt signs and hand scale. V189 remains the permanent default under tag `boop-felt-default-v189`, twelve exact-file build checks and materialized route checks. Saved colour choices remain editable.
+Next explicit request: independent hand colour in Build a Boop, preserving these accepted shapes/materials. See [v190 receipt](docs/handoffs/2026-09-15-v190-accepted-felt-signs.md). Earlier notes are historical.
+
+
 ## Latest: v189 rounded photographic lids accepted (2026-09-15)
 
 Owner `boop-rounded-lids-v189`; built/reviewed `470bb4b471e7e452b29b6a3a437bea0fa4a0904e`. GitHub run34944002348 passed; permanent-signed189 installed with actual APK hash/version verified on Shield and Pixel7Pro.

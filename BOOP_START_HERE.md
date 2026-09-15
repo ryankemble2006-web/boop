@@ -1,6 +1,6 @@
 # BOOP Unified: current startup and testing workflow
 
-Updated 2026-09-15. Current owner: `boop-rounded-lids-v189`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
+Updated 2026-09-15. Current owner: `boop-felt-signs-v190`; rollback owner: `boop-felt-preview-v178`. Main is the shared-context hub, not the latest combined app. Fetch the LIVE owning branch and main, then read this branch's `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for implementation, installed version and acceptance state. Read the current receipt for the exact built APK version.
 
 ## Latest user rule: GitHub development, testing together
 
@@ -14,10 +14,10 @@ Device operations remain scoped to Ryan's current joint-test request and current
 
 ## Current delivery and evidence
 
-Owner `boop-rounded-lids-v189`; built/reviewed `470bb4b471e7e452b29b6a3a437bea0fa4a0904e`. GitHub run34944002348 passed; permanent-signed189 installed with actual APK hash/version verified on Shield and Pixel7Pro.
-Ryan accepted v188's whole-lid movement, then requested a gently rounded lower edge. V189 replaces the flat endpoint with a soft oval while retaining the same moving felt/transparency sample. Original PNG, rig, palette, fibres, timing and187lab preserved.
-**Ryan accepted the result: the eyes now morph like an eye beneath the felt. This is the accepted felt-lid movement and rounding checkpoint.** Actual phone near-closed99% frame shows rounded bottoms and covered whites. Shield Home restored; phone left in Ryan's selected95.6ms/95% paused pose in Felt animation lab. Saved settings and rollback artifacts retained.
-See [v189 receipt](docs/handoffs/2026-09-15-v189-rounded-lower-lids.md). Earlier entries below are historical.
+## Latest: v190 felt signs accepted; hand colour requested (2026-09-15)
+
+Owner `boop-felt-signs-v190`; reviewed/built97ac4f54bd38ea385622ce7f97df85fd5593e0cc, run34945220479 passed. Permanent-signed190 installed and actual APK hash/version verified on Shield and Pixel7Pro. Ryan accepted the connected felt signs and hand scale. V189 remains the permanent default under tag `boop-felt-default-v189`, twelve exact-file build checks and materialized route checks. Saved colour choices remain editable.
+Next explicit request: independent hand colour in Build a Boop, preserving these accepted shapes/materials. See [v190 receipt](docs/handoffs/2026-09-15-v190-accepted-felt-signs.md). Earlier notes are historical.
 
 ## Continuity
 
