@@ -69,6 +69,11 @@ public final class BoopLabScaleHarness extends LabHostActivity implements LabHos
                 a.timeline.select("wake");
                 tick(a, 0); tick(a, 100);
                 if (Boolean.TRUE.equals(saver)) same(EyeCatalogue.find("wake").sample(EyeCatalogue.find("wake").duration), a.renderer.pose, "Power saver retains one-shot endpoint");
+                EyeMotion.Pose visible = a.renderer.pose;
+                a.togglePause();
+                same(visible, a.renderer.pose, "Pause freezes the visible pose, including power saver");
+                check(a.timeline.isPaused(), "Pause sets held state");
+                tick(a, 150); same(visible, a.renderer.pose, "Held pose stays displayed");
                 a.timeline.seek(73); tick(a, 200);
                 same(EyeCatalogue.find("wake").sample(73), a.renderer.pose, "Explicit freeze review remains authoritative");
             }

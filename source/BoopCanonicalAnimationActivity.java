@@ -90,9 +90,7 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
         });
         panel.addView(position, new LinearLayout.LayoutParams(-1, dp(38)));
         LinearLayout controls = strip(panel);
-        pause = add(controls, "Pause", () -> {
-            timeline.setPaused(!timeline.isPaused()); lastFrame = 0; updateControls();
-        });
+        pause = add(controls, "Pause", this::togglePause);
         slow = add(controls, "Slow review", () -> {
             timeline.setSlow(!timeline.isSlow()); lastFrame = 0; updateControls();
         });
@@ -227,6 +225,15 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
         } else if (!shouldRun && running) {
             running = false; Choreographer.getInstance().removeFrameCallback(this); lastFrame = 0;
         }
+    }
+    private void togglePause() {
+        boolean paused = !timeline.isPaused();
+        if (paused && reducedMotion) {
+            // Freeze the displayed power-saving pose, not the timeline advancing behind it.
+            if (signActive) signTime = 10000;
+            else timeline.seek(timeline.clip().loop ? 0 : timeline.clip().duration);
+        }
+        timeline.setPaused(paused); lastFrame = 0; renderFrame();
     }
     @Override public void doFrame(long now) {
         if (!running) return;
