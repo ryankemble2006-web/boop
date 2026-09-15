@@ -2,16 +2,22 @@
 
 Approved by Ryan on 2026-09-07 after the side-by-side, hands-only transparent PNG was shown. Ryan explicitly made this pair the official yellow hands for BOOP everywhere and requested the reference in the all-in-one APK project and the animation folder.
 
+## Current hand colour extension (2026-09-15)
+
+Ryan accepted v190's connected sign grip and proportions, then explicitly requested independent hand colour in Build a Boop. Runtime recolouring is allowed; the approved yellow source master, felt detail, transparency, five-digit anatomy and proportions remain protected. Zero / Original yellow restores the original artwork exactly. Hand sharing is separate and optional. This supersedes a reading of the historical yellow-colour lock that would prohibit user-selected colours.
+
+Current owner: `boop-hand-colour-v191`. Read its current handoff for build/install/user-acceptance evidence. A settings value or CI result is not physical acceptance.
+
 ## Current notification grip decision (2026-09-15)
 
-Exactly four curled fingers are visible on the front of each sign grip, with one opposing thumb behind the board. Both hands always retain five digits. Preserve the accepted connected palm/cuff proportions and yellow felt; do not assemble a grip from disconnected finger strips. The photographic grip may be reused as one coherent prop across styles, with thumb geometry retained at rear depth. This is a fixed prop pose, not validated ASL/BSL.
+Exactly four curled fingers are visible on the front of each sign grip, with one opposing thumb behind the board. Both hands always retain five digits. Preserve the accepted connected palm/cuff proportions and the original yellow felt default; do not assemble a grip from disconnected finger strips. The photographic grip may be reused as one coherent prop across styles, with thumb geometry retained at rear depth. This is a fixed prop pose, not validated ASL/BSL.
 
-The older transfer records below are historical. Current Unified master provenance and implementation live in the owning branch's latest receipt. The current task is `boop-felt-signs-v190`, based on the accepted v189 default character.
+The older transfer records below are historical. Current Unified master provenance and implementation live in the owning branch's latest receipt. The accepted grip checkpoint is `boop-felt-signs-v190`, based on the accepted v189 default character; hand-colour work continues on `boop-hand-colour-v191`.
 
 ## Design lock
 
 - Use the exact approved left/right pair as the reference across the unified Wall, Launcher and Shield bodies and every BOOP animation or Easter egg.
-- Preserve the bright yellow plush/felt material, rounded finger shapes, palm proportions and short rounded cuffs. Each hand has five digits: four fingers and one thumb.
+- Preserve the original bright yellow plush/felt master and default, rounded finger shapes, palm proportions and short rounded cuffs. Each hand has five digits: four fingers and one thumb.
 - Hands float independently. Do not add arms, sleeves, a torso or a replacement character.
 - New poses may articulate these same hands; they must not redesign them. Keep the established BOOP eyes and headphones unchanged when composing a character scene.
 - The master hand sheet contains hands only: no eyes, headphones, microphone, text, scenery or baked background. Retain real PNG alpha transparency, including soft edges. Do not flatten it onto white, black or a painted checkerboard.
