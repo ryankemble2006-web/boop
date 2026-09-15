@@ -1,6 +1,6 @@
 """PNG rig logic and original-image provenance, without hosted visual tests."""
 from pathlib import Path
-import subprocess,tempfile,unittest,hashlib
+import subprocess,tempfile,unittest,hashlib,re
 ROOT=Path(__file__).resolve().parents[1]
 class PngPuppet(unittest.TestCase):
  def test_actual_png_rig_and_bright_palette(self):
@@ -13,6 +13,19 @@ class PngPuppet(unittest.TestCase):
   path=ROOT/"unified/animation/assets/boop-png-study.png"
   self.assertTrue(path.is_file(),"Approved PNG is not loaded as animation art")
   self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),"9f2ec16f3aac0e443130b34127a16dcde8489d5a23440399b76a5295800d6f03")
+ def test_cloth_sampling_stays_inside_photo_material(self):
+  # Conservative body ellipses measured from this exact hidden material photo.
+  photo=ROOT/"unified/animation/assets/boop-hidden-felt.png"
+  self.assertEqual(hashlib.sha256(photo.read_bytes()).hexdigest(),"9f4bede5c59f55a067888779fa2d121484d902b1388b110a25cae0dbc48fb728")
+  code=(ROOT/"unified/animation/assets/eyes.frag").read_text()
+  xs=re.search(r"float clothX=left\\?mix\\(([^,]+),([^,]+),localX\\):mix\\(([^,]+),([^,]+),localX\\)",code)
+  ys=re.search(r"float clothY=mix\\(([^,]+),([^,]+),",code)
+  self.assertIsNotNone(xs);self.assertIsNotNone(ys)
+  vals=list(map(float,xs.groups())); yvals=list(map(float,ys.groups()))
+  for bounds,cx in [(vals[:2],420),(vals[2:],1100)]:
+   for x in bounds:
+    for y in yvals:
+     self.assertLess(((x*1536-cx)/280)**2+((y*1024-625)/210)**2,1,"Cloth sample rectangle reaches backdrop")
  def test_shader_links(self):
   subprocess.run(["glslangValidator","-l",str(ROOT/"unified/animation/assets/eyes.vert"),str(ROOT/"unified/animation/assets/eyes.frag")],check=True)
 if __name__=="__main__":unittest.main()
