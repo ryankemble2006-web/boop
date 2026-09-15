@@ -12,6 +12,7 @@ public final class PngPuppetHarness {
   check((rig[(440*w+1070)*4+3]&255)==255,"Right eye stays opaque through closure");
   for(int x:new int[]{400,470,550,1000,1070,1150}){
    int i=x*4;float edge=((rig[i]&255)*256+(rig[i+1]&255))/32f;
+   check((rig[i+2]&255)>0,"Original lid crown anchor required");
    check(edge>140&&edge<310,"Open lid follows actual white boundary: "+edge);
   }
   int whites=0,irises=0;
