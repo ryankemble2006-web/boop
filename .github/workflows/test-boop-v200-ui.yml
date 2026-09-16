@@ -1,0 +1,30 @@
+name: Test BOOP v200 TV chrome and voice demo
+on:
+  push:
+    branches: [boop-hand-colour-v191]
+    paths:
+      - 'tests/test_v200_uniform_tv_chrome_voice_demo.py'
+      - 'unified/UnifiedApplication.java'
+      - 'unified/app-build.gradle'
+      - 'unified/shield-home/src/main/java/com/boop/shieldhome/**'
+      - 'source/BoopNaturalSpeechBackend.java'
+      - 'scripts/patch-unified-v200-voice-ui.py'
+      - '.github/workflows/build-boop-v191-hand-colour.yml'
+      - '.github/workflows/test-boop-v200-ui.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: boop-v200-ui-focused
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -q pytest
+      - run: python -m pytest -q tests/test_v200_uniform_tv_chrome_voice_demo.py
