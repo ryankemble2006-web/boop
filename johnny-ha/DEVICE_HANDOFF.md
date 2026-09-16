@@ -1,3 +1,11 @@
+# Johnny HA Lab v15 — fast HA reaction source ready, device test pending
+
+Updated 2026-09-16. Owner `johnny-ha-native-v8`. Final source `8f8b7b0b9c1242020cd6049aa557606403a9714a`; CI `35060140950` SUCCESS, artifact `10432192360` (`johnny-native-arm64`, SHA256 digest `b431a1873fec201ff590bf5ab6b4132aee8a700740f472d7921344c2bff9d4d5`). This source is not yet packaged/installed on Shield, so v14 remains the physically accepted installed checkpoint.
+
+Ryan asked for fan/HA reactions to start much faster and cancel ordinary Johnny activity as soon as practical. Root cause was the Java HA snapshot client polling every2seconds; native ADS/walk pre-emption already exits ordinary routines at its existing safe frame/cleanup boundary. Healthy polling is now250ms. Provider-unavailable backoff preserves the prior roughly10-second retry cadence instead of hammering BOOP during an outage. The accepted eight-second wind episode, OI timing/pixels, music reactions and native cancellation/ownership logic are unchanged.
+
+TDD evidence: test-only commit `16a1420bc1bafb1077a75e6ef430789bc94bc2a9`, run `35060022954`, failed exactly because `JohnnyPollPolicy.java` did not exist. Final run passed HA edge/poll policy tests, native policy tests, pinned-source patch tests,100-cycle ADS cancellation/ownership sanitizer coverage, arm64 native build, Android View compilation and artifact upload. Expected healthy detection delay is now bounded by the250ms polling cadence plus provider/main-thread/native frame-boundary work; no end-to-end physical latency claim until Ryan tests it on Shield.
+
 # Johnny HA Lab v14 — original-pixel music reactions
 
 Updated 2026-09-14. Owner `johnny-ha-native-v8`. Source `cf6977a047ccafed3feb936003ce54fc5532f442`; CI `34884205277` SUCCESS, artifact `10364182755`. Native SHA256 `9b73985f83e8f085447a860f8fdf7029026e4c1b8e35d2069d646c8ec9d15b94`.
@@ -20,7 +28,7 @@ OI retains its exact3150ms timeline and private pixels. It takes sole actor owne
 
 Technical verification: test-first timing regressions; level/edge/reconnect, deadline/rearm/reversal/OI-expiry/clock-wrap tests; synthetic compositor,100 sanitizer ownership cycles, arm64/Java/dex compile; independent review no blocker. Installed hash/assets/preferences/audio checked separately from user acceptance.
 
-Physical results: OI night/reaction/normal-night/day accepted in v10; user reported immediate sunshine after returning lights. v11 lowering accepted. v12 one-cameo/no-repeat behavior accepted, then user requested three seconds longer. v13 duration accepted as almost perfect with small visual quirks fitting the original style. Live v13 fan off/on produced one wind sequence, then windActive0 while windOn1 and normal frames continued.
+Physical results: OI night/reaction/normal-night/day accepted in v10; user reported immediate sunshine after returning lights. v11 lowering accepted. v12 one-cameo/no-repeat behavior accepted, then user requested three seconds longer. v13 duration accepted as almost perfect with small visual quirks fitting the original style. Live v13 fan off/on produced one wind sequence, then windActive0 while fan stayed on, with advancing frames and no queued OI. Small visual quirks remain user-accepted; no claim of perfectly seamless animation.
 Combined physical check: user reports quick changes cancelled the wind for night/OI, then confirms normal activity resumed with bubble/wind effects gone and lights-on restored daylight. Additional live off/on at night returned to windActive0 while fan stayed on, with advancing frames and no queued OI. Small visual quirks remain user-accepted; no claim of perfectly seamless animation.
 
 Cleanup complete: selected `local.johnnycastaway.halab/local.johnnycastaway.shield.JohnnyDream`. Other installed Johnny variants shield/storypreview/remaster removed for user0 with `-k`; data and verified APK backups retained. Only HA Lab remains installed. BOOP removed the old stale tile; an existing HA Lab favourite was confirmed, so no duplicate added. Local projects/scene labels/original resources preserved. BOOPv176 lyrics album navigation is physically accepted and unchanged by this work.
