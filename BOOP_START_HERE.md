@@ -32,21 +32,27 @@ Frozen reference: tag `boop-felt-default-v189`, built source `470bb4b471e7e452b2
 
 Every hand has exactly five digits: four fingers and one opposing thumb. The approved notification grip shows four curled fingers in front and hides the existing thumb behind the sign. Keep connected palms, short cuffs and the original yellow felt default; Ryan explicitly authorized runtime hand recolouring in Build a Boop. Hiding a digit does not remove it from the model. Reuse one coherent grip across notification styles; the pose is not validated ASL/BSL.
 
-## Puppet identity and next personality work
+## Puppet identity and deferred personality work
 
 Ryan defines Boop as a genderless, raceless felt puppet that can belong in any household. Custom colours express felt and character styling. Preserve five digits per hand, connected anatomy and the accepted material; future ASL/BSL needs its own implementation and validation.
 
-Next requested work after the usage reset: playful, deliberately silly voice/personality controls in Build a Boop, with voice choices carried to the Shield like colour choices. Preserve optional natural-language/voice download direction and the pause/scrub lab for shared inspection. This is upcoming work; consult the owning branch's [recorded next direction](https://github.com/ryankemble2006-web/boop/blob/805a4e6ed88eb9dd221d8fc421c839c3e79c8489/docs/handoffs/2026-09-15-puppet-personality-next.md).
+Historical direction, now deferred for Astra rather than an active next task: playful, deliberately silly voice/personality controls in Build a Boop, with voice choices carried to the Shield like colour choices. Preserve optional natural-language/voice download direction and the pause/scrub lab for shared inspection. This direction is historical and does not reopen the frozen Voice work; consult the owning branch's [recorded next direction](https://github.com/ryankemble2006-web/boop/blob/805a4e6ed88eb9dd221d8fc421c839c3e79c8489/docs/handoffs/2026-09-15-puppet-personality-next.md).
 
 ## Standalone EastEnders and Casualty shortcuts
 
 Current owner: `iplayer-shortcuts-home-20260916`, with `eastenders-shortcut/` and `casualty-shortcut/` as separate standalone packages. EastEnders 1.8 and Casualty 1.2 are installed on Shield: obsolete shortcut menus removed, identical exact trailer skipping retained, and post-playback programme return now requests Home. Read the owner's `docs/handoffs/2026-09-16-iplayer-shortcuts-home.md` for successful CI, original-key signing, installation verification and pending joint playback acceptance. This does not modify the Unified app or supersede its owner.
 
-## Unified app
+## Current Wall and Shield apps
 
-Current combined app work is owned by `boop-hand-colour-v191`. Fetch its LIVE HEAD and read its current `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for exact build, installation and user-acceptance state. The branch name does not determine the APK version. Main is the shared context hub, not the latest app source.
+Current application owner: `boop-wall-shield-split-v207`. This is the accepted v206 combined lineage separated into one shared assistant implementation with Wall and Shield application shells, not older standalone code. Wall `com.boop.alpha1` version 207 / `1.2.207-wall` was clean-installed on Pixel 7 Pro; Shield `com.boop.shieldoverlay` version 207 / `1.2.207-shield` was clean-installed on Nvidia Shield. Fetch the LIVE owner and its SESSION_HANDOFF.md, BOOP_STATUS.md and BOOP_UNIFIED_MEMORY.md before work. Main remains the context hub, not the current app source.
 
-Preserve the earlier `boop-unified-v146-integration` combined lineage and the accepted v156 Shield polish at `a901c1e9f31e55c710e31ac7ff4f5924c9769d56`. Do not restart from isolated v142/v145 work or unpublished local colour drafts. Standalone Animation Lab and unrelated projects remain separate unless Ryan explicitly requests integration.
+Installed build source: `aa8fd9f6d79f28b441a48df31138a75d38420118`; signed run `35110823569`; artifact `10451993779`, `BOOP-Wall-Shield-v207-Signed`. Later verification/docs commits are not an instruction to reinstall. Both apps were initially verified at genuine first setup without this sequence pressing Continue. Latest readback: Pixel 7 remains at first setup; Shield subsequently has its setup-complete flag true and YouTube foreground. Do not reset or overwrite that subsequent progress. Read `docs/handoffs/2026-09-16-v207-signed-clean-install.md` on the owner.
+
+Voice is frozen in BOTH apps. Ryan deferred the roughly 12-second latency investigation, alternative providers/voices and further pitch/cadence work for Astra. Preserve current natural voices, local model/download path, existing tuning and sharing. No extra Voice prerequisite is implied. All 16 packaged native libraries matched accepted v206 byte-for-byte.
+
+The clean installs were explicitly authorized for this newcomer test. No BOOP data, models, credentials or setup flags were restored; no permission was pre-granted and no Android default Home was forced. Three BOOP Shield listener grants and its overlay access were found enabled later and cleared for the fresh-access brief, preserving unrelated listeners. The origin of those intervening grants was not established. Do not silently change current access or rewind setup now. Broader onboarding, HA/media/sharing/Johnny behavior remain human acceptance checks.
+
+Previous combined owner `boop-hand-colour-v191` at `841458b8bbc53773d16a18bb0359de1c0550f5e2` is preserved, as is its dirty historical local v203 documentation. Do not start from that stale worktree or historical standalone code. Preserve all earlier combined/accepted checkpoints and keep standalone Animation Lab, Johnny and unrelated projects separate.
 
 ## Standalone Shield Launcher
 
