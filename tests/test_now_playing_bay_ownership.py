@@ -5,7 +5,6 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingView.java"
 HOME_SOURCE = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java"
-PUPPET_SOURCE = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java"
 
 
 def test_row_owns_a_persistent_bay_not_the_transient_puppet():
@@ -26,9 +25,9 @@ def test_bay_does_not_create_a_second_face_or_remote_focus_target():
 
 def test_home_keeps_one_canonical_assistant_presence_when_media_is_gone():
     home = HOME_SOURCE.read_text(encoding="utf-8")
-    puppet = PUPPET_SOURCE.read_text(encoding="utf-8")
     assert "private ShieldNowPlayingPuppetView homeAssistantPuppet;" in home
     assert "homeAssistantPuppet = new ShieldNowPlayingPuppetView(getContext());" in home
-    assert "homeAssistantPuppet.setAssistantIdle(true);" in home
+    assert "homeAssistantPuppet.setPresentationOwner(com.boop.shared.BoopState.Owner.NONE);" in home
+    assert "homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());" in home
     assert "homeAssistantPuppet.setHomeVisible(!visible);" in home
-    assert "assistantIdle && shared.owner == com.boop.shared.BoopState.Owner.NONE" in puppet
+    assert "PlaybackState.STATE_BUFFERING" in home, "idle presence should reuse the canonical idle media pose"
