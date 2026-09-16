@@ -22,6 +22,10 @@ import java.util.Map;
 
 /** Presentation-only Shield HOME surface. Data discovery and persistence live elsewhere. */
 public final class ShieldHomeView extends LinearLayout {
+    private static final int NAV_TOP_DP = 30;
+    private static final int NAV_HEIGHT_DP = 60;
+    private static final int HOME_SECTION_GAP_DP = 16;
+    private static final int NOW_PLAYING_HEIGHT_DP = 182;
     public interface Callbacks {
         void onAppSelected(TvAppEntry entry);
         void onFavouriteOrderCommitted(List<String> components);
@@ -107,20 +111,22 @@ public final class ShieldHomeView extends LinearLayout {
         FrameLayout.LayoutParams navParams = new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         navParams.gravity = Gravity.TOP | Gravity.START;
-        navParams.topMargin = dp(30);
+        navParams.topMargin = dp(NAV_TOP_DP);
         stage.addView(navRow(callbacks), navParams);
 
         nowPlayingView = new ShieldNowPlayingView(getContext());
         FrameLayout.LayoutParams nowPlayingParams = new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(182));
+                LayoutParams.MATCH_PARENT, dp(NOW_PLAYING_HEIGHT_DP));
         nowPlayingParams.gravity = Gravity.TOP | Gravity.START;
-        nowPlayingParams.topMargin = dp(106);
+        nowPlayingParams.topMargin = dp(NAV_TOP_DP + NAV_HEIGHT_DP + HOME_SECTION_GAP_DP);
         stage.addView(nowPlayingView, nowPlayingParams);
         setNowPlaying(snapshot);
 
         FrameLayout.LayoutParams favouritesParams = new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(215));
-        favouritesParams.gravity = Gravity.CENTER_VERTICAL;
+        favouritesParams.gravity = Gravity.TOP | Gravity.START;
+        favouritesParams.topMargin = dp(NAV_TOP_DP + NAV_HEIGHT_DP + HOME_SECTION_GAP_DP
+                + NOW_PLAYING_HEIGHT_DP + HOME_SECTION_GAP_DP);
         stage.addView(appRow(safeFavourites, callbacks), favouritesParams);
 
         addHomeAssistant(stage);
