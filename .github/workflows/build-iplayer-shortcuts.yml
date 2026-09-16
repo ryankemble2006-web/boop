@@ -23,8 +23,8 @@ jobs:
           for programme in eastenders casualty; do
             cd "$GITHUB_WORKSPACE/$programme-shortcut"
             mkdir -p build/tests
-            javac -d build/tests src/uk/local/$programme/{Routes,ClickGate,UiPolicy,LaunchPolicy}.java tests/*.java
-            for test in RouteTest ClickGateTest AutoplayPolicyTest LaunchPolicyTest ReturnHomeTest; do
+            javac -d build/tests src/uk/local/$programme/{Routes,ClickGate,UiPolicy,LaunchPolicy,PlayerReset,BridgeSession,BridgePolicy}.java tests/*.java
+            for test in RouteTest ClickGateTest AutoplayPolicyTest LaunchPolicyTest ReturnHomeTest ColdStartTest; do
               java -cp build/tests uk.local.$programme.$test
             done
           done
