@@ -30,6 +30,10 @@ Ryan defines Boop as a genderless, raceless felt puppet that can belong in any h
 
 Next requested work after the usage reset: playful, deliberately silly voice/personality controls in Build a Boop, with voice choices carried to the Shield like colour choices. Preserve optional natural-language/voice download direction and the pause/scrub lab for shared inspection. This is upcoming work; consult the owning branch's [recorded next direction](https://github.com/ryankemble2006-web/boop/blob/805a4e6ed88eb9dd221d8fc421c839c3e79c8489/docs/handoffs/2026-09-15-puppet-personality-next.md).
 
+## Standalone EastEnders and Casualty shortcuts
+
+Current owner: `iplayer-shortcuts-home-20260916`, with `eastenders-shortcut/` and `casualty-shortcut/` as separate standalone packages. EastEnders 1.8 and Casualty 1.2 are installed on Shield: obsolete shortcut menus removed, identical exact trailer skipping retained, and post-playback programme return now requests Home. Read the owner's `docs/handoffs/2026-09-16-iplayer-shortcuts-home.md` for successful CI, original-key signing, installation verification and pending joint playback acceptance. This does not modify the Unified app or supersede its owner.
+
 ## Unified app
 
 Current combined app work is owned by `boop-hand-colour-v191`. Fetch its LIVE HEAD and read its current `SESSION_HANDOFF.md`, `BOOP_STATUS.md` and `BOOP_UNIFIED_MEMORY.md` for exact build, installation and user-acceptance state. The branch name does not determine the APK version. Main is the shared context hub, not the latest app source.
