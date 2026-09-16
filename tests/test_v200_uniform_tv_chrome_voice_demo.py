@@ -61,17 +61,18 @@ def test_natural_voice_pitch_is_applied_only_at_pcm_playback():
     assert "speedForRate(rate)" in backend
 
 
-def test_v203_build_identity_and_workflow_gate():
+def test_v204_build_identity_and_workflow_gate():
     gradle = text("unified/app-build.gradle")
-    assert "versionCode 203" in gradle
-    assert 'versionName "1.2.203-voice-home-handoff"' in gradle
+    assert "versionCode 204" in gradle
+    assert 'versionName "1.2.204-home-layout-parking"' in gradle
 
     workflow = text(".github/workflows/build-boop-v191-hand-colour.yml")
-    assert "Build BOOP v203 Voice + Home handoff" in workflow
+    assert "Build BOOP v204 Parked Home layout" in workflow
     assert "tests/test_v200_uniform_tv_chrome_voice_demo.py" in workflow
     assert "tests/test_voice_tv_focus_v202.py" in workflow
+    assert "tests/test_home_layout_v204.py" in workflow
     assert "tests/test_now_playing_bay_ownership.py" in workflow
-    assert "BOOP-Unified-v203-Voice-Home-Handoff" in workflow
+    assert "BOOP-Unified-v204-Parked-Home-Layout" in workflow
 
 
 def java_method(source: str, signature: str) -> str:
