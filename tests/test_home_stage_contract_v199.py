@@ -17,10 +17,13 @@ def test_primary_home_elements_have_independent_stage_ownership():
     assert "stage.addView(appRow(safeFavourites, callbacks), favouritesParams);" in source
 
 
-def test_favourites_are_centered_without_a_heading():
+def test_favourites_reuse_the_top_band_gap_without_a_heading():
     source = source_text()
     assert 'sectionTitle("Favourite apps")' not in source
-    assert "favouritesParams.gravity = Gravity.CENTER_VERTICAL;" in source
+    assert "private static final int HOME_SECTION_GAP_DP = 16;" in source
+    assert "nowPlayingParams.topMargin = dp(NAV_TOP_DP + NAV_HEIGHT_DP + HOME_SECTION_GAP_DP);" in source
+    assert "favouritesParams.gravity = Gravity.TOP | Gravity.START;" in source
+    assert "favouritesParams.topMargin = dp(NAV_TOP_DP + NAV_HEIGHT_DP + HOME_SECTION_GAP_DP\n                + NOW_PLAYING_HEIGHT_DP + HOME_SECTION_GAP_DP);" in source
 
 
 def test_now_playing_can_hide_without_reflowing_home():
