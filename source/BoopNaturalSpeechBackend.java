@@ -5,6 +5,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
+import android.os.SystemClock;
 
 import com.k2fsa.sherpa.onnx.GeneratedAudio;
 import com.k2fsa.sherpa.onnx.GenerationConfig;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
+    private static final String LATENCY_TAG = "BOOP-VoiceLatency";
     private static final float SILENCE_SCALE = 0.2f;
     private static final int HIGHEST_REQUIRED_SPEAKER_ID = 26;
     private static final String[] SHERPA_RUNTIME_FILES = {
@@ -43,11 +45,13 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
 
     private static final class RequestState {
         final Callback callback;
+        final long startMs;
         final AtomicBoolean terminal = new AtomicBoolean(false);
         final AtomicBoolean cancelled = new AtomicBoolean(false);
 
         RequestState(Callback callback) {
             this.callback = callback;
+            this.startMs = SystemClock.elapsedRealtime();
         }
 
         void done() {
@@ -82,6 +86,9 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             return false;
         }
         final RequestState request = new RequestState(callback);
+        android.util.Log.i(
+                LATENCY_TAG,
+                "request_queued sid=" + speakerId + " chars=" + text.length());
         RequestState interrupted = null;
         synchronized (lock) {
             if (released) return false;
@@ -178,16 +185,26 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         GeneratedAudio audio;
         try {
             OfflineTts tts = ensureTts();
+            long modelReadyMs = SystemClock.elapsedRealtime();
+            android.util.Log.i(
+                    LATENCY_TAG,
+                    "model_ready total_ms=" + (modelReadyMs - request.startMs));
             if (request.cancelled.get()) return;
 
             GenerationConfig generation = new GenerationConfig();
             generation.setSid(speakerId);
             generation.setSpeed(speed);
             generation.setSilenceScale(SILENCE_SCALE);
+            long synthesisStartMs = SystemClock.elapsedRealtime();
             // Sherpa-ONNX 1.13.7's Android callback JNI bridge can abort the
             // process. Generate without that callback and honor cancellation
             // immediately after synthesis instead.
             audio = tts.generateWithConfig(text, generation);
+            long synthesisDoneMs = SystemClock.elapsedRealtime();
+            android.util.Log.i(
+                    LATENCY_TAG,
+                    "synthesis_done stage_ms=" + (synthesisDoneMs - synthesisStartMs)
+                            + " total_ms=" + (synthesisDoneMs - request.startMs));
             if (request.cancelled.get()) return;
             if (audio == null || audio.getSamples() == null || audio.getSamples().length == 0) {
                 throw new IllegalStateException("Natural speech produced no audio");
@@ -313,6 +330,9 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
                     unsupported);
         }
         track.play();
+        android.util.Log.i(
+                LATENCY_TAG,
+                "playback_start total_ms=" + (SystemClock.elapsedRealtime() - request.startMs));
 
         while (!request.cancelled.get()
                 && track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING
