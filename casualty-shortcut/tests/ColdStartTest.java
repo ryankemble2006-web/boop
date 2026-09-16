@@ -1,8 +1,12 @@
 package uk.local.casualty;
 import java.util.*;
+import java.nio.file.*;
 public final class ColdStartTest {
     static void check(boolean value,String message) { if(!value) throw new AssertionError(message); }
     public static void main(String[] args) throws Exception {
+        String service=Files.readString(Paths.get("src/uk/local/casualty/WatchNowService.java"));
+        check(service.contains("CleanupSequence cleanupSequence"),"Cleanup actions need an explicit one-shot sequence gate");
+        check(!service.contains("cleanupLastAction"),"A time delay alone must not guard duplicate force-stop actions");
         List<String> commands=new ArrayList<>();
         PlayerReset.reset(command -> { commands.add(command); return ""; });
         check(commands.size()==2,"Stop and verify before permitting launch");
@@ -31,6 +35,6 @@ public final class ColdStartTest {
         check(!BridgePolicy.accepts("uk.local.casualty","wrong"),"Wrong signer refused");
         check(BridgePolicy.accepts("uk.local.casualty",BridgePolicy.CASUALTY_SIGNER),"Original Casualty accepted");
         check(BridgePolicy.accepts("uk.local.eastenders",BridgePolicy.EASTENDERS_SIGNER),"Original EastEnders accepted");
-        System.out.println("PASS: clean reset, background verification, failure closed, cross-programme stale-session safety, caller trust");
+        System.out.println("PASS: one-shot cleanup gate required, clean reset, background verification, failure closed, stale-session safety, caller trust");
     }
 }
