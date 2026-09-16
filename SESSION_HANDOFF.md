@@ -1,6 +1,12 @@
-# Unified session handoff — 2026-09-16
+# Unified session handoff - 2026-09-16
 
 Owner branch: `boop-hand-colour-v191`. Live GitHub is authoritative for the branch; distinguish its build receipts from fresh device observations.
+
+## Latest joint-test observation: Voice screen still obstructed
+
+Ryan resumed BOOP Voice Ideas at the **human-testing phase**, not a new design/build phase. His requested live Shield screenshot confirms full-size felt eyes covering the Voice name controls and much of the Pitch/Cadence slider area; TEST VOICE remains visible at the bottom. A read-only identity check confirms foreground `com.boop.alpha1/.MainActivity` and installed v200 (`1.2.200-uniform-tv-chrome-voice-demo`). The oversized-eyes blocker is still present; no fix, voice audio, selector behavior or cross-device acceptance is claimed.
+
+Continue from `docs/handoffs/2026-09-16-voice-human-test-overlay-blocker.md`. Locate the actual v200 source/build receipt before any correction; the older v198 receipt below is not v200 provenance. Keep the human-test phase and the requirement to clear the visual obstruction before further voice work. This continuation captured/read only and updated documentation: no app code, settings, permissions, installs, signing, phones or local worktrees changed. Private screenshots/raw output were not published.
 
 ## Latest device maintenance: Shield storage cleanup
 
