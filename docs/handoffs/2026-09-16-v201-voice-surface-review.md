@@ -1,3 +1,5 @@
+Current verification update: full signed run `35080910395` succeeded at `eff4b004176747bfa489f566a34357b52e8c0557`. Independent APK hash/signer/permission inspection passed. See `docs/handoffs/2026-09-16-v201-voice-verified-build.md` for exact receipts and the still-pending runtime boundary. The earlier review checkpoint below is retained as history.
+
 # v201 Voice surface correction - independent continuation review
 
 Date: 2026-09-16. Owner: `boop-hand-colour-v191`.
