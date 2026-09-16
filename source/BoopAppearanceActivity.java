@@ -38,7 +38,14 @@ public final class BoopAppearanceActivity extends Activity {
     private Button handShare, handRetry;
     private boolean handDragging;
     private Runnable unwatchHand;
-    private SharedPreferences eyes, appearance;
+    private BoopSharedVoiceProfileRuntime voiceSharing;
+    private BoopVoiceController voiceController;
+    private SeekBar voicePitch, voiceSpeed;
+    private TextView voicePitchLabel, voiceSpeedLabel, voiceStatus;
+    private Button voiceShare, voiceRetry;
+    private boolean voicePitchDragging, voiceSpeedDragging;
+    private Runnable unwatchVoice;
+    private SharedPreferences eyes, appearance, voice;
     private TextView status, hueLabel, speedLabel;
     private SeekBar hue;
     private GLSurfaceView preview;
@@ -54,14 +61,26 @@ public final class BoopAppearanceActivity extends Activity {
     private final SharedPreferences.OnSharedPreferenceChangeListener speedListener = (store, key) -> {
         if (key == null || "animation_speed".equals(key)) refreshSpeed();
     };
+    private final SharedPreferences.OnSharedPreferenceChangeListener voiceListener = (store, key) -> {
+        if (key == null
+                || BoopVoiceController.KEY_PITCH.equals(key)
+                || BoopVoiceController.KEY_SPEECH_RATE.equals(key)
+                || BoopVoiceController.KEY_SELECTED_BACKEND.equals(key)
+                || BoopVoiceController.KEY_NATURAL_SPEAKER_KEY.equals(key)) {
+            refreshVoice();
+        }
+    };
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         sharing = BoopSharedEyeColourRuntime.get(this);
         feltSharing = BoopSharedFeltColourRuntime.get(this);
         handSharing = BoopSharedHandColourRuntime.get(this);
+        voiceSharing = BoopSharedVoiceProfileRuntime.get(this);
+        voiceController = new BoopVoiceController(this);
         eyes = getSharedPreferences("boop_eyes", MODE_PRIVATE);
         appearance = getSharedPreferences("boop_appearance", MODE_PRIVATE);
+        voice = getSharedPreferences(BoopVoiceController.PREFS_NAME, MODE_PRIVATE);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.BLACK);
@@ -156,6 +175,45 @@ public final class BoopAppearanceActivity extends Activity {
             else confirmSharing();
         });
         retry = button(column, "Retry sharing", this::confirmSharing);
+
+        voicePitchLabel = text(column, "Voice pitch", 20);
+        voicePitch = new SeekBar(this);
+        voicePitch.setMax(BoopVoiceTuning.PROGRESS_MAX);
+        voicePitch.setKeyProgressIncrement(25);
+        voicePitch.setContentDescription("Voice pitch");
+        voicePitch.setProgress(BoopVoiceTuning.progressFromPitch(voiceController.pitch()));
+        voicePitch.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (fromUser) voiceController.setPitch(BoopVoiceTuning.pitchFromProgress(value));
+                refreshVoiceLabels();
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { voicePitchDragging = true; }
+            @Override public void onStopTrackingTouch(SeekBar bar) { voicePitchDragging = false; refreshVoice(); }
+        });
+        column.addView(voicePitch, new LinearLayout.LayoutParams(-1, dp(60)));
+
+        voiceSpeedLabel = text(column, "Voice speed", 20);
+        voiceSpeed = new SeekBar(this);
+        voiceSpeed.setMax(BoopVoiceTuning.PROGRESS_MAX);
+        voiceSpeed.setKeyProgressIncrement(25);
+        voiceSpeed.setContentDescription("Voice speed");
+        voiceSpeed.setProgress(BoopVoiceTuning.progressFromRate(voiceController.speechRate()));
+        voiceSpeed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int value, boolean fromUser) {
+                if (fromUser) voiceController.setSpeechRate(BoopVoiceTuning.rateFromProgress(value));
+                refreshVoiceLabels();
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar) { voiceSpeedDragging = true; }
+            @Override public void onStopTrackingTouch(SeekBar bar) { voiceSpeedDragging = false; refreshVoice(); }
+        });
+        column.addView(voiceSpeed, new LinearLayout.LayoutParams(-1, dp(60)));
+        text(column, "Natural voice choice, pitch and speed can follow this BOOP to your other BOOPs. Each device keeps its own optional natural-voice download.", 18);
+        voiceStatus = text(column, "", 18);
+        voiceShare = button(column, "Share voice profile: Off", () -> {
+            if (voiceSharing.enabled()) voiceSharing.setEnabled(false); else confirmVoiceSharing();
+        });
+        voiceRetry = button(column, "Retry voice sharing", this::confirmVoiceSharing);
+
         speedLabel = text(column, "Animation speed: 1x", 20);
         text(column, "BOOP only, on this device. 1x keeps the original timing. Android transitions, music and voice stay unchanged.", 18);
         LinearLayout speeds = new LinearLayout(this);
@@ -181,8 +239,43 @@ public final class BoopAppearanceActivity extends Activity {
         refresh();
         refreshFelt();
         refreshHand();
+        refreshVoice();
         refreshSpeed();
     }
+
+    private void confirmVoiceSharing() {
+        new AlertDialog.Builder(this).setTitle("Share BOOP's voice profile?")
+                .setMessage("Use the same natural voice choice, pitch and speed on your BOOPs through your paired Home Assistant. BOOP may create a separate voice-profile setting using administrator access. The natural voice model itself stays private on each device and is never transferred.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Share", (dialog, which) -> voiceSharing.setEnabled(true)).show();
+    }
+
+    private void refreshVoice() {
+        if (voicePitch == null || voiceSpeed == null || voiceShare == null) return;
+        float pitch = voiceController.pitch();
+        float rate = voiceController.speechRate();
+        if (!voicePitchDragging) voicePitch.setProgress(BoopVoiceTuning.progressFromPitch(pitch));
+        if (!voiceSpeedDragging) voiceSpeed.setProgress(BoopVoiceTuning.progressFromRate(rate));
+        refreshVoiceLabels();
+        voiceShare.setText("Share voice profile: " + (voiceSharing.enabled() ? "On" : "Off"));
+        voiceStatus.setText(voiceSharing.enabled() ? voiceSharing.status() : "Voice profile stays on this device.");
+        voiceRetry.setVisibility(voiceSharing.enabled() && !voiceSharing.ready()
+                ? android.view.View.VISIBLE : android.view.View.GONE);
+    }
+
+    private void refreshVoiceLabels() {
+        if (voicePitchLabel != null && voiceController != null) {
+            voicePitchLabel.setText("Voice pitch: " + voiceScale(voiceController.pitch()));
+        }
+        if (voiceSpeedLabel != null && voiceController != null) {
+            voiceSpeedLabel.setText("Voice speed: " + voiceScale(voiceController.speechRate()));
+        }
+    }
+
+    private String voiceScale(float value) {
+        return String.format(java.util.Locale.ROOT, "%.2fx", value);
+    }
+
     private void confirmHandSharing() {
         new AlertDialog.Builder(this).setTitle("Share BOOP's hand colour?")
                 .setMessage("Use the same hand colour on your BOOPs through your paired Home Assistant. BOOP may create a separate hand-colour setting using administrator access. Existing shared hand colour is used first; offline edits stay local.")
@@ -262,17 +355,22 @@ public final class BoopAppearanceActivity extends Activity {
         super.onStart();
         eyes.registerOnSharedPreferenceChangeListener(hueListener);
         appearance.registerOnSharedPreferenceChangeListener(speedListener);
+        voice.registerOnSharedPreferenceChangeListener(voiceListener);
         unwatch = sharing.observe(this::refresh);
         unwatchFelt = feltSharing.observe(this::refreshFelt);
         unwatchHand = handSharing.observe(this::refreshHand);
+        unwatchVoice = voiceSharing.observe(this::refreshVoice);
+        refreshVoice();
         refreshSpeed();
     }
     @Override protected void onStop() {
         eyes.unregisterOnSharedPreferenceChangeListener(hueListener);
         appearance.unregisterOnSharedPreferenceChangeListener(speedListener);
+        voice.unregisterOnSharedPreferenceChangeListener(voiceListener);
         if (unwatch != null) { unwatch.run(); unwatch = null; }
         if (unwatchFelt != null) { unwatchFelt.run(); unwatchFelt = null; }
         if (unwatchHand != null) { unwatchHand.run(); unwatchHand = null; }
+        if (unwatchVoice != null) { unwatchVoice.run(); unwatchVoice = null; }
         super.onStop();
     }
     private TextView text(LinearLayout column, String value, int size) {
