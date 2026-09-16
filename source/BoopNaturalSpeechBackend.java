@@ -252,7 +252,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
 
                 OfflineTtsModelConfig model = new OfflineTtsModelConfig();
                 model.setKokoro(kokoro);
-                model.setNumThreads(2);
+                model.setNumThreads(4);
                 model.setDebug(false);
                 model.setProvider("cpu");
 
