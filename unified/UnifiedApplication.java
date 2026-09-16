@@ -57,5 +57,6 @@ public final class UnifiedApplication extends Application {
         BoopSharedEyeColourRuntime.initialize(this);
         BoopSharedFeltColourRuntime.initialize(this);
         BoopSharedHandColourRuntime.initialize(this);
+        BoopSharedVoiceProfileRuntime.initialize(this);
     }
 }
