@@ -1,6 +1,14 @@
-# BOOP Unified durable memory — current only
+# BOOP Unified durable memory - current only
 
 Updated 2026-09-16. Live GitHub branch `boop-hand-colour-v191` is authoritative for this branch's source/build receipts; dated receipts retain detailed history. Fresh device identity and source/build provenance are separate evidence.
+
+## Current Voice continuation: human-testing phase
+
+Ryan resumed BOOP Voice Ideas after the chat malfunctioned. The work had already reached human testing. His requested screenshot on the existing Shield ADB connection confirms large photographic felt eyes covering the Voice name controls and much of the Pitch/Cadence sliders; TEST VOICE remains visible below. Fresh read-only identity confirms `com.boop.alpha1/.MainActivity`, versionCode 200, `1.2.200-uniform-tv-chrome-voice-demo`.
+
+Preserve the prior requirement to clear the full-screen eyes before continuing other voice work, use readable Home-style selectors across Shield/Android TV menus, and expose TEST VOICE with the tuning controls. None of those behavior checks is newly accepted here. This is a failing visual checkpoint, not proof of the renderer/service responsible or of input interception.
+
+Continuation/context receipt: `docs/handoffs/2026-09-16-voice-human-test-overlay-blocker.md`. Locate the actual v200 source/build receipt before a correction; the historical v198 receipt below does not supply v200 provenance. Do not restart design, downgrade, ask for an already-connected bridge or push this task into Work mode. The continuation performed captures/identity reads and documentation updates only, with no app source, settings, permissions, installs, signing or phone operations. Screenshots and raw device output remain private.
 
 ## Latest Shield observation: storage cleanup
 
