@@ -37,7 +37,7 @@ public final class MainActivity extends Activity {
             return;
         }
         if(!new File(getNoBackupFilesDir(),"iplayer-local-adb.key").isFile()) {
-            showLocalDebuggingSetup("This shortcut needs Shield Network debugging once so it can stop BBC iPlayer cleanly without showing the Force stop screen.");
+            showLocalDebuggingSetup("This shortcut needs Shield USB debugging and Network debugging once so it can stop BBC iPlayer cleanly without showing the Force stop screen.");
             return;
         }
         openProgramme();
@@ -84,7 +84,7 @@ public final class MainActivity extends Activity {
         root.addView(title,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView body=new TextView(this);
-        body.setText(detail+"\n\n1. Open Shield debugging settings and enable Network debugging.\n2. Return to this shortcut and choose Authorise.\n3. Accept Android's one-time debugging trust prompt for Casualty.\n\nNo BBC login, password or profile name is stored by this shortcut.");
+        body.setText(detail+"\n\n1. Open Shield debugging settings and enable USB debugging and Network debugging.\n2. Return to this shortcut and choose Authorise.\n3. Accept Android's one-time debugging trust prompt for Casualty.\n\nNo BBC login, password or profile name is stored by this shortcut.");
         body.setTextColor(Color.LTGRAY);
         body.setTextSize(22);
         LinearLayout.LayoutParams bodyParams=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -137,7 +137,7 @@ public final class MainActivity extends Activity {
         Intent settings=new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
         if(getPackageManager().resolveActivity(settings,0)==null) settings=new Intent(Settings.ACTION_SETTINGS);
         try { startActivity(settings); }
-        catch(RuntimeException rejected) { Toast.makeText(this,"Open Shield Developer options and enable Network debugging.",Toast.LENGTH_LONG).show(); }
+        catch(RuntimeException rejected) { Toast.makeText(this,"Open Shield Developer options and enable USB debugging and Network debugging.",Toast.LENGTH_LONG).show(); }
         finish();
     }
 

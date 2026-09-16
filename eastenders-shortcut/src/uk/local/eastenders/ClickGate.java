@@ -1,7 +1,6 @@
 package uk.local.eastenders;
 
 final class ClickGate {
-    private static final long PROFILE_DEBOUNCE_MS = 1500L;
     private static final long RETURN_HOME_TIMEOUT_MS = 2L * 60L * 60L * 1000L;
     private static final long TRAILER_WINDOW_MS = 60000L;
     private long deadline;
@@ -9,8 +8,7 @@ final class ClickGate {
     private long trailerDeadline;
     private boolean trailerClicked;
     private boolean recoverySawPlayback;
-    private int profileClicks;
-    private long lastProfileClickAt;
+    private boolean profileClicked;
 
     void arm(long now) {
         deadline = now + 120000L;
@@ -18,8 +16,7 @@ final class ClickGate {
         trailerDeadline = 0;
         trailerClicked = false;
         recoverySawPlayback = false;
-        profileClicks = 0;
-        lastProfileClickAt = 0;
+        profileClicked = false;
     }
 
     void cancel() {
@@ -57,17 +54,14 @@ final class ClickGate {
         return recoverySawPlayback;
     }
     boolean claimReturnHome(long now, boolean programmePage, boolean episodeCard) {
-        // A player overlay may repeat the programme title. Require the real grid card too.
         if (!returnPageReady(now, programmePage) || !episodeCard) return false;
         cancel();
         return true;
     }
 
-    boolean claimProfile(long now, boolean chooser, boolean focusedExistingProfile) {
-        if (!launchActive(now) || profileClicks >= 2 || !chooser || !focusedExistingProfile) return false;
-        if (profileClicks > 0 && now - lastProfileClickAt < PROFILE_DEBOUNCE_MS) return false;
-        profileClicks++;
-        lastProfileClickAt = now;
+    boolean claimProfile(long now, boolean chooser, boolean existingProfile) {
+        if (!launchActive(now) || profileClicked || !chooser || !existingProfile) return false;
+        profileClicked = true;
         return true;
     }
 
