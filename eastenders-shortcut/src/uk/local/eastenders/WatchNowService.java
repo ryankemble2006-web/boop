@@ -97,6 +97,7 @@ public final class WatchNowService extends AccessibilityService {
         if(node.isVisibleToUser()) {
             String id=node.getViewIdResourceName();
             CharSequence text=node.getText();
+            if(text==null) text="";
             if("com.android.tv.settings:id/decor_title".equals(id) && PLAYER_TITLE.contentEquals(text)) page.appInfo=true;
             if("android:id/title".equals(id) && "Open".contentEquals(text)) page.open=true;
             if("android:id/title".equals(id) && "Uninstall".contentEquals(text)) page.uninstall=true;
