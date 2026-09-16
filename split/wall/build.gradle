@@ -1,0 +1,11 @@
+plugins { id 'com.android.application' }
+apply from: rootProject.file('split-app-shell.gradle')
+android {
+    namespace 'com.boop.wallapp'
+    defaultConfig {
+        applicationId 'com.boop.alpha1'
+        versionName '1.2.207-wall'
+    }
+    buildTypes { debug { signingConfig signingConfigs.boopDev } }
+}
+dependencies { implementation project(':assistant-lib') }

@@ -1,0 +1,37 @@
+plugins { id 'com.android.library' }
+
+def escape = { value -> value.replace('\\', '\\\\').replace('"', '\\"').replace('\r', '\\r').replace('\n', '\\n') }
+android {
+    namespace 'com.boop.alpha1'
+    compileSdk 36
+    defaultConfig {
+        minSdk 29
+        buildConfigField 'String', 'BOOP_RELAY_URL', '"' + escape(System.getenv('BOOP_RELAY_URL') ?: '') + '"'
+        buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + escape(System.getenv('BOOP_RELAY_TOKEN') ?: '') + '"'
+    }
+    buildFeatures { buildConfig true }
+    sourceSets {
+        main {
+            java.srcDirs = ['../app/src/main/java']
+            res.srcDirs = ['../app/src/main/res']
+            assets.srcDirs = ['../app/src/main/assets']
+            jniLibs.srcDirs = ['../app/src/main/jniLibs']
+        }
+        test.java.srcDirs = ['../app/src/test/java']
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+
+dependencies {
+    implementation project(':animation-lib')
+    implementation project(':launcher-lib')
+    implementation project(':shield-lib')
+    implementation project(':shield-home-lib')
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.boop.vendor:sherpa-onnx:1.13.7'
+    implementation 'org.apache.commons:commons-compress:1.28.0'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.7.20'
+    implementation 'androidx.browser:browser:1.9.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}

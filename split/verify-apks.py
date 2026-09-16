@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Verify both actual signed APKs: identities, signer, component routes and bytes."""
+from pathlib import Path
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import zipfile
+
+root = Path('boop-build/BOOP-Alpha1')
+tools = Path(os.environ['ANDROID_HOME']) / 'build-tools/36.0.0'
+out = Path('split-artifact'); out.mkdir(exist_ok=True)
+expected = Path('shield-overlay/signing/boop-dev-cert-sha256.txt').read_text().strip().lower()
+source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+receipt = {'source': source, 'baseline': '9d57019d9370dbe3f47061b6e8b0ce8ed5134715', 'apps': []}
+
+def tool(name, *args):
+    return subprocess.check_output([str(tools/name), *map(str,args)], text=True)
+
+for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
+    apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
+    assert apk.is_file(), str(apk)
+    badging = tool('aapt','dump','badging',apk)
+    manifest = tool('aapt','dump','xmltree',apk,'AndroidManifest.xml')
+    cert = tool('apksigner','verify','--print-certs',apk)
+    assert f"package: name='{package}'" in badging
+    assert "versionCode='207'" in badging
+    assert f"versionName='1.2.207-{body}'" in badging
+    assert f"application-label:'{label}'" in badging
+    assert "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" in badging
+    digest = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)',cert).group(1).lower()
+    assert digest == expected, 'Permanent signer changed'
+    assert 'android.intent.category.HOME' in manifest
+    assert 'boop_app_setup_v1' not in manifest  # Setup is app-local state, never preconfigured metadata.
+    assert 'com.boop.alpha1.BoopProfileActivity' in manifest
+    assert 'com.boop.alpha1.UnifiedApplication' in manifest
+    assert 'com.boop.shieldhome.ShieldLyricsActivity' in manifest
+    if body == 'shield':
+        assert 'com.boop.alpha1.johnny_states;com.boop.shieldoverlay.johnny_states' in manifest
+    else:
+        assert 'johnny_states' not in manifest
+    with zipfile.ZipFile(apk) as archive:
+        assert archive.testzip() is None
+        dex = b''.join(archive.read(n) for n in archive.namelist() if re.fullmatch(r'classes\d*\.dex',n))
+        for cls in ['BoopAppIdentity','BoopSetupState','BoopProfileActivity','UnifiedEntryActivity','BoopNaturalSpeechBackend','BoopSharedVoiceProfileRuntime','BoopCanonicalFaceView','BoopAppearanceActivity']:
+            assert ('Lcom/boop/alpha1/'+cls+';').encode() in dex, cls
+        for cls in ['ShieldHomeView','ShieldLyricsActivity','ShieldNowPlayingPuppetView','BassCaptureService','MusicBounceSource','BoopTvChrome']:
+            assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls
+        assert b'Lcom/boop/launcher/MainActivity;' in dex, 'Built-in launcher lost'
+        assert b'setup_intro_completed' in dex and b'Set up ' in dex
+        for filename in ['boop-png-study.png','boop-hidden-felt.png','boop-felt-sign-blank.png','eyes.frag']:
+            assert archive.read('assets/'+filename) == Path('unified/animation/assets',filename).read_bytes(), filename
+        assert archive.read('assets/boopApprovedEyes.png') == Path('unified/assets/boop-eyes/boopApprovedEyes.png').read_bytes()
+        aar = root / 'app/libs/sherpa-onnx-1.13.7.aar'
+        with zipfile.ZipFile(aar) as runtime:
+            natives = [n for n in runtime.namelist() if n.startswith('jni/') and n.endswith('.so')]
+            assert natives
+            for name in natives:
+                packaged = 'lib/'+name[4:]
+                assert archive.read(packaged) == runtime.read(name), 'Natural/wake native runtime changed: '+packaged
+    name = f'BOOP-{body.title()}-v207.apk'
+    shutil.copyfile(apk,out/name)
+    sha = hashlib.sha256(apk.read_bytes()).hexdigest()
+    (out/f'{body}-badging.txt').write_text(badging)
+    (out/f'{body}-manifest.txt').write_text(manifest)
+    (out/f'{body}-signer.txt').write_text(cert)
+    receipt['apps'].append({'body':body,'package':package,'versionCode':207,'versionName':f'1.2.207-{body}',
+                             'file':name,'sha256':sha,'signerSha256':digest,'bytes':apk.stat().st_size})
+(out/'built-commit.txt').write_text(source+'\n')
+(out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+for name in ['split-materialization.json','split-inherited-checks.txt','split-input-audit.txt']:
+    shutil.copyfile(name,out/name)
+print(json.dumps(receipt,indent=2))

@@ -28,11 +28,14 @@ jobs:
         run: |
           bash scripts/materialize-unified.sh
           python scripts/audit-split-input.py
+          python scripts/materialize-split.py
       - uses: actions/upload-artifact@v4
         with:
           name: Wall-Shield-Split-Input-Audit
-          path: split-input-audit.txt
+          path: |
+            split-input-audit.txt
+            split-materialization.json
       - name: Focused split contracts
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_wall_shield_split.py
+          python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py

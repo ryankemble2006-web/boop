@@ -1,12 +1,7 @@
 package com.boop.alpha1;
 
-import android.app.UiModeManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.os.Build;
-
 import java.util.Locale;
 
 final class BoopDeviceProfile {
@@ -19,64 +14,36 @@ final class BoopDeviceProfile {
     private BoopDeviceProfile() { }
 
     static Mode resolve(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String override = prefs.getString(KEY_OVERRIDE, null);
-        boolean tv = isTelevision(context);
-        int smallestScreenWidthDp = context.getResources().getConfiguration().smallestScreenWidthDp;
-        return resolve(tv, Build.MODEL, override, smallestScreenWidthDp);
+        // The shell owns the body even if historical profile preferences exist.
+        return BoopAppIdentity.isShield(context.getPackageName()) ? Mode.SHIELD : Mode.WALL;
     }
 
+    // Historical pure routing policy retained for old source tests and receipts.
+    // The runtime Context entry above deliberately does not consult this policy.
     static Mode resolve(boolean television, String model, String override) {
         return resolve(television, model, override, 0);
     }
 
     static Mode resolve(boolean television, String model, String override, int smallestScreenWidthDp) {
         Mode forced = parseOverride(override);
-        if (forced != null) {
-            return forced;
-        }
-        if (television) {
-            return Mode.SHIELD;
-        }
+        if (forced != null) return forced;
+        if (television) return Mode.SHIELD;
         String normalized = model == null ? "" : model.trim().toLowerCase(Locale.ROOT);
-        if (normalized.equals("pixel 7 pro")) {
-            return Mode.WALL;
-        }
-        if (smallestScreenWidthDp >= TABLET_MIN_SMALLEST_WIDTH_DP) {
-            return Mode.WALL;
-        }
+        if (normalized.equals("pixel 7 pro")) return Mode.WALL;
+        if (smallestScreenWidthDp >= TABLET_MIN_SMALLEST_WIDTH_DP) return Mode.WALL;
         return Mode.LAUNCHER;
     }
 
     static void setOverride(Context context, Mode mode) {
         SharedPreferences.Editor editor = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
-        if (mode == null) {
-            editor.remove(KEY_OVERRIDE);
-        } else {
-            editor.putString(KEY_OVERRIDE, mode.name());
-        }
+        if (mode == null) editor.remove(KEY_OVERRIDE);
+        else editor.putString(KEY_OVERRIDE, mode.name());
         editor.apply();
     }
 
     private static Mode parseOverride(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return null;
-        }
-        try {
-            return Mode.valueOf(value.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
-    }
-
-    private static boolean isTelevision(Context context) {
-        PackageManager pm = context.getPackageManager();
-        if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
-                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
-            return true;
-        }
-        UiModeManager uiMode = (UiModeManager) context.getSystemService(Context.UI_MODE_SERVICE);
-        return uiMode != null
-                && uiMode.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
+        if (value == null || value.trim().isEmpty()) return null;
+        try { return Mode.valueOf(value.trim().toUpperCase(Locale.ROOT)); }
+        catch (IllegalArgumentException ignored) { return null; }
     }
 }
