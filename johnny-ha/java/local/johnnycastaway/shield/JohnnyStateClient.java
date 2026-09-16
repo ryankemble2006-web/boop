@@ -33,8 +33,8 @@ final class JohnnyStateClient {
     Bundle b=context.getContentResolver().call(Uri.parse("content://com.boop.alpha1.johnny_states"),"snapshot",null,null);
     json=b==null?null:b.getString("json");
    }catch(RuntimeException ignored){json=null;}
-   try{if(json==null||!"ok".equals(new JSONObject(json).optString("status")))skip[0]=4;}
-   catch(Exception ignored){skip[0]=4;}
+   try{if(json==null||!"ok".equals(new JSONObject(json).optString("status")))skip[0]=JohnnyPollPolicy.unavailableSkipPolls();}
+   catch(Exception ignored){skip[0]=JohnnyPollPolicy.unavailableSkipPolls();}
    final String result=json;
    main.post(()->{
     if(worker==null||generation!=session)return;
@@ -61,7 +61,7 @@ final class JohnnyStateClient {
      if(!"unavailable".equals(previous)){previous="unavailable";Log.i("JohnnyHA","State connection unavailable");}
     }
    });
-  },0,2,TimeUnit.SECONDS);
+  },0,JohnnyPollPolicy.healthyPollMs(),TimeUnit.MILLISECONDS);
  }
  void stop(){generation++;edges.reset();fanState.reset();player.cancelOi();if(worker!=null){worker.shutdownNow();worker=null;}main.removeCallbacksAndMessages(null);}
 }
