@@ -30,17 +30,19 @@ int main(void) {
  atomic_store(&c.stop,1); assert(!ha_queue_fan(&c));
 
  // A real light edge is an urgent environment change. It wakes an ordinary
- // routine, but duplicate steady-state samples do not create more work.
+ // routine and its interruptible waits, but duplicate steady-state samples do not create more work.
  HaControl light; ha_control_init(&light);
  assert(!ha_environment_pending(&light));
  assert(ha_set_night(&light,1));
  assert(atomic_load(&light.night)==1);
  assert(ha_environment_pending(&light));
  assert(ha_preempt_normal(&light));
+ assert(ha_preempt_wait(&light));
  unsigned night_token=ha_environment_token(&light);
  ha_environment_applied(&light,night_token);
  assert(!ha_environment_pending(&light));
  assert(!ha_preempt_normal(&light));
+ assert(!ha_preempt_wait(&light));
  assert(!ha_set_night(&light,1));
  assert(!ha_environment_pending(&light));
  assert(!ha_preempt_normal(&light));

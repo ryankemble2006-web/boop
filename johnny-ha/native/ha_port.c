@@ -140,7 +140,15 @@ void ha_end_music(int completed) {
  }
  ha_finish_music(&active->controls,active->music_token);
 }
-int ha_should_preempt(void) { return ha_preempt_normal(&active->controls); }
+int ha_should_preempt(void) {
+ HaControl *c=&active->controls;
+ int result=ha_preempt_normal(c);
+ // A light edge only needs to break the current ordinary routine once. The
+ // existing live island refresh consumes the new night/day value on the next
+ // frame; keeping the edge pending would immediately abort that next routine.
+ if(result && ha_environment_pending(c)) ha_environment_applied(c,ha_environment_token(c));
+ return result;
+}
 int ha_night(void) { return atomic_load(&active->controls.night); }
 int ha_fan_pending(void) { return atomic_load(&active->controls.pending)>0; }
 int ha_take_fan_request(void) { return ha_take_fan(&active->controls); }
@@ -204,8 +212,9 @@ JNIEXPORT void JNICALL JNI_NAME(nStop)(JNIEnv *e,jclass c,jlong h) {
  (void)e;(void)c; atomic_store(&((Player *)(intptr_t)h)->controls.stop,1);
 }
 JNIEXPORT void JNICALL JNI_NAME(nNight)(JNIEnv *e,jclass c,jlong h,jboolean night) {
- (void)e;(void)c; atomic_store(&((Player *)(intptr_t)h)->controls.night,night?1:0);
- if(!night) ha_cancel_oi(&((Player *)(intptr_t)h)->controls);
+ (void)e;(void)c; Player *p=(Player *)(intptr_t)h;
+ int changed=ha_set_night(&p->controls,night?1:0);
+ if(changed && !night) ha_cancel_oi(&p->controls);
 }
 JNIEXPORT jboolean JNICALL JNI_NAME(nOiAssets)(JNIEnv *e,jclass c,jlong h,jintArray pixels) {
  (void)c; Player *p=(Player *)(intptr_t)h;
