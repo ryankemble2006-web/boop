@@ -8,16 +8,15 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 
-/** Shared TV focus chrome so the Now Playing progress fill and focus outline use one accent. */
+/** Shared TV focus chrome so Home and every BOOP TV menu use one accent/style. */
 final class FocusChrome {
-    static final int BORDER_DP = 4;
-    static final int ARTWORK_BORDER_DP = 4;
+    static final int BORDER_DP = BoopTvChrome.BORDER_DP;
+    static final int ARTWORK_BORDER_DP = BoopTvChrome.BORDER_DP;
 
     private FocusChrome() { }
 
     static int accentColor(Context context) {
-        // Home uses BOOP blue consistently, independent of the firmware's default accent.
-        return Color.rgb(77, 184, 255);
+        return BoopTvChrome.accentColor(context);
     }
 
     static GradientDrawable filled(
@@ -25,13 +24,7 @@ final class FocusChrome {
             int fillColor,
             int cornerRadiusDp,
             boolean focused) {
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(fillColor);
-        background.setCornerRadius(dp(context, cornerRadiusDp));
-        if (focused) {
-            background.setStroke(dp(context, BORDER_DP), accentColor(context));
-        }
-        return background;
+        return BoopTvChrome.filled(context, fillColor, cornerRadiusDp, focused);
     }
 
     static void clipRounded(View view, int cornerRadiusDp) {
@@ -56,8 +49,6 @@ final class FocusChrome {
     }
 
     static float artworkStrokeRadius(float outerRadiusPx, float strokeWidthPx) {
-        // GradientDrawable insets its stroke centreline by half its width.
-        // Match the OUTER arc to clipRounded, not the centreline to the clip.
         return Math.max(0f, outerRadiusPx - strokeWidthPx / 2f);
     }
 
@@ -70,9 +61,7 @@ final class FocusChrome {
     }
 
     private static int dp(Context context, int value) {
-        if (context == null) {
-            return value;
-        }
+        if (context == null) return value;
         return Math.round(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
                 value,

@@ -1,12 +1,13 @@
 """Final modal ownership fix after historical source materializers have run."""
 from pathlib import Path
+import runpy
 
 ROOT = Path('boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1')
 
 def replace_one(text, old, new):
     if text.count(old) != 1:
         raise SystemExit(f'Expected one single-face anchor: {old[:100]!r}')
-    return text.replace(old, new, 1)
+    return text.replace(old,new,1)
 
 main = ROOT / 'MainActivity.java'
 text = main.read_text(encoding='utf-8')
@@ -40,4 +41,5 @@ text = puppet.read_text(encoding='utf-8')
 if 'com.boop.eyes.NotificationSignView' not in text:
     raise SystemExit('Notification stage is not Animation Lab canonical')
 
+runpy.run_path('scripts/patch-unified-v200-voice-ui.py', run_name='__main__')
 print('Single face ownership: voice hidden, one developer face, Animation Lab notifications')

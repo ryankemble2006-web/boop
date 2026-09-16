@@ -4,6 +4,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.media.PlaybackParams;
 
 import com.k2fsa.sherpa.onnx.GeneratedAudio;
 import com.k2fsa.sherpa.onnx.GenerationConfig;
@@ -96,7 +97,8 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
                     request,
                     text,
                     speakerId,
-                    speedForRate(rate)));
+                    speedForRate(rate),
+                    pitchForPlayback(pitch)));
             return true;
         } catch (RuntimeException rejected) {
             synchronized (lock) {
@@ -140,8 +142,6 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         return BoopVoiceTuning.clampRate(rate);
     }
 
-    // Retained for source/API compatibility with existing focused tests. Natural
-    // pitch is not applied until the Android playback path is physically proven.
     static float pitchForPlayback(float pitch) {
         return BoopVoiceTuning.clampPitch(pitch);
     }
@@ -173,7 +173,8 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             RequestState request,
             String text,
             int speakerId,
-            float speed) {
+            float speed,
+            float pitch) {
         GeneratedAudio audio;
         try {
             OfflineTts tts = ensureTts();
@@ -203,7 +204,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         }
 
         try {
-            play(request, audio.getSamples(), audio.getSampleRate());
+            play(request, audio.getSamples(), audio.getSampleRate(), pitch);
         } catch (Throwable error) {
             if (!request.cancelled.get()) {
                 clearIfActive(request);
@@ -225,8 +226,6 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             File lexicon = new File(root, "lexicon-gb-en.txt");
 
             try {
-                // The Android AAR exposes Sherpa's Kotlin data classes to Java as
-                // no-arg objects with bean setters, not the desktop Java builders.
                 OfflineTtsKokoroModelConfig kokoro = new OfflineTtsKokoroModelConfig();
                 kokoro.setModel(new File(root, "model.onnx").getAbsolutePath());
                 kokoro.setVoices(new File(root, "voices.bin").getAbsolutePath());
@@ -244,8 +243,6 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
                 config.setModel(model);
                 config.setSilenceScale(SILENCE_SCALE);
 
-                // A null AssetManager tells Sherpa to load the app-private absolute
-                // file paths above instead of looking in APK assets.
                 OfflineTts candidate = new OfflineTts(null, config);
                 int sampleRate = candidate.sampleRate();
                 int speakerCount = candidate.numSpeakers();
@@ -264,7 +261,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         }
     }
 
-    private void play(RequestState request, float[] samples, int sampleRate)
+    private void play(RequestState request, float[] samples, int sampleRate, float pitch)
             throws InterruptedException {
         short[] pcm = toPcm16(samples);
         int minimumBytes = AudioTrack.getMinBufferSize(
@@ -302,6 +299,18 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         int written = track.write(pcm, 0, pcm.length, AudioTrack.WRITE_BLOCKING);
         if (written != pcm.length) {
             throw new IllegalStateException("Natural speech audio output was incomplete");
+        }
+        try {
+            PlaybackParams params = new PlaybackParams()
+                    .allowDefaults()
+                    .setSpeed(1.0f)
+                    .setPitch(pitchForPlayback(pitch));
+            track.setPlaybackParams(params);
+        } catch (RuntimeException unsupported) {
+            android.util.Log.w(
+                    "BOOP-NaturalVoice",
+                    "Natural pitch unavailable; playing original PCM",
+                    unsupported);
         }
         track.play();
 
