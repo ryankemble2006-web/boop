@@ -1,0 +1,38 @@
+name: Wall Shield split focused contracts
+on:
+  push:
+    branches: [boop-wall-shield-split-v207]
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: wall-shield-split-focused-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Materialize and audit the current source before packaging
+        run: |
+          bash scripts/materialize-unified.sh
+          python scripts/audit-split-input.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wall-Shield-Split-Input-Audit
+          path: split-input-audit.txt
+      - name: Focused split contracts
+        run: |
+          python -m pip install -q pytest
+          python -m pytest -q tests/test_wall_shield_split.py

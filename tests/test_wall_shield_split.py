@@ -1,0 +1,79 @@
+"""Focused Wall/Shield split contracts, added before the implementation."""
+from pathlib import Path
+import subprocess
+import tempfile
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE = "9d57019d9370dbe3f47061b6e8b0ce8ed5134715"
+A = "{http://schemas.android.com/apk/res/android}"
+
+
+def text(path):
+    p = ROOT / path
+    assert p.is_file(), f"Missing split implementation: {path}"
+    return p.read_text(encoding="utf-8")
+
+
+def test_two_application_shells_share_one_assistant_library():
+    shared = text("split/assistant-lib.gradle")
+    assert "com.android.library" in shared
+    assert "../app/src/main/java" in shared
+    assert "../app/src/main/assets" in shared
+    assert "applicationId " not in shared
+    for body, package in (("wall", "com.boop.alpha1"), ("shield", "com.boop.shieldoverlay")):
+        shell = text(f"split/{body}/build.gradle")
+        assert "com.android.application" in shell
+        assert package in shell
+        assert "project(':assistant-lib')" in shell
+        assert "boopDev" in shell
+        manifest = ET.fromstring(text(f"split/{body}/AndroidManifest.xml"))
+        assert manifest.find("application").get(A + "allowBackup") == "false"
+
+
+def test_profile_picker_is_not_a_setup_requirement():
+    entry = text("unified/UnifiedEntryActivity.java")
+    profile = text("unified/BoopProfileActivity.java")
+    assert "profile_choice_seen" not in entry
+    assert "profile_choice_seen" not in profile
+    for label in ("Choose how BOOP opens", "Automatic for this device", "Wall / tablet", "Phone launcher", "Shield / TV Home"):
+        assert label not in profile
+    assert "Voice settings" in profile
+    assert "room" in profile
+    assert "ACTION_HOME_SETTINGS" in profile or "ROLE_HOME" in profile
+
+
+def test_real_identity_policy_rejects_cross_body_or_unknown_packages():
+    source = text("source/BoopAppIdentity.java")
+    harness = '''package com.boop.alpha1;
+public class SplitIdentityTest {
+  public static void main(String[] args) {
+    if (BoopAppIdentity.isShield("com.boop.alpha1")) throw new AssertionError("Wall became TV");
+    if (!BoopAppIdentity.isShield("com.boop.shieldoverlay")) throw new AssertionError("Shield became Wall");
+    for (String invalid : new String[]{null,"", "com.boop.unified.wall", "com.boop.unified.shield", "example.other"}) {
+      try { BoopAppIdentity.isShield(invalid); throw new AssertionError("Unknown identity accepted: "+invalid); }
+      catch (IllegalArgumentException expected) { }
+    }
+    System.out.println("7 installed-identity cases passed");
+  }
+}'''
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d)
+        (p / "BoopAppIdentity.java").write_text(source)
+        (p / "SplitIdentityTest.java").write_text(harness)
+        subprocess.run(["javac", "-d", d, str(p / "BoopAppIdentity.java"), str(p / "SplitIdentityTest.java")], check=True)
+        subprocess.run(["java", "-cp", d, "com.boop.alpha1.SplitIdentityTest"], check=True)
+
+
+def test_voice_and_accepted_home_art_sources_are_unchanged():
+    protected = [
+        "source/BoopNaturalSpeechBackend.java", "source/BoopVoiceController.java",
+        "source/BoopVoiceTuning.java", "source/MainActivity.java", "natural-voices",
+        "scripts/patch-unified-natural-voices.py", "scripts/patch-v89-natural-diagnostics.py",
+        "unified/animation", "unified/assets/boop-eyes",
+        "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java",
+        "unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java",
+        "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java",
+    ]
+    changed = subprocess.check_output(["git", "diff", "--name-only", BASE, "HEAD", "--", *protected], cwd=ROOT, text=True)
+    assert not changed.strip(), "Protected Voice/Home/art changed: " + changed
