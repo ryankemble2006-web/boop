@@ -8,7 +8,8 @@ final class PlayerBridgeClient {
     private final Context context;
     private Messenger remote;
     private long session;
-    private boolean bound,closed;
+    private boolean bound,closed,connectedOnce;
+    private final Runnable connectionLost;
     private Callback callback;
     private final Handler timer=new Handler(Looper.getMainLooper());
     private final Runnable timeout=() -> fail("iPlayer cleanup timed out. Accept the Shield debugging prompt, then try again.");
@@ -22,21 +23,23 @@ final class PlayerBridgeClient {
             }
             if(message.what!=11 && message.what!=12) return;
             timer.removeCallbacks(timeout);
-            Callback result=callback; callback=null;
+            PlayerBridgeClient.Callback result=callback; callback=null;
             if(result!=null) result.done(message.what==11,message.getData().getString("error","Cleanup failed"));
         }
     });
     private final ServiceConnection connection=new ServiceConnection() {
         @Override public void onServiceConnected(ComponentName name,IBinder binder) {
             if(closed) return;
+            if(connectedOnce) { disconnect("iPlayer cleanup connection restarted; launch the shortcut again"); return; }
+            connectedOnce=true;
             remote=new Messenger(binder);
             send(1);
         }
-        @Override public void onServiceDisconnected(ComponentName name) { remote=null; fail("iPlayer cleanup disconnected"); }
-        @Override public void onNullBinding(ComponentName name) { fail("iPlayer cleanup unavailable"); }
-        @Override public void onBindingDied(ComponentName name) { fail("iPlayer cleanup changed; try again"); }
+        @Override public void onServiceDisconnected(ComponentName name) { remote=null; disconnect("iPlayer cleanup disconnected"); }
+        @Override public void onNullBinding(ComponentName name) { disconnect("iPlayer cleanup unavailable"); }
+        @Override public void onBindingDied(ComponentName name) { disconnect("iPlayer cleanup changed; try again"); }
     };
-    PlayerBridgeClient(Context context) { this.context=context.getApplicationContext(); }
+    PlayerBridgeClient(Context context,Runnable connectionLost) { this.context=context.getApplicationContext(); this.connectionLost=connectionLost; }
     void prepare(Callback result) {
         callback=result;
         if(!BridgeTrust.packageTrusted(context,"uk.local.eastenders")) { fail("Install the original EastEnders shortcut update first"); return; }
@@ -61,9 +64,16 @@ final class PlayerBridgeClient {
             remote.send(message);
         } catch(Exception disconnected) { fail("iPlayer cleanup connection failed"); }
     }
+    private void disconnect(String error) {
+        if(closed) return;
+        PlayerBridgeClient.Callback result=callback;
+        close();
+        if(result!=null) result.done(false,error);
+        else connectionLost.run();
+    }
     private void fail(String error) {
         timer.removeCallbacks(timeout);
-        Callback result=callback; callback=null;
+        PlayerBridgeClient.Callback result=callback; callback=null;
         if(result!=null && !closed) result.done(false,error);
     }
     void close() {

@@ -83,7 +83,7 @@ public final class WatchNowService extends AccessibilityService {
         if(instance==null) { callback.done(false,"Enable the shortcut auto-play helper first"); return; }
         WatchNowService self=instance;
         self.stop(); self.preparing=true; self.expectedPackage=PlayerReset.PLAYER;
-        PlayerBridgeClient client=new PlayerBridgeClient(self); self.bridge=client;
+        PlayerBridgeClient client=new PlayerBridgeClient(self,() -> self.stop()); self.bridge=client;
         client.prepare((ok,error) -> {
             if(self.bridge!=client || !self.preparing) return;
             self.preparing=false;
