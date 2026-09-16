@@ -1,13 +1,13 @@
-name: Build BOOP v197 Home media handoff
+name: Build BOOP v199 centred favourites lab
 on:
   push:
-    branches: [boop-hand-colour-v191]
+    branches: [boop-home-centred-favourites-lab-v199]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: boop-v197-home-media-handoff
+  group: boop-v199-centred-favourites-lab
   cancel-in-progress: true
 jobs:
   build:
@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify centred Home stage contract
+        run: python -m pytest -q tests/test_home_stage_contract_v199.py
       - name: Verify hand colour, pixel preservation and stale updates
         run: python tests/test_hand_colour_v191.py
       - name: Verify locked default and coherent felt sign anatomy
