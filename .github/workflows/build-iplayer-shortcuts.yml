@@ -19,6 +19,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 tests/iplayer_shortcut_service_contract.py
           for programme in eastenders casualty; do
             cd "$GITHUB_WORKSPACE/$programme-shortcut"
             mkdir -p build/tests
@@ -27,6 +28,7 @@ jobs:
               java -cp build/tests uk.local.$programme.$test
             done
           done
+      - uses: android-actions/setup-android@v3
       - name: Build both APKs without exporting private signing keys
         shell: bash
         run: |
