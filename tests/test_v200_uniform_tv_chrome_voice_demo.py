@@ -1,4 +1,5 @@
 from pathlib import Path
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -69,3 +70,111 @@ def test_v200_build_identity_and_workflow_gate():
     assert "Build BOOP v200 uniform TV chrome and voice demo" in workflow
     assert "tests/test_v200_uniform_tv_chrome_voice_demo.py" in workflow
     assert "BOOP-Unified-v200-Uniform-TV-Chrome-Voice-Demo" in workflow
+
+
+def java_method(source: str, signature: str) -> str:
+    """Extract actual production visibility methods, not copies of their logic."""
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for index in range(opening, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start:index + 1]
+    raise AssertionError("Unclosed production method: " + signature)
+
+
+def test_face_visibility_reaches_the_actual_graphics_surface(tmp_path):
+    """Exercise real visibility/occlusion code for both wrapper and child surface.
+
+    The tiny View stand-in records direct visibility writes. It intentionally
+    does not pretend to reproduce Android composition. The hardware screenshot
+    remains the separate proof that the top-layer eyes actually disappear.
+    """
+    roots = [ROOT / "source"]
+    built = ROOT / "boop-build/BOOP-Alpha1/app/src/main/java/com/boop/alpha1"
+    if built.is_dir():
+        roots.append(built)
+    for number, root in enumerate(roots):
+        face = (root / "BoopCanonicalFaceView.java").read_text(encoding="utf-8")
+        methods = "\n".join(java_method(face, signature) for signature in (
+            "void setOccluded(String owner, boolean hidden)",
+            "public void setVisibility(int visibility)",
+            "private void applyPresentationVisibility()",
+        ))
+        harness = '''package com.boop.alpha1;
+class View {
+    static final int VISIBLE = 0, INVISIBLE = 4, GONE = 8;
+    private int visibility = VISIBLE;
+    public void setVisibility(int value) { visibility = value; }
+    public int getVisibility() { return visibility; }
+}
+public final class FaceVisibilityProbe extends View {
+    private BoopFacePresentationState presentationState = new BoopFacePresentationState();
+    private View surface = new View();
+    private void updateVisibleLifecycle() { }
+    // PRODUCTION_METHODS
+    private static void check(FaceVisibilityProbe face, int expected, String stage) {
+        if (face.getVisibility() != expected)
+            throw new AssertionError(stage + " wrapper: expected " + expected
+                    + " but was " + face.getVisibility());
+        if (face.surface.getVisibility() != expected)
+            throw new AssertionError(stage + " surface: expected " + expected
+                    + " but was " + face.surface.getVisibility());
+    }
+    public static void main(String[] args) {
+        FaceVisibilityProbe face = new FaceVisibilityProbe();
+        face.setVisibility(VISIBLE);
+        check(face, VISIBLE, "awake");
+        face.setOccluded("voice_settings", true);
+        check(face, GONE, "voice settings");
+        face.setVisibility(VISIBLE);
+        check(face, GONE, "queued wake while voice settings is open");
+        face.setOccluded("developer", true);
+        face.setOccluded("voice_settings", false);
+        check(face, GONE, "another modal still owns the screen");
+        face.setVisibility(INVISIBLE);
+        face.setOccluded("developer", false);
+        check(face, INVISIBLE, "restore idle black without reviving eyes");
+        face.setVisibility(VISIBLE);
+        check(face, VISIBLE, "wake after closing all modals");
+        face.setOccluded("voice_settings", true);
+        face.setVisibility(GONE);
+        face.setOccluded("voice_settings", false);
+        check(face, GONE, "preserve requested gone");
+        face.setVisibility(VISIBLE);
+        check(face, VISIBLE, "subsequent wake");
+        face.surface = null;
+        face.setVisibility(INVISIBLE);
+        if (face.getVisibility() != INVISIBLE)
+            throw new AssertionError("construction-time null surface");
+        face.presentationState = null;
+        face.setVisibility(GONE);
+        if (face.getVisibility() != GONE)
+            throw new AssertionError("construction-time null presentation state");
+        System.out.println("PASS: direct eye-surface visibility and modal ownership");
+    }
+}
+'''.replace("// PRODUCTION_METHODS", methods)
+        work = tmp_path / str(number)
+        work.mkdir()
+        (work / "FaceVisibilityProbe.java").write_text(harness, encoding="utf-8")
+        (work / "BoopFacePresentationState.java").write_text(
+            (root / "BoopFacePresentationState.java").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        compiled = subprocess.run(
+            ["javac", "-d", str(work), str(work / "FaceVisibilityProbe.java"),
+             str(work / "BoopFacePresentationState.java")],
+            text=True, capture_output=True, timeout=60,
+        )
+        assert compiled.returncode == 0, compiled.stdout + compiled.stderr
+        result = subprocess.run(
+            ["java", "-cp", str(work), "com.boop.alpha1.FaceVisibilityProbe"],
+            text=True, capture_output=True, timeout=30,
+        )
+        assert result.returncode == 0, str(root) + "\n" + result.stdout + result.stderr
+        assert "PASS: direct eye-surface visibility" in result.stdout
