@@ -8,11 +8,13 @@ Physical diagnosis found the Shield only surfaced `com.android.systemui/.usb.Usb
 
 EastEnders was physically accepted end-to-end on the Shield after its one-time approval. Logs confirmed the private key became authorised, iPlayer was silently force-stopped and background processes verified dead, the macro armed, and the first profile was selected. Ryan then physically confirmed rapid launch into EastEnders, pressed Back from playback, and iPlayer was killed and Home restored. He repeated the flow a second time and reported it was perfect.
 
+Casualty was then physically accepted with its own independent one-time ADB approval. On the first run after approval it launched rapidly, selected the first profile, entered Casualty, and Back immediately returned Home while killing iPlayer. Ryan repeated Casualty a second and third time and reported behavior identical to EastEnders.
+
 During acceptance logs exposed an old two-profile handoff rule that allowed a second profile click after 1.5 seconds. That behavior was removed. Current source allows exactly one profile click per launch and the setup page now says USB debugging + Network debugging. TDD run `35065326525` failed on the old two-click/setup contract; final run `35065452329` passed the targeted contract, both programme suites, both Android builds and artifact upload.
 
 Exact final signed artifacts from run `35065452329` were installed on the Shield with original signers preserved: EastEnders 1.9 SHA256 `0215bffae131bebc4bf8bb0dc45b9acfc6b528ad26c42cbad95fbed971f13070`; Casualty 1.3 SHA256 `7a4706a722c1ec1f6bf7a7d15ea0865df7282901cf7b63a1204d7ec2f5777ea8`. Existing accessibility helpers remained enabled. BOOP Unified and iPlayer data/login were not modified.
 
-**Remaining physical acceptance:** Casualty still needs its own one-time ADB approval on this Shield because it deliberately owns a separate private key. After approval, verify its first-profile-once launch and Back-exit silent kill. The shared implementation/tests are green, but do not claim Casualty physical acceptance until that separate prompt/test is completed.
+**Physical acceptance complete for the normal standalone flow on both programmes:** one-time approval, silent cold reset, first-profile selection, programme launch, Back-exit silent kill, and Home return were all confirmed on the Shield. Trailer-offered handling, pause/resume and natural episode completion remain governed by the existing shared logic/tests but were not part of this acceptance pass.
 
 ## iPlayer force-stop confirmation fix — 16 September 2026
 
@@ -45,5 +47,5 @@ Both APKs were installed on the physical Shield with `adb install -r`; read-back
 **Physical acceptance pending:** jointly check each tile, an offered trailer, pause/resume, stop/Back return Home, and natural episode completion. Source/CI/install verification is not a claim that these visible playback paths have been accepted. Casualty already contained trailer handling in its prior source and installed baseline; this update explicitly aligns and checks both implementations rather than treating historical documentation as device acceptance.
 
 - `eastenders` 1.8: APK SHA256 `54ada3a32ba6c7af0678513ee77681653409f1abf78e4c8c738220fb30ab2d54`; signer `6f85ae49982e0b38b9f134b6882fdbe4da6091051f828fb980c5a03fff439535`.
-- `casualty` 1.2: APK SHA256 `94645fe3b2c7191c24686f126b0c75d72e58095c05476e26c2370b72d018a7ef`; signer `d198e64f5cce0ccc77201bebd41db0283832be7b05476e26c2370b72d018a7ef`.
+- `casualty` 1.2: APK SHA256 `94645fe3b2c7191c24686f126b0c75d72e58095c054af846234517a374c56b1d`; signer `d198e64f5cce0ccc77201bebd41db0283832be7b05476e26c2370b72d018a7ef`.
 
