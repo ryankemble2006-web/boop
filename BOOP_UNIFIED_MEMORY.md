@@ -1,3 +1,15 @@
+## Current Unified handoff: v206 installed; idle Home corner verified
+
+Updated 2026-09-16. Owner: `boop-hand-colour-v191`. Ryan physically accepted v205 Home spacing and left alignment, and requested only the idle BOOP corner repair. Keep that approved layout unchanged.
+
+v206 (`206` / `1.2.206-idle-home-corner`) is installed on Shield from source `9d57019d9370dbe3f47061b6e8b0ce8ed5134715`. Signed run `35099151524` SUCCESS; artifact `10447197742` / `BOOP-Unified-v206-Idle-Home-Corner`. Downloaded and pulled-back installed APK SHA-256 both equal `b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca`. The permanent signer is unchanged.
+
+Live joint-test sequence: captured active playback, used the actual Close player control once, and inspected fresh no-media screenshots after the close and another Home entry. Now Playing and its small puppet disappear; one larger BOOP is visibly in the bottom-right corner below the favourites. Favourites remain parked with unchanged bounds and approved spacing. This is live screenshot/runtime evidence; Ryan retains final acceptance and other media-exit routes were not exhaustively retested.
+
+The only app behavior change is a four-line owner guard in `ShieldNowPlayingPuppetView.lockToMascotBay()`. `ShieldHomeView`, `TvAppCardView`, artwork, voice, permission declarations and media behavior are unchanged. Full diagnosis, RED/GREEN and install receipt: `docs/handoffs/2026-09-16-v206-idle-home-host.md`. Private captures/raw dumps remain local; older dirty v203 checkout documentation was preserved, not synchronized over or published as current.
+
+---
+
 ## Current Unified handoff - v205 installed; Home spacing visually aligned
 
 Updated 2026-09-16. Owner remains `boop-hand-colour-v191`. Current receipt: `docs/handoffs/2026-09-16-v205-home-visual-spacing.md`.

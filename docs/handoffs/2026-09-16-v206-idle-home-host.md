@@ -10,4 +10,15 @@ Bounded correction: guard the legacy attach-time mutator by `presentationOwner =
 
 Regression: execute the actual production mutator against recording View parameter stand-ins, checking idle-host isolation, unchanged media allocation, idempotent media attachment, non-FrameLayout and null parents at three densities. This is a host ownership logic test, not rendering or visual certification. RED run `35098539710` at `83b74db6732ec93f8b58cd2b68c296daa5e885c4`: 1 failed, 21 passed. Exact failure: idle dimensions 360x220 and bottom gravity replaced with 230x154 and top gravity.
 
-Next: run the same focused gate followed by the existing signed GitHub build, install the verified v206 candidate on the already-authorized Shield, read back version/hash, and capture the no-media Home screen. Ryan retains final physical acceptance. No phone operations or local app-source edits/builds.
+
+## Completed implementation and verification
+
+The published app change is exactly the four-line owner guard. Source `9d57019d9370dbe3f47061b6e8b0ce8ed5134715` preserves `ShieldHomeView` and `TvAppCardView` byte-for-byte, including v205 top alignment, parked favourites and equal gaps. Only version/build identity metadata and its test gate accompany the behavior correction.
+
+The new executable regression was RED in run `35098539710` before the guard and GREEN in signed run `35099151524` afterward, including the materialized-source checks. The full existing build/test/signing/package workflow passed. The separate Home-layout, TV/Voice and voice-profile workflows also passed for the candidate.
+
+Artifact: `10447197742`, `BOOP-Unified-v206-Idle-Home-Corner`. Build commit: `9d57019d9370dbe3f47061b6e8b0ce8ed5134715`. Installed package: `com.boop.alpha1`, `206` / `1.2.206-idle-home-corner`. GitHub artifact and pulled-back installed base APK both have SHA-256 `b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca`. The existing permanent signer was retained and `adb install -r` returned Success. No app data, permissions, saved settings, phones or other packages were changed.
+
+Runtime verification: after installation, playback was active and the small Now Playing puppet occupied its normal slot. Returned Home and activated the live Close player control once. Fresh screenshot and view hierarchy confirmed Now Playing invisible, its puppet gone, favourites unchanged, and the 360x220dp idle Home puppet bottom-right. Another Home entry and fresh screenshot confirmed that attachment no longer overwrites that placement. The strip remained in exactly the same position in both states.
+
+Acceptance boundary: the assistant inspected the live before/after screenshots; Ryan has accepted v205 spacing and retains final physical acceptance of this corner correction. Other app/Cast/end-of-track exit routes were not individually exercised. No claim of new voice/global-focus acceptance. Screenshots and raw diagnostics remain private. Historical dirty v203 documentation in the laptop checkout remains untouched; GitHub owns this current receipt.
