@@ -3,10 +3,10 @@ root=pathlib.Path(__file__).resolve().parents[1]
 client=(root/"java/local/johnnycastaway/shield/JohnnyStateClient.java").read_text()
 assert "main.postDelayed" in client,"lights-off OI must wait for a night render window"
 assert "JohnnyLightPolicy.oiDelayMs()" in client,"lights-off OI delay must use the tested policy"
-patch=(root/"native/patch_upstream.py").read_text()
-assert "int urgentStoryPlan=0;" in patch,"urgent HA must be able to abandon the remaining mini-story"
-assert "if(ha_should_preempt()) { urgentStoryPlan=1; break; }" in patch,"intermediate scene must break the plan on HA urgency"
-assert "if(urgentStoryPlan)" in patch and "adsReleaseIsland();" in patch,"aborted plan must release the island before redispatch"
+story_patch=(root/"native/patch_story_urgency.py").read_text()
+assert "int urgentStoryPlan=0;" in story_patch,"urgent HA must be able to abandon the remaining mini-story"
+assert "if(ha_should_preempt()) { urgentStoryPlan=1; break; }" in story_patch,"intermediate scene must break the plan on HA urgency"
+assert "if(urgentStoryPlan)" in story_patch and "adsReleaseIsland();" in story_patch,"aborted plan must release the island before redispatch"
 test=r'''package local.johnnycastaway.shield;
 public class StateEdgeHarness {
  static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
