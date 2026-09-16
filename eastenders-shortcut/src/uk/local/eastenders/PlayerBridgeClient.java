@@ -25,7 +25,7 @@ final class PlayerBridgeClient {
             }
             if(message.what!=11 && message.what!=12) return;
             timer.removeCallbacks(timeout);
-            Callback result=callback;
+            PlayerBridgeClient.Callback result=callback;
             callback=null;
             if(result!=null) result.done(message.what==11,message.getData().getString("error","Cleanup failed"));
         }
@@ -78,14 +78,14 @@ final class PlayerBridgeClient {
 
     private void disconnect(String error) {
         if(closed) return;
-        Callback result=callback;
+        PlayerBridgeClient.Callback result=callback;
         close();
         if(result!=null) result.done(false,error); else connectionLost.run();
     }
 
     private void fail(String error) {
         timer.removeCallbacks(timeout);
-        Callback result=callback;
+        PlayerBridgeClient.Callback result=callback;
         callback=null;
         if(result!=null && !closed) result.done(false,error);
     }
