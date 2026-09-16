@@ -80,7 +80,9 @@ public class PlaybackDanceHarness {
       "source/SharedVoiceProfileHaProtocol.java",
       "source/SharedVoiceProfileLink.java",
       "source/BoopSharedVoiceProfileRuntime.java",
-      # v192 intentionally adds the idle top-right assistant host on Shield Home.
+      # v205 intentionally adjusts visible Home favourite banner spacing only.
+      "unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java",
+      # v192+ Home layout/assistant hosting is separately scoped by Home tests.
       "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java",
       # v191 requested independent hand colour; locked eyes and sign geometry unchanged.
       "unified/animation/java/com/boop/eyes/HandColourPixels.java",
