@@ -1,3 +1,13 @@
+# Current candidate: v197 Home media handoff — 2026-09-16
+
+Owner `boop-hand-colour-v191`. v196 remains rollback for the balanced large Home BOOP layout. v197 fixes duplicate big/small BOOP during Now Playing by explicitly hiding and pausing the topmost GL surface when the Home puppet loses ownership, and resuming it when media disappears.
+
+TDD: RED run `35067647431` failed only the new GL-release lifecycle contract; fix-only GREEN run `35067925001`; final signed v197 run `35068273731` GREEN. Artifact `10434463728`, APK SHA-256 `ea07abfa0b573cfd0d1187a3af73e6465d2ccd4c141f7f1374903f833c5233a2`.
+
+Installed Shield-only and verified version `197` / `1.2.197-home-media-handoff`, unchanged accessibility services, and exact installed APK hash. Live screenshots: active Deezer shows only small Now Playing BOOP; force-stopping native Deezer removes Now Playing and restores the large Home BOOP. Other disappearance routes use the same ownership path; do not claim each as individually live-tested yet.
+
+Full receipt: `docs/handoffs/2026-09-16-v197-home-media-handoff.md`.
+
 # Current: v196 balanced Home BOOP candidate — 2026-09-16
 
 Owner remains `boop-hand-colour-v191`; live GitHub is authoritative. v191 remains the accepted character rollback. v194 preserved the accepted larger Home size, and v196 is the current vertical-placement candidate.
