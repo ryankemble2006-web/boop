@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: wall-shield-signed-${{ github.ref }}
   cancel-in-progress: false
@@ -61,7 +62,14 @@ jobs:
           BOOP_RELAY_URL: ${{ secrets.BOOP_RELAY_URL }}
           BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
         run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :wall-app:assembleDebug :shield-app:assembleDebug --stacktrace
-      - name: Verify BOTH actual APKs and frozen native voice/art payloads
+      - name: Download the hash-pinned accepted v206 APK for native comparison
+        uses: actions/download-artifact@v4
+        with:
+          name: BOOP-Unified-v206-Idle-Home-Corner
+          run-id: 35099151524
+          github-token: ${{ github.token }}
+          path: baseline-v206
+      - name: Verify BOTH actual APKs against accepted v206 native bytes and frozen art
         run: python split/verify-apks.py
       - uses: actions/upload-artifact@v4
         with:

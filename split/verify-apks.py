@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify both actual signed APKs: identities, signer, component routes and bytes."""
+"""Verify both signed APKs against source and the hash-pinned accepted v206 APK."""
 from pathlib import Path
 import hashlib
 import json
@@ -14,10 +14,24 @@ tools = Path(os.environ['ANDROID_HOME']) / 'build-tools/36.0.0'
 out = Path('split-artifact'); out.mkdir(exist_ok=True)
 expected = Path('shield-overlay/signing/boop-dev-cert-sha256.txt').read_text().strip().lower()
 source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-receipt = {'source': source, 'baseline': '9d57019d9370dbe3f47061b6e8b0ce8ed5134715', 'apps': []}
+baseline = Path('baseline-v206/BOOP-Unified-v206-Idle-Home-Corner.apk')
+baseline_sha = 'b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca'
+assert baseline.is_file(), 'Download the existing signed v206 reference artifact first'
+assert hashlib.sha256(baseline.read_bytes()).hexdigest() == baseline_sha, 'Baseline provenance mismatch'
+receipt = {'source': source, 'baseline': '9d57019d9370dbe3f47061b6e8b0ce8ed5134715',
+           'baselineApkSha256': baseline_sha, 'apps': []}
 
 def tool(name, *args):
     return subprocess.check_output([str(tools/name), *map(str,args)], text=True)
+
+baseline_cert = tool('apksigner','verify','--print-certs',baseline)
+assert re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)',baseline_cert).group(1).lower() == expected
+with zipfile.ZipFile(baseline) as old_apk:
+    # Compare packaged native libraries to packaged libraries. Raw AAR inputs can
+    # contain symbols that Android's normal APK packaging strips from both builds.
+    original_native = {n: hashlib.sha256(old_apk.read(n)).hexdigest()
+                       for n in old_apk.namelist() if n.startswith('lib/') and n.endswith('.so')}
+assert original_native, 'Baseline APK contains no native runtime'
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
@@ -33,10 +47,11 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
     digest = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)',cert).group(1).lower()
     assert digest == expected, 'Permanent signer changed'
     assert 'android.intent.category.HOME' in manifest
-    assert 'boop_app_setup_v1' not in manifest  # Setup is app-local state, never preconfigured metadata.
+    assert 'boop_app_setup_v1' not in manifest
     assert 'com.boop.alpha1.BoopProfileActivity' in manifest
     assert 'com.boop.alpha1.UnifiedApplication' in manifest
     assert 'com.boop.shieldhome.ShieldLyricsActivity' in manifest
+    assert re.search(r'android:allowBackup\([^\n]+\)=\(type 0x12\)0x0', manifest), 'Packaged app permits backup'
     if body == 'shield':
         assert 'com.boop.alpha1.johnny_states;com.boop.shieldoverlay.johnny_states' in manifest
     else:
@@ -53,13 +68,10 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
         for filename in ['boop-png-study.png','boop-hidden-felt.png','boop-felt-sign-blank.png','eyes.frag']:
             assert archive.read('assets/'+filename) == Path('unified/animation/assets',filename).read_bytes(), filename
         assert archive.read('assets/boopApprovedEyes.png') == Path('unified/assets/boop-eyes/boopApprovedEyes.png').read_bytes()
-        aar = root / 'app/libs/sherpa-onnx-1.13.7.aar'
-        with zipfile.ZipFile(aar) as runtime:
-            natives = [n for n in runtime.namelist() if n.startswith('jni/') and n.endswith('.so')]
-            assert natives
-            for name in natives:
-                packaged = 'lib/'+name[4:]
-                assert archive.read(packaged) == runtime.read(name), 'Natural/wake native runtime changed: '+packaged
+        natives = {n: hashlib.sha256(archive.read(n)).hexdigest()
+                   for n in archive.namelist() if n.startswith('lib/') and n.endswith('.so')}
+        assert natives == original_native, 'Packaged native runtime differs from accepted v206: ' + str(
+            sorted(n for n in set(natives)|set(original_native) if natives.get(n)!=original_native.get(n)))
     name = f'BOOP-{body.title()}-v207.apk'
     shutil.copyfile(apk,out/name)
     sha = hashlib.sha256(apk.read_bytes()).hexdigest()
@@ -67,7 +79,8 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
     (out/f'{body}-manifest.txt').write_text(manifest)
     (out/f'{body}-signer.txt').write_text(cert)
     receipt['apps'].append({'body':body,'package':package,'versionCode':207,'versionName':f'1.2.207-{body}',
-                             'file':name,'sha256':sha,'signerSha256':digest,'bytes':apk.stat().st_size})
+                             'file':name,'sha256':sha,'signerSha256':digest,'bytes':apk.stat().st_size,
+                             'identicalBaselineNativeLibraries': len(natives)})
 (out/'built-commit.txt').write_text(source+'\n')
 (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
 for name in ['split-materialization.json','split-inherited-checks.txt','split-input-audit.txt']:
