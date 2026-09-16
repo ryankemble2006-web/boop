@@ -324,7 +324,7 @@ public final class ShieldHomeView extends LinearLayout {
         LayoutParams assistantParams = new LayoutParams(dp(360), dp(220));
         assistantParams.gravity = Gravity.END;
         assistantParams.rightMargin = dp(-42);
-        assistantParams.bottomMargin = dp(8);
+        assistantParams.bottomMargin = dp(24);
         assistantBay.addView(homeAssistantPuppet, assistantParams);
 
         TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
