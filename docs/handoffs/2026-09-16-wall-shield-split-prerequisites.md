@@ -58,3 +58,11 @@ Work directly in chat with GitHub and the connected Yoga bridge. Discover curren
 Publish reviewed scoped changes, update owning context/handoff/status/memory, and verify the live remote head. Preserve dirty and concurrent work; no resets, force pushes or silent lineage merges. When actual ownership/package contracts change, update the shared context on main without treating main as the app source.
 
 End-state of this prerequisite review: existing setups untouched; neither device is at fresh onboarding step one. The split and newcomer test await completion/acceptance of the current Voice/UI work.
+
+## Supplemental device evidence: recovery retained; accepted UI preserved
+
+Both existing installed APKs are now retained privately outside the checkout, with copied hashes and permanent signatures verified. No BOOP app data was backed up. Normal Shield UI navigation opened and privately captured the existing v206 Voice screen without changing settings or triggering speech.
+
+The newest v206 UI sign-off and earlier successful pitch/cadence observations remain accepted. Do not reopen a UI/focus gate. Current Voice response-delay acceptance and voice-profile sharing remain outstanding; no split or clean install has begun. Recovery copies are not replacement APKs or proof of a tested HOME recovery route.
+
+Exact recovery evidence and continuation boundary: `docs/handoffs/2026-09-16-split-recovery-and-voice-ready.md`. The concurrent `de28b0762b616acfaff61cf246cb8d6670dea5c5` clarification and dirty local v203 documents were preserved.

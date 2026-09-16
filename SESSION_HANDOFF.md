@@ -37,3 +37,11 @@ No app source, workflow, signing configuration, permissions, app data, onboardin
 The local owning worktree is still at `0517f73a398b43b165b1557ca6a11b26f5704615` with dirty v203 documentation. It was left untouched, not synchronized over. Read live GitHub rather than that stale working copy. Before future edits recheck both live heads and concurrent work.
 
 The complete prior root handoff/status/memory documents are preserved byte-for-byte in `docs/handoffs/2026-09-16-pre-split-archive/`; their mixed v198/v200/v201/v205 status paragraphs are historical. Dated feature receipts remain intact. This publication is documentation-only.
+
+## Supplemental device evidence: recovery retained; accepted UI preserved
+
+Both existing installed APKs are now retained privately outside the checkout, with copied hashes and permanent signatures verified. No BOOP app data was backed up. Normal Shield UI navigation opened and privately captured the existing v206 Voice screen without changing settings or triggering speech.
+
+The newest v206 UI sign-off and earlier successful pitch/cadence observations remain accepted. Do not reopen a UI/focus gate. Current Voice response-delay acceptance and voice-profile sharing remain outstanding; no split or clean install has begun. Recovery copies are not replacement APKs or proof of a tested HOME recovery route.
+
+Exact recovery evidence and continuation boundary: `docs/handoffs/2026-09-16-split-recovery-and-voice-ready.md`. The concurrent `de28b0762b616acfaff61cf246cb8d6670dea5c5` clarification and dirty local v203 documents were preserved.

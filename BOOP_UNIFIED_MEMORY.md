@@ -37,3 +37,11 @@ Then intentionally uninstall Unified on each target and install only its corresp
 Source edits, non-visual tests, builds, permanent signing and durable handoffs stay on GitHub. Use focused functional regressions, then existing build/signing checks; compilation, installation and human acceptance are separate. No autonomous emulator/visual acceptance gate. Do not bypass tool denials or overwrite concurrent work.
 
 The dirty local v203 documentation was left untouched. Full previous root documents are preserved byte-for-byte at `docs/handoffs/2026-09-16-pre-split-archive/`, and dated v198/v200/v201/v205/v206, voice-blocker and storage receipts remain available. Historical device versions and old next steps must not override current readings.
+
+## Supplemental device evidence: recovery retained; accepted UI preserved
+
+Both existing installed APKs are now retained privately outside the checkout, with copied hashes and permanent signatures verified. No BOOP app data was backed up. Normal Shield UI navigation opened and privately captured the existing v206 Voice screen without changing settings or triggering speech.
+
+The newest v206 UI sign-off and earlier successful pitch/cadence observations remain accepted. Do not reopen a UI/focus gate. Current Voice response-delay acceptance and voice-profile sharing remain outstanding; no split or clean install has begun. Recovery copies are not replacement APKs or proof of a tested HOME recovery route.
+
+Exact recovery evidence and continuation boundary: `docs/handoffs/2026-09-16-split-recovery-and-voice-ready.md`. The concurrent `de28b0762b616acfaff61cf246cb8d6670dea5c5` clarification and dirty local v203 documents were preserved.
