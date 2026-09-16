@@ -65,6 +65,8 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v201 reviewed five-line modal visibility propagation; voice-surface regression covers this file.
+      "source/BoopCanonicalFaceView.java",
       # v200 intentionally adds uniform TV menu focus chrome, opaque voice settings and audible natural pitch.
       "source/BoopNaturalSpeechBackend.java",
       "scripts/patch-unified-v148-single-face.py",
