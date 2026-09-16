@@ -2,7 +2,7 @@ name: iPlayer shortcuts
 on:
   push:
     branches: [iplayer-shortcuts-home-20260916]
-    paths: ['eastenders-shortcut/**', 'casualty-shortcut/**', '.github/workflows/build-iplayer-shortcuts.yml']
+    paths: ['eastenders-shortcut/**', 'casualty-shortcut/**', 'tests/iplayer_shortcut_service_contract.py', '.github/workflows/build-iplayer-shortcuts.yml']
   workflow_dispatch:
 permissions:
   contents: read
