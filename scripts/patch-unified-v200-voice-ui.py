@@ -53,6 +53,14 @@ text = once(
 """,
     "TEST VOICE placement",
 )
+text = once(
+    text,
+    "        voiceSettingsScroll.bringToFront();",
+    """        voiceSettingsScroll.bringToFront();
+        com.boop.shieldhome.BoopTvChrome.prepareVoiceSettings(
+                voiceSettingsScroll, voiceSettingsOverlay, pitchSlider);""",
+    "v202 TV child focus after scroll attachment",
+)
 
 helper = r'''    private void testCurrentVoice() {
         final String phrase = "This is how BOOP sounds.";
@@ -127,4 +135,4 @@ text = text[:hide_start] + hide + text[hide_end:]
 
 text += "\n" + MARKER + "\n"
 MAIN.write_text(text, encoding="utf-8")
-print("v200 Voice Settings: opaque, face-hidden, TEST VOICE enabled")
+print("Voice Settings: opaque, face-hidden, TEST VOICE and TV child focus enabled")
