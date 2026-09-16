@@ -1,17 +1,23 @@
 package uk.local.eastenders;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.Gravity;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
 
 public final class MainActivity extends Activity {
     private static final String SETUP_PREFIX="SETUP_REQUIRED:";
     private boolean launched;
+    private TextView setupStatus;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -65,14 +71,66 @@ public final class MainActivity extends Activity {
     }
 
     private void showLocalDebuggingSetup(String detail) {
-        new AlertDialog.Builder(this)
-                .setTitle("One-time iPlayer shortcut setup")
-                .setMessage(detail+"\n\nEnable Network debugging in Shield Developer options. Then return here and choose Authorise. Android will ask you once to trust this EastEnders shortcut.")
-                .setPositiveButton("Authorise",(dialog,which) -> openProgramme())
-                .setNeutralButton("Open debugging settings",(dialog,which) -> openDebuggingSettings())
-                .setNegativeButton("Cancel",(dialog,which) -> finish())
-                .setOnCancelListener(dialog -> finish())
-                .show();
+        LinearLayout root=new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setGravity(Gravity.CENTER_VERTICAL);
+        root.setPadding(dp(110),dp(70),dp(110),dp(70));
+        root.setBackgroundColor(Color.rgb(18,18,18));
+
+        TextView title=new TextView(this);
+        title.setText("One-time iPlayer shortcut setup");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(34);
+        root.addView(title,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        TextView body=new TextView(this);
+        body.setText(detail+"\n\n1. Open Shield debugging settings and enable Network debugging.\n2. Return to this shortcut and choose Authorise.\n3. Accept Android's one-time debugging trust prompt for EastEnders.\n\nNo BBC login, password or profile name is stored by this shortcut.");
+        body.setTextColor(Color.LTGRAY);
+        body.setTextSize(22);
+        LinearLayout.LayoutParams bodyParams=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        bodyParams.topMargin=dp(28);
+        root.addView(body,bodyParams);
+
+        setupStatus=new TextView(this);
+        setupStatus.setText("Ready for setup.");
+        setupStatus.setTextColor(Color.WHITE);
+        setupStatus.setTextSize(20);
+        LinearLayout.LayoutParams statusParams=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        statusParams.topMargin=dp(24);
+        root.addView(setupStatus,statusParams);
+
+        LinearLayout actions=new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams actionsParams=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        actionsParams.topMargin=dp(30);
+        root.addView(actions,actionsParams);
+
+        Button settingsButton=new Button(this);
+        settingsButton.setText("Open debugging settings");
+        settingsButton.setOnClickListener(v -> openDebuggingSettings());
+        actions.addView(settingsButton,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f));
+
+        Button authoriseButton=new Button(this);
+        authoriseButton.setText("Authorise");
+        authoriseButton.setOnClickListener(v -> {
+            setupStatus.setText("Waiting for Android debugging approval…");
+            authoriseButton.setEnabled(false);
+            settingsButton.setEnabled(false);
+            openProgramme();
+        });
+        LinearLayout.LayoutParams authParams=new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f);
+        authParams.leftMargin=dp(18);
+        actions.addView(authoriseButton,authParams);
+
+        Button cancelButton=new Button(this);
+        cancelButton.setText("Cancel");
+        cancelButton.setOnClickListener(v -> finish());
+        LinearLayout.LayoutParams cancelParams=new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1f);
+        cancelParams.leftMargin=dp(18);
+        actions.addView(cancelButton,cancelParams);
+
+        setContentView(root);
+        settingsButton.requestFocus();
     }
 
     private void openDebuggingSettings() {
@@ -81,6 +139,10 @@ public final class MainActivity extends Activity {
         try { startActivity(settings); }
         catch(RuntimeException rejected) { Toast.makeText(this,"Open Shield Developer options and enable Network debugging.",Toast.LENGTH_LONG).show(); }
         finish();
+    }
+
+    private int dp(int value) {
+        return Math.round(value*getResources().getDisplayMetrics().density);
     }
 
     private void fail(String message) {
