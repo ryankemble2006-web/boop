@@ -28,5 +28,36 @@ int main(void) {
  assert(ha_take_fan(&c) && ha_take_fan(&c));
  assert(!ha_preempt_normal(&c));
  atomic_store(&c.stop,1); assert(!ha_queue_fan(&c));
- puts("control queue, wrap-safe clock, cancellation, framebuffer bounds passed");
+
+ // A real light edge is an urgent environment change. It wakes an ordinary
+ // routine, but duplicate steady-state samples do not create more work.
+ HaControl light; ha_control_init(&light);
+ assert(!ha_environment_pending(&light));
+ assert(ha_set_night(&light,1));
+ assert(atomic_load(&light.night)==1);
+ assert(ha_environment_pending(&light));
+ assert(ha_preempt_normal(&light));
+ unsigned night_token=ha_environment_token(&light);
+ ha_environment_applied(&light,night_token);
+ assert(!ha_environment_pending(&light));
+ assert(!ha_preempt_normal(&light));
+ assert(!ha_set_night(&light,1));
+ assert(!ha_environment_pending(&light));
+ assert(!ha_preempt_normal(&light));
+
+ // The active fan emergency keeps ownership. The light edge remains pending
+ // and becomes urgent as soon as the protected fan scene finishes.
+ atomic_store(&light.fan_playing,1);
+ assert(ha_set_night(&light,0));
+ assert(ha_environment_pending(&light));
+ assert(!ha_preempt_normal(&light));
+ assert(!ha_preempt_wait(&light));
+ atomic_store(&light.fan_playing,0);
+ assert(ha_preempt_normal(&light));
+ unsigned day_token=ha_environment_token(&light);
+ ha_environment_applied(&light,day_token);
+ assert(!ha_environment_pending(&light));
+ assert(!ha_preempt_normal(&light));
+
+ puts("control queue, light urgency, wrap-safe clock, cancellation, framebuffer bounds passed");
 }
