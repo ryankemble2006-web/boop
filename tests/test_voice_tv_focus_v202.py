@@ -26,7 +26,7 @@ def test_home_blue_is_the_single_tv_focus_colour_for_buttons_and_editors():
     assert "setThumbTintList(focusAccent" in chrome
     assert "setProgressTintList(focusAccent" in chrome
     assert "setProgressBackgroundTintList(focusAccent" in chrome
-    assert "accentColor(view.getContext())" in chrome
+    assert "accentColor(slider.getContext())" in chrome
     # The visible focus box is still present around sliders/editors.
     assert "StateListDrawable outline" in chrome
     assert "android.R.attr.state_focused" in chrome
