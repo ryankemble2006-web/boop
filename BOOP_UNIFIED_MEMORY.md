@@ -1,3 +1,21 @@
+# Current candidate: v192 Home assistant corner — 2026-09-16
+
+Owner lineage remains `boop-hand-colour-v191`; live GitHub is the source of truth. **v191 is still the physically accepted checkpoint and rollback.** This task adds a separately versioned v192 candidate rather than redefining v191.
+
+Ryan wants the existing **Close media** action left alone because its shutdown behavior already works. The UX change is what BOOP does afterward: once Now Playing is absent, a small BOOP should remain at the Shield Home top right as a persistent reminder that BOOP is the assistant, instead of leaving the media puppet in its old media position.
+
+Implementation at built code commit `d9f7a94e11c2e0f0da1d6048ef94e0341f8e75bc` is presentation-only. `ShieldHomeView` hosts one idle `ShieldNowPlayingPuppetView` at the right end of the top nav row, after Shield Settings. It uses `BoopState.Owner.NONE` plus a buffering snapshot that maps through the existing policy to REST / canonical `idle`. `setHomeVisible(!visible)` hides it during eligible Now Playing, while the existing media puppet retains `HOME_NOW_PLAYING` ownership. This deliberately reuses the canonical renderer and accepted artwork instead of creating another face implementation.
+
+Current starting geometry is `135dp x 90dp` with `12dp` left margin. Treat that as a code candidate only. Ryan has not yet physically accepted its precise size or corner placement on Shield. Do not change accepted v191 artwork, hand/eye/felt geometry, lyrics UI, playback controls or Close-media mechanics to tune this placement.
+
+TDD provenance: RED run `35060491690` failed specifically because the Home idle host did not exist. The first full v192 build then hit an inherited v169 production-change allowlist, which logs showed was rejecting only the intentional `ShieldHomeView.java` change. The guard was explicitly updated and the complete final run `35061033124` passed, including inherited v191 preservation checks, Home ownership/materialization checks, Android compile, permanent signing, APK identity and artifact upload.
+
+Final signed artifact: `BOOP-Unified-v192-Home-Assistant-Corner`; GitHub artifact digest `sha256:a02f54a8df2e9250492b3bf6bb7121af822f4fec9d68592b948757c2fb2c4209`. No device install, reinstall, permission change or Shield state mutation was performed. Next safe step requires Ryan's explicit install request, then joint physical validation of Close media, one-puppet ownership and exact top-right geometry.
+
+Receipt: `docs/handoffs/2026-09-16-v192-home-assistant-corner.md`.
+
+---
+
 # Current: v191 hand colour accepted — 2026-09-15
 
 Owner `boop-hand-colour-v191`; reviewed/built `32f7d34bd58e1f0ae58134326e2881ba0456f75c`, signed run34946949843 passed. Version191 installed and actual APK hash/version verified on Shield and Pixel7Pro.
@@ -99,6 +117,24 @@ Next design direction: preserve accepted phone material, shared-colour preview a
 # Current delivery: v179 stage fibres (2026-09-15)
 
 Owner `boop-stage-fibres-v179`; built source `e8b7ed4045c0ed7c1eb06b9f2a02da0a5ddf8c16`. GitHub run34931180380 passed; permanent-signed version179 installed and APK-hash verified on Shield and Pixel7Pro. Screen-width loose fibres and crown wisps replace the too-small v178 fringe. Accepted lighting and colour preview preserved. **User visual verdict pending**, including visible phone-face check. See [full receipt](docs/handoffs/2026-09-15-v179-stage-fibres.md). v178 signed rollback retained. Historical entries below describe earlier state.
+
+# v178 user verdict: colour preview accepted; felt depth unresolved
+
+2026-09-15. Ryan explicitly approves the Eyes and animation preview placement and immediate colour changes. Preserve this accepted interaction. Earlier stage-lighting approval remains valid.
+
+Ryan reports very little visible change to the fibres and says the image feels flattened in transit. v178 fringe geometry passes source/numeric checks but has NOT achieved the desired physical depth/fibre appearance. Device fault, display scaling and rendering causes are not established. Do not call the fibre repair physically accepted or blame the devices. Next visual work should investigate actual displayed scale and material detail while protecting the accepted preview, immediate hue response, lighting, artwork and motion. No new app change or installation accompanies this verdict.
+
+Product direction remains whimsical puppet performance with capable assistance behind it. Approved five-digit hand grip and fake-notification diagnostic remain subsequent work.
+
+---
+
+# v178 installed: loose fibres and live eye-colour preview
+
+Updated 2026-09-15. Current owner `boop-felt-preview-v178`. Built source `4f873eadaf65c1fb954aa95e68b5da966263a94d`, signed run34930044029 SUCCESS; installed/hash-verified on Shield and Pixel7Pro. Physical verdict pending.
+
+Ryan likes v177 stage lighting; v178 keeps that shader byte-identical and adds actual loose fibres outside the upper-lid silhouette. Eyes and animation now contains a fixed live BOOP colour preview using the existing hue binding. No timing, voice or sharing-transport change.
+
+[Full v178 source/test/install receipt](docs/handoffs/2026-09-15-v178-felt-preview.md). v177 signed rollback retained. Historical entries below describe earlier state.
 
 # v178 user verdict: colour preview accepted; felt depth unresolved
 
