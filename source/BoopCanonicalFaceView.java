@@ -244,6 +244,11 @@ final class BoopCanonicalFaceView extends FrameLayout {
     }
 
     private void applyPresentationVisibility() {
+        // The top-layer GL surface must follow modal ownership directly.
+        // Hiding only its parent can leave the last frame over Voice settings.
+        if (surface != null) {
+            surface.setVisibility(presentationState.effective());
+        }
         super.setVisibility(presentationState.effective());
         updateVisibleLifecycle();
     }
