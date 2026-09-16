@@ -40,7 +40,8 @@ def test_favourites_are_parked_under_the_now_playing_slot_with_matching_gaps():
     assert "addSpacer(dp(16));" in render
     assert "new LayoutParams(LayoutParams.MATCH_PARENT, dp(182))" in render
     assert "new LayoutParams(1, dp(16))" in render
-    assert "new LayoutParams(LayoutParams.MATCH_PARENT, dp(215))" in render
+    assert "stageContent.addView(appRow(safeFavourites, callbacks), new LayoutParams(" in render
+    assert "LayoutParams.MATCH_PARENT, dp(215)));" in render
 
 
 def test_now_playing_hides_without_collapsing_its_reserved_slot():
