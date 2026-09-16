@@ -289,7 +289,7 @@ public final class ShieldHomeView extends LinearLayout {
     private View navRow(Callbacks callbacks) {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setGravity(Gravity.BOTTOM);
         row.setClipChildren(false);
         row.setClipToPadding(false);
 
@@ -312,16 +312,25 @@ public final class ShieldHomeView extends LinearLayout {
         View spacer = new View(getContext());
         row.addView(spacer, new LayoutParams(0, 1, 1f));
 
-        TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
-        settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
-        row.addView(settings, new LayoutParams(dp(144), dp(60)));
+        LinearLayout assistantBay = new LinearLayout(getContext());
+        assistantBay.setOrientation(VERTICAL);
+        assistantBay.setGravity(Gravity.END);
+        assistantBay.setClipChildren(false);
+        assistantBay.setClipToPadding(false);
 
         homeAssistantPuppet = new ShieldNowPlayingPuppetView(getContext());
         homeAssistantPuppet.setPresentationOwner(com.boop.shared.BoopState.Owner.NONE);
         homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());
-        LayoutParams assistantParams = new LayoutParams(dp(135), dp(90));
-        assistantParams.leftMargin = dp(12);
-        row.addView(homeAssistantPuppet, assistantParams);
+        LayoutParams assistantParams = new LayoutParams(dp(230), dp(150));
+        assistantParams.bottomMargin = dp(8);
+        assistantBay.addView(homeAssistantPuppet, assistantParams);
+
+        TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
+        settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
+        LayoutParams settingsParams = new LayoutParams(dp(144), dp(60));
+        assistantBay.addView(settings, settingsParams);
+
+        row.addView(assistantBay, new LayoutParams(dp(230), LayoutParams.WRAP_CONTENT));
         return row;
     }
 
