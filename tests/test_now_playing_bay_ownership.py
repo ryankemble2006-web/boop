@@ -5,6 +5,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingView.java"
 HOME_SOURCE = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java"
+PUPPET_SOURCE = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java"
 
 
 def test_row_owns_a_persistent_bay_not_the_transient_puppet():
@@ -40,3 +41,13 @@ def test_home_assistant_sits_above_shield_settings():
     assert "assistantBay.addView(homeAssistantPuppet, assistantParams);" in home
     assert "assistantBay.addView(settings, settingsParams);" in home
     assert home.index("assistantBay.addView(homeAssistantPuppet, assistantParams);") < home.index("assistantBay.addView(settings, settingsParams);")
+
+
+def test_puppet_releases_gl_surface_when_ownership_hides_it():
+    source = PUPPET_SOURCE.read_text(encoding="utf-8")
+    assert "puppet.setSurfaceActive(false);" in source
+    assert "puppet.setSurfaceActive(true);" in source
+    assert "void setSurfaceActive(boolean active)" in source
+    assert "eyeSurface.setVisibility(active ? VISIBLE : INVISIBLE);" in source
+    assert "eyeSurface.onPause();" in source
+    assert "eyeSurface.onResume();" in source
