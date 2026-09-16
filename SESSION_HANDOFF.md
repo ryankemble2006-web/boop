@@ -1,3 +1,15 @@
+# Current: v194 bigger Home BOOP candidate ? 2026-09-16
+
+Owner remains `boop-hand-colour-v191`; live GitHub is authoritative. v191 remains the accepted character rollback and v193 remains the previous Home-placement rollback.
+
+Ryan requested the idle Home assistant above Shield Settings be substantially larger after reviewing the real v193 Shield frame. v194 changes only that Home geometry: the assistant surface grows from 230x150dp to 360x220dp, remains above Shield Settings, and extends toward the screen edge without moving the Shield Settings button. Media ownership/hide behavior, Close media behavior, accepted artwork, eyes, felt, hand, lyrics and playback controls are unchanged.
+
+Source/build commit `a7cd80d6e3528227b10d4a9bc7daaa3410e6a8f8`; GitHub run `35064596599` completed successfully. Signed artifact `BOOP-Unified-v194-Bigger-Home-Assistant`; package `com.boop.alpha1`, version 194 / `1.2.194-home-assistant-bigger`. Installed on Shield only with app data retained; accessibility service set unchanged. Local artifact SHA-256 and pulled installed APK both equal `F089FDCA83548340FED7110636B6163FD9878E0D6C2DC6E5653CD747B2568E82`.
+
+A fresh real-Shield screenshot was captured after install. Assistant observation: BOOP is visibly much larger and remains above Shield Settings. Per repo rules this is not automated visual certification; Ryan's physical visual verdict is still pending. Exact-size source assertion was removed because visual/layout acceptance belongs to Ryan on-device.
+
+---
+
 # Current: v192 Home assistant corner candidate — 2026-09-16
 
 Owner branch remains `boop-hand-colour-v191`; live GitHub is authoritative. Accepted v191 remains the physical rollback checkpoint and is not redefined by this work.

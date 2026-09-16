@@ -1,3 +1,7 @@
+# v194 bigger Home BOOP candidate ? 2026-09-16
+
+`boop-hand-colour-v191` commit `a7cd80d6e3528227b10d4a9bc7daaa3410e6a8f8`, run `35064596599` SUCCESS. Signed v194 installed on Shield only and pulled-back APK hash matches `F089FDCA83548340FED7110636B6163FD9878E0D6C2DC6E5653CD747B2568E82`. Idle Home BOOP is now 360x220dp above Shield Settings; button location and media ownership behavior are preserved. Real Shield screenshot captured; Ryan's visual acceptance is pending. v193 remains previous placement rollback; v191 remains accepted character rollback.
+
 # Current candidate: v192 Home assistant corner — 2026-09-16
 
 Branch `boop-hand-colour-v191` remains the owning lineage and live GitHub is authoritative. **v191 remains the physically accepted rollback checkpoint.** The new Home-presence candidate is versioned separately as v192.

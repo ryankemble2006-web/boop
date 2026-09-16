@@ -1,3 +1,7 @@
+# v194 Home assistant scale ? 2026-09-16
+
+Ryan asked for the Home assistant above Shield Settings to be bigger after physically reviewing v193. v194 (`a7cd80d6...`, run `35064596599`) enlarges only the idle Home assistant surface to 360x220dp, preserves Shield Settings position and existing media ownership, and is installed/hash-verified on Shield. Fresh Shield screenshot captured; visual acceptance remains Ryan's call. Do not infer visual acceptance from CI.
+
 # Current candidate: v192 Home assistant corner — 2026-09-16
 
 Owner lineage remains `boop-hand-colour-v191`; live GitHub is the source of truth. **v191 is still the physically accepted checkpoint and rollback.** This task adds a separately versioned v192 candidate rather than redefining v191.
