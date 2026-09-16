@@ -20,8 +20,8 @@ android {
         minSdk 29
         targetSdk 36
         testInstrumentationRunner "com.boop.alpha1.WallPolishInstrumentation"
-        versionCode 192
-        versionName "1.2.192-home-assistant-corner"
+        versionCode 193
+        versionName "1.2.193-home-assistant-above-settings"
         buildConfigField 'String', 'BOOP_RELAY_URL', '"' + buildConfigEscape(relayUrl) + '"'
         buildConfigField 'String', 'BOOP_RELAY_TOKEN', '"' + buildConfigEscape(relayToken) + '"'
     }
