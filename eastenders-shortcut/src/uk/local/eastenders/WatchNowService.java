@@ -212,13 +212,17 @@ public final class WatchNowService extends AccessibilityService {
     }
 
     private void stop() {
+        if(preparing || returningHome) Log.i("EastEnders", "stop() while cleanup active: preparing="+preparing+" returningHome="+returningHome);
         gate.cancel();
         handler.removeCallbacks(check);
         clearCleanup();
     }
 
     @Override protected void onServiceConnected() { instance = this; }
-    @Override public void onInterrupt() { stop(); }
+    @Override public void onInterrupt() {
+        Log.i("EastEnders", "onInterrupt: preparing="+preparing+" returningHome="+returningHome);
+        stop();
+    }
     @Override public void onDestroy() {
         stop();
         if (instance == this) instance = null;
