@@ -65,6 +65,12 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v200 intentionally adds uniform TV menu focus chrome, opaque voice settings and audible natural pitch.
+      "source/BoopNaturalSpeechBackend.java",
+      "scripts/patch-unified-v148-single-face.py",
+      "scripts/patch-unified-v200-voice-ui.py",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/BoopTvChrome.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/FocusChrome.java",
       # v198 explicitly adds Build a Boop voice tuning and separate opt-in voice-profile sharing.
       "source/BoopVoiceController.java",
       "source/SharedVoiceProfileProtocol.java",
