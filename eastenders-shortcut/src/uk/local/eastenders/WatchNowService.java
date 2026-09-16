@@ -24,8 +24,7 @@ public final class WatchNowService extends AccessibilityService {
     private boolean preparing;
     private boolean returningHome;
     private CleanupCallback cleanupCallback;
-    private int stoppedObservations;
-    private long cleanupLastAction;
+    private final CleanupSequence cleanupSequence = new CleanupSequence();
 
     private void report(String state) {
         if (!state.equals(lastState)) {
@@ -158,8 +157,7 @@ public final class WatchNowService extends AccessibilityService {
         returningHome=forHome;
         cleanupCallback=callback;
         expectedPackage=PlayerReset.PLAYER;
-        stoppedObservations=0;
-        cleanupLastAction=0;
+        cleanupSequence.reset();
         handler.removeCallbacks(cleanupPoll);
         handler.removeCallbacks(cleanupTimeout);
         try {
@@ -181,8 +179,7 @@ public final class WatchNowService extends AccessibilityService {
         preparing=false;
         returningHome=false;
         cleanupCallback=null;
-        stoppedObservations=0;
-        cleanupLastAction=0;
+        cleanupSequence.reset();
     }
 
     private void finishCleanup(boolean ok,String error) {
@@ -259,37 +256,29 @@ public final class WatchNowService extends AccessibilityService {
             CleanupPage page=new CleanupPage();
             try {
                 scanCleanup(root,page,0);
-                long now=SystemClock.elapsedRealtime();
-                if(page.breadcrumb && page.confirm) {
-                    stoppedObservations=0;
-                    if(page.ok!=null && now-cleanupLastAction>=400) {
-                        cleanupLastAction=now;
-                        boolean clicked=page.ok.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                        report(clicked ? "Confirmed iPlayer Force stop" : "Waiting to confirm iPlayer Force stop");
-                    }
-                    return;
+                boolean appInfo=page.appInfo && page.open && page.uninstall;
+                boolean confirmation=page.breadcrumb && page.confirm;
+                int action=cleanupSequence.next(appInfo,page.forceStop!=null,confirmation,page.ok!=null);
+                if(action==CleanupSequence.CLICK_FORCE_STOP) {
+                    boolean clicked=page.forceStop!=null && page.forceStop.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                    cleanupSequence.actionResult(action,clicked);
+                    report(clicked ? "Requested iPlayer Force stop" : "Waiting for iPlayer Force stop control");
+                } else if(action==CleanupSequence.CLICK_CONFIRM) {
+                    boolean clicked=page.ok!=null && page.ok.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                    cleanupSequence.actionResult(action,clicked);
+                    report(clicked ? "Confirmed iPlayer Force stop" : "Waiting to confirm iPlayer Force stop");
+                } else if(action==CleanupSequence.COMPLETE) {
+                    report("Verified iPlayer Force stop");
+                    finishCleanup(true,"");
+                } else if(appInfo && page.forceStop==null) {
+                    report("Verifying iPlayer Force stop");
                 }
-                if(page.appInfo && page.open && page.uninstall) {
-                    if(page.forceStop!=null) {
-                        stoppedObservations=0;
-                        if(now-cleanupLastAction>=400) {
-                            cleanupLastAction=now;
-                            boolean clicked=page.forceStop.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                            report(clicked ? "Requested iPlayer Force stop" : "Waiting for iPlayer Force stop control");
-                        }
-                    } else {
-                        stoppedObservations++;
-                        report("Verifying iPlayer Force stop");
-                        if(stoppedObservations>=2) finishCleanup(true,"");
-                    }
-                } else stoppedObservations=0;
             } finally {
                 if(page.forceStop!=null) page.forceStop.recycle();
                 if(page.ok!=null) page.ok.recycle();
             }
         } finally { root.recycle(); }
     }
-
     private boolean isConfiguredHome(String pkg) {
         android.content.pm.ResolveInfo home=getPackageManager().resolveActivity(
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0);
