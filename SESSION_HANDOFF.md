@@ -1,3 +1,9 @@
+## In progress: v206 idle Home host repair
+
+Ryan accepted v205 spacing and left alignment. Preserve it. Live v205 no-media screenshot reproduces the small idle BOOP over favourites: the legacy media attach mutator overwrites the independent Home FrameLayout parameters. The executable regression failed for that exact mutation in run `35098539710`; the scoped owner guard is the next candidate. Receipt and next steps: `docs/handoffs/2026-09-16-v206-idle-home-host.md`. v206 is not yet build/install/visually verified at this checkpoint. Dirty local v203 documentation remains untouched.
+
+---
+
 ## Current Unified handoff - v205 installed; Home spacing visually aligned
 
 Updated 2026-09-16. Owner remains `boop-hand-colour-v191`. Current receipt: `docs/handoffs/2026-09-16-v205-home-visual-spacing.md`.

@@ -193,6 +193,10 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     }
 
     private void lockToMascotBay() {
+        // The idle Home host owns its own size and bottom-corner placement.
+        if (presentationOwner != com.boop.shared.BoopState.Owner.HOME_NOW_PLAYING) {
+            return;
+        }
         android.view.ViewGroup.LayoutParams current = getLayoutParams();
         if (!(current instanceof FrameLayout.LayoutParams)) {
             return;
