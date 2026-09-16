@@ -29,6 +29,8 @@ jobs:
             done
           done
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Build both APKs without exporting private signing keys
         shell: bash
         run: |
