@@ -1,5 +1,8 @@
 import pathlib,subprocess,tempfile
 root=pathlib.Path(__file__).resolve().parents[1]
+client=(root/"java/local/johnnycastaway/shield/JohnnyStateClient.java").read_text()
+assert "main.postDelayed" in client,"lights-off OI must wait for a night render window"
+assert "JohnnyLightPolicy.oiDelayMs()" in client,"lights-off OI delay must use the tested policy"
 test=r'''package local.johnnycastaway.shield;
 public class StateEdgeHarness {
  static void check(boolean b,String m){if(!b)throw new AssertionError(m);}
@@ -55,10 +58,11 @@ public class StateEdgeHarness {
   check(JohnnyPollPolicy.healthyPollMs()==250L,"healthy HA poll is 250ms");
   check(JohnnyPollPolicy.unavailableSkipPolls()==39,"outage keeps a slow retry");
   check(JohnnyPollPolicy.unavailableRetryMs()==10000L,"outage retry remains about 10 seconds");
-  System.out.println("Johnny reconnect, fan edges, light policy and polling cadence passed");
+  check(JohnnyLightPolicy.oiDelayMs()==150L,"night gets a render window before OI");
+  System.out.println("Johnny reconnect, fan edges, night-before-OI policy and polling cadence passed");
  }
 }'''
 with tempfile.TemporaryDirectory() as d:
  p=pathlib.Path(d)/"StateEdgeHarness.java";p.write_text(test)
- subprocess.run(["javac","-d",d,str(root/"java/local/johnnycastaway/shield/JohnnyStateEdges.java"),str(root/"java/local/johnnycastaway/shield/JohnnyFanState.java"),str(root/"java/local/johnnycastaway/shield/JohnnyPollPolicy.java"),str(p)],check=True)
+ subprocess.run(["javac","-d",d,str(root/"java/local/johnnycastaway/shield/JohnnyStateEdges.java"),str(root/"java/local/johnnycastaway/shield/JohnnyFanState.java"),str(root/"java/local/johnnycastaway/shield/JohnnyPollPolicy.java"),str(root/"java/local/johnnycastaway/shield/JohnnyLightPolicy.java"),str(p)],check=True)
  subprocess.run(["java","-cp",d,"local.johnnycastaway.shield.StateEdgeHarness"],check=True)

@@ -32,34 +32,20 @@ int main(void) {
  // A real light edge is an urgent environment change. It wakes an ordinary
  // routine and its interruptible waits, but duplicate steady-state samples do not create more work.
  HaControl light; ha_control_init(&light);
- assert(ha_environment_visible(&light));
  assert(!ha_environment_pending(&light));
  assert(ha_set_night(&light,1));
  assert(atomic_load(&light.night)==1);
- assert(ha_queue_oi(&light)); // Java queues OI on the same lights-off observation.
  assert(ha_environment_pending(&light));
- assert(!ha_environment_visible(&light));
  assert(ha_preempt_normal(&light));
  assert(ha_preempt_wait(&light));
  unsigned night_token=ha_environment_token(&light);
  ha_environment_applied(&light,night_token);
  assert(!ha_environment_pending(&light));
-
- // OI must not steal the transition before one real night frame is presented.
- assert(!ha_environment_visible(&light));
  assert(!ha_preempt_normal(&light));
  assert(!ha_preempt_wait(&light));
- unsigned oi_token=0;
- assert(!ha_begin_oi(&light,&oi_token));
- ha_environment_presented(&light,night_token);
- assert(ha_environment_visible(&light));
- assert(ha_preempt_normal(&light));
- assert(ha_preempt_wait(&light));
- assert(ha_begin_oi(&light,&oi_token));
- ha_finish_oi(&light,oi_token,0);
- assert(!ha_preempt_normal(&light));
  assert(!ha_set_night(&light,1));
  assert(!ha_environment_pending(&light));
+ assert(!ha_preempt_normal(&light));
 
  // The active fan emergency keeps ownership. The light edge remains pending
  // and becomes urgent as soon as the protected fan scene finishes.
@@ -75,5 +61,5 @@ int main(void) {
  assert(!ha_environment_pending(&light));
  assert(!ha_preempt_normal(&light));
 
- puts("control queue, visible-night-before-OI, light urgency, wrap-safe clock, cancellation, framebuffer bounds passed");
+ puts("control queue, light urgency, wrap-safe clock, cancellation, framebuffer bounds passed");
 }
