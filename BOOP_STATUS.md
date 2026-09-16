@@ -1,3 +1,9 @@
+# v197 Home media handoff — signed and installed 2026-09-16
+
+`boop-hand-colour-v191` now carries v197 (`1.2.197-home-media-handoff`). The large idle Home BOOP releases its GL surface whenever Now Playing is eligible, leaving only the small media BOOP; it resumes automatically when the Now Playing state disappears. v196 remains the layout rollback.
+
+Final CI run `35068273731` succeeded; artifact `10434463728`; APK SHA-256 `ea07abfa0b573cfd0d1187a3af73e6465d2ccd4c141f7f1374903f833c5233a2`. Shield install and pulled-hash verification passed. Live native Deezer playback/force-stop handoff screenshots passed; Ryan owns final visual acceptance and the remaining Close-media/natural/Cast route checks.
+
 # v196 balanced Home BOOP candidate — 2026-09-16
 
 `boop-hand-colour-v191` commit `07f3d122fcd2beca910ef73814871a6654b1b753`, run `35066116181` SUCCESS. Signed v196 installed on Shield only and pulled-back APK hash matches `A90F4167D59F2DC799692C3617DFDC28B813F828F75D1C82A8CC95DA086D16B7`. Home BOOP remains 360x220dp above Shield Settings; only the inter-view gap increased to 32dp to lift him upward. Shield Settings position and media ownership behavior are preserved. Fresh Shield screenshot captured; Ryan's visual acceptance remains pending. v194 remains the larger-size rollback, v191 the accepted character rollback.
