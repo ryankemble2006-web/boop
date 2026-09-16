@@ -15,6 +15,15 @@ final class BoopVoiceController {
     static final String BACKEND_ANDROID = "android";
     static final String BACKEND_NATURAL = "natural";
     static final String NATURAL_STATE_VERIFIED = "verified";
+    static final String PREFS_NAME = "boop_voice";
+    static final String KEY_VOICE_NAME = "voice_name";
+    static final String KEY_PITCH = "pitch";
+    static final String KEY_SPEECH_RATE = "speech_rate";
+    static final String KEY_SELECTED_BACKEND = "selected_backend";
+    static final String KEY_NATURAL_SPEAKER_KEY = "natural_speaker_key";
+    private static final String KEY_NATURAL_PACK_VERSION = "natural_pack_version";
+    private static final String KEY_NATURAL_VERIFICATION_STATE = "natural_verification_state";
+    private static final String KEY_NATURAL_RUNTIME_PROVEN_VERSION = "natural_runtime_proven_version";
 
     static final class NaturalVoice {
         private final String name;
@@ -31,16 +40,6 @@ final class BoopVoiceController {
         String key() { return key; }
         int sid() { return sid; }
     }
-
-    private static final String PREFS_NAME = "boop_voice";
-    private static final String KEY_VOICE_NAME = "voice_name";
-    private static final String KEY_PITCH = "pitch";
-    private static final String KEY_SPEECH_RATE = "speech_rate";
-    private static final String KEY_SELECTED_BACKEND = "selected_backend";
-    private static final String KEY_NATURAL_SPEAKER_KEY = "natural_speaker_key";
-    private static final String KEY_NATURAL_PACK_VERSION = "natural_pack_version";
-    private static final String KEY_NATURAL_VERIFICATION_STATE = "natural_verification_state";
-    private static final String KEY_NATURAL_RUNTIME_PROVEN_VERSION = "natural_runtime_proven_version";
 
     private static final NaturalVoice[] NATURAL_VOICES = {
             new NaturalVoice("Emma", "bf_emma", 21),
@@ -65,19 +64,15 @@ final class BoopVoiceController {
 
     BoopVoiceController(Context context) {
         preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        currentPitch = preferences.getFloat(KEY_PITCH, BoopVoiceTuning.DEFAULT_PITCH);
-        currentSpeechRate = preferences.getFloat(KEY_SPEECH_RATE, BoopVoiceTuning.DEFAULT_RATE);
-        selectedBackend = preferences.getString(KEY_SELECTED_BACKEND, BACKEND_ANDROID);
-        naturalSpeakerKey = preferences.getString(KEY_NATURAL_SPEAKER_KEY, NATURAL_VOICES[0].key());
+        refreshProfileFromPreferences();
         naturalPackVersion = preferences.getString(KEY_NATURAL_PACK_VERSION, "");
         naturalVerificationState = preferences.getString(KEY_NATURAL_VERIFICATION_STATE, "");
         naturalRuntimeProvenVersion = preferences.getString(KEY_NATURAL_RUNTIME_PROVEN_VERSION, "");
-        if (!BACKEND_NATURAL.equals(selectedBackend)) selectedBackend = BACKEND_ANDROID;
-        if (findNaturalVoice(naturalSpeakerKey) == null) naturalSpeakerKey = NATURAL_VOICES[0].key();
     }
 
     void initialize(TextToSpeech tts, Locale preferredLocale) {
         this.tts = tts;
+        refreshProfileFromPreferences();
         applyPuppetCadence();
         refreshVoices(preferredLocale == null ? Locale.ENGLISH : preferredLocale);
 
@@ -141,10 +136,12 @@ final class BoopVoiceController {
     }
 
     float pitch() {
+        refreshProfileFromPreferences();
         return currentPitch;
     }
 
     float speechRate() {
+        refreshProfileFromPreferences();
         return currentSpeechRate;
     }
 
@@ -178,6 +175,7 @@ final class BoopVoiceController {
     }
 
     boolean naturalBackendSelectedAndUsable() {
+        refreshProfileFromPreferences();
         return BACKEND_NATURAL.equals(selectedBackend)
                 && naturalPackReadyForPreview()
                 && naturalRuntimeProvenVersion != null
@@ -197,6 +195,7 @@ final class BoopVoiceController {
     }
 
     NaturalVoice selectedNaturalVoice() {
+        refreshProfileFromPreferences();
         NaturalVoice voice = findNaturalVoice(naturalSpeakerKey);
         return voice == null ? NATURAL_VOICES[0] : voice;
     }
@@ -222,6 +221,17 @@ final class BoopVoiceController {
             if (NATURAL_VOICES[i].key().equals(key)) return i;
         }
         return -1;
+    }
+
+    private void refreshProfileFromPreferences() {
+        currentPitch = BoopVoiceTuning.clampPitch(
+                preferences.getFloat(KEY_PITCH, BoopVoiceTuning.DEFAULT_PITCH));
+        currentSpeechRate = BoopVoiceTuning.clampRate(
+                preferences.getFloat(KEY_SPEECH_RATE, BoopVoiceTuning.DEFAULT_RATE));
+        selectedBackend = preferences.getString(KEY_SELECTED_BACKEND, BACKEND_ANDROID);
+        if (!BACKEND_NATURAL.equals(selectedBackend)) selectedBackend = BACKEND_ANDROID;
+        naturalSpeakerKey = preferences.getString(KEY_NATURAL_SPEAKER_KEY, NATURAL_VOICES[0].key());
+        if (findNaturalVoice(naturalSpeakerKey) == null) naturalSpeakerKey = NATURAL_VOICES[0].key();
     }
 
     private void refreshVoices(Locale preferredLocale) {
