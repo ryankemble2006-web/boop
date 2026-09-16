@@ -10,6 +10,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -98,20 +99,31 @@ public final class ShieldHomeView extends LinearLayout {
             }
         }
 
-        addView(navRow(callbacks), new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        addSpacer(dp(16));
+        FrameLayout stage = new FrameLayout(getContext());
+        stage.setClipChildren(false);
+        stage.setClipToPadding(false);
+        addView(stage, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
+
+        FrameLayout.LayoutParams navParams = new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        navParams.gravity = Gravity.TOP | Gravity.START;
+        navParams.topMargin = dp(30);
+        stage.addView(navRow(callbacks), navParams);
 
         nowPlayingView = new ShieldNowPlayingView(getContext());
-        addView(nowPlayingView, new LayoutParams(LayoutParams.MATCH_PARENT, dp(182)));
-        nowPlayingSpacer = new View(getContext());
-        addView(nowPlayingSpacer, new LayoutParams(1, dp(16)));
+        FrameLayout.LayoutParams nowPlayingParams = new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, dp(182));
+        nowPlayingParams.gravity = Gravity.TOP | Gravity.START;
+        nowPlayingParams.topMargin = dp(106);
+        stage.addView(nowPlayingView, nowPlayingParams);
         setNowPlaying(snapshot);
 
-        addView(sectionTitle("Favourite apps"), wrap());
-        addSpacer(dp(16));
+        FrameLayout.LayoutParams favouritesParams = new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, dp(215));
+        favouritesParams.gravity = Gravity.CENTER_VERTICAL;
+        stage.addView(appRow(safeFavourites, callbacks), favouritesParams);
 
-        addView(appRow(safeFavourites, callbacks), new LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(215)));
+        addHomeAssistant(stage);
 
         for (HomeRow row : safeOptionalRows) {
             if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
@@ -133,7 +145,7 @@ public final class ShieldHomeView extends LinearLayout {
         panel.bind(snapshot, activeCallbacks);
         boolean visible = snapshot != null
                 && NowPlayingSelectionPolicy.eligible(snapshot.playbackState());
-        panel.setVisibility(visible ? VISIBLE : GONE);
+        panel.setVisibility(visible ? VISIBLE : INVISIBLE);
         if (nowPlayingSpacer != null) {
             nowPlayingSpacer.setVisibility(visible ? VISIBLE : GONE);
         }
@@ -312,30 +324,30 @@ public final class ShieldHomeView extends LinearLayout {
         View spacer = new View(getContext());
         row.addView(spacer, new LayoutParams(0, 1, 1f));
 
-        LinearLayout assistantBay = new LinearLayout(getContext());
-        assistantBay.setOrientation(VERTICAL);
-        assistantBay.setGravity(Gravity.END);
-        assistantBay.setClipChildren(false);
-        assistantBay.setClipToPadding(false);
+        TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
+        settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
+        LayoutParams settingsParams = new LayoutParams(dp(144), dp(60));
+        row.addView(settings, settingsParams);
+        return row;
+    }
+
+    private void addHomeAssistant(FrameLayout stage) {
+        LinearLayout assistantDock = new LinearLayout(getContext());
+        assistantDock.setGravity(Gravity.END | Gravity.BOTTOM);
+        assistantDock.setClipChildren(false);
+        assistantDock.setClipToPadding(false);
+        assistantDock.setFocusable(false);
+        assistantDock.setClickable(false);
 
         homeAssistantPuppet = new ShieldNowPlayingPuppetView(getContext());
         homeAssistantPuppet.setPresentationOwner(com.boop.shared.BoopState.Owner.NONE);
         homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());
-        LayoutParams assistantParams = new LayoutParams(dp(360), dp(220));
-        assistantParams.gravity = Gravity.END;
-        assistantParams.rightMargin = dp(-42);
-        assistantParams.bottomMargin = dp(32);
-        assistantBay.addView(homeAssistantPuppet, assistantParams);
+        assistantDock.addView(homeAssistantPuppet, new LayoutParams(dp(360), dp(220)));
 
-        TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
-        settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
-        LayoutParams settingsParams = new LayoutParams(dp(144), dp(60));
-        assistantBay.addView(settings, settingsParams);
-
-        row.addView(assistantBay, new LayoutParams(dp(230), LayoutParams.WRAP_CONTENT));
-        return row;
+        FrameLayout.LayoutParams assistantDockParams = new FrameLayout.LayoutParams(dp(360), dp(220));
+        assistantDockParams.gravity = Gravity.END | Gravity.BOTTOM;
+        stage.addView(assistantDock, assistantDockParams);
     }
-
     private NowPlayingSnapshot idleAssistantSnapshot() {
         return new NowPlayingSnapshot(
                 -1L,
