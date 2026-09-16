@@ -1,6 +1,6 @@
 # BOOP - current notes only
 
-Updated 2026-09-15. This file intentionally contains only the newest routing notes.
+Updated 2026-09-16. This file intentionally contains only the newest routing notes.
 Old startup-rule/context stacks were removed because they had become stale and slowed down work.
 Current user instructions always win.
 
@@ -15,6 +15,14 @@ Ryan and the assistant test device behaviour together. Follow his observations a
 Desktop Commander/ADB may stage the GitHub-built APK, perform an explicitly requested installation on authorized devices, and read back installation identity. Local runtime diagnosis, captures and inputs should be part of the testing agreed with Ryan, not an automatic development loop. Do not edit or build app source locally. Preserve dirty/concurrent checkout work. Emulators are optional only if Ryan explicitly asks for them; do not delete or reconfigure existing AVDs.
 
 Current authorized physical BOOP targets are Shield and Pixel 7. Leave physical Pixel 10 alone unless Ryan explicitly changes that boundary. No permission changes, lock bypass, data clear, signing-key substitution or reset of his colour/settings choices. Keep the approved artwork, coded animations, exact original 1x timing and accepted Shield polish. Tool denials must not be bypassed; they are not evidence that animation controls themselves are dangerous. Distinguish a denied operation from an independently authorized later request.
+
+## GitHub-first efficiency and test order
+
+Use GitHub as BOOP's shared source of truth across Chat, Work and Codex so a mode change does not require Ryan to reconstruct project state. Start with the intended LIVE branch HEAD, then read that branch's newest task-specific handoff/status/memory and only the source files relevant to the current change. Prefer exact line/range reads, targeted searches and commit/diff comparisons over rereading whole files or broad historical context. Do not rerun expensive checks or reread unchanged context merely because the session or mode changed.
+
+For GitHub Actions, inspect the run/job/step summaries first and fetch full logs only for the failing or otherwise relevant job. For code changes, use the smallest relevant automated regression/logic test first where the repository already supports one, then use the full GitHub Actions build/test as the authoritative clean-environment code/build evidence. Keep source edits and builds on GitHub; do not substitute a local checkout build for the published branch result.
+
+Use Desktop Commander/ADB only for the runtime/device layer that CI cannot prove, such as installation identity, Shield/phone behaviour, remote navigation, playback/media integration, notifications or agreed runtime logs/captures. Keep these evidence levels distinct: targeted test result, GitHub CI/build result, installation verification and Ryan's physical acceptance are not interchangeable. Preserve the existing concurrency, signing, privacy and no-local-source-edit/build rules while following this efficient path.
 
 ## Accepted default character: photographic felt Boop
 
