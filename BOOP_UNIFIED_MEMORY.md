@@ -1,3 +1,9 @@
+# v197 Home media handoff — 2026-09-16
+
+The balanced 360×220 Home BOOP from v196 remains unchanged in size/placement. v197 fixes duplicate Home + Now Playing BOOP by explicitly pausing/hiding the inner topmost `GLSurfaceView` whenever the Home puppet loses ownership, then resuming it when Now Playing disappears. This deliberately reuses the existing eligibility path rather than special-casing Deezer or Chromecast.
+
+RED `35067647431`; fix GREEN `35067925001`; final signed v197 `35068273731`. Installed on Shield only; version/hash/accessibility verified. Active Deezer screenshot showed only small BOOP; force-stop screenshot showed large Home BOOP restored.
+
 # v196 Home assistant vertical balance — 2026-09-16
 
 Ryan kept v194's larger 360x220dp Home assistant but wanted it higher so the black space above and below felt balanced. v195 moved the gap to 24dp but remained slightly low in a fresh Shield frame; v196 (`07f3d122f...`, run `35066116181`) uses 32dp, leaving size, horizontal placement, Shield Settings, media ownership and accepted character rendering unchanged. Signed v196 is installed/hash-verified on Shield only. Fresh Shield screenshot captured; visual acceptance remains Ryan's call.
