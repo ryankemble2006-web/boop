@@ -1,3 +1,7 @@
+# v196 balanced Home BOOP candidate — 2026-09-16
+
+`boop-hand-colour-v191` commit `07f3d122fcd2beca910ef73814871a6654b1b753`, run `35066116181` SUCCESS. Signed v196 installed on Shield only and pulled-back APK hash matches `A90F4167D59F2DC799692C3617DFDC28B813F828F75D1C82A8CC95DA086D16B7`. Home BOOP remains 360x220dp above Shield Settings; only the inter-view gap increased to 32dp to lift him upward. Shield Settings position and media ownership behavior are preserved. Fresh Shield screenshot captured; Ryan's visual acceptance remains pending. v194 remains the larger-size rollback, v191 the accepted character rollback.
+
 # v194 bigger Home BOOP candidate ? 2026-09-16
 
 `boop-hand-colour-v191` commit `a7cd80d6e3528227b10d4a9bc7daaa3410e6a8f8`, run `35064596599` SUCCESS. Signed v194 installed on Shield only and pulled-back APK hash matches `F089FDCA83548340FED7110636B6163FD9878E0D6C2DC6E5653CD747B2568E82`. Idle Home BOOP is now 360x220dp above Shield Settings; button location and media ownership behavior are preserved. Real Shield screenshot captured; Ryan's visual acceptance is pending. v193 remains previous placement rollback; v191 remains accepted character rollback.

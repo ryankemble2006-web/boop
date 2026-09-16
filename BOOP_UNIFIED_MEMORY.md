@@ -1,3 +1,7 @@
+# v196 Home assistant vertical balance — 2026-09-16
+
+Ryan kept v194's larger 360x220dp Home assistant but wanted it higher so the black space above and below felt balanced. v195 moved the gap to 24dp but remained slightly low in a fresh Shield frame; v196 (`07f3d122f...`, run `35066116181`) uses 32dp, leaving size, horizontal placement, Shield Settings, media ownership and accepted character rendering unchanged. Signed v196 is installed/hash-verified on Shield only. Fresh Shield screenshot captured; visual acceptance remains Ryan's call.
+
 # v194 Home assistant scale ? 2026-09-16
 
 Ryan asked for the Home assistant above Shield Settings to be bigger after physically reviewing v193. v194 (`a7cd80d6...`, run `35064596599`) enlarges only the idle Home assistant surface to 360x220dp, preserves Shield Settings position and existing media ownership, and is installed/hash-verified on Shield. Fresh Shield screenshot captured; visual acceptance remains Ryan's call. Do not infer visual acceptance from CI.

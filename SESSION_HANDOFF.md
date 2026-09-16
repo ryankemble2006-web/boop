@@ -1,3 +1,15 @@
+# Current: v196 balanced Home BOOP candidate — 2026-09-16
+
+Owner remains `boop-hand-colour-v191`; live GitHub is authoritative. v191 remains the accepted character rollback. v194 preserved the accepted larger Home size, and v196 is the current vertical-placement candidate.
+
+Ryan kept the v194 360x220dp size but asked BOOP to move upward so the black space above and below the eye group is balanced. v195 raised the assistant gap from 8dp to 24dp and was installed/hash-verified, but the fresh Shield frame was still slightly low. v196 raises only that gap again to 32dp. Width/height, right alignment, Shield Settings position, Close media behavior, media ownership, artwork, eyes, felt, hand, lyrics and playback controls are unchanged.
+
+Source/build commit `07f3d122fcd2beca910ef73814871a6654b1b753`; GitHub run `35066116181` SUCCESS. Signed artifact `BOOP-Unified-v196-Balanced-Home-Assistant`; package `com.boop.alpha1`, version 196 / `1.2.196-home-assistant-balanced`. Installed on Shield only with app data retained; accessibility service set unchanged. Local artifact SHA-256 and pulled installed APK both equal `A90F4167D59F2DC799692C3617DFDC28B813F828F75D1C82A8CC95DA086D16B7`.
+
+Fresh real-Shield screenshot captured after install. Assistant observation: the larger BOOP now sits substantially closer to equal spacing above and below; per repo rules Ryan owns the visual verdict and acceptance is still pending. No screenshot was published to the public repository.
+
+---
+
 # Current: v194 bigger Home BOOP candidate ? 2026-09-16
 
 Owner remains `boop-hand-colour-v191`; live GitHub is authoritative. v191 remains the accepted character rollback and v193 remains the previous Home-placement rollback.
