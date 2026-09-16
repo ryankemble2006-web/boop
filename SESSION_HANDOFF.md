@@ -1,73 +1,39 @@
-## Current Unified handoff: v206 installed; idle Home corner verified
+# BOOP current handoff: preserve accepted Home; finish Voice before splitting
 
-Updated 2026-09-16. Owner: `boop-hand-colour-v191`. Ryan physically accepted v205 Home spacing and left alignment, and requested only the idle BOOP corner repair. Keep that approved layout unchanged.
+Updated 2026-09-16. Current application owner remains `boop-hand-colour-v191`. Main is the shared context hub, not the latest app source. The Wall/Shield split is authorized only after the current voice/UI work is finished, jointly accepted and preserved. No split implementation or clean install has begun in this prerequisite review.
 
-v206 (`206` / `1.2.206-idle-home-corner`) is installed on Shield from source `9d57019d9370dbe3f47061b6e8b0ce8ed5134715`. Signed run `35099151524` SUCCESS; artifact `10447197742` / `BOOP-Unified-v206-Idle-Home-Corner`. Downloaded and pulled-back installed APK SHA-256 both equal `b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca`. The permanent signer is unchanged.
+## Verified source and device baseline
 
-Live joint-test sequence: captured active playback, used the actual Close player control once, and inspected fresh no-media screenshots after the close and another Home entry. Now Playing and its small puppet disappear; one larger BOOP is visibly in the bottom-right corner below the favourites. Favourites remain parked with unchanged bounds and approved spacing. This is live screenshot/runtime evidence; Ryan retains final acceptance and other media-exit routes were not exhaustively retested.
+Live heads read for this review: main `c9684d82818d6143ee7abc8c8494059aed8e36df`; application branch `9a21703be2bb423607fcca87cc75c1718ed7dd54` before this documentation publication. Latest built application source is `9d57019d9370dbe3f47061b6e8b0ce8ed5134715`.
 
-The only app behavior change is a four-line owner guard in `ShieldNowPlayingPuppetView.lockToMascotBay()`. `ShieldHomeView`, `TvAppCardView`, artwork, voice, permission declarations and media behavior are unchanged. Full diagnosis, RED/GREEN and install receipt: `docs/handoffs/2026-09-16-v206-idle-home-host.md`. Private captures/raw dumps remain local; older dirty v203 checkout documentation was preserved, not synchronized over or published as current.
+Fresh targeted ADB reads identify Shield as `com.boop.alpha1`, versionCode `206`, `1.2.206-idle-home-corner`, APK SHA-256 `b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca`. This matches the signed v206 receipt. GitHub run `35099151524` was rechecked and all build/test/signer/package steps report success. Artifact: `10447197742`, `BOOP-Unified-v206-Idle-Home-Corner`.
 
----
+Pixel 7 Pro still has `com.boop.alpha1`, versionCode `191`, `1.2.191-hand-colour`, installed APK SHA-256 `bfc1204c5da030a94991af021a0d0c4f85adb01b22d28825ce68fa7a065843f1`. This is installed-identity evidence, not a claim that the current Voice changes have been delivered to or accepted on Pixel 7. No command was directed to physical Pixel 10.
 
-## Current Unified handoff - v205 installed; Home spacing visually aligned
+## Home acceptance is now recorded
 
-Updated 2026-09-16. Owner remains `boop-hand-colour-v191`. Current receipt: `docs/handoffs/2026-09-16-v205-home-visual-spacing.md`.
+Ryan accepted the v205 visible spacing and left alignment, then confirmed the corner repair after reload: "tested after you reloaded.. perfection. thanks boops". Preserve the four top buttons, equal visible gaps, fixed favourites position, removed Favourite apps heading, and larger idle BOOP bottom-right when Now Playing disappears. Do not request another Home redesign or infer a need to replace accepted code.
 
-Signed v205 (`205` / `1.2.205-home-visual-spacing`) is installed on the Shield. Source/build head `b529eceaa70b3d6140eeb41d5d35cd5e41ecd8ef`; focused visual-spacing gate was RED first at run `35095495224`, then GREEN at `35096388830`; full signed run `35096667354` succeeded with artifact `10446686887` / `BOOP-Unified-v205-Home-Visual-Spacing`.
+Receipt: `docs/handoffs/2026-09-16-v206-idle-home-host.md`. This acceptance is scoped to the tested Home behavior; it is not a new exhaustive test of every external app/Cast exit route or a sign-off of Voice.
 
-Fresh ADB install/pull-back verification matched APK SHA-256 `633f0d70cff6db5823909f13f1231818fa1a7ae041088975b4cfe776bfe3b088` byte-for-byte. A fresh live Shield screenshot during playback shows the four top buttons unchanged, the visible Apps-row-to-Now-Playing gap matching the Now-Playing-to-Kodi artwork gap, and uniform gaps across Kodi, YouTube, Deezer, Casualty and EastEnders. The `Favourite apps` heading remains absent. v205 removes hidden Home-card top inset/centering and keeps banner focus size fixed so source-level 16dp spacing is also visually consistent.
+## Prerequisite still open: current Voice and wider TV focus
 
-Acceptance boundary: active-playback Home spacing is visually verified from the live screenshot. This v205 check did not stop the user's playback to re-exercise the no-media transition, so the parked favourites position and large bottom-right idle BOOP remain preserved by source/tests but await a fresh no-media physical screenshot if needed. No phones, permissions, app data, voice models or unrelated branches were touched.
+The source contains the v200 TEST VOICE and natural pitch/rate work, v201 surface-ownership repair, v202 focus/slider fixes, and subsequent natural-voice latency/four-thread changes. Do not roll back to a v201 or v198 implementation merely because an old handoff describes it.
 
----
+The fetched receipts and this conversation do not establish final human acceptance of audible current-backend output, pitch/cadence, current cross-device voice-profile sharing, or uniform Home-style focus across all requested TV controls. Pixel 7 remains on an earlier app. Establish the other window's completion/ownership status and finish the agreed joint Voice/UI checks before beginning the split. Preserve any subsequent fixes from the live owning branch; v206 is not a frozen future split base.
 
-## Current Voice handoff - v201 installed; entry screen clear
+## Next task and safety gate
 
-Updated 2026-09-16. Owner remains `boop-hand-colour-v191`. Current receipt: `docs/handoffs/2026-09-16-v201-voice-verified-build.md`. Preserve the collaborating install handoff and independent review alongside it.
+Full approved split/newcomer-test context: `docs/handoffs/2026-09-16-wall-shield-split-prerequisites.md`.
 
-**Fresh Shield verification: v201 is installed and the Voice entry screen is unobstructed.** Direct package/hash reads confirm `com.boop.alpha1`, 201 / `1.2.201-voice-surface-ownership`, installed APK SHA-256 `527907407d60787860cf9e1c1cd13b464db91f015f657eec92590f995d735c8e`. The latest targeted hierarchy shows both the canonical face wrapper and child GLSurfaceView GONE. A fresh screenshot visibly shows Voice, BOOP name/training controls, Pitch, Cadence and TEST VOICE with no giant eyes. The collaborating session performed the update; this reviewing recovery did not reinstall it or change settings.
+The current implementation has one application ID, `com.boop.alpha1`. Future identities are Wall `com.boop.alpha1` and Shield `com.boop.shieldoverlay`, derived from the latest accepted combined source with shared functionality maintained together, not resurrected standalone implementations.
 
-Build source `eff4b004176747bfa489f566a34357b52e8c0557`; full signed run `35080910395` SUCCESS; artifact `10439409429`, `BOOP-Unified-v201-Voice-Surface-Ownership`. Independent APK inspection confirms the permanent signer, matching source/hash and unchanged permission declarations versus v200. The regression failed before the five-line visibility correction and passed afterward, including against materialized source. Artwork, voice backends/tuning, Home/media behavior and music assertions were not changed by that correction.
+Shield currently resolves HOME to `com.boop.alpha1/.UnifiedEntryActivity`. The only other enabled HOME activity returned by the query was `com.android.tv.settings/.system.FallbackHome`. A usable recovery route still needs to be established before any uninstall; do not silently enable/reassign a Home app.
 
-**Acceptance boundary:** this proves the visible obstruction is absent in the captured Voice entry state; it is not blanket physical acceptance. This recovery has not pressed TEST VOICE, adjusted Pitch/Cadence, tested exit/re-entry restoration, heard the natural voice output or tested cross-device sharing. Continue those joint checks with Ryan before marking the broader voice task finished. Screenshots/raw dumps stay private. Do not reinstall again merely because an older note says v200 or awaiting deployment.
+No app source, workflow, signing configuration, permissions, app data, onboarding flags or installed package was changed in this review. Neither device is at fresh setup step one. Do not remove Unified until both replacement APKs and appropriate recovery APKs are built/retained, identity-checked and staged, and the prerequisite is closed.
 
-The earlier v200 source-provenance gap is also closed: its installed and downloaded APK hashes matched `bd0b80ab96e858ed12bcaa1c43b132f4b55a43c078630a7cebb80a9db34d5bf5` from source `572e8d6cb4726951df0604e18a9a8e614d93a543`. Keep source/builds and durable handoffs on GitHub; use the already-connected bridge without Work-mode/reconnect prompts. This publication is documentation-only. Physical Pixel 10, permissions, app data, voice models, signing keys and unrelated branches remain outside this recovery's changes.
+## Continuity
 
----
+The local owning worktree is still at `0517f73a398b43b165b1557ca6a11b26f5704615` with dirty v203 documentation. It was left untouched, not synchronized over. Read live GitHub rather than that stale working copy. Before future edits recheck both live heads and concurrent work.
 
-# Unified session handoff - 2026-09-16
-
-Owner branch: `boop-hand-colour-v191`. Live GitHub is authoritative for the branch; distinguish its build receipts from fresh device observations.
-
-## Latest joint-test observation: Voice screen still obstructed
-
-Ryan resumed BOOP Voice Ideas at the **human-testing phase**, not a new design/build phase. His requested live Shield screenshot confirms full-size felt eyes covering the Voice name controls and much of the Pitch/Cadence slider area; TEST VOICE remains visible at the bottom. A read-only identity check confirms foreground `com.boop.alpha1/.MainActivity` and installed v200 (`1.2.200-uniform-tv-chrome-voice-demo`). The oversized-eyes blocker is still present; no fix, voice audio, selector behavior or cross-device acceptance is claimed.
-
-Continue from `docs/handoffs/2026-09-16-voice-human-test-overlay-blocker.md`. Locate the actual v200 source/build receipt before any correction; the older v198 receipt below is not v200 provenance. Keep the human-test phase and the requirement to clear the visual obstruction before further voice work. This continuation captured/read only and updated documentation: no app code, settings, permissions, installs, signing, phones or local worktrees changed. Private screenshots/raw output were not published.
-
-## Latest device maintenance: Shield storage cleanup
-
-Ryan requested removal of old Shield clutter. Removed 103 obsolete downloaded APK copies, three hash-verified duplicate Forki installers, 84 old BOOP/Johnny/Rally captures and 14 old temporary diagnostics. Recovered approximately 1.92 decimal GB; final free space was 3,784,840 KiB, approximately 3.88 decimal GB (3.61 GiB), with 69% used. All 21 third-party package names and the Home/screensaver defaults were preserved. Five unclassified backup ZIPs and one original Forki installer remain on the Shield.
-
-Direct inspection before and after cleanup showed **BOOP v200** (`1.2.200-uniform-tv-chrome-voice-demo`) and Johnny versionCode 15 (`1.14-reborn-ha-fast-poll`) already installed and unchanged. This task did not build, sign, install or physically accept v200. It did not modify app data, permissions, phones, source or local worktrees.
-
-Full maintenance receipt: `docs/handoffs/2026-09-16-shield-storage-cleanup.md`.
-
-Storage cleanup is complete; the originally blocked install was not retried. The v197/v198 installation statements and install-next-step below belong to the earlier build session. They are superseded for current Shield identity by this live v200 observation. Fetch the current feature receipt before any later explicitly requested install; **do not downgrade to an older candidate from this historical next-step paragraph**. No new v200 source/hash provenance or feature acceptance is claimed.
-
-## Earlier build-session receipt: v198 voice profile controls
-
-v198 (`1.2.198-voice-profile-controls`) adds **Voice pitch** and **Voice speed** sliders to Build a Boop and a separate opt-in Home Assistant voice-profile channel. The bounded `BOOP_VOICE_V1` profile carries Android/natural backend choice, Emma/Isabella/George/Fable natural voice key, pitch and speech rate. Natural voice model files remain local to each device and are never transferred through Home Assistant.
-
-Built source `7a333039d127324d4de69d2a4b84e203fb61bbbc`; focused GREEN run `35071143878`; final signed full run `35071278286` SUCCESS. Artifact `BOOP-Unified-v198-Voice-Profile-Controls`, id `10436755628`, artifact digest `sha256:3df9ce6956c6b94078c13fd9b14a4279a478a069aef9262a9af25b981667e7da`.
-
-The full workflow passed inherited accepted-character, lyrics, music/bass, startup, natural-voice, colour-sharing, animation-speed, Android compile, permanent-signer and APK identity checks. The first full run exposed only an inherited v169 production-change allowlist; actual music worker checks passed 1,444 assertions and the allowlist was expanded only for the six intentional v198 voice source files.
-
-Natural Kokoro rate uses the shared rate. Natural Kokoro pitch remains deliberately unapplied to PCM playback until that Android audio path is physically proven. The pitch value is nevertheless saved/shared now and remains usable by Android TTS.
-
-**Verification boundary recorded in that earlier session:** v198 was CI/build/signer green but had not been installed or physically accepted. The Shield's then-verified installed baseline was v197. Preserve v197 Home/Now Playing ownership behavior, the physically accepted v191 character/hand checkpoint, and locked felt default tag `boop-felt-default-v189`.
-
-Full v198 receipt: `docs/handoffs/2026-09-16-v198-voice-profile-controls.md`.
-
-The earlier next step was an explicitly requested v198 install followed by joint verification of slider feel and phone↔Shield natural voice/rate sharing. That install instruction is now historical; use the latest-device warning above. Do not claim natural pitch playback until separately proven.
+The complete prior root handoff/status/memory documents are preserved byte-for-byte in `docs/handoffs/2026-09-16-pre-split-archive/`; their mixed v198/v200/v201/v205 status paragraphs are historical. Dated feature receipts remain intact. This publication is documentation-only.
