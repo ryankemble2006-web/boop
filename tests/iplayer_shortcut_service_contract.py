@@ -32,9 +32,12 @@ for programme in ("eastenders", "casualty"):
 
     assert "ACTION_APPLICATION_DEVELOPMENT_SETTINGS" in main, "First-run failure must offer Shield debugging setup"
     assert "Open debugging settings" in main
+    assert "new AlertDialog.Builder" not in main, "Android TV setup must not depend on a dialog window"
+    assert "setContentView" in main, "First-run setup must render inside the launcher activity"
+    assert '"Authorise"' in main and '"Cancel"' in main, "TV setup must expose D-pad actions"
 
     compact = "".join(service.split())
     assert "node.isFocused()" not in service, "Profile choice must not depend on whichever avatar currently has focus"
     assert "page.profile==null" in compact and "UiPolicy.isExistingProfile(viewId,text)" in compact, "Traversal must pick the first real profile tile"
 
-print("PASS: both shortcuts are standalone, silently reset iPlayer, and choose the first real profile")
+print("PASS: both shortcuts are standalone, render TV setup, silently reset iPlayer, and choose the first real profile")
