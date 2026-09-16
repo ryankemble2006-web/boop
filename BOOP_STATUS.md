@@ -1,58 +1,25 @@
-# CURRENT: Voice deferred for Astra; split authorized with Voice unchanged
+# BOOP status: both v207 applications installed; human testing next
 
-Updated 2026-09-16. This direction supersedes every earlier requirement in the historical material below to finish Voice, fix latency, gather another Try Emma / TEST VOICE sample or obtain further Voice acceptance before splitting. The v206 UI remains accepted.
-
-Ryan has explicitly deferred the approximately 12-second natural-voice latency investigation, alternative sources/voices and further pitch/cadence work for Astra later. Leave the current Voice implementation completely alone in BOTH split apps. Preserve the working natural backend, voice choices, model/download path, existing pitch/cadence code and voice-profile sharing. Do not optimize, remove controls, replace providers/models or roll back to a pre-tuning implementation. Working natural voices are the preservation requirement; the latency is not claimed fixed.
-
-Proceed with the agreed Wall/Shield packaging task from the latest live combined lineage. Voice work is no longer a prerequisite. Preserve all accepted UI/features and concurrent work. The package-sensitive integration audit, both signed/verified replacement APKs, recovery checks and stop-at-first-real-setup deployment conditions remain mandatory.
-
-Current execution status: no split source changes, new APKs or installation changes yet. One multi-file source-audit command was blocked by the tool safety check; it was not rerouted. This publication records the approved Voice deferral only. Current receipt: `docs/handoffs/2026-09-16-voice-deferred-split-authorized.md`.
-
-## Historical pre-deferral record below
-
-Earlier Voice prerequisites below are preserved for history and are NOT current instructions.
-
----
-
-# BOOP status: v206 UI accepted; Voice prerequisite remains open
-
-Updated 2026-09-16. Owner: `boop-hand-colour-v191`.
-
-## Current installed identities, freshly read
-
-| Target | Installed package | Version | APK SHA-256 |
-| --- | --- | --- | --- |
-| Nvidia Shield | `com.boop.alpha1` | `206` / `1.2.206-idle-home-corner` | `b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca` |
-| Pixel 7 Pro | `com.boop.alpha1` | `191` / `1.2.191-hand-colour` | `bfc1204c5da030a94991af021a0d0c4f85adb01b22d28825ce68fa7a065843f1` |
-
-Physical Pixel 10 was not targeted. No install, uninstall, data clear, setup navigation, permission grant or Home reassignment was performed in this review.
+Updated 2026-09-16. Owner: `boop-wall-shield-split-v207`.
 
 ## Evidence levels
 
-**Source/build:** latest built application source `9d57019d9370dbe3f47061b6e8b0ce8ed5134715`. Signed run `35099151524` was rechecked: success for all reported steps, including functional regressions, Android compilation, permanent signer and APK identity. Artifact `10447197742`, `BOOP-Unified-v206-Idle-Home-Corner`. No new build/test was run for this documentation-only reconciliation.
+**Build/signing:** source `aa8fd9f6d79f28b441a48df31138a75d38420118`, full signed run `35110823569` SUCCESS, focused run `35110823530` SUCCESS, artifact `10451993779` / `BOOP-Wall-Shield-v207-Signed`. The existing permanent certificate, both packages/versions/entry components, accepted artwork and all 16 native libraries were verified. All 18 inherited v206 verification steps and focused split tests passed.
 
-**Installation:** fresh Shield APK hash matches the v206 build/install receipt. Pixel 7 is still v191, so current Voice work is not established there by these readings.
+**Installation:** clean uninstall of old Unified and installation of only the corresponding replacement completed on each target. Pixel 7 is `com.boop.alpha1`, `207` / `1.2.207-wall`, SHA-256 `05436dc79441b69d2cd5c328b809dce22464b6ba0fb120cd302d7cd5084c81dd`. Shield is `com.boop.shieldoverlay`, `207` / `1.2.207-shield`, SHA-256 `d4cff18acc85e7360601de042c37281ae6f262018b428525834ed70188574a0f`. On-device hashes match the signed staged files. Shield's old `com.boop.alpha1` is absent; Wall was not installed on Shield and Shield was not installed on Pixel 7.
 
-**Human acceptance:** Ryan explicitly confirms v206 as the working baseline and its UI as accepted. Preserve the accepted layout and controls without another UI/focus acceptance gate. Earlier voice testing reported natural voices present and Pitch/Cadence affecting speech, but long Try Emma / TEST VOICE delays. Current v206 voice response-delay acceptance and cross-device voice-sharing verification remain open; UI sign-off does not establish either. Do not reset that earlier voice progress or claim a new audio test happened here.
+**Setup evidence:** both genuine first screens were captured and their completed flag was false/absent, with no Continue press or sign-in by this sequence. Pixel 7 remains at first setup in the latest read. Shield subsequently reports setup complete and YouTube foreground. Do not claim both currently remain at step one or erase that progress.
 
-## Split status
+**Acceptance:** accepted v206 UI and previously working natural Voice remain protected. Split onboarding and later device behavior have not been physically accepted by Ryan in this work. The Voice latency issue is deferred, not fixed or a prerequisite.
 
-Authorized next task, gated by completion, joint acceptance and preservation of current voice/UI work. No split source edits or replacement APKs were produced in this review. Both devices retain their existing setup; neither is at newcomer setup step one.
+## Access cleanup and recovery
 
-Future Wall: `com.boop.alpha1` on Pixel 7 Pro. Future Shield: `com.boop.shieldoverlay` on Nvidia Shield. Preserve latest combined source and genuinely shared assistant functionality. No old standalone-code rollback and no device/profile chooser. Details: `docs/handoffs/2026-09-16-wall-shield-split-prerequisites.md`.
+Before uninstalling either app, both verified replacements and both known-good, permanently signed recovery APKs were staged; responsive Shield ADB and the existing Android Settings recovery screen were verified without changing Home ownership. No BOOP data, downloaded voice pack, credential or setup flag was restored. No permission was pre-granted, default Home forced, hardware reset or Home Assistant change performed.
 
-## Uninstall safety still pending
+During later reads, three BOOP Shield notification-listener grants and overlay access were found enabled. This sequence revoked only those and preserved unrelated listeners. Their source was not determined. Last check: listeners/accessibility/overlay and mic/camera access off. No further device input was sent after noticing Shield's later setup completion. Pixel 10 was never targeted.
 
-Shield HOME currently resolves to Unified; the only other enabled HOME activity queried was Android settings `FallbackHome`. Do not call that a verified replacement launcher or silently assign another Home. Both replacement APKs, suitable recovery APKs and a usable recovery route are required before removing anything.
+## Current source and durable evidence
 
-## Preservation
+The application implementation stays at the delivered source above. Subsequent verification-only maintenance at `5f9dbc4e86c0ec92eba728e8b3fbdf56818c2ece` stores exact v206 native hashes so later builds do not depend on an expiring Actions artifact. It is not a new app feature or another install instruction. Consult its actual run result separately from delivered build success.
 
-The local owning worktree is stale and has dirty v203 documentation; it remains untouched. Complete prior status and memory stacks are archived without byte changes in `docs/handoffs/2026-09-16-pre-split-archive/`. Follow `SESSION_HANDOFF.md` for current evidence and dated receipts for history.
-
-## Supplemental device evidence: recovery retained; accepted UI preserved
-
-Both existing installed APKs are now retained privately outside the checkout, with copied hashes and permanent signatures verified. No BOOP app data was backed up. Normal Shield UI navigation opened and privately captured the existing v206 Voice screen without changing settings or triggering speech.
-
-The newest v206 UI sign-off and earlier successful pitch/cadence observations remain accepted. Do not reopen a UI/focus gate. Current Voice response-delay acceptance and voice-profile sharing remain outstanding; no split or clean install has begun. Recovery copies are not replacement APKs or proof of a tested HOME recovery route.
-
-Exact recovery evidence and continuation boundary: `docs/handoffs/2026-09-16-split-recovery-and-voice-ready.md`. The concurrent `de28b0762b616acfaff61cf246cb8d6670dea5c5` clarification and dirty local v203 documents were preserved.
+Full receipt and latest evidence: `docs/handoffs/2026-09-16-v207-signed-clean-install.md`. Previous root status/context/memory are archived byte-for-byte in `docs/handoffs/2026-09-16-v207-before-split/`. The original owner and dirty local v203 documents remain unchanged. Live GitHub, not a version-like branch name or the local checkout, remains authoritative.
