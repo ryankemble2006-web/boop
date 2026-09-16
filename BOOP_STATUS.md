@@ -1,3 +1,19 @@
+# Current candidate: v192 Home assistant corner — 2026-09-16
+
+Branch `boop-hand-colour-v191` remains the owning lineage and live GitHub is authoritative. **v191 remains the physically accepted rollback checkpoint.** The new Home-presence candidate is versioned separately as v192.
+
+Built code commit `d9f7a94e11c2e0f0da1d6048ef94e0341f8e75bc`; signed GitHub run `35061033124` succeeded and produced artifact `BOOP-Unified-v192-Home-Assistant-Corner` with artifact digest `sha256:a02f54a8df2e9250492b3bf6bb7121af822f4fec9d68592b948757c2fb2c4209`.
+
+Behavior change is scoped to Shield Home presentation. Existing **Close media** shutdown behavior is untouched. When no eligible Now Playing session remains, Home shows one idle canonical BOOP at the right end of the top navigation row as an assistant reminder. It reuses `ShieldNowPlayingPuppetView` with `BoopState.Owner.NONE` and the existing REST/idle animation; during media, the existing `HOME_NOW_PLAYING` puppet retains ownership and the idle Home presence is hidden.
+
+No new renderer or artwork and no accepted v191 hand/eye/felt assets changed. Current starting geometry is `135dp x 90dp` after Shield Settings with `12dp` left margin. **Physical Shield placement/scale has not yet been accepted by Ryan.** No install, reinstall, permission change or device-state mutation was performed in this work.
+
+Focused RED run `35060491690` proved the Home host was missing before implementation. Final run passed the new ownership/materialization checks plus inherited v191 appearance, hand, lyrics, audio, build, permanent-signer and APK identity checks. Full receipt: `docs/handoffs/2026-09-16-v192-home-assistant-corner.md`.
+
+Next safe step: only after Ryan explicitly requests installation, install the signed v192 candidate on Shield and physically verify Close media, single-puppet ownership and exact top-right geometry. Do not alter accepted v191 artwork to solve placement.
+
+---
+
 # Current: v191 hand colour accepted — 2026-09-15
 
 Owner `boop-hand-colour-v191`; reviewed/built `32f7d34bd58e1f0ae58134326e2881ba0456f75c`, signed run34946949843 passed. Version191 installed and actual APK hash/version verified on Shield and Pixel7Pro.
