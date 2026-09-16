@@ -17,8 +17,9 @@ for programme in ("eastenders", "casualty"):
     assert "APPLICATION_DETAILS_SETTINGS" in service, "Cold cleanup must open Android TV App info"
     assert "guidedactions_item_title" in service, "Force-stop confirmation must use the Shield's stable action view id"
     assert "getWindows()" in service, "Cleanup must inspect Android TV guided confirmation windows, not only the active root"
+    assert "boolean confirmation=page.ok!=null;" in service, "After our one-shot Force stop request, exact Settings OK must be sufficient even when guided title markers are hidden"
     assert "PlayerBridgeClient" not in service, "Shortcut cleanup must not depend on a private ADB approval"
     assert "PlayerControlService" not in manifest, "Obsolete ADB broker must not be exported"
     assert "android.permission.INTERNET" not in manifest, "Settings force-stop does not need network permission"
 
-print("PASS: both shortcuts can inspect Shield App info and guided Force-stop confirmation windows")
+print("PASS: both shortcuts can inspect Shield App info and accept the exact guided OK action")
