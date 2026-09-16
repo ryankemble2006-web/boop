@@ -27,6 +27,7 @@ Check
 & java -cp build/tests uk.local.eastenders.ColdStartTest
 Check
 & "$PSScriptRoot/tests/BuildAssetsTest.ps1" -Sdk $Sdk
+& "$PSScriptRoot/tests/SettingsForceStopSourceTest.ps1"
 & "$bt/aapt2.exe" compile --dir res -o build/resources.zip
 Check
 & "$bt/aapt2.exe" link -o build/base.apk --manifest AndroidManifest.xml -I $platform --java build/generated build/resources.zip
