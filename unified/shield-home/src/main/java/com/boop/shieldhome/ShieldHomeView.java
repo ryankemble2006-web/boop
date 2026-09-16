@@ -3,6 +3,7 @@ package com.boop.shieldhome;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -48,6 +49,7 @@ public final class ShieldHomeView extends LinearLayout {
     private View addFavouriteTile;
     private TvAppCardView grabbedCard;
     private ShieldNowPlayingView nowPlayingView;
+    private ShieldNowPlayingPuppetView homeAssistantPuppet;
     private View nowPlayingSpacer;
     private NowPlayingSnapshot nowPlayingSnapshot;
     private Callbacks activeCallbacks;
@@ -82,6 +84,7 @@ public final class ShieldHomeView extends LinearLayout {
         favouriteRow = null;
         addFavouriteTile = null;
         nowPlayingView = null;
+        homeAssistantPuppet = null;
         nowPlayingSpacer = null;
 
         List<TvAppEntry> safeFavourites = favourites == null ? List.of() : favourites;
@@ -133,6 +136,9 @@ public final class ShieldHomeView extends LinearLayout {
         panel.setVisibility(visible ? VISIBLE : GONE);
         if (nowPlayingSpacer != null) {
             nowPlayingSpacer.setVisibility(visible ? VISIBLE : GONE);
+        }
+        if (homeAssistantPuppet != null) {
+            homeAssistantPuppet.setHomeVisible(!visible);
         }
     }
 
@@ -309,7 +315,29 @@ public final class ShieldHomeView extends LinearLayout {
         TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
         settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
         row.addView(settings, new LayoutParams(dp(144), dp(60)));
+
+        homeAssistantPuppet = new ShieldNowPlayingPuppetView(getContext());
+        homeAssistantPuppet.setPresentationOwner(com.boop.shared.BoopState.Owner.NONE);
+        homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());
+        LayoutParams assistantParams = new LayoutParams(dp(135), dp(90));
+        assistantParams.leftMargin = dp(12);
+        row.addView(homeAssistantPuppet, assistantParams);
         return row;
+    }
+
+    private NowPlayingSnapshot idleAssistantSnapshot() {
+        return new NowPlayingSnapshot(
+                -1L,
+                "",
+                "",
+                "",
+                PlaybackState.STATE_BUFFERING,
+                0L,
+                0L,
+                0L,
+                1f,
+                0L,
+                null);
     }
 
     private View appRow(List<TvAppEntry> favourites, Callbacks callbacks) {
