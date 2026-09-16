@@ -5,6 +5,7 @@ on:
     paths:
       - 'tests/test_v200_uniform_tv_chrome_voice_demo.py'
       - 'tests/test_voice_tv_focus_v202.py'
+      - 'tests/test_natural_voice_latency_v203.py'
       - 'unified/UnifiedApplication.java'
       - 'unified/app-build.gradle'
       - 'unified/shield-home/src/main/java/com/boop/shieldhome/**'
@@ -33,4 +34,4 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -q pytest
-      - run: python -m pytest -q tests/test_v200_uniform_tv_chrome_voice_demo.py tests/test_voice_tv_focus_v202.py
+      - run: python -m pytest -q tests/test_v200_uniform_tv_chrome_voice_demo.py tests/test_voice_tv_focus_v202.py tests/test_natural_voice_latency_v203.py
