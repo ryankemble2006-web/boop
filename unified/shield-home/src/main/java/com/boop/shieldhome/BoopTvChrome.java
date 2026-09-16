@@ -2,6 +2,7 @@ package com.boop.shieldhome;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -72,14 +73,20 @@ public final class BoopTvChrome {
 
     private static void decorateVoiceEditors(View view) {
         if (view instanceof SeekBar || view instanceof EditText) {
-            // A transparent foreground preserves native tracks, caret and input
-            // handlers while matching the existing button's blue focus border.
             StateListDrawable outline = new StateListDrawable();
             outline.addState(new int[]{android.R.attr.state_focused},
                     filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, true));
             outline.addState(new int[0],
                     filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, false));
             view.setForeground(outline);
+        }
+        if (view instanceof SeekBar) {
+            SeekBar slider = (SeekBar) view;
+            int blue = accentColor(view.getContext());
+            ColorStateList focusAccent = ColorStateList.valueOf(blue);
+            slider.setThumbTintList(focusAccent);
+            slider.setProgressTintList(focusAccent);
+            slider.setProgressBackgroundTintList(focusAccent);
         }
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
