@@ -31,3 +31,13 @@ def test_home_keeps_one_canonical_assistant_presence_when_media_is_gone():
     assert "homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());" in home
     assert "homeAssistantPuppet.setHomeVisible(!visible);" in home
     assert "PlaybackState.STATE_BUFFERING" in home, "idle presence should reuse the canonical idle media pose"
+
+
+def test_home_assistant_sits_above_shield_settings():
+    home = HOME_SOURCE.read_text(encoding="utf-8")
+    assert "LinearLayout assistantBay = new LinearLayout(getContext());" in home
+    assert "assistantBay.setOrientation(VERTICAL);" in home
+    assert "assistantBay.addView(homeAssistantPuppet, assistantParams);" in home
+    assert "assistantBay.addView(settings, settingsParams);" in home
+    assert "LayoutParams assistantParams = new LayoutParams(dp(230), dp(150));" in home
+    assert home.index("assistantBay.addView(homeAssistantPuppet, assistantParams);") < home.index("assistantBay.addView(settings, settingsParams);")
