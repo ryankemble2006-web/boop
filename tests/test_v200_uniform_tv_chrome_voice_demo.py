@@ -61,15 +61,15 @@ def test_natural_voice_pitch_is_applied_only_at_pcm_playback():
     assert "speedForRate(rate)" in backend
 
 
-def test_v200_build_identity_and_workflow_gate():
+def test_v201_build_identity_and_workflow_gate():
     gradle = text("unified/app-build.gradle")
-    assert "versionCode 200" in gradle
-    assert 'versionName "1.2.200-uniform-tv-chrome-voice-demo"' in gradle
+    assert "versionCode 201" in gradle
+    assert 'versionName "1.2.201-voice-surface-ownership"' in gradle
 
     workflow = text(".github/workflows/build-boop-v191-hand-colour.yml")
-    assert "Build BOOP v200 uniform TV chrome and voice demo" in workflow
+    assert "Build BOOP v201 Voice surface ownership" in workflow
     assert "tests/test_v200_uniform_tv_chrome_voice_demo.py" in workflow
-    assert "BOOP-Unified-v200-Uniform-TV-Chrome-Voice-Demo" in workflow
+    assert "BOOP-Unified-v201-Voice-Surface-Ownership" in workflow
 
 
 def java_method(source: str, signature: str) -> str:
