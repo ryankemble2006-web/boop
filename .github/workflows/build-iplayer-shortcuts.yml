@@ -1,0 +1,57 @@
+name: iPlayer shortcuts
+on:
+  push:
+    branches: [iplayer-shortcuts-home-20260916]
+    paths: ['eastenders-shortcut/**', 'casualty-shortcut/**', '.github/workflows/build-iplayer-shortcuts.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Functional checks for both programmes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for programme in eastenders casualty; do
+            cd "$GITHUB_WORKSPACE/$programme-shortcut"
+            mkdir -p build/tests
+            javac -d build/tests src/uk/local/$programme/{Routes,ClickGate,UiPolicy,LaunchPolicy}.java tests/*.java
+            for test in RouteTest ClickGateTest AutoplayPolicyTest LaunchPolicyTest ReturnHomeTest; do
+              java -cp build/tests uk.local.$programme.$test
+            done
+          done
+      - name: Build both APKs without exporting private signing keys
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' >/dev/null
+          bt="$ANDROID_HOME/build-tools/36.0.0"
+          platform="$ANDROID_HOME/platforms/android-36/android.jar"
+          for programme in eastenders casualty; do
+            cd "$GITHUB_WORKSPACE/$programme-shortcut"
+            mkdir -p build/classes build/dex build/generated
+            sha256sum res/drawable-nodpi/{banner,icon}.png > build/artwork.sha256
+            "$bt/aapt2" compile --dir res -o build/resources.zip
+            "$bt/aapt2" link -o build/base.apk --manifest AndroidManifest.xml -I "$platform" --java build/generated build/resources.zip
+            javac --release 8 -classpath "$platform" -d build/classes $(find src -name '*.java')
+            "$bt/d8" --release --min-api 23 --lib "$platform" --output build/dex $(find build/classes -name '*.class')
+            cp build/base.apk build/unsigned.apk
+            jar uf build/unsigned.apk -C build/dex classes.dex
+            "$bt/zipalign" -f -p 4 build/unsigned.apk build/$programme-aligned.apk
+            sha256sum -c build/artwork.sha256
+            "$bt/aapt2" dump badging build/$programme-aligned.apk
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iplayer-shortcuts-unsigned
+          path: |
+            eastenders-shortcut/build/eastenders-aligned.apk
+            casualty-shortcut/build/casualty-aligned.apk
+          if-no-files-found: error
