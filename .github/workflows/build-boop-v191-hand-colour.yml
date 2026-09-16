@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: boop-v201-voice-surface-ownership
+  group: boop-v202-voice-tv-focus
   cancel-in-progress: true
 jobs:
   build:
