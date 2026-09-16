@@ -21,13 +21,14 @@ import android.widget.TextView;
 public final class TvAppCardView extends FrameLayout {
     public static final float FOCUSED_SCALE = 1.08f;
     public static final float GRABBED_SCALE = 1.14f;
-    private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.05f;
-    private static final float HOME_ARTWORK_GRABBED_SCALE = 1.03f;
+    private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.00f;
+    private static final float HOME_ARTWORK_GRABBED_SCALE = 1.00f;
     private static final int HOME_ARTWORK_CORNER_DP = 8;
     public static final long FOCUS_DURATION_MS = 120L;
 
     private final ImageView iconView;
     private final TextView labelView;
+    private final LinearLayout content;
     private final TextView favouriteBadge;
     private boolean grabbed;
     private boolean favourite;
@@ -46,7 +47,7 @@ public final class TvAppCardView extends FrameLayout {
         setPadding(dp(14), dp(14), dp(14), dp(12));
         setBackground(new ColorDrawable(Color.TRANSPARENT));
 
-        LinearLayout content = new LinearLayout(context);
+        content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.CENTER);
         LayoutParams contentParams = new LayoutParams(
@@ -180,7 +181,14 @@ public final class TvAppCardView extends FrameLayout {
 
     private void configureCardPadding(boolean homeFavourite) {
         int horizontal = homeFavourite ? 0 : dp(14);
-        setPadding(horizontal, dp(14), horizontal, dp(12));
+        if (homeFavourite) {
+            setPadding(horizontal, 0, horizontal, 0);
+        } else {
+            setPadding(horizontal, dp(14), horizontal, dp(12));
+        }
+        content.setGravity(homeFavourite
+                ? Gravity.TOP | Gravity.CENTER_HORIZONTAL
+                : Gravity.CENTER);
     }
 
     private void configureArtworkSize(boolean banner) {

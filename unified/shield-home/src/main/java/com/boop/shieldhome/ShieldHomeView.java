@@ -261,8 +261,8 @@ public final class ShieldHomeView extends LinearLayout {
     private View createAddFavouriteTile(Callbacks callbacks) {
         LinearLayout tile = new LinearLayout(getContext());
         tile.setOrientation(VERTICAL);
-        tile.setGravity(Gravity.CENTER);
-        tile.setPadding(0, dp(14), 0, dp(12));
+        tile.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        tile.setPadding(0, 0, 0, 0);
         tile.setClipChildren(false);
         tile.setClipToPadding(false);
         tile.setFocusable(true);
@@ -361,7 +361,7 @@ public final class ShieldHomeView extends LinearLayout {
 
         favouriteRow = new LinearLayout(getContext());
         favouriteRow.setOrientation(HORIZONTAL);
-        favouriteRow.setGravity(Gravity.CENTER_VERTICAL);
+        favouriteRow.setGravity(Gravity.TOP);
         favouriteRow.setClipChildren(false);
         favouriteRow.setClipToPadding(false);
 
@@ -393,7 +393,7 @@ public final class ShieldHomeView extends LinearLayout {
                 }
                 return false;
             });
-            LayoutParams params = new LayoutParams(dp(240), dp(185));
+            LayoutParams params = new LayoutParams(dp(230), dp(185));
             params.rightMargin = dp(16);
             favouriteRow.addView(card, params);
 
@@ -404,7 +404,7 @@ public final class ShieldHomeView extends LinearLayout {
             }
         }
         addFavouriteTile = createAddFavouriteTile(callbacks);
-        LayoutParams addParams = new LayoutParams(dp(240), dp(185));
+        LayoutParams addParams = new LayoutParams(dp(230), dp(185));
         addParams.rightMargin = dp(16);
         favouriteRow.addView(addFavouriteTile, addParams);
         favouriteScroller.addView(favouriteRow, new HorizontalScrollView.LayoutParams(

@@ -1,4 +1,4 @@
-name: Build BOOP v204 Parked Home layout
+name: Build BOOP v205 Home visual spacing
 on:
   push:
     branches: [boop-hand-colour-v191]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: boop-v204-home-layout-parking
+  group: boop-v205-home-visual-spacing
   cancel-in-progress: true
 jobs:
   build:
@@ -27,7 +27,7 @@ jobs:
       - name: Verify Voice focus, Home/media ownership and inherited v200 contracts first
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_v200_uniform_tv_chrome_voice_demo.py tests/test_voice_tv_focus_v202.py tests/test_now_playing_bay_ownership.py tests/test_home_layout_v204.py
+          python -m pytest -q tests/test_v200_uniform_tv_chrome_voice_demo.py tests/test_voice_tv_focus_v202.py tests/test_now_playing_bay_ownership.py tests/test_home_layout_v204.py tests/test_home_visual_spacing_v205.py
       - name: Verify hand colour, pixel preservation and stale updates
         run: python tests/test_hand_colour_v191.py
       - name: Verify locked default and coherent felt sign anatomy
@@ -82,7 +82,7 @@ jobs:
           sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Preserve native lyrics, shared voice profile, TV focus and independent blink timing
         run: |
-          python -m pytest -q tests/test_v200_uniform_tv_chrome_voice_demo.py tests/test_voice_tv_focus_v202.py tests/test_now_playing_bay_ownership.py tests/test_home_layout_v204.py
+          python -m pytest -q tests/test_v200_uniform_tv_chrome_voice_demo.py tests/test_voice_tv_focus_v202.py tests/test_now_playing_bay_ownership.py tests/test_home_layout_v204.py tests/test_home_visual_spacing_v205.py
           python -m pytest -q tests/test_v198_voice_profile_controls.py
           python -m pytest -q tests/test_unified_v70_natural_voices_contract.py
           python -m pytest -q tests/test_shared_eye_colour.py::test_colour_state_and_protocol tests/test_shared_eye_colour.py::test_colour_binding_covers_existing_renderers_without_replacements tests/test_shared_eye_colour.py::test_runtime_is_opt_in_and_reuses_saved_home_assistant_auth tests/test_shared_eye_colour.py::test_appearance_screen_is_private_and_available_in_the_apk tests/test_shared_eye_colour.py::test_appearance_screen_reuses_wall_hue_and_does_not_enable_sharing_on_open
@@ -117,29 +117,29 @@ jobs:
           printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
           chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
-      - name: Build signed v204 Parked Home layout candidate
+      - name: Build signed v205 Home visual spacing candidate
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
           BOOP_RELAY_URL: ${{ secrets.BOOP_RELAY_URL }}
           BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
         run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :app:assembleDebug --stacktrace
-      - name: Verify signed v204 APK identity, parked Home layout, Voice, lyrics and bounce bytecode
+      - name: Verify signed v205 APK identity, Home visual spacing, Voice, lyrics and bounce bytecode
         run: |
           set -euo pipefail
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
-          mkdir -p v204-artifact
-          "$TOOLS/aapt" dump badging "$APK" > v204-artifact/badging.txt
-          grep -Fq "package: name='com.boop.alpha1'" v204-artifact/badging.txt
-          grep -Fq "versionCode='204'" v204-artifact/badging.txt
-          grep -Fq "versionName='1.2.204-home-layout-parking'" v204-artifact/badging.txt
-          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v204-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.alpha1.johnny_states' v204-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v204-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v204-artifact/manifest-tree.txt
-          "$TOOLS/apksigner" verify --print-certs "$APK" > v204-artifact/signer.txt
-          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v204-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          mkdir -p v205-artifact
+          "$TOOLS/aapt" dump badging "$APK" > v205-artifact/badging.txt
+          grep -Fq "package: name='com.boop.alpha1'" v205-artifact/badging.txt
+          grep -Fq "versionCode='205'" v205-artifact/badging.txt
+          grep -Fq "versionName='1.2.205-home-visual-spacing'" v205-artifact/badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v205-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.alpha1.johnny_states' v205-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v205-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v205-artifact/manifest-tree.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > v205-artifact/signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v205-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           test -n "$ACTUAL"; test "$ACTUAL" = "$EXPECTED"
           unzip -tq "$APK"
@@ -165,14 +165,14 @@ jobs:
               assert ('Lcom/boop/alpha1/'+cls+';').encode() in dex, 'Missing BOOP UI/transport: '+cls
           print('APK contains Voice TV focus wiring and preserved voice, eye-surface, Home, lyrics and music bytecode')
           PY
-          cp "$APK" v204-artifact/BOOP-Unified-v204-Parked-Home-Layout.apk
-          (cd v204-artifact && sha256sum BOOP-Unified-v204-Parked-Home-Layout.apk > apk-sha256.txt)
-          git rev-parse HEAD > v204-artifact/built-commit.txt
-          printf '%s\n' 'v204 keeps all four Home buttons in the top row, removes the Favourite apps heading, parks favourites 16dp below the reserved 182dp Now Playing slot, and shows the large idle BOOP as a separate bottom-right overlay when media is absent.' 'Retains v203 Voice/Home integration, v202 TV focus, v201 Voice eye-surface ownership, v200 TEST VOICE, the v197 Home/media GL release path and the current four-core natural voice tuning. CI verifies structure and wiring; Ryan retains visual and physical acceptance on Shield.' > v204-artifact/verification.txt
+          cp "$APK" v205-artifact/BOOP-Unified-v205-Home-Visual-Spacing.apk
+          (cd v205-artifact && sha256sum BOOP-Unified-v205-Home-Visual-Spacing.apk > apk-sha256.txt)
+          git rev-parse HEAD > v205-artifact/built-commit.txt
+          printf '%s\n' 'v205 keeps the v204 parked Home layout and makes the visible wide favourites obey the same 16dp spacing reference: artwork starts at the top of the reserved row and wide tiles keep a fixed 16dp gap without focus width growth.' 'Retains v204 parked Home behavior, v203 Voice/Home integration, v202 TV focus, v201 Voice eye-surface ownership, v200 TEST VOICE, the v197 Home/media GL release path and current four-core natural voice tuning. CI verifies structure and wiring; Ryan retains visual and physical acceptance on Shield.' > v205-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Unified-v204-Parked-Home-Layout
-          path: v204-artifact/
+          name: BOOP-Unified-v205-Home-Visual-Spacing
+          path: v205-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
         if: always()
