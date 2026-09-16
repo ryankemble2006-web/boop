@@ -1,48 +1,11 @@
-# Casualty 1.0 - personal Android TV shortcut
+# Casualty 1.2 — Shield iPlayer shortcut
 
-Opens the official BBC iPlayer directly to Casualty on Android TV / Nvidia Shield.
+One press launches the existing official iPlayer programme route, selects the existing focused profile and newest episode, and clicks an exact `Skip trailer` control once if offered within 60 seconds. Both programme shortcuts use the same helper logic. Existing banner and square icon are unchanged.
 
-With the optional accessibility helper enabled, the shortcut can:
+The obsolete Watch/browser/settings/Close menu is removed. The shortcut finishes after launching iPlayer. When playback returns to the programme page, the armed helper returns to the device's configured Home once. Pause remains in the player. Switching to another app cancels the helper; the return guard expires after two hours. Ordinary iPlayer browsing without a shortcut launch is not armed.
 
-- choose the currently focused existing iPlayer profile;
-- open the newest Casualty episode;
-- click an exact visible `Skip trailer` control once if BBC shows a promo;
-- restore focus to the first episode card when playback later returns to the Casualty programme page.
+The existing `Casualty auto-play` accessibility helper must remain enabled in Shield Accessibility settings. No new permission grant or setup change is required for an update. If disabled, a short message explains where to enable it. If official iPlayer cannot launch, the shortcut shows a message and closes; it does not show a browser selector.
 
-It does not intercept remote keys, choose unknown profiles, record screen contents, or modify iPlayer.
+Current branch: `iplayer-shortcuts-home-20260916`. See [SESSION_HANDOFF.md](SESSION_HANDOFF.md) and the [joint receipt](../docs/handoffs/2026-09-16-iplayer-shortcuts-home.md) for CI, signing, installation, rollback and pending physical acceptance.
 
-## Install and use
-
-1. Sideload `Casualty-1.0.apk`.
-2. Open the Casualty tile once.
-3. In Shield Settings > Accessibility, enable **Casualty auto-play**.
-4. Open the tile again. The helper only acts during an armed Casualty launch.
-
-The initial launch helper expires after two minutes. After it starts an episode, the return-focus guard remains bounded for up to two hours. The optional trailer click is restricted to an exact `Skip trailer` label during the first 60 seconds after the episode launch and is claimed at most once.
-
-## BBC routes
-
-Programme PID: `b006m8wd`.
-
-TV deep link:
-`https://www.live.bbctvapps.co.uk/tap/telly/iplayer?deeplink=tv%2Fprogrammes%2Fb006m8wd`
-
-Browser fallback:
-`https://www.bbc.co.uk/iplayer/episodes/b006m8wd/casualty`
-
-## Artwork
-
-Launcher artwork source used for this private shortcut:
-`https://image.tmdb.org/t/p/w1280/2dE4H9M1gVs7pZ8xZlHpDjnFVfE.jpg`
-
-The source image is retained under `artwork/`; the Android TV banner is a 16:9 resize and the square icon is a centre crop of the same image. Rights remain with their respective owners. Inclusion here does not imply BBC or TMDb endorsement or a redistribution licence.
-
-## Physical Shield verification - 12 September 2026
-
-On the test Shield, the installed BBC iPlayer accepted the Casualty deep link. With Casualty auto-play enabled, the helper selected the existing profile, detected the exact Casualty title, clicked the newest episode, clicked the real BBC `Skip trailer` button when it appeared, and entered playback.
-
-A Back-from-playback return test then logged `Return episode focus accepted: true`; a fresh UI hierarchy showed the Casualty episode card genuinely focused. Natural end-of-episode return remains a separate long-duration acceptance case.
-
-Package: `uk.local.casualty`, versionCode 1 / versionName 1.0. The app uses its own private signing identity and can be installed beside `uk.local.eastenders`.
-
-The project has no ads, analytics, microphone permission, storage permission, account credentials, or episode-list scraping. Build output and private signing material are ignored and must not be committed.
+GitHub workflow `build-iplayer-shortcuts.yml` performs logic checks and builds unsigned aligned artifacts. Signing uses the existing original private keys locally; do not substitute keys or commit signing material. Tests do not claim physical playback acceptance.
