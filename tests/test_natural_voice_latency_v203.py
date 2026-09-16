@@ -12,3 +12,8 @@ def test_natural_voice_latency_has_stage_markers():
     assert '"synthesis_done stage_ms="' in source
     assert '"playback_start total_ms="' in source
     assert "SystemClock.elapsedRealtime()" in source
+
+
+def test_natural_voice_uses_all_four_shield_cores_for_inference():
+    source = BACKEND.read_text(encoding="utf-8")
+    assert "model.setNumThreads(4);" in source
