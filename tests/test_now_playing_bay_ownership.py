@@ -34,13 +34,11 @@ def test_home_keeps_one_canonical_assistant_presence_when_media_is_gone():
     assert "PlaybackState.STATE_BUFFERING" in home, "idle presence should reuse the canonical idle media pose"
 
 
-def test_home_assistant_sits_above_shield_settings():
+def test_home_assistant_is_separate_from_shield_settings_nav():
     home = HOME_SOURCE.read_text(encoding="utf-8")
-    assert "LinearLayout assistantBay = new LinearLayout(getContext());" in home
-    assert "assistantBay.setOrientation(VERTICAL);" in home
-    assert "assistantBay.addView(homeAssistantPuppet, assistantParams);" in home
-    assert "assistantBay.addView(settings, settingsParams);" in home
-    assert home.index("assistantBay.addView(homeAssistantPuppet, assistantParams);") < home.index("assistantBay.addView(settings, settingsParams);")
+    assert "LinearLayout assistantBay = new LinearLayout(getContext());" not in home
+    assert "row.addView(settings, settingsParams);" in home
+    assert "assistantDock.addView(homeAssistantPuppet" in home
 
 
 def test_puppet_releases_gl_surface_when_ownership_hides_it():
