@@ -52,10 +52,13 @@ public class StateEdgeHarness {
   check(f.update("on") && f.on(),"new session resynchronizes on");
   f.reset();
   check(f.update("off") && !f.on(),"new session resynchronizes off");
-  System.out.println("Johnny reconnect, fan edges and light policy passed");
+  check(JohnnyPollPolicy.healthyPollMs()==250L,"healthy HA poll is 250ms");
+  check(JohnnyPollPolicy.unavailableSkipPolls()==39,"outage keeps a slow retry");
+  check(JohnnyPollPolicy.unavailableRetryMs()==10000L,"outage retry remains about 10 seconds");
+  System.out.println("Johnny reconnect, fan edges, light policy and polling cadence passed");
  }
 }'''
 with tempfile.TemporaryDirectory() as d:
  p=pathlib.Path(d)/"StateEdgeHarness.java";p.write_text(test)
- subprocess.run(["javac","-d",d,str(root/"java/local/johnnycastaway/shield/JohnnyStateEdges.java"),str(root/"java/local/johnnycastaway/shield/JohnnyFanState.java"),str(p)],check=True)
+ subprocess.run(["javac","-d",d,str(root/"java/local/johnnycastaway/shield/JohnnyStateEdges.java"),str(root/"java/local/johnnycastaway/shield/JohnnyFanState.java"),str(root/"java/local/johnnycastaway/shield/JohnnyPollPolicy.java"),str(p)],check=True)
  subprocess.run(["java","-cp",d,"local.johnnycastaway.shield.StateEdgeHarness"],check=True)
