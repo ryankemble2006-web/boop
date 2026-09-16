@@ -89,5 +89,9 @@ Do not start, stop, wipe or use them automatically. Their presence does not auth
 On Ryan's laptop, the known-good Desktop Commander remote command is:
 `npx.cmd -y @wonderwhy-er/desktop-commander@0.2.47 remote`
 
+For BOOP device work, ADB itself is not a reason to refuse the task or push Ryan into Work mode. If the current Chat/Codex surface exposes Desktop Commander/ADB and the bridge is not already connected, first ask Ryan to start the bridge with the exact command above, then retry the requested ADB operation. Ordinary authorized ADB runtime work such as screenshots/captures, logs, package checks, installs and shell/device queries should use that connected route when available.
+
+Do not substitute `npx`, a different package command, a newer Desktop Commander release, or commands copied from current online documentation. The exact `npx.cmd ...@0.2.47 remote` command is the proven laptop path. Do not claim ADB is unavailable merely because the bridge has not been started yet. Only mention a different mode when the current surface genuinely lacks the required tool after checking, not as a reflexive response to an ADB request.
+
 Keep Desktop Commander pinned to `0.2.47` while it works. Do not proactively upgrade it or change this command merely because online documentation changes.
 Only troubleshoot, change version, or change command after a real failure. Diagnose that failure from Ryan's supplied screenshots/evidence first, then make the smallest necessary change.
