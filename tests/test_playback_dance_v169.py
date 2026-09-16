@@ -65,6 +65,8 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v192 intentionally adds the idle top-right assistant host on Shield Home.
+      "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java",
       # v191 requested independent hand colour; locked eyes and sign geometry unchanged.
       "unified/animation/java/com/boop/eyes/HandColourPixels.java",
       "unified/animation/java/com/boop/eyes/HandColourWork.java",
