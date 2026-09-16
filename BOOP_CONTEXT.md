@@ -1,4 +1,4 @@
-## Recovered v200 voice context ? 2026-09-16
+## Recovered v200 voice context - 2026-09-16
 
 Current receipt: `docs/handoffs/2026-09-16-v200-uniform-tv-chrome-voice-demo.md`. This resolves the missing v200 source/build reference in the earlier notes without changing their failing visual verdict. Built source `572e8d6cb4726951df0604e18a9a8e614d93a543`; focused run `35076396763` and full signed run `35076396821` succeeded; artifact `10438621229`. Fresh Shield readback confirms version 200; installed APK/artifact hash equality has not yet been checked in this recovery.
 
@@ -7,6 +7,7 @@ Current receipt: `docs/handoffs/2026-09-16-v200-uniform-tv-chrome-voice-demo.md`
 Ryan requested continuation directly in chat with the already-connected ADB bridge. Follow current main `BOOP_START_HERE.md`: GitHub source/tests/build/signing; agreed runtime work through the existing bridge; no Work-mode prompt, emulator gate, permission changes, data clear, signing substitution or physical Pixel 10 work. Preserve the sister session's visual-blocker handoff, storage cleanup and all content below. This update is documentation-only; it does not authorize an installation or app split.
 
 ---
+
 ## Current cosmetic workflow override (2026-09-13)
 
 Small cosmetic changes: GitHub compilation, non-visual tests, permanent signing
@@ -84,13 +85,13 @@ Do not treat these numbers as timeless. Re-fetch live branches before engineerin
 
 It is not supposed to feel like a generic chatbot pasted onto a screen.
 
-## Puppet, not ?AI personality?
+## Puppet, not “AI personality”
 
 Ryan's recurring product rule is that BOOP is a **puppet**. It may be expressive, funny and personable, but the interface should remain grounded in eyes, voice, hands, physical cues and useful actions.
 
 The aim is not to persuade anyone that a machine is alive. The aim is to make technology approachable by giving it a simple animated body with understandable behaviour.
 
-?BOOP lives in the human world with us? is the useful design lens. Controls should therefore map to human-world actions and visible states rather than computer abstractions wherever possible.
+“BOOP lives in the human world with us” is the useful design lens. Controls should therefore map to human-world actions and visible states rather than computer abstractions wherever possible.
 
 ## Works FOR BOOP / BOOP works FOR you
 
@@ -199,7 +200,7 @@ The physical diagnostic progression demonstrates the preferred debugging style.
 
 ### v85
 
-Natural rows appeared to work but fallback Android TTS could disguise failure. This proved that ?sound came out? was insufficient evidence of the requested backend.
+Natural rows appeared to work but fallback Android TTS could disguise failure. This proved that “sound came out” was insufficient evidence of the requested backend.
 
 ### v86
 
@@ -253,13 +254,13 @@ In practical terms, BOOP is a friendly interaction layer over a capable local au
 
 Basic household control must not depend on cloud chat availability.
 
-Local Home/HA command routing stays ahead of general chat fallback. If the internet/cloud assistant is unavailable, ?turn on the fan? should not become impossible merely because conversation is unavailable.
+Local Home/HA command routing stays ahead of general chat fallback. If the internet/cloud assistant is unavailable, “turn on the fan” should not become impossible merely because conversation is unavailable.
 
 ## Room context
 
-Room inference is desirable because users should be able to say ?turn on the fan? naturally when BOOP knows where it is.
+Room inference is desirable because users should be able to say “turn on the fan” naturally when BOOP knows where it is.
 
-When room identity is ambiguous, the product may ask ?Which room?? rather than controlling a similarly named device somewhere else.
+When room identity is ambiguous, the product may ask “Which room?” rather than controlling a similarly named device somewhere else.
 
 Room-scoped behaviour should fail closed. Convenience must not become cross-room surprise.
 
@@ -308,7 +309,7 @@ Do not:
 
 - regenerate;
 - redraw;
-- ?improve?;
+- “improve”;
 - flatten;
 - recompress;
 - crop/resize on disk;
@@ -367,7 +368,7 @@ Product-level privacy concepts include:
 
 - a physical sleep mask supplied with BOOP;
 - a mechanical camera shutter with an audible/tactile click or clunk;
-- a playful ?shower curtain? privacy metaphor for a speaker body.
+- a playful “shower curtain” privacy metaphor for a speaker body.
 
 The point is visible, physical privacy state.
 
@@ -414,7 +415,7 @@ Concept:
 - visible/physical camera/privacy behaviour if a camera is ever present;
 - mechanical motor/shutter sounds can be part of the character because physical state should be legible.
 
-## BOOP Robot / ?Gucci Bot?
+## BOOP Robot / “Gucci Bot”
 
 Concept direction:
 
@@ -430,19 +431,19 @@ Do not assume every speculative robot feature belongs in the current Android bac
 
 # 11. Setup, permissions and parental model
 
-Ryan prefers a one-time permission/setup app experience rather than an ?advanced mode? maze.
+Ryan prefers a one-time permission/setup app experience rather than an “advanced mode” maze.
 
 Parental/family interaction concepts include:
 
 - bedtime controls;
-- ?ask mum/dad? gates;
-- ?Let me ask your dad/mum? response path;
+- “ask mum/dad” gates;
+- “Let me ask your dad/mum” response path;
 - timed warnings before powering off an Xbox or similar device;
 - controls explained in ordinary language.
 
 The product should not hide significant authority behind clever UI. Permission should be understandable and revisitable.
 
-A playful setup idea uses a ?fly to phone and back? whoosh for serial/device transfer. This is a design metaphor, not an engineering contract unless explicitly revived.
+A playful setup idea uses a “fly to phone and back” whoosh for serial/device transfer. This is a design metaphor, not an engineering contract unless explicitly revived.
 
 # 12. Media is a first-class BOOP domain
 
@@ -471,7 +472,7 @@ Accepted patterns include:
 - real current BOOP face kept visible while trying animations;
 - local demo fixtures that do not accidentally exercise privileged runtime paths.
 
-The natural-speech E890?E899 ladder is a good example of the philosophy: separate stages so one photograph tells the next developer where the failure lives.
+The natural-speech E890–E899 ladder is a good example of the philosophy: separate stages so one photograph tells the next developer where the failure lives.
 
 # 14. Visual QA philosophy
 
@@ -489,7 +490,7 @@ GitHub should verify things machines are good at:
 - artifact/hash integrity;
 - security/sanitisation.
 
-A non-visual emulator/process smoke can prove ?it launches without this crash?. It cannot prove ?BOOP looks right?.
+A non-visual emulator/process smoke can prove “it launches without this crash”. It cannot prove “BOOP looks right”.
 
 # 15. Release and rollback discipline
 
@@ -592,20 +593,20 @@ A separate phone launcher idea also informs BOOP UI taste:
 - app drawer via simple gesture;
 - no forced folders/dock/plus-button clutter;
 - preserve ordinary app icons rather than reskinning everything;
-- strong ?bail out? path;
+- strong “bail out” path;
 - back should behave predictably.
 
 These are useful design instincts. They are not automatically requirements for every BOOP screen.
 
 # 20. Plain-English product rule
 
-?Computer talk? is effectively banned from consumer-facing BOOP UI when a normal phrase exists.
+“Computer talk” is effectively banned from consumer-facing BOOP UI when a normal phrase exists.
 
 Prefer:
 
-- ?Which room?? over exposing entity IDs;
-- ?Natural voice files are missing? over a stack trace for normal users;
-- ?Not available yet? over scary error language for an intentionally unsupported platform path;
+- “Which room?” over exposing entity IDs;
+- “Natural voice files are missing” over a stack trace for normal users;
+- “Not available yet” over scary error language for an intentionally unsupported platform path;
 - obvious large buttons over tiny settings toggles;
 - a direct action over nested settings trees.
 
@@ -623,7 +624,7 @@ Past/prototype bodies include:
 - ordinary USB webcam concepts;
 - remapped remote buttons for fast BOOP invocation.
 
-The lesson is ?prove the interaction on available hardware first?. It is not a permanent bill of materials.
+The lesson is “prove the interaction on available hardware first”. It is not a permanent bill of materials.
 
 # 22. Local-first latency lesson
 
@@ -659,7 +660,7 @@ Its UX priorities mirror BOOP in useful ways:
 
 Aura work focuses on preserving the established skin look/behaviour while improving Kodi 21 compatibility, native favourites and remote navigation.
 
-A ?canary? may appear in that history because narrow skin experiments helped establish the shared shorthand. Do not therefore assume canary is *only* an Aura term.
+A “canary” may appear in that history because narrow skin experiments helped establish the shared shorthand. Do not therefore assume canary is *only* an Aura term.
 
 ## Seren refresh
 
@@ -719,7 +720,7 @@ Use the influence as design intuition, not as brand imitation.
 - last-good checkpoint;
 - photographable diagnostic;
 - Works FOR BOOP;
-- ?Which room??;
+- “Which room?”;
 - big chunky remote UI.
 
 ## Usually wrong for BOOP
@@ -731,7 +732,7 @@ Use the influence as design intuition, not as brand imitation.
 - hidden privacy state;
 - multiple competing microphone owners;
 - recreating locked art;
-- ?AI companion? dependency framing;
+- “AI companion” dependency framing;
 - opaque smart-home actions across rooms;
 - treating version number as proof of quality;
 - visual CI claiming the puppet looks correct.
@@ -773,7 +774,7 @@ The correct current sequence is:
 - ask Ryan for physical/provider/HA/visual acceptance where machines cannot prove the result;
 - do not merge merely because CI is green.
 
-# 31. What ?completely transfer the context? means
+# 31. What “completely transfer the context” means
 
 Ryan's 2026-09-10 experiment is not asking for an impossible byte-for-byte transplant of one model's hidden state into another. It is testing how close practical continuity can get when the durable mental model is written down explicitly.
 

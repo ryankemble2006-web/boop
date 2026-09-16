@@ -1,4 +1,4 @@
-## Recovered v200 voice context ? 2026-09-16
+## Recovered v200 voice context - 2026-09-16
 
 Current receipt: `docs/handoffs/2026-09-16-v200-uniform-tv-chrome-voice-demo.md`. This resolves the missing v200 source/build reference in the earlier notes without changing their failing visual verdict. Built source `572e8d6cb4726951df0604e18a9a8e614d93a543`; focused run `35076396763` and full signed run `35076396821` succeeded; artifact `10438621229`. Fresh Shield readback confirms version 200; installed APK/artifact hash equality has not yet been checked in this recovery.
 
@@ -7,6 +7,7 @@ Current receipt: `docs/handoffs/2026-09-16-v200-uniform-tv-chrome-voice-demo.md`
 Ryan requested continuation directly in chat with the already-connected ADB bridge. Follow current main `BOOP_START_HERE.md`: GitHub source/tests/build/signing; agreed runtime work through the existing bridge; no Work-mode prompt, emulator gate, permission changes, data clear, signing substitution or physical Pixel 10 work. Preserve the sister session's visual-blocker handoff, storage cleanup and all content below. This update is documentation-only; it does not authorize an installation or app split.
 
 ---
+
 # Unified session handoff - 2026-09-16
 
 Owner branch: `boop-hand-colour-v191`. Live GitHub is authoritative for the branch; distinguish its build receipts from fresh device observations.
@@ -41,4 +42,4 @@ Natural Kokoro rate uses the shared rate. Natural Kokoro pitch remains deliberat
 
 Full v198 receipt: `docs/handoffs/2026-09-16-v198-voice-profile-controls.md`.
 
-The earlier next step was an explicitly requested v198 install followed by joint verification of slider feel and phone?Shield natural voice/rate sharing. That install instruction is now historical; use the latest-device warning above. Do not claim natural pitch playback until separately proven.
+The earlier next step was an explicitly requested v198 install followed by joint verification of slider feel and phone↔Shield natural voice/rate sharing. That install instruction is now historical; use the latest-device warning above. Do not claim natural pitch playback until separately proven.
