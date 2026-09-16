@@ -107,20 +107,23 @@ text = once(
 """,
     "remove preview face wake",
 )
-text = once(
-    text,
-    """        voiceSettingsOverlay = null;
-        voiceSettingsOpen = false;
-""",
-    """        voiceSettingsOverlay = null;
-        if (face != null) {
+
+hide_start = text.find("    private void hideVoiceSettings() {")
+hide_end = text.find("    private int dp(", hide_start)
+if hide_start < 0 or hide_end < 0:
+    raise SystemExit("Voice Settings dismissal bounds not found")
+hide = text[hide_start:hide_end]
+hide = once(
+    hide,
+    "        voiceSettingsOpen = false;",
+    """        if (face != null) {
             face.setVisibility(View.VISIBLE);
             face.showIdleBlackImmediately();
         }
-        voiceSettingsOpen = false;
-""",
+        voiceSettingsOpen = false;""",
     "restore face after Voice Settings",
 )
+text = text[:hide_start] + hide + text[hide_end:]
 
 text += "\n" + MARKER + "\n"
 MAIN.write_text(text, encoding="utf-8")
