@@ -128,6 +128,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
                 && com.boop.shared.BoopState.INSTANCE.snapshot().owner == presentationOwner;
         if (!visible) {
+            puppet.setSurfaceActive(false);
             pauseCanonicalAnimation();
             stopFrames();
             setVisibility(GONE);
@@ -135,6 +136,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         }
 
         setVisibility(VISIBLE);
+        puppet.setSurfaceActive(true);
         resumeCanonicalAnimation();
         long now = SystemClock.uptimeMillis();
         if (!animationAllowed()) {
@@ -252,6 +254,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         private final GLSurfaceView eyeSurface;
         private final com.boop.eyes.CanonicalEyeRenderer eyeRenderer;
         private final MusicBounceRenderer musicRenderer;
+        private boolean surfaceRequested;
+        private boolean surfaceResumed;
 
         LayeredPuppetView(Context context) {
             super(context);
@@ -271,12 +275,27 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             musicRenderer = new MusicBounceRenderer(eyeRenderer);
             eyeSurface.setRenderer(musicRenderer);
             eyeSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+            eyeSurface.setVisibility(INVISIBLE);
             com.boop.eyes.EyeColourBinding.install(eyeSurface, eyeRenderer);
             eyeSurface.setFocusable(false);
             eyeSurface.setClickable(false);
             addView(eyeSurface, new FrameLayout.LayoutParams(
                     LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
         }
+        void setSurfaceActive(boolean active) {
+            surfaceRequested = active;
+            eyeSurface.setVisibility(active ? VISIBLE : INVISIBLE);
+            syncSurfaceLifecycle();
+        }
+
+        private void syncSurfaceLifecycle() {
+            boolean shouldResume = surfaceRequested && isAttachedToWindow();
+            if (surfaceResumed == shouldResume) return;
+            if (shouldResume) eyeSurface.onResume();
+            else eyeSurface.onPause();
+            surfaceResumed = shouldResume;
+        }
+
         void setBounceHeight(float heightFraction) {
             musicRenderer.setHeightFraction(heightFraction);
         }
@@ -288,11 +307,14 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
         @Override protected void onAttachedToWindow() {
             super.onAttachedToWindow();
-            eyeSurface.onResume();
+            syncSurfaceLifecycle();
         }
 
         @Override protected void onDetachedFromWindow() {
-            eyeSurface.onPause();
+            if (surfaceResumed) {
+                eyeSurface.onPause();
+                surfaceResumed = false;
+            }
             super.onDetachedFromWindow();
         }
     }
