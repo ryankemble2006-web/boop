@@ -41,7 +41,7 @@ public final class PlayerControlService extends Service {
             active=adb;
             File key=new File(getNoBackupFilesDir(),"iplayer-local-adb.key");
             if(!allowApproval && !key.isFile()) throw new IOException("Open a shortcut to authorise cleanup first");
-            adb.connect(5555,AdbWire.identity(key),allowApproval ? 45000 : 5000,
+            adb.connect(5555,AdbWire.identity(key),allowApproval ? 120000 : 5000,
                     () -> respond(reply,13,id,""),allowApproval);
             if(!sessions.current(uid,id) || destroyed) return;
             String shellUid=checked(adb,"id -u").trim();

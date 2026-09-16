@@ -43,7 +43,7 @@ final class PlayerBridgeClient {
     void prepare(Callback result) {
         callback=result;
         if(!BridgeTrust.packageTrusted(context,"uk.local.eastenders")) { fail("Install the original EastEnders shortcut update first"); return; }
-        timer.postDelayed(timeout,55000);
+        timer.postDelayed(timeout,155000);
         try {
             Intent intent=new Intent().setComponent(new ComponentName("uk.local.eastenders","uk.local.eastenders.PlayerControlService"));
             bound=context.bindService(intent,connection,Context.BIND_AUTO_CREATE);
@@ -52,7 +52,7 @@ final class PlayerBridgeClient {
     }
     void stopPlayer(Callback result) {
         callback=result;
-        timer.postDelayed(timeout,15000);
+        timer.postDelayed(timeout,35000);
         if(remote==null || session==0) { fail("No authorised iPlayer cleanup session"); return; }
         send(2);
     }
