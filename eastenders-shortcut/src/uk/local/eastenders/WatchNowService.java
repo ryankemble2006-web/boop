@@ -10,6 +10,7 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Toast;
 
 public final class WatchNowService extends AccessibilityService {
@@ -251,38 +252,56 @@ public final class WatchNowService extends AccessibilityService {
         inspect();
     }
 
+    private void scanCleanupWindow(AccessibilityNodeInfo root,CleanupPage page) {
+        if(root==null || !SETTINGS_PACKAGE.equals(String.valueOf(root.getPackageName()))) return;
+        page.visited=0;
+        scanCleanup(root,page,0);
+    }
+
     private void inspectCleanup() {
         if(!(preparing || returningHome)) return;
-        AccessibilityNodeInfo root=getRootInActiveWindow();
-        if(root==null) return;
+        CleanupPage page=new CleanupPage();
         try {
-            if(!SETTINGS_PACKAGE.equals(String.valueOf(root.getPackageName()))) return;
-            CleanupPage page=new CleanupPage();
-            try {
-                scanCleanup(root,page,0);
-                boolean appInfo=page.appInfo && page.open && page.uninstall;
-                boolean confirmation=page.breadcrumb && page.confirm;
-                int action=cleanupSequence.next(appInfo,page.forceStop!=null,confirmation,page.ok!=null);
-                if(action==CleanupSequence.CLICK_FORCE_STOP) {
-                    boolean clicked=page.forceStop!=null && page.forceStop.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    cleanupSequence.actionResult(action,clicked);
-                    report(clicked ? "Requested iPlayer Force stop" : "Waiting for iPlayer Force stop control");
-                } else if(action==CleanupSequence.CLICK_CONFIRM) {
-                    boolean clicked=page.ok!=null && page.ok.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    cleanupSequence.actionResult(action,clicked);
-                    report(clicked ? "Confirmed iPlayer Force stop" : "Waiting to confirm iPlayer Force stop");
-                } else if(action==CleanupSequence.COMPLETE) {
-                    report("Verified iPlayer Force stop");
-                    finishCleanup(true,"");
-                } else if(appInfo && page.forceStop==null) {
-                    report("Verifying iPlayer Force stop");
-                }
-            } finally {
-                if(page.forceStop!=null) page.forceStop.recycle();
-                if(page.ok!=null) page.ok.recycle();
+            AccessibilityNodeInfo active=getRootInActiveWindow();
+            if(active!=null) {
+                try { scanCleanupWindow(active,page); }
+                finally { active.recycle(); }
             }
-        } finally { root.recycle(); }
+            java.util.List<AccessibilityWindowInfo> windows=getWindows();
+            if(windows!=null) {
+                for(AccessibilityWindowInfo window:windows) {
+                    if(window==null) continue;
+                    AccessibilityNodeInfo root=window.getRoot();
+                    try { if(root!=null) scanCleanupWindow(root,page); }
+                    finally {
+                        if(root!=null) root.recycle();
+                        window.recycle();
+                    }
+                }
+            }
+            boolean appInfo=page.appInfo && page.open && page.uninstall;
+            boolean confirmation=page.breadcrumb && page.confirm;
+            int action=cleanupSequence.next(appInfo,page.forceStop!=null,confirmation,page.ok!=null);
+            if(action==CleanupSequence.CLICK_FORCE_STOP) {
+                boolean clicked=page.forceStop!=null && page.forceStop.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                cleanupSequence.actionResult(action,clicked);
+                report(clicked ? "Requested iPlayer Force stop" : "Waiting for iPlayer Force stop control");
+            } else if(action==CleanupSequence.CLICK_CONFIRM) {
+                boolean clicked=page.ok!=null && page.ok.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                cleanupSequence.actionResult(action,clicked);
+                report(clicked ? "Confirmed iPlayer Force stop" : "Waiting to confirm iPlayer Force stop");
+            } else if(action==CleanupSequence.COMPLETE) {
+                report("Verified iPlayer Force stop");
+                finishCleanup(true,"");
+            } else if(appInfo && page.forceStop==null) {
+                report("Verifying iPlayer Force stop");
+            }
+        } finally {
+            if(page.forceStop!=null) page.forceStop.recycle();
+            if(page.ok!=null) page.ok.recycle();
+        }
     }
+
     private boolean isConfiguredHome(String pkg) {
         android.content.pm.ResolveInfo home=getPackageManager().resolveActivity(
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0);
