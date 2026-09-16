@@ -1,4 +1,4 @@
-name: Build BOOP v195 higher home assistant
+name: Build BOOP v196 balanced home assistant
 on:
   push:
     branches: [boop-hand-colour-v191]
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: boop-v195-higher-home-assistant
+  group: boop-v196-balanced-home-assistant
   cancel-in-progress: true
 jobs:
   build:
@@ -108,7 +108,7 @@ jobs:
           printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
           chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
-      - name: Build signed higher Home assistant candidate for joint device testing
+      - name: Build signed balanced Home assistant candidate for joint device testing
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
@@ -120,17 +120,17 @@ jobs:
           set -euo pipefail
           APK=boop-build/BOOP-Alpha1/app/build/outputs/apk/debug/app-debug.apk
           TOOLS="${ANDROID_HOME}/build-tools/36.0.0"
-          mkdir -p v195-artifact
-          "$TOOLS/aapt" dump badging "$APK" > v195-artifact/badging.txt
-          grep -Fq "package: name='com.boop.alpha1'" v195-artifact/badging.txt
-          grep -Fq "versionCode='195'" v195-artifact/badging.txt
-          grep -Fq "versionName='1.2.195-home-assistant-higher'" v195-artifact/badging.txt
-          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v195-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.alpha1.johnny_states' v195-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v195-artifact/manifest-tree.txt
-          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v195-artifact/manifest-tree.txt
-          "$TOOLS/apksigner" verify --print-certs "$APK" > v195-artifact/signer.txt
-          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v195-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
+          mkdir -p v196-artifact
+          "$TOOLS/aapt" dump badging "$APK" > v196-artifact/badging.txt
+          grep -Fq "package: name='com.boop.alpha1'" v196-artifact/badging.txt
+          grep -Fq "versionCode='196'" v196-artifact/badging.txt
+          grep -Fq "versionName='1.2.196-home-assistant-balanced'" v196-artifact/badging.txt
+          "$TOOLS/aapt" dump xmltree "$APK" AndroidManifest.xml > v196-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.alpha1.johnny_states' v196-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.ShieldLyricsActivity' v196-artifact/manifest-tree.txt
+          grep -Fq 'com.boop.shieldhome.MusicAudioPermissionActivity' v196-artifact/manifest-tree.txt
+          "$TOOLS/apksigner" verify --print-certs "$APK" > v196-artifact/signer.txt
+          ACTUAL="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' v196-artifact/signer.txt | tr -d '\r\n' | tr '[:upper:]' '[:lower:]')"
           EXPECTED="$(tr -d '\r\n' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           test -n "$ACTUAL"; test "$ACTUAL" = "$EXPECTED"
           unzip -tq "$APK"
@@ -154,14 +154,14 @@ jobs:
               assert ('Lcom/boop/alpha1/'+cls+';').encode() in dex, 'Missing felt UI/transport: '+cls
           print('Actual APK contains Home assistant presence, native lyrics and music sampler/envelope/renderer bytecode')
           PY
-          cp "$APK" v195-artifact/BOOP-Unified-v195-Higher-Home-Assistant.apk
-          (cd v195-artifact && sha256sum BOOP-Unified-v195-Higher-Home-Assistant.apk > apk-sha256.txt)
-          git rev-parse HEAD > v195-artifact/built-commit.txt
-          printf '%s\n' 'Accepted v191 appearance and hand sharing preserved. Home keeps one larger canonical idle BOOP lifted higher above Shield settings when Now Playing is absent; media ownership remains unchanged while playback is active.' 'No device, emulator or hosted visual tests. Ryan owns visual acceptance and final corner tuning.' > v195-artifact/verification.txt
+          cp "$APK" v196-artifact/BOOP-Unified-v196-Balanced-Home-Assistant.apk
+          (cd v196-artifact && sha256sum BOOP-Unified-v196-Balanced-Home-Assistant.apk > apk-sha256.txt)
+          git rev-parse HEAD > v196-artifact/built-commit.txt
+          printf '%s\n' 'Accepted v191 appearance and hand sharing preserved. Home keeps one larger canonical idle BOOP vertically balanced above Shield settings when Now Playing is absent; media ownership remains unchanged while playback is active.' 'No device, emulator or hosted visual tests. Ryan owns visual acceptance and final corner tuning.' > v196-artifact/verification.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Unified-v195-Higher-Home-Assistant
-          path: v195-artifact/
+          name: BOOP-Unified-v196-Balanced-Home-Assistant
+          path: v196-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
         if: always()
