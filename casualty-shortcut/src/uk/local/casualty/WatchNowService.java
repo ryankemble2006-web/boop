@@ -109,6 +109,16 @@ public final class WatchNowService extends AccessibilityService {
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         if (!gate.active(SystemClock.elapsedRealtime())) return;
+        // Observe foreground departures even if the root has already changed again.
+        // Only iPlayer roots are inspected below; other apps can only cancel this session.
+        if (event != null && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+                && event.getPackageName() != null) {
+            gate.observePackage(event.getPackageName().toString(), expectedPackage, getPackageName());
+            if (!gate.active(SystemClock.elapsedRealtime())) {
+                stop();
+                return;
+            }
+        }
         inspect();
     }
 

@@ -1,3 +1,3 @@
 <resources>
-    <string name="helper_description">After you launch EastEnders, this helper checks the iPlayer screen for up to two minutes and presses the focused Watch now button once, only when EastEnders is visible. It does not choose profiles, change settings, record screen contents, or send data anywhere. Turn it off here at any time.</string>
+    <string name="helper_description">After you launch EastEnders, this helper selects the existing iPlayer profile and newest episode, skips one exact Skip trailer control if offered, then returns Home when playback returns to the programme page. Pausing stays in the player. It observes foreground changes to cancel when you leave iPlayer; it only inspects iPlayer content while armed. It does not intercept remote keys, record screen contents, change settings, or send data anywhere. Turn it off here at any time.</string>
 </resources>
