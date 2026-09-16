@@ -280,7 +280,7 @@ public final class WatchNowService extends AccessibilityService {
                 }
             }
             boolean appInfo=page.appInfo && page.open && page.uninstall;
-            boolean confirmation=page.breadcrumb && page.confirm;
+            boolean confirmation=page.ok!=null;
             int action=cleanupSequence.next(appInfo,page.forceStop!=null,confirmation,page.ok!=null);
             if(action==CleanupSequence.CLICK_FORCE_STOP) {
                 boolean clicked=page.forceStop!=null && page.forceStop.performAction(AccessibilityNodeInfo.ACTION_CLICK);

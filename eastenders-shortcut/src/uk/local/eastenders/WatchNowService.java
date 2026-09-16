@@ -213,17 +213,13 @@ public final class WatchNowService extends AccessibilityService {
     }
 
     private void stop() {
-        if(preparing || returningHome) Log.i("EastEnders", "stop() while cleanup active: preparing="+preparing+" returningHome="+returningHome);
         gate.cancel();
         handler.removeCallbacks(check);
         clearCleanup();
     }
 
     @Override protected void onServiceConnected() { instance = this; }
-    @Override public void onInterrupt() {
-        Log.i("EastEnders", "onInterrupt: preparing="+preparing+" returningHome="+returningHome);
-        stop();
-    }
+    @Override public void onInterrupt() { stop(); }
     @Override public void onDestroy() {
         stop();
         if (instance == this) instance = null;
@@ -233,10 +229,6 @@ public final class WatchNowService extends AccessibilityService {
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         if(preparing || returningHome) {
             if(event!=null && event.getPackageName()!=null) {
-                AccessibilityNodeInfo diagnosticSource=event.getSource();
-                try {
-                    Log.i("EastEnders","cleanup event type="+event.getEventType()+" text="+event.getText()+" sourceText="+(diagnosticSource==null ? "null" : diagnosticSource.getText())+" sourceId="+(diagnosticSource==null ? "null" : diagnosticSource.getViewIdResourceName())+" sourceClass="+(diagnosticSource==null ? "null" : diagnosticSource.getClassName())+" clickable="+(diagnosticSource!=null && diagnosticSource.isClickable())+" focused="+(diagnosticSource!=null && diagnosticSource.isFocused()));
-                } finally { if(diagnosticSource!=null) diagnosticSource.recycle(); }
                 String pkg=event.getPackageName().toString();
                 if(SETTINGS_PACKAGE.equals(pkg)) inspectCleanup();
                 else if(!pkg.equals(expectedPackage) && !pkg.equals(getPackageName())
@@ -284,8 +276,7 @@ public final class WatchNowService extends AccessibilityService {
                 }
             }
             boolean appInfo=page.appInfo && page.open && page.uninstall;
-            boolean confirmation=page.breadcrumb && page.confirm;
-            Log.i("EastEnders","cleanup scan appInfo="+appInfo+" force="+(page.forceStop!=null)+" confirm="+confirmation+" ok="+(page.ok!=null)+" windows="+(windows==null ? 0 : windows.size()));
+            boolean confirmation=page.ok!=null;
             int action=cleanupSequence.next(appInfo,page.forceStop!=null,confirmation,page.ok!=null);
             if(action==CleanupSequence.CLICK_FORCE_STOP) {
                 boolean clicked=page.forceStop!=null && page.forceStop.performAction(AccessibilityNodeInfo.ACTION_CLICK);
