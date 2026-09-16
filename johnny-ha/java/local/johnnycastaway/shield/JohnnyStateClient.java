@@ -46,8 +46,11 @@ final class JohnnyStateClient {
      if(night>=0)player.setNight(night==1);
      else player.cancelOi();
      if(edges.lightsOff(snapshot.optString("lights"))){
-      boolean accepted=player.requestOi();
-      Log.i("JohnnyHA","Lights-off edge: "+(accepted?"OI queued":"OI unavailable"));
+      main.postDelayed(()->{
+       if(worker==null||generation!=session)return;
+       boolean accepted=player.requestOi();
+       Log.i("JohnnyHA","Lights-off edge after night render window: "+(accepted?"OI queued":"OI unavailable"));
+      },JohnnyLightPolicy.oiDelayMs());
      }
      if(fanState.update(snapshot.optString("fan"))){
       player.setFanState(fanState.on());
