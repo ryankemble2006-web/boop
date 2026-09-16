@@ -1,3 +1,19 @@
+# Current: v192 Home assistant corner candidate — 2026-09-16
+
+Owner branch remains `boop-hand-colour-v191`; live GitHub is authoritative. Accepted v191 remains the physical rollback checkpoint and is not redefined by this work.
+
+Built code commit `d9f7a94e11c2e0f0da1d6048ef94e0341f8e75bc`; GitHub run `35061033124` (`Build BOOP v192 home assistant corner`) passed completely, including the focused Home ownership contract, v191 preservation suite, materialization check, Android compile, permanent signer, APK identity and artifact upload. Artifact `BOOP-Unified-v192-Home-Assistant-Corner`, digest `sha256:a02f54a8df2e9250492b3bf6bb7121af822f4fec9d68592b948757c2fb2c4209`.
+
+Requested behavior: preserve the already-correct **Close media** shutdown path, but once Now Playing is gone leave a small BOOP on Shield Home at the top right as an assistant reminder instead of leaving the media BOOP in its old position.
+
+Implementation is intentionally presentation-only. `ShieldHomeView` reuses the canonical `ShieldNowPlayingPuppetView` as a rightmost idle Home presence with `BoopState.Owner.NONE` and the existing REST/idle animation. It hides whenever eligible Now Playing is visible, while the existing media puppet retains `HOME_NOW_PLAYING` ownership. No new renderer or artwork; no Close-media, lyrics, hand, eye, felt, playback-control or audio-routing behavior changed. Current starting geometry is `135dp x 90dp` after Shield Settings with `12dp` left margin. Physical placement/scale remains Ryan's Shield verdict.
+
+TDD: run `35060491690` first failed specifically because the idle Home host was absent. The first v192 build then exposed an inherited v169 production-change allowlist rejecting the intentional `ShieldHomeView` change; logs identified that exact guard, its allowlist was updated, and the complete final run passed. No install, reinstall, permission change or Shield state mutation was performed.
+
+Full receipt: [v192 Home assistant corner](docs/handoffs/2026-09-16-v192-home-assistant-corner.md). Next safe step is an explicit Ryan-authorized Shield install followed by physical validation of Close media, one-puppet ownership, and exact top-right geometry. Do not tune accepted v191 artwork to solve placement.
+
+---
+
 # Current: v191 hand colour accepted — 2026-09-15
 
 Owner `boop-hand-colour-v191`; reviewed/built `32f7d34bd58e1f0ae58134326e2881ba0456f75c`, signed run34946949843 passed. Version191 installed and actual APK hash/version verified on Shield and Pixel7Pro.
