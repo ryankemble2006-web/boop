@@ -9,6 +9,7 @@ on:
       - 'source/SharedVoiceProfile*.java'
       - 'source/BoopSharedVoiceProfileRuntime.java'
       - 'unified/UnifiedApplication.java'
+      - '.github/workflows/build-boop-v191-hand-colour.yml'
       - '.github/workflows/test-v198-voice-profile.yml'
   workflow_dispatch:
 permissions:
