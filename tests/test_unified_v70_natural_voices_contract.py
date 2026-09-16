@@ -64,7 +64,6 @@ def test_natural_download_stays_private_and_never_uses_browser_or_shared_storage
     downloader = DOWNLOADER.read_text(encoding="utf-8")
     pack = PACK.read_text(encoding="utf-8")
     manifest = ANDROID_MANIFEST.read_text(encoding="utf-8")
-
     assert "OkHttpClient" in downloader
     assert "getNoBackupFilesDir" in pack or "getFilesDir" in pack
     assert "ACTION_VIEW" not in downloader
@@ -106,12 +105,10 @@ def test_speak_remains_single_lifecycle_entry_and_natural_failure_falls_back_sam
     start = source.index("private void speak(String text)")
     end = source.index("private void keepAwakeAndHideSystemUi()", start)
     block = source[start:end]
-
     assert block.count("wakeCoordinator.onTtsStarting()") == 1
     assert "naturalSpeechBackend" in block
     assert "speakWithAndroidTts" in block
     assert "finishTtsUtterance()" in source
-
     android = ANDROID_BACKEND.read_text(encoding="utf-8")
     assert "tts.speak(" in android
     assert "UtteranceProgressListener" in android
@@ -126,15 +123,15 @@ def test_natural_backend_uses_local_sherpa_and_safe_android_audio_controls() -> 
     assert "setSpeed" in source
     assert "AudioTrack" in source
     assert "AudioFormat.ENCODING_PCM_16BIT" in source
-    assert "PlaybackParams" not in source
+    assert "PlaybackParams" in source
+    assert ".setPitch(pitchForPlayback(pitch))" in source
+    assert ".setSpeed(1.0f)" in source
+    assert "Natural pitch unavailable; playing original PCM" in source
     assert "lexicon-gb-en.txt" in source
 
 
 def test_no_cloud_tts_or_second_microphone_owner_is_added() -> None:
-    joined = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in (NATURAL_BACKEND, PACK, DOWNLOADER)
-    )
+    joined = "\n".join(path.read_text(encoding="utf-8") for path in (NATURAL_BACKEND, PACK, DOWNLOADER))
     forbidden = [
         "SpeechRecognizer",
         "AudioRecord",
