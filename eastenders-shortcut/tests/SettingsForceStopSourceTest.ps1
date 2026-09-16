@@ -1,3 +1,4 @@
+# This file also keeps the shortcut workflow path filter exercising the root integration contract.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $service = Get-Content (Join-Path $root 'src/uk/local/eastenders/WatchNowService.java') -Raw
