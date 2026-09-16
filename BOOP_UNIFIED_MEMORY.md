@@ -1,3 +1,15 @@
+## Current Unified handoff - v205 installed; Home spacing visually aligned
+
+Updated 2026-09-16. Owner remains `boop-hand-colour-v191`. Current receipt: `docs/handoffs/2026-09-16-v205-home-visual-spacing.md`.
+
+Signed v205 (`205` / `1.2.205-home-visual-spacing`) is installed on the Shield. Source/build head `b529eceaa70b3d6140eeb41d5d35cd5e41ecd8ef`; focused visual-spacing gate was RED first at run `35095495224`, then GREEN at `35096388830`; full signed run `35096667354` succeeded with artifact `10446686887` / `BOOP-Unified-v205-Home-Visual-Spacing`.
+
+Fresh ADB install/pull-back verification matched APK SHA-256 `633f0d70cff6db5823909f13f1231818fa1a7ae041088975b4cfe776bfe3b088` byte-for-byte. A fresh live Shield screenshot during playback shows the four top buttons unchanged, the visible Apps-row-to-Now-Playing gap matching the Now-Playing-to-Kodi artwork gap, and uniform gaps across Kodi, YouTube, Deezer, Casualty and EastEnders. The `Favourite apps` heading remains absent. v205 removes hidden Home-card top inset/centering and keeps banner focus size fixed so source-level 16dp spacing is also visually consistent.
+
+Acceptance boundary: active-playback Home spacing is visually verified from the live screenshot. This v205 check did not stop the user's playback to re-exercise the no-media transition, so the parked favourites position and large bottom-right idle BOOP remain preserved by source/tests but await a fresh no-media physical screenshot if needed. No phones, permissions, app data, voice models or unrelated branches were touched.
+
+---
+
 ## Current Voice handoff - v201 installed; entry screen clear
 
 Updated 2026-09-16. Owner remains `boop-hand-colour-v191`. Current receipt: `docs/handoffs/2026-09-16-v201-voice-verified-build.md`. Preserve the collaborating install handoff and independent review alongside it.
