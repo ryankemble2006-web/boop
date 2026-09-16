@@ -321,7 +321,9 @@ public final class ShieldHomeView extends LinearLayout {
         homeAssistantPuppet = new ShieldNowPlayingPuppetView(getContext());
         homeAssistantPuppet.setPresentationOwner(com.boop.shared.BoopState.Owner.NONE);
         homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());
-        LayoutParams assistantParams = new LayoutParams(dp(230), dp(150));
+        LayoutParams assistantParams = new LayoutParams(dp(360), dp(220));
+        assistantParams.gravity = Gravity.END;
+        assistantParams.rightMargin = dp(-42);
         assistantParams.bottomMargin = dp(8);
         assistantBay.addView(homeAssistantPuppet, assistantParams);
 

@@ -39,5 +39,4 @@ def test_home_assistant_sits_above_shield_settings():
     assert "assistantBay.setOrientation(VERTICAL);" in home
     assert "assistantBay.addView(homeAssistantPuppet, assistantParams);" in home
     assert "assistantBay.addView(settings, settingsParams);" in home
-    assert "LayoutParams assistantParams = new LayoutParams(dp(230), dp(150));" in home
     assert home.index("assistantBay.addView(homeAssistantPuppet, assistantParams);") < home.index("assistantBay.addView(settings, settingsParams);")
