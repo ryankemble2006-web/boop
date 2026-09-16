@@ -1,4 +1,4 @@
-package uk.local.eastenders;
+package uk.local.casualty;
 
 import android.app.Service;
 import android.content.Intent;
@@ -10,6 +10,7 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import uk.local.eastenders.AdbWire;
 
 /** App-private serial controller. It can only stop the official Shield iPlayer. */
 public final class PlayerControlService extends Service {
