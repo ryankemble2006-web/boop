@@ -15,6 +15,9 @@ public final class WatchNowService extends AccessibilityService {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private String expectedPackage;
     private String lastState;
+    private PlayerBridgeClient bridge;
+    private boolean preparing;
+    private boolean returningHome;
 
     private void report(String state) {
         if (!state.equals(lastState)) {
@@ -76,14 +79,21 @@ public final class WatchNowService extends AccessibilityService {
 
     static boolean ready() { return instance != null; }
 
-    static void arm(String pkg) {
-        if (instance == null) return;
-        instance.stop();
-        instance.expectedPackage = pkg;
-        instance.lastState = null;
-        instance.gate.arm(SystemClock.elapsedRealtime());
-        Log.i("EastEnders", "Auto-play armed");
-        instance.handler.postDelayed(instance.check, 500);
+    static void prepareColdStart(PlayerBridgeClient.Callback callback) {
+        if(instance==null) { callback.done(false,"Enable the shortcut auto-play helper first"); return; }
+        WatchNowService self=instance;
+        self.stop(); self.preparing=true; self.expectedPackage=PlayerReset.PLAYER;
+        PlayerBridgeClient client=new PlayerBridgeClient(self); self.bridge=client;
+        client.prepare((ok,error) -> {
+            if(self.bridge!=client || !self.preparing) return;
+            self.preparing=false;
+            if(ok) {
+                self.lastState=null; self.gate.arm(SystemClock.elapsedRealtime());
+                self.handler.postDelayed(self.check,500);
+                self.report("Clean iPlayer start verified; macro armed");
+            } else self.stop();
+            callback.done(ok,error);
+        });
     }
 
     static void cancel() {
@@ -96,6 +106,8 @@ public final class WatchNowService extends AccessibilityService {
     private void stop() {
         gate.cancel();
         handler.removeCallbacks(check);
+        preparing=false; returningHome=false;
+        if(bridge!=null) { PlayerBridgeClient old=bridge; bridge=null; old.close(); }
     }
 
     @Override protected void onServiceConnected() { instance = this; }
@@ -108,6 +120,15 @@ public final class WatchNowService extends AccessibilityService {
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+        if(preparing || returningHome) {
+            if(event!=null && event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+                    && event.getPackageName()!=null) {
+                String pkg=event.getPackageName().toString();
+                if(!pkg.equals(expectedPackage) && !pkg.equals(getPackageName())
+                        && !pkg.equals("android") && !pkg.equals("com.android.systemui")) stop();
+            }
+            return;
+        }
         if (!gate.active(SystemClock.elapsedRealtime())) return;
         // Observe foreground departures even if the root has already changed again.
         // Only iPlayer roots are inspected below; other apps can only cancel this session.
@@ -120,6 +141,16 @@ public final class WatchNowService extends AccessibilityService {
             }
         }
         inspect();
+    }
+
+    private void goHome(boolean clean) {
+        report(clean ? "iPlayer fully stopped; returning Home" : "Cleanup unconfirmed; returning Home");
+        stop();
+        if(!performGlobalAction(GLOBAL_ACTION_HOME)) {
+            try { startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
+            catch(RuntimeException rejected) { report("Use the remote Home button"); }
+        }
     }
 
     private void inspect() {
@@ -152,20 +183,15 @@ public final class WatchNowService extends AccessibilityService {
                         return;
                     }
                     if (gate.claimReturnHome(now, page.title, page.episode != null)) {
-                        // Consume the one-shot guard before changing the foreground.
                         handler.removeCallbacks(check);
-                        boolean returned = performGlobalAction(GLOBAL_ACTION_HOME);
-                        Log.i("EastEnders", "Return Home accepted: " + returned);
-                        if (!returned) {
-                            try {
-                                startActivity(new Intent(Intent.ACTION_MAIN)
-                                        .addCategory(Intent.CATEGORY_HOME)
-                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                                report("Return Home fallback launched");
-                            } catch (RuntimeException rejected) {
-                                report("Return Home rejected; use the remote Home button");
-                            }
-                        }
+                        returningHome=true;
+                        PlayerBridgeClient client=bridge;
+                        if(client==null) { goHome(false); return; }
+                        client.stopPlayer((ok,error) -> {
+                            if(bridge!=client || !returningHome) return;
+                            if(!ok) android.widget.Toast.makeText(this,error,android.widget.Toast.LENGTH_LONG).show();
+                            goHome(ok);
+                        });
                     } else {
                         report(page.title ? "Waiting for programme return after playback" : "Playback active; Home return armed");
                     }

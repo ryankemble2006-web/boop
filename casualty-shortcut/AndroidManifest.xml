@@ -1,8 +1,10 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="uk.local.casualty" android:versionCode="3" android:versionName="1.2">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="uk.local.casualty" android:versionCode="4" android:versionName="1.3">
     <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="35" />
     <uses-feature android:name="android.software.leanback" android:required="true" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <queries>
+        <package android:name="uk.local.eastenders" />
+        <package android:name="uk.local.casualty" />
         <package android:name="com.nvidia.bbciplayer" />
         <package android:name="bbc.iplayer.android" />
         <package android:name="uk.co.bbc.iplayer" />
