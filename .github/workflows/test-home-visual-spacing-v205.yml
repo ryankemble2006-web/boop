@@ -1,0 +1,25 @@
+name: Test BOOP v205 Home visual spacing
+on:
+  push:
+    branches: [boop-hand-colour-v191]
+    paths:
+      - 'tests/test_home_visual_spacing_v205.py'
+      - 'unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java'
+      - 'unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java'
+      - '.github/workflows/test-home-visual-spacing-v205.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify visible Home spacing contract
+        run: |
+          python -m pip install -q pytest
+          python -m pytest -q tests/test_home_visual_spacing_v205.py
