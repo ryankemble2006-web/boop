@@ -73,20 +73,10 @@ public final class BoopTvChrome {
 
     private static void decorateVoiceEditors(View view) {
         if (view instanceof SeekBar || view instanceof EditText) {
-            StateListDrawable outline = new StateListDrawable();
-            outline.addState(new int[]{android.R.attr.state_focused},
-                    filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, true));
-            outline.addState(new int[0],
-                    filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, false));
-            view.setForeground(outline);
+            applyEditorOutline(view);
         }
         if (view instanceof SeekBar) {
-            SeekBar slider = (SeekBar) view;
-            int blue = accentColor(view.getContext());
-            ColorStateList focusAccent = ColorStateList.valueOf(blue);
-            slider.setThumbTintList(focusAccent);
-            slider.setProgressTintList(focusAccent);
-            slider.setProgressBackgroundTintList(focusAccent);
+            tintSlider((SeekBar) view);
         }
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
@@ -94,6 +84,23 @@ public final class BoopTvChrome {
                 decorateVoiceEditors(group.getChildAt(i));
             }
         }
+    }
+
+    private static void applyEditorOutline(View view) {
+        StateListDrawable outline = new StateListDrawable();
+        outline.addState(new int[]{android.R.attr.state_focused},
+                filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, true));
+        outline.addState(new int[0],
+                filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, false));
+        view.setForeground(outline);
+    }
+
+    private static void tintSlider(SeekBar slider) {
+        int blue = accentColor(slider.getContext());
+        ColorStateList focusAccent = ColorStateList.valueOf(blue);
+        slider.setThumbTintList(focusAccent);
+        slider.setProgressTintList(focusAccent);
+        slider.setProgressBackgroundTintList(focusAccent);
     }
 
     public static int accentColor(Context context) {
@@ -121,6 +128,9 @@ public final class BoopTvChrome {
 
     private static void decorateTree(View view) {
         if (view == null) return;
+        if (view instanceof SeekBar) {
+            tintSlider((SeekBar) view);
+        }
         if (eligible(view)) {
             synchronized (DECORATED) {
                 DECORATED.add(view);
