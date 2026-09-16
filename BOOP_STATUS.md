@@ -1,6 +1,12 @@
-# BOOP status — 2026-09-16
+# BOOP status - 2026-09-16
 
 Owner: `boop-hand-colour-v191`.
+
+## Latest feature status: Voice human testing blocked
+
+The requested live Shield screenshot confirms oversized full-screen felt eyes over Voice settings, obscuring the name controls and much of Pitch/Cadence. TEST VOICE is visible below. Read-only device identity confirms `com.boop.alpha1` versionCode 200, `1.2.200-uniform-tv-chrome-voice-demo`, with MainActivity foreground.
+
+This is a confirmed failing visual observation, not physical acceptance. No fix, voice playback, selector or sync test was performed. Resume the already-reached human-testing phase and address the obstruction before further voice work. Locate the actual v200 source/build receipt before corrections; do not infer it from the older v198 receipt. Details/context: `docs/handoffs/2026-09-16-voice-human-test-overlay-blocker.md`. This continuation only captured/read the device and updated documentation; no code, settings, permissions, installs or signing changed.
 
 ## Latest device observation: storage maintenance complete
 
@@ -35,4 +41,4 @@ Full v198 receipt: `docs/handoffs/2026-09-16-v198-voice-profile-controls.md`.
 Historical release/acceptance details remain in their dated receipts rather than being duplicated here.
 
 ## Next
-Storage maintenance is complete. No additional install is implied. For subsequent work, fetch the newest relevant source/build handoff and preserve the observed v200 installation unless Ryan explicitly requests a verified replacement. Jointly verify feature behavior with Ryan; keep CI/build evidence, install identity and physical acceptance separate.
+Voice human testing is currently blocked by the oversized eyes; use the latest feature-context receipt above rather than restarting design or using an old install-next-step. Storage maintenance is complete and no additional install is implied. Before any correction, fetch the actual v200 source/build handoff and preserve the installed app unless Ryan explicitly requests a verified replacement. Jointly verify behavior with Ryan; keep CI/build evidence, install identity and physical acceptance separate.
