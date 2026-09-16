@@ -125,7 +125,8 @@ public final class WatchNowService extends AccessibilityService {
                     && event.getPackageName()!=null) {
                 String pkg=event.getPackageName().toString();
                 if(!pkg.equals(expectedPackage) && !pkg.equals(getPackageName())
-                        && !pkg.equals("android") && !pkg.equals("com.android.systemui")) stop();
+                        && !pkg.equals("android") && !pkg.equals("com.android.systemui")
+                        && !(returningHome && isConfiguredHome(pkg))) stop();
             }
             return;
         }
@@ -141,6 +142,12 @@ public final class WatchNowService extends AccessibilityService {
             }
         }
         inspect();
+    }
+
+    private boolean isConfiguredHome(String pkg) {
+        android.content.pm.ResolveInfo home=getPackageManager().resolveActivity(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0);
+        return home!=null && home.activityInfo!=null && pkg.equals(home.activityInfo.packageName);
     }
 
     private void goHome(boolean clean) {
