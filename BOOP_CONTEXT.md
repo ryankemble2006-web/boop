@@ -1,3 +1,19 @@
+# CURRENT: Voice deferred for Astra; split authorized with Voice unchanged
+
+Updated 2026-09-16. This direction supersedes every earlier requirement in the historical material below to finish Voice, fix latency, gather another Try Emma / TEST VOICE sample or obtain further Voice acceptance before splitting. The v206 UI remains accepted.
+
+Ryan has explicitly deferred the approximately 12-second natural-voice latency investigation, alternative sources/voices and further pitch/cadence work for Astra later. Leave the current Voice implementation completely alone in BOTH split apps. Preserve the working natural backend, voice choices, model/download path, existing pitch/cadence code and voice-profile sharing. Do not optimize, remove controls, replace providers/models or roll back to a pre-tuning implementation. Working natural voices are the preservation requirement; the latency is not claimed fixed.
+
+Proceed with the agreed Wall/Shield packaging task from the latest live combined lineage. Voice work is no longer a prerequisite. Preserve all accepted UI/features and concurrent work. The package-sensitive integration audit, both signed/verified replacement APKs, recovery checks and stop-at-first-real-setup deployment conditions remain mandatory.
+
+Current execution status: no split source changes, new APKs or installation changes yet. One multi-file source-audit command was blocked by the tool safety check; it was not rerouted. This publication records the approved Voice deferral only. Current receipt: `docs/handoffs/2026-09-16-voice-deferred-split-authorized.md`.
+
+## Historical pre-deferral record below
+
+Earlier Voice prerequisites below are preserved for history and are NOT current instructions.
+
+---
+
 ## Current override: v206 UI accepted; finish Voice before Wall/Shield split
 
 Updated 2026-09-16. Ryan explicitly confirms v206 as the working baseline and physically accepts its UI. Current owner is `boop-hand-colour-v191`; latest built source is `9d57019d9370dbe3f47061b6e8b0ce8ed5134715`, signed run `35099151524`. Main's current BOOP_START_HERE.md owns routing; the older branch/version and emulator-first directions below are historical and do not override current instructions.
