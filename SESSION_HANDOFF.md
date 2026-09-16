@@ -1,4 +1,4 @@
-# BOOP current handoff: preserve accepted Home; finish Voice before splitting
+# BOOP current handoff: v206 UI accepted; finish Voice before splitting
 
 Updated 2026-09-16. Current application owner remains `boop-hand-colour-v191`. Main is the shared context hub, not the latest app source. The Wall/Shield split is authorized only after the current voice/UI work is finished, jointly accepted and preserved. No split implementation or clean install has begun in this prerequisite review.
 
@@ -16,11 +16,11 @@ Ryan accepted the v205 visible spacing and left alignment, then confirmed the co
 
 Receipt: `docs/handoffs/2026-09-16-v206-idle-home-host.md`. This acceptance is scoped to the tested Home behavior; it is not a new exhaustive test of every external app/Cast exit route or a sign-off of Voice.
 
-## Prerequisite still open: current Voice and wider TV focus
+## Prerequisite still open: current Voice response delay and sharing
 
 The source contains the v200 TEST VOICE and natural pitch/rate work, v201 surface-ownership repair, v202 focus/slider fixes, and subsequent natural-voice latency/four-thread changes. Do not roll back to a v201 or v198 implementation merely because an old handoff describes it.
 
-The fetched receipts and this conversation do not establish final human acceptance of audible current-backend output, pitch/cadence, current cross-device voice-profile sharing, or uniform Home-style focus across all requested TV controls. Pixel 7 remains on an earlier app. Establish the other window's completion/ownership status and finish the agreed joint Voice/UI checks before beginning the split. Preserve any subsequent fixes from the live owning branch; v206 is not a frozen future split base.
+Ryan explicitly confirmed v206 as the working baseline and its UI as accepted in the continuing chat. Do not keep a pending UI/focus acceptance gate from an older paragraph or redesign accepted controls. His earlier voice test reported natural voices present, Pitch/Cadence affecting speech and acceptable blue highlights, but long Try Emma / TEST VOICE delays. Current v206 response-delay acceptance and cross-device voice-sharing verification remain open; Pixel 7 is still on v191. Preserve the current pitch playback, latency diagnostics and four-thread inference rather than returning to old voice implementations. Determine the collaborating window's completion/ownership status and finish the remaining joint Voice checks before splitting, retaining all subsequent accepted fixes from the live owner.
 
 ## Next task and safety gate
 

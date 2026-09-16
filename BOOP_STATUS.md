@@ -1,4 +1,4 @@
-# BOOP status: Home accepted; Voice prerequisite remains open
+# BOOP status: v206 UI accepted; Voice prerequisite remains open
 
 Updated 2026-09-16. Owner: `boop-hand-colour-v191`.
 
@@ -17,7 +17,7 @@ Physical Pixel 10 was not targeted. No install, uninstall, data clear, setup nav
 
 **Installation:** fresh Shield APK hash matches the v206 build/install receipt. Pixel 7 is still v191, so current Voice work is not established there by these readings.
 
-**Human acceptance:** Ryan accepted v205 spacing/alignment and subsequently the idle bottom-right BOOP after reload. That Home acceptance is recorded, not merely awaiting a screenshot. Wider current Voice sound, pitch/cadence, sharing and TV-menu focus completion are not established by the available receipts. Do not extrapolate Home acceptance to them.
+**Human acceptance:** Ryan explicitly confirms v206 as the working baseline and its UI as accepted. Preserve the accepted layout and controls without another UI/focus acceptance gate. Earlier voice testing reported natural voices present and Pitch/Cadence affecting speech, but long Try Emma / TEST VOICE delays. Current v206 voice response-delay acceptance and cross-device voice-sharing verification remain open; UI sign-off does not establish either. Do not reset that earlier voice progress or claim a new audio test happened here.
 
 ## Split status
 

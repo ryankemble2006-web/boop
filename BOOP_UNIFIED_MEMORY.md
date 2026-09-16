@@ -1,4 +1,4 @@
-# BOOP durable memory: accepted Home and gated Wall/Shield split
+# BOOP durable memory: accepted v206 UI and gated Wall/Shield split
 
 Updated 2026-09-16. Current application owner remains `boop-hand-colour-v191`; read LIVE GitHub heads and latest receipts before any edit. A version-like branch name and the primary checkout are not application-version evidence.
 
@@ -10,7 +10,7 @@ Fresh ADB reads confirm Shield `com.boop.alpha1` v206 with APK hash `b5f7b0570ec
 
 Ryan explicitly accepted the Home visual spacing and left alignment, then the corner behavior after reload. Preserve four buttons across the top; Now Playing below; equal visible 16dp spacing to the aligned wide favourite artwork and between the wide tiles; no Favourite apps heading; favourites parked even when the panel vanishes; one larger idle BOOP in the bottom-right. The v206 owner guard prevents the media attach path from overwriting the Home host's size/gravity/margins. The tested Home result is accepted; not every external playback-exit route was individually tested.
 
-Preserve subsequent Voice work already in the source: TEST VOICE, natural pitch/rate playback, modal eye-surface hiding, TV focus/slider fixes, voice latency markers and four-thread Shield natural inference. Old v198 statements that natural pitch is deliberately unapplied are historical, not current implementation instructions. Audible operation, cross-device Voice sharing and the full requested TV focus coverage still require final human acceptance; Pixel 7's v191 identity does not prove those later features.
+Preserve subsequent Voice work already in the source: TEST VOICE, natural pitch/rate playback, modal eye-surface hiding, TV focus/slider fixes, voice latency markers and four-thread Shield natural inference. Old v198 statements that natural pitch is deliberately unapplied are historical, not current implementation instructions. Ryan now explicitly confirms the v206 UI as accepted; do not reopen a UI/focus acceptance gate. Earlier voice testing reported natural voices present and Pitch/Cadence affecting speech, with long Try Emma / TEST VOICE delays. Current v206 response-delay acceptance and cross-device voice-sharing verification remain pending. Pixel 7's v191 identity does not prove those later features, and the UI confirmation is not a new v206 audio test.
 
 ## Preserve accepted functionality in any later split
 

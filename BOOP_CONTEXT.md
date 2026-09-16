@@ -1,3 +1,17 @@
+## Current override: v206 UI accepted; finish Voice before Wall/Shield split
+
+Updated 2026-09-16. Ryan explicitly confirms v206 as the working baseline and physically accepts its UI. Current owner is `boop-hand-colour-v191`; latest built source is `9d57019d9370dbe3f47061b6e8b0ce8ed5134715`, signed run `35099151524`. Main's current BOOP_START_HERE.md owns routing; the older branch/version and emulator-first directions below are historical and do not override current instructions.
+
+Preserve all accepted v206 UI, photographic felt artwork/animations, appearance controls, HA, notifications, sharing and media/launcher behavior. Current Voice includes natural pitch playback, timing diagnostics and four-thread inference. Earlier physical testing reported pitch/cadence working but long Try Emma / TEST VOICE delays; current response-delay and cross-device voice-sharing acceptance remain open. Do not reopen UI acceptance or revert to older voice code.
+
+Finish and jointly accept the outstanding Voice work, preserve subsequent fixes and respect concurrent ownership before splitting the latest accepted combined source into Wall `com.boop.alpha1` and Shield `com.boop.shieldoverlay` shells sharing maintained functionality. Automatic appropriate UI removes only device/profile choice, not room/voice settings or genuine Android permission/Home confirmations. This is not an old standalone-code rollback.
+
+Only Pixel 7 Pro and Nvidia Shield are deployment targets; leave physical Pixel 10 alone. Both signed/verified replacement APKs and recovery APKs plus usable Shield HOME recovery must be ready before intentional clean installs. Do not restore BOOP app data, setup flags or preconfigured access. Open each real first setup screen and stop. No split or clean install has begun; existing devices/settings remain unchanged.
+
+Read current SESSION_HANDOFF.md, BOOP_STATUS.md, BOOP_UNIFIED_MEMORY.md and `docs/handoffs/2026-09-16-wall-shield-split-prerequisites.md`. These supersede stale current-status statements below. The historical local v203 dirty documents and the collaborating window's newer GitHub work remain preserved. This clarification changes documentation only.
+
+---
+
 ## Current Voice handoff - v201 installed; entry screen clear
 
 Updated 2026-09-16. Owner remains `boop-hand-colour-v191`. Current receipt: `docs/handoffs/2026-09-16-v201-voice-verified-build.md`. Preserve the collaborating install handoff and independent review alongside it.

@@ -27,7 +27,11 @@ Fresh targeted ADB reads:
 
 Ryan accepted v205 Home spacing/left alignment and subsequently confirmed the bottom-right repair after reload: "tested after you reloaded.. perfection. thanks boops". Record that as scoped physical Home acceptance. Preserve all four top buttons, fixed favourites, equal visible gaps, removed heading and the idle-corner behavior.
 
-Final human acceptance of current voice output, pitch/cadence, Voice sharing and the complete requested TV focus styling is not established by the fetched receipts/conversation. Determine the other window's completion state and finish these joint checks before splitting. Do not infer that missing acceptance means the source implementation should be rewritten.
+Latest clarification, 2026-09-16: Ryan explicitly confirms v206 as the working baseline and the UI as accepted. Do not retain a pending UI/focus gate from an earlier review. His earlier Voice test reported natural voices present and Pitch/Cadence affecting speech, but long Try Emma / TEST VOICE delays. Current v206 response-delay acceptance and cross-device voice-sharing verification remain open; determine the collaborating window's completion state and finish those joint Voice checks before splitting. Missing final acceptance is not permission to rewrite current voice implementations.
+
+This continuation independently rechecked the same installed v206/v191 identities and APK hashes above, and the successful v206 build job `104803873837` plus separate Home-layout, voice-profile and TV/Voice runs `35099151474`, `35099151512`, `35099151480`. Current `source/BoopNaturalSpeechBackend.java` and `tests/test_natural_voice_latency_v203.py` retain pitch playback, four-thread inference and request/model/synthesis/playback timing markers. A read-only check of retained Shield `BOOP-VoiceLatency` logs found no stage samples; no fresh voice playback was triggered or accepted. The next joint timing sample is Try Emma, TEST VOICE, then Try Emma again on current v206, without disrupting another window's test.
+
+A concurrent documentation publication advanced the owner to `926ce10b852328a73166ed87bfcc5e6a22968bd8`. The stale-head guard stopped this continuation's earlier proposed write before any write occurred; this clarification is based on the newer documents, preserving that publication and its archived history. No application source, workflow, install, permission or default-Home change is included.
 
 ## Approved packaging outcome
 
