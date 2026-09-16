@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Source-level layout contract only. Ryan retains visual acceptance on Shield.
 ROOT = Path(__file__).resolve().parents[1]
 HOME = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java"
 
