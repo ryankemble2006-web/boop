@@ -1,3 +1,13 @@
+## Latest independent Shield observation: installed v201, clear Voice entry
+
+This observation supersedes the earlier pending-install boundary below. After the collaborating session's update, fresh read-only package and installed-APK checks confirm v201 with SHA-256 `527907407d60787860cf9e1c1cd13b464db91f015f657eec92590f995d735c8e`, identical to the verified signed artifact. No second install was performed by this reviewing recovery.
+
+The targeted MainActivity view hierarchy now marks both BoopCanonicalFaceView and its child GLSurfaceView GONE. The fresh private screenshot visibly confirms the Voice page is unobstructed: BOOP name/training controls, Pitch, Cadence and TEST VOICE are visible without the oversized eyes. This is a successful runtime observation for the displayed entry state, not acceptance of every lifecycle/audio path.
+
+The reviewing recovery did not press a button, change tuning, play the demo or operate on phones. TEST VOICE audio, pitch/rate extremes, eyes staying absent during playback, exit/re-entry restoration, selector behavior and phone/Shield propagation remain joint checks. Current install identity must be read again before any future deployment; do not repeat the completed update from a stale pending-install note. Captures and raw output remain private.
+
+---
+
 # v201 Voice surface correction - verified build receipt
 
 Date: 2026-09-16. Owner: `boop-hand-colour-v191`.
