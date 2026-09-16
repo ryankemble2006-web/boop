@@ -2,6 +2,7 @@ package uk.local.casualty;
 
 import android.accessibilityservice.AccessibilityService;
 import android.os.Handler;
+import android.content.Intent;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
@@ -49,13 +50,14 @@ public final class WatchNowService extends AccessibilityService {
             if (insideNewestRow && page.episode == null && node.isEnabled() && node.isClickable()
                     && UiPolicy.isEpisodeCard(viewId, description)) {
                 page.episode = AccessibilityNodeInfo.obtain(node);
-            }            if (page.trailer == null && node.isEnabled() && node.isClickable()
+            }
+            if (page.trailer == null && node.isEnabled() && node.isClickable()
                     && UiPolicy.isSkipTrailer(text, description)) {
                 page.trailer = AccessibilityNodeInfo.obtain(node);
             }
         }
 
-        for (int i = 0; i < node.getChildCount(); i++) {
+        for (int i = 0; i < node.getChildCount() && page.visited < 1500; i++) {
             AccessibilityNodeInfo child = node.getChild(i);
             if (child != null) {
                 try { scan(child, page, depth + 1, insideNewestRow); }
@@ -139,17 +141,24 @@ public final class WatchNowService extends AccessibilityService {
                         report(skipped ? "Trailer skipped" : "Skip trailer control rejected click");
                         return;
                     }
-                    if (!gate.returnPageReady(now, page.title)) {
-                        report(page.title ? "Playback starting; return focus guard waiting" : "Playback active; return focus guard armed");
-                        return;
+                    if (gate.claimReturnHome(now, page.title, page.episode != null)) {
+                        // Consume the one-shot guard before changing the foreground.
+                        handler.removeCallbacks(check);
+                        boolean returned = performGlobalAction(GLOBAL_ACTION_HOME);
+                        Log.i("Casualty", "Return Home accepted: " + returned);
+                        if (!returned) {
+                            try {
+                                startActivity(new Intent(Intent.ACTION_MAIN)
+                                        .addCategory(Intent.CATEGORY_HOME)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                                report("Return Home fallback launched");
+                            } catch (RuntimeException rejected) {
+                                report("Return Home rejected; use the remote Home button");
+                            }
+                        }
+                    } else {
+                        report(page.title ? "Waiting for programme return after playback" : "Playback active; Home return armed");
                     }
-                    if (page.episode == null) {
-                        report("Casualty returned; waiting for episode focus target");
-                        return;
-                    }
-                    boolean focused = page.episode.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
-                    Log.i("Casualty", "Return episode focus accepted: " + focused);
-                    if (focused) gate.cancel();
                     return;
                 }
                 if (gate.claimProfile(SystemClock.elapsedRealtime(), page.chooser, page.profile != null)) {
@@ -166,6 +175,7 @@ public final class WatchNowService extends AccessibilityService {
                 if (gate.claimEpisode(SystemClock.elapsedRealtime(), true, page.episode != null)) {
                     boolean clicked = page.episode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                     Log.i("Casualty", "Newest episode click accepted: " + clicked);
+                    if (!clicked) stop();
                 }
             } finally {
                 if (page.profile != null) page.profile.recycle();

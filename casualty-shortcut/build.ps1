@@ -12,7 +12,7 @@ foreach ($name in @('banner', 'icon')) {
         throw "Missing approved $name artwork resource"
     }
 }
-& javac -d build/tests src/uk/local/casualty/Routes.java src/uk/local/casualty/ClickGate.java src/uk/local/casualty/UiPolicy.java src/uk/local/casualty/LaunchPolicy.java tests/RouteTest.java tests/ClickGateTest.java tests/AutoplayPolicyTest.java tests/LaunchPolicyTest.java
+& javac -d build/tests src/uk/local/casualty/Routes.java src/uk/local/casualty/ClickGate.java src/uk/local/casualty/UiPolicy.java src/uk/local/casualty/LaunchPolicy.java tests/RouteTest.java tests/ClickGateTest.java tests/AutoplayPolicyTest.java tests/LaunchPolicyTest.java tests/ReturnHomeTest.java
 Check
 & java -cp build/tests uk.local.casualty.RouteTest
 Check
@@ -21,6 +21,8 @@ Check
 & java -cp build/tests uk.local.casualty.AutoplayPolicyTest
 Check
 & java -cp build/tests uk.local.casualty.LaunchPolicyTest
+Check
+& java -cp build/tests uk.local.casualty.ReturnHomeTest
 Check
 & "$PSScriptRoot/tests/BuildAssetsTest.ps1" -Sdk $Sdk
 & "$bt/aapt2.exe" compile --dir res -o build/resources.zip
@@ -53,11 +55,11 @@ try {
         & keytool -genkeypair -keystore signing/casualty.p12 -storetype PKCS12 -alias casualty -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=Casualty Personal Launcher' -storepass:env CASUALTY_SIGN_PASSWORD -keypass:env CASUALTY_SIGN_PASSWORD
         Check
     }
-    & "$bt/apksigner.bat" sign --ks signing/casualty.p12 --ks-key-alias casualty --ks-pass "file:signing/password.txt" --out build/Casualty-1.1.apk build/aligned.apk
+    & "$bt/apksigner.bat" sign --ks signing/casualty.p12 --ks-key-alias casualty --ks-pass "file:signing/password.txt" --out build/Casualty-1.2.apk build/aligned.apk
     Check
 } finally { Remove-Item Env:CASUALTY_SIGN_PASSWORD -ErrorAction SilentlyContinue }
-& "$bt/apksigner.bat" verify --verbose --print-certs build/Casualty-1.1.apk
+& "$bt/apksigner.bat" verify --verbose --print-certs build/Casualty-1.2.apk
 Check
-& "$bt/aapt2.exe" dump badging build/Casualty-1.1.apk
+& "$bt/aapt2.exe" dump badging build/Casualty-1.2.apk
 Check
-Get-FileHash build/Casualty-1.1.apk -Algorithm SHA256
+Get-FileHash build/Casualty-1.2.apk -Algorithm SHA256
