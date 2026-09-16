@@ -21,4 +21,10 @@ Artifact: `10447197742`, `BOOP-Unified-v206-Idle-Home-Corner`. Build commit: `9d
 
 Runtime verification: after installation, playback was active and the small Now Playing puppet occupied its normal slot. Returned Home and activated the live Close player control once. Fresh screenshot and view hierarchy confirmed Now Playing invisible, its puppet gone, favourites unchanged, and the 360x220dp idle Home puppet bottom-right. Another Home entry and fresh screenshot confirmed that attachment no longer overwrites that placement. The strip remained in exactly the same position in both states.
 
-Acceptance boundary: the assistant inspected the live before/after screenshots; Ryan has accepted v205 spacing and retains final physical acceptance of this corner correction. Other app/Cast/end-of-track exit routes were not individually exercised. No claim of new voice/global-focus acceptance. Screenshots and raw diagnostics remain private. Historical dirty v203 documentation in the laptop checkout remains untouched; GitHub owns this current receipt.
+Acceptance boundary at the implementation receipt: the assistant inspected the live before/after screenshots; Ryan had accepted v205 spacing and retained final physical acceptance of this corner correction. Other app/Cast/end-of-track exit routes were not individually exercised. No claim of new voice/global-focus acceptance. Screenshots and raw diagnostics remain private. Historical dirty v203 documentation in the laptop checkout remains untouched; GitHub owns this current receipt.
+
+## Subsequent user acceptance
+
+After the reload Ryan confirmed: "tested after you reloaded.. perfection. thanks boops". The tested Home/corner correction is therefore physically accepted alongside his v205 spacing/alignment acceptance. No further Home change is implied. This does not establish final Voice/global TV focus acceptance or an exhaustive test of every external media exit route.
+
+The next agreed task is the latest-source Wall/Shield split, gated by completing and preserving current Voice/UI work. Context: `docs/handoffs/2026-09-16-wall-shield-split-prerequisites.md`.
