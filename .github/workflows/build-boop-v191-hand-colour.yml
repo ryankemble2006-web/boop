@@ -1,13 +1,13 @@
-name: Build BOOP v199 centred favourites lab
+name: Build BOOP v200 matched Home spacing lab
 on:
   push:
-    branches: [boop-home-centred-favourites-lab-v199]
+    branches: [boop-home-centred-favourites-lab-v200]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: boop-v199-centred-favourites-lab
+  group: boop-v200-matched-home-spacing-lab
   cancel-in-progress: true
 jobs:
   build:
