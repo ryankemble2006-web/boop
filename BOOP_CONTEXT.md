@@ -10,17 +10,23 @@ The accepted v206 combined implementation now builds as a common assistant libra
 
 Both signed v207 APKs were clean-installed from source `aa8fd9f6d79f28b441a48df31138a75d38420118`, run `35110823569`, artifact `10451993779`. Read the signed-clean-install receipt for exact hashes and verification. Human acceptance remains distinct from build/install success.
 
+## Latest runtime continuation: Shield mic button
+
+Ryan explicitly requested recovery of the previously working BOOP mic takeover. The installed v207 assistant code and `use_boop` preference were intact; Android's ASSISTANT role/default still selected Google Katniss. Reassigned that role to `com.boop.shieldoverlay`, yielding `com.boop.shieldoverlay/com.boop.alpha1.BoopAssistantActivity`, an empty voice-interaction setting and unchanged Katniss recognizer. Injected KEYCODE_ASSIST reached BOOP MainActivity/face without a system restart. Real remote capture/commands remain Ryan's acceptance check.
+
+No new APK, app source, Voice or signing change was necessary; installed v207 hash still matches its signed delivery. No Home-role change, reset or phone operation. The earlier denied mic-access snapshot is superseded by a later granted/USER_SET readback after a permission activity appeared; this session issued no grant or permission-dialog input. Preserve current progress/access. Deezer launch succeeded for the requested attention cue, but Flow playback is unverified because Recents/YouTube transitions interrupted navigation and further input stopped. See `docs/handoffs/2026-09-16-v207-shield-mic-role-recovery.md`.
+
 ## Preserve the current experience
 
 Keep the accepted v206 UI, photographic felt character and animations, appearance controls, local Home Assistant behavior, cross-device sharing, notifications and applicable launcher/media functions. Wall still has a built-in launcher; both retain shared assistant capability. Johnny's current legacy state authority remains on Shield with the original read-only caller/signature boundary.
 
 Voice is frozen in both apps. Ryan explicitly deferred the approximately 12-second latency investigation, alternate providers/voices and further pitch/cadence work for Astra. Preserve the existing natural voices, local model/download path and tuning/sharing implementation unchanged. No rollback, new voice backend or extra voice-acceptance gate is implied. All 16 packaged native libraries matched the accepted v206 APK exactly.
 
-## Fresh setup versus later progress
+## Fresh setup versus later progress (split-delivery history)
 
-The requested newcomer test intentionally removed old BOOP-local setup. Both replacements were initially captured at their genuine first setup screen, with incomplete setup flags and no Continue/sign-in action by this sequence. Android permission and Home confirmations remain genuine user choices. No old data, downloaded models, credentials or setup flags were restored, and no default Home was forced.
+The requested newcomer test intentionally removed old BOOP-local setup. Both replacements were initially captured at their genuine first setup screen, with incomplete setup flags and no Continue/sign-in action by the split sequence. Android permission and Home confirmations remain genuine user choices. No old data, downloaded models, credentials or setup flags were restored, and no default Home was forced by that sequence.
 
-Latest verified state: Pixel 7 remains at first setup. Shield subsequently reports setup complete and YouTube foreground; do not erase or rewind that progress. Three BOOP Shield listener grants and overlay access were found enabled during the checks and cleared by this sequence for the unconfigured-access brief; unrelated listeners were preserved. The source of those intervening grants/advancement was not established. No further device inputs were sent after noticing the later completed flag. Consult `docs/handoffs/2026-09-16-v207-signed-clean-install.md` for the precise sequence.
+At the last split-delivery read, Pixel 7 remained at first setup. Shield subsequently reported setup complete and YouTube foreground; do not erase or rewind that progress. Three BOOP Shield listener grants and overlay access were found enabled during those checks and cleared for the unconfigured-access brief; unrelated listeners were preserved. The source of those intervening grants/advancement was not established. The split sequence stopped device inputs at that point; the mic recovery above is a later, separately authorized task. Consult `docs/handoffs/2026-09-16-v207-signed-clean-install.md` for the earlier sequence.
 
 ## Collaboration and publication
 

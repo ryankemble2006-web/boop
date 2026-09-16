@@ -2,6 +2,16 @@
 
 Updated 2026-09-16. Current owner is `boop-wall-shield-split-v207`; this filename remains for continuity. One repository, one maintained shared assistant and existing shared render/media libraries, two application shells. Never resurrect the older standalone implementations when fixing these packages.
 
+## Shield mic-button recovery after the split
+
+The v207 microphone regression was an Android assistant-assignment problem, not missing mic code. Live v207 had the correct ASSIST activity and `shield_mic_button_choice_v1=use_boop`, while the OS role/default still selected Google Katniss. With Ryan's explicit restoration request, reassigned ASSISTANT to `com.boop.shieldoverlay`. Correct component: `com.boop.shieldoverlay/com.boop.alpha1.BoopAssistantActivity`. Keep application ID and unchanged Java namespace distinct.
+
+This restores the successful v105+ activity-based design: voice-interaction setting empty, existing Katniss speech-recognition provider retained. Do not reintroduce the historical malformed VoiceInteractionService registration, disable the recognizer or replace the natural Voice stack. In-app opt-in alone does not prove Android role ownership. Package-changing clean installs require a fresh role check and explicit user choice, not forced defaults during newcomer setup.
+
+Role/default readback and injected KEYCODE_ASSIST -> BOOP MainActivity/face were verified without a system restart. The installed v207 hash was unchanged; no new APK or source build was needed. Real remote speech/commands still need Ryan's acceptance. Microphone permission was initially denied, remained denied immediately after reassignment, then was observed granted with USER_SET after a permission activity appeared. This session issued no grant or dialog-selection input; do not rewind that later state.
+
+Deezer was launched for the requested Flow cue, but Recents/YouTube transitions interrupted navigation. Further input stopped; Flow playback is not established. Full receipt: `docs/handoffs/2026-09-16-v207-shield-mic-role-recovery.md`.
+
 ## Delivered applications and lineage
 
 Wall `com.boop.alpha1`, `207` / `1.2.207-wall`, was clean-installed only on Pixel 7 Pro. Shield `com.boop.shieldoverlay`, `207` / `1.2.207-shield`, was clean-installed only on Nvidia Shield. Installed build source `aa8fd9f6d79f28b441a48df31138a75d38420118`, signed run `35110823569`, artifact `10451993779`. Exact hashes, permanent signature, recovery, first-screen and subsequent-state evidence are in `docs/handoffs/2026-09-16-v207-signed-clean-install.md`.
@@ -22,11 +32,11 @@ Keep Java namespaces and semantic action/protocol IDs distinct from Android appl
 
 Shield alone owns legacy authority `com.boop.alpha1.johnny_states` plus `com.boop.shieldoverlay.johnny_states`. The current signed Johnny consumer queries/calls the legacy provider authority; retain compatibility without modifying Johnny. The fixed read-only snapshot and caller package/certificate guard are unchanged. Do not expose credentials or silently broaden HA scope.
 
-## Newcomer test and observed subsequent progress
+## Newcomer test and subsequent progress (split-delivery history)
 
-Both old Unified installs were deliberately removed without keeping data. No old app data, voice models, HA credentials, setup flags or access grants were restored. Both new apps initially reached their real first setup screens with incomplete flags; no Continue, sign-in or completion-flag write was issued by this sequence.
+Both old Unified installs were deliberately removed without keeping data. No old app data, voice models, HA credentials, setup flags or access grants were restored. Both new apps initially reached their real first setup screens with incomplete flags; no Continue, sign-in or completion-flag write was issued by the split sequence.
 
-Pixel 7 remained at initial setup in the latest read. Shield later had enabled BOOP listener/overlay access; this sequence cleared only those grants for the fresh-access brief, preserving unrelated listeners. A following read showed Shield setup completed and YouTube foreground. The actor responsible was not established. Do not reset, reinstall, regrant or force it back to first setup. No further device input was sent after noticing the advancement. Report this honestly instead of asserting both still sit at step one.
+Pixel 7 remained at initial setup in that sequence's last read and was not operated during mic recovery. Shield later had enabled BOOP listener/overlay access; the split sequence cleared only those grants for the fresh-access brief, preserving unrelated listeners. A following read showed Shield setup completed and YouTube foreground. The actor responsible was not established. Its no-further-input stopping point is historical; the later mic recovery above was separately authorized. Do not reset, reinstall, regrant or force the devices back to first setup.
 
 ## Working boundaries
 
