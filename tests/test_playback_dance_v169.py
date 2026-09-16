@@ -65,6 +65,14 @@ public class PlaybackDanceHarness {
         subprocess.run(["javac","-d",d,*files],check=True)
         subprocess.run(["java","-cp",d,"com.boop.shieldhome.PlaybackDanceHarness"],check=True)
     allowed={
+      # v207 explicitly separates application shells; focused split contracts cover these exact files.
+      "unified/BoopProfileActivity.java",
+      "unified/UnifiedEntryActivity.java",
+      "unified/BoopDeviceProfile.java",
+      "source/BoopAppIdentity.java",
+      "source/BoopSetupState.java",
+      "scripts/materialize-split.py",
+      "scripts/audit-split-input.py",
       # v201 reviewed five-line modal visibility propagation; voice-surface regression covers this file.
       "source/BoopCanonicalFaceView.java",
       # v200 intentionally adds uniform TV menu focus chrome, opaque voice settings and audible natural pitch.

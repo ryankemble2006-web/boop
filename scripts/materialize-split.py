@@ -9,6 +9,8 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
+import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path('boop-build/BOOP-Alpha1')
@@ -41,7 +43,7 @@ for node in app.iter():
             node.set(A + attr, 'com.boop.alpha1' + value)
 app.attrib.pop(A + 'label', None)
 entry = next(n for n in app.findall('activity') if n.get(A + 'name') == 'com.boop.alpha1.UnifiedEntryActivity')
-app.remove(entry)  # Only the two actual application shells advertise HOME/launch.
+app.remove(entry)
 provider = next(n for n in app.findall('provider') if n.get(A + 'name') == 'com.boop.alpha1.JohnnyStateProvider')
 assert provider.get(A + 'authorities') == 'com.boop.alpha1.johnny_states'
 app.remove(provider)  # Shield owns Johnny's legacy URI; Wall cannot collide.
@@ -53,17 +55,15 @@ for body in ('wall', 'shield'):
     shutil.copyfile('split/' + body + '/build.gradle', target / 'build.gradle')
     shutil.copyfile('split/' + body + '/AndroidManifest.xml', target / 'src/main/AndroidManifest.xml')
 
-# Make self-filtering depend on the owning APK rather than the old Unified ID.
+# AppRepository accepts PackageManager only. The application UID identifies self
+# without changing its public API or assuming a nonexistent Context field.
 repo = ROOT / 'launcher-lib/src/main/java/com/boop/launcher/AppRepository.java'
 text = repo.read_text()
 old = 'if("com.boop.alpha1".equals(r.activityInfo.packageName))continue;'
 assert text.count(old) == 1, 'Unexpected launcher self-filter implementation'
-# AppRepository already owns the application context; use the context name found
-# in its constructor rather than introducing an external package dependency.
-context_match = re.search(r'\b(?:Context|android\.content\.Context)\s+([A-Za-z_][A-Za-z_0-9]*)\s*;', text)
-assert context_match, 'AppRepository context field was not found'
-context = context_match.group(1)
-repo.write_text(text.replace(old, f'if({context}.getPackageName().equals(r.activityInfo.packageName))continue;', 1))
+repo.write_text(text.replace(old,
+    'if(r.activityInfo.applicationInfo != null && r.activityInfo.applicationInfo.uid == android.os.Process.myUid())continue;', 1))
+subprocess.run([sys.executable, 'split/test-repository-uid.py'], check=True)
 
 # The pinned, hash-verified AAR remains byte-for-byte unchanged. A local Maven
 # coordinate lets Gradle propagate it correctly through an Android library.
