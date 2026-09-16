@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -45,6 +46,47 @@ public final class BoopTvChrome {
             if (eligible(oldFocus)) oldFocus.post(() -> applyState((TextView) oldFocus, false));
             if (eligible(newFocus)) newFocus.post(() -> applyState((TextView) newFocus, true));
         });
+    }
+
+    /** Voice's clickable panel blocks touch-through but must not own D-pad focus. */
+    public static void prepareVoiceSettings(
+            ViewGroup scroll, ViewGroup content, View initialFocus) {
+        if (scroll == null || content == null || initialFocus == null
+                || !isTelevision(content.getContext())) return;
+        prepareVoiceContainer(scroll);
+        prepareVoiceContainer(content);
+        decorateVoiceEditors(content);
+        initialFocus.setFocusableInTouchMode(true);
+        initialFocus.post(() -> {
+            if (content.isAttachedToWindow() && initialFocus.isShown() && initialFocus.isEnabled()) {
+                initialFocus.requestFocus();
+            }
+        });
+    }
+
+    private static void prepareVoiceContainer(ViewGroup group) {
+        group.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+        group.setFocusableInTouchMode(false);
+        group.setFocusable(false);
+    }
+
+    private static void decorateVoiceEditors(View view) {
+        if (view instanceof SeekBar || view instanceof EditText) {
+            // A transparent foreground preserves native tracks, caret and input
+            // handlers while matching the existing button's blue focus border.
+            StateListDrawable outline = new StateListDrawable();
+            outline.addState(new int[]{android.R.attr.state_focused},
+                    filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, true));
+            outline.addState(new int[0],
+                    filled(view.getContext(), Color.TRANSPARENT, CORNER_DP, false));
+            view.setForeground(outline);
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                decorateVoiceEditors(group.getChildAt(i));
+            }
+        }
     }
 
     public static int accentColor(Context context) {
