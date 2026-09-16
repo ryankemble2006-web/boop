@@ -14,24 +14,22 @@ tools = Path(os.environ['ANDROID_HOME']) / 'build-tools/36.0.0'
 out = Path('split-artifact'); out.mkdir(exist_ok=True)
 expected = Path('shield-overlay/signing/boop-dev-cert-sha256.txt').read_text().strip().lower()
 source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-baseline = Path('baseline-v206/BOOP-Unified-v206-Idle-Home-Corner.apk')
+baseline = json.loads(Path('split/v206-native-baseline.json').read_text())
 baseline_sha = 'b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca'
-assert baseline.is_file(), 'Download the existing signed v206 reference artifact first'
-assert hashlib.sha256(baseline.read_bytes()).hexdigest() == baseline_sha, 'Baseline provenance mismatch'
+assert baseline['apkSha256'] == baseline_sha, 'Baseline provenance mismatch'
+assert baseline['source'] == '9d57019d9370dbe3f47061b6e8b0ce8ed5134715'
+assert baseline['signerSha256'] == expected, 'Baseline signer mismatch'
+original_native = baseline['nativeSha256']
+assert len(original_native) == 16, 'Baseline native library set changed'
 receipt = {'source': source, 'baseline': '9d57019d9370dbe3f47061b6e8b0ce8ed5134715',
            'baselineApkSha256': baseline_sha, 'apps': []}
 
 def tool(name, *args):
     return subprocess.check_output([str(tools/name), *map(str,args)], text=True)
 
-baseline_cert = tool('apksigner','verify','--print-certs',baseline)
-assert re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)',baseline_cert).group(1).lower() == expected
-with zipfile.ZipFile(baseline) as old_apk:
-    # Compare packaged native libraries to packaged libraries. Raw AAR inputs can
-    # contain symbols that Android's normal APK packaging strips from both builds.
-    original_native = {n: hashlib.sha256(old_apk.read(n)).hexdigest()
-                       for n in old_apk.namelist() if n.startswith('lib/') and n.endswith('.so')}
-assert original_native, 'Baseline APK contains no native runtime'
+# Hashes were extracted from the verified, signed v206 APK, then matched
+# against both initial split APKs. This permanent source checkpoint does not
+# depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'

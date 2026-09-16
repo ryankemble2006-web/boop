@@ -1,0 +1,23 @@
+{
+  "source": "9d57019d9370dbe3f47061b6e8b0ce8ed5134715",
+  "apkSha256": "b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca",
+  "signerSha256": "f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde",
+  "nativeSha256": {
+    "lib/arm64-v8a/libonnxruntime.so": "892bde5701ea47edffb3f1cc070f5bab690fccfca40e11baaed7b252084af477",
+    "lib/arm64-v8a/libsherpa-onnx-c-api.so": "6a4388a024d297e4fc5faea4229238efa069dff8a98f25030d35ca82e5f67b33",
+    "lib/arm64-v8a/libsherpa-onnx-cxx-api.so": "986dac2b94bf1da10112c2ce69a3f15439e5f04061d5891cf970f2eeaccb213d",
+    "lib/arm64-v8a/libsherpa-onnx-jni.so": "330eca65c8ca29d2eeb545c2bfe7f73da47415f10c638ae07709ef8a6e441e91",
+    "lib/armeabi-v7a/libonnxruntime.so": "c8a53da59795c5c96e8882be909d4919cc9da67bd3a4d732a0ddfcea9f4e9a0b",
+    "lib/armeabi-v7a/libsherpa-onnx-c-api.so": "de124cae75805d439604292611ee435ca0496a5a7e1bc8e7104982781a9f8da3",
+    "lib/armeabi-v7a/libsherpa-onnx-cxx-api.so": "5709df090c67c250622bc965edf7805030ef2211489b7ffe41b156fd727a8ee4",
+    "lib/armeabi-v7a/libsherpa-onnx-jni.so": "da24a1c3db73f2da80f22d1737bac9e164ee7f36b0ebaaa698e936f9d7693cc7",
+    "lib/x86/libonnxruntime.so": "e4d0b20a12b54fa7135bfca034fdf931a4e7e28c7a98bb1f1944402e817480e1",
+    "lib/x86/libsherpa-onnx-c-api.so": "8ba386336d8ea6b92fd2264d121ece459012ed2c68b8db95cf15e550e4f58e41",
+    "lib/x86/libsherpa-onnx-cxx-api.so": "e6fb96cc704babeffe2aa3115621a880690f70fe61fde6e1ef9a99609686443c",
+    "lib/x86/libsherpa-onnx-jni.so": "ce639870aeab66825ca0937be0e504d3c804b008bf5377056a685cd5ee326afb",
+    "lib/x86_64/libonnxruntime.so": "a3901bc4d8a6bd06118fd209351d1d632455b471f817d255edf8fbdd69af15fe",
+    "lib/x86_64/libsherpa-onnx-c-api.so": "bd4232af045a4e34fcf7bd83ea946e42116f6f7e5e91e8c88232405e63f748c5",
+    "lib/x86_64/libsherpa-onnx-cxx-api.so": "5005bfe717baed0feb677540fe6db04ecf3635ab6d4d8cc99d7bd61742621eda",
+    "lib/x86_64/libsherpa-onnx-jni.so": "695a20fee08d861fcd7692242a3554eb2fa5614c13b9c14d6194d613300f3288"
+  }
+}

@@ -77,3 +77,15 @@ def test_voice_and_accepted_home_art_sources_are_unchanged():
     ]
     changed = subprocess.check_output(["git", "diff", "--name-only", BASE, "HEAD", "--", *protected], cwd=ROOT, text=True)
     assert not changed.strip(), "Protected Voice/Home/art changed: " + changed
+
+
+def test_native_checkpoint_does_not_depend_on_expiring_ci_artifacts():
+    import json
+    import re
+    baseline = json.loads(text("split/v206-native-baseline.json"))
+    assert baseline["source"] == BASE
+    assert baseline["apkSha256"] == "b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca"
+    assert baseline["signerSha256"] == text("shield-overlay/signing/boop-dev-cert-sha256.txt").strip()
+    assert len(baseline["nativeSha256"]) == 16
+    assert all(re.fullmatch(r"[0-9a-f]{64}", value) for value in baseline["nativeSha256"].values())
+    assert "run-id: 35099151524" not in text(".github/workflows/build-wall-shield-split.yml")
