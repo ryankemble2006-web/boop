@@ -320,3 +320,12 @@ the retired Lab or reopen the confirmed integration gate. Unenumerated catalogue
 offline cases remain unclaimed coverage, not a new automatic testing backlog.
 See `SESSION_HANDOFF.md`, `BOOP_UNIFIED_MEMORY.md`, and
 `docs/handoffs/2026-09-13-unified-v162-accepted-lab-retired.md`.
+
+
+## 2026-09-16 v202 matched Home spacing lab
+- Coordination: another collaborating sister/session is busy. Keep this Home-layout experiment isolated on oop-home-centred-favourites-lab-v200; do not merge into or modify her active lane until Ryan requests it.
+- v202 package identity: ersionCode 202, ersionName 1.2.202-matched-home-spacing-lab.
+- Home layout intent: top controls and the unchanged 182dp Now Playing box stay fixed; Favourite apps heading remains removed; unchanged favourites widget is placed one shared 16dp Home-section gap below Now Playing; 360x220 idle BOOP remains bottom-right; v197 big/small BOOP media ownership remains preserved.
+- Final GitHub Actions run 35073895001 passed at 4a0a0a71d98568c933366ae182805703921d034.
+- Artifact BOOP-Unified-v202-Matched-Home-Spacing-Lab; APK SHA-256 750c44ac35734469ec4103eaae13183d496c743554ab2192c12bafc1179bde86; signer SHA-256 5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+- INSTALL HOLD: v202 has NOT been installed. Wait for Ryan's explicit go before any Shield install or live visual acceptance.
