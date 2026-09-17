@@ -150,6 +150,14 @@ public class PlaybackDanceHarness {
         old_focus,b"        BoopTvChrome.useTextOnlyFocus(subtitle);")
     assert (ROOT/artist_path).read_bytes()==expected,"Now Playing changed beyond approved artist styling"
     allowed.add(artist_path)
+    # v209 permits only the reviewed, regression-tested close-marker ownership repair.
+    # Pin exact production bytes, not a blanket exception for either close file.
+    close_paths=("unified/LocalPlayerCloseGate.java","unified/BoopClosePlayerActivity.java")
+    for close_path in close_paths:
+        expected_close=subprocess.check_output(["git","show",
+            "6caf25e30c9b0dbffbf1567e01d83b4e603f55e4:"+close_path],cwd=ROOT)
+        assert (ROOT/close_path).read_bytes()==expected_close,"Close code changed beyond reviewed v209 identity repair: "+close_path
+        allowed.add(close_path)
     changed=subprocess.check_output(["git","diff","--name-only","33f3a77dd5c52f9ddfe3427ade66103ca4fcaa62","HEAD","--","source","unified","scripts","launcher","shield-overlay"],cwd=ROOT,text=True).splitlines()
     assert set(changed)<=allowed,"Unexpected production changes: "+str(set(changed)-allowed)
     print("Audio routing including HA lab, voice repair, renderer and approved artwork preserved")
