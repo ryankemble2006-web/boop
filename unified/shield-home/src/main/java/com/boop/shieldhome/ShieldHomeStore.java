@@ -16,6 +16,7 @@ public final class ShieldHomeStore {
     private static final String KEY_INITIALISED = "favourites_initialised";
     private static final String KEY_FAVOURITES = "favourites_json";
     private static final String KEY_NOW_PLAYING_PLAYER = "now_playing_player_package_v1";
+    private static final String KEY_SMART_HOME_PANEL_ENABLED = "smart_home_panel_enabled_v1";
 
     public interface Preferences {
         String getString(String key, String fallback);
@@ -87,6 +88,14 @@ public final class ShieldHomeStore {
 
     public void setRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
         preferences.putBoolean(key.preferenceKey(), enabled);
+    }
+
+    public boolean smartHomePanelEnabled() {
+        return preferences.getBoolean(KEY_SMART_HOME_PANEL_ENABLED, true);
+    }
+
+    public void setSmartHomePanelEnabled(boolean enabled) {
+        preferences.putBoolean(KEY_SMART_HOME_PANEL_ENABLED, enabled);
     }
 
     public String nowPlayingPlayerPackage() {
