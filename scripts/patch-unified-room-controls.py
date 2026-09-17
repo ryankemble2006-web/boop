@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Apply small integration adapters to both preserved and materialized Shield sources."""
 from pathlib import Path
+import runpy
 
 
 def replace_once(text, old, new, label):
@@ -75,4 +76,8 @@ for root in roots:
         "            detail.setTextColor(f ? Color.rgb(18,40,44) : Color.rgb(170,170,178));")
     settings.write_text(text, encoding="utf-8")
 
+# The launcher reuses the exact selected-room value and Home Assistant stack.
+# Materialization calls this integration layer more than once, so the panel patch
+# is marker-guarded and safe to re-run.
+runpy.run_path('scripts/patch-shield-room-panel.py', run_name='__main__')
 print("Shield room selector, stable control filtering and keyed HA metadata integrated")
