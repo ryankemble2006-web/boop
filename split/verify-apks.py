@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 210 if body == 'shield' else 207
+    version = 211 if body == 'shield' else 207
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
@@ -53,6 +53,7 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
     assert re.search(r'android:allowBackup\([^\n]+\)=\(type 0x12\)0x0', manifest), 'Packaged app permits backup'
     if body == 'shield':
         assert 'com.boop.alpha1.johnny_states;com.boop.shieldoverlay.johnny_states' in manifest
+        assert 'android.permission.INTERNET' in manifest, 'Shield weather cannot reach Open-Meteo'
     else:
         assert 'johnny_states' not in manifest
     with zipfile.ZipFile(apk) as archive:
