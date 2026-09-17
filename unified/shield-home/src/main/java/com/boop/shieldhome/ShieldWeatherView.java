@@ -23,9 +23,9 @@ final class ShieldWeatherView extends LinearLayout {
         removeAllViews();
         if(s==null){ addView(text("Weather unavailable",24,true,Color.WHITE)); addView(text("Trying again automatically",15,false,Color.LTGRAY)); return; }
         LinearLayout top=row();
-        top.addView(current(s),new LayoutParams(0,0,3f)); top.addView(divider(),new LayoutParams(dp(1),LayoutParams.MATCH_PARENT));
-        top.addView(hours(s),new LayoutParams(0,0,4f)); top.addView(divider(),new LayoutParams(dp(1),LayoutParams.MATCH_PARENT));
-        top.addView(days(s),new LayoutParams(0,0,3f)); addView(top,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
+        top.addView(current(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,3f)); top.addView(divider(),new LayoutParams(dp(1),LayoutParams.MATCH_PARENT));
+        top.addView(hours(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,4f)); top.addView(divider(),new LayoutParams(dp(1),LayoutParams.MATCH_PARENT));
+        top.addView(days(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,3f)); addView(top,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
         LinearLayout foot=row(); foot.setGravity(Gravity.CENTER_VERTICAL);
         foot.addView(text("↝  "+Math.round(s.windSpeed)+" km/h "+WeatherCode.compass(s.windDirection),12,false,CYAN),new LayoutParams(0,LayoutParams.WRAP_CONTENT,1f));
         foot.addView(text("☀  "+clock(s.sunrise)+"    ◐  "+clock(s.sunset),12,false,Color.LTGRAY),new LayoutParams(0,LayoutParams.WRAP_CONTENT,1f));
