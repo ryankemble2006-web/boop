@@ -1,20 +1,22 @@
 # BOOP - current notes only
 
-Updated 2026-09-16. This file intentionally contains only the newest routing notes.
+Updated 2026-09-17. This file intentionally contains only the newest routing notes.
 Old startup-rule/context stacks were removed because they had become stale and slowed down work.
 Current user instructions always win.
 
-## Current workflow: GitHub development, joint device testing
+## Current workflow: downloadable APKs; Ryan owns visual testing
 
-Ryan explicitly requested on 2026-09-13: install the signed candidate so he can test it, and from now keep development on GitHub and test together with him.
+Ryan explicitly changed the default on 2026-09-17 to conserve tool/AI usage: the assistant and GitHub handle code and non-visual CI; Ryan installs candidates himself and is the eyes. This supersedes the previous joint-device-testing and assistant-install defaults. Routine BOOP development and delivery must not depend on Desktop Commander or on a computer-control connection to the laptop.
 
-Keep source edits, non-visual functional/logic tests, builds, permanent signing and durable handoffs on GitHub. After the existing code/package/signer checks pass, provide the signed APK and perform the installation Ryan requests. Do not add an emulator-first gate, automatic emulator run, autonomous visual acceptance sweep or repeated testing hurdles before delivering the candidate. This replaces earlier emulator-first rules, including the former distinction between cosmetic and substantive changes.
+Keep source edits, non-visual functional/logic/regression tests, builds, permanent signing and durable handoffs on GitHub. After the existing code/package/signer checks pass, deliver a clearly labelled download link/button for each actual signed `.apk`, distinguishing Wall from Shield and identifying its version/build. Prefer the APK itself rather than making Ryan unpack an Actions artifact ZIP. Never claim a download exists or that a package was installed without evidence.
 
-Ryan and the assistant test device behaviour together. Follow his observations and agreed next checks; do not claim visible behaviour works merely because CI passes, a slider value changes or a connection says ready. Installation verification means package/version/hash checks, not physical acceptance of animation, navigation, notifications or media behaviour. No GitHub visual tests or hosted Android acceptance runs.
+Ryan downloads the APK and drags it onto the corresponding scrcpy device window. He performs installation and all visual/physical acceptance. Do not automatically install an APK, drive the device, check its screen or use RDC to deliver it. A later explicit request for a specific diagnostic or installation is scoped permission for that task only, not a return to the old default.
 
-Desktop Commander/ADB may stage the GitHub-built APK, perform an explicitly requested installation on authorized devices, and read back installation identity. Local runtime diagnosis, captures and inputs should be part of the testing agreed with Ryan, not an automatic development loop. Do not edit or build app source locally. Preserve dirty/concurrent checkout work. Emulators are optional only if Ryan explicitly asks for them; do not delete or reconfigure existing AVDs.
+Assistant-run and GitHub-run visual tests remain OFF: no automatic screenshots/captures, visual acceptance sweeps, emulator launches, hosted Android visual acceptance or repeated device-testing hurdles before delivering a candidate. Ryan may provide screenshots, errors and observations for the assistant to interpret. Do not initiate an independent visual-testing loop. Non-visual code tests, lint/static checks, compilation, package/version/signer/hash checks and CI remain ON. CI success is not evidence that animation, navigation, media, onboarding or visible behaviour has been accepted; record Ryan's reported acceptance separately.
 
 Current authorized physical BOOP targets are Shield and Pixel 7. Leave physical Pixel 10 alone unless Ryan explicitly changes that boundary. No permission changes, lock bypass, data clear, signing-key substitution or reset of his colour/settings choices. Keep the approved artwork, coded animations, exact original 1x timing and accepted Shield polish. Tool denials must not be bypassed; they are not evidence that animation controls themselves are dangerous. Distinguish a denied operation from an independently authorized later request.
+
+Local scrcpy is Ryan's install/control surface, not a new assistant-to-laptop bridge. The Pixel 7 Pro and Shield desktop launchers select their own device and leave audio forwarding off. Keep device addresses/identifiers and private laptop connection details out of this public repository. No new app build, installation or physical BOOP acceptance is implied by configuring those launchers.
 
 ## GitHub-first efficiency and test order
 
@@ -22,7 +24,7 @@ Use GitHub as BOOP's shared source of truth across Chat, Work and Codex so a mod
 
 For GitHub Actions, inspect the run/job/step summaries first and fetch full logs only for the failing or otherwise relevant job. For code changes, use the smallest relevant automated regression/logic test first where the repository already supports one, then use the full GitHub Actions build/test as the authoritative clean-environment code/build evidence. Keep source edits and builds on GitHub; do not substitute a local checkout build for the published branch result.
 
-Use Desktop Commander/ADB only for the runtime/device layer that CI cannot prove, such as installation identity, Shield/phone behaviour, remote navigation, playback/media integration, notifications or agreed runtime logs/captures. Keep these evidence levels distinct: targeted test result, GitHub CI/build result, installation verification and Ryan's physical acceptance are not interchangeable. Preserve the existing concurrency, signing, privacy and no-local-source-edit/build rules while following this efficient path.
+Device testing and installation are Ryan-owned by default. Use his supplied evidence, not routine Desktop Commander/ADB calls, for visual feedback. A separately requested non-visual runtime diagnostic does not authorize screen inspection or an autonomous test loop. Keep these evidence levels distinct: targeted test result, GitHub CI/build result, installation verification and Ryan's physical acceptance are not interchangeable. Preserve the existing concurrency, signing, privacy and no-local-source-edit/build rules while following this efficient path.
 
 ## Accepted default character: photographic felt Boop
 
@@ -90,14 +92,14 @@ Previously configured phone AVD: `Pixel_10_Pro_XL_API_36`, official `pixel_10_pr
 Previously configured TV AVD: `BOOP_Android_TV_API_36`.
 Do not start, stop, wipe or use them automatically. Their presence does not authorize a local test run. The current workflow above supersedes the earlier default emulator-first policy.
 
-## Desktop Commander / ADB
+## Desktop Commander / ADB: optional, not the delivery path
 
-On Ryan's laptop, the known-good Desktop Commander remote command is:
+Routine builds, APK downloads and Ryan's scrcpy installations do not require RDC. Do not ask him to restart/pay for a bridge or switch modes merely to deliver a candidate. Scrcpy itself does not give the assistant independent access to his laptop.
+
+For a separately requested task that genuinely needs remote laptop/device access, check the tools actually available and respect the current authorization. On Ryan's laptop, the known-good Desktop Commander remote command is:
 `npx.cmd -y @wonderwhy-er/desktop-commander@0.2.47 remote`
 
-For BOOP device work, ADB itself is not a reason to refuse the task or push Ryan into Work mode. If the current Chat/Codex surface exposes Desktop Commander/ADB and the bridge is not already connected, first ask Ryan to start the bridge with the exact command above, then retry the requested ADB operation. Ordinary authorized ADB runtime work such as screenshots/captures, logs, package checks, installs and shell/device queries should use that connected route when available.
-
-Do not substitute `npx`, a different package command, a newer Desktop Commander release, or commands copied from current online documentation. The exact `npx.cmd ...@0.2.47 remote` command is the proven laptop path. Do not claim ADB is unavailable merely because the bridge has not been started yet. Only mention a different mode when the current surface genuinely lacks the required tool after checking, not as a reflexive response to an ADB request.
+Do not substitute `npx`, a different package command, a newer Desktop Commander release, or commands copied from current online documentation. The exact `npx.cmd ...@0.2.47 remote` command is the proven laptop path. Do not claim ADB itself is unavailable or force Work mode merely because a bridge is absent; distinguish local ADB from the assistant's remote-control transport. The manual-delivery and no-visual-testing rules above remain the default.
 
 Keep Desktop Commander pinned to `0.2.47` while it works. Do not proactively upgrade it or change this command merely because online documentation changes.
 Only troubleshoot, change version, or change command after a real failure. Diagnose that failure from Ryan's supplied screenshots/evidence first, then make the smallest necessary change.

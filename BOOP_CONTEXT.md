@@ -1,35 +1,25 @@
-# BOOP current context: Wall and Shield v207
+# BOOP current context: Shield v208 candidate and Wall v207
 
-Updated 2026-09-16. This is the current application context, not a replacement for the archived project philosophy/history. The complete preceding context is preserved byte-for-byte at `docs/handoffs/2026-09-16-v207-before-split/BOOP_CONTEXT.md`.
+Updated 2026-09-17. Owner: `boop-wall-shield-split-v207`. Main's current `BOOP_START_HERE.md` owns shared workflow; fetch LIVE app/main heads and read the newest relevant handoff before changes. The historical primary Yoga checkout is not the app authority. Preserve your sister's concurrent work and accepted checkpoints; no resets, force-pushes or silent lineage merges.
 
-Current owner: `boop-wall-shield-split-v207`. Main's BOOP_START_HERE.md is the shared routing hub. Read the live owner and SESSION_HANDOFF.md / BOOP_STATUS.md / BOOP_UNIFIED_MEMORY.md before edits. The old primary laptop checkout and dirty v203 owning worktree are not the current application.
+## Current implementation
 
-## One repository, two bodies, shared implementation
+One shared assistant implementation plus existing shared TV/launcher/animation libraries, with two thin application shells. Shield is `com.boop.shieldoverlay`; Wall is `com.boop.alpha1` and retains its phone launcher. These names do not mean the pre-unified standalone implementations were restored. Installed package owns the body; no device/profile chooser. Shield retains Johnny's legacy and canonical state-provider authorities and original caller/signer checks.
 
-The accepted v206 combined implementation now builds as a common assistant library and existing shared animation/launcher/TV libraries, consumed by separate Wall and Shield shells. Wall package `com.boop.alpha1` is installed only on Pixel 7 Pro; Shield package `com.boop.shieldoverlay` only on Nvidia Shield. These restored names are not reverted old codebases. Each shell automatically owns its appropriate interface, without asking which profile/device the user wants.
+The sole new UI decision is the Now Playing artist label: no grey background or focus outline, white unfocused, the same cyan as progress (`#4DB8FF`) focused. It remains a full clickable/focusable artist action with unchanged layout and D-pad routes. Only this label is exempted from generic TV button decoration. Other controls keep their chrome.
 
-Both signed v207 APKs were clean-installed from source `aa8fd9f6d79f28b441a48df31138a75d38420118`, run `35110823569`, artifact `10451993779`. Read the signed-clean-install receipt for exact hashes and verification. Human acceptance remains distinct from build/install success.
+Shield v208 is a permanently signed, non-visually verified candidate from `477f199b6ad8bcf54e9d0eb6256bbb9f9633682c`, signed run `35217237866`, artifact `10495244358`. It has NOT been installed or physically accepted in this task. Wall's installed v207 is not being replaced. Read SESSION_HANDOFF.md and the dated artist-focus receipt for exact APK identity.
 
-## Latest runtime continuation: Shield mic button
+## Manual delivery and user-owned eyes
 
-Ryan explicitly requested recovery of the previously working BOOP mic takeover. The installed v207 assistant code and `use_boop` preference were intact; Android's ASSISTANT role/default still selected Google Katniss. Reassigned that role to `com.boop.shieldoverlay`, yielding `com.boop.shieldoverlay/com.boop.alpha1.BoopAssistantActivity`, an empty voice-interaction setting and unchanged Katniss recognizer. Injected KEYCODE_ASSIST reached BOOP MainActivity/face without a system restart. Real remote capture/commands remain Ryan's acceptance check.
+Ryan explicitly changed the workflow on 2026-09-17: source, code review, non-visual regression/logic checks, builds and permanent signing stay on GitHub; deliver the actual signed APK download, clearly distinguishing the target. Ryan installs by dragging it into the matching scrcpy window and performs visual/physical tests. Interpret only screenshots/errors/observations he supplies unless a later specific diagnostic is requested. No automatic installs, assistant/CI visual tests, screenshots, emulator runs, device-driving loops or routine RDC dependence. Do not prompt for Work mode or a paid bridge just to deliver an APK.
 
-No new APK, app source, Voice or signing change was necessary; installed v207 hash still matches its signed delivery. No Home-role change, reset or phone operation. The earlier denied mic-access snapshot is superseded by a later granted/USER_SET readback after a permission activity appeared; this session issued no grant or permission-dialog input. Preserve current progress/access. Deezer launch succeeded for the requested attention cue, but Flow playback is unverified because Recents/YouTube transitions interrupted navigation and further input stopped. See `docs/handoffs/2026-09-16-v207-shield-mic-role-recovery.md`.
+CI, package/hash identity, installation and Ryan's physical acceptance are separate evidence levels. Do not infer any acceptance from a successful build or a responding scrcpy window.
 
-## Preserve the current experience
+## Frozen and preserved state
 
-Keep the accepted v206 UI, photographic felt character and animations, appearance controls, local Home Assistant behavior, cross-device sharing, notifications and applicable launcher/media functions. Wall still has a built-in launcher; both retain shared assistant capability. Johnny's current legacy state authority remains on Shield with the original read-only caller/signature boundary.
+Preserve the accepted photographic felt character, original timing, connected five-digit hands, free appearance controls and saved choices, fixed Home layout, local HA scope, sharing, media, notifications and Johnny. Voice is frozen in both apps: existing natural backend, model downloads, tuning/sharing and fallback stay unchanged; roughly 12-second latency and alternate providers/pitch work are deferred, not fixed by this UI update. Packaged v208 native bytes still match accepted v206.
 
-Voice is frozen in both apps. Ryan explicitly deferred the approximately 12-second latency investigation, alternate providers/voices and further pitch/cadence work for Astra. Preserve the existing natural voices, local model/download path and tuning/sharing implementation unchanged. No rollback, new voice backend or extra voice-acceptance gate is implied. All 16 packaged native libraries matched the accepted v206 APK exactly.
+The prior mic repair was Android ASSISTANT reassignment, not a missing-code fix. Preserve BOOP activity-based assistant, empty voice-interaction setting, Katniss recognizer and the user's later permission/setup/Home progress. Real remote capture/commands are still a pending user check. Do not rewind old first-setup/access-off snapshots. Physical Pixel 10 remains outside routine work. No permission, data, model, HA or signing changes are authorized here.
 
-## Fresh setup versus later progress (split-delivery history)
-
-The requested newcomer test intentionally removed old BOOP-local setup. Both replacements were initially captured at their genuine first setup screen, with incomplete setup flags and no Continue/sign-in action by the split sequence. Android permission and Home confirmations remain genuine user choices. No old data, downloaded models, credentials or setup flags were restored, and no default Home was forced by that sequence.
-
-At the last split-delivery read, Pixel 7 remained at first setup. Shield subsequently reported setup complete and YouTube foreground; do not erase or rewind that progress. Three BOOP Shield listener grants and overlay access were found enabled during those checks and cleared for the unconfigured-access brief; unrelated listeners were preserved. The source of those intervening grants/advancement was not established. The split sequence stopped device inputs at that point; the mic recovery above is a later, separately authorized task. Consult `docs/handoffs/2026-09-16-v207-signed-clean-install.md` for the earlier sequence.
-
-## Collaboration and publication
-
-Beep, Boop and collaborating sessions remain the user's team shorthand, with repository handoffs providing shared continuity rather than automatic access to other conversations. Preserve your sister's concurrent work. No resets, force pushes, silent app-lineage merges, local source builds or private material in the public repository. GitHub owns source/tests/builds/signing; Yoga provides authorized runtime access. Pixel 10 remains untouched.
-
-The former combined branch at `841458b8bbc53773d16a18bb0359de1c0550f5e2` and all earlier accepted checkpoints remain preserved. Standalone Johnny, Animation Lab, Launcher and other projects remain separate. Full historical context is archived, not deleted. Current handoff/status/memory and the live main routing pointer supersede outdated next-step and voice-gate statements in that history.
+Full preceding context is preserved byte-for-byte at `docs/handoffs/2026-09-17-before-artist-focus/BOOP_CONTEXT.md`. Older v207/v206 archival evidence remains intact. Beep, Boop and collaborating sessions are team shorthand; repository handoffs provide continuity, not automatic access to other conversations.
