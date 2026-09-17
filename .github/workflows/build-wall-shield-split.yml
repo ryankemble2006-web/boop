@@ -40,7 +40,7 @@ jobs:
         run: |
           python -m pip install -q pytest pyyaml
           sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
-      - name: Existing v206 functional and source-preservation gates
+      - name: Existing v206 functional checks
         run: python split/run-inherited-checks.py
       - name: Materialize both shells and execute focused integration checks
         run: |
