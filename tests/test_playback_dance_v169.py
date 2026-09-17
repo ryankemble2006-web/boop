@@ -139,6 +139,17 @@ public class PlaybackDanceHarness {
        "ShieldLyricsView.java","ShieldLyricsActivity.java","BassEnergy.java","BassOnset.java","PlaybackGroove.java","MusicBounceRenderer.java","BassCaptureState.java","BassCaptureActivity.java","BassCaptureService.java",
        "MusicBounceSource.java","MusicBounceEnvelope.java","ShieldNowPlayingPuppetView.java","ShieldHomeSettingsView.java"]}
     }
+    # v208 permits only Ryan's artist-text styling delta, not arbitrary media UI edits.
+    artist_path="unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingView.java"
+    before=subprocess.check_output(["git","show","1b6816f611f88db67abf548eebe67057c01f5bab:"+artist_path],cwd=ROOT)
+    old_colour=b"subtitle = text(18, Color.LTGRAY);"
+    old_focus=(b"        subtitle.setOnFocusChangeListener((v, focused) -> subtitle.setTextColor(\n"
+               b"                focused ? FocusChrome.accentColor(getContext()) : Color.LTGRAY));")
+    assert before.count(old_colour)==1 and before.count(old_focus)==1,"Artist baseline changed"
+    expected=before.replace(old_colour,b"subtitle = text(18, Color.WHITE);").replace(
+        old_focus,b"        BoopTvChrome.useTextOnlyFocus(subtitle);")
+    assert (ROOT/artist_path).read_bytes()==expected,"Now Playing changed beyond approved artist styling"
+    allowed.add(artist_path)
     changed=subprocess.check_output(["git","diff","--name-only","33f3a77dd5c52f9ddfe3427ade66103ca4fcaa62","HEAD","--","source","unified","scripts","launcher","shield-overlay"],cwd=ROOT,text=True).splitlines()
     assert set(changed)<=allowed,"Unexpected production changes: "+str(set(changed)-allowed)
     print("Audio routing including HA lab, voice repair, renderer and approved artwork preserved")
