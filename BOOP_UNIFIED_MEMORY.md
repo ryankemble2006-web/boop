@@ -1,27 +1,33 @@
-# BOOP durable memory: artist-only focus and manual APK delivery
+# BOOP durable memory: split close identity and manual APK delivery
 
-Updated 2026-09-17. Owner remains `boop-wall-shield-split-v207`; the filename retains historical continuity. Maintain the current shared implementation with Wall and Shield shells, not older standalone source.
+Updated 2026-09-17. Owner remains `boop-wall-shield-split-v207`; this filename retains historical continuity. Continue the current shared implementation with Wall/Shield shells, not older standalone source or unified checkpoints.
 
-## Latest accepted requirement, not yet physically accepted implementation
+## Close player / Close media regression and repair
 
-Ryan approved a tiny Shield Now Playing refinement: remove the artist's box and outline completely, display white normally and progress-bar cyan (`#4DB8FF`) on D-pad focus. Keep size, spacing, the artist click and existing key routes.
+Ryan reported that both controls worked in unified and broke after the split. The native closing activity writes a per-action nonce marker in its own private `getFilesDir()`. `LocalPlayerCloseGate` still hard-coded `run-as com.boop.alpha1`, but Shield now owns `com.boop.shieldoverlay`; HA's device-identification check consequently looked in the wrong private app storage and refused to proceed. The two buttons share this gate. Selected Cast closing follows the separate existing media-session stop path.
 
-Root cause: `BoopTvChrome` globally decorated clickable/focusable TextViews, adding a grey button and overriding the artist's local focus callback. `useTextOnlyFocus(subtitle)` now registers only the artist in a weak exemption set before attachment, clears background, disables Android's default focus highlight and installs a focused/default ColorStateList. Both generic eligibility and queued apply-state callbacks respect the exemption. Ordinary button/Voice styling is unchanged; do not extend this exemption to unrelated controls without a user request.
+The v209 repair passes the running activity's `getPackageName()` into BOTH native gate routes. The gate accepts only `com.boop.alpha1` or `com.boop.shieldoverlay`, stores the validated identity immutably, and uses it for the marker read and every existing marker recheck. Java package namespaces intentionally remain unchanged. Do not blanket-replace `com.boop.alpha1` across source or weaken the hardware-identity safeguard.
 
-The new non-visual regression harness compiles actual production decoration methods against property-recording doubles, exercises repeated focus/layout and stale callbacks, and checks unaffected normal buttons. It is NOT an Android renderer or physical UI test. Source checks preserve artist key/click binding. The historical music changed-file guard now permits only the exact approved artist hunk, proving all other Now Playing bytes unchanged; its music behavior tests remain intact.
+Legacy unified overloads retain compatibility; current app activity routes explicitly supply their Context package and are regression-covered. Preserve the selected native player allowlist, nonce format, current-session matching, Back cancellation, unique-hardware discovery, fresh per-call receipts and final removal confirmation. `LocalPlayerCloseClient`, Cast stopping and Android manifests were not modified.
 
-## Candidate identity and status
+A non-visual pytest/Java harness compiles the actual gate and exercises both owner identities, both native close paths, selected Deezer/YouTube targets, combined cleanup, invalid owners/nonces, cancellation and session matching. It checks activity ownership wiring and runs again against materialized Java. The pre-fix commit compiled and demonstrated the actual wrong command, rather than failing solely because of a new method signature. Extra invalid-owner cases specify the safety of the NEW input; they do not imply the old no-input API had an injection vulnerability.
 
-Shield only advances to `208` / `1.2.208-shield`, package `com.boop.shieldoverlay`. Build source `477f199b6ad8bcf54e9d0eb6256bbb9f9633682c`; full signed run `35217237866` and focused run `35217237801` succeeded. Artifact `10495244358` contains `BOOP-Shield-v208.apk`, SHA-256 `6503557057c1661a37cf4c65f91c63e149808dbde000645ceaea04e3d1eba5a9`. Original signer, all 16 accepted v206 native library hashes and frozen asset checks passed. The downloaded archive and extracted APK were hash-verified. Wall was compiled only as part of the existing shared checks; no new Wall installation is requested.
+## Signed candidate and verification boundary
 
-User installation and physical acceptance remain PENDING. Neither installed identity nor visual behavior of v208 was inspected. Current exact receipt and red/green history: `docs/handoffs/2026-09-17-shield-artist-text-focus.md`.
+Production fix `6caf25e30c9b0dbffbf1567e01d83b4e603f55e4`; signed source `6292bfe770c93e904e75100f5c4231e022437183`. Full signed run `35223237787`, job `105208294482`, passed all 18 inherited stages, source/materialized integration checks and actual APK validation. An inherited changed-file guard needed a narrow update: it now accepts exactly the reviewed bytes of both close files. All music behavior assertions and the existing exact artist delta guard remain intact.
 
-## Working boundary
+Shield candidate: 209 / `1.2.209-shield`, `com.boop.shieldoverlay`. Artifact `10498580480`; `BOOP-Shield-v209.apk`, SHA-256 `a690fefa1bd600c8ddbfc34ca3e1e5d82d6aa775de5ce2dcd20746e847c0220e`, 160420197 bytes. Existing permanent signer, all 16 accepted v206 native libraries and frozen art passed the build's checks. Downloaded ZIP and extracted APK hashes/integrity were independently verified. Wall stays 207 and is not a new delivery request.
 
-GitHub owns source/review/non-visual checks/builds/signing; deliver the actual APK download. Ryan installs through scrcpy and is the eyes. Assistant/CI visual testing, automatic installs, emulator runs, captures and routine RDC device access are OFF. Do not restart the older joint-device loop or demand a mode change. User-supplied screenshots/errors are welcome evidence, not blanket permission to drive devices.
+Ryan's installation and physical Close player/Close media acceptance remain PENDING. No physical success is implied by source tests, packaged class checks or CI-green. Detailed receipt and run history: `docs/handoffs/2026-09-17-shield-close-identity.md`.
 
-## Preserve earlier work
+## Preserve artist focus, Voice and prior state
 
-Both apps share the accepted v206 lineage. Protect felt artwork, animation timing, appearance choices, navigation/media functionality, Voice, package/caller boundaries and concurrent branches. Voice latency/provider/pitch work remains frozen. No app-data, setup, permission, model, HA or signing-key changes accompany this candidate; physical Pixel 10 stays untouched.
+The v208 requirement remains: only the artist label loses its box/outline, appears white normally and progress-bar cyan (`#4DB8FF`) on D-pad focus, with unchanged size/spacing/key/click behavior. `BoopTvChrome.useTextOnlyFocus(subtitle)` uses a weak exemption set, clears the background/default focus highlight and installs focused/default text colors; generic and queued decoration both respect the exemption. Do not extend it to other controls without a user request. The source/property-recording tests are not a physical renderer test. Prior v208 physical acceptance was pending, not newly established here.
 
-The earlier v207 mic assignment restored the BOOP activity-based assistant while retaining the Katniss recognizer. Actual Bluetooth speech/commands remain a user check. Preserve later access/setup/Home state rather than replaying historical fresh-install snapshots. The previous root memory is preserved byte-for-byte at `docs/handoffs/2026-09-17-before-artist-focus/BOOP_UNIFIED_MEMORY.md`, including original v207 delivery, microphone repair and cross-app contracts. Older archives and accepted checkpoints are unchanged.
+Preserve the accepted v206 lineage, frozen natural Voice, model/download choices, tuning, felt art, animations, navigation/media features, caller boundaries and concurrent work. The earlier v207 assistant-role assignment retained the Katniss recognizer; actual Bluetooth speech/commands remain a user check. Do not replay old fresh-install/permission snapshots over newer setup or access state.
+
+## Working boundary and archives
+
+GitHub owns source edits, review, non-visual checks, builds, signing and handoffs. Deliver the actual signed APK. Ryan installs through scrcpy and supplies the eyes. Automatic installs, visual testing, captures, emulator runs and routine RDC device access are OFF. No mode-change demand, blanket device permission or local build is implied. No data/setup, permission, model, HA or signing-key change was made. Physical Pixel 10 remains untouched.
+
+Previous v208 handoff/status/memory are preserved byte-for-byte at `docs/handoffs/2026-09-17-before-close-identity/`. Artist receipt: `docs/handoffs/2026-09-17-shield-artist-text-focus.md`. Earlier v207 and cross-app contracts remain in `docs/handoffs/2026-09-17-before-artist-focus/` and their dated receipts. Main's ownership map is unchanged; final publication must verify the live owning ref, not assume the laptop is synchronized.
