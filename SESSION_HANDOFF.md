@@ -1,28 +1,25 @@
-# BOOP Shield v208: signed candidate; Ryan's artist-focus test pending
+# BOOP Shield v209: close identity fixed in source; signed pipeline running
 
-Updated 2026-09-17. Application owner remains `boop-wall-shield-split-v207`. Start from its LIVE HEAD, not the old primary laptop checkout or historical standalone apps. Main owns the shared workflow; the current app branch owns implementation evidence.
+Updated 2026-09-17. Application owner remains `boop-wall-shield-split-v207`. Fetch its LIVE HEAD before work; main owns the shared workflow, not current app source.
 
-## Latest delivery
+## Current task and evidence
 
-Ryan approved a narrowly scoped Now Playing change after supplying a Shield screenshot: remove the artist label's grey box and outline, keep white text normally, and use the progress bar's cyan (`#4DB8FF`) on focus. Only that label opts out of generic TV button decoration. Its size, spacing, click callback, D-pad routes and availability rules are retained. Other button chrome is unchanged. Voice and approved artwork/animation sources were not changed.
+Ryan authorized repairing Close player and Close media after the read-only split regression diagnosis. Started from live owner `4ce305962c04b1bfa25a09bd12d1741679b567ea`, preserving Shield v208 artist text focus and all newer work there. Shared main was checked at `9808322212b4953d3fb4831fd05e9ffa1de806c6`. No later owner commits were present at the pre-publication check; the isolated task branch was fast-forwarded into the owner without force.
 
-Signed build source: `477f199b6ad8bcf54e9d0eb6256bbb9f9633682c`.
-Signed CI: run `35217237866`, job `105188496531`, SUCCESS. Focused split run `35217237801` also succeeded. All 18 inherited non-visual stages and the new source/production-method artist regressions passed, including checks of the materialized sources.
+Implementation source: `6caf25e30c9b0dbffbf1567e01d83b4e603f55e4`. Both native close paths now pass their activity's `getPackageName()` to the close gate, matching the private marker's `getFilesDir()` Context. Only the existing BOOP application IDs are accepted. Marker/nonce safeguards, unique-device discovery, authenticated HA route, restricted native player targets, fresh receipts, cancellation and completion checks are retained. The selected Cast path is unchanged.
 
-Deliver `BOOP-Shield-v208.apk`: package `com.boop.shieldoverlay`, versionCode `208`, versionName `1.2.208-shield`, 160420201 bytes. SHA-256 `6503557057c1661a37cf4c65f91c63e149808dbde000645ceaea04e3d1eba5a9`. Permanent signer SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`. All 16 native libraries match accepted v206 and packaged frozen art matches source. Artifact `10495244358`, `BOOP-Shield-v208-Wall-v207-Signed`, contains the APK and verification receipt. The downloaded archive and extracted Shield APK hashes were verified without rebuilding or re-signing.
+Regression before the fix: commit `4b7fcb13f35ea19ab01d8774334a2c2d38c616cf`, run `35222305035`, job `105205208176`, expected 22 failures / 17 passes, including the actual wrong Shield command. After the fix, focused run `35222770661`, job `105206748802`, succeeded. The owner split-contract run `35222849027` also succeeded. The exact two production-file changes were reviewed; no UI, Voice, animation, HA client or manifest code changed.
 
-The shared pipeline also built Wall for compatibility checks, still version 207. That rebuilt binary is not claimed identical to the previously delivered Wall APK and is not a new Wall delivery request. Leave the user's installed Wall alone.
+Full signed pipeline `35222849116`, job `105207010155`, is still running at this checkpoint. Its initial close/artist checks passed. Do not claim a completed APK or physical result yet. The existing full inherited stages and package/signer/native/art checks remain enabled. New Shield version is 209 / `1.2.209-shield`; Wall remains version 207 and is not a new delivery request.
 
-## Next user check and working boundary
+## Next safe step
 
-Ryan downloads the actual Shield APK and drags it into his Shield scrcpy window. He checks no artist box in either state, white when unfocused, matching cyan when focused, and the retained artist action/navigation. Installation and visual/physical acceptance are PENDING. Nothing was installed or driven by this session, and no screen capture, emulator or autonomous visual test was run. CI is not physical acceptance.
+Inspect the signed run's job/step summaries first, then only relevant failed logs if needed. Once successful, fetch the actual artifact, verify the downloaded Shield APK against its receipt, deliver the APK itself, and reconcile this handoff, status and memory with the completed evidence. Record build source separately from later documentation commits. Detailed repair history: `docs/handoffs/2026-09-17-shield-close-identity.md`.
 
-The 2026-09-17 manual-delivery policy supersedes older joint-testing/assistant-install defaults: GitHub source/review/non-visual tests/builds/permanent signing, then actual APK download; Ryan installs and supplies screenshots/errors. Routine work must not depend on RDC or a mode change. `BOOP_START_HERE.md` has been synchronized to the shared main policy, not an older fallback.
+Ryan installs through the Shield scrcpy window and owns physical acceptance. No automatic installation, device driving, screen capture or emulator. No permission, setup/data, model, HA, signing-key or physical Pixel 10 changes. A source fix and CI success do not establish device behavior.
 
-## Preserved continuity
+## Preserved delivery and acceptance history
 
-Shield's earlier v207 ASSISTANT-role repair remains: BOOP activity-based assistant, empty voice interaction, original Katniss recognizer. Real Bluetooth microphone capture/command acceptance remains pending; this UI task did not retest or change that state. Preserve subsequent user setup, microphone permission and Home ownership. Never restore historical first-setup/access snapshots automatically.
+The prior Shield v208 artist candidate was signed from `477f199b6ad8bcf54e9d0eb6256bbb9f9633682c`, run `35217237866`, artifact `10495244358`. Its artist label stays transparent/no-outline, white normally and progress-bar cyan on focus; size, spacing, click and navigation remain intact. Its installation/physical artist acceptance was pending in the last handoff and is not newly claimed here. Full receipt: `docs/handoffs/2026-09-17-shield-artist-text-focus.md`.
 
-The last separately verified installations were Wall/Shield v207 from `aa8fd9f6d79f28b441a48df31138a75d38420118`. Their original receipt and the full microphone recovery history remain in the dated v207 handoffs. Voice latency/provider/pitch investigation is frozen for later; all current natural voice behavior, downloads and tuning stay intact. Physical Pixel 10, HA itself, other apps and dirty/concurrent work were untouched.
-
-Detailed current receipt: `docs/handoffs/2026-09-17-shield-artist-text-focus.md`. The four previous root context/handoff/status/memory files are preserved byte-for-byte in `docs/handoffs/2026-09-17-before-artist-focus/`; their historical delivery claims are not new v208 acceptance.
+Preserve the earlier v207 assistant-role repair and the existing Katniss recognizer. Real Bluetooth speech/command acceptance remains pending; Voice latency/provider/pitch investigation remains frozen. Natural voices, downloads, tuning, art and animation are unchanged. Existing v207 install receipts and archived root history remain in `docs/handoffs/2026-09-17-before-artist-focus/` and dated handoffs. Never replay old fresh-install/access snapshots over later user progress.
