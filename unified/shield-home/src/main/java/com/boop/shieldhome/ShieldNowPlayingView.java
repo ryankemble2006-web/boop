@@ -117,13 +117,12 @@ public final class ShieldNowPlayingView extends FrameLayout {
         textStack.addView(title, new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        subtitle = text(18, Color.LTGRAY);
+        subtitle = text(18, Color.WHITE);
         subtitle.setSingleLine(true);
         subtitle.setEllipsize(TextUtils.TruncateAt.END);
         subtitle.setFocusable(true);
         subtitle.setClickable(true);
-        subtitle.setOnFocusChangeListener((v, focused) -> subtitle.setTextColor(
-                focused ? FocusChrome.accentColor(getContext()) : Color.LTGRAY));
+        BoopTvChrome.useTextOnlyFocus(subtitle);
         subtitle.setOnKeyListener(this::handleArtistKey);
         subtitle.setOnClickListener(v -> {
             if (callbacks != null && v.isEnabled()) callbacks.onBrowseNowPlayingArtist();

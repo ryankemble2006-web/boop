@@ -32,14 +32,15 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
+    version = 208 if body == 'shield' else 207
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
     manifest = tool('aapt','dump','xmltree',apk,'AndroidManifest.xml')
     cert = tool('apksigner','verify','--print-certs',apk)
     assert f"package: name='{package}'" in badging
-    assert "versionCode='207'" in badging
-    assert f"versionName='1.2.207-{body}'" in badging
+    assert f"versionCode='{version}'" in badging
+    assert f"versionName='1.2.{version}-{body}'" in badging
     assert f"application-label:'{label}'" in badging
     assert "launchable-activity: name='com.boop.alpha1.UnifiedEntryActivity'" in badging
     digest = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)',cert).group(1).lower()
@@ -61,6 +62,7 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
             assert ('Lcom/boop/alpha1/'+cls+';').encode() in dex, cls
         for cls in ['ShieldHomeView','ShieldLyricsActivity','ShieldNowPlayingPuppetView','BassCaptureService','MusicBounceSource','BoopTvChrome']:
             assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls
+        assert b'useTextOnlyFocus' in dex, 'Artist text-only focus helper missing from APK'
         assert b'Lcom/boop/launcher/MainActivity;' in dex, 'Built-in launcher lost'
         assert b'setup_intro_completed' in dex and b'Set up ' in dex
         for filename in ['boop-png-study.png','boop-hidden-felt.png','boop-felt-sign-blank.png','eyes.frag']:
@@ -70,13 +72,13 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
                    for n in archive.namelist() if n.startswith('lib/') and n.endswith('.so')}
         assert natives == original_native, 'Packaged native runtime differs from accepted v206: ' + str(
             sorted(n for n in set(natives)|set(original_native) if natives.get(n)!=original_native.get(n)))
-    name = f'BOOP-{body.title()}-v207.apk'
+    name = f'BOOP-{body.title()}-v{version}.apk'
     shutil.copyfile(apk,out/name)
     sha = hashlib.sha256(apk.read_bytes()).hexdigest()
     (out/f'{body}-badging.txt').write_text(badging)
     (out/f'{body}-manifest.txt').write_text(manifest)
     (out/f'{body}-signer.txt').write_text(cert)
-    receipt['apps'].append({'body':body,'package':package,'versionCode':207,'versionName':f'1.2.207-{body}',
+    receipt['apps'].append({'body':body,'package':package,'versionCode':version,'versionName':f'1.2.{version}-{body}',
                              'file':name,'sha256':sha,'signerSha256':digest,'bytes':apk.stat().st_size,
                              'identicalBaselineNativeLibraries': len(natives)})
 (out/'built-commit.txt').write_text(source+'\n')

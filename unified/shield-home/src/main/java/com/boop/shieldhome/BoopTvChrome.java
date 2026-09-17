@@ -30,6 +30,7 @@ public final class BoopTvChrome {
 
     private static final Set<View> DECORATED = Collections.newSetFromMap(new WeakHashMap<>());
     private static final Set<View> INSTALLED_ROOTS = Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<View> TEXT_ONLY_ACTIONS = Collections.newSetFromMap(new WeakHashMap<>());
 
     private BoopTvChrome() { }
 
@@ -47,6 +48,25 @@ public final class BoopTvChrome {
             if (eligible(oldFocus)) oldFocus.post(() -> applyState((TextView) oldFocus, false));
             if (eligible(newFocus)) newFocus.post(() -> applyState((TextView) newFocus, true));
         });
+    }
+
+    /** Opt in before attachment: text colour alone owns this action's focus. */
+    public static void useTextOnlyFocus(TextView view) {
+        if (view == null) return;
+        synchronized (TEXT_ONLY_ACTIONS) {
+            TEXT_ONLY_ACTIONS.add(view);
+        }
+        view.setBackground(null);
+        view.setDefaultFocusHighlightEnabled(false);
+        view.setTextColor(new ColorStateList(
+                new int[][] {new int[] {android.R.attr.state_focused}, new int[0]},
+                new int[] {accentColor(view.getContext()), Color.WHITE}));
+    }
+
+    private static boolean isTextOnlyAction(View view) {
+        synchronized (TEXT_ONLY_ACTIONS) {
+            return TEXT_ONLY_ACTIONS.contains(view);
+        }
     }
 
     /** Voice's clickable panel blocks touch-through but must not own D-pad focus. */
@@ -145,7 +165,7 @@ public final class BoopTvChrome {
     }
 
     private static boolean eligible(View view) {
-        if (view == null) return false;
+        if (view == null || isTextOnlyAction(view)) return false;
         if (view instanceof EditText) return false;
         if (view instanceof SeekBar) return false;
         if (view instanceof ImageView) return false;
@@ -155,7 +175,7 @@ public final class BoopTvChrome {
     }
 
     private static void applyState(TextView view, boolean focused) {
-        if (view == null) return;
+        if (view == null || isTextOnlyAction(view)) return;
         view.setTextColor(Color.WHITE);
         view.setBackground(filled(view.getContext(), NORMAL_FILL, CORNER_DP, focused));
         view.animate()
