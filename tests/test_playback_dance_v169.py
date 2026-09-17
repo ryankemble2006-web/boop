@@ -92,6 +92,12 @@ public class PlaybackDanceHarness {
       "unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java",
       # v192+ Home layout/assistant hosting is separately scoped by Home tests.
       "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java",
+      # v210 approved idle weather surface; Now Playing remains authoritative.
+      "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldLauncherActivity.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldWeatherRepository.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldWeatherView.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/WeatherCode.java",
+      "unified/shield-home/src/main/java/com/boop/shieldhome/WeatherSnapshot.java",
       # v191 requested independent hand colour; locked eyes and sign geometry unchanged.
       "unified/animation/java/com/boop/eyes/HandColourPixels.java",
       "unified/animation/java/com/boop/eyes/HandColourWork.java",

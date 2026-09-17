@@ -50,6 +50,7 @@ public final class ShieldHomeView extends LinearLayout {
     private View addFavouriteTile;
     private TvAppCardView grabbedCard;
     private ShieldNowPlayingView nowPlayingView;
+    private ShieldWeatherView weatherView;
     private ShieldNowPlayingPuppetView homeAssistantPuppet;
     private View nowPlayingSpacer;
     private NowPlayingSnapshot nowPlayingSnapshot;
@@ -85,6 +86,7 @@ public final class ShieldHomeView extends LinearLayout {
         favouriteRow = null;
         addFavouriteTile = null;
         nowPlayingView = null;
+        weatherView = null;
         homeAssistantPuppet = null;
         nowPlayingSpacer = null;
 
@@ -110,8 +112,14 @@ public final class ShieldHomeView extends LinearLayout {
         stageContent.setClipChildren(false);
         stageContent.setClipToPadding(false);
 
+        FrameLayout heroSlot = new FrameLayout(getContext());
+        weatherView = new ShieldWeatherView(getContext());
+        heroSlot.addView(weatherView, new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         nowPlayingView = new ShieldNowPlayingView(getContext());
-        stageContent.addView(nowPlayingView, new LayoutParams(LayoutParams.MATCH_PARENT, dp(182)));
+        heroSlot.addView(nowPlayingView, new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        stageContent.addView(heroSlot, new LayoutParams(LayoutParams.MATCH_PARENT, dp(182)));
         nowPlayingSpacer = new View(getContext());
         stageContent.addView(nowPlayingSpacer, new LayoutParams(1, dp(16)));
         stageContent.addView(appRow(safeFavourites, callbacks), new LayoutParams(
@@ -155,8 +163,18 @@ public final class ShieldHomeView extends LinearLayout {
         boolean visible = snapshot != null
                 && NowPlayingSelectionPolicy.eligible(snapshot.playbackState());
         panel.setVisibility(visible ? VISIBLE : INVISIBLE);
+        if (weatherView != null) weatherView.setVisibility(visible ? INVISIBLE : VISIBLE);
         if (homeAssistantPuppet != null) {
             homeAssistantPuppet.setHomeVisible(!visible);
+        }
+    }
+
+    public void setWeather(WeatherSnapshot snapshot) {
+        if (weatherView != null) {
+            weatherView.bind(snapshot, System.currentTimeMillis());
+            boolean mediaVisible = nowPlayingSnapshot != null
+                    && NowPlayingSelectionPolicy.eligible(nowPlayingSnapshot.playbackState());
+            weatherView.setVisibility(mediaVisible ? INVISIBLE : VISIBLE);
         }
     }
 

@@ -65,6 +65,8 @@ public final class ShieldLauncherActivity extends Activity {
     private ShieldNowPlayingManager nowPlayingManager;
     private Runnable unsubscribeNowPlaying;
     private NowPlayingSnapshot nowPlayingSnapshot;
+    private ShieldWeatherRepository weatherRepository;
+    private WeatherSnapshot weatherSnapshot;
     private ExecutorService executor;
     private FrameLayout root;
     private View currentView;
@@ -83,6 +85,8 @@ public final class ShieldLauncherActivity extends Activity {
     private final BackPressGesture backPressGesture = new BackPressGesture();
     private Handler inputHandler;
     private Runnable backHoldRunnable;
+    private Runnable weatherRefreshRunnable;
+    private static final long WEATHER_REFRESH_MS = 30L * 60L * 1000L;
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -97,6 +101,7 @@ public final class ShieldLauncherActivity extends Activity {
             }
             openSystemSettings();
         };
+        weatherRefreshRunnable = this::refreshWeather;
 
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -110,10 +115,12 @@ public final class ShieldLauncherActivity extends Activity {
         unsubscribeNowPlaying = nowPlayingManager.state().subscribe(this::onNowPlayingChanged);
         nowPlayingManager.refreshAccess();
         executor = Executors.newSingleThreadExecutor();
+        weatherRepository = new ShieldWeatherRepository(this);
 
         registerPackageReceiver();
         showHome();
         reloadApps();
+        refreshWeather();
         // Unified profile selection does not request accessibility or replace Android HOME.
     }
 
@@ -132,6 +139,7 @@ public final class ShieldLauncherActivity extends Activity {
             nowPlayingManager.refreshAccess();
             nowPlayingManager.reapplyAudioMode();
         }
+        refreshWeather();
         if (root != null && store != null && currentPage == Page.SETTINGS) {
             showSettings();
         }
@@ -149,6 +157,24 @@ public final class ShieldLauncherActivity extends Activity {
             return;
         }
         ((ShieldHomeView) currentView).setNowPlaying(snapshot);
+    }
+
+    private void refreshWeather() {
+        if (destroyed || executor == null || executor.isShutdown() || weatherRepository == null) return;
+        executor.execute(() -> {
+            WeatherSnapshot loaded = weatherRepository.load(System.currentTimeMillis());
+            runOnUiThread(() -> {
+                if (destroyed) return;
+                weatherSnapshot = loaded;
+                if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
+                    ((ShieldHomeView) currentView).setWeather(loaded);
+                }
+                if (inputHandler != null && weatherRefreshRunnable != null) {
+                    inputHandler.removeCallbacks(weatherRefreshRunnable);
+                    inputHandler.postDelayed(weatherRefreshRunnable, WEATHER_REFRESH_MS);
+                }
+            });
+        });
     }
 
     private void reloadApps() {
@@ -218,6 +244,7 @@ public final class ShieldLauncherActivity extends Activity {
         ShieldHomeView view = new ShieldHomeView(this);
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
         view.render(favourites, List.of(), nowPlayingSnapshot, callbacks);
+        view.setWeather(weatherSnapshot);
         transitionTo(view);
         if (focusComponent != null) {
             view.post(() -> view.focusFavourite(focusComponent));
@@ -1011,6 +1038,9 @@ public final class ShieldLauncherActivity extends Activity {
         }
         if (inputHandler != null && backHoldRunnable != null) {
             inputHandler.removeCallbacks(backHoldRunnable);
+        }
+        if (inputHandler != null && weatherRefreshRunnable != null) {
+            inputHandler.removeCallbacks(weatherRefreshRunnable);
         }
         backPressGesture.cancel();
         if (receiverRegistered && packageReceiver != null) {
