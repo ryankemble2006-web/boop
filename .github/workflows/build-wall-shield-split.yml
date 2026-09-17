@@ -1,4 +1,4 @@
-name: Build signed BOOP Shield v210 and Wall v207
+name: Build signed BOOP Shield v211 and Wall v207
 on:
   push:
     branches: [boop-wall-shield-split-v207]
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify close identity and text-only artist focus before the full build
+      - name: Verify close identity, artist focus and weather before the full build
         run: |
           python -m pip install -q pytest
           python -m pytest -q tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_shield_weather_panel.py
@@ -69,7 +69,7 @@ jobs:
         run: python split/verify-apks.py
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-v210-Wall-v207-Signed
+          name: BOOP-Shield-v211-Wall-v207-Signed
           path: split-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
