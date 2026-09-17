@@ -24,6 +24,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify text-only artist focus before the full build
+        run: |
+          python -m pip install -q pytest
+          python -m pytest -q tests/test_now_playing_artist_chrome.py
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
@@ -42,7 +46,7 @@ jobs:
         run: |
           python scripts/audit-split-input.py
           python scripts/materialize-split.py
-          python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py
+          python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py tests/test_now_playing_artist_chrome.py
       - name: Prepare existing permanent BOOP signer
         env:
           BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
