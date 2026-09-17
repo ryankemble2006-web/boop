@@ -1,0 +1,30 @@
+name: Review Shield room panel source
+on:
+  push:
+    branches: [boop-shield-home-panel-v211]
+    paths: ['.github/workflows/review-shield-room-panel.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Snapshot committed public sources only
+        run: |
+          mkdir -p /tmp/boop-review
+          git bundle create /tmp/boop-review/source.bundle HEAD refs/remotes/origin/boop-wall-shield-split-v207 refs/remotes/origin/main
+          git bundle verify /tmp/boop-review/source.bundle
+          git rev-parse HEAD refs/remotes/origin/boop-wall-shield-split-v207 refs/remotes/origin/main > /tmp/boop-review/refs.txt
+          sha256sum /tmp/boop-review/source.bundle > /tmp/boop-review/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-room-panel-source-review
+          path: /tmp/boop-review/
+          retention-days: 3
+          if-no-files-found: error
