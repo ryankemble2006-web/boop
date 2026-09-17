@@ -16,8 +16,8 @@ final class ShieldWeatherView extends LinearLayout {
     private static final int CYAN=Color.rgb(77,184,255);
     ShieldWeatherView(Context context) {
         super(context); setOrientation(VERTICAL); setPadding(dp(18),dp(12),dp(18),dp(9));
-        GradientDrawable bg=new GradientDrawable(); bg.setColor(Color.rgb(15,22,28)); bg.setCornerRadius(dp(12));
-        bg.setStroke(dp(1),Color.rgb(42,57,69)); setBackground(bg); setFocusable(false); setClickable(false);
+        GradientDrawable bg=new GradientDrawable(); bg.setColor(Color.rgb(16,16,16)); bg.setCornerRadius(dp(14));
+        bg.setStroke(dp(1),Color.rgb(48,48,48)); setBackground(bg); setFocusable(false); setClickable(false);
     }
     void bind(WeatherSnapshot s,long nowMs) {
         removeAllViews();
