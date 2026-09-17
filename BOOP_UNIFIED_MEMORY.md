@@ -2,16 +2,29 @@
 
 Updated 2026-09-17.
 
-The current consumer apps are split shells around the shared BOOP implementation: Wall uses `com.boop.alpha1`; Shield uses `com.boop.shieldoverlay`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` on v207; Shield `com.boop.shieldoverlay` now on v213. The owning app branch remains `boop-wall-shield-split-v207`.
 
-Shield v209 repaired native Close player / Close media ownership after the package split. Shield v210 introduced a weather panel in the existing 182dp idle Now Playing slot, but Ryan's first physical test found that no weather information loaded and the panel surface did not match Now Playing.
+## Accepted room-panel design and implementation
 
-Shield v211 added the missing Shield `android.permission.INTERNET` and locked the weather surface to the exact Now Playing card chrome: RGB 16/16/16 fill, 14dp corner radius, and RGB 48/48/48 1dp stroke. Ryan physically approved that colour match. His v211 screenshot also displayed live footer weather values, including wind, sunrise/sunset and update age, proving the Open-Meteo fetch and cache path were functioning. The main current/hourly/daily content remained blank because those three weighted columns had been created with height `0`.
+Ryan wants the entire empty lower Shield Home area to be useful, not just a small item beside BOOP. The native smart-home panel fills that area under favourite captions. It expands across BOOP's lower-right space when he is absent and contracts when he returns, without moving the hero, favourites or his character rig. Surfaces use BOOP charcoal with cyan focus. The existing **Set this device room** selection is the only room source; no duplicate picker, room keys or pairing flow.
 
-Shield v212 fixes only that rendering error by using `MATCH_PARENT` height for the current, next-four-hours and three-day columns while retaining the existing 3:4:3 width weights. No user setup is required for weather. Open-Meteo remains keyless; weather still refreshes every 30 minutes, keeps a bounded stale cache, is non-focusable, disappears for eligible Now Playing media, retains the approved 182dp slot and exact card chrome, and leaves the favourites row parked.
+**Home settings > Smart home panel: ON / OFF** is persisted, default ON. OFF hides the panel and stops its HA work. D-pad Down from favourites enters devices; Left/Right navigate and stop at row ends; Up restores the previous favourite. Live state updates retain tile identity and focus. Existing HA physical lights, switches/smart plugs and fans are shown through the existing room/device filtering. Sensor values, camera views and thermostat detail controls remain future presentation work rather than fabricated buttons.
 
-Latest signed Shield source: `aef9b05605b2d271d7df9f2698f8431dd42fb97e`. Signed run `35229524975`; artifact `10500159898` (`BOOP-Shield-v212-Wall-v207-Signed`). Target APK `BOOP-Shield-v212.apk`, SHA-256 `01cd1a53a2fc9b9eedffcc6b6601390ab204af6369dbcdd754a4eb9f1c7a3ff1`. Automated weather-layout, exact-chrome, packaged INTERNET-permission, inherited functional, split integration, package/version/signer, native-library and frozen-art checks passed. Ryan owns manual installation and visual/physical acceptance. v212 visual acceptance remains pending; v211's colour is accepted and its weather data plumbing was physically demonstrated. Wall remains on v207.
+After multiple interrupted attempts Ryan requested a fresh autonomous implementation and a signed APK link while he was away. v213 starts directly from v212 owner `2ab0db655368089b19f9c705fba2cd404a1cd4e7`. The earlier `boop-shield-home-panel-v211` implementation and orphan trees were not merged. The new state machine is isolated from legacy HomeDashboardController, reuses the HA transport/repository and pairing, gates stale room/actions, rechecks membership before a command and does not invent success before confirmation. It stops subscriptions, connections and retry timers off Home or when disabled.
 
-The earlier GitHub workflow-rule/context experiment was retired on 2026-09-17. The active branch no longer carries the root AGENTS, BOOP_START_HERE, BOOP_CONTEXT, BOOP_RULES or BUILD_ON_GITHUB files, and the current exact-file/source-preservation allowlists were removed. Functional regression coverage, package verification and signer/integrity checks remain.
+## Latest verified artifact
 
-Historical receipts under `docs/` remain history rather than active instructions.
+Signed source `7cb211b2a4f2b0307b500cc7ec718effa609ffd5`; feature commit `cfcb627348c5fde2bc4be86553f8a9648192a51b`.
+Successful run `35244156761`, job `105279913277`; artifact `10506423552`, `BOOP-Shield-v213-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v213.apk`, SHA-256 `cb21540979161b31ebebd756fbfea40ab1217ed8781ca8073094059c2286f783`.
+Permanent certificate `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged. Focused/controller/numerical tests, inherited checks, HA registry tests, materialized integration, both app builds and packaged identity/native/art checks passed; downloaded ZIP/APK were independently verified. No build or re-sign outside GitHub. A first-run CI signer-ordering error was corrected without removing checks.
+
+Ryan owns APK drag-and-drop installation through Shield scrcpy and all physical/visual acceptance. v213 has not been installed or tested against his live devices by this session. No RDC, device driving, emulator, screenshots, permission changes or daily Pixel access. Wall remains v207, built only for compatibility and not requested for installation.
+
+## Preserved history
+
+v209 fixed native Close player / Close media identity after the split; Ryan reported it working. v210 introduced idle weather in the 182dp Now Playing slot. v211 added missing Shield INTERNET and matched the weather card to Now Playing: RGB 16/16/16, 14dp corners, RGB 48/48/48 1dp stroke. Ryan approved that colour; his footer data proved the Open-Meteo path worked. The three main columns were still blank because their heights were zero.
+
+v212 changed those current/hourly/daily columns to MATCH_PARENT while preserving their 3:4:3 widths. No new weather setup is needed. Keyless Open-Meteo, 30-minute refresh/cache, non-focusable weather, media priority and parked favourites are preserved in v213. Full v212 visual acceptance was not separately recorded. Prior v212 source `aef9b05605b2d271d7df9f2698f8431dd42fb97e`, run `35229524975`, artifact `10500159898`, APK hash `01cd1a53a2fc9b9eedffcc6b6601390ab204af6369dbcdd754a4eb9f1c7a3ff1` remain historical receipts.
+
+The root AGENTS/START_HERE/CONTEXT/RULES/BUILD_ON_GITHUB experiment and changed-file allowlists were retired on 2026-09-17 and were not restored. Functional regression, package and permanent-signer/integrity checks remain. Dated docs are historical context, not automatic instructions to roll back current source.

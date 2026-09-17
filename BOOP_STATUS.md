@@ -1,20 +1,17 @@
 # BOOP status
 
-Updated 2026-09-17. Active app branch: `boop-wall-shield-split-v207`.
+Updated 2026-09-17. Owner: `boop-wall-shield-split-v207`. Implementation: `boop-shield-room-panel-v213`.
 
-Shield is on the v212 release line. v209 repaired Close player / Close media after the split; Ryan reported the close behavior working. v210 was the first idle-weather candidate, but its first physical test found no weather information loaded and the panel colour did not match Now Playing.
+Shield v213 / `1.2.213-shield` is signed and ready for Ryan's manual test. It adds the adaptive charcoal room-control panel below favourites, populated from the existing Set this device room selection. No duplicate room setup. Home settings has a persisted Smart home panel ON/OFF switch; disabled and non-Home states stop the panel's network session. Room controls support existing physical lights, switches/plugs and fans. Sensors remain deferred.
 
-v211 added the missing Shield INTERNET permission and matched the weather card exactly to Now Playing. Ryan physically approved the colour. His v211 screenshot also showed wind, sunrise/sunset and update age in the footer, proving Open-Meteo data was loading, but the main current/hourly/daily area remained blank.
+The fresh implementation starts from v212 owner `2ab0db655368089b19f9c705fba2cd404a1cd4e7`, not the interrupted v211 panel work. The v209 close-media repair, approved weather chrome, v211 network permission and v212 weather column-height repair are preserved. Voice/audio and BOOP's character rig/artwork were not edited.
 
-That v211 blank area was a rendering bug rather than user setup: all three weighted weather content columns had height `0`. v212 changes those column heights to `MATCH_PARENT`, preserving their existing 3:4:3 width weights, the approved 182dp hero slot, favourites-row position, weather source/cache/refresh behaviour, and the approved Now Playing card chrome.
+Signed source `7cb211b2a4f2b0307b500cc7ec718effa609ffd5`; successful run `35244156761`, job `105279913277`.
+Artifact `10506423552`, `BOOP-Shield-v213-Wall-v207-Signed`.
+Shield file `BOOP-Shield-v213.apk`, 160485741 bytes, SHA-256 `cb21540979161b31ebebd756fbfea40ab1217ed8781ca8073094059c2286f783`.
 
-v212 signed source: `aef9b05605b2d271d7df9f2698f8431dd42fb97e`.
-Signed run: `35229524975` (success).
-Artifact: `10500159898`, `BOOP-Shield-v212-Wall-v207-Signed`.
-Target APK: `BOOP-Shield-v212.apk`, package `com.boop.shieldoverlay`.
-APK SHA-256: `01cd1a53a2fc9b9eedffcc6b6601390ab204af6369dbcdd754a4eb9f1c7a3ff1`.
-Automated weather-layout, chrome, INTERNET-permission, inherited functional, split integration, package/version/signer, native-library and frozen-art verification all passed. v212 manual Shield visual acceptance remains Ryan-owned and pending. v211's colour is accepted and its weather data fetch was physically demonstrated.
+Verification passed: 96 local focused checks; CI 70 initial checks, 18 inherited stages, 95 materialized checks, 13 HA registry/filter unit tests, both shell builds, and actual APK identity/certificate/native/art checks. Suites overlap, not a summed unique count. Downloaded ZIP/Shield APK CRC and receipt hashes independently matched, with all 16 native-library hashes and frozen art unchanged. The first CI signer-ordering failure was repaired without changing the permanent key or dropping checks.
 
-Wall remains v207 / `com.boop.alpha1`.
+Manual installation, live room-device control, remote focus and visual acceptance remain PENDING. No automatic installation, emulator, screenshot, device driving or permission changes occurred. Wall remains v207 and is not to be installed for this Shield feature.
 
-Repository governance cleanup on 2026-09-17 removed the former BOOP root workflow-rule/context files and the current source-preservation/changed-file allowlist gates. Functional behavior tests, build checks, signing verification and package integrity checks remain available.
+Prior v212 receipt and physical-acceptance distinctions are retained in SESSION_HANDOFF.md. Retired root workflow-rule/context files and source-preservation allowlists remain retired. Functional tests, package checks and signer/integrity verification remain active.
