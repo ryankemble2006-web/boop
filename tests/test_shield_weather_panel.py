@@ -27,14 +27,30 @@ def test_now_playing_remains_authoritative_and_weather_never_takes_focus():
     assert "setClickable(false)" in weather
 
 
-def test_open_meteo_is_keyless_cached_and_bounded():
+def test_weather_card_matches_now_playing_surface_exactly():
+    weather = read("ShieldWeatherView.java")
+    now_playing = read("ShieldNowPlayingView.java")
+    for chrome in (
+        "setColor(Color.rgb(16,16,16))",
+        "setCornerRadius(dp(14))",
+        "setStroke(dp(1),Color.rgb(48,48,48))",
+    ):
+        assert chrome in weather
+    assert "background.setColor(Color.rgb(16, 16, 16));" in now_playing
+    assert "background.setCornerRadius(dp(14));" in now_playing
+    assert "background.setStroke(dp(1), Color.rgb(48, 48, 48));" in now_playing
+
+
+def test_open_meteo_is_keyless_cached_bounded_and_network_enabled():
     repo = read("ShieldWeatherRepository.java")
+    manifest = (ROOT / "split/shield/AndroidManifest.xml").read_text()
     assert "https://api.open-meteo.com/v1/forecast?" in repo
     assert "apikey" not in repo.lower()
     assert "FRESH_MS=30L*60L*1000L" in repo
     assert "STALE_MS=6L*60L*60L*1000L" in repo
     assert "setConnectTimeout(5000)" in repo
     assert "setReadTimeout(5000)" in repo
+    assert '<uses-permission android:name="android.permission.INTERNET" />' in manifest
     assert "Open-Meteo" in read("ShieldWeatherView.java")
 
 
@@ -46,9 +62,10 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
     assert "refreshWeather();" in activity
 
 
-def test_shield_release_advances_past_user_confirmed_209_floor():
+def test_shield_release_advances_failed_210_weather_candidate():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
-    assert "versionCode 210" in gradle
-    assert "versionName '1.2.210-shield'" in gradle
-    assert "version = 210 if body == 'shield' else 207" in verify
+    assert "versionCode 211" in gradle
+    assert "versionName '1.2.211-shield'" in gradle
+    assert "version = 211 if body == 'shield' else 207" in verify
+    assert "android.permission.INTERNET" in verify
