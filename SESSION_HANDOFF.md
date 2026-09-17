@@ -5,20 +5,23 @@ Updated 2026-09-17. Current owner branch: `boop-wall-shield-split-v207`.
 ## Current Shield
 
 Shield package: `com.boop.shieldoverlay`.
-Current release line: v210 / `1.2.210-shield`.
+Current release line: v211 / `1.2.211-shield`.
 
 v209 fixed Close player / Close media after the Wall-Shield package split by using the running application's package identity for the private close marker. Ryan subsequently reported the close behavior working.
 
-v210 adds the idle weather surface to the existing 182dp Now Playing slot. Weather uses Open-Meteo without an API key, refreshes on a 30-minute cadence, keeps a bounded stale cache, and yields immediately to Now Playing whenever eligible media is present. The favourites row retains its existing position and spacing.
+v210 introduced the idle weather surface in the existing 182dp Now Playing slot. Ryan's first physical test found that the panel loaded no weather information and its background did not match Now Playing.
 
-Signed v210 build source: `a3618c613fd53e75577e8d9a608bb1b2b732e007`.
-GitHub run: `35226569308`.
-Artifact: `10499332037`, `BOOP-Shield-v210-Wall-v207-Signed`.
-Ryan received `BOOP-Shield-v210.apk` for manual installation/testing.
+v211 repairs that candidate without changing the approved layout: the Shield shell now declares `android.permission.INTERNET` so the existing keyless Open-Meteo repository can actually fetch weather data, and the weather panel uses the exact Now Playing card chrome: RGB 16/16/16 fill, 14dp corner radius, and RGB 48/48/48 1dp stroke. The weather panel remains non-focusable, keeps its 30-minute refresh and bounded stale cache, yields immediately to eligible Now Playing media, and leaves the favourites row parked in its existing position.
+
+Signed v211 build source: `3d1c62b965fbe02aee58e8d39dd6649721611fef`.
+GitHub run: `35228355008` (success).
+Artifact: `10500275652`, `BOOP-Shield-v211-Wall-v207-Signed`.
+Target APK: `BOOP-Shield-v211.apk`, SHA-256 `cd059052f7dfe1b398b8d1aeba21f49d333d4e637b455e87776367578ea6874d`.
+The signed APK passed package/version/signer checks, the packaged INTERNET-permission check, inherited v206 functional checks, split integration checks, and the frozen native/art verification. Ryan owns manual installation and visual/physical acceptance; v211 is not yet recorded as installed or visually accepted.
 
 ## Wall
 
-Wall remains package `com.boop.alpha1`, release line v207. No Wall feature change was made by the Shield weather work.
+Wall remains package `com.boop.alpha1`, release line v207. No Wall feature change was made by the Shield weather repair.
 
 ## Repository cleanup
 
