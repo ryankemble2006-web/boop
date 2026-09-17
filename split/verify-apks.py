@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 208 if body == 'shield' else 207
+    version = 209 if body == 'shield' else 207
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
@@ -58,11 +58,13 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
     with zipfile.ZipFile(apk) as archive:
         assert archive.testzip() is None
         dex = b''.join(archive.read(n) for n in archive.namelist() if re.fullmatch(r'classes\d*\.dex',n))
-        for cls in ['BoopAppIdentity','BoopSetupState','BoopProfileActivity','UnifiedEntryActivity','BoopNaturalSpeechBackend','BoopSharedVoiceProfileRuntime','BoopCanonicalFaceView','BoopAppearanceActivity']:
+        for cls in ['BoopAppIdentity','BoopSetupState','BoopProfileActivity','UnifiedEntryActivity','BoopNaturalSpeechBackend','BoopSharedVoiceProfileRuntime','BoopCanonicalFaceView','BoopAppearanceActivity','LocalPlayerCloseGate','BoopClosePlayerActivity']:
             assert ('Lcom/boop/alpha1/'+cls+';').encode() in dex, cls
         for cls in ['ShieldHomeView','ShieldLyricsActivity','ShieldNowPlayingPuppetView','BassCaptureService','MusicBounceSource','BoopTvChrome']:
             assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls
         assert b'useTextOnlyFocus' in dex, 'Artist text-only focus helper missing from APK'
+        assert b'applicationPackageName' in dex, 'Runtime close-marker owner missing from APK'
+        assert b'Unsupported BOOP application' in dex, 'Close-marker owner validation missing from APK'
         assert b'Lcom/boop/launcher/MainActivity;' in dex, 'Built-in launcher lost'
         assert b'setup_intro_completed' in dex and b'Set up ' in dex
         for filename in ['boop-png-study.png','boop-hidden-felt.png','boop-felt-sign-blank.png','eyes.frag']:

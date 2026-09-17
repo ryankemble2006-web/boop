@@ -58,8 +58,9 @@ public final class BoopClosePlayerActivity extends Activity {
         }
         try {
             String nonce=UUID.randomUUID().toString().replace("-","");
-            gate=allMediaApps ? LocalPlayerCloseGate.allMediaApps(nonce)
-                    : new LocalPlayerCloseGate(sessionId,player,nonce);
+            String applicationPackageName=getPackageName();
+            gate=allMediaApps ? LocalPlayerCloseGate.allMediaApps(nonce,applicationPackageName)
+                    : new LocalPlayerCloseGate(sessionId,player,nonce,applicationPackageName);
             marker=new File(getFilesDir(),gate.filename());
             try(FileOutputStream out=new FileOutputStream(marker)) {
                 out.write(gate.nonce.getBytes(StandardCharsets.US_ASCII));
