@@ -27,6 +27,13 @@ def test_now_playing_remains_authoritative_and_weather_never_takes_focus():
     assert "setClickable(false)" in weather
 
 
+def test_weather_content_columns_fill_available_height():
+    weather = read("ShieldWeatherView.java")
+    assert "top.addView(current(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,3f))" in weather
+    assert "top.addView(hours(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,4f))" in weather
+    assert "top.addView(days(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,3f))" in weather
+
+
 def test_weather_card_matches_now_playing_surface_exactly():
     weather = read("ShieldWeatherView.java")
     now_playing = read("ShieldNowPlayingView.java")
@@ -62,10 +69,10 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
     assert "refreshWeather();" in activity
 
 
-def test_shield_release_advances_failed_210_weather_candidate():
+def test_shield_release_advances_blank_211_weather_candidate():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
-    assert "versionCode 211" in gradle
-    assert "versionName '1.2.211-shield'" in gradle
-    assert "version = 211 if body == 'shield' else 207" in verify
+    assert "versionCode 212" in gradle
+    assert "versionName '1.2.212-shield'" in gradle
+    assert "version = 212 if body == 'shield' else 207" in verify
     assert "android.permission.INTERNET" in verify
