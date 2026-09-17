@@ -49,9 +49,9 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
 def test_shield_release_advances_past_user_confirmed_209_floor():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
-    assert "versionCode 210" in gradle
-    assert "versionName '1.2.210-shield'" in gradle
-    assert "version = 210 if body == 'shield' else 207" in verify
+    assert "versionCode 211" in gradle
+    assert "versionName '1.2.211-shield'" in gradle
+    assert "version = 211 if body == 'shield' else 207" in verify
 
 
 def test_home_view_diff_is_only_the_approved_weather_slot_hunks():
