@@ -47,14 +47,6 @@ jobs:
           python scripts/audit-split-input.py
           python scripts/materialize-split.py
           python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py tests/test_now_playing_artist_chrome.py tests/test_close_player_app_identity.py tests/test_shield_weather_panel.py
-      - name: Verify existing HA room scope and command confirmation
-        run: |
-          TARGET=boop-build/BOOP-Alpha1/shield-lib/src/test/java/com/boop/shieldoverlay
-          mkdir -p "$TARGET"
-          for file in HomeAssistantRepositoryTest RoomScopedEntitiesTest RoomDeviceControlsTest HaEntityCategoryTest; do
-            cp "shield-overlay/app/src/test/java/com/boop/shieldoverlay/$file.java" "$TARGET/"
-          done
-          gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --stacktrace
       - name: Prepare existing permanent BOOP signer
         env:
           BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
@@ -66,6 +58,17 @@ jobs:
           printf '%s' "$BOOP_DEV_KEYSTORE_B64" | base64 --decode > "${RUNNER_TEMP}/boop-dev.jks"
           chmod 600 "${RUNNER_TEMP}/boop-dev.jks"
           echo "BOOP_SIGNING_STORE_FILE=${RUNNER_TEMP}/boop-dev.jks" >> "$GITHUB_ENV"
+      - name: Verify existing HA room scope and command confirmation
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          TARGET=boop-build/BOOP-Alpha1/shield-lib/src/test/java/com/boop/shieldoverlay
+          mkdir -p "$TARGET"
+          for file in HomeAssistantRepositoryTest RoomScopedEntitiesTest RoomDeviceControlsTest HaEntityCategoryTest; do
+            cp "shield-overlay/app/src/test/java/com/boop/shieldoverlay/$file.java" "$TARGET/"
+          done
+          gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --stacktrace
       - name: Build both apps with the unchanged permanent key
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
