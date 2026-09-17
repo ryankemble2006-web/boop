@@ -1,0 +1,28 @@
+name: Shield close identity regression
+on:
+  push:
+    branches: [boop-shield-close-identity-v209, boop-wall-shield-split-v207]
+    paths:
+      - 'unified/LocalPlayerCloseGate.java'
+      - 'unified/BoopClosePlayerActivity.java'
+      - 'tests/test_close_player_app_identity.py'
+      - '.github/workflows/test-shield-close-identity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -q pytest
+      - name: Exercise actual close gate and activity ownership wiring
+        run: python -m pytest -q tests/test_close_player_app_identity.py

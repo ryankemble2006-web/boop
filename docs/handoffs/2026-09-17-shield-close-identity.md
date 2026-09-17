@@ -1,0 +1,9 @@
+# Shield close identity repair: WIP regression checkpoint
+
+Updated 2026-09-17. Ryan explicitly authorized fixing the latest Shield app after the read-only diagnosis and warned that GitHub had advanced. Live owner read: `boop-wall-shield-split-v207` at `4ce305962c04b1bfa25a09bd12d1741679b567ea`; shared main read: `9808322212b4953d3fb4831fd05e9ffa1de806c6`. The v208 artist-only text focus, frozen Voice and all later accepted work remain the baseline. This task's isolated test branch is `boop-shield-close-identity-v209`; it is not a replacement accepted APK.
+
+The runtime activity creates its private marker through `getFilesDir()`, but the common close gate still reads it using hard-coded `run-as com.boop.alpha1`. Split Shield owns `com.boop.shieldoverlay`. Both native Close player and Close media reach this gate. Selected Cast closing uses the separate media-session stop path and is not changed by this repair.
+
+This checkpoint adds only a non-visual regression harness and its focused GitHub workflow, before production edits. The harness compiles the actual Java gate and compares its identity/close commands for both app identities and both close paths. It also checks invalid owner/nonce rejection, restricted target packages, cancellation and session matching. A test-side reflection fallback permits the old API to demonstrate the wrong command rather than a missing-constructor compilation error. Activity source checks require both routes to pass their own Context package.
+
+Pending: observe the expected pre-fix failure, implement validated runtime package injection, run the focused and complete existing build/test/signing gates, then reconcile with the live owning branch without overwriting concurrent work. Only Shield is a new delivery candidate. No installation, screen capture, emulator, device control, permission, HA or signing-key change is authorized by this task. Ryan installs the verified signed APK via scrcpy and owns physical acceptance.
