@@ -42,6 +42,7 @@ public final class ShieldHomeView extends LinearLayout {
         default void onBrowseNowPlayingArtist() { }
         default void onCloseNowPlayingSource() { }
         default void onCloseMediaApps() { }
+        default void onRoomDeviceSelected(long generation, String entityId) { }
     }
 
     private FavouriteGrabSession grabSession;
@@ -55,6 +56,16 @@ public final class ShieldHomeView extends LinearLayout {
     private View nowPlayingSpacer;
     private NowPlayingSnapshot nowPlayingSnapshot;
     private Callbacks activeCallbacks;
+    private ShieldRoomPanelView roomPanelView;
+    private FrameLayout roomPanelStage;
+    private LinearLayout roomPanelContent;
+    private com.boop.shieldoverlay.RoomPanelController.State roomPanelState;
+    private boolean roomPanelEnabled = true;
+    private boolean roomPanelHasOptionalRows;
+    private android.animation.ValueAnimator roomPanelResize;
+    private int roomPanelRight;
+    private int roomPanelTarget = -1;
+    private View roomPanelPreviousFavourite;
 
     public ShieldHomeView(Context context) {
         this(context, null);
@@ -79,6 +90,12 @@ public final class ShieldHomeView extends LinearLayout {
             List<HomeRow> optionalRows,
             NowPlayingSnapshot snapshot,
             Callbacks callbacks) {
+        if (homeAssistantPuppet != null) homeAssistantPuppet.setVisibilityListener(null);
+        if (roomPanelResize != null) { roomPanelResize.cancel(); roomPanelResize = null; }
+        roomPanelTarget = -1;
+        roomPanelPreviousFavourite = null;
+        roomPanelView = null;
+        roomPanelHasOptionalRows = false;
         removeAllViews();
         activeCallbacks = callbacks;
         nowPlayingSnapshot = snapshot;
@@ -105,9 +122,11 @@ public final class ShieldHomeView extends LinearLayout {
         addSpacer(dp(16));
 
         FrameLayout homeStage = new FrameLayout(getContext());
+        roomPanelStage = homeStage;
         homeStage.setClipChildren(false);
         homeStage.setClipToPadding(false);
         LinearLayout stageContent = new LinearLayout(getContext());
+        roomPanelContent = stageContent;
         stageContent.setOrientation(VERTICAL);
         stageContent.setClipChildren(false);
         stageContent.setClipToPadding(false);
@@ -127,6 +146,7 @@ public final class ShieldHomeView extends LinearLayout {
 
         for (HomeRow row : safeOptionalRows) {
             if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
+            roomPanelHasOptionalRows = true;
             View beforeTitle = new View(getContext());
             stageContent.addView(beforeTitle, new LayoutParams(1, dp(16)));
             stageContent.addView(sectionTitle(row.title()), wrap());
@@ -139,9 +159,21 @@ public final class ShieldHomeView extends LinearLayout {
         homeStage.addView(stageContent, new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.TOP));
 
+        roomPanelView = new ShieldRoomPanelView(getContext());
+        roomPanelView.setActions((generation, entityId) -> {
+            if (activeCallbacks != null) activeCallbacks.onRoomDeviceSelected(generation, entityId);
+        }, this::returnFromRoomPanel);
+        roomPanelView.bind(roomPanelState);
+        homeStage.addView(roomPanelView, new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, 0, Gravity.START | Gravity.TOP));
+        roomPanelView.setVisibility(GONE);
+        homeStage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
+        stageContent.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
+
         homeAssistantPuppet = new ShieldNowPlayingPuppetView(getContext());
         homeAssistantPuppet.setPresentationOwner(com.boop.shared.BoopState.Owner.NONE);
         homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());
+        homeAssistantPuppet.setVisibilityListener(this::resizeForBoop);
         FrameLayout.LayoutParams assistantParams = new FrameLayout.LayoutParams(
                 dp(360), dp(220), Gravity.END | Gravity.BOTTOM);
         assistantParams.rightMargin = dp(-42);
@@ -178,9 +210,87 @@ public final class ShieldHomeView extends LinearLayout {
         }
     }
 
+    public void setRoomPanelState(com.boop.shieldoverlay.RoomPanelController.State state, boolean enabled) {
+        roomPanelState = state;
+        roomPanelEnabled = enabled;
+        if (roomPanelView != null) roomPanelView.bind(state);
+        updateRoomPanelBounds();
+    }
+
+    private void resizeForBoop(boolean visible) {
+        int target = visible ? dp(336) : 0;
+        if (target == roomPanelTarget) return;
+        roomPanelTarget = target;
+        if (roomPanelResize != null) roomPanelResize.cancel();
+        if (!isAttachedToWindow() || getWidth() == 0 || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            roomPanelRight = target;
+            updateRoomPanelBounds();
+            return;
+        }
+        roomPanelResize = android.animation.ValueAnimator.ofInt(roomPanelRight, target);
+        roomPanelResize.setDuration(200L);
+        roomPanelResize.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        roomPanelResize.addUpdateListener(value -> {
+            roomPanelRight = (Integer) value.getAnimatedValue();
+            updateRoomPanelBounds();
+        });
+        roomPanelResize.start();
+    }
+
+    private void updateRoomPanelBounds() {
+        if (roomPanelView == null || roomPanelStage == null || roomPanelContent == null
+                || favouriteScroller == null || favouriteRow == null || roomPanelStage.getHeight() == 0) return;
+        int bottom = 0;
+        for (int i = 0; i < favouriteRow.getChildCount(); i++) {
+            View tile = favouriteRow.getChildAt(i);
+            int visibleBottom = tile.getHeight();
+            if (tile instanceof TvAppCardView) visibleBottom = ((TvAppCardView) tile).homeContentBottom();
+            else if (tile instanceof LinearLayout) {
+                LinearLayout add = (LinearLayout) tile;
+                if (add.getChildCount() > 0) visibleBottom = add.getChildAt(add.getChildCount()-1).getBottom();
+            }
+            bottom = Math.max(bottom, tile.getTop() + visibleBottom);
+        }
+        bottom += roomPanelContent.getTop() + favouriteScroller.getTop() + favouriteRow.getTop();
+        if (roomPanelHasOptionalRows) bottom = Math.max(bottom, roomPanelContent.getBottom());
+        RoomPanelLayout.Bounds bounds = RoomPanelLayout.calculate(roomPanelStage.getWidth(),
+                roomPanelStage.getHeight(), bottom, dp(16), roomPanelRight, dp(110));
+        boolean visible = roomPanelEnabled && bounds.height > 0;
+        if (!visible && roomPanelView.hasFocus()) returnFromRoomPanel();
+        roomPanelView.setVisibility(visible ? VISIBLE : GONE);
+        FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) roomPanelView.getLayoutParams();
+        if (p.topMargin != bounds.top || p.height != bounds.height || p.rightMargin != bounds.right) {
+            p.topMargin = bounds.top; p.height = bounds.height; p.rightMargin = bounds.right;
+            roomPanelView.setLayoutParams(p);
+        }
+    }
+
+    private boolean focusedFavourite(View focus) {
+        for (android.view.ViewParent p = focus == null ? null : focus.getParent(); p != null; p = p.getParent())
+            if (p == favouriteRow) return true;
+        return false;
+    }
+
+    private void returnFromRoomPanel() {
+        if (roomPanelPreviousFavourite != null && roomPanelPreviousFavourite.isAttachedToWindow())
+            roomPanelPreviousFavourite.requestFocus();
+        else resetToFirstFavourite();
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        if (roomPanelResize != null) { roomPanelResize.cancel(); roomPanelResize = null; }
+        super.onDetachedFromWindow();
+    }
+
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
         if (handleGrabKeyEvent(event)) {
             return true;
+        }
+        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && roomPanelEnabled
+                && roomPanelView != null && focusedFavourite(findFocus())) {
+            View previous = findFocus();
+            if (roomPanelView.focusControls()) { roomPanelPreviousFavourite = previous; return true; }
         }
         return super.dispatchKeyEvent(event);
     }

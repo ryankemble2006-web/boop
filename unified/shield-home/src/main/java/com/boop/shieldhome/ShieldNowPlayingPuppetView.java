@@ -48,6 +48,20 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private boolean animationPaused;
     private com.boop.shared.BoopState.Owner presentationOwner = com.boop.shared.BoopState.Owner.HOME_NOW_PLAYING;
     private Runnable unsubscribeShared;
+    public interface VisibilityListener { void onVisibilityChanged(boolean visible); }
+    private VisibilityListener visibilityListener;
+
+    public void setVisibilityListener(VisibilityListener listener) {
+        visibilityListener = listener;
+        if (listener != null) listener.onVisibilityChanged(getVisibility() == VISIBLE);
+    }
+
+    @Override public void setVisibility(int visibility) {
+        int before = getVisibility();
+        super.setVisibility(visibility);
+        if (before != visibility && visibilityListener != null)
+            visibilityListener.onVisibilityChanged(visibility == VISIBLE);
+    }
 
     public void setPresentationOwner(com.boop.shared.BoopState.Owner owner) {
         presentationOwner = owner;

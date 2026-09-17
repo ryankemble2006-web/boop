@@ -67,6 +67,8 @@ public final class ShieldLauncherActivity extends Activity {
     private NowPlayingSnapshot nowPlayingSnapshot;
     private ShieldWeatherRepository weatherRepository;
     private WeatherSnapshot weatherSnapshot;
+    private com.boop.shieldoverlay.RoomPanelSession roomPanelSession;
+    private com.boop.shieldoverlay.RoomPanelController.State roomPanelState;
     private ExecutorService executor;
     private FrameLayout root;
     private View currentView;
@@ -116,6 +118,12 @@ public final class ShieldLauncherActivity extends Activity {
         nowPlayingManager.refreshAccess();
         executor = Executors.newSingleThreadExecutor();
         weatherRepository = new ShieldWeatherRepository(this);
+        roomPanelSession = new com.boop.shieldoverlay.RoomPanelSession(this, panelState -> {
+            if (destroyed) return;
+            roomPanelState = panelState;
+            if (currentPage == Page.HOME && currentView instanceof ShieldHomeView)
+                ((ShieldHomeView) currentView).setRoomPanelState(panelState, store.smartHomePanelEnabled());
+        });
 
         registerPackageReceiver();
         showHome();
@@ -140,6 +148,7 @@ public final class ShieldLauncherActivity extends Activity {
             nowPlayingManager.reapplyAudioMode();
         }
         refreshWeather();
+        refreshRoomPanelSession();
         if (root != null && store != null && currentPage == Page.SETTINGS) {
             showSettings();
         }
@@ -175,6 +184,12 @@ public final class ShieldLauncherActivity extends Activity {
                 }
             });
         });
+    }
+
+    private void refreshRoomPanelSession() {
+        if (roomPanelSession == null || store == null) return;
+        if (resumed && currentPage == Page.HOME && store.smartHomePanelEnabled()) roomPanelSession.start();
+        else roomPanelSession.stop();
     }
 
     private void reloadApps() {
@@ -237,6 +252,7 @@ public final class ShieldLauncherActivity extends Activity {
         artistBrowser.cancel();
         lyricsBrowser.cancel();
         currentPage = Page.HOME;
+        refreshRoomPanelSession();
         com.boop.shared.BoopState.INSTANCE.homeVisible(resumed);
         int generation = ++optionalGeneration;
         List<TvAppEntry> favourites = favouriteEntries();
@@ -245,6 +261,7 @@ public final class ShieldLauncherActivity extends Activity {
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
         view.render(favourites, List.of(), nowPlayingSnapshot, callbacks);
         view.setWeather(weatherSnapshot);
+        view.setRoomPanelState(roomPanelState, store.smartHomePanelEnabled());
         transitionTo(view);
         if (focusComponent != null) {
             view.post(() -> view.focusFavourite(focusComponent));
@@ -294,6 +311,8 @@ public final class ShieldLauncherActivity extends Activity {
                     return;
                 }
                 view.render(favouriteEntries(), readyRows, nowPlayingSnapshot, homeCallbacks());
+                view.setWeather(weatherSnapshot);
+                view.setRoomPanelState(roomPanelState, store.smartHomePanelEnabled());
                 if (focusComponent != null) {
                     view.post(() -> view.focusFavourite(focusComponent));
                 } else if (focusFirstFavourite) {
@@ -305,6 +324,11 @@ public final class ShieldLauncherActivity extends Activity {
 
     private ShieldHomeView.Callbacks homeCallbacks() {
         return new ShieldHomeView.Callbacks() {
+            @Override public void onRoomDeviceSelected(long generation, String entityId) {
+                if (resumed && currentPage == Page.HOME && store.smartHomePanelEnabled() && roomPanelSession != null)
+                    roomPanelSession.toggle(generation, entityId);
+            }
+
             @Override public void onAppSelected(TvAppEntry entry) {
                 launchApp(entry);
             }
@@ -404,6 +428,7 @@ public final class ShieldLauncherActivity extends Activity {
         artistBrowser.cancel();
         lyricsBrowser.cancel();
         currentPage = Page.APPS;
+        refreshRoomPanelSession();
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
 
@@ -425,6 +450,7 @@ public final class ShieldLauncherActivity extends Activity {
         artistBrowser.cancel();
         lyricsBrowser.cancel();
         currentPage = Page.SETTINGS;
+        refreshRoomPanelSession();
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
         ++optionalGeneration;
 
@@ -441,7 +467,12 @@ public final class ShieldLauncherActivity extends Activity {
                 homeOverrideEnabled,
                 nowPlayingAccess,
                 playerLabel,
+                store.smartHomePanelEnabled(),
                 new ShieldHomeSettingsView.Callbacks() {
+            @Override public void onSetSmartHomePanelEnabled(boolean enabled) {
+                store.setSmartHomePanelEnabled(enabled);
+                refreshRoomPanelSession();
+            }
             @Override public void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
                 store.setRowEnabled(key, enabled);
                 showSettings();
@@ -1051,6 +1082,7 @@ public final class ShieldLauncherActivity extends Activity {
             }
             receiverRegistered = false;
         }
+        if (roomPanelSession != null) { roomPanelSession.close(); roomPanelSession = null; }
         if (executor != null) {
             executor.shutdownNow();
         }
@@ -1059,6 +1091,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onPause() {
         resumed = false;
+        refreshRoomPanelSession();
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
         artistBrowser.cancel();

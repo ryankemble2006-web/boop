@@ -160,6 +160,9 @@ public final class TvAppCardView extends FrameLayout {
         refreshEmphasis();
     }
 
+    /** Visible HOME content, excluding the reserved empty focus-row space. */
+    int homeContentBottom() { return content.getTop() + labelView.getBottom(); }
+
     public void setGrabbed(boolean grabbed) {
         this.grabbed = grabbed;
         refreshBadge();

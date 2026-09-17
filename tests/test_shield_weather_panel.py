@@ -72,7 +72,7 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
 def test_shield_release_advances_blank_211_weather_candidate():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
-    assert "versionCode 212" in gradle
-    assert "versionName '1.2.212-shield'" in gradle
-    assert "version = 212 if body == 'shield' else 207" in verify
+    assert "versionCode 213" in gradle
+    assert "versionName '1.2.213-shield'" in gradle
+    assert "version = 213 if body == 'shield' else 207" in verify
     assert "android.permission.INTERNET" in verify

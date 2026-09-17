@@ -1,7 +1,7 @@
-name: Build signed BOOP Shield v212 and Wall v207
+name: Build signed BOOP Shield v213 and Wall v207
 on:
   push:
-    branches: [boop-wall-shield-split-v207]
+    branches: [boop-wall-shield-split-v207, boop-shield-room-panel-v213]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
@@ -27,7 +27,7 @@ jobs:
       - name: Verify close identity, artist focus and weather before the full build
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_shield_weather_panel.py
+          python -m pytest -q tests/test_room_panel.py tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_shield_weather_panel.py
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
@@ -47,6 +47,14 @@ jobs:
           python scripts/audit-split-input.py
           python scripts/materialize-split.py
           python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py tests/test_now_playing_artist_chrome.py tests/test_close_player_app_identity.py tests/test_shield_weather_panel.py
+      - name: Verify existing HA room scope and command confirmation
+        run: |
+          TARGET=boop-build/BOOP-Alpha1/shield-lib/src/test/java/com/boop/shieldoverlay
+          mkdir -p "$TARGET"
+          for file in HomeAssistantRepositoryTest RoomScopedEntitiesTest RoomDeviceControlsTest HaEntityCategoryTest; do
+            cp "shield-overlay/app/src/test/java/com/boop/shieldoverlay/$file.java" "$TARGET/"
+          done
+          gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --stacktrace
       - name: Prepare existing permanent BOOP signer
         env:
           BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
@@ -66,10 +74,12 @@ jobs:
           BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
         run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :wall-app:assembleDebug :shield-app:assembleDebug --stacktrace
       - name: Verify BOTH actual APKs against accepted v206 native bytes and frozen art
-        run: python split/verify-apks.py
+        run: |
+          python split/verify-apks.py
+          cp -R boop-build/BOOP-Alpha1/shield-lib/build/test-results/testDebugUnitTest split-artifact/ha-unit-tests
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-v212-Wall-v207-Signed
+          name: BOOP-Shield-v213-Wall-v207-Signed
           path: split-artifact/
           if-no-files-found: error
       - name: Remove temporary signer

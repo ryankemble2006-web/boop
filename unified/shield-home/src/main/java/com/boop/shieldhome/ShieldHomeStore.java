@@ -48,6 +48,10 @@ public final class ShieldHomeStore {
         }
     }
 
+    private static final String SMART_HOME_PANEL = "smart_home_panel_enabled_v1";
+    public boolean smartHomePanelEnabled() { return preferences.getBoolean(SMART_HOME_PANEL, true); }
+    public void setSmartHomePanelEnabled(boolean enabled) { preferences.putBoolean(SMART_HOME_PANEL, enabled); }
+
     private final Preferences preferences;
 
     public ShieldHomeStore(Context context) {

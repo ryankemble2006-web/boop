@@ -22,6 +22,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         default void onEnableHomeOverride() { onChooseHomeApp(); }
         default void onOpenNowPlayingAccess() { }
         default void onChooseNowPlayingPlayer() { }
+        default void onSetSmartHomePanelEnabled(boolean enabled) { }
         void onBackHome();
     }
 
@@ -49,6 +50,11 @@ public final class ShieldHomeSettingsView extends LinearLayout {
 
     public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled,
                        boolean nowPlayingAccess, String nowPlayingPlayerLabel, Callbacks callbacks) {
+        render(playNext, appChannels, homeOverrideEnabled, nowPlayingAccess, nowPlayingPlayerLabel, true, callbacks);
+    }
+
+    public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled,
+                       boolean nowPlayingAccess, String nowPlayingPlayerLabel, boolean smartHomePanel, Callbacks callbacks) {
         removeAllViews();
         TextView title = text(launcherSettingsLabel(), 28); addView(title, wrap()); addSpacer(dp(18));
         TextView homeSection = text("Shield Home", 20); addView(homeSection, wrap()); addSpacer(dp(10));
@@ -56,6 +62,18 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         TextView overrideHome = action("BOOP device and room settings");
         overrideHome.setOnClickListener(v -> { if (callbacks != null) callbacks.onEnableHomeOverride(); });
         addView(overrideHome, rowParams()); addSpacer(dp(10));
+
+        final boolean[] panelEnabled = {smartHomePanel};
+        TextView roomPanel = action("Smart home panel: " + (smartHomePanel ? "ON" : "OFF"));
+        roomPanel.setOnClickListener(v -> {
+            panelEnabled[0] = !panelEnabled[0];
+            roomPanel.setText("Smart home panel: " + (panelEnabled[0] ? "ON" : "OFF"));
+            if (callbacks != null) callbacks.onSetSmartHomePanelEnabled(panelEnabled[0]);
+        });
+        addView(roomPanel, rowParams()); addSpacer(dp(6));
+        TextView roomHint = text("Uses your existing ‘Set this device room’ selection.", 15);
+        roomHint.setTextColor(Color.LTGRAY);
+        addView(roomHint, wrap()); addSpacer(dp(12));
 
         TextView stockInfo = action("Home Assistant controls");
         stockInfo.setOnClickListener(v -> { if (callbacks != null) callbacks.onRetireStockHome(); });

@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 212 if body == 'shield' else 207
+    version = 213 if body == 'shield' else 207
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
@@ -63,6 +63,11 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
             assert ('Lcom/boop/alpha1/'+cls+';').encode() in dex, cls
         for cls in ['ShieldHomeView','ShieldLyricsActivity','ShieldNowPlayingPuppetView','BassCaptureService','MusicBounceSource','BoopTvChrome']:
             assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls
+        for cls in ['RoomPanelController', 'RoomPanelSession']:
+            assert ('Lcom/boop/shieldoverlay/'+cls+';').encode() in dex, cls
+        for cls in ['ShieldRoomPanelView', 'RoomPanelLayout']:
+            assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls
+        assert b'smartHomePanelEnabled' in dex
         assert b'useTextOnlyFocus' in dex, 'Artist text-only focus helper missing from APK'
         assert b'applicationPackageName' in dex, 'Runtime close-marker owner missing from APK'
         assert b'Unsupported BOOP application' in dex, 'Close-marker owner validation missing from APK'
