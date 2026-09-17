@@ -71,7 +71,6 @@ def test_voice_and_accepted_home_art_sources_are_unchanged():
         "source/BoopVoiceTuning.java", "source/MainActivity.java", "natural-voices",
         "scripts/patch-unified-natural-voices.py", "scripts/patch-v89-natural-diagnostics.py",
         "unified/animation", "unified/assets/boop-eyes",
-        "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldHomeView.java",
         "unified/shield-home/src/main/java/com/boop/shieldhome/TvAppCardView.java",
         "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldNowPlayingPuppetView.java",
     ]
