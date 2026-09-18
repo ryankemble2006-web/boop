@@ -124,7 +124,18 @@ public final class BoopTvChrome {
     }
 
     public static int accentColor(Context context) {
-        return Color.rgb(77, 184, 255);
+        int hue = context == null
+                ? ShieldHomeStore.DEFAULT_ACCENT_HUE
+                : new ShieldHomeStore(context).accentHue();
+        return colorForHue(hue);
+    }
+
+    public static int colorForHue(int hue) {
+        int stable = Math.max(0, Math.min(359, hue));
+        if (stable == ShieldHomeStore.DEFAULT_ACCENT_HUE) {
+            return Color.rgb(77, 184, 255);
+        }
+        return Color.HSVToColor(new float[] {stable, 0.6980392f, 1f});
     }
 
     public static GradientDrawable filled(
