@@ -16,6 +16,7 @@ public final class ShieldHomeStore {
     private static final String KEY_INITIALISED = "favourites_initialised";
     private static final String KEY_FAVOURITES = "favourites_json";
     private static final String KEY_NOW_PLAYING_PLAYER = "now_playing_player_package_v1";
+    private static final String KEY_ROOM_CONTROL_ORDER_PREFIX = "room_control_order_v1:";
 
     public interface Preferences {
         String getString(String key, String fallback);
@@ -83,6 +84,40 @@ public final class ShieldHomeStore {
     public void saveFavourites(List<String> components) {
         preferences.putString(KEY_FAVOURITES, encodeComponents(components));
         preferences.putBoolean(KEY_INITIALISED, true);
+    }
+
+
+    public List<String> loadRoomControlOrder(String roomId, List<String> availableEntityIds) {
+        String stableRoomId = roomId == null ? "" : roomId.trim();
+        if (stableRoomId.isEmpty()) return reconcileOrder(List.of(), availableEntityIds);
+        List<String> saved = decodeComponents(preferences.getString(
+                KEY_ROOM_CONTROL_ORDER_PREFIX + stableRoomId, "[]"));
+        return reconcileOrder(saved, availableEntityIds);
+    }
+
+    public void saveRoomControlOrder(String roomId, List<String> entityIds) {
+        String stableRoomId = roomId == null ? "" : roomId.trim();
+        if (stableRoomId.isEmpty()) return;
+        preferences.putString(KEY_ROOM_CONTROL_ORDER_PREFIX + stableRoomId, encodeComponents(entityIds));
+    }
+
+    static List<String> reconcileOrder(List<String> preferred, List<String> available) {
+        ArrayList<String> out = new ArrayList<>();
+        Set<String> availableSet = new HashSet<>();
+        if (available != null) {
+            for (String value : available) if (value != null && !value.isEmpty()) availableSet.add(value);
+        }
+        if (preferred != null) {
+            for (String value : preferred) {
+                if (value != null && availableSet.contains(value) && !out.contains(value)) out.add(value);
+            }
+        }
+        if (available != null) {
+            for (String value : available) {
+                if (value != null && !value.isEmpty() && !out.contains(value)) out.add(value);
+            }
+        }
+        return out;
     }
 
     public boolean rowEnabled(OptionalRowRegistry.Key key) {
