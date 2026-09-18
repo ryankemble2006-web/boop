@@ -54,6 +54,7 @@ def test_actual_chrome_methods_preserve_artist_style_and_normal_buttons(tmp_path
         chrome = (root / 'BoopTvChrome.java').read_text()
         signatures = [
             'public static int accentColor(Context context)',
+            'public static int colorForHue(int hue)',
             'public static GradientDrawable filled(',
             'private static void decorateTree(View view)',
             'private static boolean eligible(View view)',
@@ -74,6 +75,12 @@ class Context { }
 class Color {
     static final int WHITE = 0xffffffff;
     static int rgb(int r, int g, int b) { return 0xff000000 | r << 16 | g << 8 | b; }
+    static int HSVToColor(float[] hsv) { return rgb(77, 184, 255); }
+}
+class ShieldHomeStore {
+    static final int DEFAULT_ACCENT_HUE = 204;
+    ShieldHomeStore(Context context) { }
+    int accentHue() { return DEFAULT_ACCENT_HUE; }
 }
 class ColorStateList {
     final int[][] states; final int[] colors;
