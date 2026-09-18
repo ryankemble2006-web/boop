@@ -168,6 +168,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(8));
         progressParams.topMargin = dp(9);
+        progressParams.rightMargin = dp(8);
         details.addView(progress, progressParams);
 
         LinearLayout controls = new LinearLayout(context);
@@ -178,6 +179,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         // The progress track is the horizontal datum for the whole media stack.
         // Keep transport chrome on that same left edge instead of adding its own inset.
         controls.setPadding(0, 0, 0, 0);
+        controls.setTranslationX(-dp(4));
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(46));
         controlsParams.topMargin = dp(4);
