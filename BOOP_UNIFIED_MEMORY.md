@@ -2,7 +2,7 @@
 
 Updated 2026-09-18.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v219 on `boop-shield-now-playing-align-v219`. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v220 on `boop-shield-accent-colour-v220`. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -19,7 +19,7 @@ Sonoff and light controls proved instant on the v214/v215 direct `call_service` 
 
 v215 capability-aware entity selection remains required: native fan entities need the current HA power flags when feature metadata is known, otherwise choose the same device's actual power/on-off switch rather than oscillation/settings entities.
 
-When the physical tile is semantically a fan, first use Home Assistant's WebSocket `conversation/process` with a room-scoped natural command. Accept only an `action_done` response with no failed targets. If conversation cannot act, immediately fall back to the v215 direct service route. This is generic fan behaviour, not a Govee brand special case.
+When the physical tile is semantically a fan, first use Home Assistant's WebSocket `conversation/process` with a room-scoped natural command. Accept only an `action_done` response with no failed targets. If conversation cannot act, immediately fall back to the v215 direct service route.
 
 ## HA icon rule from v216
 
@@ -29,43 +29,53 @@ Icons represent the physical device, not the implementation entity:
 - light -> bulb;
 - remaining switches -> power symbol.
 
-Use display name + device name + entity ID to classify semantic fan/subwoofer identity.
-
 ## Weather centring rule from v216
 
-Weather centring is locked to the actual divider/cell geometry:
-- no horizontal inset inside the three main 3:4:3 regions;
-- every hourly/daily line consumes MATCH_PARENT cell width;
-- explicit centre gravity + centre text alignment for every line;
-- weather glyph receives a +2dp optical horizontal correction for font side bearing;
-- numeric/text rows stay mathematically centred;
-- headings and footer stay centred within the same 3:4:3 regions.
-
-Do not reintroduce per-section padding that changes the region centre.
+Weather centring is locked to the actual divider/cell geometry. Do not reintroduce per-section padding that changes the region centre. Weather glyphs keep the accepted +2dp optical correction.
 
 ## Grab/reorder rule from v217
 
-HOME favourites and HA controls now share the same remote mental model: hold to grab, left/right to move, OK/Enter to drop.
+HOME favourites and HA controls share one remote model: hold to grab, left/right to move, OK/Enter to drop.
 
-- Favourite ordinary focus must keep the accepted artwork geometry. Only an active grab receives the stronger 1.14x + Z-depth lift.
-- HA tiles receive a 1.10x + Z-depth lift only while grabbed.
-- A normal HA click remains a normal device toggle; entering reorder mode must not add a pre-click network gate or change HA latency.
-- HA control order is persisted per room. Reconcile saved order against currently available entities, drop vanished IDs, and append newly discovered IDs after the saved order.
-- Room changes cancel an in-progress grab rather than moving an entity into another room's ordering.
+- Favourite ordinary focus keeps accepted artwork geometry; active grab alone gets 1.14x + Z-depth.
+- HA tiles get 1.10x + Z-depth only while grabbed.
+- Normal HA clicks remain normal device toggles and must not gain network latency.
+- HA control order persists per room; vanished IDs drop and new IDs append.
+- Room changes cancel an in-progress grab.
+
+Ryan accepted this movement/customisation behavior as perfect on 2026-09-18.
 
 ## Now Playing alignment rule from v219
 
-Use the visible progress bar as the visual ruler for the media stack. Title, artist and playback-state text remain on the details-column left edge. The transport row has a deliberate -4dp X translation so the unfocused Prev button visually keys to the progress track. The progress bar has an 8dp right margin so its visible right edge lines up with the visible right edge of Close player. Do not reintroduce the old transport-only +8dp left padding. Lyrics/Close-player layout, album art and mascot bay remain unchanged.
+Ryan physically accepted v219 as perfect on 2026-09-18.
+
+Preserve:
+- transport row visual translation `-4dp`, making unfocused Prev align with the progress track;
+- progress bar right margin `8dp`, ending on Close player's visible right edge;
+- title/artist/Playing positions, Lyrics/Close-player layout, art and mascot bay unchanged.
+
+## Launcher accent-colour rule from v220
+
+Launcher highlight colour is user-configurable from **Launcher Settings**, immediately below **Smart home panel**.
+
+- Store hue as `accent_hue_v1`, integer 0-359.
+- Default is hue 204 and must map exactly to existing `#4DB8FF`.
+- A single hue slider is the user control; it previews via its label and thumb.
+- `BoopTvChrome.accentColor(Context)` is the canonical runtime accent source.
+- Shared focus borders, text-only artist focus, Now Playing progress, HA active text/icons and other `FocusChrome` consumers must use that source.
+- HOME navigation vector icons are runtime-tinted from the same source.
+- Weather wind/current icon/rain accents use the same source.
+- Add favourites already resolves through `FocusChrome`.
+- Do not change charcoal fills, white body text, layout geometry or HA behavior when changing accent.
+- The setting persists and new launcher surfaces should resolve the saved hue on construction/focus rather than hardcode cyan.
 
 ## Latest verified artifact
 
-Build source `9ad31957cba942f857c4d48588702d9b4ab89cb4`.
-Run `35353692917`, job `105627714059`; artifact `10551187345`, `BOOP-Shield-v219-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v219.apk`, 160485741 bytes, SHA-256 `d6462470ca1b95e8672d038acd902c7bdd57d687aaa8146e1b0d66e2e222bdae`.
+Build source `a009b921bf23d018f7edc9ebf2c64a9f89bf8ddd`.
+Run `35355454656`, job `105634013385`; artifact `10552105353`, `BOOP-Shield-v220-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v220.apk`, 160485741 bytes, SHA-256 `2ac14d16983a7662b09f5338e18f7f43b749cea0666e4af676d86b8e087d34ad`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Uploaded artifact ZIP SHA-256 `4f8f5016bca24475d808c7e9afc0fb3c8d8c07f639986fd084e56639b0070e60`.
-All 16 native libraries remain baseline-identical.
+Uploaded artifact ZIP SHA-256 `1a6fa09706d06b2bba52becc4123f7640fee15068147fd3b8b38288a11d4cdf1`.
+77 focused checks, inherited v206 checks, 100 materialized integration checks and HA tests passed; all 16 native libraries remain baseline-identical.
 
-v218 is the prior signed checkpoint. The first v217 run stopped on the intentionally superseded v205 assertion that a grabbed favourite must remain 1.00x and produced no APK.
-
-Voice/provider/pitch work remains deferred and untouched. Wall stays v207. No device driving, daily Pixel access, permission or signer changes were made.
+v219 is the prior accepted signed checkpoint. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.
