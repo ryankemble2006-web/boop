@@ -1,17 +1,20 @@
 # BOOP status
 
-Updated 2026-09-17. Owner: `boop-wall-shield-split-v207`. Implementation: `boop-shield-room-panel-v213`.
+Updated 2026-09-18. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-ha-fast-v214`.
 
-Shield v213 / `1.2.213-shield` is signed and ready for Ryan's manual test. It adds the adaptive charcoal room-control panel below favourites, populated from the existing Set this device room selection. No duplicate room setup. Home settings has a persisted Smart home panel ON/OFF switch; disabled and non-Home states stop the panel's network session. Room controls support existing physical lights, switches/plugs and fans. Sensors remain deferred.
+Shield v214 / `1.2.214-shield` is signed and ready for Ryan's physical test.
 
-The fresh implementation starts from v212 owner `2ab0db655368089b19f9c705fba2cd404a1cd4e7`, not the interrupted v211 panel work. The v209 close-media repair, approved weather chrome, v211 network permission and v212 weather column-height repair are preserved. Voice/audio and BOOP's character rig/artwork were not edited.
+The v213 smart-home panel was functionally correct in CI but its real-device click path was over-defensive: each press reloaded room membership/state and then created another state subscription before accepting success. v214 keeps the existing room/generation safety gates but sends the Home Assistant `call_service` action immediately over the existing WebSocket. The session's one long-lived `state_changed` subscription remains the source of truth for displayed device state. This fast path applies to the supported binary room controls: lights, switches/plugs, fans and input booleans. No optimistic success state is painted.
 
-Signed source `7cb211b2a4f2b0307b500cc7ec718effa609ffd5`; successful run `35244156761`, job `105279913277`.
-Artifact `10506423552`, `BOOP-Shield-v213-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v213.apk`, 160485741 bytes, SHA-256 `cb21540979161b31ebebd756fbfea40ab1217ed8781ca8073094059c2286f783`.
+Weather layout is also corrected without changing the previously accepted card chrome or data source. Current, hourly and daily sections now share one header grid and vertically aligned bodies; the footer is consistently centred.
 
-Verification passed: 96 local focused checks; CI 70 initial checks, 18 inherited stages, 95 materialized checks, 13 HA registry/filter unit tests, both shell builds, and actual APK identity/certificate/native/art checks. Suites overlap, not a summed unique count. Downloaded ZIP/Shield APK CRC and receipt hashes independently matched, with all 16 native-library hashes and frozen art unchanged. The first CI signer-ordering failure was repaired without changing the permanent key or dropping checks.
+Build source `2d07d4307a89dec735b93bdc08a5f6956f5e5ae2`.
+Successful run `35343966769`, job `105596091769`.
+Artifact `10545697780`, `BOOP-Shield-v214-Wall-v207-Signed`.
+Shield file `BOOP-Shield-v214.apk`, 160485741 bytes, SHA-256 `28a7f0686308c1907039bdfe46462a08bf6b24593d3b29ccbd90a3879d96f195`.
+Permanent signer SHA-256 remains `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Downloaded artifact ZIP SHA-256 `5abca90da2e32b07ceab0f942bcebff0ed3aac77e17c58ebeec2b3bdeb1902ee`.
 
-Manual installation, live room-device control, remote focus and visual acceptance remain PENDING. No automatic installation, emulator, screenshot, device driving or permission changes occurred. Wall remains v207 and is not to be installed for this Shield feature.
+Verification passed: focused room-panel/weather tests, inherited v206 checks, materialized split integration, dedicated HA low-latency tests, both app builds, and packaged identity/certificate/native/art checks. The downloaded artifact receipt and extracted APK were independently matched; all 16 native libraries remain baseline-identical. The copied HA unit XML reports 15 tests, zero failures/errors.
 
-Prior v212 receipt and physical-acceptance distinctions are retained in SESSION_HANDOFF.md. Retired root workflow-rule/context files and source-preservation allowlists remain retired. Functional tests, package checks and signer/integrity verification remain active.
+Manual Shield installation and live acceptance remain PENDING. No automatic install, emulator, screenshot, device driving, permission change, voice/audio change, phone change or Wall feature change occurred. v213 remains the previous signed checkpoint.

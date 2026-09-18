@@ -1,42 +1,48 @@
 # BOOP current handoff
 
-Updated 2026-09-17. Owner branch: `boop-wall-shield-split-v207`. Room-panel implementation branch: `boop-shield-room-panel-v213`.
+Updated 2026-09-18. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-ha-fast-v214`.
 
-## Current Shield: v213, signed and ready for Ryan's test
+## Current Shield: v214, signed and ready for Ryan's physical test
 
-Package `com.boop.shieldoverlay`, version `213` / `1.2.213-shield`.
-Ryan approved an adaptive, room-derived Home panel and then explicitly requested a fresh implementation after the earlier interrupted attempts. This version starts from the live v212 owner `2ab0db655368089b19f9c705fba2cd404a1cd4e7`; the incomplete `boop-shield-home-panel-v211` branch was not merged.
+Package `com.boop.shieldoverlay`, version `214` / `1.2.214-shield`.
 
-The lower Home area now contains native charcoal/cyan device controls from the existing **Set this device room** selection and existing Home Assistant pairing. No second room preference or pairing flow. The panel fills the available area below favourite captions, expands when lower-right BOOP disappears, and contracts with a 200 ms margin animation when he returns. The hero slot, favourites and BOOP's corner geometry remain parked. If optional content leaves insufficient space, the panel hides rather than covering it.
+v214 starts exactly from the signed/documented v213 branch tip `1fddf88050f004860c98e50860e1780e82415a86`. It fixes the first physical-test findings from the new room panel: Home Assistant buttons could hang or feel slow, especially the fan, while the existing phone voice path remained immediate; the idle weather content also needed proper vertical alignment.
 
-Home settings contains **Smart home panel: ON / OFF**, default ON. Off removes the panel and stops its Home Assistant session. D-pad Down enters from favourites; Left/Right traverse controls and stop at the ends; Up returns to the prior favourite. Device tiles retain identity and focus during live state updates. Existing supported physical lights, switches/smart plugs and fans appear; sensor readings, camera views and thermostat detail controls remain later work.
+### Home Assistant latency fix
 
-The separate RoomPanelController/RoomPanelSession reuse the existing HA repository and canonical room adapter. Old room callbacks and stale tile presses are rejected, membership is rechecked before commands, pending actions cannot double-toggle, and actual state is not replaced with optimistic success. Connections/subscriptions/retry timers stop when disabled or outside launcher Home. Legacy HomeDashboardController and voice/audio code were not changed.
+The v213 Shield click path unnecessarily refreshed the entire room membership before every action: `extract_from_target`, device registry, entity registry, then `get_states`. It then created a second per-click `state_changed` subscription and waited up to ten seconds for an exact expected state. The session already owned a long-lived state stream.
+
+v214 removes both delays. A valid rendered room tile is checked against the current selected room and cached room-scoped card, then sends `call_service` immediately over the already-open Home Assistant WebSocket. The service result clears the pending press; the existing long-lived `state_changed` stream remains authoritative for the displayed real state. No optimistic on/off state is invented. Duplicate presses while the action is pending, stale generations, room changes and unavailable entities remain guarded. The normal 30-second background room refresh remains for membership reconciliation.
+
+This follows Home Assistant's current WebSocket API: service calls are sent with `call_service`; clients interested in resulting entity changes listen to `state_changed` events. It applies to the panel's supported binary controls: lights, switches/plugs, fans and input booleans.
+
+### Weather alignment fix
+
+The accepted weather chrome remains unchanged: 182dp hero slot, RGB 16/16/16 fill, 14dp corners, RGB 48/48/48 stroke, 3:4:3 column widths, Open-Meteo data, non-focusable behaviour and Now Playing priority.
+
+v214 gives all three weather sections one fixed-height header grid, vertically centres their bodies, moves the current-condition label into the current body so it no longer pushes that column down, and centres the footer content consistently. Weather/network behaviour and caching were not changed.
 
 ## Verified signed artifact
 
-Build source: `7cb211b2a4f2b0307b500cc7ec718effa609ffd5`.
-Production feature commit: `cfcb627348c5fde2bc4be86553f8a9648192a51b`.
-Successful GitHub run `35244156761`, job `105279913277`.
-Artifact `10506423552`: `BOOP-Shield-v213-Wall-v207-Signed`.
-Deliver **BOOP-Shield-v213.apk**, 160485741 bytes.
-APK SHA-256: `cb21540979161b31ebebd756fbfea40ab1217ed8781ca8073094059c2286f783`.
+Production/build source: `2d07d4307a89dec735b93bdc08a5f6956f5e5ae2`.
+Successful GitHub Actions run `35343966769`, job `105596091769`.
+Artifact `10545697780`: `BOOP-Shield-v214-Wall-v207-Signed`.
+
+Deliver **BOOP-Shield-v214.apk**, 160485741 bytes.
+Shield APK SHA-256: `28a7f0686308c1907039bdfe46462a08bf6b24593d3b29ccbd90a3879d96f195`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `4dc5cb1ce6b6385d2f575ad04ec06d9cb95e2a35a3b49c52088765e2813eebfb`.
+Downloaded artifact ZIP SHA-256: `5abca90da2e32b07ceab0f942bcebff0ed3aac77e17c58ebeec2b3bdeb1902ee`.
 
-Verification: 96 local focused tests; CI initial 70 focused tests, all 18 inherited stages, 95 materialized integration checks, and 13 HA registry/room-filter unit tests passed. These suites overlap and must not be added into a unique test total. Both app builds and actual package/version/certificate checks passed. The downloaded artifact ZIP and extracted Shield APK were independently checked against metadata/receipt; CRC, new feature classes, all 16 native-library hashes and frozen artwork matched. No rebuild or re-sign took place outside GitHub.
+The focused room-panel/weather gate passed, inherited v206 checks passed, materialized split integration passed, the dedicated HA low-latency unit suite passed, both apps built with the unchanged permanent signer, and actual APK identity/certificate/native/art verification passed. The downloaded artifact was unpacked independently: its receipt names source `2d07d430...`; the extracted Shield APK hash matches the receipt; all 16 native-library hashes match the accepted baseline. HA unit XML contains 15 tests total across the four copied suites, with zero failures/errors.
 
-The first v213 run `35243778496` stopped before the full APK build because a new Gradle unit-test step ran before the existing required signer environment was prepared. The workflow now prepares that same permanent signer before Gradle configuration and supplies the existing password environment to the test step. No signer check was disabled and no replacement key was created.
+## Physical acceptance still pending
 
-## Physical acceptance and next step
+Ryan should install only `BOOP-Shield-v214.apk` on the Shield and check:
+1. Fan/light/switch button response feels immediate and no tile remains hung.
+2. Real tile state follows the actual Home Assistant state after each action.
+3. Repeated presses are safely blocked only while the service acknowledgement is pending.
+4. Weather current / next-hours / three-day columns and footer look aligned on the real TV.
 
-Ryan downloads the Shield APK, drags it into his Shield scrcpy window, and tests the room devices, D-pad navigation, panel On/Off and expansion with/without media/BOOP. Physical installation and visual/live-device acceptance are pending. No device was driven, no emulator or screenshot was used, no permissions were granted, and no daily Pixel was touched. The earlier model's unfinished files remain historical, not the current deliverable.
+No device was driven, no emulator or screenshot was used, no permissions were changed, and no phone/Wall code, voice/audio work or signing material was altered. Wall remains v207 for compatibility only.
 
-## Preserved baseline and Wall
-
-v209 repaired native Close player / Close media; Ryan reported it working. v211's weather card colour was physically approved and its footer proved Open-Meteo data was arriving. v212 repaired the three zero-height current/hourly/daily columns with MATCH_PARENT, retaining their 3:4:3 widths. All those fixes remain in v213, including Shield INTERNET, the 182dp hero slot and RGB 16/16/16 card fill, 14dp corners and RGB 48/48/48 stroke. v212's separate full visual acceptance was not recorded and is not invented here.
-
-Prior signed v212 source `aef9b05605b2d271d7df9f2698f8431dd42fb97e`, run `35229524975`, artifact `10500159898`, APK SHA-256 `01cd1a53a2fc9b9eedffcc6b6601390ab204af6369dbcdd754a4eb9f1c7a3ff1`.
-Wall remains v207 / `com.boop.alpha1`; it was built for shared compatibility only and is not requested for installation. Voice/provider/pitch investigation remains untouched.
-
-The retired root workflow-rule/context files and changed-file allowlists were not restored. Detailed implementation and verification record: `docs/handoffs/2026-09-17-shield-room-panel-v213.md`.
+v213 remains the prior signed checkpoint. Detailed v214 record: `docs/handoffs/2026-09-18-shield-ha-fast-weather-v214.md`.

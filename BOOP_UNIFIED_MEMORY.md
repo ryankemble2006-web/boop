@@ -1,30 +1,46 @@
 # BOOP durable project memory
 
-Updated 2026-09-17.
+Updated 2026-09-18.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` on v207; Shield `com.boop.shieldoverlay` now on v213. The owning app branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays on v207; Shield `com.boop.shieldoverlay` is now v214 on `boop-shield-ha-fast-v214`. The owning split branch remains `boop-wall-shield-split-v207`.
 
-## Accepted room-panel design and implementation
+## Shield smart-home panel
 
-Ryan wants the entire empty lower Shield Home area to be useful, not just a small item beside BOOP. The native smart-home panel fills that area under favourite captions. It expands across BOOP's lower-right space when he is absent and contracts when he returns, without moving the hero, favourites or his character rig. Surfaces use BOOP charcoal with cyan focus. The existing **Set this device room** selection is the only room source; no duplicate picker, room keys or pairing flow.
+The native charcoal/cyan lower Home panel uses the existing **Set this device room** choice and existing Home Assistant pairing. It expands into BOOP's lower-right space when BOOP is absent and contracts when he returns without moving the hero/favourites. Home settings has **Smart home panel: ON / OFF**, default ON. D-pad Down enters from favourites, Left/Right stop at row ends, Up returns to the prior favourite. Supported controls remain physical lights, switches/smart plugs, fans and input booleans. Sensors/cameras/thermostat detail remain future presentation work.
 
-**Home settings > Smart home panel: ON / OFF** is persisted, default ON. OFF hides the panel and stops its HA work. D-pad Down from favourites enters devices; Left/Right navigate and stop at row ends; Up restores the previous favourite. Live state updates retain tile identity and focus. Existing HA physical lights, switches/smart plugs and fans are shown through the existing room/device filtering. Sensor values, camera views and thermostat detail controls remain future presentation work rather than fabricated buttons.
+### Low-latency rule locked in from v214
 
-After multiple interrupted attempts Ryan requested a fresh autonomous implementation and a signed APK link while he was away. v213 starts directly from v212 owner `2ab0db655368089b19f9c705fba2cd404a1cd4e7`. The earlier `boop-shield-home-panel-v211` implementation and orphan trees were not merged. The new state machine is isolated from legacy HomeDashboardController, reuses the HA transport/repository and pairing, gates stale room/actions, rechecks membership before a command and does not invent success before confirmation. It stops subscriptions, connections and retry timers off Home or when disabled.
+Do not put full room discovery or a fresh state subscription in the user-action critical path.
+
+The accepted architecture is:
+- room discovery/registry/state loading happens on connection and background refresh;
+- a button press validates current generation, selected room and the already room-scoped cached card locally;
+- send Home Assistant `call_service` immediately over the existing WebSocket;
+- use the service result only as action acknowledgement;
+- use the one long-lived `state_changed` stream as authoritative real device state;
+- do not invent optimistic on/off state;
+- continue blocking duplicate pending presses and rejecting stale room/generation actions.
+
+Reason: v213 did `extract_from_target` + device registry + entity registry + `get_states` before every press, then created a second per-action state subscription with a ten-second timeout. On the real Shield the fan could appear hung while the phone's established HA path acted immediately. v214 removes that latency while retaining room safety.
+
+## Weather alignment
+
+Keep the accepted weather surface: 182dp hero slot, RGB 16/16/16, 14dp corners, RGB 48/48/48 stroke, 3:4:3 column widths, keyless Open-Meteo, 30-minute refresh/cache, non-focusable weather and Now Playing priority.
+
+From v214, current/hourly/daily sections share one fixed-height header grid and vertically centred bodies. The current-condition label belongs in the current body rather than creating an extra header line. Footer wind, sun and update/source text are vertically aligned; the middle sun group is centred.
 
 ## Latest verified artifact
 
-Signed source `7cb211b2a4f2b0307b500cc7ec718effa609ffd5`; feature commit `cfcb627348c5fde2bc4be86553f8a9648192a51b`.
-Successful run `35244156761`, job `105279913277`; artifact `10506423552`, `BOOP-Shield-v213-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v213.apk`, SHA-256 `cb21540979161b31ebebd756fbfea40ab1217ed8781ca8073094059c2286f783`.
-Permanent certificate `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged. Focused/controller/numerical tests, inherited checks, HA registry tests, materialized integration, both app builds and packaged identity/native/art checks passed; downloaded ZIP/APK were independently verified. No build or re-sign outside GitHub. A first-run CI signer-ordering error was corrected without removing checks.
+Build source `2d07d4307a89dec735b93bdc08a5f6956f5e5ae2`.
+Run `35343966769`, job `105596091769`; artifact `10545697780`, `BOOP-Shield-v214-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v214.apk`, 160485741 bytes, SHA-256 `28a7f0686308c1907039bdfe46462a08bf6b24593d3b29ccbd90a3879d96f195`.
+Permanent certificate `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
+Downloaded ZIP SHA-256 `5abca90da2e32b07ceab0f942bcebff0ed3aac77e17c58ebeec2b3bdeb1902ee`.
 
-Ryan owns APK drag-and-drop installation through Shield scrcpy and all physical/visual acceptance. v213 has not been installed or tested against his live devices by this session. No RDC, device driving, emulator, screenshots, permission changes or daily Pixel access. Wall remains v207, built only for compatibility and not requested for installation.
+CI passed focused room/weather checks, inherited regression checks, materialized integration, dedicated low-latency HA tests, both builds and actual APK integrity verification. Independent artifact inspection matched the receipt and all 16 baseline native libraries. Physical Shield acceptance is still Ryan's manual step.
 
-## Preserved history
+## Preserved history and boundaries
 
-v209 fixed native Close player / Close media identity after the split; Ryan reported it working. v210 introduced idle weather in the 182dp Now Playing slot. v211 added missing Shield INTERNET and matched the weather card to Now Playing: RGB 16/16/16, 14dp corners, RGB 48/48/48 1dp stroke. Ryan approved that colour; his footer data proved the Open-Meteo path worked. The three main columns were still blank because their heights were zero.
+v209 fixed native Close player / Close media after the split. v210 introduced idle weather. v211 added Shield INTERNET and the accepted weather chrome. v212 repaired zero-height weather columns. v213 added the adaptive room panel. v214 is the first latency/alignment correction from real v213 testing.
 
-v212 changed those current/hourly/daily columns to MATCH_PARENT while preserving their 3:4:3 widths. No new weather setup is needed. Keyless Open-Meteo, 30-minute refresh/cache, non-focusable weather, media priority and parked favourites are preserved in v213. Full v212 visual acceptance was not separately recorded. Prior v212 source `aef9b05605b2d271d7df9f2698f8431dd42fb97e`, run `35229524975`, artifact `10500159898`, APK hash `01cd1a53a2fc9b9eedffcc6b6601390ab204af6369dbcdd754a4eb9f1c7a3ff1` remain historical receipts.
-
-The root AGENTS/START_HERE/CONTEXT/RULES/BUILD_ON_GITHUB experiment and changed-file allowlists were retired on 2026-09-17 and were not restored. Functional regression, package and permanent-signer/integrity checks remain. Dated docs are historical context, not automatic instructions to roll back current source.
+Voice/provider/pitch work remains deferred and untouched. Wall remains v207 and should not be installed for this Shield-only change. No RDC/device driving, daily Pixel access, permissions or signer changes were made. The retired root AGENTS/START_HERE/CONTEXT/RULES/BUILD_ON_GITHUB experiment remains retired; do not restore it automatically.
