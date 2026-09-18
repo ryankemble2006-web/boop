@@ -2,6 +2,7 @@ package com.boop.shieldhome;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
@@ -9,6 +10,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 /** Presentation-only launcher controls; platform actions are owned by the activity. */
@@ -23,6 +25,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         default void onOpenNowPlayingAccess() { }
         default void onChooseNowPlayingPlayer() { }
         default void onSetSmartHomePanelEnabled(boolean enabled) { }
+        default void onSetAccentHue(int hue) { }
         void onBackHome();
     }
 
@@ -55,6 +58,13 @@ public final class ShieldHomeSettingsView extends LinearLayout {
 
     public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled,
                        boolean nowPlayingAccess, String nowPlayingPlayerLabel, boolean smartHomePanel, Callbacks callbacks) {
+        render(playNext, appChannels, homeOverrideEnabled, nowPlayingAccess, nowPlayingPlayerLabel,
+                smartHomePanel, ShieldHomeStore.DEFAULT_ACCENT_HUE, callbacks);
+    }
+
+    public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled,
+                       boolean nowPlayingAccess, String nowPlayingPlayerLabel, boolean smartHomePanel,
+                       int accentHue, Callbacks callbacks) {
         removeAllViews();
         TextView title = text(launcherSettingsLabel(), 28); addView(title, wrap()); addSpacer(dp(18));
         TextView homeSection = text("Shield Home", 20); addView(homeSection, wrap()); addSpacer(dp(10));
@@ -70,7 +80,45 @@ public final class ShieldHomeSettingsView extends LinearLayout {
             roomPanel.setText("Smart home panel: " + (panelEnabled[0] ? "ON" : "OFF"));
             if (callbacks != null) callbacks.onSetSmartHomePanelEnabled(panelEnabled[0]);
         });
-        addView(roomPanel, rowParams()); addSpacer(dp(6));
+        addView(roomPanel, rowParams()); addSpacer(dp(8));
+
+        int stableHue = Math.max(0, Math.min(359, accentHue));
+        TextView accentLabel = text("Highlight colour", 16);
+        accentLabel.setTextColor(BoopTvChrome.colorForHue(stableHue));
+        addView(accentLabel, wrap()); addSpacer(dp(4));
+
+        SeekBar accentSlider = new SeekBar(getContext());
+        accentSlider.setMax(359);
+        accentSlider.setProgress(stableHue);
+        accentSlider.setFocusable(true);
+        accentSlider.setClickable(true);
+        accentSlider.setContentDescription("Highlight colour");
+        accentSlider.setSplitTrack(false);
+        GradientDrawable spectrum = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[] {
+                        Color.rgb(255,77,77), Color.rgb(255,255,77), Color.rgb(77,255,77),
+                        Color.rgb(77,255,255), Color.rgb(77,77,255), Color.rgb(255,77,255),
+                        Color.rgb(255,77,77)
+                });
+        spectrum.setCornerRadius(dp(5));
+        accentSlider.setProgressDrawable(spectrum);
+        accentSlider.setThumbTintList(ColorStateList.valueOf(BoopTvChrome.colorForHue(stableHue)));
+        accentSlider.setOnFocusChangeListener((v, focused) ->
+                v.setForeground(focused ? FocusChrome.outline(getContext(), 8) : null));
+        accentSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int preview = BoopTvChrome.colorForHue(progress);
+                accentLabel.setTextColor(preview);
+                seekBar.setThumbTintList(ColorStateList.valueOf(preview));
+                if (seekBar.hasFocus()) seekBar.setForeground(FocusChrome.outline(getContext(), 8));
+                if (fromUser && callbacks != null) callbacks.onSetAccentHue(progress);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
+            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        addView(accentSlider, new LayoutParams(dp(440), dp(38))); addSpacer(dp(8));
+
         TextView roomHint = text("Uses your existing ‘Set this device room’ selection.", 15);
         roomHint.setTextColor(Color.LTGRAY);
         addView(roomHint, wrap()); addSpacer(dp(12));
