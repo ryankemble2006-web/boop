@@ -1,7 +1,7 @@
-name: Build signed BOOP Shield v217 and Wall v207
+name: Build signed BOOP Shield v218 and Wall v207
 on:
   push:
-    branches: [boop-wall-shield-split-v207, boop-shield-room-panel-v213, boop-shield-ha-fast-v214, boop-shield-fan-capability-v215, boop-shield-weather-icon-fan-v216, boop-shield-grab-reorder-v217]
+    branches: [boop-wall-shield-split-v207, boop-shield-room-panel-v213, boop-shield-ha-fast-v214, boop-shield-fan-capability-v215, boop-shield-weather-icon-fan-v216, boop-shield-grab-reorder-v217, boop-shield-now-playing-align-v218]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
@@ -27,7 +27,7 @@ jobs:
       - name: Verify close identity, artist focus and weather before the full build
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_room_panel.py tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_shield_weather_panel.py
+          python -m pytest -q tests/test_room_panel.py tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_shield_weather_panel.py
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
@@ -46,7 +46,7 @@ jobs:
         run: |
           python scripts/audit-split-input.py
           python scripts/materialize-split.py
-          python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py tests/test_now_playing_artist_chrome.py tests/test_close_player_app_identity.py tests/test_shield_weather_panel.py
+          python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_close_player_app_identity.py tests/test_shield_weather_panel.py
       - name: Prepare existing permanent BOOP signer
         env:
           BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
@@ -82,7 +82,7 @@ jobs:
           cp -R boop-build/BOOP-Alpha1/shield-lib/build/test-results/testDebugUnitTest split-artifact/ha-unit-tests
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-v217-Wall-v207-Signed
+          name: BOOP-Shield-v218-Wall-v207-Signed
           path: split-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
