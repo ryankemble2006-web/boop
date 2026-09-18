@@ -2,45 +2,56 @@
 
 Updated 2026-09-18.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays on v207; Shield `com.boop.shieldoverlay` is now v214 on `boop-shield-ha-fast-v214`. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v215 on `boop-shield-fan-capability-v215`. The owning split branch remains `boop-wall-shield-split-v207`.
 
-## Shield smart-home panel
+## Shield room-panel control rules
 
-The native charcoal/cyan lower Home panel uses the existing **Set this device room** choice and existing Home Assistant pairing. It expands into BOOP's lower-right space when BOOP is absent and contracts when he returns without moving the hero/favourites. Home settings has **Smart home panel: ON / OFF**, default ON. D-pad Down enters from favourites, Left/Right stop at row ends, Up returns to the prior favourite. Supported controls remain physical lights, switches/smart plugs, fans and input booleans. Sensors/cameras/thermostat detail remain future presentation work.
-
-### Low-latency rule locked in from v214
-
-Do not put full room discovery or a fresh state subscription in the user-action critical path.
-
-The accepted architecture is:
-- room discovery/registry/state loading happens on connection and background refresh;
-- a button press validates current generation, selected room and the already room-scoped cached card locally;
-- send Home Assistant `call_service` immediately over the existing WebSocket;
-- use the service result only as action acknowledgement;
-- use the one long-lived `state_changed` stream as authoritative real device state;
+The charcoal/cyan Home panel still uses the existing **Set this device room** and existing HA pairing. The accepted v214 latency architecture remains locked:
+- room discovery/registry/state loading happens on connect/background refresh, not before every press;
+- validate current generation, selected room and cached room-scoped card locally;
+- send `call_service` immediately over the existing WebSocket;
+- service result is acknowledgement only;
+- the one long-lived `state_changed` stream is authoritative for real displayed state;
 - do not invent optimistic on/off state;
-- continue blocking duplicate pending presses and rejecting stale room/generation actions.
+- reject stale room/generation actions and duplicate pending presses.
 
-Reason: v213 did `extract_from_target` + device registry + entity registry + `get_states` before every press, then created a second per-action state subscription with a ten-second timeout. On the real Shield the fan could appear hung while the phone's established HA path acted immediately. v214 removes that latency while retaining room safety.
+Ryan's v214 physical test proved Sonoff subwoofer and Govee right-speaker light were instant, while the Govee fan tile still did nothing. Because phone BOOP controlled that fan immediately, treat this as an entity-selection/capability problem unless new evidence shows otherwise.
 
-## Weather alignment
+### Fan capability rule from v215
 
-Keep the accepted weather surface: 182dp hero slot, RGB 16/16/16, 14dp corners, RGB 48/48/48 stroke, 3:4:3 column widths, keyless Open-Meteo, 30-minute refresh/cache, non-focusable weather and Now Playing priority.
+Do not blindly prefer a `fan.*` entity simply because it exists.
 
-From v214, current/hourly/daily sections share one fixed-height header grid and vertically centred bodies. The current-condition label belongs in the current body rather than creating an extra header line. Footer wind, sun and update/source text are vertically aligned; the middle sun group is centred.
+BOOP now carries HA state `supported_features` with each room card. Current Home Assistant fan power flags are TURN_OFF = 16 and TURN_ON = 32. When a feature mask is known, a native fan entity must contain both bits (48) to qualify as BOOP's simple on/off device control.
+
+If it does not:
+- exclude that fan entity from simple binary control;
+- consider other actionable entities on the same physical device;
+- prefer a switch whose entity ID or entity name identifies it as `power` or `on/off` over feature/settings switches such as oscillation;
+- retain the physical device's friendly name on the tile.
+
+Do not brand-special-case Govee. This is a generic Home Assistant capability rule. If feature metadata is genuinely absent/unknown, preserve legacy behaviour rather than assuming the fan is invalid.
+
+## Weather centring rule from v215
+
+The weather surface remains: 182dp hero slot, RGB 16/16/16, 14dp corners, RGB 48/48/48 stroke, 3:4:3 main regions, keyless Open-Meteo, 30-minute refresh/cache, non-focusable and Now Playing priority.
+
+When centring weather, use the visible divider geometry as the reference:
+- current/hourly/daily headings centred inside their own 3:4:3 regions;
+- symmetric horizontal padding inside each region;
+- current icon + temperature text centred as one visual group;
+- forecast cells centred;
+- footer must use the same 3:4:3 weights, not equal thirds;
+- wind, sun and update/source text centred within those corresponding footer regions.
 
 ## Latest verified artifact
 
-Build source `2d07d4307a89dec735b93bdc08a5f6956f5e5ae2`.
-Run `35343966769`, job `105596091769`; artifact `10545697780`, `BOOP-Shield-v214-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v214.apk`, 160485741 bytes, SHA-256 `28a7f0686308c1907039bdfe46462a08bf6b24593d3b29ccbd90a3879d96f195`.
-Permanent certificate `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Downloaded ZIP SHA-256 `5abca90da2e32b07ceab0f942bcebff0ed3aac77e17c58ebeec2b3bdeb1902ee`.
+Build source `376bb700f2aedc9ffdd659c036bd1abfb14a9948`.
+Run `35345512061`, job `105601126131`; artifact `10546950922`, `BOOP-Shield-v215-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v215.apk`, 160485741 bytes, SHA-256 `6297d060874ab7b06fc61f4b29f8e3179b40528cd53377681c6f9811ff01ffc0`.
+Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
+Downloaded ZIP SHA-256 `b39b83515876efe3508419b326d22c7e4f84ba44eb9d39996ac4e39117e95c2f`.
+18 copied HA unit tests passed with zero failures/errors/skips; all 16 native libraries remain baseline-identical.
 
-CI passed focused room/weather checks, inherited regression checks, materialized integration, dedicated low-latency HA tests, both builds and actual APK integrity verification. Independent artifact inspection matched the receipt and all 16 baseline native libraries. Physical Shield acceptance is still Ryan's manual step.
+The first v215 code commit had a caught constructor typo and failed before APK build; it is superseded and must not be delivered. Physical Shield acceptance is still Ryan's test.
 
-## Preserved history and boundaries
-
-v209 fixed native Close player / Close media after the split. v210 introduced idle weather. v211 added Shield INTERNET and the accepted weather chrome. v212 repaired zero-height weather columns. v213 added the adaptive room panel. v214 is the first latency/alignment correction from real v213 testing.
-
-Voice/provider/pitch work remains deferred and untouched. Wall remains v207 and should not be installed for this Shield-only change. No RDC/device driving, daily Pixel access, permissions or signer changes were made. The retired root AGENTS/START_HERE/CONTEXT/RULES/BUILD_ON_GITHUB experiment remains retired; do not restore it automatically.
+Voice/provider/pitch work remains deferred and untouched. Wall stays v207. No RDC/device driving, daily Pixel access, permissions or signer changes were made.
