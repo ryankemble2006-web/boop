@@ -22,7 +22,7 @@ public final class TvAppCardView extends FrameLayout {
     public static final float FOCUSED_SCALE = 1.08f;
     public static final float GRABBED_SCALE = 1.14f;
     private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.00f;
-    private static final float HOME_ARTWORK_GRABBED_SCALE = 1.00f;
+    private static final float HOME_ARTWORK_GRABBED_SCALE = 1.14f;
     private static final int HOME_ARTWORK_CORNER_DP = 8;
     public static final long FOCUS_DURATION_MS = 120L;
 
@@ -108,6 +108,7 @@ public final class TvAppCardView extends FrameLayout {
         setScaleY(1f);
         iconView.setScaleX(1f);
         iconView.setScaleY(1f);
+        iconView.setTranslationZ(0f);
 
         if (entry == null) {
             labelView.setText("");
@@ -233,6 +234,7 @@ public final class TvAppCardView extends FrameLayout {
             iconView.animate()
                     .scaleX(artworkTarget)
                     .scaleY(artworkTarget)
+                    .translationZ(grabbed ? dp(10) : 0f)
                     .setDuration(FOCUS_DURATION_MS)
                     .start();
             return;
