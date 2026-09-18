@@ -679,6 +679,7 @@ public final class ShieldHomeView extends LinearLayout {
         view.setIncludeFontPadding(false);
         view.setPadding(dp(8), dp(6), dp(8), dp(6));
         android.graphics.drawable.Drawable icon = getContext().getDrawable(iconResource).mutate();
+        icon.setTint(FocusChrome.accentColor(getContext()));
         icon.setBounds(0, 0, dp(26), dp(26));
         view.setCompoundDrawables(null, icon, null, null);
         view.setCompoundDrawablePadding(dp(3));
