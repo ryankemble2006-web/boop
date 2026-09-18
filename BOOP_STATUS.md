@@ -1,8 +1,10 @@
 # BOOP status
 
-Updated 2026-09-18. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-grab-reorder-v217`.
+Updated 2026-09-18. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-now-playing-align-v218`.
 
-Shield v217 / `1.2.217-shield` is signed and ready for Ryan's physical test.
+Shield v218 / `1.2.218-shield` is signed and ready for Ryan's physical test.
+
+v218 is a deliberately tiny Now Playing geometry fix on top of accepted v217. The progress bar is now the horizontal datum for the title/artist/state/transport stack: the transport row's old 8dp left inset was removed, so Prev starts on the exact same left edge as the progress track and the title/artist/Playing stack. Lyrics, Close player, album art, mascot bay, favourite/HA reorder behavior and HA latency paths are unchanged.
 
 v217 keeps the verified v216 weather, HA icon and fan-control work unchanged, and adds one consistent remote interaction for rearranging HOME items:
 
@@ -11,15 +13,15 @@ v217 keeps the verified v216 weather, HA icon and fan-control work unchanged, an
 - HA order persists per selected room. Missing entities are removed safely, and newly discovered devices append after the user's saved order instead of reshuffling existing controls.
 - Normal HA taps still use the existing toggle path. The v214-v216 low-latency/state-stream architecture and fan routing were not changed.
 
-Build source `4fde718e7ee928f87438f452022dc8e38f858163`.
-Successful run `35351389519`, job `105620113142`.
-Artifact `10549884892`, `BOOP-Shield-v217-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v217.apk`, 160485741 bytes, SHA-256 `a6742e4fa9e3457ffe0384c9f1c41d5a1a97b4231c39b7b06688f68122227b3b`.
+Build source `a5f211a4038e208109e0ac31e18452c410a8f455`.
+Successful run `35352592271`, job `105624043955`.
+Artifact `10550157413`, `BOOP-Shield-v218-Wall-v207-Signed`.
+Shield file `BOOP-Shield-v218.apk`, 160485741 bytes, SHA-256 `37db129fce83bf8cca062e93d1474533d8f4b7253120da1255912914ff4d8b58`.
 Permanent signer SHA-256 remains `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Uploaded artifact ZIP SHA-256 `51106302b2394af6dd2fc79a47dd1599ed1e9a0015b56866ca02a30615c29aa9`.
+Uploaded artifact ZIP SHA-256 `e9ca76c0fecb22d6de60815d63e9939ab021c26b40d07d3485f1890145f3ed9a`.
 
-Verification passed through focused checks, inherited v206 regression, materialized split integration, HA room/latency tests, both app builds, and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+Verification passed through 74 focused checks, inherited v206 regression, materialized split integration, 97 integration checks, HA room/latency tests, both app builds, and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
 
 The first v217 run `35351182952` correctly stopped on an inherited v205 visual test that still asserted the former 1.00x grabbed scale. That test was updated to the newly requested grab contract; no APK was produced by the failed run.
 
-Physical acceptance of the stronger favourite hold and HA reorder interaction remains pending. v216 remains the prior signed checkpoint. Wall stays v207; voice/audio, permissions and signing material were not changed.
+Physical acceptance of the Now Playing alignment remains pending. v217 is the prior signed checkpoint. Wall stays v207; voice/audio, permissions and signing material were not changed.
