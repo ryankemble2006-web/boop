@@ -66,6 +66,18 @@ public final class ShieldHomeStoreTest {
                 List.of(new TvAppEntry("a/.A", "a", "A"))));
     }
 
+    @Test public void roomControlOrderPersistsPerRoomAndAppendsNewDevices() {
+        MemoryPreferences preferences = new MemoryPreferences();
+        ShieldHomeStore store = new ShieldHomeStore(preferences);
+
+        store.saveRoomControlOrder("living_room", List.of("fan.power", "sub.power"));
+        assertEquals(List.of("fan.power", "sub.power", "light.right"),
+                store.loadRoomControlOrder("living_room",
+                        List.of("light.right", "sub.power", "fan.power")));
+        assertEquals(List.of("bed.light"),
+                store.loadRoomControlOrder("bedroom", List.of("bed.light")));
+    }
+
     @Test public void optionalRowsDefaultOffAndPersistIndependently() {
         MemoryPreferences preferences = new MemoryPreferences();
         ShieldHomeStore store = new ShieldHomeStore(preferences);
