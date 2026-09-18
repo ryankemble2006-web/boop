@@ -201,7 +201,7 @@ public final class HomeAssistantRepositoryTest {
     }
 
     @Test
-    public void semanticFanFallsBackToDirectServiceWhenConversationCannotAct() {
+    public void semanticFanFallsBackToDirectServiceWhenConversationCannotAct() throws Exception {
         FakeCommandPort commands = new FakeCommandPort();
         HomeAssistantRepository repository = new HomeAssistantRepository(commands);
         AreaInfo lounge = new AreaInfo("living_room", "Living Room");
