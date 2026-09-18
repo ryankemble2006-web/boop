@@ -17,6 +17,8 @@ public final class ShieldHomeStore {
     private static final String KEY_FAVOURITES = "favourites_json";
     private static final String KEY_NOW_PLAYING_PLAYER = "now_playing_player_package_v1";
     private static final String KEY_ROOM_CONTROL_ORDER_PREFIX = "room_control_order_v1:";
+    private static final String KEY_ACCENT_HUE = "accent_hue_v1";
+    static final int DEFAULT_ACCENT_HUE = 204;
 
     public interface Preferences {
         String getString(String key, String fallback);
@@ -118,6 +120,20 @@ public final class ShieldHomeStore {
             }
         }
         return out;
+    }
+
+    public int accentHue() {
+        String raw = preferences.getString(KEY_ACCENT_HUE, Integer.toString(DEFAULT_ACCENT_HUE));
+        try {
+            int hue = Integer.parseInt(raw == null ? "" : raw.trim());
+            return Math.max(0, Math.min(359, hue));
+        } catch (NumberFormatException ignored) {
+            return DEFAULT_ACCENT_HUE;
+        }
+    }
+
+    public void setAccentHue(int hue) {
+        preferences.putString(KEY_ACCENT_HUE, Integer.toString(Math.max(0, Math.min(359, hue))));
     }
 
     public boolean rowEnabled(OptionalRowRegistry.Key key) {
