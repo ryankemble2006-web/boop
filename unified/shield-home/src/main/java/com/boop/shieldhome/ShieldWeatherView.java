@@ -13,7 +13,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 final class ShieldWeatherView extends LinearLayout {
-    private static final int CYAN=Color.rgb(77,184,255);
     private static final int HEADER_DP=26;
 
     ShieldWeatherView(Context context) {
@@ -51,7 +50,7 @@ final class ShieldWeatherView extends LinearLayout {
 
         LinearLayout foot=row();
         foot.setGravity(Gravity.CENTER_VERTICAL);
-        TextView wind=text("↝  "+Math.round(s.windSpeed)+" km/h "+WeatherCode.compass(s.windDirection),12,false,CYAN);
+        TextView wind=text("↝  "+Math.round(s.windSpeed)+" km/h "+WeatherCode.compass(s.windDirection),12,false,accent());
         wind.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
         wind.setGravity(Gravity.CENTER);
         foot.addView(wind,new LayoutParams(0,LayoutParams.MATCH_PARENT,3f));
@@ -75,7 +74,7 @@ final class ShieldWeatherView extends LinearLayout {
 
         LinearLayout body=row();
         body.setGravity(Gravity.CENTER);
-        TextView icon=text(WeatherCode.glyph(s.code),40,false,CYAN);
+        TextView icon=text(WeatherCode.glyph(s.code),40,false,accent());
         icon.setGravity(Gravity.CENTER);
         LayoutParams iconParams=new LayoutParams(dp(58),LayoutParams.MATCH_PARENT);
         iconParams.rightMargin=dp(8);
@@ -104,7 +103,7 @@ final class ShieldWeatherView extends LinearLayout {
             addCenteredLine(cell,text(clock(h.time),11,false,Color.LTGRAY),false);
             addCenteredLine(cell,text(WeatherCode.glyph(h.code),23,false,Color.WHITE),true);
             addCenteredLine(cell,text(Math.round(h.temp)+"°",14,true,Color.WHITE),false);
-            addCenteredLine(cell,text("● "+h.rain+"%",10,false,CYAN),false);
+            addCenteredLine(cell,text("● "+h.rain+"%",10,false,accent()),false);
             strip.addView(cell,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
         }
         box.addView(strip,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
@@ -126,7 +125,7 @@ final class ShieldWeatherView extends LinearLayout {
             addCenteredLine(cell,text(label,11,false,Color.LTGRAY),false);
             addCenteredLine(cell,text(WeatherCode.glyph(d.code),23,false,Color.WHITE),true);
             addCenteredLine(cell,text(Math.round(d.high)+"° / "+Math.round(d.low)+"°",12,true,Color.WHITE),false);
-            addCenteredLine(cell,text("● "+d.rain+"%",10,false,CYAN),false);
+            addCenteredLine(cell,text("● "+d.rain+"%",10,false,accent()),false);
             strip.addView(cell,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
         }
         box.addView(strip,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
@@ -152,5 +151,6 @@ final class ShieldWeatherView extends LinearLayout {
     private android.view.View divider(){ android.view.View v=new android.view.View(getContext()); v.setBackgroundColor(Color.rgb(56,74,86)); return v; }
     private String clock(String iso){ if(iso==null)return ""; int t=iso.indexOf('T'); return t>=0&&iso.length()>=t+6?iso.substring(t+1,t+6):iso; }
     private String weekday(String iso){ try{return LocalDate.parse(iso).format(DateTimeFormatter.ofPattern("EEE",Locale.UK));}catch(Exception e){return iso;} }
+    private int accent(){ return FocusChrome.accentColor(getContext()); }
     private int dp(int v){ return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,v,getResources().getDisplayMetrics())); }
 }
