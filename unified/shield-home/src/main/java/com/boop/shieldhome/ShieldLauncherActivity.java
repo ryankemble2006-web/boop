@@ -468,10 +468,14 @@ public final class ShieldLauncherActivity extends Activity {
                 nowPlayingAccess,
                 playerLabel,
                 store.smartHomePanelEnabled(),
+                store.accentHue(),
                 new ShieldHomeSettingsView.Callbacks() {
             @Override public void onSetSmartHomePanelEnabled(boolean enabled) {
                 store.setSmartHomePanelEnabled(enabled);
                 refreshRoomPanelSession();
+            }
+            @Override public void onSetAccentHue(int hue) {
+                store.setAccentHue(hue);
             }
             @Override public void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
                 store.setRowEnabled(key, enabled);
