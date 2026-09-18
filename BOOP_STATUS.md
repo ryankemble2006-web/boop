@@ -1,20 +1,22 @@
 # BOOP status
 
-Updated 2026-09-18. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-fan-capability-v215`.
+Updated 2026-09-18. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-weather-icon-fan-v216`.
 
-Shield v215 / `1.2.215-shield` is signed and ready for Ryan's physical test.
+Shield v216 / `1.2.216-shield` is signed and ready for Ryan's physical test.
 
-v214 proved the low-latency HA transport: the Sonoff subwoofer and Govee right-speaker light were instant. The remaining fan failure was isolated to control selection, not WebSocket latency. v215 reads HA `supported_features` and only prefers a native `fan.*` entity as a simple power tile when it advertises both current fan power flags (TURN_OFF 16 + TURN_ON 32). Otherwise BOOP falls back to the same physical device's power switch, prioritising power/on-off switches over settings such as oscillation. The direct v214 command path is otherwise unchanged and displayed state still comes from the live HA event stream.
+Weather now uses the visible divider geometry as the complete horizontal coordinate system. Hourly/daily labels, weather glyphs, temperatures and rain percentages each occupy the full width of their cell and are explicitly centred; section horizontal insets are zero. Weather glyphs have a +2dp optical correction for font side bearing, addressing the screenshot where numbers looked right-shifted beneath cloud icons. The footer remains aligned to the same 3:4:3 regions.
 
-Weather keeps its accepted chrome and 3:4:3 layout but now centres every section using the divider geometry itself. Headings and body content are centred in each box; internal padding is symmetric; footer regions also use 3:4:3 weights and centred content.
+Fan routing now tries Home Assistant's WebSocket `conversation/process` with an explicit room-scoped fan command first, matching the HA intent resolver already proven by BOOP on the phone. If HA does not return an action result, v215's capability-aware direct `call_service` route remains the fallback. Sonoff and light tiles retain their existing direct path. Live `state_changed` remains authoritative for display state.
 
-Build source `376bb700f2aedc9ffdd659c036bd1abfb14a9948`.
-Successful run `35345512061`, job `105601126131`.
-Artifact `10546950922`, `BOOP-Shield-v215-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v215.apk`, 160485741 bytes, SHA-256 `6297d060874ab7b06fc61f4b29f8e3179b40528cd53377681c6f9811ff01ffc0`.
+Room-control icons are semantic: fan devices show a fan vector even when the selected control entity is a switch; sub/subwoofer devices show a speaker/woofer vector; light/switch icons otherwise remain unchanged.
+
+Build source `e60a3521524e1ccdb19fcac73f4ad4c3033bf618`.
+Successful run `35347668181`, job `105607970217`.
+Artifact `10547503847`, `BOOP-Shield-v216-Wall-v207-Signed`.
+Shield file `BOOP-Shield-v216.apk`, 160485741 bytes, SHA-256 `a81dfd6f143ebe32952e48924184b52325644ed64b8ed217443cb1a6dd460004`.
 Permanent signer SHA-256 remains `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Downloaded artifact ZIP SHA-256 `b39b83515876efe3508419b326d22c7e4f84ba44eb9d39996ac4e39117e95c2f`.
+Downloaded artifact ZIP SHA-256 `3cfaf36dd7936ecf4a57d5c5c57ffa16d0d2347837fa388020d13e13f23fa293`.
 
-Verification passed through focused tests, inherited regression, materialized integration, 18 HA unit tests with zero failures/errors, both app builds and packaged signer/native/art checks. Independent artifact extraction matched the CI receipt; all 16 native libraries remain baseline-identical.
+Verification passed through focused checks, inherited regression, materialized split integration, 20 HA unit tests with zero failures/errors/skips, both app builds, and packaged signer/native/art verification. Independent extraction matched the CI receipt and all 16 native libraries remain baseline-identical.
 
-Physical acceptance of the Govee fan and divider-centred weather remains pending. v214 stays available as the prior signed checkpoint. The superseded pre-fix v215 commit/run failed before building an APK and is not an install candidate.
+Physical weather/fan/icon acceptance remains pending. Wall stays v207; voice/audio, permissions and signing material were not changed.
