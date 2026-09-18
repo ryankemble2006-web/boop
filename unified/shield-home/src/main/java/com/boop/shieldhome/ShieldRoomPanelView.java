@@ -210,7 +210,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
             value.setText(label);
             int accent=FocusChrome.accentColor(getContext());
             value.setTextColor("On".equals(label)?accent:Color.LTGRAY);
-            icon.domain=card.domain(); icon.color=live&&available?accent:Color.GRAY; icon.invalidate();
+            icon.kind=semanticIcon(card); icon.color=live&&available?accent:Color.GRAY; icon.invalidate();
             setContentDescription(card.displayName()+", "+label);
             // Focus remains available while pending or offline. Only the action is gated.
             setAlpha(live&&available?1f:0.60f);
@@ -218,25 +218,40 @@ public final class ShieldRoomPanelView extends LinearLayout {
         GradientDrawable chrome(boolean focused) { return FocusChrome.filled(getContext(),Color.rgb(42,42,42),10,focused); }
     }
 
+    private static String semanticIcon(EntityCard card) {
+        String name = ((card.displayName() == null ? "" : card.displayName()) + " "
+                + (card.deviceName() == null ? "" : card.deviceName()) + " "
+                + card.entityId()).toLowerCase(java.util.Locale.ROOT);
+        if (name.contains("subwoofer") || name.matches(".*\\bsub\\b.*")
+                || name.contains("sub_") || name.contains("_sub")) return "subwoofer";
+        if (name.matches(".*\\bfan\\b.*") || name.contains("_fan") || name.contains("fan_")) return "fan";
+        return card.domain();
+    }
+
     /** Small vector symbols avoid missing emoji fonts and never animate independently of BOOP. */
     private static final class DeviceIcon extends View {
         final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
-        String domain="switch"; int color;
+        String kind="switch"; int color;
         DeviceIcon(Context c) { super(c); setFocusable(false); }
         @Override protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             canvas.save(); canvas.scale(getWidth()/28f,getHeight()/28f);
             paint.setColor(color); paint.setStrokeWidth(2f); paint.setStyle(Paint.Style.STROKE); paint.setStrokeCap(Paint.Cap.ROUND);
-            if ("light".equals(domain)) {
+            if ("light".equals(kind)) {
                 canvas.drawArc(new RectF(7,3,21,18),145,250,false,paint);
                 canvas.drawLine(8.3f,14.5f,11,21,paint); canvas.drawLine(19.7f,14.5f,17,21,paint);
                 canvas.drawLine(11,21,17,21,paint); canvas.drawLine(12,25,16,25,paint);
-            } else if ("fan".equals(domain)) {
+            } else if ("fan".equals(kind)) {
                 canvas.drawCircle(14,14,2,paint);
                 for(int i=0;i<3;i++) {
                     canvas.save();canvas.rotate(i*120,14,14);
                     canvas.drawOval(new RectF(11,2,18,10),paint);canvas.restore();
                 }
+            } else if ("subwoofer".equals(kind)) {
+                canvas.drawRoundRect(new RectF(5,2,23,26),2.5f,2.5f,paint);
+                canvas.drawCircle(14,9,2.4f,paint);
+                canvas.drawCircle(14,18.5f,5.2f,paint);
+                canvas.drawCircle(14,18.5f,1.2f,paint);
             } else {
                 canvas.drawArc(new RectF(5,5,23,24),-55,290,false,paint);
                 canvas.drawLine(14,2,14,13,paint);

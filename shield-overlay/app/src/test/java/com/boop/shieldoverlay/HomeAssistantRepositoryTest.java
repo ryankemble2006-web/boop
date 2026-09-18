@@ -178,6 +178,49 @@ public final class HomeAssistantRepositoryTest {
     }
 
     @Test
+    public void semanticFanUsesRoomScopedConversationRouteFirst() throws Exception {
+        FakeCommandPort commands = new FakeCommandPort();
+        HomeAssistantRepository repository = new HomeAssistantRepository(commands);
+        AreaInfo lounge = new AreaInfo("living_room", "Living Room");
+        EntityCard fanPowerSwitch = new EntityCard(
+                "switch.govee_fan_power_switch", "living_room", "Govee Fan", "on",
+                false, null, "dev-govee", "Govee Fan");
+        AtomicReference<Boolean> success = new AtomicReference<>();
+
+        repository.toggleBinary(lounge, fanPowerSwitch,
+                (ok, card, message) -> success.set(ok));
+
+        assertEquals("conversation/process", commands.type(0));
+        assertEquals("turn off Govee Fan in Living Room", commands.body(0).getString("text"));
+        commands.reply(0, true, new JSONObject()
+                .put("response", new JSONObject()
+                        .put("response_type", "action_done")
+                        .put("data", new JSONObject().put("failed", new JSONArray()))), null);
+        assertEquals(Boolean.TRUE, success.get());
+        assertEquals(1, commands.size());
+    }
+
+    @Test
+    public void semanticFanFallsBackToDirectServiceWhenConversationCannotAct() {
+        FakeCommandPort commands = new FakeCommandPort();
+        HomeAssistantRepository repository = new HomeAssistantRepository(commands);
+        AreaInfo lounge = new AreaInfo("living_room", "Living Room");
+        EntityCard fanPowerSwitch = new EntityCard(
+                "switch.govee_fan_power_switch", "living_room", "Fan", "off",
+                false, null, "dev-govee", "Fan");
+        AtomicReference<Boolean> success = new AtomicReference<>();
+
+        repository.toggleBinary(lounge, fanPowerSwitch,
+                (ok, card, message) -> success.set(ok));
+        assertEquals("conversation/process", commands.type(0));
+        commands.reply(0, true, new JSONObject()
+                .put("response", new JSONObject().put("response_type", "error")), null);
+        assertEquals("call_service", commands.type(1));
+        commands.reply(1, true, new JSONObject(), null);
+        assertEquals(Boolean.TRUE, success.get());
+    }
+
+    @Test
     public void binaryToggleReportsImmediateServiceFailure() {
         FakeCommandPort commands = new FakeCommandPort();
         HomeAssistantRepository repository = new HomeAssistantRepository(commands);
@@ -217,15 +260,18 @@ public final class HomeAssistantRepositoryTest {
     private static final class FakeCommandPort implements HomeAssistantRepository.CommandPort {
         private final List<String> types = new ArrayList<>();
         private final List<HomeAssistantWebSocket.Callback> callbacks = new ArrayList<>();
+        private final List<JSONObject> bodies = new ArrayList<>();
 
         @Override
         public void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback) {
             types.add(type);
+            bodies.add(body);
             callbacks.add(callback);
         }
 
         int size() { return types.size(); }
         String type(int index) { return types.get(index); }
+        JSONObject body(int index) { return bodies.get(index); }
         void reply(int index, boolean success, Object result, String error) {
             callbacks.get(index).onResult(success, result, error);
         }

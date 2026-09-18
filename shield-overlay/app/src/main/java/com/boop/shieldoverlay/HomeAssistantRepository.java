@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Locale;
 
 public final class HomeAssistantRepository {
     public interface CommandPort {
@@ -245,13 +246,51 @@ public final class HomeAssistantRepository {
     }
 
     public void toggleBinary(EntityCard card, BinaryActionCallback callback) {
+        toggleBinary(null, card, callback);
+    }
+
+    public void toggleBinary(AreaInfo room, EntityCard card, BinaryActionCallback callback) {
         if (card == null) throw new IllegalArgumentException("entity card is required");
         if (callback == null) throw new IllegalArgumentException("binary action callback is required");
         if (!isSupportedBinary(card)) {
             callback.onResult(false, null, "That control isn't a simple on/off thing.");
             return;
         }
+        if (room != null && RoomDeviceControls.isSemanticFan(card)) {
+            toggleFanThroughConversation(room, card, callback);
+            return;
+        }
+        sendDirectBinary(card, callback);
+    }
 
+    private void toggleFanThroughConversation(
+            AreaInfo room, EntityCard card, BinaryActionCallback callback) {
+        String expectedState = "off".equals(card.state()) ? "on" : "off";
+        String action = "off".equals(card.state()) ? "turn on" : "turn off";
+        final JSONObject body;
+        try {
+            body = new JSONObject()
+                    .put("text", action + " " + card.displayName() + " in " + room.name())
+                    .put("language", Locale.getDefault().toLanguageTag());
+        } catch (JSONException impossible) {
+            sendDirectBinary(card, callback);
+            return;
+        }
+        try {
+            commandPort.send("conversation/process", body, (success, result, error) -> {
+                if (success && conversationActionSucceeded(result)) {
+                    callback.onAccepted(card.withState(expectedState));
+                    callback.onResult(true, null, null);
+                    return;
+                }
+                sendDirectBinary(card, callback);
+            });
+        } catch (RuntimeException unavailable) {
+            sendDirectBinary(card, callback);
+        }
+    }
+
+    private void sendDirectBinary(EntityCard card, BinaryActionCallback callback) {
         String expectedState = "off".equals(card.state()) ? "on" : "off";
         String service = "off".equals(card.state()) ? "turn_on" : "turn_off";
         final JSONObject body;
@@ -265,10 +304,6 @@ public final class HomeAssistantRepository {
             callback.onResult(false, null, "I couldn't prepare that Home Assistant command.");
             return;
         }
-
-        // The session already owns a live state_changed subscription. Home Assistant's
-        // call_service result is the action acknowledgement, so a second per-click
-        // subscription only adds latency and can leave slow-reporting devices stuck busy.
         try {
             commandPort.send("call_service", body, (success, result, error) -> {
                 if (!success) {
@@ -281,6 +316,15 @@ public final class HomeAssistantRepository {
         } catch (RuntimeException couldNotSend) {
             callback.onResult(false, null, "Home Assistant didn't do that.");
         }
+    }
+
+    private static boolean conversationActionSucceeded(Object result) {
+        if (!(result instanceof JSONObject)) return false;
+        JSONObject response = ((JSONObject) result).optJSONObject("response");
+        if (response == null || !"action_done".equals(response.optString("response_type", ""))) return false;
+        JSONObject data = response.optJSONObject("data");
+        JSONArray failed = data == null ? null : data.optJSONArray("failed");
+        return failed == null || failed.length() == 0;
     }
 
     private static Set<String> referencedEntities(JSONObject result) {

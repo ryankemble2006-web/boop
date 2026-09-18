@@ -22,6 +22,15 @@ final class RoomDeviceControls {
         return "light".equals(domain) || "switch".equals(domain);
     }
 
+    static boolean isSemanticFan(EntityCard card) {
+        if (card == null) return false;
+        if ("fan".equals(card.domain())) return true;
+        String label = ((card.displayName() == null ? "" : card.displayName()) + " "
+                + (card.deviceName() == null ? "" : card.deviceName()) + " "
+                + card.entityId()).toLowerCase(java.util.Locale.ROOT);
+        return label.matches(".*\\bfan\\b.*") || label.contains("_fan") || label.contains("fan_");
+    }
+
     static List<EntityCard> collapseToDevices(List<EntityCard> cards) {
         Map<String, EntityCard> bestByDevice = new LinkedHashMap<>();
         Map<String, Integer> bestRankByDevice = new LinkedHashMap<>();

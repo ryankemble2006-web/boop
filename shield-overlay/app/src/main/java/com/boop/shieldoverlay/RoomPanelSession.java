@@ -110,7 +110,7 @@ public final class RoomPanelSession implements AutoCloseable {
             if (!allowed() || repository == null || !RoomScopedEntities.belongsTo(room, card)) {
                 callback.onResult(false, null, "Room controls are inactive."); return;
             }
-            repository.toggleBinary(card, new HomeAssistantRepository.BinaryActionCallback() {
+            repository.toggleBinary(room, card, new HomeAssistantRepository.BinaryActionCallback() {
                 public void onObservedState(EntityCard actual) { dispatch(() -> callback.onObserved(actual)); }
                 public void onResult(boolean success, EntityCard actual, String error) {
                     dispatch(() -> callback.onResult(success, actual, error));

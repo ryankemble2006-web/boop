@@ -93,18 +93,18 @@ final class ShieldWeatherView extends LinearLayout {
 
     private LinearLayout hours(WeatherSnapshot s){
         LinearLayout box=column();
-        box.setPadding(dp(12),0,dp(12),0);
+        box.setPadding(0,0,0,0);
         addHeader(box,"Next 4 hours");
 
         LinearLayout strip=row();
-        strip.setGravity(Gravity.CENTER_VERTICAL);
+        strip.setGravity(Gravity.CENTER);
         for(WeatherSnapshot.Hour h:s.hours){
             LinearLayout cell=column();
             cell.setGravity(Gravity.CENTER);
-            cell.addView(text(clock(h.time),11,false,Color.LTGRAY));
-            cell.addView(text(WeatherCode.glyph(h.code),23,false,Color.WHITE));
-            cell.addView(text(Math.round(h.temp)+"°",14,true,Color.WHITE));
-            cell.addView(text("● "+h.rain+"%",10,false,CYAN));
+            addCenteredLine(cell,text(clock(h.time),11,false,Color.LTGRAY),false);
+            addCenteredLine(cell,text(WeatherCode.glyph(h.code),23,false,Color.WHITE),true);
+            addCenteredLine(cell,text(Math.round(h.temp)+"°",14,true,Color.WHITE),false);
+            addCenteredLine(cell,text("● "+h.rain+"%",10,false,CYAN),false);
             strip.addView(cell,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
         }
         box.addView(strip,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
@@ -113,20 +113,20 @@ final class ShieldWeatherView extends LinearLayout {
 
     private LinearLayout days(WeatherSnapshot s){
         LinearLayout box=column();
-        box.setPadding(dp(12),0,dp(12),0);
+        box.setPadding(0,0,0,0);
         addHeader(box,"3 day forecast");
 
         LinearLayout strip=row();
-        strip.setGravity(Gravity.CENTER_VERTICAL);
+        strip.setGravity(Gravity.CENTER);
         for(int i=0;i<s.days.size();i++){
             WeatherSnapshot.Day d=s.days.get(i);
             LinearLayout cell=column();
             cell.setGravity(Gravity.CENTER);
             String label=i==0?"Today":i==1?"Tomorrow":weekday(d.date);
-            cell.addView(text(label,11,false,Color.LTGRAY));
-            cell.addView(text(WeatherCode.glyph(d.code),23,false,Color.WHITE));
-            cell.addView(text(Math.round(d.high)+"° / "+Math.round(d.low)+"°",12,true,Color.WHITE));
-            cell.addView(text("● "+d.rain+"%",10,false,CYAN));
+            addCenteredLine(cell,text(label,11,false,Color.LTGRAY),false);
+            addCenteredLine(cell,text(WeatherCode.glyph(d.code),23,false,Color.WHITE),true);
+            addCenteredLine(cell,text(Math.round(d.high)+"° / "+Math.round(d.low)+"°",12,true,Color.WHITE),false);
+            addCenteredLine(cell,text("● "+d.rain+"%",10,false,CYAN),false);
             strip.addView(cell,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
         }
         box.addView(strip,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
@@ -140,6 +140,12 @@ final class ShieldWeatherView extends LinearLayout {
         box.addView(title,new LayoutParams(LayoutParams.MATCH_PARENT,dp(HEADER_DP)));
     }
 
+    private void addCenteredLine(LinearLayout cell,TextView line,boolean weatherGlyph){
+        line.setGravity(Gravity.CENTER);
+        line.setTextAlignment(TEXT_ALIGNMENT_CENTER);
+        if(weatherGlyph) line.setTranslationX(dp(2));
+        cell.addView(line,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
+    }
     private LinearLayout row(){ LinearLayout v=new LinearLayout(getContext()); v.setOrientation(HORIZONTAL); return v; }
     private LinearLayout column(){ LinearLayout v=new LinearLayout(getContext()); v.setOrientation(VERTICAL); return v; }
     private TextView text(String value,float size,boolean bold,int color){ TextView v=new TextView(getContext()); v.setText(value); v.setTextColor(color); v.setTextSize(TypedValue.COMPLEX_UNIT_SP,size); v.setIncludeFontPadding(false); if(bold)v.setTypeface(v.getTypeface(),1); return v; }

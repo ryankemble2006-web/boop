@@ -38,3 +38,10 @@ def test_layout_arithmetic(tmp_path):
     run=subprocess.run(['javac','-d',str(tmp_path),str(path),str(ROOT/'tests/room-panel/RoomPanelLayoutProbe.java')],capture_output=True,text=True)
     assert run.returncode==0,run.stderr
     subprocess.run(['java','-cp',str(tmp_path),'com.boop.shieldhome.RoomPanelLayoutProbe'],check=True)
+
+def test_room_panel_semantic_icons_match_device_identity():
+    view=(HOME/'ShieldRoomPanelView.java').read_text()
+    assert 'return "fan";' in view
+    assert 'return "subwoofer";' in view
+    assert 'canvas.drawRoundRect(new RectF(5,2,23,26)' in view
+    assert 'canvas.drawOval(new RectF(11,2,18,10)' in view

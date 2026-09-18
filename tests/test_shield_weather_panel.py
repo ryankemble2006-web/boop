@@ -69,12 +69,12 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
     assert "refreshWeather();" in activity
 
 
-def test_shield_release_keeps_aligned_weather_in_v215():
+def test_shield_release_keeps_aligned_weather_in_v216():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
-    assert "versionCode 215" in gradle
-    assert "versionName '1.2.215-shield'" in gradle
-    assert "version = 215 if body == 'shield' else 207" in verify
+    assert "versionCode 216" in gradle
+    assert "versionName '1.2.216-shield'" in gradle
+    assert "version = 216 if body == 'shield' else 207" in verify
     assert "android.permission.INTERNET" in verify
 
 def test_weather_sections_share_one_header_grid_and_centered_footer():
@@ -91,4 +91,7 @@ def test_weather_sections_share_one_header_grid_and_centered_footer():
     assert "foot.addView(wind,new LayoutParams(0,LayoutParams.MATCH_PARENT,3f))" in weather
     assert "foot.addView(sun,new LayoutParams(0,LayoutParams.MATCH_PARENT,4f))" in weather
     assert "foot.addView(source,new LayoutParams(0,LayoutParams.MATCH_PARENT,3f))" in weather
-    assert weather.count("box.setPadding(dp(12),0,dp(12),0)") == 3
+    assert weather.count("box.setPadding(0,0,0,0)") == 3
+    assert "line.setTextAlignment(TEXT_ALIGNMENT_CENTER)" in weather
+    assert "cell.addView(line,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT))" in weather
+    assert "if(weatherGlyph) line.setTranslationX(dp(2))" in weather
