@@ -32,6 +32,19 @@ def test_source_wiring():
     assert 'smartHomePanelEnabled' in activity
     assert 'Smart home panel: ' in settings
 
+def test_remote_hold_reorders_controls_and_favourites_lift_visibly():
+    panel=(HOME/'ShieldRoomPanelView.java').read_text()
+    store=(HOME/'ShieldHomeStore.java').read_text()
+    card=(HOME/'TvAppCardView.java').read_text()
+    assert 'setOnLongClickListener' in panel
+    assert 'FavouriteGrabSession.begin' in panel
+    assert 'moveGrab(key==KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1)' in panel
+    assert 'orderStore.saveRoomControlOrder' in panel
+    assert 'float scale = grabbed ? 1.10f : 1f;' in panel
+    assert 'HOME_ARTWORK_GRABBED_SCALE = 1.14f' in card
+    assert '.translationZ(grabbed ? dp(10) : 0f)' in card
+    assert 'KEY_ROOM_CONTROL_ORDER_PREFIX' in store
+
 def test_layout_arithmetic(tmp_path):
     path=HOME/'RoomPanelLayout.java'
     assert path.exists(), 'Adaptive panel geometry is not implemented'
