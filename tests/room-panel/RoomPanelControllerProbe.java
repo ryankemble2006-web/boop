@@ -42,20 +42,20 @@ public final class RoomPanelControllerProbe {
             switch(test) {
                 case "confirmed-toggle":
                     f.click(); check(f.state.pending("light.lamp"), "No pending indicator");
-                    check(f.link.calls==0, "Command bypassed current area validation");
-                    f.link.data(LIVING, lamp("off"));
-                    check(f.link.calls==1 && f.link.command.areaId().equals(LIVING.id()), "Wrong command target");
-                    f.link.action.onObserved(lamp("on"));
-                    f.link.action.onResult(true, lamp("on"), null);
-                    check(f.state.cards.get(0).state().equals("on") && !f.state.pending("light.lamp"), "Missing actual confirmation"); break;
+                    check(f.link.calls==1 && f.link.command.areaId().equals(LIVING.id()), "Command was not sent immediately");
+                    f.link.events.onState("light.lamp","on");
+                    f.link.action.onResult(true, null, null);
+                    check(f.state.cards.get(0).state().equals("on") && !f.state.pending("light.lamp"), "Live state was not retained"); break;
                 case "no-optimistic-success":
-                    f.click(); f.link.data(LIVING,lamp("off"));
+                    f.click();
                     check(f.state.cards.get(0).state().equals("off"), "Service request invented an on state");
-                    f.link.action.onResult(false,null,"Rejected");
-                    check(f.state.cards.get(0).state().equals("off") && f.state.message!=null, "Rejection lost"); break;
+                    f.link.action.onResult(true,null,null);
+                    check(f.state.cards.get(0).state().equals("off") && !f.state.pending("light.lamp"), "Service acceptance invented state or stayed busy");
+                    f.link.events.onState("light.lamp","on");
+                    check(f.state.cards.get(0).state().equals("on"), "Live state did not update after acceptance"); break;
                 case "duplicate-click":
-                    f.click(); f.link.data(LIVING,lamp("off")); f.click();
-                    check(f.link.calls==1,"Duplicate command sent while awaiting confirmation"); break;
+                    f.click(); f.click();
+                    check(f.link.calls==1,"Duplicate command sent while awaiting service acceptance"); break;
                 case "external-state":
                     f.link.events.onState("light.lamp","on");
                     check(f.state.cards.get(0).state().equals("on") && f.link.calls==0,"External state was not passive"); break;
@@ -79,9 +79,11 @@ public final class RoomPanelControllerProbe {
                 case "room-change-before-click":
                     f.room=BED; f.click(); check(f.link.calls==0 && f.state.room.id().equals("bed"),"Click ignored canonical room change"); break;
                 case "entity-moved-before-click":
-                    f.click(); f.link.data(LIVING); check(f.link.calls==0 && f.state.cards.isEmpty(),"Removed room device was operated"); break;
+                    f.clock.advance(30000); f.link.data(LIVING); f.click();
+                    check(f.link.calls==0 && f.state.cards.isEmpty(),"Removed room device was operated"); break;
                 case "wrong-room-snapshot":
-                    f.click(); f.link.data(BED,lamp("off")); check(f.link.calls==0 && f.state.cards.isEmpty(),"Unconfirmed scope was operated"); break;
+                    f.clock.advance(30000); f.link.data(BED,lamp("off")); f.click();
+                    check(f.link.calls==0 && f.state.cards.isEmpty(),"Wrong-room refresh left an actionable tile"); break;
                 case "state-race":
                     f.clock.advance(30000); f.link.events.onState("light.lamp","on"); f.link.data(LIVING,lamp("off"));
                     check(f.state.cards.get(0).state().equals("on"),"Late snapshot overwrote newer observation"); break;
@@ -94,19 +96,18 @@ public final class RoomPanelControllerProbe {
                 case "load-timeout":
                     f.clock.advance(30000); f.clock.advance(20000); check(f.state.phase==RoomPanelController.Phase.OFFLINE,"Unanswered request stayed busy forever"); break;
                 case "action-timeout":
-                    f.click(); f.link.data(LIVING,lamp("off")); f.clock.advance(20000);
+                    f.click(); f.clock.advance(20000);
                     check(f.state.phase==RoomPanelController.Phase.OFFLINE && !f.state.pending("light.lamp"),"Action stayed busy forever"); break;
                 case "cancel-validation": {
-                    f.click(); RoomPanelController.LoadCallback cb=f.link.load; Link old=f.link; f.controller.stop(); cb.onResult(new DashboardSnapshot(LIVING,List.of(lamp("off"))),null);
-                    check(old.calls==0,"Delayed validation sent action after pause"); break;
+                    f.click(); RoomPanelController.ActionCallback cb=f.link.action; Link old=f.link; f.controller.stop(); cb.onResult(true,null,null);
+                    check(old.closed && f.state.phase==RoomPanelController.Phase.HIDDEN,"Late service result escaped after pause"); break;
                 }
                 case "late-confirmation":
-                    f.click(); f.link.data(LIVING,lamp("off"));
+                    f.click();
                     f.link.events.onState("light.lamp","on");
-                    f.link.action.onObserved(lamp("on"));
                     f.link.events.onState("light.lamp","off");
-                    f.link.action.onResult(true,lamp("on"),null);
-                    check(f.state.cards.get(0).state().equals("off"),"Old command result overwrote the latest real state"); break;
+                    f.link.action.onResult(true,null,null);
+                    check(f.state.cards.get(0).state().equals("off"),"Service acceptance overwrote the latest real state"); break;
                 case "hidden-device":
                     f.clock.advance(30000); f.link.data(LIVING,new EntityCard("light.lamp","living","Lamp","off",true,null,"lamp-device","Lamp"));
                     check(f.state.cards.isEmpty(),"Hidden entity displayed"); break;

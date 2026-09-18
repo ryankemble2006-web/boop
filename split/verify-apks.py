@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 213 if body == 'shield' else 207
+    version = 214 if body == 'shield' else 207
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)

@@ -11,20 +11,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 public final class HomeAssistantRepository {
-    private static final long BINARY_CONFIRM_TIMEOUT_MS = 10000L;
-    private static final ScheduledExecutorService BINARY_CONFIRM_EXECUTOR =
-            Executors.newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "boop-ha-confirm");
-                thread.setDaemon(true);
-                return thread;
-            });
-
     public interface CommandPort {
         void send(String type, JSONObject body, HomeAssistantWebSocket.Callback callback);
     }
@@ -258,10 +246,6 @@ public final class HomeAssistantRepository {
             callback.onResult(false, null, "That control isn't a simple on/off thing.");
             return;
         }
-        if (stateChangePort == null) {
-            callback.onResult(false, null, "I couldn't listen for the new Home Assistant state.");
-            return;
-        }
 
         String expectedState = "off".equals(card.state()) ? "on" : "off";
         String service = "off".equals(card.state()) ? "turn_on" : "turn_off";
@@ -276,113 +260,21 @@ public final class HomeAssistantRepository {
             callback.onResult(false, null, "I couldn't prepare that Home Assistant command.");
             return;
         }
-        new BinaryConfirmation(card, expectedState, body, callback).start();
-    }
 
-    private final class BinaryConfirmation {
-        private final long startedNanos = System.nanoTime();
-        private void trace(String stage) {
-            System.out.println("BOOP-Control action=" + startedNanos + " stage=" + stage
-                    + " elapsedMs=" + (System.nanoTime() - startedNanos) / 1_000_000L);
-        }
-        private final EntityCard original;
-        private final String expectedState;
-        private final JSONObject serviceBody;
-        private final BinaryActionCallback callback;
-        private StateChangePort.Subscription subscription;
-        private ScheduledFuture<?> timeout;
-        private boolean serviceSucceeded;
-        private boolean expectedStateSeen;
-        private boolean done;
-
-        BinaryConfirmation(EntityCard original, String expectedState, JSONObject serviceBody, BinaryActionCallback callback) {
-            this.original = original;
-            this.expectedState = expectedState;
-            this.serviceBody = serviceBody;
-            this.callback = callback;
-        }
-
-        void start() {
-            trace("subscribe-start");
-            try {
-                stateChangePort.subscribe(this::onStateChanged, this::onSubscribed);
-            } catch (RuntimeException couldNotSubscribe) {
-                complete(false, "I couldn't listen for the new Home Assistant state.");
-            }
-        }
-
-        private void onSubscribed(StateChangePort.Subscription active, String error) {
-            trace("subscription-reply");
-            if (active == null || error != null) {
-                if (active != null) active.cancel();
-                complete(false, plainError(error, "I couldn't listen for the new Home Assistant state."));
-                return;
-            }
-            synchronized (this) {
-                if (done) { active.cancel(); return; }
-                subscription = active;
-                timeout = BINARY_CONFIRM_EXECUTOR.schedule(
-                        () -> complete(false, "Home Assistant changed it, but I couldn't confirm the new state."),
-                        BINARY_CONFIRM_TIMEOUT_MS,
-                        TimeUnit.MILLISECONDS);
-            }
-            try {
-                commandPort.send("call_service", serviceBody, this::onServiceResult);
-                trace("service-sent");
-            } catch (RuntimeException couldNotSend) {
-                complete(false, "Home Assistant didn't do that.");
-            }
-        }
-
-        private void onStateChanged(String entityId, String state) {
-            if (!original.entityId().equals(clean(entityId)) || !expectedState.equals(clean(state))) return;
-            trace("expected-state-event");
-            boolean finish;
-            synchronized (this) {
-                if (done || subscription == null || expectedStateSeen) return;
-                expectedStateSeen = true;
-                finish = serviceSucceeded;
-            }
-            callback.onObservedState(original.withState(expectedState));
-            trace("observed-state-delivered");
-            if (finish) complete(true, null);
-        }
-
-        private void onServiceResult(boolean success, Object result, String error) {
-            trace(success ? "service-success" : "service-failure");
-            if (!success) {
-                complete(false, plainError(error, "Home Assistant didn't do that."));
-                return;
-            }
-            boolean finish;
-            synchronized (this) {
-                if (done) return;
-                if (serviceSucceeded) return;
-                serviceSucceeded = true;
-                finish = expectedStateSeen;
-            }
-            callback.onAccepted(original.withState(expectedState));
-            if (finish) complete(true, null);
-        }
-
-        private void complete(boolean success, String error) {
-            final StateChangePort.Subscription toCancel;
-            final ScheduledFuture<?> timeoutToCancel;
-            synchronized (this) {
-                if (done) return;
-                done = true;
-                toCancel = subscription;
-                subscription = null;
-                timeoutToCancel = timeout;
-                timeout = null;
-            }
-            if (timeoutToCancel != null) timeoutToCancel.cancel(false);
-            trace(success ? "complete-success" : "complete-failure");
-            if (toCancel != null) toCancel.cancel();
-            callback.onResult(
-                    success,
-                    success ? original.withState(expectedState) : null,
-                    success ? null : plainError(error, "Home Assistant didn't do that."));
+        // The session already owns a live state_changed subscription. Home Assistant's
+        // call_service result is the action acknowledgement, so a second per-click
+        // subscription only adds latency and can leave slow-reporting devices stuck busy.
+        try {
+            commandPort.send("call_service", body, (success, result, error) -> {
+                if (!success) {
+                    callback.onResult(false, null, plainError(error, "Home Assistant didn't do that."));
+                    return;
+                }
+                callback.onAccepted(card.withState(expectedState));
+                callback.onResult(true, null, null);
+            });
+        } catch (RuntimeException couldNotSend) {
+            callback.onResult(false, null, "Home Assistant didn't do that.");
         }
     }
 

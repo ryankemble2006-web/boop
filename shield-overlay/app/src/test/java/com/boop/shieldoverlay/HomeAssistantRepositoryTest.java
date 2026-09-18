@@ -115,6 +115,57 @@ public final class HomeAssistantRepositoryTest {
         assertTrue(result.get().cards().isEmpty());
     }
 
+    @Test
+    public void binaryToggleSendsCallServiceImmediatelyAndLeavesStateToLiveStream() {
+        FakeCommandPort commands = new FakeCommandPort();
+        HomeAssistantRepository repository = new HomeAssistantRepository(commands);
+        EntityCard fan = new EntityCard(
+                "fan.lounge_fan", "living_room", "Fan", "off",
+                false, null, "dev-fan", "Living Room Fan");
+        AtomicReference<Boolean> success = new AtomicReference<>();
+        AtomicReference<EntityCard> accepted = new AtomicReference<>();
+        AtomicReference<EntityCard> returned = new AtomicReference<>();
+        AtomicReference<String> error = new AtomicReference<>();
+
+        repository.toggleBinary(fan, new HomeAssistantRepository.BinaryActionCallback() {
+            @Override public void onAccepted(EntityCard requestedState) { accepted.set(requestedState); }
+            @Override public void onResult(boolean ok, EntityCard card, String message) {
+                success.set(ok); returned.set(card); error.set(message);
+            }
+        });
+
+        assertEquals(1, commands.size());
+        assertEquals("call_service", commands.type(0));
+        assertNull(success.get());
+        commands.reply(0, true, new JSONObject(), null);
+
+        assertEquals(Boolean.TRUE, success.get());
+        assertNotNull(accepted.get());
+        assertEquals("on", accepted.get().state());
+        assertNull(returned.get());
+        assertNull(error.get());
+    }
+
+    @Test
+    public void binaryToggleReportsImmediateServiceFailure() {
+        FakeCommandPort commands = new FakeCommandPort();
+        HomeAssistantRepository repository = new HomeAssistantRepository(commands);
+        EntityCard light = new EntityCard(
+                "light.lamp", "living_room", "Lamp", "on",
+                false, null, "dev-light", "Lamp");
+        AtomicReference<Boolean> success = new AtomicReference<>();
+        AtomicReference<String> error = new AtomicReference<>();
+
+        repository.toggleBinary(light, (ok, card, message) -> {
+            success.set(ok); error.set(message);
+        });
+        assertEquals("call_service", commands.type(0));
+        commands.reply(0, false, null, "rejected");
+
+        assertEquals(Boolean.FALSE, success.get());
+        assertEquals("rejected", error.get());
+    }
+
     private static JSONObject state(String entityId, String value, String name) throws Exception {
         return new JSONObject()
                 .put("entity_id", entityId)
@@ -132,6 +183,7 @@ public final class HomeAssistantRepositoryTest {
             callbacks.add(callback);
         }
 
+        int size() { return types.size(); }
         String type(int index) { return types.get(index); }
         void reply(int index, boolean success, Object result, String error) {
             callbacks.get(index).onResult(success, result, error);

@@ -69,10 +69,19 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
     assert "refreshWeather();" in activity
 
 
-def test_shield_release_advances_blank_211_weather_candidate():
+def test_shield_release_keeps_aligned_weather_in_v214():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
-    assert "versionCode 213" in gradle
-    assert "versionName '1.2.213-shield'" in gradle
-    assert "version = 213 if body == 'shield' else 207" in verify
+    assert "versionCode 214" in gradle
+    assert "versionName '1.2.214-shield'" in gradle
+    assert "version = 214 if body == 'shield' else 207" in verify
     assert "android.permission.INTERNET" in verify
+
+def test_weather_sections_share_one_header_grid_and_centered_footer():
+    weather = read("ShieldWeatherView.java")
+    assert "private static final int HEADER_DP=26;" in weather
+    assert 'addHeader(box,s.location);' in weather
+    assert 'addHeader(box,"Next 4 hours");' in weather
+    assert 'addHeader(box,"3 day forecast");' in weather
+    assert "source.setGravity(Gravity.END|Gravity.CENTER_VERTICAL)" in weather
+    assert "sun.setGravity(Gravity.CENTER)" in weather

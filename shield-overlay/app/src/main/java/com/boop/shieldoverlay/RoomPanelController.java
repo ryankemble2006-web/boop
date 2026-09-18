@@ -116,11 +116,13 @@ public final class RoomPanelController {
         if (!sameRoom(source.selectedRoom(), room)) { begin(source.selectedRoom()); return; }
         if (phase != Phase.LIVE || pendingId != null) return;
         EntityCard requested = find(entityId);
-        if (!RoomDeviceControls.isActionable(requested)) return;
+        if (!RoomDeviceControls.isActionable(requested)
+                || !RoomScopedEntities.belongsTo(room, requested)) return;
         pendingId = entityId; message = null;
         emit();
-        // Revalidate membership immediately before a command, not only at the last refresh.
-        load(requested);
+        // The live card set is already room-scoped and refreshed in the background.
+        // Do not block a button press on registry and whole-state round trips.
+        send(generation, requested);
     }
 
     private void load(EntityCard requested) {
@@ -182,8 +184,12 @@ public final class RoomPanelController {
                 public void onResult(boolean success, EntityCard card, String error) {
                     if (!current()) return;
                     done = true; pendingId = null;
-                    if (success && confirmed(card)) { if (noNewerEvent()) replace(card); message = null; }
-                    else message = "Home Assistant did not confirm that change. Please try again.";
+                    if (success) {
+                        if (confirmed(card) && noNewerEvent()) replace(card);
+                        message = null;
+                    } else {
+                        message = "Home Assistant did not accept that change. Please try again.";
+                    }
                     emit(); scheduleRefresh();
                 }
             });
