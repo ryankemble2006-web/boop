@@ -175,7 +175,9 @@ public final class ShieldNowPlayingView extends FrameLayout {
         controls.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         controls.setClipChildren(false);
         controls.setClipToPadding(false);
-        controls.setPadding(dp(8), 0, 0, 0);
+        // The progress track is the horizontal datum for the whole media stack.
+        // Keep transport chrome on that same left edge instead of adding its own inset.
+        controls.setPadding(0, 0, 0, 0);
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(46));
         controlsParams.topMargin = dp(4);
