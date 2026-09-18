@@ -1,12 +1,12 @@
 # BOOP current handoff
 
-Updated 2026-09-18. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-now-playing-align-v218`.
+Updated 2026-09-18. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-now-playing-align-v219`.
 
-## Current Shield: v218, signed and ready for Ryan's physical test
+## Current Shield: v219, signed and ready for Ryan's physical test
 
-Package `com.boop.shieldoverlay`, version `218` / `1.2.218-shield`.
+Package `com.boop.shieldoverlay`, version `219` / `1.2.219-shield`.
 
-v218 is a surgical Now Playing alignment pass based directly on Ryan's Shield screenshot. The visible progress bar is the reference edge. The only production geometry change is removal of the transport row's private 8dp left padding, so Prev/Rew/Pause/Fwd/Next now begin on the same left edge as title, artist, playback-state text and the progress track. Lyrics/Close player, artwork, mascot bay, HOME rows, v217 movement/customisation and HA control behavior are intentionally untouched.
+v219 is the final micro-alignment pass from Ryan's follow-up screenshot. The unfocused transport row is translated 4dp left so Prev visually aligns with the progress track, and the progress bar gets an 8dp right margin so it ends on the visible right edge of Close player. Lyrics/Close player themselves, artwork, mascot bay, HOME rows, v217 movement/customisation and HA behavior are intentionally untouched.
 
 v217 is a focused interaction change on top of the verified v216 weather/icon/fan build. It does not alter voice/audio, HA transport, weather geometry, permissions, signer, Wall behavior or BOOP's accepted HOME spacing.
 
@@ -35,14 +35,14 @@ The exact divider-based weather centring, semantic fan/subwoofer icons, capabili
 
 ## Verified signed artifact
 
-Production/build source: `a5f211a4038e208109e0ac31e18452c410a8f455`.
-Successful GitHub Actions run `35352592271`, job `105624043955`.
-Artifact `10550157413`: `BOOP-Shield-v218-Wall-v207-Signed`.
+Production/build source: `9ad31957cba942f857c4d48588702d9b4ab89cb4`.
+Successful GitHub Actions run `35353692917`, job `105627714059`.
+Artifact `10551187345`: `BOOP-Shield-v219-Wall-v207-Signed`.
 
-Deliver **BOOP-Shield-v218.apk**, 160485741 bytes.
-Shield APK SHA-256: `37db129fce83bf8cca062e93d1474533d8f4b7253120da1255912914ff4d8b58`.
+Deliver **BOOP-Shield-v219.apk**, 160485741 bytes.
+Shield APK SHA-256: `d6462470ca1b95e8672d038acd902c7bdd57d687aaa8146e1b0d66e2e222bdae`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Uploaded artifact ZIP SHA-256: `e9ca76c0fecb22d6de60815d63e9939ab021c26b40d07d3485f1890145f3ed9a`.
+Uploaded artifact ZIP SHA-256: `4f8f5016bca24475d808c7e9afc0fb3c8d8c07f639986fd084e56639b0070e60`.
 
 Verification passed: 74 initial focused checks, inherited v206 regression, materialized split integration, 97 integration checks, HA room/latency unit tests, both app builds, and actual APK identity/certificate/native/art checks. All 16 native libraries remain baseline-identical.
 
@@ -52,13 +52,13 @@ Run `35351182952` stopped before materialization/build because `tests/test_home_
 
 ## Physical acceptance still pending
 
-Install `BOOP-Shield-v218.apk` and check the Now Playing panel against the screenshot:
-1. Title, artist and Playing retain the progress bar's left edge.
-2. Progress bar remains unchanged.
-3. Prev now begins exactly on that same left edge, with the rest of the transport row following it.
+Install `BOOP-Shield-v219.apk` and check the Now Playing panel:
+1. Unfocused Prev visually lines up with the left edge of the progress track.
+2. The progress track ends on the visible right edge of Close player.
+3. Title, artist and Playing remain unchanged.
 4. Lyrics/Close player, artwork, eyes, HOME favourites and HA Controls remain where they were.
 5. v217 hold/reorder movement remains accepted and unchanged.
 
-Wall remains v207. v217 remains the prior signed checkpoint.
+Wall remains v207. v218 remains the prior signed checkpoint.
 
-Detailed v218 record: `docs/handoffs/2026-09-18-shield-now-playing-align-v218.md`.
+Detailed v219 record: `docs/handoffs/2026-09-18-shield-now-playing-align-v219.md`.
