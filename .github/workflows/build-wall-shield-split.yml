@@ -1,7 +1,7 @@
-name: Build signed BOOP Shield v219 and Wall v207
+name: Build signed BOOP Shield v220 and Wall v207
 on:
   push:
-    branches: [boop-wall-shield-split-v207, boop-shield-room-panel-v213, boop-shield-ha-fast-v214, boop-shield-fan-capability-v215, boop-shield-weather-icon-fan-v216, boop-shield-grab-reorder-v217, boop-shield-now-playing-align-v218, boop-shield-now-playing-align-v219]
+    branches: [boop-wall-shield-split-v207, boop-shield-room-panel-v213, boop-shield-ha-fast-v214, boop-shield-fan-capability-v215, boop-shield-weather-icon-fan-v216, boop-shield-grab-reorder-v217, boop-shield-now-playing-align-v218, boop-shield-now-playing-align-v219, boop-shield-accent-colour-v220]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 permissions:
@@ -27,7 +27,7 @@ jobs:
       - name: Verify close identity, artist focus and weather before the full build
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_room_panel.py tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_shield_weather_panel.py
+          python -m pytest -q tests/test_room_panel.py tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_launcher_accent_colour.py tests/test_shield_weather_panel.py
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
@@ -82,7 +82,7 @@ jobs:
           cp -R boop-build/BOOP-Alpha1/shield-lib/build/test-results/testDebugUnitTest split-artifact/ha-unit-tests
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-v219-Wall-v207-Signed
+          name: BOOP-Shield-v220-Wall-v207-Signed
           path: split-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
