@@ -1,27 +1,27 @@
 # BOOP status
 
-Updated 2026-09-18. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-now-playing-align-v219`.
+Updated 2026-09-18. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-accent-colour-v220`.
 
-Shield v219 / `1.2.219-shield` is signed and ready for Ryan's physical test.
+Shield v220 / `1.2.220-shield` is signed and ready for Ryan's physical test.
 
-v219 finishes the Now Playing visual alignment from Ryan's v218 screenshot: the transport row is shifted 4dp further left for visual alignment in its unfocused state, and the progress bar now has an 8dp right margin so its visible end lines up with the visible right edge of Close player. Lyrics/Close player positions, album art, mascot bay, favourite/HA reorder behavior and HA latency paths are unchanged.
+Ryan physically accepted the v219 Now Playing alignment as perfect. Preserve its -4dp transport visual correction and 8dp progress right margin.
 
-v217 keeps the verified v216 weather, HA icon and fan-control work unchanged, and adds one consistent remote interaction for rearranging HOME items:
+v220 adds user-selectable launcher highlight colour in **Launcher Settings**, directly below **Smart home panel**:
+- one remote-focusable hue slider, range 0-359;
+- default hue 204 maps exactly to BOOP's existing `#4DB8FF` cyan, so untouched installs look unchanged;
+- setting persists in Shield launcher preferences;
+- slider label/thumb preview the selected hue while it moves;
+- the shared accent source now drives TV focus chrome, artist focus colour, Now Playing progress, HA on-state/icons, Add favourites, launcher navigation icons and weather accent details;
+- the launcher icon vectors are tinted at runtime, so their old baked cyan no longer locks the visible colour;
+- layout, v217 favourite/HA reordering, HA latency/control paths, v219 Now Playing geometry, voice/audio, permissions and signing were not changed.
 
-- HOME favourites: long-press/hold now makes the grabbed artwork visibly lift to 1.14x with Z-depth. Ordinary focus remains at the accepted 1.00x artwork scale, so the stronger treatment appears only after the hold has actually engaged.
-- HA Controls: long-press a device tile to grab it; the tile visibly lifts to 1.10x with Z-depth. Left/right moves it, and OK/Enter drops it.
-- HA order persists per selected room. Missing entities are removed safely, and newly discovered devices append after the user's saved order instead of reshuffling existing controls.
-- Normal HA taps still use the existing toggle path. The v214-v216 low-latency/state-stream architecture and fan routing were not changed.
-
-Build source `9ad31957cba942f857c4d48588702d9b4ab89cb4`.
-Successful run `35353692917`, job `105627714059`.
-Artifact `10551187345`, `BOOP-Shield-v219-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v219.apk`, 160485741 bytes, SHA-256 `d6462470ca1b95e8672d038acd902c7bdd57d687aaa8146e1b0d66e2e222bdae`.
+Build source `a009b921bf23d018f7edc9ebf2c64a9f89bf8ddd`.
+Successful run `35355454656`, job `105634013385`.
+Artifact `10552105353`, `BOOP-Shield-v220-Wall-v207-Signed`.
+Shield file `BOOP-Shield-v220.apk`, 160485741 bytes, SHA-256 `2ac14d16983a7662b09f5338e18f7f43b749cea0666e4af676d86b8e087d34ad`.
 Permanent signer SHA-256 remains `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Uploaded artifact ZIP SHA-256 `4f8f5016bca24475d808c7e9afc0fb3c8d8c07f639986fd084e56639b0070e60`.
+Uploaded artifact ZIP SHA-256 `1a6fa09706d06b2bba52becc4123f7640fee15068147fd3b8b38288a11d4cdf1`.
 
-Verification passed through 74 focused checks, inherited v206 regression, materialized split integration, 97 integration checks, HA room/latency tests, both app builds, and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+Verification passed through 77 focused checks, inherited v206 regression, materialized split integration with 100 checks, HA room/latency tests, both app builds, and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
 
-The first v217 run `35351182952` correctly stopped on an inherited v205 visual test that still asserted the former 1.00x grabbed scale. That test was updated to the newly requested grab contract; no APK was produced by the failed run.
-
-Physical acceptance of the final Now Playing edge alignment remains pending. v218 is the prior signed checkpoint. Wall stays v207; voice/audio, permissions and signing material were not changed.
+Physical acceptance of the colour slider and accent propagation remains pending. v219 is the prior accepted signed checkpoint. Wall stays v207.
