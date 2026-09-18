@@ -78,6 +78,19 @@ public final class ShieldHomeStoreTest {
                 store.loadRoomControlOrder("bedroom", List.of("bed.light")));
     }
 
+    @Test public void accentHueDefaultsPersistsAndClamps() {
+        MemoryPreferences preferences = new MemoryPreferences();
+        ShieldHomeStore store = new ShieldHomeStore(preferences);
+
+        assertEquals(204, store.accentHue());
+        store.setAccentHue(312);
+        assertEquals(312, store.accentHue());
+        store.setAccentHue(-4);
+        assertEquals(0, store.accentHue());
+        store.setAccentHue(999);
+        assertEquals(359, store.accentHue());
+    }
+
     @Test public void optionalRowsDefaultOffAndPersistIndependently() {
         MemoryPreferences preferences = new MemoryPreferences();
         ShieldHomeStore store = new ShieldHomeStore(preferences);
