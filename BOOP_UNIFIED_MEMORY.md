@@ -2,7 +2,7 @@
 
 Updated 2026-09-18.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v218 on `boop-shield-now-playing-align-v218`. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v219 on `boop-shield-now-playing-align-v219`. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -53,19 +53,19 @@ HOME favourites and HA controls now share the same remote mental model: hold to 
 - HA control order is persisted per room. Reconcile saved order against currently available entities, drop vanished IDs, and append newly discovered IDs after the saved order.
 - Room changes cancel an in-progress grab rather than moving an entity into another room's ordering.
 
-## Now Playing alignment rule from v218
+## Now Playing alignment rule from v219
 
-Use the visible progress bar as the horizontal datum for the media text/transport stack. Title, artist, playback-state label, progress bar and transport row all start on the same details-column left edge. Do not reintroduce the old 8dp transport-only left padding. Lyrics/Close-player remain in the title row's right-side controls and are not part of this datum. Album art and mascot bay geometry remain unchanged.
+Use the visible progress bar as the visual ruler for the media stack. Title, artist and playback-state text remain on the details-column left edge. The transport row has a deliberate -4dp X translation so the unfocused Prev button visually keys to the progress track. The progress bar has an 8dp right margin so its visible right edge lines up with the visible right edge of Close player. Do not reintroduce the old transport-only +8dp left padding. Lyrics/Close-player layout, album art and mascot bay remain unchanged.
 
 ## Latest verified artifact
 
-Build source `a5f211a4038e208109e0ac31e18452c410a8f455`.
-Run `35352592271`, job `105624043955`; artifact `10550157413`, `BOOP-Shield-v218-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v218.apk`, 160485741 bytes, SHA-256 `37db129fce83bf8cca062e93d1474533d8f4b7253120da1255912914ff4d8b58`.
+Build source `9ad31957cba942f857c4d48588702d9b4ab89cb4`.
+Run `35353692917`, job `105627714059`; artifact `10551187345`, `BOOP-Shield-v219-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v219.apk`, 160485741 bytes, SHA-256 `d6462470ca1b95e8672d038acd902c7bdd57d687aaa8146e1b0d66e2e222bdae`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Uploaded artifact ZIP SHA-256 `e9ca76c0fecb22d6de60815d63e9939ab021c26b40d07d3485f1890145f3ed9a`.
+Uploaded artifact ZIP SHA-256 `4f8f5016bca24475d808c7e9afc0fb3c8d8c07f639986fd084e56639b0070e60`.
 All 16 native libraries remain baseline-identical.
 
-v217 is the prior signed checkpoint. The first v217 run stopped on the intentionally superseded v205 assertion that a grabbed favourite must remain 1.00x and produced no APK.
+v218 is the prior signed checkpoint. The first v217 run stopped on the intentionally superseded v205 assertion that a grabbed favourite must remain 1.00x and produced no APK.
 
 Voice/provider/pitch work remains deferred and untouched. Wall stays v207. No device driving, daily Pixel access, permission or signer changes were made.
