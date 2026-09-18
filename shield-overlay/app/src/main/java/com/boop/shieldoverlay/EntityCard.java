@@ -18,7 +18,8 @@ public final class EntityCard {
             String state,
             boolean hidden,
             String entityCategory) {
-        this(entityId, areaId, displayName, state, hidden, entityCategory, null, null, -1L);
+        this(entityId, areaId, displayName, state, hidden, entityCategory,
+                null, null, -1L);
     }
 
     public EntityCard(
@@ -30,13 +31,6 @@ public final class EntityCard {
             String entityCategory,
             String deviceId,
             String deviceName) {
-        this.entityId = requireText(entityId, "entity id");
-        this.areaId = clean(areaId);
-        this.displayName = requireText(displayName, "display name");
-        this.state = requireText(state, "state").toLowerCase();
-        this.hidden = hidden;
-        this.entityCategory = clean(entityCategory);
-        this.deviceId = clean(deviceId);
         this(entityId, areaId, displayName, state, hidden, entityCategory,
                 deviceId, deviceName, -1L);
     }
