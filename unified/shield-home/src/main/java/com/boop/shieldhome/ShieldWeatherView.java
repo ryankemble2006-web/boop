@@ -70,7 +70,7 @@ final class ShieldWeatherView extends LinearLayout {
 
     private LinearLayout current(WeatherSnapshot s){
         LinearLayout box=column();
-        box.setPadding(dp(12),0,dp(12),0);
+        box.setPadding(0,0,0,0);
         addHeader(box,s.location);
 
         LinearLayout body=row();
