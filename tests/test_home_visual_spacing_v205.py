@@ -23,13 +23,14 @@ def test_wide_tiles_use_one_exact_16dp_visible_gap():
     assert "addParams.rightMargin = dp(16);" in home
 
 
-def test_home_banner_has_no_hidden_top_inset_or_focus_width_growth():
+def test_home_banner_keeps_focus_geometry_but_lifts_when_grabbed():
     card = text(CARD)
     assert "setPadding(horizontal, 0, horizontal, 0);" in card
     assert "content.setGravity(homeFavourite" in card
     assert "? Gravity.TOP | Gravity.CENTER_HORIZONTAL" in card
     assert "HOME_ARTWORK_FOCUSED_SCALE = 1.00f" in card
-    assert "HOME_ARTWORK_GRABBED_SCALE = 1.00f" in card
+    assert "HOME_ARTWORK_GRABBED_SCALE = 1.14f" in card
+    assert ".translationZ(grabbed ? dp(10) : 0f)" in card
 
 
 def test_now_playing_to_artwork_gap_remains_the_shared_16dp_reference():
