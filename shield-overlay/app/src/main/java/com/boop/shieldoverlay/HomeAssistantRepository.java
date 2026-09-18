@@ -212,7 +212,11 @@ public final class HomeAssistantRepository {
                 String friendlyName = attributes == null
                         ? null
                         : clean(attributes.optString("friendly_name", null));
-                states.put(entityId, new EntityState(entityId, state, friendlyName));
+                long supportedFeatures = attributes == null
+                        ? -1L
+                        : attributes.optLong("supported_features", -1L);
+                states.put(entityId, new EntityState(
+                        entityId, state, friendlyName, supportedFeatures));
             }
 
             List<EntityCard> candidates = new ArrayList<>();
@@ -229,7 +233,8 @@ public final class HomeAssistantRepository {
                         entry.hidden,
                         entry.category,
                         entry.deviceId,
-                        entry.deviceName);
+                        entry.deviceName,
+                        state.supportedFeatures());
                 if (isDashboardControl(card)) candidates.add(card);
             }
 

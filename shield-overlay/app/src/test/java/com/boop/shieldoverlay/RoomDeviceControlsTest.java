@@ -35,6 +35,26 @@ public final class RoomDeviceControlsTest {
         assertEquals("Living Room Fan", result.get(0).displayName());
     }
 
+    @Test public void fallsBackToPowerSwitchWhenFanDoesNotAdvertisePowerFeatures() {
+        List<EntityCard> result = RoomDeviceControls.collapseToDevices(Arrays.asList(
+                deviceCard("switch.govee_fan_oscillation", "Oscillation", "off", "dev-govee", "Govee Fan"),
+                deviceCard("switch.govee_fan_power_switch", "Power Switch", "on", "dev-govee", "Govee Fan"),
+                deviceCardWithFeatures("fan.govee_fan", "Fan", "on", "dev-govee", "Govee Fan", 0L)));
+
+        assertEquals(1, result.size());
+        assertEquals("switch.govee_fan_power_switch", result.get(0).entityId());
+        assertEquals("Govee Fan", result.get(0).displayName());
+    }
+
+    @Test public void keepsNativeFanWhenItAdvertisesBothPowerFeatures() {
+        List<EntityCard> result = RoomDeviceControls.collapseToDevices(Arrays.asList(
+                deviceCard("switch.govee_fan_power_switch", "Power Switch", "on", "dev-govee", "Govee Fan"),
+                deviceCardWithFeatures("fan.govee_fan", "Fan", "on", "dev-govee", "Govee Fan", 48L)));
+
+        assertEquals(1, result.size());
+        assertEquals("fan.govee_fan", result.get(0).entityId());
+    }
+
     @Test public void keepsOneStandaloneSwitchWhenItReallyIsTheDevice() {
         List<EntityCard> result = RoomDeviceControls.collapseToDevices(Arrays.asList(
                 deviceCard("switch.floor_lamp", "Power", "off", "dev-plug", "Floor Lamp")));
@@ -57,5 +77,11 @@ public final class RoomDeviceControlsTest {
 
     private EntityCard deviceCard(String id, String entityName, String state, String deviceId, String deviceName) {
         return new EntityCard(id, "living_room", entityName, state, false, null, deviceId, deviceName);
+    }
+
+    private EntityCard deviceCardWithFeatures(String id, String entityName, String state,
+            String deviceId, String deviceName, long supportedFeatures) {
+        return new EntityCard(id, "living_room", entityName, state, false, null,
+                deviceId, deviceName, supportedFeatures);
     }
 }

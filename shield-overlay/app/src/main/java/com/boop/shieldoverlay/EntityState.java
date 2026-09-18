@@ -4,11 +4,17 @@ public final class EntityState {
     private final String entityId;
     private final String state;
     private final String friendlyName;
+    private final long supportedFeatures;
 
     public EntityState(String entityId, String state, String friendlyName) {
+        this(entityId, state, friendlyName, -1L);
+    }
+
+    public EntityState(String entityId, String state, String friendlyName, long supportedFeatures) {
         this.entityId = requireText(entityId, "entity id");
         this.state = requireText(state, "state").toLowerCase();
         this.friendlyName = clean(friendlyName);
+        this.supportedFeatures = supportedFeatures;
     }
 
     public String entityId() {
@@ -21,6 +27,10 @@ public final class EntityState {
 
     public String friendlyName() {
         return friendlyName;
+    }
+
+    public long supportedFeatures() {
+        return supportedFeatures;
     }
 
     private static String requireText(String value, String label) {

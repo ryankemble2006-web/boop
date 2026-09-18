@@ -9,6 +9,7 @@ public final class EntityCard {
     private final String entityCategory;
     private final String deviceId;
     private final String deviceName;
+    private final long supportedFeatures;
 
     public EntityCard(
             String entityId,
@@ -17,7 +18,7 @@ public final class EntityCard {
             String state,
             boolean hidden,
             String entityCategory) {
-        this(entityId, areaId, displayName, state, hidden, entityCategory, null, null);
+        this(entityId, areaId, displayName, state, hidden, entityCategory, null, null, -1L);
     }
 
     public EntityCard(
@@ -36,7 +37,29 @@ public final class EntityCard {
         this.hidden = hidden;
         this.entityCategory = clean(entityCategory);
         this.deviceId = clean(deviceId);
+        this(entityId, areaId, displayName, state, hidden, entityCategory,
+                deviceId, deviceName, -1L);
+    }
+
+    public EntityCard(
+            String entityId,
+            String areaId,
+            String displayName,
+            String state,
+            boolean hidden,
+            String entityCategory,
+            String deviceId,
+            String deviceName,
+            long supportedFeatures) {
+        this.entityId = requireText(entityId, "entity id");
+        this.areaId = clean(areaId);
+        this.displayName = requireText(displayName, "display name");
+        this.state = requireText(state, "state").toLowerCase();
+        this.hidden = hidden;
+        this.entityCategory = clean(entityCategory);
+        this.deviceId = clean(deviceId);
         this.deviceName = clean(deviceName);
+        this.supportedFeatures = supportedFeatures;
     }
 
     public String entityId() { return entityId; }
@@ -47,6 +70,7 @@ public final class EntityCard {
     public String entityCategory() { return entityCategory; }
     public String deviceId() { return deviceId; }
     public String deviceName() { return deviceName; }
+    public long supportedFeatures() { return supportedFeatures; }
 
     public String domain() {
         int dot = entityId.indexOf('.');
@@ -62,7 +86,8 @@ public final class EntityCard {
                 hidden,
                 entityCategory,
                 deviceId,
-                deviceName);
+                deviceName,
+                supportedFeatures);
     }
 
     public EntityCard withDisplayName(String newDisplayName) {
@@ -74,7 +99,8 @@ public final class EntityCard {
                 hidden,
                 entityCategory,
                 deviceId,
-                deviceName);
+                deviceName,
+                supportedFeatures);
     }
 
     private static String requireText(String value, String label) {

@@ -53,44 +53,47 @@ final class ShieldWeatherView extends LinearLayout {
         foot.setGravity(Gravity.CENTER_VERTICAL);
         TextView wind=text("↝  "+Math.round(s.windSpeed)+" km/h "+WeatherCode.compass(s.windDirection),12,false,CYAN);
         wind.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
-        foot.addView(wind,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
+        wind.setGravity(Gravity.CENTER);
+        foot.addView(wind,new LayoutParams(0,LayoutParams.MATCH_PARENT,3f));
 
         TextView sun=text("☀  "+clock(s.sunrise)+"    ◐  "+clock(s.sunset),12,false,Color.LTGRAY);
         sun.setGravity(Gravity.CENTER);
-        foot.addView(sun,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
+        foot.addView(sun,new LayoutParams(0,LayoutParams.MATCH_PARENT,4f));
 
         long mins=Math.max(0,(nowMs-s.fetchedAtMs)/60000L);
         String age=mins<1?"just now":mins+" min ago";
         TextView source=text("Updated "+age+"  ·  Open-Meteo",11,false,Color.GRAY);
-        source.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
-        foot.addView(source,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
+        source.setGravity(Gravity.CENTER);
+        foot.addView(source,new LayoutParams(0,LayoutParams.MATCH_PARENT,3f));
         addView(foot,new LayoutParams(LayoutParams.MATCH_PARENT,dp(24)));
     }
 
     private LinearLayout current(WeatherSnapshot s){
         LinearLayout box=column();
-        box.setPadding(0,0,dp(14),0);
+        box.setPadding(dp(12),0,dp(12),0);
         addHeader(box,s.location);
 
         LinearLayout body=row();
-        body.setGravity(Gravity.CENTER_VERTICAL);
+        body.setGravity(Gravity.CENTER);
         TextView icon=text(WeatherCode.glyph(s.code),40,false,CYAN);
         icon.setGravity(Gravity.CENTER);
-        body.addView(icon,new LayoutParams(dp(58),LayoutParams.MATCH_PARENT));
+        LayoutParams iconParams=new LayoutParams(dp(58),LayoutParams.MATCH_PARENT);
+        iconParams.rightMargin=dp(8);
+        body.addView(icon,iconParams);
 
         LinearLayout nums=column();
         nums.setGravity(Gravity.CENTER_VERTICAL);
         nums.addView(text(Math.round(s.temp)+"°",38,true,Color.WHITE));
         nums.addView(text(WeatherCode.label(s.code),12,false,Color.LTGRAY));
         nums.addView(text("Feels "+Math.round(s.feels)+"°",11,false,Color.LTGRAY));
-        body.addView(nums,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
+        body.addView(nums,new LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.MATCH_PARENT));
         box.addView(body,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
         return box;
     }
 
     private LinearLayout hours(WeatherSnapshot s){
         LinearLayout box=column();
-        box.setPadding(dp(14),0,dp(14),0);
+        box.setPadding(dp(12),0,dp(12),0);
         addHeader(box,"Next 4 hours");
 
         LinearLayout strip=row();
@@ -110,7 +113,7 @@ final class ShieldWeatherView extends LinearLayout {
 
     private LinearLayout days(WeatherSnapshot s){
         LinearLayout box=column();
-        box.setPadding(dp(14),0,0,0);
+        box.setPadding(dp(12),0,dp(12),0);
         addHeader(box,"3 day forecast");
 
         LinearLayout strip=row();
@@ -132,7 +135,7 @@ final class ShieldWeatherView extends LinearLayout {
 
     private void addHeader(LinearLayout box,String value){
         TextView title=text(value,13,true,Color.WHITE);
-        title.setGravity(Gravity.START|Gravity.CENTER_VERTICAL);
+        title.setGravity(Gravity.CENTER);
         title.setSingleLine(true);
         box.addView(title,new LayoutParams(LayoutParams.MATCH_PARENT,dp(HEADER_DP)));
     }

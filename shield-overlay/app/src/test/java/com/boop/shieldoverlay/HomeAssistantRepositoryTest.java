@@ -83,7 +83,7 @@ public final class HomeAssistantRepositoryTest {
 
         assertEquals("get_states", commands.type(3));
         JSONArray states = new JSONArray()
-                .put(state("fan.lounge_fan", "on", "Fan"))
+                .put(stateWithFeatures("fan.lounge_fan", "on", "Fan", 48L))
                 .put(state("switch.lounge_fan_power_switch", "on", "Power Switch"))
                 .put(state("switch.lounge_fan_oscillation_toggle", "off", "Oscillation Toggle"))
                 .put(state("switch.bedroom_plug", "on", "Power"))
@@ -96,6 +96,37 @@ public final class HomeAssistantRepositoryTest {
         assertEquals("fan.lounge_fan", result.get().cards().get(0).entityId());
         assertEquals("Living Room Fan", result.get().cards().get(0).displayName());
         assertEquals("living_room", result.get().cards().get(0).areaId());
+    }
+
+    @Test
+    public void dashboardFallsBackToPowerSwitchWhenFanLacksPowerFeatures() throws Exception {
+        FakeCommandPort commands = new FakeCommandPort();
+        HomeAssistantRepository repository = new HomeAssistantRepository(commands);
+        AtomicReference<DashboardSnapshot> result = new AtomicReference<>();
+        AreaInfo lounge = new AreaInfo("living_room", "Living Room");
+        repository.loadDashboard(lounge, (snapshot, message) -> result.set(snapshot));
+
+        commands.reply(0, true, new JSONObject().put("referenced_entities", new JSONArray()
+                .put("fan.govee_fan")
+                .put("switch.govee_fan_power_switch")
+                .put("switch.govee_fan_oscillation")), null);
+        commands.reply(1, true, new JSONArray()
+                .put(new JSONObject().put("id", "dev-govee").put("area_id", "living_room").put("name", "Govee Fan")), null);
+        commands.reply(2, true, new JSONObject()
+                .put("entity_categories", new JSONObject())
+                .put("entities", new JSONArray()
+                        .put(new JSONObject().put("ei", "fan.govee_fan").put("di", "dev-govee").put("en", "Fan"))
+                        .put(new JSONObject().put("ei", "switch.govee_fan_power_switch").put("di", "dev-govee").put("en", "Power Switch"))
+                        .put(new JSONObject().put("ei", "switch.govee_fan_oscillation").put("di", "dev-govee").put("en", "Oscillation"))), null);
+        commands.reply(3, true, new JSONArray()
+                .put(stateWithFeatures("fan.govee_fan", "on", "Fan", 0L))
+                .put(state("switch.govee_fan_power_switch", "on", "Power Switch"))
+                .put(state("switch.govee_fan_oscillation", "off", "Oscillation")), null);
+
+        assertNotNull(result.get());
+        assertEquals(1, result.get().cards().size());
+        assertEquals("switch.govee_fan_power_switch", result.get().cards().get(0).entityId());
+        assertEquals("Govee Fan", result.get().cards().get(0).displayName());
     }
 
     @Test
@@ -171,6 +202,16 @@ public final class HomeAssistantRepositoryTest {
                 .put("entity_id", entityId)
                 .put("state", value)
                 .put("attributes", new JSONObject().put("friendly_name", name));
+    }
+
+    private static JSONObject stateWithFeatures(
+            String entityId, String value, String name, long supportedFeatures) throws Exception {
+        return new JSONObject()
+                .put("entity_id", entityId)
+                .put("state", value)
+                .put("attributes", new JSONObject()
+                        .put("friendly_name", name)
+                        .put("supported_features", supportedFeatures));
     }
 
     private static final class FakeCommandPort implements HomeAssistantRepository.CommandPort {
