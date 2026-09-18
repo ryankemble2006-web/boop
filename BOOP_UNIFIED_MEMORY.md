@@ -2,7 +2,7 @@
 
 Updated 2026-09-18.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v216 on `boop-shield-weather-icon-fan-v216`. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v217 on `boop-shield-grab-reorder-v217`. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -19,7 +19,7 @@ Sonoff and light controls proved instant on the v214/v215 direct `call_service` 
 
 v215 capability-aware entity selection remains required: native fan entities need the current HA power flags when feature metadata is known, otherwise choose the same device's actual power/on-off switch rather than oscillation/settings entities.
 
-In addition, when the physical tile is semantically a fan, first use Home Assistant's WebSocket `conversation/process` with a room-scoped natural command (for example `turn off Govee Fan in Living Room`). This deliberately lets Home Assistant resolve the fan through the same Assist/conversation machinery that BOOP's phone command proved functional. Accept only an `action_done` response with no failed targets. If conversation cannot act, immediately fall back to the v215 direct service route. This is generic fan behaviour, not a Govee brand special case.
+When the physical tile is semantically a fan, first use Home Assistant's WebSocket `conversation/process` with a room-scoped natural command. Accept only an `action_done` response with no failed targets. If conversation cannot act, immediately fall back to the v215 direct service route. This is generic fan behaviour, not a Govee brand special case.
 
 ## HA icon rule from v216
 
@@ -33,7 +33,7 @@ Use display name + device name + entity ID to classify semantic fan/subwoofer id
 
 ## Weather centring rule from v216
 
-The screenshot demonstrated that centred containers plus wrap-content children are not sufficient. Weather centring is now locked to the actual divider/cell geometry:
+Weather centring is locked to the actual divider/cell geometry:
 - no horizontal inset inside the three main 3:4:3 regions;
 - every hourly/daily line consumes MATCH_PARENT cell width;
 - explicit centre gravity + centre text alignment for every line;
@@ -43,15 +43,25 @@ The screenshot demonstrated that centred containers plus wrap-content children a
 
 Do not reintroduce per-section padding that changes the region centre.
 
+## Grab/reorder rule from v217
+
+HOME favourites and HA controls now share the same remote mental model: hold to grab, left/right to move, OK/Enter to drop.
+
+- Favourite ordinary focus must keep the accepted artwork geometry. Only an active grab receives the stronger 1.14x + Z-depth lift.
+- HA tiles receive a 1.10x + Z-depth lift only while grabbed.
+- A normal HA click remains a normal device toggle; entering reorder mode must not add a pre-click network gate or change HA latency.
+- HA control order is persisted per room. Reconcile saved order against currently available entities, drop vanished IDs, and append newly discovered IDs after the saved order.
+- Room changes cancel an in-progress grab rather than moving an entity into another room's ordering.
+
 ## Latest verified artifact
 
-Build source `e60a3521524e1ccdb19fcac73f4ad4c3033bf618`.
-Run `35347668181`, job `105607970217`; artifact `10547503847`, `BOOP-Shield-v216-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v216.apk`, 160485741 bytes, SHA-256 `a81dfd6f143ebe32952e48924184b52325644ed64b8ed217443cb1a6dd460004`.
+Build source `4fde718e7ee928f87438f452022dc8e38f858163`.
+Run `35351389519`, job `105620113142`; artifact `10549884892`, `BOOP-Shield-v217-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v217.apk`, 160485741 bytes, SHA-256 `a6742e4fa9e3457ffe0384c9f1c41d5a1a97b4231c39b7b06688f68122227b3b`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Downloaded ZIP SHA-256 `3cfaf36dd7936ecf4a57d5c5c57ffa16d0d2347837fa388020d13e13f23fa293`.
-20 copied HA unit tests passed with zero failures/errors/skips; all 16 native libraries remain baseline-identical.
+Uploaded artifact ZIP SHA-256 `51106302b2394af6dd2fc79a47dd1599ed1e9a0015b56866ca02a30615c29aa9`.
+All 16 native libraries remain baseline-identical.
 
-v215 is the prior signed checkpoint. Earlier v216 failed runs did not produce install candidates: one caught a weather inset invariant; another suffered an external 504 and then caught a unit-test exception declaration. Only the verified build source above should be delivered.
+v216 is the prior signed checkpoint. The first v217 run stopped on the intentionally superseded v205 assertion that a grabbed favourite must remain 1.00x and produced no APK.
 
-Voice/provider/pitch work remains deferred and untouched. Wall stays v207. No device driving, daily Pixel access, permissions or signer changes were made.
+Voice/provider/pitch work remains deferred and untouched. Wall stays v207. No device driving, daily Pixel access, permission or signer changes were made.
