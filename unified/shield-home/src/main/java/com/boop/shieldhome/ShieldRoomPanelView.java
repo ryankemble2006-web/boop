@@ -31,13 +31,17 @@ public final class ShieldRoomPanelView extends LinearLayout {
     private final HorizontalScrollView scroller;
     private final LinearLayout row;
     private final Map<String, Tile> tiles = new LinkedHashMap<>();
+    private final ShieldHomeStore orderStore;
     private RoomPanelController.State state;
     private String focusedId;
     private Runnable exitUp;
     private Toggle toggle;
+    private FavouriteGrabSession grabSession;
+    private Tile grabbedTile;
 
     public ShieldRoomPanelView(Context context) {
         super(context);
+        orderStore = new ShieldHomeStore(context);
         setOrientation(VERTICAL);
         setPadding(dp(18), dp(14), dp(18), dp(14));
         setFocusable(false);
@@ -63,9 +67,13 @@ public final class ShieldRoomPanelView extends LinearLayout {
         scroller.setHorizontalScrollBarEnabled(false);
         scroller.setFocusable(false);
         scroller.setFillViewport(true);
+        scroller.setClipChildren(false);
+        scroller.setClipToPadding(false);
         scroller.setPadding(dp(3), dp(3), dp(3), dp(3));
         row = new LinearLayout(context);
         row.setOrientation(HORIZONTAL);
+        row.setClipChildren(false);
+        row.setClipToPadding(false);
         scroller.addView(row, new HorizontalScrollView.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         addView(scroller, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
         notice = text("", 13, Color.LTGRAY);
@@ -84,17 +92,35 @@ public final class ShieldRoomPanelView extends LinearLayout {
         String previousRoom = state == null || state.room == null ? null : state.room.id();
         String nextRoom = next == null || next.room == null ? null : next.room.id();
         boolean roomChanged = !java.util.Objects.equals(previousRoom, nextRoom);
+        if (roomChanged) cancelGrab();
         state = next;
         title.setText(nextRoom == null ? "Home" : next.room.name());
+
         List<EntityCard> cards = next == null ? List.of() : next.cards;
-        List<String> ids = new ArrayList<>();
-        for (EntityCard card : cards) if (inRoom(card)) ids.add(card.entityId());
-        boolean rebuild = roomChanged || !ids.equals(new ArrayList<>(tiles.keySet()));
+        List<EntityCard> roomCards = new ArrayList<>();
+        List<String> availableIds = new ArrayList<>();
+        for (EntityCard card : cards) {
+            if (!inRoom(card)) continue;
+            roomCards.add(card);
+            availableIds.add(card.entityId());
+        }
+
+        List<String> orderedIds = grabSession == null
+                ? orderStore.loadRoomControlOrder(nextRoom, availableIds)
+                : ShieldHomeStore.reconcileOrder(grabSession.current(), availableIds);
+        Map<String, EntityCard> cardsById = new LinkedHashMap<>();
+        for (EntityCard card : roomCards) cardsById.put(card.entityId(), card);
+        List<EntityCard> orderedCards = new ArrayList<>();
+        for (String id : orderedIds) {
+            EntityCard card = cardsById.get(id);
+            if (card != null) orderedCards.add(card);
+        }
+
+        boolean rebuild = roomChanged || !orderedIds.equals(new ArrayList<>(tiles.keySet()));
         if (roomChanged) { tiles.clear(); focusedId = null; }
         if (rebuild) row.removeAllViews();
         Map<String, Tile> updated = new LinkedHashMap<>();
-        for (EntityCard card : cards) {
-            if (!inRoom(card)) continue;
+        for (EntityCard card : orderedCards) {
             Tile tile = tiles.get(card.entityId());
             if (tile == null) tile = new Tile(card.entityId());
             tile.bind(card);
@@ -102,6 +128,11 @@ public final class ShieldRoomPanelView extends LinearLayout {
             if (rebuild) row.addView(tile, new LayoutParams(dp(190), LayoutParams.MATCH_PARENT));
         }
         tiles.clear(); tiles.putAll(updated);
+        if (grabSession != null) {
+            grabbedTile = tiles.get(grabSession.grabbedComponent());
+            if (grabbedTile == null) grabSession = null;
+            else grabbedTile.setGrabbed(true);
+        }
         boolean hasCards = !tiles.isEmpty();
         empty.setVisibility(hasCards ? GONE : VISIBLE);
         scroller.setVisibility(hasCards ? VISIBLE : GONE);
@@ -128,6 +159,59 @@ public final class ShieldRoomPanelView extends LinearLayout {
                 else if (row.getChildCount() > 0) row.getChildAt(Math.max(0,Math.min(oldIndex,row.getChildCount()-1))).requestFocus();
                 else if (exitUp != null) exitUp.run();
             }
+        }
+    }
+
+    private void beginGrab(Tile tile) {
+        if (tile == null || state == null || state.room == null || !tiles.containsKey(tile.entityId)) return;
+        if (grabbedTile != null && grabbedTile != tile) grabbedTile.setGrabbed(false);
+        grabSession = FavouriteGrabSession.begin(new ArrayList<>(tiles.keySet()), tile.entityId);
+        grabbedTile = tile;
+        focusedId = tile.entityId;
+        tile.setGrabbed(true);
+        tile.requestFocus();
+    }
+
+    private void moveGrab(int delta) {
+        if (grabSession == null || grabbedTile == null) return;
+        if (grabSession.move(delta)) reorderTiles(grabSession.current());
+    }
+
+    private void commitGrab() {
+        if (grabSession == null) return;
+        String roomId = state == null || state.room == null ? null : state.room.id();
+        orderStore.saveRoomControlOrder(roomId, grabSession.commit());
+        if (grabbedTile != null) grabbedTile.setGrabbed(false);
+        grabSession = null;
+        grabbedTile = null;
+    }
+
+    private void cancelGrab() {
+        if (grabbedTile != null) grabbedTile.setGrabbed(false);
+        grabSession = null;
+        grabbedTile = null;
+    }
+
+    private void reorderTiles(List<String> preferred) {
+        List<String> order = ShieldHomeStore.reconcileOrder(preferred, new ArrayList<>(tiles.keySet()));
+        Map<String, Tile> existing = new LinkedHashMap<>(tiles);
+        row.removeAllViews();
+        tiles.clear();
+        for (String id : order) {
+            Tile tile = existing.get(id);
+            if (tile == null) continue;
+            tiles.put(id, tile);
+            row.addView(tile, new LayoutParams(dp(190), LayoutParams.MATCH_PARENT));
+        }
+        resizeTiles();
+        if (grabbedTile != null) {
+            grabbedTile.setGrabbed(true);
+            grabbedTile.requestFocus();
+            grabbedTile.post(() -> {
+                if (grabbedTile != null && grabbedTile.hasFocus())
+                    grabbedTile.requestRectangleOnScreen(
+                            new Rect(0, 0, grabbedTile.getWidth(), grabbedTile.getHeight()), true);
+            });
         }
     }
 
@@ -159,6 +243,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
         final String entityId;
         final TextView name, value;
         final DeviceIcon icon;
+        boolean grabbed;
         Tile(String entityId) {
             super(ShieldRoomPanelView.this.getContext());
             this.entityId=entityId;
@@ -176,11 +261,18 @@ public final class ShieldRoomPanelView extends LinearLayout {
             labels.addView(name); labels.addView(value);
             addView(labels,new LayoutParams(0,LayoutParams.WRAP_CONTENT,1f));
             setOnFocusChangeListener((v,focused) -> {
-                v.setBackground(chrome(focused));
                 if (focused) focusedId=entityId;
-                name.setSelected(focused);
+                refreshEmphasis();
+            });
+            setOnLongClickListener(v -> {
+                beginGrab(this);
+                return true;
             });
             setOnClickListener(v -> {
+                if (grabSession != null && grabbedTile == this) {
+                    commitGrab();
+                    return;
+                }
                 if (toggle==null || state==null || !state.actionable()) return;
                 for (EntityCard card:state.cards) if (entityId.equals(card.entityId()) && inRoom(card)
                         && ("on".equals(card.state())||"off".equals(card.state()))) {
@@ -188,6 +280,18 @@ public final class ShieldRoomPanelView extends LinearLayout {
                 }
             });
             setOnKeyListener((v,key,event) -> {
+                if (grabSession != null && grabbedTile == this) {
+                    if (key==KeyEvent.KEYCODE_DPAD_LEFT || key==KeyEvent.KEYCODE_DPAD_RIGHT) {
+                        if (event.getAction()==KeyEvent.ACTION_DOWN)
+                            moveGrab(key==KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1);
+                        return true;
+                    }
+                    if (key==KeyEvent.KEYCODE_DPAD_CENTER || key==KeyEvent.KEYCODE_ENTER) {
+                        if (event.getAction()==KeyEvent.ACTION_DOWN && event.getRepeatCount()==0) commitGrab();
+                        return true;
+                    }
+                    if (key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) return true;
+                }
                 if (key==KeyEvent.KEYCODE_DPAD_LEFT || key==KeyEvent.KEYCODE_DPAD_RIGHT) {
                     if (event.getAction()==KeyEvent.ACTION_DOWN) {
                         int i=row.indexOfChild(v)+(key==KeyEvent.KEYCODE_DPAD_LEFT?-1:1);
@@ -201,6 +305,20 @@ public final class ShieldRoomPanelView extends LinearLayout {
                 }
                 return false;
             });
+        }
+        void setGrabbed(boolean value) {
+            grabbed = value;
+            refreshEmphasis();
+        }
+        void refreshEmphasis() {
+            boolean focused = hasFocus();
+            setBackground(chrome(focused));
+            name.setSelected(focused);
+            animate().cancel();
+            float scale = grabbed ? 1.10f : 1f;
+            animate().scaleX(scale).scaleY(scale)
+                    .translationZ(grabbed ? dp(10) : 0f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS).start();
         }
         void bind(EntityCard card) {
             name.setText(card.displayName());
