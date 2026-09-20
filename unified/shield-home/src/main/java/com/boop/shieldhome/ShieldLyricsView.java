@@ -114,15 +114,6 @@ public final class ShieldLyricsView extends FrameLayout {
         artist.setOnClickListener(v -> {
             if (v.isEnabled()) controls.browseArtist();
         });
-        artist.setOnKeyListener((v, key, event) -> {
-            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
-            if (key == KeyEvent.KEYCODE_DPAD_UP)
-                return artist.isFocusable() ? artist.requestFocus()
-                        : artwork.isFocusable() && artwork.requestFocus();
-            if (key == KeyEvent.KEYCODE_DPAD_DOWN)
-                return progress.isFocusable() ? progress.requestFocus() : focusTransport();
-            return false;
-        });
         lyrics = new LyricsLinesView(context, accent);
         addView(lyrics);
         status = label("", 24, Color.rgb(155, 174, 184), false);
@@ -132,13 +123,23 @@ public final class ShieldLyricsView extends FrameLayout {
         duration = label("", 12, Color.rgb(161, 177, 187), false);
         duration.setGravity(Gravity.END);
         progress = new PositionBar(context);
+        artist.setOnKeyListener((v, key, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (key == KeyEvent.KEYCODE_DPAD_UP)
+                return artwork.isFocusable() && artwork.requestFocus();
+            if (key == KeyEvent.KEYCODE_DPAD_DOWN)
+                return progress.isFocusable() ? progress.requestFocus() : focusTransport();
+            return false;
+        });
         progress.setFocusable(true);
         progress.setContentDescription("Track position. Left and right seek ten seconds.");
         progress.setOnKeyListener((v, key, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (key == KeyEvent.KEYCODE_DPAD_LEFT) { controls.seek(-10000L); return true; }
             if (key == KeyEvent.KEYCODE_DPAD_RIGHT) { controls.seek(10000L); return true; }
-            if (key == KeyEvent.KEYCODE_DPAD_UP) return artwork.isFocusable() && artwork.requestFocus();
+            if (key == KeyEvent.KEYCODE_DPAD_UP)
+                return artist.isFocusable() ? artist.requestFocus()
+                        : artwork.isFocusable() && artwork.requestFocus();
             if (key == KeyEvent.KEYCODE_DPAD_DOWN) return focusTransport();
             return false;
         });
