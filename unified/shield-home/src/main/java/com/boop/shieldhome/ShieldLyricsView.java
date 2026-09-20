@@ -29,7 +29,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private final int accent;
     private final Controls controls;
     private final ImageView artwork;
-    private final TextView eyebrow, title, artist, status, credit, elapsed, duration;
+    private final TextView eyebrow, title, artist, status, elapsed, duration;
     private final LyricsLinesView lyrics;
     private final TransportButton[] buttons = new TransportButton[5];
     private final PositionBar progress;
@@ -87,13 +87,8 @@ public final class ShieldLyricsView extends FrameLayout {
         };
         artwork.setOnClickListener(v -> { if (v.isEnabled()) controls.browseAlbum(); });
         artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        artwork.setBackgroundColor(Color.rgb(16, 24, 29));
-        artwork.setOutlineProvider(new ViewOutlineProvider() {
-            @Override public void getOutline(View view, Outline outline) {
-                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), 9f * unit);
-            }
-        });
-        artwork.setClipToOutline(true);
+        artwork.setBackground(FocusChrome.filled(context, Color.rgb(16, 24, 29), 9, false));
+        FocusChrome.clipRounded(artwork, 9);
         addView(artwork);
         title = label("", 29, Color.WHITE, true);
         title.setMaxLines(2);
@@ -106,12 +101,6 @@ public final class ShieldLyricsView extends FrameLayout {
         status = label("", 24, Color.rgb(155, 174, 184), false);
         status.setGravity(Gravity.CENTER_VERTICAL);
         status.setMaxLines(3);
-        credit = label("", 5, Color.rgb(116, 133, 143), false);
-        credit.setMaxLines(3);
-        credit.setEllipsize(TextUtils.TruncateAt.END);
-        credit.setGravity(Gravity.END | Gravity.BOTTOM);
-        credit.setFocusable(false);
-        credit.setClickable(false);
         elapsed = label("0:00", 12, Color.rgb(161, 177, 187), false);
         duration = label("", 12, Color.rgb(161, 177, 187), false);
         duration.setGravity(Gravity.END);
@@ -197,7 +186,6 @@ public final class ShieldLyricsView extends FrameLayout {
     }
     public void setDocument(DeezerLyricsDocument document) {
         lyrics.setDocument(document);
-        credit.setText(document == null ? "" : document.credit());
         snapClock = true;
         schedule();
     }
@@ -248,14 +236,12 @@ public final class ShieldLyricsView extends FrameLayout {
         float lyricsX = 590f * unit;
         place(lyrics, lyricsX, 52f * unit, w - lyricsX - 66f * unit, 550f * unit);
         place(status, lyricsX, 180f * unit, w - lyricsX - 85f * unit, 260f * unit);
-        // Keep the former footer's right/bottom inset, with room for the complete credit.
-        place(credit, lyricsX, 676f * unit, w - lyricsX - 57f * unit, 28f * unit);
         place(progress, left, 583f * unit, 397f * unit, 18f * unit);
         place(elapsed, left, 601f * unit, 80f * unit, 24f * unit);
         place(duration, left + 317f * unit, 601f * unit, 80f * unit, 24f * unit);
         for (int i = 0; i < buttons.length; i++) place(buttons[i], left + i * 71f * unit, 632f * unit, 54f * unit, 54f * unit);
         size(eyebrow, 13); size(title, 28); size(artist, 19); size(status, 24);
-        size(credit, 5); size(elapsed, 12); size(duration, 12);
+size(elapsed, 12); size(duration, 12);
         artwork.invalidateOutline();
     }
     private void place(View view, float x, float y, float w, float h) {
