@@ -48,6 +48,7 @@ public final class ShieldNowPlayingManager {
     private final ShieldHomeStore store;
     private final NowPlayingState state = new NowPlayingState();
     private final DeezerFlowController flowController = new DeezerFlowController();
+    private final DeezerQueueController queueController;
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
     private final LinkedHashMap<String, Bitmap> notificationArtwork = new LinkedHashMap<>();
     private final LinkedHashMap<String, PendingIntent> notificationContentIntents = new LinkedHashMap<>();
@@ -93,7 +94,13 @@ public final class ShieldNowPlayingManager {
                 applicationContext, mainHandler, this::publishSelection);
         store = new ShieldHomeStore(applicationContext);
         preferredPackage = store.nowPlayingPlayerPackage();
+        queueController = new DeezerQueueController(() -> {
+            try { return applicationContext.getPackageManager().getPackageInfo("deezer.android.app", 0).getLongVersionCode(); }
+            catch (Exception unavailable) { return 0L; }
+        });
     }
+
+    DeezerQueueController queue() { return queueController; }
 
     public NowPlayingState state() {
         return state;
@@ -212,8 +219,10 @@ public final class ShieldNowPlayingManager {
         if (Looper.myLooper() != Looper.getMainLooper()) return false;
         DeezerFlowController.Result result = flowController.request(selectedController, state.current(),
                 SystemClock.elapsedRealtime());
-        if (result == DeezerFlowController.Result.REQUESTED)
+        if (result == DeezerFlowController.Result.REQUESTED) {
+            queueController.suppressForFlow();
             android.util.Log.i("BOOPFlow", "Native Deezer Flow requested");
+        }
         return result != DeezerFlowController.Result.UNAVAILABLE;
     }
 
@@ -496,6 +505,7 @@ public final class ShieldNowPlayingManager {
         artworkResolver.clear();
         selectedId = 0L;
         selectedController = null;
+        queueController.clear();
         state.update(null);
     }
 
@@ -599,6 +609,7 @@ public final class ShieldNowPlayingManager {
         selectedId = chosen;
         selectedController = null;
         if (chosen == 0L) {
+            queueController.clear();
             state.update(null);
             return;
         }
@@ -618,10 +629,12 @@ public final class ShieldNowPlayingManager {
             AudioModeController.get(applicationContext).applyCast(
                     AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing, actions));
             state.update(snapshot(binding));
+            queueController.update(selectedController, selectedId);
             return;
         }
 
         selectedId = 0L;
+        queueController.clear();
         state.update(null);
     }
 
@@ -764,6 +777,14 @@ public final class ShieldNowPlayingManager {
 
             @Override public void onPlaybackStateChanged(PlaybackState playbackState) {
                 publishSelection();
+            }
+
+            @Override public void onQueueChanged(List<MediaSession.QueueItem> queue) {
+                queueController.queueChanged(controller, id, queue);
+            }
+
+            @Override public void onQueueTitleChanged(CharSequence title) {
+                if (id == selectedId) queueController.update(controller, id);
             }
 
             @Override public void onAudioInfoChanged(MediaController.PlaybackInfo info) {

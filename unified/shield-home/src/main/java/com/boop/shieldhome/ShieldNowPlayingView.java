@@ -35,6 +35,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private final ProgressBar progress;
     private final TextView lyricsButton;
     private final TextView sourceButton;
+    private final TextView queueButton;
+    private Runnable unsubscribeQueue;
     private final TextView previousButton;
     private final TextView playPauseButton;
     private final TextView nextButton;
@@ -140,6 +142,14 @@ public final class ShieldNowPlayingView extends FrameLayout {
         lyricsParams.rightMargin = dp(8);
         titleRow.addView(lyricsButton, lyricsParams);
 
+        queueButton = actionButton("Queue");
+        queueButton.setContentDescription("Browse the current album or playlist queue");
+        queueButton.setOnClickListener(v -> { if (callbacks != null) callbacks.onNowPlayingQueue(); });
+        queueButton.setVisibility(GONE);
+        LinearLayout.LayoutParams queueParams = new LinearLayout.LayoutParams(dp(78), dp(44));
+        queueParams.rightMargin = dp(8);
+        titleRow.addView(queueButton, queueParams);
+
         sourceButton = actionButton("Flow");
         sourceButton.setContentDescription("Start your Deezer Flow");
         sourceButton.setOnClickListener(v -> {
@@ -223,6 +233,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         this.callbacks = callbacks;
         this.snapshot = snapshot;
         favouriteButton.setSnapshot(snapshot);
+        updateQueueButton(ShieldNowPlayingManager.get(getContext()).queue().current());
         artwork.setContentDescription(snapshot != null && "deezer.android.app".equals(snapshot.packageName())
                 ? "Browse album in Deezer" : "Open source player");
         stopTicker();
@@ -262,7 +273,27 @@ public final class ShieldNowPlayingView extends FrameLayout {
         }
     }
 
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        subscribeQueue();
+    }
+
+    private void subscribeQueue() {
+        if (unsubscribeQueue == null && isAttachedToWindow())
+            unsubscribeQueue = ShieldNowPlayingManager.get(getContext()).queue().subscribe(this::updateQueueButton);
+    }
+
+    private void updateQueueButton(DeezerQueueController.State queue) {
+        boolean show = queue.visible && snapshot != null && snapshot.sessionId() == queue.session;
+        if (!show && queueButton.hasFocus()) sourceButton.requestFocus();
+        queueButton.setVisibility(show ? VISIBLE : GONE);
+        queueButton.setFocusable(show);
+        queueButton.setEnabled(show);
+    }
+
     @Override protected void onDetachedFromWindow() {
+        if (unsubscribeQueue != null) unsubscribeQueue.run();
+        unsubscribeQueue = null;
         stopTicker();
         super.onDetachedFromWindow();
     }
@@ -378,6 +409,15 @@ public final class ShieldNowPlayingView extends FrameLayout {
                 (favouriteButton.getVisibility() == VISIBLE ? favouriteButton : nextButton).requestFocus();
                 return true;
             }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                (queueButton.getVisibility() == VISIBLE ? queueButton : sourceButton).requestFocus(); return true;
+            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) { progress.requestFocus(); return true; }
+            return false;
+        });
+        queueButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { lyricsButton.requestFocus(); return true; }
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { sourceButton.requestFocus(); return true; }
             if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) { progress.requestFocus(); return true; }
             return false;
@@ -386,7 +426,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton
+                (queueButton.getVisibility() == VISIBLE ? queueButton
+                        : lyricsButton.getVisibility() == VISIBLE ? lyricsButton
                         : favouriteButton.getVisibility() == VISIBLE ? favouriteButton : nextButton).requestFocus();
                 return true;
             }

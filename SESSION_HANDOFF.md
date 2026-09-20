@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## In progress: v237 approved Queue panel
+
+Ryan approved Queue beside Lyrics, hidden during Flow. The physical native album queue jump is now confirmed, preserving album order. The v237 source candidate adds the charcoal remote list, real current-track indication, same-queue selection and Flow exclusion with stale-row/late-metadata guards. Twelve focused tests pass, including34 native queue assertions; full CI and the new installed panel remain pending. No working heart/Lyrics/audio code was altered. Details: docs/handoffs/2026-09-20-shield-queue-v237.md. The earlier investigation below is historical and its layout/jump questions are superseded by this approval and probe.
+
 ## Queue investigation, not implemented: 2026-09-20
 
 Ryan is interested in a normal album/playlist Queue, explicitly excluding Flow. Live read-only inspection found an actual published Flow marker (`com.deezer.METADATA_KEY_STREAM_CONTEXT_TYPE=flow_partner`, listen type SMART_RADIO), so hiding it need not rely on queue length. Matched-provider mapping also defines album_partner and playlist_partner; those modes have not yet been captured live in this task. The current Flow list is listening history through the current item, not upcoming suggestions. Queue titles/artists and unique numeric queue IDs are available; standard item media IDs are absent. Long playlists use a limited published window.

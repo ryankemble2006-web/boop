@@ -73,6 +73,7 @@ public final class ShieldLauncherActivity extends Activity {
     private FrameLayout root;
     private View currentView;
     private AlertDialog favouritePicker;
+    private ShieldQueueDialog queueDialog;
 
     private List<TvAppEntry> installedApps = List.of();
     private List<String> favouriteComponents = List.of();
@@ -135,6 +136,7 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if (queueDialog != null) queueDialog.dismiss();
         showHome(true);
     }
 
@@ -412,6 +414,12 @@ public final class ShieldLauncherActivity extends Activity {
             }
             @Override public void onOpenNowPlayingSource() {
                 if (nowPlayingManager != null) nowPlayingManager.openSource(ShieldLauncherActivity.this);
+            }
+            @Override public void onNowPlayingQueue() {
+                if (nowPlayingManager == null || !nowPlayingManager.queue().current().visible) return;
+                if (queueDialog != null && queueDialog.isShowing()) return;
+                queueDialog = new ShieldQueueDialog(ShieldLauncherActivity.this, nowPlayingManager.queue());
+                queueDialog.show();
             }
             @Override public void onNowPlayingFlow() {
                 if (nowPlayingManager == null || !nowPlayingManager.playDeezerFlow())
@@ -1079,6 +1087,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onDestroy() {
         destroyed = true;
+        if (queueDialog != null) queueDialog.dismiss();
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
         artistBrowser.cancel();
@@ -1112,6 +1121,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onPause() {
         resumed = false;
+        if (queueDialog != null) queueDialog.dismiss();
         refreshRoomPanelSession();
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
