@@ -9,7 +9,7 @@ def test_lrclib_is_second_source_after_deezer_and_uses_synced_only():
     client = (SRC / "LrclibLyricsClient.java").read_text(encoding="utf-8")
     document = (SRC / "DeezerLyricsDocument.java").read_text(encoding="utf-8")
     assert "client.load(id, request, primaryDeadline)" in loader
-    assert "fallback.load(track, id, request, deadline)" in loader
+    assert "fallback.load(track, id, request, fallbackDeadline)" in loader
     assert 'https://lrclib.net/api' in client
     assert '"/get?track_name="' in client
     assert '"/search?track_name="' in client
@@ -21,8 +21,8 @@ def test_lrclib_is_second_source_after_deezer_and_uses_synced_only():
 
 def test_lrclib_candidate_is_identity_checked_and_duration_bounded():
     client = (SRC / "LrclibLyricsClient.java").read_text(encoding="utf-8")
-    assert 'norm(row.optString("trackName")).equals(norm(track.title()))' in client
-    assert 'norm(row.optString("artistName")).equals(norm(track.subtitle()))' in client
+    assert 'sameText(row.optString("trackName"), track.title())' in client
+    assert 'sameText(row.optString("artistName"), track.subtitle())' in client
     assert "Math.abs(duration*1000.0-track.durationMs()) <= 3500.0" in client
 
 
