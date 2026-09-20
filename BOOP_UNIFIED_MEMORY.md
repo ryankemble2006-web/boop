@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v231. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v232. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -137,11 +137,19 @@ Fullscreen lyrics artist behavior matches HOME:
 - click routes to the same `DeezerArtistBrowser` used by HOME;
 - album and artist browser operations cancel each other to prevent overlapping lookups.
 
+## Lyrics fallback rule from v232
+
+Lyrics provider order is:
+1. Deezer timed lyrics, unchanged primary path.
+2. LRCLIB synced LRC fallback using current title/artist/album/duration metadata.
+
+Only synced LRCLIB lyrics are accepted. Do not synthesize timestamps from plain lyrics. Candidate title and artist are normalized and must match; duration must be within 3.5 seconds when known. HOME preflight and fullscreen loading share the same fallback-aware loader.
+
 ## Latest verified artifact
 
-Build source `d8fd4251e1788e3d056f40a96b8b5cdd04399ad3`.
-Run `35522094041`, job `106107816107`; artifact `10608946787`, `BOOP-Shield-v231-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v231.apk`, 160485741 bytes, SHA-256 `6ea6f021f272261ff59c01c757db02d8aa8d16c920bfe446819ccaf874007f37`.
+Build source `ba25861b5bb9547fcf68c2dd816718716bbe6d27`.
+Run `35523199556`, job `106110743571`; artifact `10609073068`, `BOOP-Shield-v232-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v232.apk`, 160502125 bytes, SHA-256 `3f2b77070a95c48b9d69079338002636053a1688dfb1fb4ff1a394d3d9c98d9d`.
 Permanent signer unchanged. All 16 native libraries remain baseline-identical.
 
-v230 title rendering, v229 centred lyrics layout, v228 marquee and v226 hard-mask corners remain retained. Wall stays v207.
+v231 artist action and all accepted v230/v229/v228/v226 presentation behavior remain retained. Wall stays v207.
