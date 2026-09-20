@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## Latest feedback: v241 Queen favourite passed; voice selection needs investigation
+
+Ryan reports a successful favourite from a manually selected Queen album on v241. Keep this as scoped positive acceptance, not a claim that all heart cases are fixed. He reports unreliable natural music requests for Queen, John Lennon Imagine, John Lennon and Britney Spears. Read-only inspection found brittle title/artist selection rules. A private test of current production resolver code with live public catalogue results selected the correct Queen, Lennon and Britney artists, but returned NO_MATCH for John Lennon Imagine. Original wrong selections and spoken Failed were not reproduced end-to-end; transcription and execution route remain to be checked. No new app changes/install or playback commands. Proposed resolver improvements are pending, not a completed fix. Details: docs/handoffs/2026-09-20-music-voice-selection-investigation.md.
+
 ## Current: Shield v241 installed; Pixel 7 Wall v208 installed; heart retest pending
 
 Source/build45c49833cf1be594645b030029ddea29beaee88b on boop-shield-weather-focus-v221. Shield241 is installed with data preserved and its package version read back. The decorative NOW PLAYING heading in Lyrics is removed; all accepted artwork/title/artist/progress/transport/Queue coordinates and38px column translation are unchanged. Ryan already accepted the prior Queue placement and list scale. No acceptance of the new heart correction is inferred from that UI feedback.
