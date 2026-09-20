@@ -1,8 +1,8 @@
 # BOOP status
 
-Updated 2026-09-20. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-hour-temp-nudge-v222`.
+Updated 2026-09-20. Owner: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221`; v222 snapshot branch: `boop-shield-hour-temp-nudge-v222`.
 
-Shield v222 / `1.2.222-shield` is signed and ready for Ryan's physical test.
+Shield v222 / `1.2.222-shield` is signed and ready for Ryan's physical test. The live iteration branch intentionally stays on `boop-shield-weather-focus-v221` so subsequent tiny UI builds can reuse the same branch-scoped Gradle cache.
 
 v222 is deliberately tiny:
 - only the four **Next 4 hours** temperature values are nudged +1 physical pixel to the right;
