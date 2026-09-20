@@ -93,13 +93,17 @@ public final class BoopDeezerHeartBackend {
     }
     private static String shell(String base,String token,String entity,String command,BooleanSupplier current)throws Exception {
         check(current);String receipt="BOOP_HEART_"+UUID.randomUUID().toString().replace("-","");
-        DeezerArtistClient.request(base+"/api/services/androidtv/adb_command",token,new JSONObject()
+        String serviceReply=DeezerArtistClient.request(base+"/api/services/androidtv/adb_command",token,new JSONObject()
                 .put("entity_id",entity).put("command","echo "+receipt+"; "+command));
-        JSONObject state=new JSONObject(DeezerArtistClient.request(base+"/api/states/"+entity,token,null));
-        check(current);JSONObject attributes=state.optJSONObject("attributes");
-        String[] lines=(attributes==null?"":attributes.optString("adb_response")).split("\\r?\\n",2);
-        if(lines.length==0||!receipt.equals(lines[0]))throw new IOException("Stale ADB receipt");
-        return lines.length<2?"":lines[1].trim();
+        check(current);
+        String output=AdbCommandReceipt.fromService(serviceReply,entity,receipt);
+        if(output==null) {
+            JSONObject state=new JSONObject(DeezerArtistClient.request(base+"/api/states/"+entity,token,null));
+            check(current);
+            output=AdbCommandReceipt.fromState(state,entity,receipt);
+        }
+        if(output==null)throw new IOException("Stale ADB receipt");
+        return output;
     }
     private static void check(BooleanSupplier current)throws IOException {
         if(Thread.currentThread().isInterrupted()||!current.getAsBoolean())throw new IOException("Heart request cancelled");

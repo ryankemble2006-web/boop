@@ -56,13 +56,19 @@ final class DeezerNativeController {
     private String shell(String command) throws Exception {
         checkCurrent();
         String nonce="BOOP_"+UUID.randomUUID().toString().replace("-","");
-        http.request(base+"/api/services/androidtv/adb_command",token,new JSONObject().put("entity_id",entity).put("command","echo "+nonce+"; "+command));
-        JSONObject state=new JSONObject(http.request(base+"/api/states/"+entity,token,null));
+        String serviceReply=http.request(base+"/api/services/androidtv/adb_command",token,
+                new JSONObject().put("entity_id",entity).put("command","echo "+nonce+"; "+command));
         checkCurrent();
-        JSONObject attrs=state.optJSONObject("attributes");
-        String output=attrs==null?"":attrs.optString("adb_response");
-        if(!output.startsWith(nonce)) throw new IOException("Stale ADB response");
-        return output.substring(nonce.length()).trim();
+        // The native track change can start a simultaneous Shield heart lookup.
+        // Its ADB output must not replace this command's completed response.
+        String output=AdbCommandReceipt.fromService(serviceReply,entity,nonce);
+        if(output==null) {
+            JSONObject state=new JSONObject(http.request(base+"/api/states/"+entity,token,null));
+            checkCurrent();
+            output=AdbCommandReceipt.fromState(state,entity,nonce);
+        }
+        if(output==null)throw new IOException("Stale ADB response");
+        return output;
     }
     private void checkCurrent() throws IOException {
         BoopRoom current=rooms.currentRoom();

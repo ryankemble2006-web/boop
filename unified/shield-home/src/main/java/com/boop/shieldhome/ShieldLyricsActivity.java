@@ -17,6 +17,8 @@ public final class ShieldLyricsActivity extends Activity {
     private ShieldNowPlayingManager manager;
     private ShieldLyricsView presentation;
     private Runnable unsubscribe;
+    private Runnable unsubscribeQueue;
+    private ShieldQueueDialog queueDialog;
     private String identity = "";
     private boolean started;
 
@@ -34,6 +36,14 @@ public final class ShieldLyricsActivity extends Activity {
             @Override public void next() { manager.next(); }
             @Override public void seek(long milliseconds) { manager.seekBy(milliseconds); }
             @Override public void close() { finish(); }
+            @Override public void queue() {
+                if (!started || isFinishing() || !manager.queue().current().visible) return;
+                if (queueDialog != null && queueDialog.isShowing()) return;
+                queueDialog = new ShieldQueueDialog(ShieldLyricsActivity.this, manager.queue());
+                queueDialog.show();
+                if (queueDialog.getWindow() != null) queueDialog.getWindow().getDecorView()
+                        .setSystemUiVisibility(getWindow().getDecorView().getSystemUiVisibility());
+            }
             @Override public void browseAlbum() {
                 artistBrowser.cancel();
                 if (!started || isFinishing()) return;
@@ -59,11 +69,18 @@ public final class ShieldLyricsActivity extends Activity {
         identity = "";
         presentation.setRunning(true);
         unsubscribe = manager.state().subscribe(this::changed);
+        unsubscribeQueue = manager.queue().subscribe(this::queueChanged);
         manager.refreshAccess();
+    }
+    private void queueChanged(DeezerQueueController.State state) {
+        if (!started || isFinishing()) return;
+        NowPlayingSnapshot current = manager.state().current();
+        presentation.setQueueAvailable(state.visible && current != null && state.session == current.sessionId());
     }
     private void changed(NowPlayingSnapshot snapshot) {
         if (!started || isFinishing()) return;
         presentation.setSnapshot(snapshot, clockKnown(snapshot));
+        queueChanged(manager.queue().current());
         String deezerId = snapshot == null ? "" : manager.deezerLyricsTrackId(snapshot);
         String cacheId = snapshot == null ? "" : deezerId.isEmpty()
                 ? "meta:" + Integer.toHexString(snapshot.trackKey().hashCode()) : deezerId;
@@ -100,6 +117,7 @@ public final class ShieldLyricsActivity extends Activity {
         } catch (RuntimeException unavailable) { return false; }
     }
     @Override protected void onPause() {
+        if (queueDialog != null) queueDialog.dismiss();
         albumBrowser.cancel();
         artistBrowser.cancel();
         super.onPause();
@@ -111,6 +129,9 @@ public final class ShieldLyricsActivity extends Activity {
         loader.cancel();
         if (unsubscribe != null) unsubscribe.run();
         unsubscribe = null;
+        if (unsubscribeQueue != null) unsubscribeQueue.run();
+        unsubscribeQueue = null;
+        presentation.setQueueAvailable(false);
         presentation.setRunning(false);
         super.onStop();
     }

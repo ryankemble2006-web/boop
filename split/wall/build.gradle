@@ -4,7 +4,8 @@ android {
     namespace 'com.boop.wallapp'
     defaultConfig {
         applicationId 'com.boop.alpha1'
-        versionName '1.2.207-wall'
+        versionCode 208
+        versionName '1.2.208-wall'
     }
     buildTypes { debug { signingConfig signingConfigs.boopDev } }
 }

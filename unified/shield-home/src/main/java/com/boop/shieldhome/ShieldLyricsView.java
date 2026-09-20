@@ -23,11 +23,14 @@ import java.util.Locale;
 public final class ShieldLyricsView extends FrameLayout {
     public interface Controls {
         void previous(); void playPause(); void next(); void seek(long milliseconds); void close(); void browseAlbum(); void browseArtist();
+        default void queue() { }
     }
+    private static final float MUSIC_COLUMN_SHIFT = 38f;
     private final int accent;
     private final Controls controls;
     private final ImageView artwork;
     private final TextView eyebrow, title, artist, status, elapsed, duration;
+    private final TextView queueButton;
     private final LyricsLinesView lyrics;
     private final TransportButton[] buttons = new TransportButton[3];
     private final PositionBar progress;
@@ -178,6 +181,22 @@ public final class ShieldLyricsView extends FrameLayout {
             button.setOnKeyListener((v, key, event) -> handleFavouriteRowKey(kind + 1, key, event));
             addView(button);
         }
+        queueButton = label("Queue", 18, Color.WHITE, true);
+        queueButton.setGravity(Gravity.CENTER);
+        queueButton.setIncludeFontPadding(false);
+        queueButton.setSingleLine(true);
+        queueButton.setContentDescription("Browse the current album or playlist queue");
+        queueButton.setBackground(FocusChrome.filled(context, Color.rgb(14, 23, 28), 9, false));
+        queueButton.setOnFocusChangeListener((v, focused) -> v.setBackground(
+                FocusChrome.filled(getContext(), Color.rgb(14, 23, 28), 9, focused)));
+        queueButton.setOnClickListener(v -> { if (v.isEnabled()) controls.queue(); });
+        queueButton.setOnKeyListener((v, key, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (key == KeyEvent.KEYCODE_DPAD_UP) return focusTransport();
+            return key == KeyEvent.KEYCODE_DPAD_DOWN || key == KeyEvent.KEYCODE_DPAD_LEFT
+                    || key == KeyEvent.KEYCODE_DPAD_RIGHT;
+        });
+        setQueueAvailable(false);
         post(() -> { if (buttons[1].isFocusable()) buttons[1].requestFocus(); });
     }
     public void setSnapshot(NowPlayingSnapshot next, boolean knownClock) {
@@ -218,8 +237,16 @@ public final class ShieldLyricsView extends FrameLayout {
         displayedSecond = Long.MIN_VALUE;
         schedule();
     }
+    public void setQueueAvailable(boolean available) {
+        if (!available && queueButton.hasFocus()) focusTransport();
+        queueButton.setVisibility(available ? VISIBLE : GONE);
+        queueButton.setFocusable(available);
+        queueButton.setEnabled(available);
+        queueButton.setClickable(available);
+    }
     private boolean handleFavouriteRowKey(int slot, int key, KeyEvent event) {
         if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        if (key == KeyEvent.KEYCODE_DPAD_DOWN && queueButton.isShown()) return queueButton.requestFocus();
         if (key == KeyEvent.KEYCODE_DPAD_UP)
             return progress.isFocusable() ? progress.requestFocus()
                     : artist.isFocusable() ? artist.requestFocus()
@@ -306,6 +333,12 @@ public final class ShieldLyricsView extends FrameLayout {
         place(addHeart, transportLeft + 213f * unit, 632f * unit, 54f * unit, 54f * unit);
         size(eyebrow, 13); size(title, 28); size(artist, 19); size(status, 24);
 size(elapsed, 12); size(duration, 12);
+        place(queueButton, progressCenter - 56f * unit, 703f * unit, 112f * unit, 38f * unit);
+        size(queueButton, 18);
+        // Keep every accepted gap; translate the whole music column, never the lyric text.
+        for (View item : new View[]{eyebrow, artwork, title, artist, progress, elapsed, duration, removeHeart, addHeart, queueButton})
+            item.setTranslationY(-MUSIC_COLUMN_SHIFT * unit);
+        for (TransportButton button : buttons) button.setTranslationY(-MUSIC_COLUMN_SHIFT * unit);
         artwork.invalidate();
     }
     private void place(View view, float x, float y, float w, float h) {

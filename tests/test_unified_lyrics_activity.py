@@ -24,7 +24,7 @@ public class Activity {
 'android/view/View.java': '''package android.view; public class View {
  public static final int SYSTEM_UI_FLAG_FULLSCREEN=1,SYSTEM_UI_FLAG_HIDE_NAVIGATION=2,SYSTEM_UI_FLAG_IMMERSIVE_STICKY=4,
  SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN=8,SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION=16,SYSTEM_UI_FLAG_LAYOUT_STABLE=32;
- public void setSystemUiVisibility(int flags){}
+ public void setSystemUiVisibility(int flags){} public int getSystemUiVisibility(){return 63;}
 }''',
 'android/view/Window.java': 'package android.view; public class Window {public void addFlags(int f){} public View getDecorView(){return new View();}}',
 'android/view/WindowManager.java': 'package android.view; public class WindowManager {public static class LayoutParams {public static final int FLAG_KEEP_SCREEN_ON=128;}}',
@@ -74,19 +74,35 @@ final class DeezerArtistBrowser {
  void open(android.app.Activity a,ShieldNowPlayingManager m,NowPlayingSnapshot s){opens++;requested=s;}
  void cancel(){cancellations++;}
 }
+final class DeezerQueueController {
+ static final class State {final boolean visible;final long session;State(boolean v,long s){visible=v;session=s;}}
+ State value=new State(true,1);final List<Consumer<State>> listeners=new ArrayList<>();
+ State current(){return value;}
+ Runnable subscribe(Consumer<State> listener){listeners.add(listener);listener.accept(value);return ()->listeners.remove(listener);}
+ void update(boolean visible,long session){value=new State(visible,session);for(Consumer<State> c:new ArrayList<>(listeners))c.accept(value);}
+}
+final class ShieldQueueDialog {
+ static int opens; static ShieldQueueDialog latest; boolean showing;
+ ShieldQueueDialog(android.app.Activity activity,DeezerQueueController controller){latest=this;}
+ void show(){showing=true;opens++;} boolean isShowing(){return showing;} void dismiss(){showing=false;}
+ android.view.Window getWindow(){return new android.view.Window();}
+}
 final class ShieldNowPlayingManager {
  static ShieldNowPlayingManager instance; final NowPlayingState bus=new NowPlayingState();
  int refreshes,previous,next,toggle,sourceOpens; boolean openSource(android.app.Activity activity){sourceOpens++;return true;} long seek;
  static ShieldNowPlayingManager get(android.app.Activity activity){return instance;}
+ final DeezerQueueController queue=new DeezerQueueController();
+ DeezerQueueController queue(){return queue;}
  NowPlayingState state(){return bus;} void refreshAccess(){refreshes++;}
  String deezerLyricsTrackId(NowPlayingSnapshot snapshot){return DeezerLyricsPolicy.available(snapshot.pkg)?snapshot.track:"";}
  android.media.session.MediaSession.Token sessionToken(long id){return new android.media.session.MediaSession.Token();}
  void previous(){previous++;} void next(){next++;} void togglePlayPause(){toggle++;} void seekBy(long delta){seek=delta;}
 }
 final class ShieldLyricsView extends android.view.View {
- interface Controls {void previous();void playPause();void next();void seek(long delta);void close();default void browseAlbum(){} default void browseArtist(){} }
+ interface Controls {void previous();void playPause();void next();void seek(long delta);void close();default void browseAlbum(){} default void browseArtist(){} default void queue(){} }
  static ShieldLyricsView latest; final Controls controls; NowPlayingSnapshot snapshot; DeezerLyricsDocument document;
- String status=""; boolean running; int updates;
+ String status=""; boolean running; int updates; boolean queueVisible;
+ void setQueueAvailable(boolean v){queueVisible=v;}
  ShieldLyricsView(android.app.Activity activity,int accent,Controls controls){latest=this;this.controls=controls;}
  void setRunning(boolean value){running=value;}
  void setSnapshot(NowPlayingSnapshot snapshot,boolean known){this.snapshot=snapshot;updates++;}
@@ -139,10 +155,21 @@ public final class UnifiedLyricsActivityCheck {
   eq(2,DeezerAlbumBrowser.opens,"Null selection cannot browse stale album");
   manager.bus.update(new NowPlayingSnapshot("707","other.player",3,2));view.controls.browseAlbum();
   eq(1,manager.sourceOpens,"Other player uses source fallback");
+  manager.bus.update(track("808"));manager.queue.update(true,1);
+  eq(true,view.queueVisible,"Lyrics queue follows allowed matching session");
+  view.controls.queue();eq(1,ShieldQueueDialog.opens,"Lyrics opens shared queue panel");
+  view.controls.queue();eq(1,ShieldQueueDialog.opens,"No duplicate queue dialogs");
+  manager.queue.update(false,1);eq(false,view.queueVisible,"Flow hides Lyrics queue immediately");
+  view.controls.queue();eq(1,ShieldQueueDialog.opens,"Flow never opens a queue");
+  manager.queue.update(true,2);eq(false,view.queueVisible,"Another session cannot expose queue");
+  manager.queue.update(true,1);eq(true,view.queueVisible,"Album restores Queue");
   int cancelled=DeezerAlbumBrowser.cancellations;activity.dispatchPause();
+  eq(false,ShieldQueueDialog.latest.isShowing(),"Leaving Lyrics dismisses its Queue");
   eq(cancelled+1,DeezerAlbumBrowser.cancellations,"Pause cancels pending album lookup");
   cancelled=DeezerAlbumBrowser.cancellations;activity.onStop();
   eq(cancelled+1,DeezerAlbumBrowser.cancellations,"Stop cancels pending album lookup");
+  eq(0,manager.queue.listeners.size(),"Stopped Lyrics unsubscribes Queue");
+  eq(false,view.queueVisible,"Stopped Lyrics does not expose an old Queue");
   activity.dispatchKeyEvent(new android.view.KeyEvent(4,0));eq(true,activity.isFinishing(),"Back retains Activity default path");
   activity.onStop();activity.onDestroy();eq(true,loader.destroyed,"Destroyed owner releases loader");
   System.out.println("PASS: "+checks+" internal Unified lyrics Activity/state/lifecycle/transport assertions.");
