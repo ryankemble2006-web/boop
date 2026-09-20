@@ -29,7 +29,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private final ImageView artwork;
     private final TextView eyebrow, title, artist, status, elapsed, duration;
     private final LyricsLinesView lyrics;
-    private final TransportButton[] buttons = new TransportButton[5];
+    private final TransportButton[] buttons = new TransportButton[3];
     private final PositionBar progress;
     private NowPlayingSnapshot snapshot;
     private boolean clockKnown;
@@ -103,6 +103,8 @@ public final class ShieldLyricsView extends FrameLayout {
         title.setMarqueeRepeatLimit(1);
         title.setSelected(true);
         artist = label("", 19, Color.rgb(162, 179, 189), false);
+        title.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
+        artist.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
         artist.setSingleLine(true);
         artist.setEllipsize(TextUtils.TruncateAt.END);
         lyrics = new LyricsLinesView(context, accent);
@@ -130,7 +132,7 @@ public final class ShieldLyricsView extends FrameLayout {
             return progress.isFocusable() ? progress.requestFocus() : focusTransport();
         });
 
-        String[] descriptions = {"Previous track", "Rewind ten seconds", "Pause", "Forward ten seconds", "Next track"};
+        String[] descriptions = {"Previous track", "Pause", "Next track"};
         for (int i = 0; i < buttons.length; i++) {
             final int kind = i;
             TransportButton button = new TransportButton(context, i);
@@ -142,10 +144,8 @@ public final class ShieldLyricsView extends FrameLayout {
                 if (!v.isEnabled()) return;
                 switch (kind) {
                     case 0: controls.previous(); break;
-                    case 1: controls.seek(-10000L); break;
-                    case 2: controls.playPause(); break;
-                    case 3: controls.seek(10000L); break;
-                    case 4: controls.next(); break;
+                    case 1: controls.playPause(); break;
+                    case 2: controls.next(); break;
                     default: break;
                 }
             });
@@ -155,7 +155,7 @@ public final class ShieldLyricsView extends FrameLayout {
                             : artwork.isFocusable() && artwork.requestFocus()));
             addView(button);
         }
-        post(() -> { if (buttons[2].isFocusable()) buttons[2].requestFocus(); });
+        post(() -> { if (buttons[1].isFocusable()) buttons[1].requestFocus(); });
     }
     public void setSnapshot(NowPlayingSnapshot next, boolean knownClock) {
         long now = SystemClock.elapsedRealtime();
@@ -177,19 +177,19 @@ public final class ShieldLyricsView extends FrameLayout {
         boolean seek = next != null && next.canSeek() && next.durationMs() > 0 && knownClock;
         progress.setFocusable(seek);
         progress.setEnabled(seek);
-        boolean[] enabled = {next != null && next.canPrevious(), seek,
-                next != null && next.canPlayPause(), seek, next != null && next.canNext()};
+        boolean[] enabled = {next != null && next.canPrevious(),
+                next != null && next.canPlayPause(), next != null && next.canNext()};
         for (int i = 0; i < buttons.length; i++) {
             buttons[i].setEnabled(enabled[i]);
             buttons[i].setFocusable(enabled[i]);
             buttons[i].invalidate();
         }
-        buttons[2].setContentDescription(next != null && next.isPlaying() ? "Pause" : "Play");
+        buttons[1].setContentDescription(next != null && next.isPlaying() ? "Pause" : "Play");
         displayedSecond = Long.MIN_VALUE;
         schedule();
     }
     private boolean focusTransport() {
-        if (buttons[2].isFocusable()) return buttons[2].requestFocus();
+        if (buttons[1].isFocusable()) return buttons[1].requestFocus();
         for (TransportButton button : buttons) if (button.isFocusable()) return button.requestFocus();
         return false;
     }
@@ -237,18 +237,24 @@ public final class ShieldLyricsView extends FrameLayout {
     private void measureGeometry(int w, int h) {
         unit = Math.min(w / 1280f, h / 720f);
         float left = 66f * unit;
+        float progressWidth = 397f * unit;
+        float progressCenter = left + progressWidth * 0.5f;
         float artSize = 302f * unit;
+        float artLeft = progressCenter - artSize * 0.5f;
+        float transportSpan = (3f * 54f + 2f * 17f) * unit;
+        float transportLeft = progressCenter - transportSpan * 0.5f;
         place(eyebrow, left, 54f * unit, 365f * unit, 30f * unit);
-        place(artwork, left, 116f * unit, artSize, artSize);
-        place(title, left, 448f * unit, 440f * unit, 42f * unit);
-        place(artist, left, 532f * unit, 440f * unit, 35f * unit);
+        place(artwork, artLeft, 116f * unit, artSize, artSize);
+        place(title, left, 448f * unit, progressWidth, 42f * unit);
+        place(artist, left, 520f * unit, progressWidth, 35f * unit);
         float lyricsX = 590f * unit;
         place(lyrics, lyricsX, 52f * unit, w - lyricsX - 66f * unit, 550f * unit);
         place(status, lyricsX, 180f * unit, w - lyricsX - 85f * unit, 260f * unit);
-        place(progress, left, 583f * unit, 397f * unit, 18f * unit);
+        place(progress, left, 583f * unit, progressWidth, 18f * unit);
         place(elapsed, left, 601f * unit, 80f * unit, 24f * unit);
         place(duration, left + 317f * unit, 601f * unit, 80f * unit, 24f * unit);
-        for (int i = 0; i < buttons.length; i++) place(buttons[i], left + i * 71f * unit, 632f * unit, 54f * unit, 54f * unit);
+        for (int i = 0; i < buttons.length; i++)
+            place(buttons[i], transportLeft + i * 71f * unit, 632f * unit, 54f * unit, 54f * unit);
         size(eyebrow, 13); size(title, 28); size(artist, 19); size(status, 24);
 size(elapsed, 12); size(duration, 12);
         artwork.invalidate();
@@ -298,7 +304,6 @@ size(elapsed, 12); size(duration, 12);
     private final class TransportButton extends View {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Path path = new Path();
-        private final RectF arc = new RectF(-15, -15, 15, 15);
         private final int kind;
         TransportButton(Context context, int kind) { super(context); this.kind = kind; }
         @Override protected void onFocusChanged(boolean gain, int direction, android.graphics.Rect previous) {
@@ -320,26 +325,16 @@ size(elapsed, 12); size(duration, 12);
             }
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(isEnabled() ? Color.WHITE : Color.rgb(69, 83, 92));
-            if (kind == 2) {
+            if (kind == 1) {
                 if (snapshot != null && snapshot.isPlaying()) {
                     canvas.drawRoundRect(-7, -9, -2, 9, 1, 1, paint);
                     canvas.drawRoundRect(2, -9, 7, 9, 1, 1, paint);
                 } else triangle(canvas, 1);
-            } else if (kind == 0 || kind == 4) {
+            } else {
                 canvas.save();
                 if (kind == 0) canvas.scale(-1, 1);
                 triangle(canvas, -1); canvas.drawRect(8, -9, 11, 9, paint);
                 canvas.restore();
-            } else {
-                canvas.save();
-                if (kind == 1) canvas.scale(-1, 1);
-                paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(1.8f); paint.setStrokeCap(Paint.Cap.ROUND);
-                canvas.drawArc(arc, -60, 285, false, paint);
-                paint.setStyle(Paint.Style.FILL);
-                path.reset(); path.moveTo(8, -18); path.lineTo(9, -9); path.lineTo(16, -14); path.close(); canvas.drawPath(path, paint);
-                canvas.restore();
-                paint.setTextSize(11); paint.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-                paint.setTextAlign(Paint.Align.CENTER); canvas.drawText("10", 0, 4, paint);
             }
             canvas.restore();
         }
