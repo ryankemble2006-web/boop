@@ -11,8 +11,9 @@ import java.util.function.Consumer;
 
 /** One UI owner, one cancellable request. Successful documents live briefly in memory only. */
 final class NativeLyricsLoader {
-    private static final long WAIT_MS = 5500L;
+    private static final long WAIT_MS = 9000L;
     private static final long DEEZER_WAIT_MS = 2500L;
+    private static final long LRCLIB_WAIT_MS = 6000L;
     private static final long CACHE_MS = 300000L;
     private static final Map<String, Cached> CACHE = new LinkedHashMap<>();
     private static final class Cached {
@@ -76,7 +77,8 @@ final class NativeLyricsLoader {
             if (document.status() != DeezerLyricsDocument.Status.AVAILABLE
                     && track != null && !request.cancelled()
                     && DeezerLyricsClient.nowMs() < deadline) {
-                DeezerLyricsDocument second = fallback.load(track, id, request, deadline);
+                long fallbackDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + LRCLIB_WAIT_MS);
+                DeezerLyricsDocument second = fallback.load(track, id, request, fallbackDeadline);
                 if (second.status() == DeezerLyricsDocument.Status.AVAILABLE
                         || document.status() == DeezerLyricsDocument.Status.UNAVAILABLE)
                     document = second;

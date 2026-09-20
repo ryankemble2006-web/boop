@@ -55,8 +55,8 @@ final class LrclibLyricsClient {
     private static JSONArray search(NowPlayingSnapshot track,
             DeezerLyricsClient.Call call, long deadline) throws Exception {
         String url = BASE + "/search?track_name=" + enc(track.title())
-                + "&artist_name=" + enc(track.subtitle());
-        String body = request(url, call, deadline, false);
+                + "&q=" + enc(track.title());
+        String body = request(url, call, deadline, true);
         return body == null ? null : new JSONArray(body);
     }
 
@@ -99,15 +99,25 @@ final class LrclibLyricsClient {
 
     private static boolean matches(JSONObject row, NowPlayingSnapshot track) {
         if (row == null) return false;
-        if (!norm(row.optString("trackName")).equals(norm(track.title()))) return false;
-        if (!norm(row.optString("artistName")).equals(norm(track.subtitle()))) return false;
+        if (!sameText(row.optString("trackName"), track.title())) return false;
+        if (!sameText(row.optString("artistName"), track.subtitle())) return false;
         double duration=row.optDouble("duration",-1);
         return duration <= 0 || track.durationMs() <= 0
                 || Math.abs(duration*1000.0-track.durationMs()) <= 3500.0;
     }
 
+    private static boolean sameText(String one, String two) {
+        String left = norm(one), right = norm(two);
+        if (left.equals(right)) return true;
+        if (left.startsWith("the ")) left = left.substring(4);
+        if (right.startsWith("the ")) right = right.substring(4);
+        return left.equals(right);
+    }
+
     private static String norm(String value) {
         return value == null ? "" : value.toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("\\([^)]*\\)$","")
+                .replaceAll("\\[[^]]*\\]$","")
                 .replaceAll("[^\\p{L}\\p{N}]+"," ").trim().replaceAll("\\s+"," ");
     }
 

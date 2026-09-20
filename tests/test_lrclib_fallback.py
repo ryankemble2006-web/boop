@@ -33,3 +33,15 @@ def test_home_preflight_and_open_lyrics_activity_both_use_metadata_fallback():
     assert "loader.load(snapshot, cacheId, next, document ->" in activity
     assert '"meta:" + Integer.toHexString' in browser
     assert '"meta:" + Integer.toHexString' in activity
+
+
+def test_lrclib_gets_its_own_fallback_window_and_broad_search():
+    loader = (SRC / "NativeLyricsLoader.java").read_text(encoding="utf-8")
+    client = (SRC / "LrclibLyricsClient.java").read_text(encoding="utf-8")
+    assert "private static final long WAIT_MS = 9000L;" in loader
+    assert "private static final long LRCLIB_WAIT_MS = 6000L;" in loader
+    assert "fallbackDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + LRCLIB_WAIT_MS)" in loader
+    assert '"/search?track_name=" + enc(track.title())' in client
+    assert '"&q=" + enc(track.title())' in client
+    assert "request(url, call, deadline, true)" in client
+    assert 'if (left.startsWith("the ")) left = left.substring(4);' in client
