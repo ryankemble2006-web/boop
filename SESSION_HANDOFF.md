@@ -1,54 +1,39 @@
 # BOOP current handoff
 
-## In progress: v235 invisible-heart candidate
+Updated 2026-09-20. Owning Shield branch: boop-shield-weather-focus-v221 (long-lived cache-hot branch, not app version). Source worktree for this task is .worktrees/boop-deezer-invisible-v235, isolated from the old primary checkout. Wall remains v207 and was not installed.
 
-The latest user instruction prefers invisible operation and authorizes using the existing emulator/laptop, automatic installation of the verified Shield APK, then a normal next-track ready signal. A bounded native offscreen-display feasibility test now confirmed favourite saved -> unsaved -> saved without retaining a display or changing the final TV remote focus. Original favourite restored. No live recording or repeated UI polling. Source-owned v235 implementation and six focused tests are prepared; signed CI and final app route/install are not yet verified. Correct roles: Lyrics left outlined dislike+skip, Lyrics right and HOME toggles filled only when saved, using runtime accent-slider colour. See `docs/handoffs/2026-09-20-invisible-deezer-hearts-v235.md` for exact evidence and limits. This supersedes the earlier visible-handoff proposal below.
+## Current: Shield v235 signed and installed; native route responding
 
-Updated 2026-09-20 after Ryan's reported power outage. Owner lineage: `boop-wall-shield-split-v207`. Live Shield iteration branch: `boop-shield-weather-focus-v221`. Keep the long-lived branch; its suffix is not the app version.
+Source/build commit: d6a7957d57a94fb7fc2a25266478e7c4d376f220.
+Signed workflow35531643785, job106133185445: SUCCESS. Favourite checks35531643786, job106133185094: SUCCESS.
+Artifact10611029896: BOOP-Shield-v235-Wall-v207-Signed.
+APK BOOP-Shield-v235.apk, 160534893 bytes, SHA256 31d0161a2b3a534c0858ccde3b2aeb0f67474379352b366dc21a8f3cd9119d43.
+ZIP SHA256 37d99acc99912d5f306b1f2aa58367583e2581a0d19f2e4cc22e98023c600ba4.
+Permanent signer SHA256 f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
 
-## Latest: correct heart semantics established; native route still unresolved
+The exact APK was downloaded and independently hash/size/CRC checked. All 16 native libraries and 8 frozen PNG/shader assets match v234 byte-for-byte, plus CI's accepted baseline checks. Cryptographic apksigner verification passed both in CI and on the laptop with the permanent certificate. The APK was copied to Desktop/APKBOOP and installed by adb install -r on the verified physical Shield. Installed version235 / 1.2.235-shield was read back. Existing app data retained; no permission grants or provider modifications. No Wall install.
 
-Ryan clarified that he toggled the SAME normal heart twice: add/fill, then remove/outline. The separate crossed-out heart is dislike-and-immediately-skip and was not used in his favourite test.
+BOOP Shield HOME was brought foreground. Installed-app logs subsequently show native read OK saved0 and toggle OK saved1 at stage confirmation, followed by further successful reads. This verifies a real installed BOOP -> existing Home Assistant -> offscreen native Deezer -> matching result path, not only a fake boundary test. One earlier read failed at hardware-binding with IOException; its root cause was not established. Do not claim a completely error-free first connection.
 
-Approved target: Lyrics LEFT dislike+skip (outline, normal focus only), Lyrics RIGHT favourites toggle, HOME Now Playing one favourites toggle. Both favourites toggles fill with the current launcher accent-slider colour when saved and become outlines when unsaved. NO hardcoded orange and NO saved-state fill on dislike. This supersedes v234's remove-left/add-right semantics and the historical favourite section in BOOP_UNIFIED_MEMORY.md. No new implementation is yet claimed.
+An earlier reversible native probe separately verified saved -> unsaved -> saved on the same track and restored its initial favourite. Do not present that as an observed v235 UI unfavourite test. Ryan's final acceptance of both-screen state/colour, unfavourite and dislike+skip is still pending. A normal KEYCODE_MEDIA_NEXT was sent once as his requested ready signal, after installation and successful native receipts. Never use dislike for an attention signal.
 
-Ryan has authorized automatic installation of the next verified Shield APK and a normal next-track action to attract his attention when it is ready to test. Do not use dislike for this notification. Neither installation nor ready signal has happened in this continuation.
+## Approved UI and actual native mechanism
 
-## Diagnostic result and required next decision
+Lyrics LEFT: crossed-out dislike-and-immediate-skip icon, outlined with ordinary focus highlighting only.
+Lyrics RIGHT: favourites toggle. HOME Now Playing: same favourites toggle after Next.
+ONLY those two favourites toggles fill, and only when confirmed saved. Colour is resolved from FocusChrome.accentColor(context) when drawn, following the user's slider, not hardcoded orange. Three transport positions, artwork, text, progress and accepted v233 lyric fallback remain unchanged.
 
-The installed-provider media-session route in v234 FAILED: unavailable-control message on the physical Shield; rating type0, action mask273714 without SET_RATING, and an empty custom-action list before/after provider-button tests. The later log-only test exposed only two memory-cleanup entries, not the favourite request. Prior saved UI data has clickable heart nodes without useful resource IDs/descriptions/checked state.
+Native Deezer301000101 has no advertised rating/custom heart commands. A source-built, short-lived shell helper creates its own destroy-on-removal virtual display and runs the real signed-in Deezer player there. It invokes actual accessibility ACTION_CLICK on verified offscreen nodes, with no synthetic touch/key input and no visible fallback. Version, capability, track title/artist/album/duration/mediaID/session and native control geometry are checked. A small in-memory glyph crop provides the native fill receipt; it is not a recording and writes no screenshot files. The user's normal accessibility services remain enabled via FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES.
 
-After the interruption, RDC and ADB reached the intended Shield. Cached provider APK and installed base APK match exactly by SHA-256. Existing tools completed a partial offline reconstruction with 585 decompilation errors. Targeted readable code traces the normal heart to Deezer's own track-specific add/remove network/data mutations and then back to its favourite-state stream. The separate ban callback is identified; its complete body was not reconstructed. No usable external favourite/dislike entry was established. No credentials were accessed.
+The existing authenticated HA ADB route is reused. An own-app private nonce marker proves the target hardware and supports cancellation; credentials from Deezer are never read. No new login, permissions, permanent service or laptop dependency. State discovery runs once per track/screen entry, not every progress callback. Single-flight actions; helper12s/app30s deadlines; stale/ambiguous/unconfirmed state fails closed without optimistic fill.
 
-Next proposal: a feasibility test of a brief, deliberate switch into Deezer's real player to perform the requested UI action and return to BOOP. This is different from an invisible media-session action. Obtain Ryan's agreement to that visible handoff before implementing it. Do not claim the alternative already works or build another guessed-command APK.
+## Verification and limits
 
-Detailed decisions, evidence and limitations: `docs/handoffs/2026-09-20-deezer-heart-static-and-ui-scope.md`.
-Prior physical/log evidence: `docs/handoffs/2026-09-20-deezer-heart-live-diagnosis.md`.
+Six focused tests pass, including 70 retained favourite assertions, 27 native-rule assertions, runtime-accent/UI contracts and actual-controller async boundary tests for shared results, query coalescing, toggle/dislike separation and cancellation. Source helper compilation/dex passed. Full inherited v206, split integration, HA unit-test, both APK builds and package/signature/native/art CI stages passed. Review was self-review, not an independent reviewer.
 
-## Capture and publication boundaries
+The existing TV API36 emulator ran in a read-only data overlay with snapshot saving disabled, 2 cores and 2GB RAM. It lacks secondary-display activity support; the physical SDK30 Shield supports it. A separate emulator-only synthetic playback fixture was built, but its installation did not complete before the unresponsive lab instance was stopped. No emulator visual/UI pass is claimed. The task-owned emulator was closed; laptop had about20GB RAM free afterward. Do not treat an emulator capability failure as proof the physical Shield lacks the feature.
 
-NO LIVE RECORDING and NO repeated UI/screenshot polling: they slowed navigation until Ryan could not use the Shield. Do not restart them. Offline source inspection and bounded after-action reads are the agreed diagnostic pattern.
+No live recording or repeated UI polling on the real Shield: Ryan stopped the earlier capture because it made navigation unusable. Keep diagnostics bounded and preferably post-action. Raw dumps, provider APK/reconstruction, images, lab signing material and local authoring scripts remain private. One standalone manual production-helper diagnostic was safety-blocked and was not retried; normal authorized signed-APK installation and the installed app's own route supplied later evidence.
 
-This continuation made no app-source changes, fresh application tests/build, install, new device screenshot, UI input, permission change or signing change. A process check found no screenrecord/screencap/uiautomator on the Shield. Raw diagnostics, matching third-party APK and reconstructed source remain private on the laptop. No Windows BOOP checkout synchronization is claimed.
-
-## Unchanged signed v234 artifact
-
-Package `com.boop.shieldoverlay`, version234 / `1.2.234-shield`.
-App source/build `ccbd42cf3c4dc77614425f675e80fa8a3f146d20`.
-Historical successful signed workflow `35525392054`, job `106116533781`.
-Artifact `10609691434`, `BOOP-Shield-v234-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v234.apk`, 160518509 bytes.
-APK SHA-256 `58d151cd8a91142a3372e7efacdf59edc771dad8a7eddd69aa892b7d4f3876b9`.
-Certificate SHA-256 `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256 `5871cfe13020d5e4f9cf50abf9177195403978c3704bd1c5569548236ad10533`.
-
-Existing test/build receipts remain in `docs/handoffs/2026-09-20-shield-favourite-hearts-v234.md`. They did not validate the installed Deezer app and do not establish the new route.
-
-## Preserve accepted work
-
-Ryan accepted v233. Preserve Deezer-first/LRCLIB timed lyric fallback, v231 artist browsing, v230 title clipping fix, v229 centred column/spacing, v228 marquee, v226 bitmap corners, v224 three-button transport, v223 weather geometry, v221 focus, v220 accent, v217 reordering and all voice/audio/HA behavior.
-
-Keep no-guessed-action, no-optimistic-state, bounded-pending and stale-track guards when replacing the unavailable favourite route. Dislike is now explicitly requested as a separate left-hand action; never treat it as unfavourite or quietly use it as a fallback.
-
-Wall remains version207. Shared-code CI builds are not separate requested Wall releases or asserted byte-identical artifacts.
-Accepted v233 rollback: source `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`, docs/base `52afeddb66dcca23aaf9ec5c17aa3218cc1eeb9c`, APK SHA-256 `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`.
+Details: docs/handoffs/2026-09-20-invisible-deezer-hearts-v235.md.
+Historical v234 failure, static investigation and v233 rollback remain in preceding dated handoffs. v233 rollback source9e319d7336e7b52d54c080ed8d3bd596c805ae3d. Preserve accepted voice/audio/HA/artist browsing and all frozen art. The obsolete v234 remove-left/add-right design must not be restored.

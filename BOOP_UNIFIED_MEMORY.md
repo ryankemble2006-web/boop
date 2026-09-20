@@ -153,7 +153,7 @@ Timing/search rules:
 - duration remains bounded within 3.5 s when known;
 - plain untimed lyrics are still never converted into fake synced lyrics.
 
-## Favourite hearts from v234
+## Historical v234 favourite hearts (superseded roles)
 
 Ryan approved explicit lyrics REMOVE on the left of the existing transport buttons, ADD on the right, and one toggle heart in HOME Now Playing. Lyrics hearts are 54-design-pixel controls at transportLeft-71 and transportLeft+213, preserving the existing three positions. HOME heart is 42dp after Next. Focus uses the chosen launcher accent, with explicit D-pad navigation.
 
@@ -163,7 +163,7 @@ Unknown state is not unsaved. Toggle refuses unknown; explicit add/remove do not
 
 The installed Deezer app's actual capability, favourite round trip and v234 layout remain physically UNVERIFIED. If the heart is unknown or an unavailable message appears, inspect the actual provider controls rather than pretending the feature is working. CI tests use deterministic test-only Android boundaries, not the installed Deezer application. No automatic installation or Windows sync was performed.
 
-## Latest verified artifact
+## Historical v234 artifact
 
 Build source `ccbd42cf3c4dc77614425f675e80fa8a3f146d20`.
 Successful signed run `35525392054`, job `106116533781`; artifact `10609691434`, `BOOP-Shield-v234-Wall-v207-Signed`.
@@ -175,10 +175,25 @@ Archive SHA-256 `5871cfe13020d5e4f9cf50abf9177195403978c3704bd1c5569548236ad1053
 
 Accepted v233 rollback: build source `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`, base documentation `52afeddb66dcca23aaf9ec5c17aa3218cc1eeb9c`, artifact `10608914071`, APK SHA-256 `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`. Preserve its accepted lyrics/audio behavior.
 
-## Invisible native hearts: v235 candidate, 2026-09-20
+## Invisible native hearts: v235 installed, 2026-09-20
 
-Corrected user-approved roles supersede the historical v234 add/remove description: LEFT Lyrics is dislike+immediate skip and stays outlined; RIGHT Lyrics and HOME Now Playing are favourites toggles. Only those two toggles fill when genuinely saved, using the current launcher accent slider colour at draw time. No fixed orange.
+## Approved UI and actual native mechanism
 
-Native Deezer301000101 exposes no rating/custom heart actions. A physical offscreen-display probe has now confirmed saved -> unsaved -> saved, restoring original state; final display0 focus and existing accessibility settings were retained. Production uses a short-lived source-built offscreen helper through the existing authenticated local HA/ADB route, own-app nonce hardware binding and cancellation checks. No main-display capture, recording, synthetic input, provider credential extraction or new login/permission. Read-only discovery is once per track/screen entry, not a progress polling loop. App-only source is v235 candidate; signed CI/install/final route still pending publication. Native probe success is not final app acceptance.
+Lyrics LEFT: crossed-out dislike-and-immediate-skip icon, outlined with ordinary focus highlighting only.
+Lyrics RIGHT: favourites toggle. HOME Now Playing: same favourites toggle after Next.
+ONLY those two favourites toggles fill, and only when confirmed saved. Colour is resolved from FocusChrome.accentColor(context) when drawn, following the user's slider, not hardcoded orange. Three transport positions, artwork, text, progress and accepted v233 lyric fallback remain unchanged.
 
-User permits automatic verified Shield install and normal next-track ready signal; not dislike for attention. Do not revive live recording or repeated UI polling. The read-only API36 TV emulator lacks secondary activity support, unlike the real SDK30 Shield; keep capability gates. Detailed record: docs/handoffs/2026-09-20-invisible-deezer-hearts-v235.md.
+Native Deezer301000101 has no advertised rating/custom heart commands. A source-built, short-lived shell helper creates its own destroy-on-removal virtual display and runs the real signed-in Deezer player there. It invokes actual accessibility ACTION_CLICK on verified offscreen nodes, with no synthetic touch/key input and no visible fallback. Version, capability, track title/artist/album/duration/mediaID/session and native control geometry are checked. A small in-memory glyph crop provides the native fill receipt; it is not a recording and writes no screenshot files. The user's normal accessibility services remain enabled via FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES.
+
+The existing authenticated HA ADB route is reused. An own-app private nonce marker proves the target hardware and supports cancellation; credentials from Deezer are never read. No new login, permissions, permanent service or laptop dependency. State discovery runs once per track/screen entry, not every progress callback. Single-flight actions; helper12s/app30s deadlines; stale/ambiguous/unconfirmed state fails closed without optimistic fill.
+
+
+## Final build, install and live receipts
+
+Source d6a7957d57a94fb7fc2a25266478e7c4d376f220. Signed workflow35531643785/job106133185445 succeeded through all inherited, split, HA, build and package verification stages; favourite workflow35531643786/job106133185094 also succeeded. Artifact10611029896, BOOP-Shield-v235-Wall-v207-Signed; ZIP SHA25637d99acc99912d5f306b1f2aa58367583e2581a0d19f2e4cc22e98023c600ba4.
+
+Delivered Shield APK160534893 bytes, SHA25631d0161a2b3a534c0858ccde3b2aeb0f67474379352b366dc21a8f3cd9119d43; unchanged signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde. Downloaded archive CRC/source/hash/size independently verified. All16 native libraries and8 frozen PNG/shader assets match v234. Full cryptographic apksigner verification also passed on the laptop. Copied to Desktop/APKBOOP and installed via adb install -r; installed235/1.2.235-shield read back. No app-data wipe, new grants or Wall install.
+
+Installed BOOP HOME was brought forward. Bounded post-action BOOP logs show read OK saved0, toggle OK saved1 at confirmation, and several subsequent read OK results. One preceding hardware-binding IOException remains an observed transient failure with unestablished cause. The final native route therefore has positive real installed-app evidence; do not claim every operation or first attempt was faultless. User acceptance of actual v235 unfavourite, dislike+skip and both-screen accent/state behavior remains pending. The earlier native reversible probe is separate evidence, not a replacement for user acceptance.
+
+A single normal media-next was sent as the authorized ready signal after install/live receipts. No dislike used for attention. The task-owned read-only TV emulator was stopped after its synthetic fixture installation did not complete; no visual emulator pass is asserted. It had already established missing secondary-activity support on that image, unlike the physical Shield. Laptop memory remained healthy, about20GB free after lab shutdown. Private test signing material is only for the unused emulator fixture, never BOOP's permanent key or the native provider. No live recording restarted.
