@@ -1,8 +1,10 @@
 # BOOP current handoff
 
-Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-hour-temp-nudge-v222`.
+Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221` (kept long-lived so CI cache remains reusable). v222 snapshot branch: `boop-shield-hour-temp-nudge-v222`.
 
 ## Current Shield: v222, signed and ready for Ryan's physical test
+
+The branch name deliberately remains v221 for live iteration. Do not create a fresh branch for every one-pixel/UI tweak unless there is a reason to fork; same-branch follow-ups are what let GitHub reuse this branch-scoped Gradle cache.
 
 Package `com.boop.shieldoverlay`, version `222` / `1.2.222-shield`.
 
