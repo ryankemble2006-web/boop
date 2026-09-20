@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v223. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v224. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -83,13 +83,25 @@ Relative to v222, the four **Next 4 hours** temperature values alone move 2 more
 
 The active Shield CI workflow uses writable Gradle caching with `--build-cache` and cancels superseded rapid UI builds. Keep tiny sequential Shield UI iterations on the cache-hot active branch instead of creating a fresh version branch for every pixel tweak; use version branches as snapshots when useful. v222 proved the cache was restored and reused 77 app-build tasks, with the Gradle app build completing in 26 seconds.
 
+## Now Playing transport rule from v224
+
+The transport row is **Prev / Play-Pause / Next** only. Rew and Fwd are intentionally absent.
+
+Preserve:
+- Prev's accepted v219 position via `controls.setTranslationX(-dp(4))`;
+- existing `CONTROL_GAP_DP = 10`;
+- progress bar ±10-second seeking;
+- Lyrics/Close-player navigation and the v219 progress geometry.
+
+Do not recenter the three-button row.
+
 ## Latest verified artifact
 
-Build source `fceb5659a5fe52d01205641956b834ff5615385e`.
-Run `35517619079`, job `106096104834`; artifact `10607337069`, `BOOP-Shield-v223-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v223.apk`, 160485741 bytes, SHA-256 `2bc6179110d22f3a76243e1914f8f19db7573e74694c5e85e8aa40493d7340d4`.
+Build source `16fbfdc632d821d7efd3911823a2035f3b8904b9`.
+Run `35518326403`, job `106097941527`; artifact `10606879001`, `BOOP-Shield-v224-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v224.apk`, 160485737 bytes, SHA-256 `ead4ecb9de285499d46d44dca49d3ed24f6322b9e590e1c956dfd9c9a4514a28`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Artifact ZIP SHA-256 `05e542e8c4e090792781dd24d3f53fff9e33ce4c3a85b2fb65b3fdfee5f5c3bd`.
+Artifact ZIP SHA-256 `caaa3f168f5a6fef4713c32d4b043111a43042d93f29117a68c966add9293778`.
 Focused checks, inherited v206 checks, materialized split integration, HA tests, both builds and packaged signer/native/art verification passed; all 16 native libraries remain baseline-identical.
 
-v219 Now Playing alignment remains physically accepted. v220 accent-colour behaviour and v221 return-focus/weather geometry remain retained. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.
+v223 weather alignment remains retained. v219 Now Playing datum remains physically accepted. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.
