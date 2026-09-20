@@ -45,7 +45,11 @@ final class ShieldWeatherView extends LinearLayout {
         top.addView(divider(),new LayoutParams(dp(1),LayoutParams.MATCH_PARENT));
         top.addView(hours(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,4f));
         top.addView(divider(),new LayoutParams(dp(1),LayoutParams.MATCH_PARENT));
-        top.addView(days(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,3f));
+        LinearLayout forecastDays=days(s);
+        // The card itself has 18dp outer padding. Shift the right panel by half of
+        // that inset so its visual centre is the divider-to-outer-border centre.
+        forecastDays.setTranslationX(dp(9));
+        top.addView(forecastDays,new LayoutParams(0,LayoutParams.MATCH_PARENT,3f));
         addView(top,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
 
         LinearLayout foot=row();
@@ -142,7 +146,9 @@ final class ShieldWeatherView extends LinearLayout {
     private void addCenteredLine(LinearLayout cell,TextView line,boolean weatherGlyph){
         line.setGravity(Gravity.CENTER);
         line.setTextAlignment(TEXT_ALIGNMENT_CENTER);
-        if(weatherGlyph) line.setTranslationX(dp(2));
+        // The accepted glyph optical centre is +2dp. Align every related line
+        // to that same centre so time/temperature/rain sit directly under it.
+        line.setTranslationX(dp(2));
         cell.addView(line,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
     }
     private LinearLayout row(){ LinearLayout v=new LinearLayout(getContext()); v.setOrientation(HORIZONTAL); return v; }
