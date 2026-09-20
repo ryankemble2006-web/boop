@@ -135,7 +135,7 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        showHome();
+        showHome(true);
     }
 
     @Override protected void onResume() {
@@ -152,6 +152,7 @@ public final class ShieldLauncherActivity extends Activity {
         if (root != null && store != null && currentPage == Page.SETTINGS) {
             showSettings();
         }
+        focusFirstFavourite();
     }
 
     private void onNowPlayingChanged(NowPlayingSnapshot snapshot) {
@@ -417,8 +418,11 @@ public final class ShieldLauncherActivity extends Activity {
                     android.widget.Toast.makeText(ShieldLauncherActivity.this,"Failed",android.widget.Toast.LENGTH_SHORT).show();
             }
             @Override public void onCloseMediaApps() {
-                if(nowPlayingManager==null || !nowPlayingManager.closeMediaApps(ShieldLauncherActivity.this))
+                boolean closed = nowPlayingManager != null
+                        && nowPlayingManager.closeMediaApps(ShieldLauncherActivity.this);
+                if (!closed)
                     android.widget.Toast.makeText(ShieldLauncherActivity.this,"Failed",android.widget.Toast.LENGTH_SHORT).show();
+                focusFirstFavourite();
             }
         };
     }
@@ -1040,6 +1044,14 @@ public final class ShieldLauncherActivity extends Activity {
             return true;
         }
         return super.dispatchKeyEvent(event);
+    }
+
+    private void focusFirstFavourite() {
+        if (currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) {
+            return;
+        }
+        ShieldHomeView home = (ShieldHomeView) currentView;
+        home.post(home::resetToFirstFavourite);
     }
 
     private void handleShortBack() {
