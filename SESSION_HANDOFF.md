@@ -1,5 +1,11 @@
 # BOOP current handoff
 
+## Queue investigation, not implemented: 2026-09-20
+
+Ryan is interested in a normal album/playlist Queue, explicitly excluding Flow. Live read-only inspection found an actual published Flow marker (`com.deezer.METADATA_KEY_STREAM_CONTEXT_TYPE=flow_partner`, listen type SMART_RADIO), so hiding it need not rely on queue length. Matched-provider mapping also defines album_partner and playlist_partner; those modes have not yet been captured live in this task. The current Flow list is listening history through the current item, not upcoming suggestions. Queue titles/artists and unique numeric queue IDs are available; standard item media IDs are absent. Long playlists use a limited published window.
+
+The provider implements a queue-jump handler but does not advertise SKIP_TO_QUEUE_ITEM in the inspected live state. A direct normal-album row selection still needs a physical test before shipment. Proposed Queue panel/entry is not yet implemented or layout-approved. Hide during Flow/radio/unknown context, use event-driven native metadata/queue callbacks, and preserve v236 Flow/hearts/Lyrics. No playback, app source, APK, permissions, recording or emulator changes were made. Details: docs/handoffs/2026-09-20-deezer-queue-flow-exclusion-investigation.md.
+
 ## User-accepted v236 Flow and album-to-Flow use case: 2026-09-20
 
 Ryan reports that the installed Flow button works perfectly. His stated use case is to browse to an album by selecting the Now Playing artwork, listen to the album, then press Flow when it finishes without digging through Deezer's menus. Preserve the direct Flow shortcut alongside album-art browsing and the accepted favourite controls; this is the reason Flow replaced Close player.
