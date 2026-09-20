@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v229. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v230. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -124,13 +124,15 @@ The fullscreen lyrics progress bar is the master horizontal datum. Preserve:
 - 3-button group centred on progress midpoint using existing 54px buttons and 17px gaps;
 - progress-bar left/right remains ±10-second seek.
 
+## Lyrics title rendering rule from v230
+
+Keep all v229 music-column geometry unchanged. The title alone uses `setIncludeFontPadding(false)` to eliminate slight glyph clipping inside its existing 42-design-pixel frame.
+
 ## Latest verified artifact
 
-Build source `e95bbeb88b32e9134da47100d0cd598df45752d7`.
-Run `35520822777`, job `106104476205`; artifact `10608905132`, `BOOP-Shield-v229-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v229.apk`, 160485741 bytes, SHA-256 `b4fa6a00ec74b0b1a2ab865adc8df8d82229143ad2ac1e204db5522e2ff79836`.
-Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Artifact ZIP SHA-256 `364bdcc540838ee3184f5fd780e5a836b6d674ac2acd133d7b9fcc5216a48668`.
-Focused music-column/transport checks and all inherited packaging/runtime checks passed; all 16 native libraries remain baseline-identical.
+Build source `7187d9686cffb52a67d5c3ceb575e565a8827019`.
+Run `35521333151`, job `106105827783`; artifact `10608133140`, `BOOP-Shield-v230-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v230.apk`, 160485741 bytes, SHA-256 `8cfe8808bfe51f3620da2dabd4b31b6f1c2debd0201eac6376530e633831eba3`.
+Permanent signer unchanged. All 16 native libraries remain baseline-identical.
 
-v228 marquee, v226 hard-mask corners, v224 home Now Playing transport, v223 weather alignment and v219 home Now Playing datum remain retained. Wall stays v207.
+v229 centred lyrics layout, v228 marquee and v226 hard-mask corners remain retained. Wall stays v207.
