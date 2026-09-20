@@ -1,32 +1,32 @@
 # BOOP status
 
-Updated 2026-09-20. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-weather-focus-v221`.
+Updated 2026-09-20. Owner: `boop-wall-shield-split-v207`. Current Shield implementation: `boop-shield-hour-temp-nudge-v222`.
 
-Shield v221 / `1.2.221-shield` is signed and ready for Ryan's physical test.
+Shield v222 / `1.2.222-shield` is signed and ready for Ryan's physical test.
 
-v221 changes only Shield weather alignment and HOME return focus:
-- hourly and 3-day forecast text rows now share the accepted +2dp optical centre of their weather glyph;
-- the 3-day forecast region is translated +9dp so its visible space is balanced between the middle divider and outer right card border;
-- returning from an external app, including via Shield task manager, requests Favourite entry 1;
-- Close media returns focus to Favourite entry 1 after the existing close-media action.
+v222 is deliberately tiny:
+- only the four **Next 4 hours** temperature values are nudged +1 physical pixel to the right;
+- their prior +2dp weather optical correction remains intact;
+- times, glyphs, rain, 3-day forecast, current weather and footer are unchanged.
 
 Preserved unchanged:
-- v219 Now Playing geometry, physically accepted as perfect;
+- v221 first-favourite return focus and forecast layout;
 - v220 user-selectable launcher highlight colour;
+- v219 Now Playing geometry, physically accepted as perfect;
 - v217 favourite/HA hold-to-reorder;
 - HA command/latency paths;
 - voice/audio, assistant art and native runtime;
 - Wall v207.
 
-CI speed-up: `.github/workflows/build-wall-shield-split.yml` now uses writable `gradle/actions/setup-gradle@v4` caching on the active branch and passes `--build-cache` to Gradle. First seed run: `35515825323`.
+CI caching is now verified working on the active Shield branch. Run `35516142829` restored the Gradle cache and the app build reported **77 tasks from cache**, 69 executed and 8 up-to-date, finishing the Gradle app build in **26 seconds**. Rapid superseded builds now cancel automatically.
 
-Build source `9bf329a24631310261843b654f9fe0716a59aa2e`.
-Successful run `35515284079`, job `106090068972`.
-Artifact `10606343049`, `BOOP-Shield-v221-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v221.apk`, 160485741 bytes, SHA-256 `d0e5111efd97dc948890b2181e3212ce20e67b4e43cadc0df900a06969295f8a`.
+Build source `5bab9dab597161a0a53ab5e6f85ef0f3d913bee0`.
+Successful run `35516142829`, job `106092308080`.
+Artifact `10606488920`, `BOOP-Shield-v222-Wall-v207-Signed`.
+Shield file `BOOP-Shield-v222.apk`, 160485741 bytes, SHA-256 `3eee980f533a64b09d4fa0a25177c9c13bcbab2df17ec46f01c407f4c8f98bc5`.
 Permanent signer SHA-256 remains `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256 `20a5fbf892d2139d4e45239515bfcee0f2f2773af4c86f0543c42440e2dc664c`.
+Artifact ZIP SHA-256 `649641d807fbcab638ad2b65ef5ea35aed5aefd0a70d34e7a4e9c6036667fe30`.
 
-All CI gates passed, including focused Shield checks, inherited v206 checks, materialized split integration, HA unit tests, both app builds and actual APK signer/native/art verification. All 16 native libraries remain baseline-identical.
+All CI gates passed and all 16 native libraries remain baseline-identical.
 
-Physical weather/focus acceptance remains pending with Ryan as the visual/ADB tester.
+Physical acceptance of the one-pixel temperature nudge remains pending with Ryan.
