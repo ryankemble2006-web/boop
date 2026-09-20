@@ -88,6 +88,9 @@ public class VoicePreviewHarness {
   check(OfflineTts.opened==0 && OfflineTts.generated==0,"Fixed previews invoked the neural model");
   check(a.params.pitch==1.45f && a.params.speed==0.7f,"sliders not applied independently");
   check(first.done==1,"preview completion count");
+  Result whimsy=new Result();backend.speak("This is how BOOP sounds.",21,2.90f,2.50f,whimsy);AudioTrack w=played();done(whimsy);
+  check(w.params.pitch==2.90f && w.params.speed==2.50f,"Doubled pitch/cadence silently clamped");
+  check(OfflineTts.opened==0 && OfflineTts.generated==0,"Maximum whimsy lost instant preview path");
   // A live utterance is blocked inside native code. A demo must still replace it immediately.
   OfflineTts.gate=new CountDownLatch(1);Result live=new Result();backend.speak("A new generated reply.",21,1.12f,1.25f,live);
   check(OfflineTts.entered.await(1,TimeUnit.SECONDS),"no synthesis");AudioTrack.hold=true;

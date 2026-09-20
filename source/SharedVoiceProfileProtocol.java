@@ -9,9 +9,9 @@ final class SharedVoiceProfileProtocol {
     static final String NAME = "BOOP shared voice profile";
     static final String MARKER = "^BOOP_VOICE_V1\\|(android|natural)\\|(bf_emma|bf_isabella|bm_george|bm_fable)\\|[0-9]{3,4}\\|[0-9]{3,4}$";
     static final int MIN_PITCH_MILLI = 750;
-    static final int MAX_PITCH_MILLI = 1450;
+    static final int MAX_PITCH_MILLI = 2900;
     static final int MIN_RATE_MILLI = 700;
-    static final int MAX_RATE_MILLI = 1250;
+    static final int MAX_RATE_MILLI = 2500;
 
     static final class Profile {
         final String backend;

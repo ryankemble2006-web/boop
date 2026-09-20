@@ -4,11 +4,11 @@ final class BoopVoiceTuning {
     static final int PROGRESS_MAX = 1000;
 
     static final float MIN_PITCH = 0.75f;
-    static final float MAX_PITCH = 1.45f;
+    static final float MAX_PITCH = 2.90f;
     static final float DEFAULT_PITCH = 1.12f;
 
     static final float MIN_RATE = 0.70f;
-    static final float MAX_RATE = 1.25f;
+    static final float MAX_RATE = 2.50f;
     static final float DEFAULT_RATE = 0.96f;
 
     private BoopVoiceTuning() { }

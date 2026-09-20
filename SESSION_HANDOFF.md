@@ -1,5 +1,11 @@
 # BOOP current handoff
 
+## In progress: doubled voice range (Shield246 / Wall213)
+
+Ryan physically accepted both shared voices and requested double the maximum pitch and cadence. Maxima are now2.90x pitch and2.50x cadence across tuning, playback clamps and shared-profile validation. Existing minima, defaults and saved numeric settings remain unchanged. The existing helper marker already allows four-digit values; both devices must be upgraded before values above the old limits are shared.
+
+132 focused local checks and15 speech lifecycle scenarios passed. New regressions failed before the limit changes and passed after, including old saved values without write echoes, maximum playback without model inference, strict shared bounds and profile convergence. Independent review found no blocking issues. Real Shield/phone AudioTrack probes accepted all tested extremes with fallback mode FAIL, read back exact parameters and consumed all38144 sample frames. These are audio-path checks, not Ryan's acoustic acceptance. Signed CI/install and actual app sharing/preview checks are pending;245/212 remain installed.
+
 ## Current: shared voice enabled on Shield245 / Pixel7 Wall212
 
 Ryan accepted the immediate natural previews, then requested sharing voice across devices like colours, with the phone's current voice as the starting point. Both devices now share Emma, pitch1.45 and cadence1.25. Voice Settings exposes the same sharing flag/runtime as Build a Boop, beneath the natural voice buttons. The open sliders, effective profile and Selected label follow remote updates; active touch drags and transient preview messages are preserved. Sharing uses the existing paired Home Assistant, works while BOOP is open, retains the last profile offline and catches up on reopening. Natural voice downloads remain local.

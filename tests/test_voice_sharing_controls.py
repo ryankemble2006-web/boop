@@ -49,7 +49,7 @@ public class VoiceSharingControlsHarness {
   BoopVoiceSharingControls.install(a,c,voice,pitch,rate,naturalStatus);
   check(sharing.observers.isEmpty(),"Unattached screen retained");c.attach();
   check(sharing.observers.size()==1,"Attached screen must observe once");
-  check(pitch.progress==1000 && rate.progress==1000 && voice.writes==0,"Initial sliders or write echo");
+  check(pitch.progress==326 && rate.progress==306 && voice.writes==0,"Initial sliders or write echo");
   check(labels(c).contains("Emma"),"Selected voice missing");
   check(naturalStatus.text.toString().contains("Emma"),"Natural selection label stale on open");
   naturalStatus.setText("Trying Isabella...");sharing.emit();
@@ -62,10 +62,10 @@ public class VoiceSharingControlsHarness {
   check(naturalStatus.text.toString().contains("George"),"Remote voice left old Selected label behind");
   check(button(c,"Retry voice sharing").visibility==View.GONE,"Retry still visible when ready");
   pitch.listener.onStartTrackingTouch(pitch);pitch.user(500);sharing.emit();
-  check(Math.abs(voice.pitch-1.10f)<.0001f && voice.writes==1,"Touch change not saved");
-  voice.pitch=1.45f;sharing.emit();check(pitch.progress==500,"Remote event moved active drag");
+  check(Math.abs(voice.pitch-1.825f)<.0001f && voice.writes==1,"Touch change not saved");
+  voice.pitch=2.90f;sharing.emit();check(pitch.progress==500,"Remote event moved active drag");
   pitch.listener.onStopTrackingTouch(pitch);check(pitch.progress==1000,"Drag release did not refresh");
-  rate.user(500);check(Math.abs(voice.rate-.975f)<.0001f,"DPAD cadence change not saved");
+  rate.user(500);check(Math.abs(voice.rate-1.60f)<.0001f,"DPAD cadence change not saved");
   sharing.ready=false;sharing.emit();check(button(c,"Retry voice sharing").visibility==View.VISIBLE,"Offline retry missing");
   button(c,"Share voice profile").performClick();check(!sharing.enabled,"Disable failed");
   voice.usable=false;sharing.emit();check(labels(c).contains("Android"),"Unavailable natural voice misrepresented");
