@@ -1,8 +1,8 @@
 # BOOP status
 
-## In progress: v237 approved Queue panel
+## In progress: v238 Queue presentation refinement
 
-Ryan approved Queue beside Lyrics, hidden during Flow. The physical native album queue jump is now confirmed, preserving album order. The v237 source candidate adds the charcoal remote list, real current-track indication, same-queue selection and Flow exclusion with stale-row/late-metadata guards. Twelve focused tests pass, including34 native queue assertions; full CI and the new installed panel remain pending. No working heart/Lyrics/audio code was altered. Details: docs/handoffs/2026-09-20-shield-queue-v237.md. The earlier investigation below is historical and its layout/jump questions are superseded by this approval and probe.
+The v237 native Queue panel is installed and physically selects album tracks without losing album order; its actual Flow button also hides Queue correctly. A still screenshot exposed clipped artist lines and a garbled static separator. v238 fixes only those presentation issues with content-sized rows and portable labels. Thirteen focused tests pass; final signed v238 installation/visual check pending. See docs/handoffs/2026-09-20-shield-queue-v237.md. Preserve accepted v236 Flow and v235 hearts. No live recording or repeated UI polling.
 
 ## Queue investigation, not implemented: 2026-09-20
 

@@ -100,3 +100,9 @@ def test_queue_entry_dialog_and_callbacks_preserve_existing_controls():
     assert 'onStop()' in dialog and 'unsubscribe.run()' in dialog
     assert 'controller.select(clicked.boundState, clicked.boundRow)' in dialog
     assert 'startActivity' not in dialog and 'requestAudioFocus' not in dialog
+
+def test_queue_rows_allow_font_scaling_and_use_portable_labels():
+    dialog=(SRC/'ShieldQueueDialog.java').read_text(encoding='utf-8')
+    assert 'row.setMinimumHeight(dp(72))' in dialog, 'Fixed queue row clips scaled artist text'
+    assert 'new android.widget.AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)' in dialog
+    assert all(ord(c)<128 for c in dialog), 'Static Queue labels must be portable across source-writing encodings'

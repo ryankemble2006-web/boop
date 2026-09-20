@@ -87,10 +87,10 @@ final class ShieldQueueDialog extends Dialog {
         long selectedId = list.getSelectedItemId(); int oldPosition = list.getSelectedItemPosition();
         boolean changed = !adapter.rows.equals(state.rows);
         shown = state;
-        subtitle.setText((state.title.isEmpty() ? "Current queue" : state.title) + "  Â·  " + state.rows.size() + " tracks available");
+        subtitle.setText((state.title.isEmpty() ? "Current queue" : state.title) + "  |  " + state.rows.size() + " tracks available");
         adapter.rows = state.rows; adapter.notifyDataSetChanged();
-        footer.setText(state.pending ? "Starting the selected trackâ€¦" : !state.message.isEmpty() ? state.message
-                : !state.visible ? "Updating Deezer's queueâ€¦" : !state.canSelect ? "Deezer is not exposing track selection. Press Back to return."
+        footer.setText(state.pending ? "Selecting the track..." : !state.message.isEmpty() ? state.message
+                : !state.visible ? "Updating Deezer's queue..." : !state.canSelect ? "Deezer is not exposing track selection. Press Back to return."
                 : "Showing Deezer's available queue. Select a track, or press Back.");
         if (initialSelection && state.visible) {
             initialSelection = false; int index = state.indexOf(state.activeId);
@@ -111,7 +111,8 @@ final class ShieldQueueDialog extends Dialog {
             if (recycled == null) {
                 LinearLayout row = new LinearLayout(getContext()); row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(14), dp(8), dp(14), dp(8));
-                row.setLayoutParams(new android.widget.AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(64)));
+                row.setLayoutParams(new android.widget.AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                row.setMinimumHeight(dp(72));
                 LinearLayout lines = new LinearLayout(getContext()); lines.setOrientation(LinearLayout.VERTICAL);
                 TextView title = text("", 18, Color.WHITE), artist = text("", 14, Color.LTGRAY);
                 title.setSingleLine(true); title.setEllipsize(TextUtils.TruncateAt.END);
@@ -128,7 +129,7 @@ final class ShieldQueueDialog extends Dialog {
             boolean waiting = shown != null && shown.pending && item.id == shown.pendingId;
             int accent = FocusChrome.accentColor(getContext());
             h.title.setText(item.title); h.title.setTextColor(current ? accent : Color.WHITE);
-            h.artist.setText(item.artist); h.status.setText(waiting ? "Startingâ€¦" : current ? "Current" : "");
+            h.artist.setText(item.artist); h.status.setText(waiting ? "Selecting..." : current ? "Current" : "");
             h.status.setTextColor(current ? accent : Color.LTGRAY);
             recycled.setContentDescription(item.title + ", " + item.artist + (current ? ", current track" : ""));
             return recycled;
