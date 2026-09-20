@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v227. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v228. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -101,17 +101,24 @@ Fullscreen lyrics album art uses a hard bitmap mask in the ImageView draw path. 
 
 The lyric provider/licence credit remains parsed internally but is not drawn.
 
-## Lyrics title spacing rule from v227
+## Lyrics title rule from v228
 
-Fullscreen lyrics track title starts at `436f * unit`, raised 12 design pixels from v226. Artist remains at `532f * unit`; progress remains at `583f * unit`. Do not move those lower elements to compensate.
+Fullscreen lyrics track title is one line at its original Y position. Use:
+- `setSingleLine(true)`;
+- `setHorizontallyScrolling(true)`;
+- `TextUtils.TruncateAt.MARQUEE`;
+- `setMarqueeRepeatLimit(1)`;
+- `setSelected(true)`.
+
+Geometry: title `448f * unit`, height `42f * unit`; artist stays `532f * unit`; progress stays `583f * unit`.
 
 ## Latest verified artifact
 
-Build source `51cf2687d71c7580279163332a72e3955a1f26f6`.
-Run `35519761368`, job `106101711931`; artifact `10607489121`, `BOOP-Shield-v227-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v227.apk`, 160485741 bytes, SHA-256 `99bb4089224f98f7d7b0ae1cae3640447737db02767cb6e94d8dddfba567111f`.
+Build source `0dae3cd377f85374f5ca6f01bb01d4a8d5a41cbe`.
+Run `35520215512`, job `106102885432`; artifact `10607839097`, `BOOP-Shield-v228-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v228.apk`, 160485741 bytes, SHA-256 `7a90cef6cc660028d088f382ac3da09e658318ca1934674f41ff18041f324763`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Artifact ZIP SHA-256 `03fb296d6682b1171452a892ea43724bb05b7f66b2400eeeb89dfbae41b5280c`.
-Focused title-geometry checks and all inherited packaging/runtime checks passed; all 16 native libraries remain baseline-identical.
+Artifact ZIP SHA-256 `af9bf5900ed05471749bc3ea63bc2fb65721a630a012defe666031d17c6c02a7`.
+Focused marquee/title checks and all inherited packaging/runtime checks passed; all 16 native libraries remain baseline-identical.
 
 v226 hard-mask corners, v224 transport, v223 weather alignment and v219 Now Playing datum remain retained. Wall stays v207.
