@@ -4,6 +4,7 @@ on:
     branches: [boop-shield-weather-focus-v221]
     paths:
       - 'tests/test_deezer_favourites.py'
+      - 'tests/favourite_android_boundary.py'
       - 'unified/shield-home/src/main/java/com/boop/shieldhome/*Favourite*.java'
       - '.github/workflows/test-deezer-favourites.yml'
 permissions:
@@ -18,13 +19,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Export tracked source for scoped review
-        run: git archive --format=zip --output=boop-source-review.zip HEAD
-      - uses: actions/upload-artifact@v4
-        with:
-          name: BOOP-Favourite-Source-Review
-          path: boop-source-review.zip
-          retention-days: 1
       - name: Favourite behaviour checks
         run: |
           python -m pip install -q pytest

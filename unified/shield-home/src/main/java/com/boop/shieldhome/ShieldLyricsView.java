@@ -31,6 +31,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private final LyricsLinesView lyrics;
     private final TransportButton[] buttons = new TransportButton[3];
     private final PositionBar progress;
+    private final DeezerFavouriteButton removeHeart, addHeart;
     private NowPlayingSnapshot snapshot;
     private boolean clockKnown;
     private boolean running;
@@ -150,6 +151,13 @@ public final class ShieldLyricsView extends FrameLayout {
                     : progress.isFocusable() ? progress.requestFocus() : focusTransport();
         });
 
+        removeHeart = new DeezerFavouriteButton(context, DeezerFavouriteButton.REMOVE, accent);
+        addHeart = new DeezerFavouriteButton(context, DeezerFavouriteButton.ADD, accent);
+        removeHeart.setOnKeyListener((v, key, event) -> handleFavouriteRowKey(0, key, event));
+        addHeart.setOnKeyListener((v, key, event) -> handleFavouriteRowKey(4, key, event));
+        addView(removeHeart);
+        addView(addHeart);
+
         String[] descriptions = {"Previous track", "Pause", "Next track"};
         for (int i = 0; i < buttons.length; i++) {
             final int kind = i;
@@ -167,10 +175,7 @@ public final class ShieldLyricsView extends FrameLayout {
                     default: break;
                 }
             });
-            button.setOnKeyListener((v, key, event) -> event.getAction() == KeyEvent.ACTION_DOWN
-                    && key == KeyEvent.KEYCODE_DPAD_UP
-                    && (progress.isFocusable() ? progress.requestFocus()
-                            : artwork.isFocusable() && artwork.requestFocus()));
+            button.setOnKeyListener((v, key, event) -> handleFavouriteRowKey(kind + 1, key, event));
             addView(button);
         }
         post(() -> { if (buttons[1].isFocusable()) buttons[1].requestFocus(); });
@@ -181,6 +186,8 @@ public final class ShieldLyricsView extends FrameLayout {
                 || !snapshot.trackKey().equals(next.trackKey())
                 || Math.abs(snapshot.estimatedPositionMs(now) - next.estimatedPositionMs(now)) > 1500L) snapClock = true;
         snapshot = next;
+        removeHeart.setSnapshot(next);
+        addHeart.setSnapshot(next);
         clockKnown = knownClock;
         artwork.setImageBitmap(next == null ? null : next.artwork());
         boolean albumAvailable = next != null && NowPlayingSelectionPolicy.eligible(next.playbackState());
@@ -210,6 +217,22 @@ public final class ShieldLyricsView extends FrameLayout {
         buttons[1].setContentDescription(next != null && next.isPlaying() ? "Pause" : "Play");
         displayedSecond = Long.MIN_VALUE;
         schedule();
+    }
+    private boolean handleFavouriteRowKey(int slot, int key, KeyEvent event) {
+        if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+        if (key == KeyEvent.KEYCODE_DPAD_UP)
+            return progress.isFocusable() ? progress.requestFocus()
+                    : artist.isFocusable() ? artist.requestFocus()
+                    : artwork.isFocusable() && artwork.requestFocus();
+        if (key != KeyEvent.KEYCODE_DPAD_LEFT && key != KeyEvent.KEYCODE_DPAD_RIGHT) return false;
+        View[] row = {removeHeart, buttons[0], buttons[1], buttons[2], addHeart};
+        int direction = key == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : 1;
+        for (int i = slot + direction; i >= 0 && i < row.length; i += direction) {
+            View candidate = row[i];
+            if (candidate.getVisibility() == VISIBLE && candidate.isFocusable() && candidate.isEnabled())
+                return candidate.requestFocus();
+        }
+        return true;
     }
     private boolean focusTransport() {
         if (buttons[1].isFocusable()) return buttons[1].requestFocus();
@@ -278,6 +301,9 @@ public final class ShieldLyricsView extends FrameLayout {
         place(duration, left + 317f * unit, 601f * unit, 80f * unit, 24f * unit);
         for (int i = 0; i < buttons.length; i++)
             place(buttons[i], transportLeft + i * 71f * unit, 632f * unit, 54f * unit, 54f * unit);
+        // Hearts flank the accepted transport geometry; none of the original three moves.
+        place(removeHeart, transportLeft - 71f * unit, 632f * unit, 54f * unit, 54f * unit);
+        place(addHeart, transportLeft + 213f * unit, 632f * unit, 54f * unit, 54f * unit);
         size(eyebrow, 13); size(title, 28); size(artist, 19); size(status, 24);
 size(elapsed, 12); size(duration, 12);
         artwork.invalidate();

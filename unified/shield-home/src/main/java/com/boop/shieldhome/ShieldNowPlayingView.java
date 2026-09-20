@@ -38,6 +38,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private final TextView previousButton;
     private final TextView playPauseButton;
     private final TextView nextButton;
+    private final DeezerFavouriteButton favouriteButton;
     private final ShieldNowPlayingPuppetView puppetView;
 
     private NowPlayingSnapshot snapshot;
@@ -196,6 +197,11 @@ public final class ShieldNowPlayingView extends FrameLayout {
         addControl(controls, previousButton);
         addControl(controls, playPauseButton);
         addControl(controls, nextButton);
+        favouriteButton = new DeezerFavouriteButton(context, DeezerFavouriteButton.TOGGLE,
+                FocusChrome.accentColor(context));
+        LinearLayout.LayoutParams favouriteParams = new LinearLayout.LayoutParams(dp(42), dp(42));
+        favouriteParams.rightMargin = dp(CONTROL_GAP_DP);
+        controls.addView(favouriteButton, favouriteParams);
         installEdgeFocusNavigation();
 
         // Media ownership can hide the puppet while a seek buffers. Keep its bay
@@ -215,6 +221,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     public void bind(NowPlayingSnapshot snapshot, ShieldHomeView.Callbacks callbacks) {
         this.callbacks = callbacks;
         this.snapshot = snapshot;
+        favouriteButton.setSnapshot(snapshot);
         artwork.setContentDescription(snapshot != null && "deezer.android.app".equals(snapshot.packageName())
                 ? "Browse album in Deezer" : "Open source player");
         stopTicker();
@@ -349,14 +356,27 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : sourceButton).requestFocus();
+                (favouriteButton.getVisibility() == VISIBLE ? favouriteButton
+                        : lyricsButton.getVisibility() == VISIBLE ? lyricsButton : sourceButton).requestFocus();
                 return true;
             }
             return false;
         });
-        lyricsButton.setOnKeyListener((v, keyCode, event) -> {
+        favouriteButton.setOnKeyListener((v, keyCode, event) -> {
             if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { nextButton.requestFocus(); return true; }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : sourceButton).requestFocus();
+                return true;
+            }
+            return upToProgress.onKey(v, keyCode, event);
+        });
+        lyricsButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                (favouriteButton.getVisibility() == VISIBLE ? favouriteButton : nextButton).requestFocus();
+                return true;
+            }
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { sourceButton.requestFocus(); return true; }
             if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) { progress.requestFocus(); return true; }
             return false;
@@ -365,7 +385,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : nextButton).requestFocus();
+                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton
+                        : favouriteButton.getVisibility() == VISIBLE ? favouriteButton : nextButton).requestFocus();
                 return true;
             }
             if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
