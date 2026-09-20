@@ -69,7 +69,7 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
     assert "refreshWeather();" in activity
 
 
-def test_shield_release_keeps_aligned_weather_in_v240():
+def test_shield_release_keeps_aligned_weather_in_v241():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
     assert "versionCode 241" in gradle
