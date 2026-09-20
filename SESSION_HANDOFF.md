@@ -1,11 +1,12 @@
 # BOOP current handoff
 
-## Music voice candidate: Shield242 / Wall209 (not installed)
+## Current: natural music fix installed on Shield242 and Pixel7 Wall209
 
-Autonomous continuation from bd803312. Artist/title word orders and possessives now resolve against catalogue performer IDs, with conservative studio remaster handling. Artist/song collisions ask before any HA or playback call; a retained, room/account-scoped 60-second clarification accepts artist/song replies through the existing speech follow-up. Cancellation and activity exit invalidate pending lookup results without blocking the UI. Native playback, room/hardware guards, nonce receipts and accepted art are unchanged.
+Signed source54c8a2e14f59bc25be918fa2bedcadaae7170d63, successful GitHub run35541894553, artifact10615640493. Both APKs were independently hash/size/ZIP/signature checked, installed with data preserved, and versions242/209 read back. All18 assets and16 native libraries in each APK match the241/208 rollback byte-for-byte. Rollbacks retained; no signing, voice-model, settings or permission changes.
 
-Deterministic production-source regression was red before implementation. Focused existing checks:112 passed before final review corrections; final validation and signed CI are pending. Review found UI monitor blocking, duplicate artist/song collisions and explicit remaster title regressions; each gained a failing test and correction. Current live public catalogue resolves Queen412, Britney483 and Lennon Imagine with artist226; bare John Lennon asks artist versus song. Runtime/device acceptance is NOT claimed. Build target242/209; previous241/208 remain installed and are rollback. No raw catalogue/device data is published.
+Old installed Wall208 reproduced the wrong selection: John Lennon Imagine returned Done but played Crazy Chauffeur. Installed209 now plays John Lennon's Imagine (Remastered2010). Actual installed-handler tests on both apps verified Queen and Britney artist playback after clarification, and correct Lennon/Imagine playback. Phone cancellation left playback unchanged. These tests inject text at HomeAssistantClient and inspect Deezer MediaSession metadata; microphone recognition and spoken follow-up have NOT been physically accepted by Ryan.
 
+Artist/song collisions ask before playback, with a room/connection-scoped60-second follow-up.116 focused local checks and full inherited/signed CI passed. Final production-source probes:97 music-selection assertions and22 native receipt assertions passed. Independent review findings were fixed with regressions. Details: docs/handoffs/2026-09-20-natural-music-v242.md.
 
 ## Latest feedback: v241 Queen favourite passed; voice selection needs investigation
 

@@ -16,7 +16,7 @@ public final class MusicVoiceSelectionProbe {
         JSONArray nameArtists;
         BoopRoom room=new BoopRoom("lounge","Lounge");
         int houseCalls; boolean offline;long now=1000;
-        String status="",token="private-test-token";
+        String status="",token="private-test-token",connection="test-registration";
         DeezerArtistClient client=new DeezerArtistClient(this,(b,t)->Collections.singleton("media_player.tv"),ms->{},()->now);
         public String request(String url,String token,JSONObject body)throws Exception {
             if(url.startsWith("https://api.deezer.com/")) {
@@ -33,7 +33,7 @@ public final class MusicVoiceSelectionProbe {
             return new JSONObject().put("state","on").toString();
         }
         String say(String text)throws Exception {
-            CommandOutcome outcome=client.process("http://ha.invalid",token,text,room,()->room);
+            CommandOutcome outcome=client.processForConnection("http://ha.invalid",token,connection,text,room,()->room);
             status=outcome==null?"":outcome.status().name();
             return outcome==null?"FALLTHROUGH":LocalReply.forOutcome(outcome);
         }
@@ -56,6 +56,8 @@ public final class MusicVoiceSelectionProbe {
         check("FALLTHROUGH".equals(r.say("the artist")),"clarification consumed once");
         r=new Rig().collision();r.say("play Queen");r.token="newly-refreshed-access-token";
         check("Done".equals(r.say("the artist")) && DeezerNativeController.played.endsWith("/artist/412"),"normal access-token refresh preserves clarification");
+        r=new Rig().collision();r.say("play Queen");r.connection="different-registration";before=DeezerNativeController.plays;
+        check("FALLTHROUGH".equals(r.say("the artist")) && before==DeezerNativeController.plays,"changed connection invalidates clarification");
         r=new Rig().collision();r.say("play Queen on Deezer");
         check(r.houseCalls==0,"explicit ambiguity also precedes target discovery");
         check("Done".equals(r.say("the song")) && DeezerNativeController.played.endsWith("/track/3"),"song clarification executes exact choice");
