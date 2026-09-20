@@ -16,3 +16,19 @@ def test_now_playing_stack_uses_progress_bar_left_edge_as_datum():
     assert "details.addView(progress, progressParams);" in view
     assert "details.addView(controls, controlsParams);" in view
     assert "controls.setPadding(dp(8), 0, 0, 0);" not in view
+
+
+def test_transport_keeps_prev_fixed_and_uses_three_buttons_with_existing_gap():
+    view = VIEW.read_text(encoding="utf-8")
+    assert 'private static final int CONTROL_GAP_DP = 10;' in view
+    assert 'controls.setTranslationX(-dp(4));' in view
+    assert 'previousButton = controlButton("Prev"' in view
+    assert 'playPauseButton = controlButton("Play"' in view
+    assert 'nextButton = controlButton("Next"' in view
+    assert 'controlButton("Rew"' not in view
+    assert 'controlButton("Fwd"' not in view
+    controls = view[view.index('addControl(controls, previousButton);'):view.index('installEdgeFocusNavigation();')]
+    assert controls.count("addControl(controls,") == 3
+    assert "addControl(controls, previousButton);" in controls
+    assert "addControl(controls, playPauseButton);" in controls
+    assert "addControl(controls, nextButton);" in controls

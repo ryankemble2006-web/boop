@@ -36,9 +36,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private final TextView lyricsButton;
     private final TextView sourceButton;
     private final TextView previousButton;
-    private final TextView rewindButton;
     private final TextView playPauseButton;
-    private final TextView fastForwardButton;
     private final TextView nextButton;
     private final ShieldNowPlayingPuppetView puppetView;
 
@@ -188,23 +186,15 @@ public final class ShieldNowPlayingView extends FrameLayout {
         previousButton = controlButton("Prev", () -> {
             if (callbacks != null) callbacks.onNowPlayingPrevious();
         });
-        rewindButton = controlButton("Rew", () -> {
-            if (callbacks != null) callbacks.onNowPlayingRewind();
-        });
         playPauseButton = controlButton("Play", () -> {
             if (callbacks != null) callbacks.onNowPlayingPlayPause();
-        });
-        fastForwardButton = controlButton("Fwd", () -> {
-            if (callbacks != null) callbacks.onNowPlayingFastForward();
         });
         nextButton = controlButton("Next", () -> {
             if (callbacks != null) callbacks.onNowPlayingNext();
         });
 
         addControl(controls, previousButton);
-        addControl(controls, rewindButton);
         addControl(controls, playPauseButton);
-        addControl(controls, fastForwardButton);
         addControl(controls, nextButton);
         installEdgeFocusNavigation();
 
@@ -255,9 +245,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         sourceButton.setLayoutParams(sourceLayout);
 
         setControlEnabled(previousButton, snapshot.canPrevious());
-        setControlEnabled(rewindButton, snapshot.canRewind());
         setControlEnabled(playPauseButton, snapshot.canPlayPause());
-        setControlEnabled(fastForwardButton, snapshot.canFastForward());
         setControlEnabled(nextButton, snapshot.canNext());
 
         updateProgress(snapshot, SystemClock.elapsedRealtime());
@@ -351,9 +339,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
             return false;
         };
         previousButton.setOnKeyListener(upToProgress);
-        rewindButton.setOnKeyListener(upToProgress);
         playPauseButton.setOnKeyListener(upToProgress);
-        fastForwardButton.setOnKeyListener(upToProgress);
         nextButton.setOnKeyListener((v, keyCode, event) -> {
             if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable()) {
