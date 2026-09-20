@@ -1,5 +1,12 @@
 # BOOP durable project memory
 
+## In progress: Shield v241 confirmation correction; Pixel 7 updated
+
+Ryan accepts the Lyrics Queue placement and list scale but reports an applied favourite can still show unconfirmed on v240. The new candidate removes only the decorative NOW PLAYING heading, preserves all accepted geometry, waits for a bounded fresh native state transition and performs at most one read-only reconciliation after an uncertain toggle. No duplicate favourite actions, fake fills or continuous UI-tree polling.32 focused tests and source helper compilation pass; signed build/install/runtime validation pending. Details: docs/handoffs/2026-09-20-heart-confirmation-v241.md.
+
+Pixel7 Pro was explicitly paired and identified, then the final Wall208 from source6a6eeb944e152b75323f653f31f7541668febe68 was hash/signature verified and installed over207 preserving data. Installed208/1.2.208-wall read back. APK SHA2566f5bdbe2897342e1891fb60714b07c445f73d4169cba905b3967081a2cd847aa. Phone voice retest remains pending; Pixel10 untouched. No pairing secret or address is published.
+
+
 ## User-accepted v235 favourites: 2026-09-20
 
 Ryan physically tested the installed v235 and reports that the favourites button works exactly as desired, including Android added/removed confirmation messages. He favourited a track in native Deezer, returned to BOOP HOME and saw the heart fill; he then unfavourited it on BOOP's Lyrics screen and verified that the removal was reflected in native Deezer. This is acceptance of real cross-app favourite-state propagation and add/remove operation on the installed build, not merely CI success or the earlier standalone probe. Preserve this working checkpoint and its invisible operation.

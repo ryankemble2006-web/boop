@@ -66,7 +66,20 @@ public final class BoopDeezerHeartBackend {
                     ||saved< -1||saved>1||("OK".equals(status)&&saved<0))throw new IOException("Malformed native receipt");
             android.util.Log.i("BOOPHeart","operation="+operation+" status="+status+" saved="+saved+" stage="+reply.optString("stage")+" reason="+reply.optString("reason"));
             Map<String,String> result=new HashMap<>();result.put("status",status);result.put("saved",Integer.toString(saved));
-            result.put("nonce",nonce);result.put("operation",operation);return result;
+            result.put("nonce",nonce);result.put("operation",operation);
+            result.put("target_saved",Integer.toString(reply.optInt("target_saved",-1)));
+            // A late repaint or hidden native control is not permission to toggle twice.
+            return DeezerHeartReceiptRecovery.resolve(result,()->{
+                check(current);
+                Map<String,String> readValues=new HashMap<>(values);
+                readValues.put("operation","read");
+                readValues.put("nonce",UUID.randomUUID().toString().replace("-",""));
+                readValues.put("expected_saved","-1");
+                Map<String,String> observed=execute(context,readValues,current);
+                check(current);
+                android.util.Log.i("BOOPHeart","readback status="+observed.get("status")+" saved="+observed.get("saved"));
+                return observed;
+            });
         }catch(Exception unavailable){
             android.util.Log.w("BOOPHeart","operation="+operation+" failed at "+phase+" ("+unavailable.getClass().getSimpleName()+")");
             throw unavailable;

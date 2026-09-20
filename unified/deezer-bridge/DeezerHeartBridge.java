@@ -32,6 +32,8 @@ public final class DeezerHeartBridge {
     private Context context;
     private ImageReader reader;
     private Image image;
+    private long frameSequence,frameReceivedAt;
+    private int targetSaved=-1;
     private VirtualDisplay display;
     private UiAutomation ui;
     private MediaController player;
@@ -87,7 +89,7 @@ public final class DeezerHeartBridge {
         reader=ImageReader.newInstance(1280,720,PixelFormat.RGBA_8888,4);
         reader.setOnImageAvailableListener(r->{synchronized(pixelsLock){
             if(ended.get())return;
-            try {Image next=r.acquireLatestImage();if(next!=null){if(image!=null)image.close();image=next;pixelsLock.notifyAll();}}
+            try {Image next=r.acquireLatestImage();if(next!=null){if(image!=null)image.close();image=next;frameSequence++;frameReceivedAt=SystemClock.elapsedRealtime();pixelsLock.notifyAll();}}
             catch(IllegalStateException closing){ }
         }},main);
     }
@@ -129,16 +131,27 @@ public final class DeezerHeartBridge {
             if("read".equals(operation)){end("OK",saved);return;}
             if("toggle".equals(operation)&&!DeezerHeartRules.shouldToggle(saved,request.getInt("expected_saved"))){end("STALE_STATE",saved);return;}
             AccessibilityNodeInfo target="dislike".equals(operation)?selectHeart(nodes,true):heart;
-            checkOwner();checkTrack();stage="heart-action";actionSent=true;
+            checkOwner();checkTrack();stage="heart-action";
+            Rect heartBounds=new Rect();heart.getBoundsInScreen(heartBounds);
+            long beforeFrame; synchronized(pixelsLock){beforeFrame=frameSequence;}
+            targetSaved="toggle".equals(operation)?1-saved:-1;
+            actionSent=true;
             if(!target.performAction(AccessibilityNodeInfo.ACTION_CLICK))throw new IOException("Action not delivered");
-            Thread.sleep(1200);stage="confirmation";
+            stage="confirmation";
             if("dislike".equals(operation)){
+                Thread.sleep(1200);
                 // A changed native queue item after the actual ban click confirms skip, not a substituted Next command.
                 if(matches(player.getMetadata())){end("UNCONFIRMED",-1);return;}
                 end("DISLIKED",-1);return;
             }
-            checkTrack();int after=state(heart);
-            if(after!=1-saved){end("UNCONFIRMED",-1);return;}
+            // A network-backed native mutation need not repaint within one fixed 1200ms sample.
+            int after=DeezerHeartConfirmation.awaitChange(saved,beforeFrame,
+                    Math.min(deadline-700,SystemClock.elapsedRealtime()+6000),
+                    (cursor,until)->nextHeartFrame(heartBounds,cursor,until));
+            checkOwner();checkTrack();
+            if(after!=1-saved || !heart.refresh() || !usable(heart) || state(heart)!=after){
+                end("UNCONFIRMED",-1);return;
+            }
             end("OK",after);
         }finally{recycle(nodes);}
     }
@@ -211,10 +224,24 @@ public final class DeezerHeartBridge {
         int index=DeezerHeartRules.heartIndex(geometry,lyrics.centerY(),dislike,playerContextType);
         if(index<0)throw new IOException("Native transport layout changed");return buttons.get(index);
     }
-    private int state(AccessibilityNodeInfo heart)throws Exception {
-        Rect b=new Rect();heart.getBoundsInScreen(b);int[] crop=new int[41*41];
+    private DeezerHeartConfirmation.Frame nextHeartFrame(Rect bounds,long after,long until)throws Exception {
         synchronized(pixelsLock){
-            if(image==null || System.nanoTime()-image.getTimestamp()>2500000000L)throw new IOException("No fresh offscreen frame");
+            while(!ended.get() && frameSequence<=after){
+                long remaining=until-SystemClock.elapsedRealtime();
+                if(remaining<=0)return null;
+                pixelsLock.wait(remaining);
+            }
+            if(ended.get() || SystemClock.elapsedRealtime()>until)return null;
+            return new DeezerHeartConfirmation.Frame(frameSequence,frameReceivedAt,state(bounds));
+        }
+    }
+    private int state(AccessibilityNodeInfo heart)throws Exception {
+        Rect b=new Rect();heart.getBoundsInScreen(b);return state(b);
+    }
+    private int state(Rect b)throws Exception {
+        int[] crop=new int[41*41];
+        synchronized(pixelsLock){
+            if(image==null || SystemClock.elapsedRealtime()-frameReceivedAt>2500L)throw new IOException("No fresh offscreen frame");
             Image.Plane plane=image.getPlanes()[0];ByteBuffer bytes=plane.getBuffer();
             if(plane.getPixelStride()!=4 || b.centerX()<20||b.centerY()<20||b.centerX()+20>=image.getWidth()||b.centerY()+20>=image.getHeight())throw new IOException("Invalid native glyph");
             for(int y=0;y<41;y++)for(int x=0;x<41;x++){
@@ -236,7 +263,7 @@ public final class DeezerHeartBridge {
         try {
             if(ui!=null)try{UiAutomation.class.getMethod("disconnect").invoke(ui);}catch(Exception ignored){ }
             synchronized(pixelsLock){if(image!=null){image.close();image=null;}if(display!=null)display.release();if(reader!=null)reader.close();}
-            JSONObject response=new JSONObject().put("nonce",nonce).put("operation",operation).put("status",status).put("saved",saved).put("stage",stage).put("reason",failureReason);
+            JSONObject response=new JSONObject().put("nonce",nonce).put("operation",operation).put("status",status).put("saved",saved).put("target_saved",targetSaved).put("stage",stage).put("reason",failureReason);
             System.out.println("BOOP_HEART_RESULT="+response);
         }catch(Exception ignored){System.out.println("BOOP_HEART_CLEANUP_FAILED");}
         finally{System.exit("OK".equals(status)||"DISLIKED".equals(status)||"STALE_STATE".equals(status)?0:1);}

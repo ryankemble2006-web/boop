@@ -29,7 +29,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private final int accent;
     private final Controls controls;
     private final ImageView artwork;
-    private final TextView eyebrow, title, artist, status, elapsed, duration;
+    private final TextView title, artist, status, elapsed, duration;
     private final TextView queueButton;
     private final LyricsLinesView lyrics;
     private final TransportButton[] buttons = new TransportButton[3];
@@ -67,8 +67,6 @@ public final class ShieldLyricsView extends FrameLayout {
         setClipChildren(true);
         setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.rgb(11, 18, 22), Color.rgb(3, 5, 7), Color.BLACK}));
-        eyebrow = label("NOW PLAYING", 14, Color.rgb(151, 169, 178), true);
-        eyebrow.setLetterSpacing(0.18f);
         artwork = new ImageView(context) {
             private final Paint focusPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             @Override protected void onFocusChanged(boolean gain, int direction, android.graphics.Rect previous) {
@@ -316,7 +314,6 @@ public final class ShieldLyricsView extends FrameLayout {
         float artLeft = progressCenter - artSize * 0.5f;
         float transportSpan = (3f * 54f + 2f * 17f) * unit;
         float transportLeft = progressCenter - transportSpan * 0.5f;
-        place(eyebrow, left, 54f * unit, 365f * unit, 30f * unit);
         place(artwork, artLeft, 116f * unit, artSize, artSize);
         place(title, left, 448f * unit, progressWidth, 42f * unit);
         place(artist, left, 520f * unit, progressWidth, 35f * unit);
@@ -331,12 +328,12 @@ public final class ShieldLyricsView extends FrameLayout {
         // Hearts flank the accepted transport geometry; none of the original three moves.
         place(removeHeart, transportLeft - 71f * unit, 632f * unit, 54f * unit, 54f * unit);
         place(addHeart, transportLeft + 213f * unit, 632f * unit, 54f * unit, 54f * unit);
-        size(eyebrow, 13); size(title, 28); size(artist, 19); size(status, 24);
+        size(title, 28); size(artist, 19); size(status, 24);
 size(elapsed, 12); size(duration, 12);
         place(queueButton, progressCenter - 56f * unit, 703f * unit, 112f * unit, 38f * unit);
         size(queueButton, 18);
         // Keep every accepted gap; translate the whole music column, never the lyric text.
-        for (View item : new View[]{eyebrow, artwork, title, artist, progress, elapsed, duration, removeHeart, addHeart, queueButton})
+        for (View item : new View[]{artwork, title, artist, progress, elapsed, duration, removeHeart, addHeart, queueButton})
             item.setTranslationY(-MUSIC_COLUMN_SHIFT * unit);
         for (TransportButton button : buttons) button.setTranslationY(-MUSIC_COLUMN_SHIFT * unit);
         artwork.invalidate();

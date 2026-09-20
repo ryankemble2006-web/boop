@@ -20,7 +20,7 @@ def test_lyrics_column_moves_as_one_without_changing_internal_gaps():
     view=(SRC/'ShieldLyricsView.java').read_text(encoding='utf-8')
     assert 'private static final float MUSIC_COLUMN_SHIFT = 38f;' in view, 'No consistent upward shift yet'
     assert 'place(queueButton, progressCenter - 56f * unit, 703f * unit, 112f * unit, 38f * unit)' in view
-    assert 'eyebrow, artwork, title, artist, progress, elapsed, duration, removeHeart, addHeart, queueButton' in view
+    assert 'artwork, title, artist, progress, elapsed, duration, removeHeart, addHeart, queueButton' in view
     assert 'item.setTranslationY(-MUSIC_COLUMN_SHIFT * unit)' in view
     assert 'button.setTranslationY(-MUSIC_COLUMN_SHIFT * unit)' in view
     assert 'size(queueButton, 18)' in view

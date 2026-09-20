@@ -1,5 +1,12 @@
 # BOOP current handoff
 
+## In progress: Shield v241 confirmation correction; Pixel 7 updated
+
+Ryan accepts the Lyrics Queue placement and list scale but reports an applied favourite can still show unconfirmed on v240. The new candidate removes only the decorative NOW PLAYING heading, preserves all accepted geometry, waits for a bounded fresh native state transition and performs at most one read-only reconciliation after an uncertain toggle. No duplicate favourite actions, fake fills or continuous UI-tree polling.32 focused tests and source helper compilation pass; signed build/install/runtime validation pending. Details: docs/handoffs/2026-09-20-heart-confirmation-v241.md.
+
+Pixel7 Pro was explicitly paired and identified, then the final Wall208 from source6a6eeb944e152b75323f653f31f7541668febe68 was hash/signature verified and installed over207 preserving data. Installed208/1.2.208-wall read back. APK SHA2566f5bdbe2897342e1891fb60714b07c445f73d4169cba905b3967081a2cd847aa. Phone voice retest remains pending; Pixel10 untouched. No pairing secret or address is published.
+
+
 ## Current: Shield v240 installed; Lyrics Queue verified; Wall v208 ready for voice retest
 
 Ryan accepted v238 Queue and requested the same panel in Lyrics for karaoke. Queue is centred below Play/Pause; the whole left music column shifts up38 design pixels, preserving its gaps. Right-hand lyrics are unchanged. Flow/radio/unknown modes hide Queue. On final240 the actual Queue button opened a20-track native queue, selection was provider-confirmed with context/session/order preserved, and Back returned to the SAME Lyrics Activity. Its position under Play/Pause was measured. Earlier239 testing also physically verified Flow exclusion,31-track album selection and the actual spacing screenshot; Lyrics source did not change in240.
