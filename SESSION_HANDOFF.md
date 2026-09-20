@@ -1,53 +1,50 @@
 # BOOP current handoff
 
-Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-weather-focus-v221`.
+Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-hour-temp-nudge-v222`.
 
-## Current Shield: v221, signed and ready for Ryan's physical test
+## Current Shield: v222, signed and ready for Ryan's physical test
 
-Package `com.boop.shieldoverlay`, version `221` / `1.2.221-shield`.
+Package `com.boop.shieldoverlay`, version `222` / `1.2.222-shield`.
 
-v219's Now Playing alignment remains physically accepted as perfect and is unchanged. v220's user-selectable highlight colour remains unchanged.
+v219's Now Playing alignment remains physically accepted as perfect. v220 accent colour, v217 reordering, v221 weather/focus behaviour and all voice/audio behaviour remain unchanged.
 
-### v221 weather alignment
+### v222 tiny weather polish
 
-Forecast rows now use the weather glyph's accepted optical centre as the anchor. Time/day labels, temperature/high-low and rain percentage receive the same +2dp optical correction as the weather glyph, so each stack is centred on the icon point rather than merely the weighted cell.
+Only the four **Next 4 hours** temperature labels are changed. Their existing +2dp optical alignment is retained and the temperature text receives an additional **+1 physical pixel** horizontal nudge to the right.
 
-The 3-day forecast region is shifted +9dp inside its 3/10 card region. This compensates for the card's 18dp outer inset so the visible empty space from the middle divider to the first forecast and from the last forecast to the outer border is balanced.
+Times, weather glyphs, rain percentages, 3-day forecast geometry, current weather and footer are unchanged.
 
-No Now Playing, HA control, accent-colour, voice/audio or assistant geometry was changed.
+### CI iteration speed
 
-### v221 return-focus behaviour
+The signed Shield/Wall workflow now:
+- restores and saves writable Gradle caches on the active Shield branch;
+- invokes Gradle with `--build-cache`;
+- cancels superseded in-progress builds during rapid UI iteration.
 
-Whenever the Shield launcher regains focus from an external app, HOME requests Favourite entry 1. This covers ordinary Back returns and returns through Shield's task manager. HOME intents also rebuild with first-favourite focus.
+The v222 production run confirmed the cache is genuinely active:
+- `GRADLE_BUILD_ACTION_CACHE_RESTORED=true`;
+- app build: **154 actionable tasks: 69 executed, 77 from cache, 8 up-to-date**;
+- Gradle app build completed in **26 seconds**.
 
-The launcher Close media action now returns focus to Favourite entry 1 after issuing the existing close-media command. Existing internal short-Back behaviour retains the same first-favourite destination.
-
-### CI Gradle cache
-
-The Shield/Wall signed workflow now enables writable Gradle caching on the active branch and invokes Gradle with `--build-cache`. This lets repeated small follow-up builds reuse Gradle User Home/dependency state and eligible task outputs instead of rebuilding/downloading them from cold state. Cache setup commit: `438562a21cfb226f7c1eabec1213a549c8e8bf56`. The first post-change run seeds the cache; later runs on the same branch are the payoff.
+This does not shrink the APK delivered to Ryan, but it substantially reduces repeated CI compilation/dependency work.
 
 ## Verified signed artifact
 
-Production/build source: `9bf329a24631310261843b654f9fe0716a59aa2e`.
-Successful GitHub Actions run `35515284079`, job `106090068972`.
-Artifact `10606343049`: `BOOP-Shield-v221-Wall-v207-Signed`.
+Production/build source: `5bab9dab597161a0a53ab5e6f85ef0f3d913bee0`.
+Successful GitHub Actions run `35516142829`, job `106092308080`.
+Artifact `10606488920`: `BOOP-Shield-v222-Wall-v207-Signed`.
 
-Deliver **BOOP-Shield-v221.apk**, 160485741 bytes.
-Shield APK SHA-256: `d0e5111efd97dc948890b2181e3212ce20e67b4e43cadc0df900a06969295f8a`.
+Deliver **BOOP-Shield-v222.apk**, 160485741 bytes.
+Shield APK SHA-256: `3eee980f533a64b09d4fa0a25177c9c13bcbab2df17ec46f01c407f4c8f98bc5`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `20a5fbf892d2139d4e45239515bfcee0f2f2773af4c86f0543c42440e2dc664c`.
+Artifact ZIP SHA-256: `649641d807fbcab638ad2b65ef5ea35aed5aefd0a70d34e7a4e9c6036667fe30`.
 
-Verification passed the focused Shield checks, inherited v206 checks, split materialization/integration, HA room/latency unit tests, both app builds, and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+Verification passed focused Shield checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
 
 Wall remains v207.
 
 ## Physical acceptance pending
 
-Ryan is the visual/ADB tester. Check:
-1. Next 4 hours: time, temperature and rain percentage visually centre on each weather glyph.
-2. 3 day forecast: each label/high-low/rain stack centres on its glyph and the whole panel has balanced left/right visible whitespace.
-3. Back out of an app and return through Shield task manager: focus lands on Favourite entry 1.
-4. Close media: focus lands on Favourite entry 1.
-5. v219 Now Playing alignment and v220 accent behaviour remain unchanged.
+Ryan is the visual/ADB tester. Check only that the four hourly temperature values are now one pixel farther right. Everything else should remain visually identical to v221.
 
-Detailed record: `docs/handoffs/2026-09-20-shield-weather-focus-v221.md`.
+Detailed record: `docs/handoffs/2026-09-20-shield-hour-temp-nudge-v222.md`.
