@@ -19,6 +19,7 @@ if not ASSET_SOURCE.is_file():
     raise SystemExit("Natural voice manifest source is missing")
 ASSET_TARGET.parent.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(ASSET_SOURCE, ASSET_TARGET)
+shutil.copytree(Path("natural-voices/previews"), ASSET_TARGET.parent / "previews", dirs_exist_ok=True)
 
 text = MAIN.read_text(encoding="utf-8")
 if MARKER in text:
@@ -37,6 +38,7 @@ text = replace_once(
     private BoopNaturalVoicePack naturalVoicePack;
     private BoopNaturalVoiceDownloader naturalVoiceDownloader;
     private BoopNaturalSpeechBackend naturalSpeechBackend;
+    private int naturalPreviewGeneration;
 """,
     "natural voice fields",
 )
@@ -253,6 +255,7 @@ helper = r'''    private void addNaturalVoiceSettings() {
 
     private void previewNaturalVoice(String key, String text, TextView naturalStatus, Button button) {
         wakeFaceForInteraction();
+        final int previewGeneration = ++naturalPreviewGeneration;
         if (wakeCoordinator != null) {
             wakeCoordinator.onTtsStarting();
         }
@@ -276,9 +279,12 @@ helper = r'''    private void addNaturalVoiceSettings() {
                 voiceController.pitch(),
                 voiceController.speechRate(),
                 new BoopSpeechBackend.Callback() {
+                    @Override public void onCancelled() { }
                     @Override
                     public void onDone() {
                         runOnUiThread(() -> {
+                            if (previewGeneration != naturalPreviewGeneration || !voiceSettingsOpen
+                                    || !activityInForeground || isFinishing() || isDestroyed()) return;
                             if (voiceController.selectNaturalVoice(key)) {
                                 voiceController.markNaturalPlaybackProven();
                                 naturalStatus.setText("Selected: " + button.getText());
@@ -296,6 +302,8 @@ helper = r'''    private void addNaturalVoiceSettings() {
                                 "Natural voice preview failed; Android voice remains active",
                                 error);
                         runOnUiThread(() -> {
+                            if (previewGeneration != naturalPreviewGeneration || !voiceSettingsOpen
+                                    || !activityInForeground || isFinishing() || isDestroyed()) return;
                             String stage = "speech";
                             if (error instanceof BoopNaturalSpeechBackend.NaturalSpeechException) {
                                 stage = ((BoopNaturalSpeechBackend.NaturalSpeechException) error).stage();
@@ -349,6 +357,9 @@ hide = replace_once(
         if (naturalVoiceDownloader != null && naturalVoiceDownloader.isRunning()) {
             naturalVoiceDownloader.cancel();
         }
+        naturalPreviewGeneration++;
+        if (naturalSpeechBackend != null) naturalSpeechBackend.stop();
+        if (wakeCoordinator != null) wakeCoordinator.onTtsFinished();
 """,
     "Voice Settings download cancellation",
 )
@@ -407,6 +418,7 @@ new_speak = '''    private void speak(String text) {
                     voiceController.pitch(),
                     voiceController.speechRate(),
                     new BoopSpeechBackend.Callback() {
+                        @Override public void onCancelled() { }
                         @Override
                         public void onDone() {
                             runOnUiThread(() -> finishTtsUtterance());

@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 243 if body == 'shield' else 210
+    version = 244 if body == 'shield' else 211
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
@@ -77,6 +77,8 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
         for filename in ['boop-png-study.png','boop-hidden-felt.png','boop-felt-sign-blank.png','eyes.frag']:
             assert archive.read('assets/'+filename) == Path('unified/animation/assets',filename).read_bytes(), filename
         assert archive.read('assets/boopApprovedEyes.png') == Path('unified/assets/boop-eyes/boopApprovedEyes.png').read_bytes()
+        for demo in Path('natural-voices/previews').glob('*.pcm'):
+            assert archive.read('assets/boop-natural-voices/previews/' + demo.name) == demo.read_bytes(), demo.name
         natives = {n: hashlib.sha256(archive.read(n)).hexdigest()
                    for n in archive.namelist() if n.startswith('lib/') and n.endswith('.so')}
         assert natives == original_native, 'Packaged native runtime differs from accepted v206: ' + str(

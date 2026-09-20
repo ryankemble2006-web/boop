@@ -125,8 +125,9 @@ def test_natural_backend_uses_local_sherpa_and_safe_android_audio_controls() -> 
     assert "AudioFormat.ENCODING_PCM_16BIT" in source
     assert "PlaybackParams" in source
     assert ".setPitch(pitchForPlayback(pitch))" in source
-    assert ".setSpeed(1.0f)" in source
-    assert "Natural pitch unavailable; playing original PCM" in source
+    assert "generation.setSpeed(1.0f)" in source
+    assert ".setSpeed(speedForRate(speed))" in source
+    assert "Natural pitch/cadence unavailable" in source
     assert "lexicon-gb-en.txt" in source
 
 

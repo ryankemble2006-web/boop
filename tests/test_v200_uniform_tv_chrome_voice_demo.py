@@ -56,8 +56,9 @@ def test_natural_voice_pitch_is_applied_only_at_pcm_playback():
     backend = text("source/BoopNaturalSpeechBackend.java")
     assert "PlaybackParams" in backend
     assert ".setPitch(pitchForPlayback(pitch))" in backend
-    assert ".setSpeed(1.0f)" in backend
-    assert "Natural pitch unavailable; playing original PCM" in backend
+    assert "generation.setSpeed(1.0f)" in backend
+    assert ".setSpeed(speedForRate(speed))" in backend
+    assert "Natural pitch/cadence unavailable" in backend
     assert "speedForRate(rate)" in backend
 
 

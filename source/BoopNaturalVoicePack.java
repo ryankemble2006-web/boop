@@ -72,6 +72,7 @@ final class BoopNaturalVoicePack {
     }
 
     private final BoopNaturalVoiceManifest manifest;
+    private final android.content.res.AssetManager assets;
     private final File root;
     private final File archive;
     private final File staging;
@@ -80,6 +81,7 @@ final class BoopNaturalVoicePack {
 
     BoopNaturalVoicePack(Context context, BoopNaturalVoiceManifest manifest) {
         this.manifest = manifest;
+        this.assets = context.getAssets();
         this.root = new File(context.getNoBackupFilesDir(), ROOT_NAME);
         this.archive = new File(root, ARCHIVE_NAME);
         this.staging = new File(root, "staging");
@@ -97,6 +99,10 @@ final class BoopNaturalVoicePack {
 
     synchronized File activeDirectory() {
         return active;
+    }
+
+    InputStream openPreview(String assetName) throws IOException {
+        return assets.open(assetName);
     }
 
     synchronized File archiveFile() throws IOException {

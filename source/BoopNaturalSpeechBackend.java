@@ -15,6 +15,7 @@ import com.k2fsa.sherpa.onnx.OfflineTtsKokoroModelConfig;
 import com.k2fsa.sherpa.onnx.OfflineTtsModelConfig;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -61,6 +62,10 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         void error(Throwable error) {
             if (terminal.compareAndSet(false, true)) callback.onError(error);
         }
+
+        void cancel() {
+            if (terminal.compareAndSet(false, true)) callback.onCancelled();
+        }
     }
 
     private final BoopNaturalVoicePack pack;
@@ -70,11 +75,17 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         return thread;
     });
     private final Object lock = new Object();
+    // Audio must not queue behind a running, non-interruptible native inference.
+    private final ExecutorService playbackExecutor = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "boop-natural-playback");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private OfflineTts offlineTts;
     private AudioTrack activeTrack;
     private RequestState activeRequest;
-    private boolean released;
+    private volatile boolean released;
 
     BoopNaturalSpeechBackend(BoopNaturalVoicePack pack) {
         this.pack = pack;
@@ -98,14 +109,15 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             }
             activeRequest = request;
         }
-        if (interrupted != null) interrupted.done();
+        if (interrupted != null) interrupted.cancel();
         try {
-            executor.execute(() -> synthesizeAndPlay(
-                    request,
-                    text,
-                    speakerId,
-                    speedForRate(rate),
-                    pitchForPlayback(pitch)));
+            String preview = BoopNaturalVoicePreview.assetName(text, speakerId);
+            if (preview != null) {
+                playbackExecutor.execute(() -> playPreview(
+                        request, preview, text, speakerId, pitchForPlayback(pitch), speedForRate(rate)));
+            } else {
+                queueSynthesis(request, text, speakerId, speedForRate(rate), pitchForPlayback(pitch));
+            }
             return true;
         } catch (RuntimeException rejected) {
             synchronized (lock) {
@@ -123,12 +135,11 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             if (request == null) return;
             stopLocked(request, true);
         }
-        request.done();
+        request.cancel();
     }
 
     @Override
     public void release() {
-        OfflineTts ttsToRelease;
         synchronized (lock) {
             if (released) return;
             released = true;
@@ -136,12 +147,48 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
                 stopLocked(activeRequest, false);
                 activeRequest = null;
             }
-            ttsToRelease = offlineTts;
-            offlineTts = null;
         }
-        executor.shutdownNow();
-        if (ttsToRelease != null) {
-            try { ttsToRelease.release(); } catch (Throwable ignored) { }
+        playbackExecutor.shutdownNow();
+        // JNI generation cannot safely be interrupted. Dispose on its own worker,
+        // after the current call returns, without blocking the Activity/main thread.
+        executor.execute(() -> {
+            if (offlineTts != null) {
+                try { offlineTts.release(); } catch (Throwable ignored) { }
+                offlineTts = null;
+            }
+        });
+        executor.shutdown();
+    }
+
+    private void queueSynthesis(RequestState request, String text, int speakerId, float speed, float pitch) {
+        executor.execute(() -> synthesizeAndPlay(request, text, speakerId, speed, pitch));
+    }
+
+    private void playPreview(RequestState request, String asset, String text, int speakerId, float pitch, float speed) {
+        if (request.cancelled.get() || released) return;
+        short[] pcm;
+        try (InputStream input = pack.openPreview(asset)) {
+            pcm = BoopNaturalVoicePreview.read(input);
+        } catch (Exception unavailable) {
+            if (request.cancelled.get() || released) return;
+            android.util.Log.w("BOOP-NaturalVoice", "Voice demo unavailable; generating locally", unavailable);
+            try { queueSynthesis(request, text, speakerId, speed, pitch); }
+            catch (RuntimeException rejected) { fail(request, "synthesis", rejected); }
+            return;
+        }
+        android.util.Log.i(LATENCY_TAG, "preview_ready total_ms=" + (SystemClock.elapsedRealtime() - request.startMs));
+        playSafely(request, pcm, BoopNaturalVoicePreview.SAMPLE_RATE, pitch, speed);
+    }
+
+    private void playSafely(RequestState request, short[] pcm, int sampleRate, float pitch, float speed) {
+        try { play(request, pcm, sampleRate, pitch, speed); }
+        catch (Throwable error) { fail(request, "playback", error); }
+    }
+
+    private void fail(RequestState request, String stage, Throwable error) {
+        if (!request.cancelled.get() && !released) {
+            clearIfActive(request);
+            request.error(error instanceof NaturalSpeechException ? error : new NaturalSpeechException(stage, error));
         }
     }
 
@@ -184,6 +231,7 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             float pitch) {
         GeneratedAudio audio;
         try {
+            if (request.cancelled.get() || released) return;
             OfflineTts tts = ensureTts();
             long modelReadyMs = SystemClock.elapsedRealtime();
             android.util.Log.i(
@@ -193,7 +241,9 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
 
             GenerationConfig generation = new GenerationConfig();
             generation.setSid(speakerId);
-            generation.setSpeed(speed);
+            // Match the fixed demos: keep neural PCM neutral, then apply both
+            // saved controls together through Android's independent pitch/speed.
+            generation.setSpeed(1.0f);
             generation.setSilenceScale(SILENCE_SCALE);
             long synthesisStartMs = SystemClock.elapsedRealtime();
             // Sherpa-ONNX 1.13.7's Android callback JNI bridge can abort the
@@ -221,7 +271,8 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
         }
 
         try {
-            play(request, audio.getSamples(), audio.getSampleRate(), pitch);
+            short[] pcm = toPcm16(audio.getSamples());
+            playbackExecutor.execute(() -> playSafely(request, pcm, audio.getSampleRate(), pitch, speed));
         } catch (Throwable error) {
             if (!request.cancelled.get()) {
                 clearIfActive(request);
@@ -231,56 +282,56 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
     }
 
     private OfflineTts ensureTts() {
-        synchronized (lock) {
-            if (released) throw new IllegalStateException("Natural speech backend is closed");
-            if (offlineTts != null) return offlineTts;
-            File root = pack.activeDirectory();
-            if (!runtimeFilesReadyForSherpa(root)) {
-                throw new NaturalSpeechException(
-                        "files",
-                        new IllegalStateException("Natural voice runtime files are incomplete"));
+        // Only the synthesis executor accesses this model. Never hold the UI's
+        // cancellation lock while opening the native model or running inference.
+        if (released) throw new IllegalStateException("Natural speech backend is closed");
+        if (offlineTts != null) return offlineTts;
+        File root = pack.activeDirectory();
+        if (!runtimeFilesReadyForSherpa(root)) {
+            throw new NaturalSpeechException(
+                    "files",
+                    new IllegalStateException("Natural voice runtime files are incomplete"));
+        }
+        File lexicon = new File(root, "lexicon-gb-en.txt");
+
+        try {
+            OfflineTtsKokoroModelConfig kokoro = new OfflineTtsKokoroModelConfig();
+            kokoro.setModel(new File(root, "model.onnx").getAbsolutePath());
+            kokoro.setVoices(new File(root, "voices.bin").getAbsolutePath());
+            kokoro.setTokens(new File(root, "tokens.txt").getAbsolutePath());
+            kokoro.setDataDir(new File(root, "espeak-ng-data").getAbsolutePath());
+            kokoro.setLexicon(lexicon.getAbsolutePath());
+
+            OfflineTtsModelConfig model = new OfflineTtsModelConfig();
+            model.setKokoro(kokoro);
+            model.setNumThreads(4);
+            model.setDebug(false);
+            model.setProvider("cpu");
+
+            OfflineTtsConfig config = new OfflineTtsConfig();
+            config.setModel(model);
+            config.setSilenceScale(SILENCE_SCALE);
+
+            OfflineTts candidate = new OfflineTts(null, config);
+            int sampleRate = candidate.sampleRate();
+            int speakerCount = candidate.numSpeakers();
+            if (sampleRate <= 0 || speakerCount <= HIGHEST_REQUIRED_SPEAKER_ID) {
+                try { candidate.release(); } catch (Throwable ignored) { }
+                throw new IllegalStateException(
+                        "Natural voice model opened with invalid runtime metadata");
             }
-            File lexicon = new File(root, "lexicon-gb-en.txt");
-
-            try {
-                OfflineTtsKokoroModelConfig kokoro = new OfflineTtsKokoroModelConfig();
-                kokoro.setModel(new File(root, "model.onnx").getAbsolutePath());
-                kokoro.setVoices(new File(root, "voices.bin").getAbsolutePath());
-                kokoro.setTokens(new File(root, "tokens.txt").getAbsolutePath());
-                kokoro.setDataDir(new File(root, "espeak-ng-data").getAbsolutePath());
-                kokoro.setLexicon(lexicon.getAbsolutePath());
-
-                OfflineTtsModelConfig model = new OfflineTtsModelConfig();
-                model.setKokoro(kokoro);
-                model.setNumThreads(4);
-                model.setDebug(false);
-                model.setProvider("cpu");
-
-                OfflineTtsConfig config = new OfflineTtsConfig();
-                config.setModel(model);
-                config.setSilenceScale(SILENCE_SCALE);
-
-                OfflineTts candidate = new OfflineTts(null, config);
-                int sampleRate = candidate.sampleRate();
-                int speakerCount = candidate.numSpeakers();
-                if (sampleRate <= 0 || speakerCount <= HIGHEST_REQUIRED_SPEAKER_ID) {
-                    try { candidate.release(); } catch (Throwable ignored) { }
-                    throw new IllegalStateException(
-                            "Natural voice model opened with invalid runtime metadata");
-                }
-                offlineTts = candidate;
-                return offlineTts;
-            } catch (NaturalSpeechException failure) {
-                throw failure;
-            } catch (Throwable error) {
-                throw new NaturalSpeechException("initialization", error);
-            }
+            offlineTts = candidate;
+            return offlineTts;
+        } catch (NaturalSpeechException failure) {
+            throw failure;
+        } catch (Throwable error) {
+            throw new NaturalSpeechException("initialization", error);
         }
     }
 
-    private void play(RequestState request, float[] samples, int sampleRate, float pitch)
+    private void play(RequestState request, short[] pcm, int sampleRate, float pitch, float speed)
             throws InterruptedException {
-        short[] pcm = toPcm16(samples);
+        if (request.cancelled.get() || released) return;
         int minimumBytes = AudioTrack.getMinBufferSize(
                 sampleRate,
                 AudioFormat.CHANNEL_OUT_MONO,
@@ -305,42 +356,44 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
             throw new IllegalStateException("Natural speech audio output unavailable");
         }
 
-        synchronized (lock) {
-            if (released || activeRequest != request || request.cancelled.get()) {
-                track.release();
-                return;
-            }
-            activeTrack = track;
-        }
-
-        int written = track.write(pcm, 0, pcm.length, AudioTrack.WRITE_BLOCKING);
-        if (written != pcm.length) {
-            throw new IllegalStateException("Natural speech audio output was incomplete");
-        }
         try {
-            PlaybackParams params = new PlaybackParams()
-                    .allowDefaults()
-                    .setSpeed(1.0f)
-                    .setPitch(pitchForPlayback(pitch));
-            track.setPlaybackParams(params);
-        } catch (RuntimeException unsupported) {
-            android.util.Log.w(
-                    "BOOP-NaturalVoice",
-                    "Natural pitch unavailable; playing original PCM",
-                    unsupported);
-        }
-        track.play();
-        android.util.Log.i(
-                LATENCY_TAG,
-                "playback_start total_ms=" + (SystemClock.elapsedRealtime() - request.startMs));
+            synchronized (lock) {
+                if (released || activeRequest != request || request.cancelled.get()) {
+                    return;
+                }
+                activeTrack = track;
+                int written = track.write(pcm, 0, pcm.length, AudioTrack.WRITE_BLOCKING);
+                if (written != pcm.length) {
+                    throw new IllegalStateException("Natural speech audio output was incomplete");
+                }
+                try {
+                    PlaybackParams params = new PlaybackParams()
+                            .allowDefaults()
+                            .setSpeed(speedForRate(speed))
+                            .setPitch(pitchForPlayback(pitch));
+                    track.setPlaybackParams(params);
+                } catch (RuntimeException unsupported) {
+                    throw new IllegalStateException("Natural pitch/cadence unavailable", unsupported);
+                }
+                track.play();
+                android.util.Log.i(
+                        LATENCY_TAG,
+                        "playback_start total_ms=" + (SystemClock.elapsedRealtime() - request.startMs)
+                                + " pitch=" + pitch + " rate=" + speed);
+            }
 
-        while (!request.cancelled.get()
-                && track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING
-                && Integer.toUnsignedLong(track.getPlaybackHeadPosition()) < pcm.length) {
-            Thread.sleep(20L);
-        }
-        if (!request.cancelled.get()) {
+            while (!request.cancelled.get()) {
+                synchronized (lock) {
+                    if (request.cancelled.get() || activeTrack != track) break;
+                    if (track.getPlayState() != AudioTrack.PLAYSTATE_PLAYING
+                            || Integer.toUnsignedLong(track.getPlaybackHeadPosition()) >= pcm.length) break;
+                }
+                Thread.sleep(20L);
+            }
+        } finally {
             clearTrack(track, request);
+        }
+        if (!request.cancelled.get() && !released) {
             request.done();
         }
     }
@@ -370,7 +423,8 @@ final class BoopNaturalSpeechBackend implements BoopSpeechBackend {
 
     private void clearIfActive(RequestState request) {
         synchronized (lock) {
-            if (activeRequest == request) activeRequest = null;
+            if (activeRequest != request) return;
+            activeRequest = null;
             AudioTrack track = activeTrack;
             activeTrack = null;
             if (track != null) {

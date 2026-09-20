@@ -63,6 +63,7 @@ text = once(
 )
 
 helper = r'''    private void testCurrentVoice() {
+        final int previewGeneration = ++naturalPreviewGeneration;
         final String phrase = "This is how BOOP sounds.";
         if (wakeCoordinator != null) {
             wakeCoordinator.onTtsStarting();
@@ -78,8 +79,12 @@ helper = r'''    private void testCurrentVoice() {
                         voiceController.pitch(),
                         voiceController.speechRate(),
                         new BoopSpeechBackend.Callback() {
+                            @Override public void onCancelled() { }
                             @Override public void onDone() {
-                                runOnUiThread(() -> finishTtsUtterance());
+                                runOnUiThread(() -> {
+                                    if (previewGeneration == naturalPreviewGeneration && voiceSettingsOpen
+                                            && activityInForeground && !isFinishing() && !isDestroyed()) finishTtsUtterance();
+                                });
                             }
 
                             @Override public void onError(Throwable error) {
@@ -87,7 +92,10 @@ helper = r'''    private void testCurrentVoice() {
                                         "BOOP-NaturalVoice",
                                         "Natural voice demo failed; using Android TTS",
                                         error);
-                                runOnUiThread(() -> speakWithAndroidTts(phrase));
+                                runOnUiThread(() -> {
+                                    if (previewGeneration == naturalPreviewGeneration && voiceSettingsOpen
+                                            && activityInForeground && !isFinishing() && !isDestroyed()) speakWithAndroidTts(phrase);
+                                });
                             }
                         });
                 if (started) return;
@@ -107,10 +115,12 @@ text = once(
     text,
     """    private void previewNaturalVoice(String key, String text, TextView naturalStatus, Button button) {
         wakeFaceForInteraction();
+        final int previewGeneration = ++naturalPreviewGeneration;
         if (wakeCoordinator != null) {
 """,
     """    private void previewNaturalVoice(String key, String text, TextView naturalStatus, Button button) {
         // v200 remove preview face wake: Voice Settings owns the whole screen.
+        final int previewGeneration = ++naturalPreviewGeneration;
         if (wakeCoordinator != null) {
 """,
     "remove preview face wake",

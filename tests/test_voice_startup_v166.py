@@ -164,7 +164,7 @@ public class SpeechStartupHarness extends StubActivity implements TextToSpeech.O
  static class Natural implements BoopSpeechBackend {
   Callback callback;String text;int sid;float pitch,rate;
   public boolean speak(String text,int sid,float pitch,float rate,Callback cb){this.text=text;this.sid=sid;this.pitch=pitch;this.rate=rate;this.callback=cb;return true;}
-  public void stop(){}public void release(){}
+  public void stop(){if(callback!=null)callback.onCancelled();}public void release(){}
  }
  static void natural(){
   SpeechStartupHarness a=fresh();Natural n=new Natural();a.naturalSpeechBackend=n;a.voiceController.natural=true;
@@ -194,14 +194,23 @@ public class SpeechStartupHarness extends StubActivity implements TextToSpeech.O
   a.speak("Late result");a.speakWithAndroidTts("Late fallback");a.ready();Handler.advance(11000);
   check(a.tts.calls==0&&a.completions==0,"late response played or completed while backgrounded");
  }
+ static void naturalPaused(){
+  SpeechStartupHarness a=fresh();Natural n=new Natural();a.naturalSpeechBackend=n;a.voiceController.natural=true;
+  a.speak("Natural reply");
+  check(a.wakeCoordinator.state.state()==BoopWakeSessionState.State.SPEAKING,"natural did not enter speaking");
+  a.activityInForeground=false;a.onPause();
+  a.activityInForeground=true;a.wakeCoordinator.resume();
+  check(a.wakeCoordinator.state.state()==BoopWakeSessionState.State.ARMED,"natural pause left wake recognition stuck speaking");
+  check(a.completions==0,"cancelling natural speech reported successful completion");
+ }
  public static void main(String[] args){
   int failures=0;
-  for(String name:new String[]{"cold","warm","timeout","initFailure","languageFailure","replace","cancel","release","stale","rejected","paused","late","natural","naturalFallback"}){
+  for(String name:new String[]{"cold","warm","timeout","initFailure","languageFailure","replace","cancel","release","stale","rejected","paused","late","natural","naturalFallback","naturalPaused"}){
    try{SpeechStartupHarness.class.getDeclaredMethod(name).invoke(null);System.out.println("PASS "+name);}
    catch(Throwable x){failures++;System.out.println("FAIL "+name+": "+x.getCause());}
   }
   if(failures>0)throw new AssertionError(failures+" speech lifecycle regressions");
-  System.out.println("14 speech startup/playback scenarios passed");
+  System.out.println("15 speech startup/playback scenarios passed");
  }
 }
 """

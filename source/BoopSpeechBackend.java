@@ -4,6 +4,8 @@ interface BoopSpeechBackend {
     interface Callback {
         void onDone();
         void onError(Throwable error);
+        /** Cancellation is terminal, but must not select an interrupted voice demo. */
+        default void onCancelled() { onDone(); }
     }
 
     /**

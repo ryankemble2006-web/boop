@@ -35,13 +35,13 @@ once("""    public void onInit(int status) {
     }""")
 once("    protected void onPause() {",
      """    protected void onPause() {
-        boolean cancelledAndroidSpeech = androidSpeechBackend != null && androidSpeechBackend.hasSpeech();
+        if (naturalSpeechBackend != null) naturalSpeechBackend.stop();
         if (androidSpeechBackend != null) androidSpeechBackend.stop();""")
 once("            wakeCoordinator.endForegroundSession();",
      """            wakeCoordinator.endForegroundSession();
-            if (cancelledAndroidSpeech) wakeCoordinator.onTtsFinished();""")
+            wakeCoordinator.onTtsFinished();""")
 once("        super.onPause();",
-     """        if (cancelledAndroidSpeech) com.boop.shared.BoopState.INSTANCE.speech(false, false);
+     """        com.boop.shared.BoopState.INSTANCE.speech(false, false);
         super.onPause();""")
 MAIN.write_text(text)
 print("Reply startup waiting and lifecycle cancellation integrated; natural voice route preserved")
