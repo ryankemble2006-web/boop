@@ -3,7 +3,6 @@ package com.boop.shieldhome;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -15,7 +14,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -73,8 +71,16 @@ public final class ShieldLyricsView extends FrameLayout {
                 super.onFocusChanged(gain, direction, previous);
                 invalidate();
             }
+            private final Path artworkClip = new Path();
+            private final RectF artworkBounds = new RectF();
             @Override protected void onDraw(Canvas canvas) {
+                artworkBounds.set(0f, 0f, getWidth(), getHeight());
+                artworkClip.reset();
+                artworkClip.addRoundRect(artworkBounds, 9f * unit, 9f * unit, Path.Direction.CW);
+                int clipped = canvas.save();
+                canvas.clipPath(artworkClip);
                 super.onDraw(canvas);
+                canvas.restoreToCount(clipped);
                 if (hasFocus()) {
                     float inset = 2f * unit;
                     focusPaint.setStyle(Paint.Style.STROKE);
@@ -88,7 +94,7 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setOnClickListener(v -> { if (v.isEnabled()) controls.browseAlbum(); });
         artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
         artwork.setBackground(FocusChrome.filled(context, Color.rgb(16, 24, 29), 9, false));
-        FocusChrome.clipRounded(artwork, 9);
+        artwork.setClipToOutline(false);
         addView(artwork);
         title = label("", 29, Color.WHITE, true);
         title.setMaxLines(2);
@@ -242,7 +248,7 @@ public final class ShieldLyricsView extends FrameLayout {
         for (int i = 0; i < buttons.length; i++) place(buttons[i], left + i * 71f * unit, 632f * unit, 54f * unit, 54f * unit);
         size(eyebrow, 13); size(title, 28); size(artist, 19); size(status, 24);
 size(elapsed, 12); size(duration, 12);
-        artwork.invalidateOutline();
+        artwork.invalidate();
     }
     private void place(View view, float x, float y, float w, float h) {
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
