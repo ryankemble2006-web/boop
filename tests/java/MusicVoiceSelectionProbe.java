@@ -15,11 +15,12 @@ public final class MusicVoiceSelectionProbe {
         JSONArray artists=new JSONArray(), tracks=new JSONArray();
         JSONArray nameArtists;
         BoopRoom room=new BoopRoom("lounge","Lounge");
-        int houseCalls; boolean offline;long now=1000;
+        int houseCalls,catalogueCalls; boolean offline;long now=1000;
         String status="",token="private-test-token",connection="test-registration";
         DeezerArtistClient client=new DeezerArtistClient(this,(b,t)->Collections.singleton("media_player.tv"),ms->{},()->now);
         public String request(String url,String token,JSONObject body)throws Exception {
             if(url.startsWith("https://api.deezer.com/")) {
+                catalogueCalls++;
                 check(token==null && body==null,"catalogue receives no credentials or POST");
                 if(offline)throw new java.io.IOException();
                 JSONArray reply=url.contains("search/artist")?artists:tracks;
@@ -43,6 +44,11 @@ public final class MusicVoiceSelectionProbe {
             tracks.put(track(4,"Bohemian Rhapsody",412,"Queen"));return this;}
     }
     public static void main(String[] args)throws Exception {
+        for(String shortcut:new String[]{"music","play some music"," MUSIC! ","Play   some music.","play some music on Deezer"}) {
+            Rig flow=new Rig();int plays=DeezerNativeController.plays;
+            check("Done".equals(flow.say(shortcut)) && DeezerNativeController.plays==plays+1
+                    && flow.catalogueCalls==0,"Flow shortcut bypasses catalogue: "+shortcut);
+        }
         for(String query:new String[]{"John Lennon Imagine","Imagine John Lennon","John Lennon's Imagine","Imagine by John Lennon"}) {
             Rig r=new Rig().lennon(); String result=r.say("play "+query);
             check("Done".equals(result) && DeezerNativeController.played.endsWith("/track/2"),"natural Lennon request: "+query);

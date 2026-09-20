@@ -60,6 +60,9 @@ public final class SharedStateCheck {
         check(MediaRequest.parse("turn the fan on") == null, "not a media command");
         check(MediaRequest.parse("play Britney Spears").query.equals("Britney Spears"), "bare artist request");
         check(MediaRequest.parse("play music") != null && MediaRequest.parse("play music").kind.name().equals("DEEZER_FLOW"), "play music defaults to Deezer Flow");
+        for(String shortcut:new String[]{"music","play some music"," MUSIC! ","Play   some music.","play some music on Deezer"})
+            check(MediaRequest.parse(shortcut)!=null && MediaRequest.parse(shortcut).kind==MediaRequest.Kind.DEEZER_FLOW,
+                    "Flow shortcut: "+shortcut);
         try {
             String card="<node package='deezer.android.app' enabled='true' clickable='true' bounds='[240,200][600,400]'><node package='deezer.android.app' text='Flow' /></node>";
             DeezerScreen screen=DeezerScreen.parse("<hierarchy>"+card+"</hierarchy>");

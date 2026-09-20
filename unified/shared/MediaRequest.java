@@ -22,6 +22,7 @@ public final class MediaRequest {
         if (matcher.matches() && !matcher.group(1).trim().isEmpty())
             return new MediaRequest(flow(matcher.group(1)) ? Kind.DEEZER_FLOW : Kind.DEEZER_SEARCH, matcher.group(1).trim(),true);
         switch(value.toLowerCase(Locale.ROOT).replaceAll("[.!?]+$", "")) {
+            case "music": case "play some music":
             case "play music": case "play the music": case "play flow": case "play my flow": case "play deezer flow":
                 return new MediaRequest(Kind.DEEZER_FLOW, "",true);
             case "pause": case "pause music": case "pause the music": return new MediaRequest(Kind.PAUSE, "");
@@ -39,6 +40,6 @@ public final class MediaRequest {
     }
     private static boolean flow(String query) {
         String value=query.trim().toLowerCase(Locale.ROOT);
-        return value.equals("music") || value.equals("the music") || value.equals("flow") || value.equals("my flow");
+        return value.equals("music") || value.equals("some music") || value.equals("the music") || value.equals("flow") || value.equals("my flow");
     }
 }

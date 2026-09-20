@@ -1,5 +1,10 @@
 # BOOP durable project memory
 
+## Flow shortcut candidate: Shield243 / Wall210
+
+Ryan reports242/209 partly working and requests music and play some music as aliases for the existing play music -> Deezer Flow shortcut. Shared MediaRequest now recognizes both, including ordinary case/space/punctuation variants and play some music on Deezer. Five new production-path cases first failed, then passed without catalogue lookup; canonical core and existing music-receipt tests passed. Signed build/install validation pending. No other music-selection or UI behavior is changed.
+
+
 ## Current: natural music fix installed on Shield242 and Pixel7 Wall209
 
 Signed source54c8a2e14f59bc25be918fa2bedcadaae7170d63, successful GitHub run35541894553, artifact10615640493. Both APKs were independently hash/size/ZIP/signature checked, installed with data preserved, and versions242/209 read back. All18 assets and16 native libraries in each APK match the241/208 rollback byte-for-byte. Rollbacks retained; no signing, voice-model, settings or permission changes.
