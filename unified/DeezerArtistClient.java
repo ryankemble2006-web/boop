@@ -18,7 +18,7 @@ final class DeezerArtistClient {
     private final Delay delay;
     private final java.util.function.LongSupplier clock;
     private DeezerCatalogue.Selection pending;
-    private String pendingBase,pendingToken,pendingRoom;
+    private String pendingBase,pendingConnection,pendingRoom;
     private long pendingUntil;
     private long generation;
     DeezerArtistClient() {
@@ -34,12 +34,16 @@ final class DeezerArtistClient {
 
     CommandOutcome process(String base, String token, String text, BoopRoom room,
             BoopRoomSource rooms) throws HomeAssistantAuth.AuthRejectedException {
+        return processForConnection(base,token,"instance",text,room,rooms);
+    }
+    CommandOutcome processForConnection(String base,String token,String connection,String text,BoopRoom room,
+            BoopRoomSource rooms) throws HomeAssistantAuth.AuthRejectedException {
         DeezerCatalogue.Selection resolved=null;
         final long operation;
         synchronized(this) {
         operation=++generation;
         if(pending!=null && (clock.getAsLong()>=pendingUntil || !Objects.equals(base,pendingBase)
-                || !Objects.equals(token,pendingToken) || !roomKey(room).equals(pendingRoom))) clearPending();
+                || !Objects.equals(connection,pendingConnection) || !roomKey(room).equals(pendingRoom))) clearPending();
         if(pending!=null) {
             String answer=text==null?"":normal(text).replaceAll("[.!?]+$","");
             if(answer.matches("(cancel|never mind|nevermind|stop|no)( please)?")) {clearPending();return reply("Cancelled.");}
@@ -63,7 +67,7 @@ final class DeezerArtistClient {
         synchronized(this) {
         if(operation!=generation)return reply("Cancelled.");
         if(resolved.ambiguous()) {
-            pending=resolved;pendingBase=base;pendingToken=token;pendingRoom=roomKey(room);pendingUntil=clock.getAsLong()+60000;
+            pending=resolved;pendingBase=base;pendingConnection=connection;pendingRoom=roomKey(room);pendingUntil=clock.getAsLong()+60000;
             diagnostic("clarification");return CommandOutcome.localQuestion(resolved.question);
         }
         }
@@ -105,7 +109,7 @@ final class DeezerArtistClient {
         } catch(InterruptedException e) { Thread.currentThread().interrupt(); return reply("Failed");
         } catch(Exception e) {diagnostic(stage+"_failed");return reply("Failed"); }
     }
-    private void clearPending() {pending=null;pendingBase=null;pendingToken=null;pendingRoom=null;pendingUntil=0;}
+    private void clearPending() {pending=null;pendingBase=null;pendingConnection=null;pendingRoom=null;pendingUntil=0;}
     synchronized void cancelClarification() {generation++;clearPending();}
     synchronized void prepareTurn(String text) {
         generation++;

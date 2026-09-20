@@ -32,8 +32,8 @@ text=once(text,'    private final GenericHomeAssistantClient genericHome',
 text=once(text,'    CommandOutcome process(String text) {','''    void prepareMusicTurn(String text) { musicClient.prepareTurn(text); }
     void cancelMusicClarification() { musicClient.cancelClarification(); }
     CommandOutcome process(String text) {''')
-text=once(text,'            String colour = LightColourCommandParser.parseColour(text);','''            CommandOutcome artistOutcome = musicClient.process(
-                    baseUrl, accessToken, text, room, roomSource);
+text=once(text,'            String colour = LightColourCommandParser.parseColour(text);','''            CommandOutcome artistOutcome = musicClient.processForConnection(
+                    baseUrl, accessToken, deviceId, text, room, roomSource);
             if (artistOutcome != null) return artistOutcome;
 
             String colour = LightColourCommandParser.parseColour(text);''')
