@@ -68,6 +68,11 @@ final class DeezerAlbumBrowser {
  void open(android.app.Activity a,ShieldNowPlayingManager m,NowPlayingSnapshot s){opens++;requested=s;}
  void cancel(){cancellations++;}
 }
+final class DeezerArtistBrowser {
+ static int opens,cancellations; static NowPlayingSnapshot requested;
+ void open(android.app.Activity a,ShieldNowPlayingManager m,NowPlayingSnapshot s){opens++;requested=s;}
+ void cancel(){cancellations++;}
+}
 final class ShieldNowPlayingManager {
  static ShieldNowPlayingManager instance; final NowPlayingState bus=new NowPlayingState();
  int refreshes,previous,next,toggle,sourceOpens; boolean openSource(android.app.Activity activity){sourceOpens++;return true;} long seek;
@@ -78,7 +83,7 @@ final class ShieldNowPlayingManager {
  void previous(){previous++;} void next(){next++;} void togglePlayPause(){toggle++;} void seekBy(long delta){seek=delta;}
 }
 final class ShieldLyricsView extends android.view.View {
- interface Controls {void previous();void playPause();void next();void seek(long delta);void close();default void browseAlbum(){} }
+ interface Controls {void previous();void playPause();void next();void seek(long delta);void close();default void browseAlbum(){} default void browseArtist(){} }
  static ShieldLyricsView latest; final Controls controls; NowPlayingSnapshot snapshot; DeezerLyricsDocument document;
  String status=""; boolean running; int updates;
  ShieldLyricsView(android.app.Activity activity,int accent,Controls controls){latest=this;this.controls=controls;}
@@ -125,6 +130,8 @@ public final class UnifiedLyricsActivityCheck {
   activity.dispatchKeyEvent(new android.view.KeyEvent(87,1));eq(2,manager.next,"Repeated hardware event not duplicated");
   view.controls.browseAlbum();eq(1,DeezerAlbumBrowser.opens,"Album click reaches existing browser");
   eq("505",DeezerAlbumBrowser.requested.track,"Album uses current selected recording");
+  view.controls.browseArtist();eq(1,DeezerArtistBrowser.opens,"Artist click reaches existing browser");
+  eq("505",DeezerArtistBrowser.requested.track,"Artist uses current selected recording");
   manager.bus.update(track("606"));view.controls.browseAlbum();
   eq("606",DeezerAlbumBrowser.requested.track,"Album click reads latest snapshot");
   manager.bus.update(null);view.controls.browseAlbum();
