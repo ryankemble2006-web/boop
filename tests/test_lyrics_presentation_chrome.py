@@ -18,3 +18,10 @@ def test_lyrics_provider_credit_is_not_drawn():
     assert "credit = label(" not in view
     assert "place(credit," not in view
     assert "credit.setText(" not in view
+
+
+def test_long_track_title_is_raised_without_moving_artist_or_progress():
+    view = VIEW.read_text(encoding="utf-8")
+    assert "place(title, left, 436f * unit, 440f * unit, 79f * unit);" in view
+    assert "place(artist, left, 532f * unit, 440f * unit, 35f * unit);" in view
+    assert "place(progress, left, 583f * unit, 397f * unit, 18f * unit);" in view

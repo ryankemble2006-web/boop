@@ -237,7 +237,7 @@ public final class ShieldLyricsView extends FrameLayout {
         float artSize = 302f * unit;
         place(eyebrow, left, 54f * unit, 365f * unit, 30f * unit);
         place(artwork, left, 116f * unit, artSize, artSize);
-        place(title, left, 448f * unit, 440f * unit, 79f * unit);
+        place(title, left, 436f * unit, 440f * unit, 79f * unit);
         place(artist, left, 532f * unit, 440f * unit, 35f * unit);
         float lyricsX = 590f * unit;
         place(lyrics, lyricsX, 52f * unit, w - lyricsX - 66f * unit, 550f * unit);
