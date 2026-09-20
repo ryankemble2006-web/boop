@@ -49,10 +49,9 @@ text = once(
         testVoiceParams.setMargins(0, dp(6), 0, dp(12));
         voiceSettingsOverlay.addView(testVoice, testVoiceParams);
 
+        TextView naturalStatus = addNaturalVoiceSettings();
         BoopVoiceSharingControls.install(this, voiceSettingsOverlay, voiceController,
-                pitchSlider, cadenceSlider);
-
-        addNaturalVoiceSettings();
+                pitchSlider, cadenceSlider, naturalStatus);
 """,
     "TEST VOICE placement",
 )
@@ -110,8 +109,8 @@ helper = r'''    private void testCurrentVoice() {
 '''
 text = once(
     text,
-    "    private void addNaturalVoiceSettings() {\n",
-    helper + "    private void addNaturalVoiceSettings() {\n",
+    "    private TextView addNaturalVoiceSettings() {\n",
+    helper + "    private TextView addNaturalVoiceSettings() {\n",
     "TEST VOICE helper",
 )
 text = once(

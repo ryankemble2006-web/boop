@@ -45,16 +45,21 @@ public class VoiceSharingControlsHarness {
  public static void main(String[] args){
   Activity a=new Activity();LinearLayout c=new LinearLayout(a);SeekBar pitch=new SeekBar(a),rate=new SeekBar(a);
   BoopVoiceController voice=new BoopVoiceController();var sharing=BoopSharedVoiceProfileRuntime.instance;
-  BoopVoiceSharingControls.install(a,c,voice,pitch,rate);
+  TextView naturalStatus=new TextView(a);naturalStatus.setText("Downloaded. Pick a voice below.");
+  BoopVoiceSharingControls.install(a,c,voice,pitch,rate,naturalStatus);
   check(sharing.observers.isEmpty(),"Unattached screen retained");c.attach();
   check(sharing.observers.size()==1,"Attached screen must observe once");
   check(pitch.progress==1000 && rate.progress==1000 && voice.writes==0,"Initial sliders or write echo");
   check(labels(c).contains("Emma"),"Selected voice missing");
+  check(naturalStatus.text.toString().contains("Emma"),"Natural selection label stale on open");
+  naturalStatus.setText("Trying Isabella...");sharing.emit();
+  check(naturalStatus.text.toString().equals("Trying Isabella..."),"Unrelated event erased preview status");
   button(c,"Share voice profile").performClick();check(!sharing.enabled,"Sharing enabled before confirmation");
   AlertDialog.positive.run();check(sharing.enabled,"Confirmed sharing did not enable");
   sharing.ready=true;sharing.status="Connected";voice.pitch=.75f;voice.rate=.70f;voice.name="George";sharing.emit();
   check(pitch.progress==0 && rate.progress==0 && voice.writes==0,"Remote profile did not update silently");
   check(labels(c).contains("George") && labels(c).contains("Connected"),"Remote voice/status stale");
+  check(naturalStatus.text.toString().contains("George"),"Remote voice left old Selected label behind");
   check(button(c,"Retry voice sharing").visibility==View.GONE,"Retry still visible when ready");
   pitch.listener.onStartTrackingTouch(pitch);pitch.user(500);sharing.emit();
   check(Math.abs(voice.pitch-1.10f)<.0001f && voice.writes==1,"Touch change not saved");

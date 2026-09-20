@@ -95,7 +95,7 @@ text = replace_once(
     "Voice Settings natural section",
 )
 
-helper = r'''    private void addNaturalVoiceSettings() {
+helper = r'''    private TextView addNaturalVoiceSettings() {
         TextView naturalTitle = new TextView(this);
         naturalTitle.setText("Natural voices");
         naturalTitle.setTextColor(Color.WHITE);
@@ -235,6 +235,7 @@ helper = r'''    private void addNaturalVoiceSettings() {
                 naturalCancel.setVisibility(View.GONE);
             }
         });
+        return naturalStatus;
     }
 
     private LinearLayout.LayoutParams naturalVoiceButtonParams() {

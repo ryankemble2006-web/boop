@@ -4,7 +4,7 @@
 
 Ryan accepted the instant natural-voice previews and requested sharing across devices like colours, using the phone's current voice as the starting point. Phone sharing is enabled; its initial profile is Emma, pitch1.45, cadence1.25. Voice Settings now exposes the existing Build a Boop sharing runtime, selected effective voice, status and retry; open sliders follow received profiles without write echoes or moving an active touch drag. The observer is removed when the screen closes. No model, preview, protocol or artwork changes.
 
-131 focused local checks and15 speech lifecycle scenarios passed. Independent source review found no blocking issues. Signed CI, installation and bidirectional device verification are pending;244/211 remain the accepted installed rollback. Candidate branch astra-music-resolver-v242; owning branch boop-shield-weather-focus-v221 remains unchanged until verification.
+131 focused local checks and15 speech lifecycle scenarios passed. First signed CI35544335701 passed and245/212 installed with all preferences preserved. Real device tests verified phone pitch to Shield, Shield DPAD cadence to phone, George to Shield and Isabella to phone, with fast demos. A stale secondary Selected label was found on-device; its regression test failed before the correction and passed after. The corrected labels and original named-button placement passed independent review; final signed rebuild/reinstall is pending. Emma1.45/1.25 is restored on both.244/211 rollbacks remain. Candidate branch astra-music-resolver-v242; owning branch boop-shield-weather-focus-v221 remains unchanged until final verification.
 
 ## Current: fast natural voice previews installed on Shield244 / Pixel7 Wall211
 

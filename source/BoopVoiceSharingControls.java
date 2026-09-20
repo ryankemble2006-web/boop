@@ -17,22 +17,24 @@ final class BoopVoiceSharingControls implements View.OnAttachStateChangeListener
     private final BoopVoiceController voice;
     private final BoopSharedVoiceProfileRuntime sharing;
     private final SeekBar pitch, cadence;
-    private final TextView profile, status;
+    private final TextView profile, status, naturalStatus;
+    private String displayedVoice;
     private final Button toggle, retry;
     private boolean pitchDragging, cadenceDragging;
     private Runnable unwatch;
 
     static void install(Activity activity, LinearLayout column, BoopVoiceController voice,
-                        SeekBar pitch, SeekBar cadence) {
-        new BoopVoiceSharingControls(activity, column, voice, pitch, cadence);
+                        SeekBar pitch, SeekBar cadence, TextView naturalStatus) {
+        new BoopVoiceSharingControls(activity, column, voice, pitch, cadence, naturalStatus);
     }
 
     private BoopVoiceSharingControls(Activity activity, LinearLayout column,
-                                    BoopVoiceController voice, SeekBar pitch, SeekBar cadence) {
+                                    BoopVoiceController voice, SeekBar pitch, SeekBar cadence, TextView naturalStatus) {
         this.activity = activity;
         this.voice = voice;
         this.pitch = pitch;
         this.cadence = cadence;
+        this.naturalStatus = naturalStatus;
         sharing = BoopSharedVoiceProfileRuntime.get(activity);
         profile = label(column, "");
         toggle = button(column, "Share voice profile: Off", () -> {
@@ -80,6 +82,11 @@ final class BoopVoiceSharingControls implements View.OnAttachStateChangeListener
         if (!cadenceDragging) cadence.setProgress(BoopVoiceTuning.progressFromRate(voice.speechRate()));
         String name = voice.naturalBackendSelectedAndUsable()
                 ? voice.selectedNaturalVoice().name() : "Android voice";
+        if (!name.equals(displayedVoice)) {
+            if (voice.naturalBackendSelectedAndUsable()) naturalStatus.setText("Selected: " + name);
+            else if (displayedVoice != null) naturalStatus.setText("Android voice is active on this device.");
+            displayedVoice = name;
+        }
         profile.setText(String.format(Locale.ROOT, "%s · Pitch %.2fx · Cadence %.2fx",
                 name, voice.pitch(), voice.speechRate()));
         toggle.setText("Share voice profile: " + (sharing.enabled() ? "On" : "Off"));
