@@ -31,7 +31,7 @@ def test_weather_content_columns_fill_available_height():
     weather = read("ShieldWeatherView.java")
     assert "top.addView(current(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,3f))" in weather
     assert "top.addView(hours(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,4f))" in weather
-    assert "top.addView(days(s),new LayoutParams(0,LayoutParams.MATCH_PARENT,3f))" in weather
+    assert "top.addView(forecastDays,new LayoutParams(0,LayoutParams.MATCH_PARENT,3f))" in weather
 
 
 def test_weather_card_matches_now_playing_surface_exactly():
