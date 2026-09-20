@@ -1,74 +1,49 @@
 # BOOP current handoff
 
-Updated 2026-09-18. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-accent-colour-v220`.
+Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield implementation branch: `boop-shield-weather-focus-v221`.
 
-## Current Shield: v220, signed and ready for Ryan's physical test
+## Current Shield: v221, signed and ready for Ryan's physical test
 
-Package `com.boop.shieldoverlay`, version `220` / `1.2.220-shield`.
+Package `com.boop.shieldoverlay`, version `221` / `1.2.221-shield`.
 
-Ryan confirmed v219's Now Playing alignment is **absolutely perfect**. Do not alter that geometry unless explicitly requested.
+v219's Now Playing alignment remains physically accepted as perfect and is unchanged. v220's user-selectable highlight colour remains unchanged.
 
-### User-selectable highlight colour
+### v221 weather alignment
 
-v220 adds **Highlight colour** immediately below **Smart home panel** in Launcher Settings.
+Forecast rows now use the weather glyph's accepted optical centre as the anchor. Time/day labels, temperature/high-low and rain percentage receive the same +2dp optical correction as the weather glyph, so each stack is centred on the icon point rather than merely the weighted cell.
 
-The control is a single hue slider:
-- range 0-359;
-- current BOOP cyan is the default at hue 204;
-- hue 204 deliberately returns the exact legacy `#4DB8FF` colour;
-- the slider label and thumb preview the hue while Ryan moves it;
-- changes persist immediately in `ShieldHomeStore`.
+The 3-day forecast region is shifted +9dp inside its 3/10 card region. This compensates for the card's 18dp outer inset so the visible empty space from the middle divider to the first forecast and from the last forecast to the outer border is balanced.
 
-The saved accent is resolved through `BoopTvChrome.accentColor(Context)`. Existing `FocusChrome` consumers therefore inherit the selected colour without separate per-screen settings.
+No Now Playing, HA control, accent-colour, voice/audio or assistant geometry was changed.
 
-Explicitly covered in v220:
-- TV focus outlines;
-- text-only artist focus;
-- Now Playing progress accent;
-- HA active state text and device icons;
-- Add favourites accent;
-- HOME navigation icons, now runtime-tinted;
-- weather current icon, wind and rain accents.
+### v221 return-focus behaviour
 
-The charcoal/black/white visual language is unchanged. This is accent replacement only.
+Whenever the Shield launcher regains focus from an external app, HOME requests Favourite entry 1. This covers ordinary Back returns and returns through Shield's task manager. HOME intents also rebuild with first-favourite focus.
 
-### Accepted behavior retained
-
-v217 favourite/HA hold-to-reorder remains accepted and unchanged:
-- hold lifts;
-- left/right reorders;
-- OK drops;
-- HA order persists per room;
-- normal HA toggles stay on the low-latency path.
-
-v219 Now Playing remains accepted and unchanged:
-- transport row -4dp visual correction;
-- progress right margin 8dp;
-- Lyrics/Close player, title/artist/Playing, artwork and eyes remain where accepted.
+The launcher Close media action now returns focus to Favourite entry 1 after issuing the existing close-media command. Existing internal short-Back behaviour retains the same first-favourite destination.
 
 ## Verified signed artifact
 
-Production/build source: `a009b921bf23d018f7edc9ebf2c64a9f89bf8ddd`.
-Successful GitHub Actions run `35355454656`, job `105634013385`.
-Artifact `10552105353`: `BOOP-Shield-v220-Wall-v207-Signed`.
+Production/build source: `9bf329a24631310261843b654f9fe0716a59aa2e`.
+Successful GitHub Actions run `35515284079`, job `106090068972`.
+Artifact `10606343049`: `BOOP-Shield-v221-Wall-v207-Signed`.
 
-Deliver **BOOP-Shield-v220.apk**, 160485741 bytes.
-Shield APK SHA-256: `2ac14d16983a7662b09f5338e18f7f43b749cea0666e4af676d86b8e087d34ad`.
+Deliver **BOOP-Shield-v221.apk**, 160485741 bytes.
+Shield APK SHA-256: `d0e5111efd97dc948890b2181e3212ce20e67b4e43cadc0df900a06969295f8a`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Uploaded artifact ZIP SHA-256: `1a6fa09706d06b2bba52becc4123f7640fee15068147fd3b8b38288a11d4cdf1`.
+Artifact ZIP SHA-256: `20a5fbf892d2139d4e45239515bfcee0f2f2773af4c86f0543c42440e2dc664c`.
 
-Verification passed: 77 initial focused checks, inherited v206 regression, materialized split integration with 100 checks, HA room/latency unit tests, both app builds, and actual APK identity/certificate/native/art checks. All 16 native libraries remain baseline-identical.
+Verification passed the focused Shield checks, inherited v206 checks, split materialization/integration, HA room/latency unit tests, both app builds, and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+
+Wall remains v207.
 
 ## Physical acceptance pending
 
-Install `BOOP-Shield-v220.apk` and check:
-1. Launcher Settings shows Highlight colour directly below Smart home panel.
-2. Slider is D-pad focusable and moves smoothly through colours.
-3. Leaving settings for HOME applies the selected colour to nav icons, focus outlines, Now Playing progress and HA accents.
-4. Weather accent details follow the same colour when weather is visible.
-5. Returning/restarting preserves the selected hue.
-6. v217 movement/customisation and v219 Now Playing alignment remain unchanged.
+Ryan is the visual/ADB tester. Check:
+1. Next 4 hours: time, temperature and rain percentage visually centre on each weather glyph.
+2. 3 day forecast: each label/high-low/rain stack centres on its glyph and the whole panel has balanced left/right visible whitespace.
+3. Back out of an app and return through Shield task manager: focus lands on Favourite entry 1.
+4. Close media: focus lands on Favourite entry 1.
+5. v219 Now Playing alignment and v220 accent behaviour remain unchanged.
 
-Wall remains v207. v219 is the prior accepted signed checkpoint.
-
-Detailed v220 record: `docs/handoffs/2026-09-18-shield-accent-colour-v220.md`.
+Detailed record: `docs/handoffs/2026-09-20-shield-weather-focus-v221.md`.
