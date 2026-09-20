@@ -26,6 +26,23 @@ public final class DeezerHeartRules {
                 || row[2][0] < 360) return -1;
         return dislike ? 0 : 1;
     }
+    /** The inspected finite-queue player has one heart, then shuffle/transport/repeat.
+     * Its first middle control is NOT a favourite, and it has no dislike control.
+     */
+    public static int heartIndex(int[][] row, int lyricsY, boolean dislike, String contextType) {
+        if (!"album_partner".equals(contextType) && !"playlist_partner".equals(contextType))
+            return heartIndex(row, lyricsY, dislike);
+        if (dislike || row == null || row.length != 6) return -1;
+        int[] left = {64, 488, 552, 616, 680, 744};
+        for (int i = 0; i < row.length; i++) {
+            int[] r = row[i];
+            if (r == null || r.length != 4 || Math.abs(r[0] - left[i]) > 2
+                    || Math.abs(r[2] - left[i] - 48) > 2
+                    || Math.abs(r[1] - lyricsY + 24) > 2
+                    || Math.abs(r[3] - lyricsY - 24) > 2) return -1;
+        }
+        return 0;
+    }
     private static boolean purple(int p) {
         int r=(p>>>16)&255,g=(p>>>8)&255,b=p&255;
         return b>190 && r>120 && r<235 && g<170 && b-g>55;

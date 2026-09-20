@@ -112,3 +112,48 @@ public final class InvisibleControllerProbe {
     files=[source/(name+'.java') for name in ['DeezerFavouritePolicy','DeezerFavouriteRequest','DeezerFavouriteController','NowPlayingSnapshot','NowPlayingState','NowPlayingActionPolicy','NowPlayingSelectionPolicy']]
     subprocess.run(['javac','-encoding','UTF-8','-d',str(tmp_path),*map(str,files),*map(str,tmp_path.rglob('*.java'))],check=True)
     subprocess.run(['java','-cp',str(tmp_path),'com.boop.shieldhome.InvisibleControllerProbe'],check=True,timeout=15)
+
+def test_album_one_heart_never_mistakes_shuffle_for_favourite_or_dislike(tmp_path):
+    probe=tmp_path/'AlbumHeartProbe.java'
+    probe.write_text('''package com.boop.bridge;
+import java.lang.reflect.*;
+public final class AlbumHeartProbe {
+ static int n;
+ static void yes(boolean b,String why){n++;if(!b)throw new AssertionError(why);}
+ static int index(int[][] row,boolean dislike,String context)throws Exception {
+  try{return (Integer)DeezerHeartRules.class.getMethod("heartIndex",int[][].class,int.class,boolean.class,String.class).invoke(null,row,422,dislike,context);}
+  catch(NoSuchMethodException old){return DeezerHeartRules.heartIndex(row,422,dislike);}
+ }
+ public static void main(String[] args)throws Exception {
+  int[][] album={{64,398,112,446},{488,398,536,446},{552,398,600,446},{616,398,664,446},{680,398,728,446},{744,398,792,446}};
+  int[][] flow={{64,398,112,446},{120,398,168,446},{520,398,568,446},{584,398,632,446},{648,398,696,446},{712,398,760,446}};
+  yes(index(album,false,"album_partner")==0,"The real album favourite is the first control, not Shuffle");
+  yes(index(album,false,"playlist_partner")==0,"Recognised finite playlist layout");
+  yes(index(album,true,"album_partner")==-1,"No native dislike in an album");
+  yes(index(album,true,"playlist_partner")==-1,"Never substitute a playlist heart for dislike");
+  yes(index(flow,false,"flow_partner")==1,"Flow keeps second favourite");
+  yes(index(flow,true,"flow_partner")==0,"Flow keeps first dislike");
+  yes(index(album,false,"flow_partner")==-1,"Mode and native geometry must agree");
+  yes(index(flow,false,"album_partner")==-1,"Album never assumes two hearts");
+  yes(index(album,false,"")==-1,"Unknown mode must not accept finite layout");
+  yes(index(null,false,"album_partner")==-1,"Null layout fails closed");
+  yes(index(java.util.Arrays.copyOf(album,5),false,"album_partner")==-1,"Missing controls fail closed");
+  int[][] changed=album.clone();changed[1]=new int[]{120,398,168,446};
+  yes(index(changed,false,"album_partner")==-1,"A second left control changes the layout");
+  changed=album.clone();changed[3]=new int[]{616,438,664,486};
+  yes(index(changed,false,"album_partner")==-1,"Misaligned controls rejected");
+  changed=album.clone();changed[2]=new int[]{488,398,536,446};
+  yes(index(changed,false,"album_partner")==-1,"Duplicate controls rejected");
+  changed=album.clone();changed[0]=null;
+  yes(index(changed,false,"album_partner")==-1,"Missing geometry rejected");
+  System.out.println("Album native heart: "+n+" assertions passed");
+ }
+}''',encoding='utf-8')
+    subprocess.run(['javac','-encoding','UTF-8','-d',str(tmp_path),str(SOURCE),str(probe)],check=True)
+    subprocess.run(['java','-cp',str(tmp_path),'com.boop.bridge.AlbumHeartProbe'],check=True)
+
+def test_native_heart_verifies_context_before_reusing_control_geometry():
+    bridge=(ROOT/'unified/deezer-bridge/DeezerHeartBridge.java').read_text(encoding='utf-8')
+    assert 'lyrics.centerY(),dislike,playerContextType)' in bridge
+    assert 'playerContextId.equals(text(current.getMetadata(),CONTEXT_ID))' in bridge
+    assert 'playerContextType.equals(text(current.getMetadata(),CONTEXT_TYPE))' in bridge

@@ -38,6 +38,9 @@ public final class DeezerHeartBridge {
     private long deadline;
     private int displayId;
     private boolean actionSent;
+    private static final String CONTEXT_TYPE="com.deezer.METADATA_KEY_STREAM_CONTEXT_TYPE";
+    private static final String CONTEXT_ID="com.deezer.METADATA_KEY_STREAM_CONTEXT_ID";
+    private String playerContextType="",playerContextId="";
     private volatile String stage="initialization",failureReason="";
     private DeezerHeartBridge(JSONObject request)throws Exception {
         this.request=request;nonce=request.getString("nonce");operation=request.getString("operation");
@@ -89,7 +92,11 @@ public final class DeezerHeartBridge {
         }},main);
     }
     private void perform()throws Exception {
-        stage="ownership";checkOwner();player=findPlayer();checkTrack();
+        stage="ownership";checkOwner();player=findPlayer();
+        MediaMetadata initial=player.getMetadata();
+        if(initial==null)throw new IOException("No native metadata");
+        playerContextType=text(initial,CONTEXT_TYPE);playerContextId=text(initial,CONTEXT_ID);
+        checkTrack();
         stage="display";
         int flags=1|2|8|64|128|256; // public, presentation, own content, touch, rotation, DESTROY on removal
         if(Build.VERSION.SDK_INT>=33)flags|=1024|2048|4096|8192;
@@ -143,7 +150,9 @@ public final class DeezerHeartBridge {
     }
     private void checkTrack()throws IOException {
         MediaController current=findPlayer();
-        if(!player.getSessionToken().equals(current.getSessionToken()) || !matches(current.getMetadata()))throw new IOException("Track changed");
+        if(!player.getSessionToken().equals(current.getSessionToken()) || !matches(current.getMetadata())
+                || !playerContextId.equals(text(current.getMetadata(),CONTEXT_ID))
+                || !playerContextType.equals(text(current.getMetadata(),CONTEXT_TYPE)))throw new IOException("Track or context changed");
     }
     private static String text(MediaMetadata m,String key){CharSequence s=m.getText(key);return s==null?"":s.toString().trim();}
     private boolean matches(MediaMetadata m){
@@ -199,7 +208,7 @@ public final class DeezerHeartBridge {
             if(Math.abs(b.centerY()-lyrics.centerY())<=3&&b.width()>=40&&b.width()<=70)row.putIfAbsent(b.left,n);}
         List<AccessibilityNodeInfo> buttons=new ArrayList<>(row.values());int[][] geometry=new int[buttons.size()][];
         for(int i=0;i<buttons.size();i++){buttons.get(i).getBoundsInScreen(b);geometry[i]=new int[]{b.left,b.top,b.right,b.bottom};}
-        int index=DeezerHeartRules.heartIndex(geometry,lyrics.centerY(),dislike);
+        int index=DeezerHeartRules.heartIndex(geometry,lyrics.centerY(),dislike,playerContextType);
         if(index<0)throw new IOException("Native transport layout changed");return buttons.get(index);
     }
     private int state(AccessibilityNodeInfo heart)throws Exception {

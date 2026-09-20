@@ -1,10 +1,10 @@
 # BOOP current handoff
 
-## In progress: v239 Lyrics Queue and music-reply correction
+## In progress: v240 Lyrics Queue, native album hearts and music-reply correction
 
 Ryan accepted v238 Queue as perfect. The requested Lyrics Queue now reuses the same panel/controller, appears below Play/Pause, and remains hidden on Flow. The whole left music column moves up38 design pixels together; old internal gaps and right-hand lyrics stay unchanged. A deterministic native music test reproduced playback being sent once but reported Failed when a concurrent heart lookup overwrites HA's latest ADB response. The code now reads the exact service-call receipt first and never replays an uncertain command. This is a reproduced music-path defect; the precise phone utterance/version and a physical phone re-test are still needed.
 
-Source candidate: Shield239 and companion Wall208 for the sending-phone client. No phone installation is being performed.26 focused tests plus47 Lyrics Activity boundary assertions passed; signed CI and physical final Lyrics layout remain pending. Current details: docs/handoffs/2026-09-20-lyrics-queue-and-voice-receipt-v239.md. Preserve accepted v238/v236/v235 results below.
+Source candidate: Shield240 and companion Wall208 for the sending-phone client. No phone installation is being performed.26 focused tests plus47 Lyrics Activity boundary assertions passed; v239 signed CI and physical Lyrics Queue/geometry/Back tests passed. A final v240 build adds the observed single-heart album layout while preserving Flow; its album-heart retest remains pending. The native album has no dislike, which is never substituted with another action. Current details: docs/handoffs/2026-09-20-lyrics-queue-and-voice-receipt-v239.md. Preserve accepted v238/v236/v235 results below.
 
 ## Current: Shield v238 Queue installed and physically verified
 
