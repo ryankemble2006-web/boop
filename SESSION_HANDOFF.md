@@ -1,8 +1,14 @@
 # BOOP current handoff
 
+## User-accepted v235 favourites: 2026-09-20
+
+Ryan physically tested the installed v235 and reports that the favourites button works exactly as desired, including Android added/removed confirmation messages. He favourited a track in native Deezer, returned to BOOP HOME and saw the heart fill; he then unfavourited it on BOOP's Lyrics screen and verified that the removal was reflected in native Deezer. This is acceptance of real cross-app favourite-state propagation and add/remove operation on the installed build, not merely CI success or the earlier standalone probe. Preserve this working checkpoint and its invisible operation.
+
+Scope of acceptance: favourites add/remove, confirmation messages, Deezer-to-HOME filled state, and Lyrics-to-Deezer removal. The separate dislike-and-skip button and a fresh change of the accent slider were not explicitly tested in this report; do not infer those results or an unrestricted every-app/window guarantee. The selected-accent requirement remains unchanged. The earlier hardware-binding failure remains historical evidence; this report does not diagnose it. No new app code, build, install, permission change, recording, input or ready-track skip was performed to record this feedback. Existing source d6a7957d57a94fb7fc2a25266478e7c4d376f220 and the verified v235 APK are unchanged.
+
 Updated 2026-09-20. Owning Shield branch: boop-shield-weather-focus-v221 (long-lived cache-hot branch, not app version). Source worktree for this task is .worktrees/boop-deezer-invisible-v235, isolated from the old primary checkout. Wall remains v207 and was not installed.
 
-## Current: Shield v235 signed and installed; native route responding
+## Current: Shield v235 favourites physically accepted
 
 Source/build commit: d6a7957d57a94fb7fc2a25266478e7c4d376f220.
 Signed workflow35531643785, job106133185445: SUCCESS. Favourite checks35531643786, job106133185094: SUCCESS.
@@ -15,7 +21,7 @@ The exact APK was downloaded and independently hash/size/CRC checked. All 16 nat
 
 BOOP Shield HOME was brought foreground. Installed-app logs subsequently show native read OK saved0 and toggle OK saved1 at stage confirmation, followed by further successful reads. This verifies a real installed BOOP -> existing Home Assistant -> offscreen native Deezer -> matching result path, not only a fake boundary test. One earlier read failed at hardware-binding with IOException; its root cause was not established. Do not claim a completely error-free first connection.
 
-An earlier reversible native probe separately verified saved -> unsaved -> saved on the same track and restored its initial favourite. Do not present that as an observed v235 UI unfavourite test. Ryan's final acceptance of both-screen state/colour, unfavourite and dislike+skip is still pending. A normal KEYCODE_MEDIA_NEXT was sent once as his requested ready signal, after installation and successful native receipts. Never use dislike for an attention signal.
+An earlier reversible native probe separately verified saved -> unsaved -> saved on the same track and restored its initial favourite. Do not present that as an observed v235 UI unfavourite test. Ryan subsequently accepted favourite add/remove and cross-app state propagation; separate dislike+skip and a fresh accent-slider change remain unreported, as recorded above. A normal KEYCODE_MEDIA_NEXT was sent once as his requested ready signal, after installation and successful native receipts. Never use dislike for an attention signal.
 
 ## Approved UI and actual native mechanism
 
