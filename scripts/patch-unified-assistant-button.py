@@ -79,8 +79,18 @@ text = once(text,
 ''',
     'assistant one-shot helpers')
 text = once(text,
+    '                if (outcome.status() == CommandOutcome.Status.ASSISTANT_REPLY) {\n',
+    '                // Accepted music is its own confirmation; do not wait for neural TTS.\n'
+    '                if (assistantOneShot && !voiceSettingsOpen && outcome.hasAcceptedMusicPlayback()) {\n'
+    '                    android.util.Log.i("BOOP-Assist", "Music accepted; closing assistant");\n'
+    '                    finishAssistantOneShot();\n'
+    '                    return;\n'
+    '                }\n'
+    '                if (outcome.status() == CommandOutcome.Status.ASSISTANT_REPLY) {\n',
+    'assistant music completes without speech')
+text = once(text,
     '        if (sleepAfterTts) {\n            sleepFaceImmediately();\n            return;\n        }\n',
-    '        if (assistantOneShot) {\n'
+    '        if (assistantOneShot && !openAssistantFollowUp) {\n'
     '            finishAssistantOneShot();\n'
     '            return;\n'
     '        }\n'

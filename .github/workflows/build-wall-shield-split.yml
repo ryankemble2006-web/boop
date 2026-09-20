@@ -1,4 +1,4 @@
-name: Build signed BOOP Shield v246 and Wall v213
+name: Build signed BOOP Shield v247 and Wall v214
 on:
   push:
     branches: [boop-wall-shield-split-v207, boop-shield-room-panel-v213, boop-shield-ha-fast-v214, boop-shield-fan-capability-v215, boop-shield-weather-icon-fan-v216, boop-shield-grab-reorder-v217, boop-shield-now-playing-align-v218, boop-shield-now-playing-align-v219, boop-shield-accent-colour-v220, boop-shield-weather-focus-v221]
@@ -27,7 +27,7 @@ jobs:
       - name: Verify close identity, artist focus and weather before the full build
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_room_panel.py tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_launcher_accent_colour.py tests/test_shield_weather_panel.py tests/test_shield_return_focus.py tests/test_lyrics_presentation_chrome.py tests/test_unified_lyrics_activity.py tests/test_lrclib_fallback.py tests/test_deezer_favourites.py tests/test_deezer_invisible_hearts.py tests/test_deezer_flow_button.py tests/test_deezer_queue.py tests/test_lyrics_queue.py tests/test_deezer_native_receipts.py tests/test_heart_confirmation.py tests/test_music_voice_selection.py tests/test_natural_voice_preview.py tests/test_voice_sharing_controls.py tests/test_voice_whimsy_range.py
+          python -m pytest -q tests/test_room_panel.py tests/test_close_player_app_identity.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_launcher_accent_colour.py tests/test_shield_weather_panel.py tests/test_shield_return_focus.py tests/test_lyrics_presentation_chrome.py tests/test_unified_lyrics_activity.py tests/test_lrclib_fallback.py tests/test_deezer_favourites.py tests/test_deezer_invisible_hearts.py tests/test_deezer_flow_button.py tests/test_deezer_queue.py tests/test_lyrics_queue.py tests/test_deezer_native_receipts.py tests/test_heart_confirmation.py tests/test_music_voice_selection.py tests/test_assistant_music_completion.py tests/test_natural_voice_preview.py tests/test_voice_sharing_controls.py tests/test_voice_whimsy_range.py
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
@@ -49,7 +49,7 @@ jobs:
         run: |
           python scripts/audit-split-input.py
           python scripts/materialize-split.py
-          python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_launcher_accent_colour.py tests/test_close_player_app_identity.py tests/test_shield_weather_panel.py tests/test_shield_return_focus.py tests/test_lyrics_presentation_chrome.py tests/test_unified_lyrics_activity.py tests/test_lrclib_fallback.py tests/test_deezer_favourites.py tests/test_deezer_invisible_hearts.py tests/test_deezer_flow_button.py tests/test_deezer_queue.py tests/test_lyrics_queue.py tests/test_deezer_native_receipts.py tests/test_heart_confirmation.py tests/test_music_voice_selection.py tests/test_natural_voice_preview.py tests/test_voice_sharing_controls.py tests/test_voice_whimsy_range.py
+          python -m pytest -q tests/test_wall_shield_split.py tests/test_split_setup_and_integration.py tests/test_now_playing_artist_chrome.py tests/test_now_playing_alignment.py tests/test_launcher_accent_colour.py tests/test_close_player_app_identity.py tests/test_shield_weather_panel.py tests/test_shield_return_focus.py tests/test_lyrics_presentation_chrome.py tests/test_unified_lyrics_activity.py tests/test_lrclib_fallback.py tests/test_deezer_favourites.py tests/test_deezer_invisible_hearts.py tests/test_deezer_flow_button.py tests/test_deezer_queue.py tests/test_lyrics_queue.py tests/test_deezer_native_receipts.py tests/test_heart_confirmation.py tests/test_music_voice_selection.py tests/test_assistant_music_completion.py tests/test_natural_voice_preview.py tests/test_voice_sharing_controls.py tests/test_voice_whimsy_range.py
       - name: Prepare existing permanent BOOP signer
         env:
           BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
@@ -85,7 +85,7 @@ jobs:
           cp -R boop-build/BOOP-Alpha1/shield-lib/build/test-results/testDebugUnitTest split-artifact/ha-unit-tests
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-v246-Wall-v213-Signed
+          name: BOOP-Shield-v247-Wall-v214-Signed
           path: split-artifact/
           if-no-files-found: error
       - name: Remove temporary signer

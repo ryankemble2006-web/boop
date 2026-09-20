@@ -28,6 +28,7 @@ final class CommandOutcome {
     private final String targetName;
     private final String area;
     private final String assistantSpeech;
+    private final boolean acceptedMusicPlayback;
 
     private CommandOutcome(Status status, String targetName, String area) {
         this(status, targetName, area, "");
@@ -38,10 +39,16 @@ final class CommandOutcome {
             String targetName,
             String area,
             String assistantSpeech) {
+        this(status, targetName, area, assistantSpeech, false);
+    }
+
+    private CommandOutcome(Status status, String targetName, String area,
+            String assistantSpeech, boolean acceptedMusicPlayback) {
         this.status = status;
         this.targetName = targetName == null ? "" : targetName;
         this.area = area == null ? "" : area;
         this.assistantSpeech = assistantSpeech == null ? "" : assistantSpeech;
+        this.acceptedMusicPlayback = acceptedMusicPlayback;
     }
 
     static CommandOutcome success(String targetName) {
@@ -54,6 +61,10 @@ final class CommandOutcome {
 
     static CommandOutcome localReply(String speech) {
         return new CommandOutcome(Status.LOCAL_REPLY, "", "", speech);
+    }
+
+    static CommandOutcome musicPlaybackAccepted() {
+        return new CommandOutcome(Status.LOCAL_REPLY, "", "", "Done", true);
     }
 
     static CommandOutcome localQuestion(String speech) {
@@ -128,4 +139,5 @@ final class CommandOutcome {
     String targetName() { return targetName; }
     String area() { return area; }
     String assistantSpeech() { return assistantSpeech; }
+    boolean hasAcceptedMusicPlayback() { return acceptedMusicPlayback; }
 }

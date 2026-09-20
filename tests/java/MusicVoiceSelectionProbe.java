@@ -17,6 +17,7 @@ public final class MusicVoiceSelectionProbe {
         BoopRoom room=new BoopRoom("lounge","Lounge");
         int houseCalls,catalogueCalls; boolean offline;long now=1000;
         String status="",token="private-test-token",connection="test-registration";
+        boolean accepted;
         DeezerArtistClient client=new DeezerArtistClient(this,(b,t)->Collections.singleton("media_player.tv"),ms->{},()->now);
         public String request(String url,String token,JSONObject body)throws Exception {
             if(url.startsWith("https://api.deezer.com/")) {
@@ -36,6 +37,7 @@ public final class MusicVoiceSelectionProbe {
         String say(String text)throws Exception {
             CommandOutcome outcome=client.processForConnection("http://ha.invalid",token,connection,text,room,()->room);
             status=outcome==null?"":outcome.status().name();
+            accepted=outcome!=null && outcome.hasAcceptedMusicPlayback();
             return outcome==null?"FALLTHROUGH":LocalReply.forOutcome(outcome);
         }
         Rig lennon() {artists.put(artist(226,"John Lennon"));tracks.put(track(1,"John Lennon Imagine",999,"Namesake"));
@@ -48,7 +50,12 @@ public final class MusicVoiceSelectionProbe {
             Rig flow=new Rig();int plays=DeezerNativeController.plays;
             check("Done".equals(flow.say(shortcut)) && DeezerNativeController.plays==plays+1
                     && flow.catalogueCalls==0,"Flow shortcut bypasses catalogue: "+shortcut);
+            check(flow.accepted,"accepted Flow can finish the mic-button activity: "+shortcut);
         }
+        DeezerNativeController.fail=true;
+        Rig rejected=new Rig();
+        check("Failed".equals(rejected.say("music")) && !rejected.accepted,"rejected playback retains its error reply");
+        DeezerNativeController.fail=false;
         for(String query:new String[]{"John Lennon Imagine","Imagine John Lennon","John Lennon's Imagine","Imagine by John Lennon"}) {
             Rig r=new Rig().lennon(); String result=r.say("play "+query);
             check("Done".equals(result) && DeezerNativeController.played.endsWith("/track/2"),"natural Lennon request: "+query);
@@ -56,9 +63,11 @@ public final class MusicVoiceSelectionProbe {
         Rig r=new Rig().collision(); int before=DeezerNativeController.plays;
         String reply=r.say("play Queen");
         check("LOCAL_QUESTION".equals(r.status),"clarification opens the existing spoken follow-up window");
+        check(!r.accepted,"music question must not dismiss the assistant");
         check(reply.toLowerCase(Locale.ROOT).contains("artist") && reply.toLowerCase(Locale.ROOT).contains("song"),"collision asks artist or song");
         check(r.houseCalls==0 && before==DeezerNativeController.plays,"ambiguity has no house/device effects");
         check("Done".equals(r.say("the artist")) && DeezerNativeController.played.endsWith("/artist/412"),"artist clarification executes exact choice");
+        check(r.accepted,"accepted clarification can finish the assistant");
         check("FALLTHROUGH".equals(r.say("the artist")),"clarification consumed once");
         r=new Rig().collision();r.say("play Queen");r.token="newly-refreshed-access-token";
         check("Done".equals(r.say("the artist")) && DeezerNativeController.played.endsWith("/artist/412"),"normal access-token refresh preserves clarification");

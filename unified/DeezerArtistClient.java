@@ -104,7 +104,7 @@ final class DeezerArtistClient {
             stage="native_playback";
             new DeezerNativeController(base,token,adbEntity,http,delay,room,rooms).play(target.optJSONArray("macs"),selection);
             diagnostic("playback_requested");
-            return reply("Done");
+            return CommandOutcome.musicPlaybackAccepted();
         } catch(HomeAssistantAuth.AuthRejectedException e) { throw e;
         } catch(InterruptedException e) { Thread.currentThread().interrupt(); return reply("Failed");
         } catch(Exception e) {diagnostic(stage+"_failed");return reply("Failed"); }

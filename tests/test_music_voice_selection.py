@@ -17,10 +17,11 @@ final class HomeAssistantEntityDiscoveryClient {
 java.util.Set<String> allowedEntityIds(String base,String token) {return java.util.Collections.emptySet();} }''',
         'DeezerNativeController.java': '''package com.boop.alpha1;
 final class DeezerNativeController {
-static String played=""; static int plays;
+static String played=""; static int plays; static boolean fail;
 DeezerNativeController(String base,String token,String entity,DeezerArtistClient.Http http,
 DeezerArtistClient.Delay delay,BoopRoom room,BoopRoomSource rooms) {}
-void play(org.json.JSONArray macs,DeezerCatalogue.Selection selection) {played=selection.url;plays++;} }''',
+void play(org.json.JSONArray macs,DeezerCatalogue.Selection selection) {
+if(fail)throw new IllegalStateException("playback rejected");played=selection.url;plays++;} }''',
     }
     for name, content in stubs.items():
         (tmp_path/name).write_text(content, encoding='utf-8')
