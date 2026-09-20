@@ -97,6 +97,7 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setClipToOutline(false);
         addView(artwork);
         title = label("", 29, Color.WHITE, true);
+        title.setIncludeFontPadding(false);
         title.setSingleLine(true);
         title.setHorizontallyScrolling(true);
         title.setEllipsize(TextUtils.TruncateAt.MARQUEE);

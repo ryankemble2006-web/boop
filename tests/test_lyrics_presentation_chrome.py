@@ -46,3 +46,13 @@ def test_left_music_column_uses_progress_centre_and_three_transport_buttons():
     assert "transportLeft = progressCenter - transportSpan * 0.5f;" in view
     assert "Rewind ten seconds" not in view
     assert "Forward ten seconds" not in view
+
+
+def test_title_clipping_fix_keeps_all_geometry_unchanged():
+    view = VIEW.read_text(encoding="utf-8")
+    assert "title.setIncludeFontPadding(false);" in view
+    assert "place(title, left, 448f * unit, progressWidth, 42f * unit);" in view
+    assert "place(artist, left, 520f * unit, progressWidth, 35f * unit);" in view
+    assert "place(progress, left, 583f * unit, progressWidth, 18f * unit);" in view
+    assert "float artLeft = progressCenter - artSize * 0.5f;" in view
+    assert "transportLeft = progressCenter - transportSpan * 0.5f;" in view
