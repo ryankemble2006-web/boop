@@ -20,8 +20,13 @@ def test_lyrics_provider_credit_is_not_drawn():
     assert "credit.setText(" not in view
 
 
-def test_long_track_title_is_raised_without_moving_artist_or_progress():
+def test_long_track_title_is_single_line_marquee_once_at_original_position():
     view = VIEW.read_text(encoding="utf-8")
-    assert "place(title, left, 436f * unit, 440f * unit, 79f * unit);" in view
+    assert "title.setSingleLine(true);" in view
+    assert "title.setHorizontallyScrolling(true);" in view
+    assert "title.setEllipsize(TextUtils.TruncateAt.MARQUEE);" in view
+    assert "title.setMarqueeRepeatLimit(1);" in view
+    assert "title.setSelected(true);" in view
+    assert "place(title, left, 448f * unit, 440f * unit, 42f * unit);" in view
     assert "place(artist, left, 532f * unit, 440f * unit, 35f * unit);" in view
     assert "place(progress, left, 583f * unit, 397f * unit, 18f * unit);" in view

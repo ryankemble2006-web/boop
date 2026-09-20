@@ -97,8 +97,11 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setClipToOutline(false);
         addView(artwork);
         title = label("", 29, Color.WHITE, true);
-        title.setMaxLines(2);
-        title.setEllipsize(TextUtils.TruncateAt.END);
+        title.setSingleLine(true);
+        title.setHorizontallyScrolling(true);
+        title.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+        title.setMarqueeRepeatLimit(1);
+        title.setSelected(true);
         artist = label("", 19, Color.rgb(162, 179, 189), false);
         artist.setSingleLine(true);
         artist.setEllipsize(TextUtils.TruncateAt.END);
@@ -237,7 +240,7 @@ public final class ShieldLyricsView extends FrameLayout {
         float artSize = 302f * unit;
         place(eyebrow, left, 54f * unit, 365f * unit, 30f * unit);
         place(artwork, left, 116f * unit, artSize, artSize);
-        place(title, left, 436f * unit, 440f * unit, 79f * unit);
+        place(title, left, 448f * unit, 440f * unit, 42f * unit);
         place(artist, left, 532f * unit, 440f * unit, 35f * unit);
         float lyricsX = 590f * unit;
         place(lyrics, lyricsX, 52f * unit, w - lyricsX - 66f * unit, 550f * unit);
