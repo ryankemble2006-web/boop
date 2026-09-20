@@ -67,6 +67,8 @@ import android.os.Handler;
 import java.util.Locale;
 class StubActivity {protected void onPause(){}}
 public class SpeechStartupHarness extends StubActivity implements TextToSpeech.OnInitListener {
+ final MusicClient haClient=new MusicClient();
+ static class MusicClient {boolean cancelled;void cancelMusicClarification(){cancelled=true;}}
  boolean activityInForeground=true;
  boolean assistantFollowUpAfterTts,sleepFaceAfterTts,assistantFollowUpListening,faceTouchActive;
  String latestAssistantFollowUpPartial;
@@ -182,6 +184,7 @@ public class SpeechStartupHarness extends StubActivity implements TextToSpeech.O
   SpeechStartupHarness a=fresh();a.speak("Done");
   check(a.wakeCoordinator.state.state()==BoopWakeSessionState.State.SPEAKING,"test did not enter speaking state");
   a.activityInForeground=false;a.onPause();a.ready();Handler.advance(11000);
+  if(__MUSIC_CANCEL__)check(a.haClient.cancelled,"pause retained a pending music clarification");
   a.activityInForeground=true;a.wakeCoordinator.resume();
   check(a.wakeCoordinator.state.state()==BoopWakeSessionState.State.ARMED,"cancelled reply left wake recognition stuck speaking");
   check(a.tts.calls==0&&a.completions==0,"paused reply spoke or fired completion");
@@ -232,6 +235,7 @@ with tempfile.TemporaryDirectory() as folder:
         (pkg/name).write_text((ROOT/name).read_text())
     (pkg/"BoopVoiceController.java").write_text("package com.boop.alpha1;class BoopVoiceController {static class NaturalVoice {int sid(){return 21;}}}")
     methods=method(main,"private void speakWithAndroidTts(String text)")+"\n"+method(main,"public void onInit(int status)")+"\n"+method(main,"private void speak(String text)")+"\n"+method(main,"protected void onPause()")
-    (pkg/"SpeechStartupHarness.java").write_text(HARNESS.replace("__METHODS__",methods))
+    (pkg/"SpeechStartupHarness.java").write_text(HARNESS.replace("__METHODS__",methods).replace(
+        "__MUSIC_CANCEL__",str("haClient.cancelMusicClarification()" in main).lower()))
     subprocess.run(["javac","-d",str(out),*[str(p) for p in out.rglob("*.java")]],check=True)
     subprocess.run(["java","-cp",str(out),"com.boop.alpha1.SpeechStartupHarness"],check=True)
