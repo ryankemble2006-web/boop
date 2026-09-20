@@ -18,6 +18,8 @@ Preserved unchanged:
 - voice/audio, assistant art and native runtime;
 - Wall v207.
 
+CI speed-up: `.github/workflows/build-wall-shield-split.yml` now uses writable `gradle/actions/setup-gradle@v4` caching on the active branch and passes `--build-cache` to Gradle. First seed run: `35515825323`.
+
 Build source `9bf329a24631310261843b654f9fe0716a59aa2e`.
 Successful run `35515284079`, job `106090068972`.
 Artifact `10606343049`, `BOOP-Shield-v221-Wall-v207-Signed`.
