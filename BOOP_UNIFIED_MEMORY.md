@@ -1,8 +1,8 @@
 # BOOP durable project memory
 
-Updated 2026-09-18.
+Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v220 on `boop-shield-accent-colour-v220`. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v221 on `boop-shield-weather-focus-v221`. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -69,13 +69,21 @@ Launcher highlight colour is user-configurable from **Launcher Settings**, immed
 - Do not change charcoal fills, white body text, layout geometry or HA behavior when changing accent.
 - The setting persists and new launcher surfaces should resolve the saved hue on construction/focus rather than hardcode cyan.
 
+## Shield weather/focus rule from v221
+
+Ryan's physical reference point for forecast alignment is the weather glyph's optical centre, not merely the weighted cell centre. Keep the accepted +2dp glyph correction on the associated time/day, temperature/high-low and rain rows as one aligned stack.
+
+The 3-day region uses a +9dp container translation to balance visible whitespace from its middle divider to the card's outer right border while preserving the 3:4:3 divider geometry.
+
+When Shield HOME regains foreground from an external app, including a Shield task-manager return, focus belongs on Favourite entry 1. Close media also returns focus to Favourite entry 1. Internal short Back retains the same destination.
+
 ## Latest verified artifact
 
-Build source `a009b921bf23d018f7edc9ebf2c64a9f89bf8ddd`.
-Run `35355454656`, job `105634013385`; artifact `10552105353`, `BOOP-Shield-v220-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v220.apk`, 160485741 bytes, SHA-256 `2ac14d16983a7662b09f5338e18f7f43b749cea0666e4af676d86b8e087d34ad`.
+Build source `9bf329a24631310261843b654f9fe0716a59aa2e`.
+Run `35515284079`, job `106090068972`; artifact `10606343049`, `BOOP-Shield-v221-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v221.apk`, 160485741 bytes, SHA-256 `d0e5111efd97dc948890b2181e3212ce20e67b4e43cadc0df900a06969295f8a`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Uploaded artifact ZIP SHA-256 `1a6fa09706d06b2bba52becc4123f7640fee15068147fd3b8b38288a11d4cdf1`.
-77 focused checks, inherited v206 checks, 100 materialized integration checks and HA tests passed; all 16 native libraries remain baseline-identical.
+Artifact ZIP SHA-256 `20a5fbf892d2139d4e45239515bfcee0f2f2773af4c86f0543c42440e2dc664c`.
+Focused checks, inherited v206 checks, materialized split integration, HA tests, both builds and packaged signer/native/art verification passed; all 16 native libraries remain baseline-identical.
 
-v219 is the prior accepted signed checkpoint. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.
+v219 Now Playing alignment remains physically accepted. v220 accent-colour behaviour remains retained. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.
