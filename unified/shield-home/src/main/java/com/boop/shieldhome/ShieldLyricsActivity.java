@@ -64,8 +64,10 @@ public final class ShieldLyricsActivity extends Activity {
     private void changed(NowPlayingSnapshot snapshot) {
         if (!started || isFinishing()) return;
         presentation.setSnapshot(snapshot, clockKnown(snapshot));
-        String id = snapshot == null ? "" : manager.deezerLyricsTrackId(snapshot);
-        String next = id.isEmpty() ? "" : snapshot.sessionId() + ":" + id;
+        String deezerId = snapshot == null ? "" : manager.deezerLyricsTrackId(snapshot);
+        String cacheId = snapshot == null ? "" : deezerId.isEmpty()
+                ? "meta:" + Integer.toHexString(snapshot.trackKey().hashCode()) : deezerId;
+        String next = snapshot == null ? "" : snapshot.sessionId() + ":" + cacheId;
         if (next.equals(identity) && !next.isEmpty()) return;
         identity = next;
         loader.cancel();
@@ -74,11 +76,9 @@ public final class ShieldLyricsActivity extends Activity {
             presentation.setStatus("Nothing playing.");
         } else if (!DeezerLyricsPolicy.available(snapshot.packageName())) {
             presentation.setStatus("Lyrics are available here for Deezer.");
-        } else if (id.isEmpty()) {
-            presentation.setStatus("Couldn't identify this track for lyrics.");
         } else {
             presentation.setStatus("Finding lyrics…");
-            loader.load(id, next, document -> {
+            loader.load(snapshot, cacheId, next, document -> {
                 if (!started || !next.equals(identity) || isFinishing()) return;
                 if (document.status() == DeezerLyricsDocument.Status.AVAILABLE) {
                     presentation.setDocument(document);
