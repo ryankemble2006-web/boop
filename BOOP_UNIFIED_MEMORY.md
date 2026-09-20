@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v225. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v226. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -95,21 +95,19 @@ Preserve:
 
 Do not recenter the three-button row.
 
-## Lyrics presentation rule from v225
+## Lyrics presentation rule from v226
 
-Fullscreen lyrics album art must use the same shared HOME-banner clipping path:
-- rounded background via `FocusChrome.filled(..., 9, false)`;
-- `FocusChrome.clipRounded(artwork, 9)`.
+Fullscreen lyrics album art uses a hard bitmap mask in the ImageView draw path. Build a rounded `Path`, call `canvas.clipPath(...)`, draw the image, restore the canvas, then draw focus chrome. Do not rely on `clipToOutline` for this screen.
 
-Do not restore the custom lyrics outline provider. The lyric provider/licence credit remains parsed internally but is not drawn in the bottom-right of the fullscreen lyrics UI.
+The lyric provider/licence credit remains parsed internally but is not drawn.
 
 ## Latest verified artifact
 
-Build source `8b252a2250e07187095303b25cf1d27298b715f1`.
-Run `35518868544`, job `106099355568`; artifact `10607712461`, `BOOP-Shield-v225-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v225.apk`, 160485741 bytes, SHA-256 `b6625c5ad25a1b6e3afbd6e6e40ef76ae7db7c59b2c750e8748301dcd258d328`.
+Build source `4758eaf8b4c74cd27b984af62e5be5d3f50e9280`.
+Run `35519275112`, job `106100424396`; artifact `10607129240`, `BOOP-Shield-v226-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v226.apk`, 160485741 bytes, SHA-256 `eb52fefacfec25c5ce8173c6b6466f14fdabfa35d8175c131b7d2f016a62f0ee`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Artifact ZIP SHA-256 `e8a31f636ac9e98889ec11f4154d036dba4c42d43dbcd3b8fab1f0937f2456f6`.
-Focused lyrics-presentation checks, inherited v206 checks, materialized split integration, HA tests, both builds and packaged signer/native/art verification passed; all 16 native libraries remain baseline-identical.
+Artifact ZIP SHA-256 `55c53470a621c5956e63bb3e440503bd3e5dd031634626a86db3faf6151c66c1`.
+Focused hard-mask lyrics presentation checks, inherited v206 checks, materialized split integration, HA tests, both builds and packaged signer/native/art verification passed; all 16 native libraries remain baseline-identical.
 
 v224 transport, v223 weather alignment and v219 Now Playing datum remain retained. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.
