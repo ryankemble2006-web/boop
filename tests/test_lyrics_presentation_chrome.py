@@ -56,3 +56,17 @@ def test_title_clipping_fix_keeps_all_geometry_unchanged():
     assert "place(progress, left, 583f * unit, progressWidth, 18f * unit);" in view
     assert "float artLeft = progressCenter - artSize * 0.5f;" in view
     assert "transportLeft = progressCenter - transportSpan * 0.5f;" in view
+
+
+def test_lyrics_artist_clones_home_text_only_focus_and_deezer_action():
+    view = VIEW.read_text(encoding="utf-8")
+    activity = (ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome/ShieldLyricsActivity.java").read_text(encoding="utf-8")
+    assert "BoopTvChrome.useTextOnlyFocus(artist);" in view
+    assert "controls.browseArtist();" in view
+    assert "artist.setFocusable(artistAvailable);" in view
+    assert "artist.setClickable(artistAvailable);" in view
+    assert 'artist.setContentDescription(artistAvailable ? "Browse artist " + next.subtitle() + " in Deezer"' in view
+    assert "return artist.isFocusable() ? artist.requestFocus()" in view
+    assert "void browseArtist();" in view
+    assert "private final DeezerArtistBrowser artistBrowser = new DeezerArtistBrowser();" in activity
+    assert "artistBrowser.open(" in activity
