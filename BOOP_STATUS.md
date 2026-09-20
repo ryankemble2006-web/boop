@@ -1,5 +1,9 @@
 # BOOP status
 
+## Current task: v236 Flow button candidate
+
+Ryan requested replacing the Now Playing Close player button with Flow, which starts native Deezer Flow without leaving BOOP. Same130x44dp slot, spacing, focus and current accent. Separate Close media remains. The accepted v235 favourite/dislike implementation and lyrics are untouched. Flow uses the already-established native URI via the selected MediaController, gated by current package/session/capability and a short repeat guard. Ten focused tests passed, including18 real Flow-controller assertions. Full signed CI and actual installed-button acceptance are pending. Details: docs/handoffs/2026-09-20-shield-flow-button-v236.md. This is a candidate, not yet an installed replacement.
+
 ## User-accepted v235 favourites: 2026-09-20
 
 Ryan physically tested the installed v235 and reports that the favourites button works exactly as desired, including Android added/removed confirmation messages. He favourited a track in native Deezer, returned to BOOP HOME and saw the heart fill; he then unfavourited it on BOOP's Lyrics screen and verified that the removal was reflected in native Deezer. This is acceptance of real cross-app favourite-state propagation and add/remove operation on the installed build, not merely CI success or the earlier standalone probe. Preserve this working checkpoint and its invisible operation.

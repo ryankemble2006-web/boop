@@ -47,6 +47,7 @@ public final class ShieldNowPlayingManager {
     private final Handler mainHandler;
     private final ShieldHomeStore store;
     private final NowPlayingState state = new NowPlayingState();
+    private final DeezerFlowController flowController = new DeezerFlowController();
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
     private final LinkedHashMap<String, Bitmap> notificationArtwork = new LinkedHashMap<>();
     private final LinkedHashMap<String, PendingIntent> notificationContentIntents = new LinkedHashMap<>();
@@ -204,6 +205,16 @@ public final class ShieldNowPlayingManager {
 
     public void fastForward() {
         runTransport(NowPlayingSnapshot::canFastForward, controls -> controls.fastForward());
+    }
+
+    /** Explicit Flow shortcut on the native session. No foreground launch or shell round trip. */
+    public boolean playDeezerFlow() {
+        if (Looper.myLooper() != Looper.getMainLooper()) return false;
+        DeezerFlowController.Result result = flowController.request(selectedController, state.current(),
+                SystemClock.elapsedRealtime());
+        if (result == DeezerFlowController.Result.REQUESTED)
+            android.util.Log.i("BOOPFlow", "Native Deezer Flow requested");
+        return result != DeezerFlowController.Result.UNAVAILABLE;
     }
 
     public void next() {

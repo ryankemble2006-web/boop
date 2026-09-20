@@ -140,9 +140,10 @@ public final class ShieldNowPlayingView extends FrameLayout {
         lyricsParams.rightMargin = dp(8);
         titleRow.addView(lyricsButton, lyricsParams);
 
-        sourceButton = actionButton("Close player");
+        sourceButton = actionButton("Flow");
+        sourceButton.setContentDescription("Start your Deezer Flow");
         sourceButton.setOnClickListener(v -> {
-            if (callbacks != null) callbacks.onCloseNowPlayingSource();
+            if (callbacks != null) callbacks.onNowPlayingFlow();
         });
         LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(130), dp(44));
         sourceParams.leftMargin = dp(12);

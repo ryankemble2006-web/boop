@@ -5,6 +5,8 @@ on:
     paths:
       - 'tests/test_deezer_favourites.py'
       - 'tests/test_deezer_invisible_hearts.py'
+      - 'tests/test_deezer_flow_button.py'
+      - 'unified/shield-home/src/main/java/com/boop/shieldhome/*Flow*.java'
       - 'unified/deezer-bridge/**'
       - 'unified/BoopDeezerHeartBackend.java'
       - 'tests/favourite_android_boundary.py'
@@ -25,4 +27,4 @@ jobs:
       - name: Favourite behaviour checks
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_deezer_favourites.py tests/test_deezer_invisible_hearts.py
+          python -m pytest -q tests/test_deezer_favourites.py tests/test_deezer_invisible_hearts.py tests/test_deezer_flow_button.py
