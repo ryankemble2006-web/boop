@@ -46,7 +46,7 @@ import java.util.ArrayList; import java.util.List; import java.util.function.Con
 final class NowPlayingSnapshot {
  final String track,pkg; final int state; final long session;
  NowPlayingSnapshot(String track,String pkg,int state,long session){this.track=track;this.pkg=pkg;this.state=state;this.session=session;}
- String packageName(){return pkg;} long sessionId(){return session;} int playbackState(){return state;}
+ String packageName(){return pkg;} long sessionId(){return session;} int playbackState(){return state;} String trackKey(){return pkg+"\n"+track;}
 }
 final class NowPlayingSelectionPolicy {static boolean eligible(int state){return state==2||state==3||state==6||state==8;}}
 final class FocusChrome {static int accentColor(android.app.Activity activity){return 0;}}
