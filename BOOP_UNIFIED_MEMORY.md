@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v222. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v223. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -77,19 +77,19 @@ The 3-day region uses a +9dp container translation to balance visible whitespace
 
 When Shield HOME regains foreground from an external app, including a Shield task-manager return, focus belongs on Favourite entry 1. Close media also returns focus to Favourite entry 1. Internal short Back retains the same destination.
 
-## Shield hourly temperature optical rule from v222
+## Shield hourly temperature optical rule from v223
 
-The four **Next 4 hours** temperature values alone receive one extra physical-pixel nudge to the right after the shared +2dp weather optical correction: `temp.setTranslationX(dp(2)+1f)`. Do not apply that extra pixel to times, glyphs, rain percentages or the 3-day forecast unless Ryan explicitly requests it.
+Relative to v222, the four **Next 4 hours** temperature values alone move 2 more physical pixels right after the shared +2dp weather optical correction: `temp.setTranslationX(dp(2)+3f)`. Times, glyphs, rain percentages and the 3-day forecast remain unchanged.
 
 The active Shield CI workflow uses writable Gradle caching with `--build-cache` and cancels superseded rapid UI builds. Keep tiny sequential Shield UI iterations on the cache-hot active branch instead of creating a fresh version branch for every pixel tweak; use version branches as snapshots when useful. v222 proved the cache was restored and reused 77 app-build tasks, with the Gradle app build completing in 26 seconds.
 
 ## Latest verified artifact
 
-Build source `5bab9dab597161a0a53ab5e6f85ef0f3d913bee0`.
-Run `35516142829`, job `106092308080`; artifact `10606488920`, `BOOP-Shield-v222-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v222.apk`, 160485741 bytes, SHA-256 `3eee980f533a64b09d4fa0a25177c9c13bcbab2df17ec46f01c407f4c8f98bc5`.
+Build source `fceb5659a5fe52d01205641956b834ff5615385e`.
+Run `35517619079`, job `106096104834`; artifact `10607337069`, `BOOP-Shield-v223-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v223.apk`, 160485741 bytes, SHA-256 `2bc6179110d22f3a76243e1914f8f19db7573e74694c5e85e8aa40493d7340d4`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Artifact ZIP SHA-256 `649641d807fbcab638ad2b65ef5ea35aed5aefd0a70d34e7a4e9c6036667fe30`.
+Artifact ZIP SHA-256 `05e542e8c4e090792781dd24d3f53fff9e33ce4c3a85b2fb65b3fdfee5f5c3bd`.
 Focused checks, inherited v206 checks, materialized split integration, HA tests, both builds and packaged signer/native/art verification passed; all 16 native libraries remain baseline-identical.
 
 v219 Now Playing alignment remains physically accepted. v220 accent-colour behaviour and v221 return-focus/weather geometry remain retained. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.

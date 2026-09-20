@@ -2,17 +2,17 @@
 
 Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221` (kept long-lived so CI cache remains reusable). v222 snapshot branch: `boop-shield-hour-temp-nudge-v222`.
 
-## Current Shield: v222, signed and ready for Ryan's physical test
+## Current Shield: v223, signed and ready for Ryan's physical test
 
 The branch name deliberately remains v221 for live iteration. Do not create a fresh branch for every one-pixel/UI tweak unless there is a reason to fork; same-branch follow-ups are what let GitHub reuse this branch-scoped Gradle cache.
 
-Package `com.boop.shieldoverlay`, version `222` / `1.2.222-shield`.
+Package `com.boop.shieldoverlay`, version `223` / `1.2.223-shield`.
 
 v219's Now Playing alignment remains physically accepted as perfect. v220 accent colour, v217 reordering, v221 weather/focus behaviour and all voice/audio behaviour remain unchanged.
 
-### v222 tiny weather polish
+### v223 tiny weather polish
 
-Only the four **Next 4 hours** temperature labels are changed. Their existing +2dp optical alignment is retained and the temperature text receives an additional **+1 physical pixel** horizontal nudge to the right.
+Only the four **Next 4 hours** temperature labels changed from v222. Their existing +2dp optical alignment is retained and the temperature text moves **2 more physical pixels right**, changing `temp.setTranslationX(dp(2)+1f)` to `temp.setTranslationX(dp(2)+3f)`.
 
 Times, weather glyphs, rain percentages, 3-day forecast geometry, current weather and footer are unchanged.
 
@@ -32,14 +32,14 @@ This does not shrink the APK delivered to Ryan, but it substantially reduces rep
 
 ## Verified signed artifact
 
-Production/build source: `5bab9dab597161a0a53ab5e6f85ef0f3d913bee0`.
-Successful GitHub Actions run `35516142829`, job `106092308080`.
-Artifact `10606488920`: `BOOP-Shield-v222-Wall-v207-Signed`.
+Production/build source: `fceb5659a5fe52d01205641956b834ff5615385e`.
+Successful GitHub Actions run `35517619079`, job `106096104834`.
+Artifact `10607337069`: `BOOP-Shield-v223-Wall-v207-Signed`.
 
-Deliver **BOOP-Shield-v222.apk**, 160485741 bytes.
-Shield APK SHA-256: `3eee980f533a64b09d4fa0a25177c9c13bcbab2df17ec46f01c407f4c8f98bc5`.
+Deliver **BOOP-Shield-v223.apk**, 160485741 bytes.
+Shield APK SHA-256: `2bc6179110d22f3a76243e1914f8f19db7573e74694c5e85e8aa40493d7340d4`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `649641d807fbcab638ad2b65ef5ea35aed5aefd0a70d34e7a4e9c6036667fe30`.
+Artifact ZIP SHA-256: `05e542e8c4e090792781dd24d3f53fff9e33ce4c3a85b2fb65b3fdfee5f5c3bd`.
 
 Verification passed focused Shield checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
 
@@ -47,6 +47,6 @@ Wall remains v207.
 
 ## Physical acceptance pending
 
-Ryan is the visual/ADB tester. Check only that the four hourly temperature values are now one pixel farther right. Everything else should remain visually identical to v221.
+Ryan is the visual/ADB tester. Check only that the four hourly temperature values are now 2 physical pixels farther right than v222. Everything else should remain visually identical to v222.
 
-Detailed record: `docs/handoffs/2026-09-20-shield-hour-temp-nudge-v222.md`.
+Detailed record: `docs/handoffs/2026-09-20-shield-hour-temp-nudge-v223.md`.
