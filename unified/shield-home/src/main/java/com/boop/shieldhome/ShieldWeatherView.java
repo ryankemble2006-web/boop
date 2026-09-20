@@ -106,7 +106,7 @@ final class ShieldWeatherView extends LinearLayout {
             cell.setGravity(Gravity.CENTER);
             addCenteredLine(cell,text(clock(h.time),11,false,Color.LTGRAY),false);
             addCenteredLine(cell,text(WeatherCode.glyph(h.code),23,false,Color.WHITE),true);
-            addCenteredLine(cell,text(Math.round(h.temp)+"°",14,true,Color.WHITE),false);
+            TextView temp=text(Math.round(h.temp)+"°",14,true,Color.WHITE);\n            addCenteredLine(cell,temp,false);\n            temp.setTranslationX(dp(2)+1f);
             addCenteredLine(cell,text("● "+h.rain+"%",10,false,accent()),false);
             strip.addView(cell,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
         }
