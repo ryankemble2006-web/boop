@@ -17,3 +17,18 @@ Two tests were observed failing first: the old button still said Close player, a
 Ten focused Flow/favourite/invisible-heart/alignment tests passed locally. Production diff and git whitespace checks were reviewed. Review is self-review, not an independent review. New tests are added to the full signed build workflow and the lightweight Deezer checks. Full signed CI, actual APK verification and physical button use are pending this source commit. No new emulator run or live recording. No app install or media action yet for this change.
 
 Shield version236 /1.2.236-shield. Wall version207 unchanged; the shared build is not a separate requested Wall update. Existing permanent signer and packaged native/art checks remain required. Keep the accepted v235 favourite round trip as a regression checkpoint.
+
+## Verified v236 build, installation and physical Flow-button test
+
+Source/build commit5bfb8d91f3351cbe1c089fb5e0a2566334db2553.
+Signed workflow35533035925/job106137012994 succeeded through focused, inherited v206, split, HA, both APK builds and packaged signature/native/art verification. Lightweight Deezer checks35533036024/job106137012988 also passed.
+Artifact10612281598: BOOP-Shield-v236-Wall-v207-Signed.
+Archive SHA256 d3c2ea4229b9a7bce8a5edc24760b19a748a0b3fca6029873bc7d37729ad6ed5.
+Shield APK BOOP-Shield-v236.apk,160534893 bytes, SHA25693608fae1f3566943fe11e37147a37b5d0bb48bf6938ff711c5ecd054bee06ec.
+Permanent signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde.
+
+Downloaded ZIP/APK CRC, source receipt, size and SHA256 were independently verified. All16 native libraries and all18 packaged assets match accepted v235 byte-for-byte. Full cryptographic apksigner verification also passed on the laptop. The exact APK was copied to Desktop/APKBOOP and installed with adb install -r on the verified Shield. Installed version236/1.2.236-shield was read back. Accepted v235 desktop rollback was hash-checked and retained. No data wipe, permission changes, native Deezer modification or Wall installation.
+
+A private one-shot check located the actual visible BOOP button by exact text Flow plus content description Start your Deezer Flow, and invoked its accessibility click once. No coordinate guessing, recording or UI polling loop. The installed app logged Native Deezer Flow requested. In the after-state the native Deezer player was PLAYING a different track with a fresh queue and active item0, replacing the previous101-item queue. The exact same BOOP ShieldLauncherActivity remained resumed on the primary display before and after, and remote focus stayed on display0. This is physical evidence of the installed Flow button dispatching and changing native playback without leaving BOOP, not just a compile/stub pass. End-user preference acceptance remains for Ryan to report separately.
+
+The one-shot test disconnected its inspection session and removed its temporary on-device JAR. No extra next-track attention skip was sent: the Flow test itself changed playback once. No emulator or live recording was started. Raw test metadata remains private on the laptop and was not published. Review was self-review; no independent reviewer claimed.

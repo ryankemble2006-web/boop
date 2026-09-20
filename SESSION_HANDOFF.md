@@ -1,9 +1,12 @@
 # BOOP current handoff
 
-## Current task: v236 Flow button candidate
+## Current: v236 Flow installed and physically checked
 
-Ryan requested replacing the Now Playing Close player button with Flow, which starts native Deezer Flow without leaving BOOP. Same130x44dp slot, spacing, focus and current accent. Separate Close media remains. The accepted v235 favourite/dislike implementation and lyrics are untouched. Flow uses the already-established native URI via the selected MediaController, gated by current package/session/capability and a short repeat guard. Ten focused tests passed, including18 real Flow-controller assertions. Full signed CI and actual installed-button acceptance are pending. Details: docs/handoffs/2026-09-20-shield-flow-button-v236.md. This is a candidate, not yet an installed replacement.
+The Now Playing Close player slot is now Flow, with the same130x44dp geometry, margins, focus and current accent. It starts the existing native Deezer Flow URI directly through the selected player's advertised playFromUri command, without leaving BOOP. Separate Close media remains. Accepted v235 hearts, dislike and Lyrics implementation are untouched. Native Deezer playback must already be active; no Cast or visible cold-launch fallback is claimed.
 
+Source5bfb8d91f3351cbe1c089fb5e0a2566334db2553; signed run35533035925/job106137012994 SUCCESS; Deezer checks35533036024 also SUCCESS. Artifact10612281598. Installed236/1.2.236-shield after full hash/signature verification; copy in Desktop/APKBOOP; v235 rollback retained. APK SHA25693608fae1f3566943fe11e37147a37b5d0bb48bf6938ff711c5ecd054bee06ec,160534893 bytes. Permanent signer unchanged;16 native libraries and18 assets byte-identical to v235. Wall not installed.
+
+One exact-labelled Flow-button click on the physical installed app started a new playing native Deezer queue with active item0. The same BOOP HOME activity stayed onscreen and remote focus stayed on display0. No separate attention skip, recording or repeated UI polling. Ten focused tests passed locally, with18 native Flow assertions, and the full signed pipeline passed. User preference acceptance remains for Ryan; the runtime test was performed by this session. Details: docs/handoffs/2026-09-20-shield-flow-button-v236.md.
 ## User-accepted v235 favourites: 2026-09-20
 
 Ryan physically tested the installed v235 and reports that the favourites button works exactly as desired, including Android added/removed confirmation messages. He favourited a track in native Deezer, returned to BOOP HOME and saw the heart fill; he then unfavourited it on BOOP's Lyrics screen and verified that the removal was reflected in native Deezer. This is acceptance of real cross-app favourite-state propagation and add/remove operation on the installed build, not merely CI success or the earlier standalone probe. Preserve this working checkpoint and its invisible operation.
@@ -12,7 +15,7 @@ Scope of acceptance: favourites add/remove, confirmation messages, Deezer-to-HOM
 
 Updated 2026-09-20. Owning Shield branch: boop-shield-weather-focus-v221 (long-lived cache-hot branch, not app version). Source worktree for this task is .worktrees/boop-deezer-invisible-v235, isolated from the old primary checkout. Wall remains v207 and was not installed.
 
-## Current: Shield v235 favourites physically accepted
+## Retained checkpoint: v235 favourites physically accepted
 
 Source/build commit: d6a7957d57a94fb7fc2a25266478e7c4d376f220.
 Signed workflow35531643785, job106133185445: SUCCESS. Favourite checks35531643786, job106133185094: SUCCESS.
