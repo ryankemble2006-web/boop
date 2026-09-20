@@ -28,8 +28,8 @@ def test_long_track_title_is_single_line_marquee_once_at_original_position():
     assert "title.setMarqueeRepeatLimit(1);" in view
     assert "title.setSelected(true);" in view
     assert "place(title, left, 448f * unit, progressWidth, 42f * unit);" in view
-    assert "place(artist, left, 532f * unit, 440f * unit, 35f * unit);" in view
-    assert "place(progress, left, 583f * unit, 397f * unit, 18f * unit);" in view
+    assert "place(artist, left, 520f * unit, progressWidth, 35f * unit);" in view
+    assert "place(progress, left, 583f * unit, progressWidth, 18f * unit);" in view
 
 
 def test_left_music_column_uses_progress_centre_and_three_transport_buttons():
