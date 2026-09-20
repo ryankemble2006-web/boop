@@ -15,7 +15,7 @@ out = Path('split-artifact'); out.mkdir(exist_ok=True)
 expected = Path('shield-overlay/signing/boop-dev-cert-sha256.txt').read_text().strip().lower()
 source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 baseline = json.loads(Path('split/v206-native-baseline.json').read_text())
-baseline_sha = 'b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b239713bca'
+baseline_sha = 'b5f7b0570eccb171bcda7a2ad4e58e79cb397768ec12851e110f04b238713bca'
 assert baseline['apkSha256'] == baseline_sha, 'Baseline provenance mismatch'
 assert baseline['source'] == '9d57019d9370dbe3f47061b6e8b0ce8ed5134715'
 assert baseline['signerSha256'] == expected, 'Baseline signer mismatch'

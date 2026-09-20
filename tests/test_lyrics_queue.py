@@ -31,3 +31,11 @@ def test_lyrics_column_moves_as_one_without_changing_internal_gaps():
     assert (520-shift)-(448+42-shift)==30
     assert (703-shift)-(632+54-shift)==17
     assert 54-shift>=16 and 703+38-shift<=704
+
+def test_version_bump_never_rewrites_native_baseline_provenance():
+    import ast, json
+    tree=ast.parse((ROOT/'split/verify-apks.py').read_text(encoding='utf-8'))
+    pinned=next(ast.literal_eval(node.value) for node in tree.body
+                if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='baseline_sha' for t in node.targets))
+    expected=json.loads((ROOT/'split/v206-native-baseline.json').read_text(encoding='utf-8'))['apkSha256']
+    assert pinned==expected, 'Historical baseline hash changed during a version bump'
