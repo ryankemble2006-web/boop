@@ -2,19 +2,27 @@
 
 Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221` (kept long-lived so CI cache remains reusable). v222 snapshot branch: `boop-shield-hour-temp-nudge-v222`.
 
-## Current Shield: v228, signed and ready for Ryan's physical test
+## Current Shield: v229, signed and ready for Ryan's physical test
 
 The branch name deliberately remains v221 for live iteration. Do not create a fresh branch for every one-pixel/UI tweak unless there is a reason to fork; same-branch follow-ups are what let GitHub reuse this branch-scoped Gradle cache.
 
-Package `com.boop.shieldoverlay`, version `228` / `1.2.228-shield`.
+Package `com.boop.shieldoverlay`, version `229` / `1.2.229-shield`.
 
 v219's Now Playing alignment remains physically accepted as perfect. v220 accent colour, v217 reordering, v221 weather/focus behaviour and all voice/audio behaviour remain unchanged.
 
-### v228 one-line lyrics title marquee
+### v229 centred lyrics music column
 
-The fullscreen lyrics title is back at its original vertical position and is now single-line. Overflowing titles use Android marquee with `setMarqueeRepeatLimit(1)`, so they auto-scroll once; short titles remain static.
+The fullscreen lyrics left music column now uses the 397-design-pixel progress bar as its horizontal datum.
 
-The title geometry is now `place(title, left, 448f * unit, 440f * unit, 42f * unit)`. Artist and progress remain fixed at their accepted positions. v226 hard bitmap-mask corners remain retained and physically accepted by Ryan. v224 transport simplification, v223 weather geometry, v221 return-focus behaviour, v220 accent colour, v217 reordering and all voice/audio behaviour remain unchanged.
+- Album art is centred on the progress-bar midpoint.
+- Title and artist use the progress-bar width and centred text.
+- Album-bottom -> title gap is 30 design pixels.
+- Title-bottom -> artist gap is also 30 design pixels.
+- Lyrics-screen transport is now **Prev / Play-Pause / Next** only.
+- The 3-button group is centred on the progress-bar midpoint.
+- Progress-bar left/right seeking remains ±10 seconds.
+
+v228 one-line once-only marquee remains retained. v226 hard bitmap-mask corners remain retained and physically accepted by Ryan. v224 transport simplification, v223 weather geometry, v221 return-focus behaviour, v220 accent colour, v217 reordering and all voice/audio behaviour remain unchanged.
 
 ### CI iteration speed
 
@@ -32,21 +40,21 @@ This does not shrink the APK delivered to Ryan, but it substantially reduces rep
 
 ## Verified signed artifact
 
-Production/build source: `0dae3cd377f85374f5ca6f01bb01d4a8d5a41cbe`.
-Successful GitHub Actions run `35520215512`, job `106102885432`.
-Artifact `10607839097`: `BOOP-Shield-v228-Wall-v207-Signed`.
+Production/build source: `e95bbeb88b32e9134da47100d0cd598df45752d7`.
+Successful GitHub Actions run `35520822777`, job `106104476205`.
+Artifact `10608905132`: `BOOP-Shield-v229-Wall-v207-Signed`.
 
-Deliver **BOOP-Shield-v228.apk**, 160485741 bytes.
-Shield APK SHA-256: `7a90cef6cc660028d088f382ac3da09e658318ca1934674f41ff18041f324763`.
+Deliver **BOOP-Shield-v229.apk**, 160485741 bytes.
+Shield APK SHA-256: `b4fa6a00ec74b0b1a2ab865adc8df8d82229143ad2ac1e204db5522e2ff79836`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `af9bf5900ed05471749bc3ea63bc2fb65721a630a012defe666031d17c6c02a7`.
+Artifact ZIP SHA-256: `364bdcc540838ee3184f5fd780e5a836b6d674ac2acd133d7b9fcc5216a48668`.
 
-Verification passed focused marquee/title checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+Verification passed focused music-column/transport checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
 
 Wall remains v207.
 
 ## Physical acceptance pending
 
-Ryan is the visual/ADB tester. Check that short titles remain still and correctly spaced, while an overflowing title scrolls once on one line.
+Ryan is the visual/ADB tester. Check the left column against the progress-bar centre, matching 30-pixel vertical gaps, and the centred 3-button transport row.
 
-Detailed record: `docs/handoffs/2026-09-20-shield-lyrics-title-marquee-v228.md`.
+Detailed record: `docs/handoffs/2026-09-20-shield-lyrics-centred-column-v229.md`.
