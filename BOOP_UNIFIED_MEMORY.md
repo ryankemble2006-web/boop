@@ -1,5 +1,15 @@
 # BOOP durable project memory
 
+## Current: doubled voice range installed on Shield246 / Pixel7 Wall213
+
+Ryan physically accepted shared voice on both devices ("both work brilliantly") and requested double the pitch/cadence maxima for maximum whimsy. Pitch now reaches 2.90x and cadence 2.50x in both settings screens, Android/natural playback clamps and shared-profile validation. Existing minima/defaults and stored numeric settings are unchanged by installation. The existing HA helper marker is retained; both paired devices were upgraded before raising the sliders, since older builds reject values above their previous limits.
+
+Final signed source `b697a00c55f2d2108889c92cc0d43b2da962de79`; successful run `35545251765`; artifact `10616267577` (`BOOP-Shield-v246-Wall-v213-Signed`). 132 focused local checks, 15 speech lifecycle scenarios and complete inherited/integration/HA/signed CI passed. Three new failing-before/passing-after regression paths cover preserved saved values on expanded sliders, immediate playback without clamping, and shared maximum serialization/state convergence with strict bounds. Independent review found no blocking issues.
+
+Both permanent-signed APKs installed in place; on-device APK SHA256s match independently verified artifacts, and versions 246/213 read back. All voice/appearance preferences matched before/after installation. All 29 assets and 16 native libraries per APK match 245/212 byte-for-byte. APKs and receipts are retained in task outputs and Desktop/APKBOOP; 245/212 rollbacks remain.
+
+Actual AudioTrack probes on both devices accepted pitch/rate pairs (2.90,2.50), (2.90,0.70), (0.75,2.50) and (1.45,1.25) with fallback mode FAIL, exact parameter readback and all 38144 sample frames consumed. Installed app tests then set both phone sliders to maximum, confirmed both device profiles/labels at 2.90/2.50, and verified a Shield DPAD pitch change travelled back to the phone before returning to maximum. TEST VOICE at maximum started in 18 ms on phone and 24 ms on Shield. Subsequent named-preview traces remained fast while Ryan actively tuned the phone. His live adjustments were preserved, so the final profile is user-controlled rather than forcibly reset to maximum. These are UI/profile/AudioTrack checks, not inferred acoustic acceptance of the new extremes. Temporary device probe files were removed. Details: `docs/handoffs/2026-09-21-maximum-whimsy-v246.md`.
+
 ## Current: shared voice enabled on Shield245 / Pixel7 Wall212
 
 Ryan accepted the immediate natural previews, then requested sharing voice across devices like colours, with the phone's current voice as the starting point. Both devices now share Emma, pitch1.45 and cadence1.25. Voice Settings exposes the same sharing flag/runtime as Build a Boop, beneath the natural voice buttons. The open sliders, effective profile and Selected label follow remote updates; active touch drags and transient preview messages are preserved. Sharing uses the existing paired Home Assistant, works while BOOP is open, retains the last profile offline and catches up on reopening. Natural voice downloads remain local.
