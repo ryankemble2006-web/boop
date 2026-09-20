@@ -35,7 +35,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.6.0'
-          cache-read-only: true
+          # BOOP iterates repeatedly on the active Shield branch. Allow the
+          # branch to save its Gradle User Home/local build cache after a
+          # successful run so small follow-up builds can reuse it.
+          cache-read-only: false
       - name: Prepare test dependencies
         run: |
           python -m pip install -q pytest pyyaml
@@ -68,14 +71,14 @@ jobs:
           for file in HomeAssistantRepositoryTest RoomScopedEntitiesTest RoomDeviceControlsTest HaEntityCategoryTest; do
             cp "shield-overlay/app/src/test/java/com/boop/shieldoverlay/$file.java" "$TARGET/"
           done
-          gradle --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --stacktrace
+          gradle --build-cache --no-daemon -p boop-build/BOOP-Alpha1 :shield-lib:testDebugUnitTest --stacktrace
       - name: Build both apps with the unchanged permanent key
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
           BOOP_RELAY_URL: ${{ secrets.BOOP_RELAY_URL }}
           BOOP_RELAY_TOKEN: ${{ secrets.BOOP_RELAY_TOKEN }}
-        run: gradle --no-daemon -p boop-build/BOOP-Alpha1 :wall-app:assembleDebug :shield-app:assembleDebug --stacktrace
+        run: gradle --build-cache --no-daemon -p boop-build/BOOP-Alpha1 :wall-app:assembleDebug :shield-app:assembleDebug --stacktrace
       - name: Verify BOTH actual APKs against accepted v206 native bytes and frozen art
         run: |
           python split/verify-apks.py
