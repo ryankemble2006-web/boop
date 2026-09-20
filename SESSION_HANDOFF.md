@@ -22,6 +22,10 @@ Whenever the Shield launcher regains focus from an external app, HOME requests F
 
 The launcher Close media action now returns focus to Favourite entry 1 after issuing the existing close-media command. Existing internal short-Back behaviour retains the same first-favourite destination.
 
+### CI Gradle cache
+
+The Shield/Wall signed workflow now enables writable Gradle caching on the active branch and invokes Gradle with `--build-cache`. This lets repeated small follow-up builds reuse Gradle User Home/dependency state and eligible task outputs instead of rebuilding/downloading them from cold state. Cache setup commit: `438562a21cfb226f7c1eabec1213a549c8e8bf56`. The first post-change run seeds the cache; later runs on the same branch are the payoff.
+
 ## Verified signed artifact
 
 Production/build source: `9bf329a24631310261843b654f9fe0716a59aa2e`.
