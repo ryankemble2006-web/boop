@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v226. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v227. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -101,13 +101,17 @@ Fullscreen lyrics album art uses a hard bitmap mask in the ImageView draw path. 
 
 The lyric provider/licence credit remains parsed internally but is not drawn.
 
+## Lyrics title spacing rule from v227
+
+Fullscreen lyrics track title starts at `436f * unit`, raised 12 design pixels from v226. Artist remains at `532f * unit`; progress remains at `583f * unit`. Do not move those lower elements to compensate.
+
 ## Latest verified artifact
 
-Build source `4758eaf8b4c74cd27b984af62e5be5d3f50e9280`.
-Run `35519275112`, job `106100424396`; artifact `10607129240`, `BOOP-Shield-v226-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v226.apk`, 160485741 bytes, SHA-256 `eb52fefacfec25c5ce8173c6b6466f14fdabfa35d8175c131b7d2f016a62f0ee`.
+Build source `51cf2687d71c7580279163332a72e3955a1f26f6`.
+Run `35519761368`, job `106101711931`; artifact `10607489121`, `BOOP-Shield-v227-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v227.apk`, 160485741 bytes, SHA-256 `99bb4089224f98f7d7b0ae1cae3640447737db02767cb6e94d8dddfba567111f`.
 Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde` unchanged.
-Artifact ZIP SHA-256 `55c53470a621c5956e63bb3e440503bd3e5dd031634626a86db3faf6151c66c1`.
-Focused hard-mask lyrics presentation checks, inherited v206 checks, materialized split integration, HA tests, both builds and packaged signer/native/art verification passed; all 16 native libraries remain baseline-identical.
+Artifact ZIP SHA-256 `03fb296d6682b1171452a892ea43724bb05b7f66b2400eeeb89dfbae41b5280c`.
+Focused title-geometry checks and all inherited packaging/runtime checks passed; all 16 native libraries remain baseline-identical.
 
-v224 transport, v223 weather alignment and v219 Now Playing datum remain retained. Voice/provider/pitch work remains deferred and untouched. Wall stays v207.
+v226 hard-mask corners, v224 transport, v223 weather alignment and v219 Now Playing datum remain retained. Wall stays v207.

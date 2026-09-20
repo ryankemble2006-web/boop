@@ -2,21 +2,19 @@
 
 Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221` (kept long-lived so CI cache remains reusable). v222 snapshot branch: `boop-shield-hour-temp-nudge-v222`.
 
-## Current Shield: v226, signed and ready for Ryan's physical test
+## Current Shield: v227, signed and ready for Ryan's physical test
 
 The branch name deliberately remains v221 for live iteration. Do not create a fresh branch for every one-pixel/UI tweak unless there is a reason to fork; same-branch follow-ups are what let GitHub reuse this branch-scoped Gradle cache.
 
-Package `com.boop.shieldoverlay`, version `226` / `1.2.226-shield`.
+Package `com.boop.shieldoverlay`, version `227` / `1.2.227-shield`.
 
 v219's Now Playing alignment remains physically accepted as perfect. v220 accent colour, v217 reordering, v221 weather/focus behaviour and all voice/audio behaviour remain unchanged.
 
-### v226 lyrics-screen hard bitmap mask
+### v227 long lyrics title spacing
 
-The fullscreen lyrics artwork no longer relies on Android outline clipping. The bitmap is now clipped directly inside the artwork ImageView's `onDraw()` using a rounded `Path` and `canvas.clipPath(...)` before `super.onDraw(canvas)`, then the orange focus ring is drawn after the clip is restored.
+The fullscreen lyrics title block alone moves up 12 design pixels: `place(title, left, 448f * unit, ...)` -> `place(title, left, 436f * unit, ...)`. Artist, progress, timing and transport geometry remain exactly where they were.
 
-This specifically targets the remaining square-pixel leak visible at the album-art corners in v225. The bottom-right lyric provider/licence credit remains removed.
-
-v224 transport simplification, v223 weather geometry, v221 return-focus behaviour, v220 accent colour, v217 reordering and all voice/audio behaviour remain unchanged.
+v226 hard bitmap-mask corners remain retained and physically accepted by Ryan. v224 transport simplification, v223 weather geometry, v221 return-focus behaviour, v220 accent colour, v217 reordering and all voice/audio behaviour remain unchanged.
 
 ### CI iteration speed
 
@@ -34,21 +32,21 @@ This does not shrink the APK delivered to Ryan, but it substantially reduces rep
 
 ## Verified signed artifact
 
-Production/build source: `4758eaf8b4c74cd27b984af62e5be5d3f50e9280`.
-Successful GitHub Actions run `35519275112`, job `106100424396`.
-Artifact `10607129240`: `BOOP-Shield-v226-Wall-v207-Signed`.
+Production/build source: `51cf2687d71c7580279163332a72e3955a1f26f6`.
+Successful GitHub Actions run `35519761368`, job `106101711931`.
+Artifact `10607489121`: `BOOP-Shield-v227-Wall-v207-Signed`.
 
-Deliver **BOOP-Shield-v226.apk**, 160485741 bytes.
-Shield APK SHA-256: `eb52fefacfec25c5ce8173c6b6466f14fdabfa35d8175c131b7d2f016a62f0ee`.
+Deliver **BOOP-Shield-v227.apk**, 160485741 bytes.
+Shield APK SHA-256: `99bb4089224f98f7d7b0ae1cae3640447737db02767cb6e94d8dddfba567111f`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `55c53470a621c5956e63bb3e440503bd3e5dd031634626a86db3faf6151c66c1`.
+Artifact ZIP SHA-256: `03fb296d6682b1171452a892ea43724bb05b7f66b2400eeeb89dfbae41b5280c`.
 
-Verification passed the hard-mask lyrics presentation check, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+Verification passed focused title-geometry checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
 
 Wall remains v207.
 
 ## Physical acceptance pending
 
-Ryan is the visual/ADB tester. Check the album-art corners again, especially the top-right corner that still leaked in v225.
+Ryan is the visual/ADB tester. Check a two-line long track title for bottom clipping while confirming artist/progress did not move.
 
-Detailed record: `docs/handoffs/2026-09-20-shield-lyrics-hard-mask-v226.md`.
+Detailed record: `docs/handoffs/2026-09-20-shield-lyrics-title-v227.md`.
