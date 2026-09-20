@@ -60,6 +60,7 @@ final class NativeLyricsLoader {
  boolean destroyed; int cancellations;
  NativeLyricsLoader(){latest=this;}
  void load(String id,String identity,Consumer<DeezerLyricsDocument> done){ids.add(id);callbacks.add(done);}
+ void load(NowPlayingSnapshot track,String id,String identity,Consumer<DeezerLyricsDocument> done){load(id,identity,done);}
  void cancel(){cancellations++;} void destroy(){destroyed=true;}
  void reply(int index,DeezerLyricsDocument.Status result){callbacks.get(index).accept(new DeezerLyricsDocument(ids.get(index),result));}
 }
