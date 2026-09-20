@@ -1,5 +1,12 @@
 # BOOP status
 
+## Music voice candidate: Shield242 / Wall209 (not installed)
+
+Autonomous continuation from bd803312. Artist/title word orders and possessives now resolve against catalogue performer IDs, with conservative studio remaster handling. Artist/song collisions ask before any HA or playback call; a retained, room/account-scoped 60-second clarification accepts artist/song replies through the existing speech follow-up. Cancellation and activity exit invalidate pending lookup results without blocking the UI. Native playback, room/hardware guards, nonce receipts and accepted art are unchanged.
+
+Deterministic production-source regression was red before implementation. Focused existing checks:112 passed before final review corrections; final validation and signed CI are pending. Review found UI monitor blocking, duplicate artist/song collisions and explicit remaster title regressions; each gained a failing test and correction. Current live public catalogue resolves Queen412, Britney483 and Lennon Imagine with artist226; bare John Lennon asks artist versus song. Runtime/device acceptance is NOT claimed. Build target242/209; previous241/208 remain installed and are rollback. No raw catalogue/device data is published.
+
+
 ## Latest feedback: v241 Queen favourite passed; voice selection needs investigation
 
 Ryan reports a successful favourite from a manually selected Queen album on v241. Keep this as scoped positive acceptance, not a claim that all heart cases are fixed. He reports unreliable natural music requests for Queen, John Lennon Imagine, John Lennon and Britney Spears. Read-only inspection found brittle title/artist selection rules. A private test of current production resolver code with live public catalogue results selected the correct Queen, Lennon and Britney artists, but returned NO_MATCH for John Lennon Imagine. Original wrong selections and spoken Failed were not reproduced end-to-end; transcription and execution route remain to be checked. No new app changes/install or playback commands. Proposed resolver improvements are pending, not a completed fix. Details: docs/handoffs/2026-09-20-music-voice-selection-investigation.md.

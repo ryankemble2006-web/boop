@@ -4,6 +4,7 @@ final class CommandOutcome {
     enum Status {
         SUCCESS,
         LOCAL_REPLY,
+        LOCAL_QUESTION,
         TARGET_OFFLINE,
         AMBIGUOUS_TARGET,
         NO_MATCH,
@@ -53,6 +54,10 @@ final class CommandOutcome {
 
     static CommandOutcome localReply(String speech) {
         return new CommandOutcome(Status.LOCAL_REPLY, "", "", speech);
+    }
+
+    static CommandOutcome localQuestion(String speech) {
+        return new CommandOutcome(Status.LOCAL_QUESTION, "", "", speech);
     }
 
     static CommandOutcome ambiguousTarget() {

@@ -27,7 +27,12 @@ for filename in ['BoopClosePlayerActivity.java','LocalPlayerCloseGate.java','Loc
 
 ha_client=MAIN/'HomeAssistantClient.java'
 text=ha_client.read_text()
-text=once(text,'            String colour = LightColourCommandParser.parseColour(text);','''            CommandOutcome artistOutcome = new DeezerArtistClient().process(
+text=once(text,'    private final GenericHomeAssistantClient genericHome',
+          '    private final DeezerArtistClient musicClient = new DeezerArtistClient();\n    private final GenericHomeAssistantClient genericHome')
+text=once(text,'    CommandOutcome process(String text) {','''    void prepareMusicTurn(String text) { musicClient.prepareTurn(text); }
+    void cancelMusicClarification() { musicClient.cancelClarification(); }
+    CommandOutcome process(String text) {''')
+text=once(text,'            String colour = LightColourCommandParser.parseColour(text);','''            CommandOutcome artistOutcome = musicClient.process(
                     baseUrl, accessToken, text, room, roomSource);
             if (artistOutcome != null) return artistOutcome;
 
@@ -47,6 +52,9 @@ manifest.write_text(text)
 
 wall=MAIN/'MainActivity.java'
 text=wall.read_text()
+text=once(text,'if (outcome.status() == CommandOutcome.Status.ASSISTANT_REPLY)',
+          'if (outcome.status() == CommandOutcome.Status.ASSISTANT_REPLY || outcome.status() == CommandOutcome.Status.LOCAL_QUESTION)')
+text=once(text,'        super.onPause();','        if (haClient != null) haClient.cancelMusicClarification();\n        super.onPause();')
 shutil.copy2('unified/BoopVoiceTokenStore.java',MAIN/'BoopVoiceTokenStore.java')
 text=once(text,'tokenStore = new SecureTokenStore(this);','tokenStore = BoopVoiceTokenStore.create(this);')
 text=once(text,'    private void ensureHouseConnection() {','''    private void ensureHouseConnection() {
@@ -64,6 +72,7 @@ text=once(text,'        handleAuthIntent(getIntent());','''        handleAuthInt
             interactionSurface.post(this::showVoiceSettings);
         }''')
 text=once(text,'    private void handleRecognizedSpeech(String transcript) {','''    private void handleRecognizedSpeech(String transcript) {
+        if (haClient != null) haClient.prepareMusicTurn(transcript);
         if ("boop settings".equalsIgnoreCase(transcript.trim()) || "device settings".equalsIgnoreCase(transcript.trim())) {
             startActivity(new Intent(this,BoopProfileActivity.class)); return;
         }

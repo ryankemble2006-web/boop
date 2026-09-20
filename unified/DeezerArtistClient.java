@@ -16,28 +16,59 @@ final class DeezerArtistClient {
     private final Http http;
     private final Exposure exposure;
     private final Delay delay;
+    private final java.util.function.LongSupplier clock;
+    private DeezerCatalogue.Selection pending;
+    private String pendingBase,pendingToken,pendingRoom;
+    private long pendingUntil;
+    private long generation;
     DeezerArtistClient() {
         this(DeezerArtistClient::request, new HomeAssistantEntityDiscoveryClient()::allowedEntityIds,
                 Thread::sleep);
     }
     DeezerArtistClient(Http http, Exposure exposure, Delay delay) {
-        this.http=http; this.exposure=exposure; this.delay=delay;
+        this(http,exposure,delay,()->System.nanoTime()/1000000);
+    }
+    DeezerArtistClient(Http http, Exposure exposure, Delay delay, java.util.function.LongSupplier clock) {
+        this.http=http; this.exposure=exposure; this.delay=delay;this.clock=clock;
     }
 
     CommandOutcome process(String base, String token, String text, BoopRoom room,
             BoopRoomSource rooms) throws HomeAssistantAuth.AuthRejectedException {
-        MediaRequest request = MediaRequest.parse(text);
-        if (request == null || (request.kind != MediaRequest.Kind.DEEZER_SEARCH && request.kind != MediaRequest.Kind.DEEZER_FLOW)) return null;
-        if (request.query.length() > 160) return request.explicitProvider
-                ? reply("Failed") : null;
         DeezerCatalogue.Selection resolved=null;
-        if(!request.explicitProvider) {
+        final long operation;
+        synchronized(this) {
+        operation=++generation;
+        if(pending!=null && (clock.getAsLong()>=pendingUntil || !Objects.equals(base,pendingBase)
+                || !Objects.equals(token,pendingToken) || !roomKey(room).equals(pendingRoom))) clearPending();
+        if(pending!=null) {
+            String answer=text==null?"":normal(text).replaceAll("[.!?]+$","");
+            if(answer.matches("(cancel|never mind|nevermind|stop|no)( please)?")) {clearPending();return reply("Cancelled.");}
+            resolved=DeezerCatalogue.answer(pending,answer);
+            if(resolved==null && answer.matches("(play )?(the )?(artist|band|song|track)( please)?"))
+                return CommandOutcome.localQuestion(pending.question+" Please include the artist's name.");
+            clearPending();
+        }
+        }
+        MediaRequest request = MediaRequest.parse(text);
+        if (resolved==null && (request == null || (request.kind != MediaRequest.Kind.DEEZER_SEARCH && request.kind != MediaRequest.Kind.DEEZER_FLOW))) return null;
+        if (resolved==null && request.query.length() > 160) return request.explicitProvider
+                ? reply("Failed") : null;
+        if(resolved==null) {
             // "Play a game" and other conversation must retain the existing routing.
             // Even missing TVs or an offline catalogue cannot consume an unconfirmed artist request.
             try { resolved=DeezerCatalogue.resolve(http,request); }
-            catch(Exception unavailable) { return null; }
-            if(resolved==null) return null;
+            catch(Exception unavailable) { diagnostic("catalogue_unavailable");return request.explicitProvider?reply("I couldn't reach the music catalogue."):null; }
+            if(resolved==null) {diagnostic("catalogue_no_match");return request.explicitProvider?reply("I couldn't find that music. Please say the title and artist."):null;}
         }
+        synchronized(this) {
+        if(operation!=generation)return reply("Cancelled.");
+        if(resolved.ambiguous()) {
+            pending=resolved;pendingBase=base;pendingToken=token;pendingRoom=roomKey(room);pendingUntil=clock.getAsLong()+60000;
+            diagnostic("clarification");return CommandOutcome.localQuestion(resolved.question);
+        }
+        }
+        diagnostic(resolved.flow?"resolved_flow":resolved.track?"resolved_track":"resolved_artist");
+        String stage="target_discovery";
         try {
             JSONArray rows = new JSONArray(http.request(base + "/api/template", token,
                     new JSONObject().put("template", targetsTemplate(room.name()))));
@@ -51,27 +82,41 @@ final class DeezerArtistClient {
                 if(media.startsWith("media_player.") && remote.startsWith("remote.")
                         && allowed.contains(media) && seen.add(remote)) targets.add(row);
             }
-            if(targets.isEmpty()) return reply("Failed");
-            if(targets.size()!=1) return reply("Failed");
+            if(targets.isEmpty()) {diagnostic("no_room_tv");return reply("I couldn't find an available TV in this room.");}
+            if(targets.size()!=1) {diagnostic("ambiguous_room_tv");return reply("More than one TV matches this room.");}
             JSONObject target=targets.get(0);
             String media=target.getString("media"), remote=target.getString("remote");
             JSONObject state=new JSONObject(http.request(base+"/api/states/"+media, token, null));
-            if(unavailable(state)) return reply("Failed");
+            if(unavailable(state)) {diagnostic("tv_unavailable");return reply("The TV in this room is unavailable.");}
 
-            DeezerCatalogue.Selection selection=resolved==null ? DeezerCatalogue.resolve(http,request) : resolved;
-            if(selection==null) return reply("Failed");
+            DeezerCatalogue.Selection selection=resolved;
             JSONArray adb=target.optJSONArray("adb");
             if(adb==null || adb.length()!=1 || !adb.optString(0).matches("media_player[.][a-z0-9_]+"))
                 return reply("Failed");
             String adbEntity=adb.getString(0);
             JSONObject adbState=new JSONObject(http.request(base+"/api/states/"+adbEntity,token,null));
             if(unavailable(adbState)) return reply("Failed");
+            synchronized(this) {if(operation!=generation)return reply("Cancelled.");}
+            stage="native_playback";
             new DeezerNativeController(base,token,adbEntity,http,delay,room,rooms).play(target.optJSONArray("macs"),selection);
+            diagnostic("playback_requested");
             return reply("Done");
         } catch(HomeAssistantAuth.AuthRejectedException e) { throw e;
         } catch(InterruptedException e) { Thread.currentThread().interrupt(); return reply("Failed");
-        } catch(Exception e) { return reply("Failed"); }
+        } catch(Exception e) {diagnostic(stage+"_failed");return reply("Failed"); }
     }
+    private void clearPending() {pending=null;pendingBase=null;pendingToken=null;pendingRoom=null;pendingUntil=0;}
+    synchronized void cancelClarification() {generation++;clearPending();}
+    synchronized void prepareTurn(String text) {
+        generation++;
+        if(pending==null)return;
+        String answer=text==null?"":normal(text).replaceAll("[.!?]+$","");
+        if(DeezerCatalogue.answer(pending,answer)==null
+                && !answer.matches("(play )?(the )?(artist|band|song|track)( please)?")
+                && !answer.matches("(cancel|never mind|nevermind|stop|no)( please)?"))clearPending();
+    }
+    private static String roomKey(BoopRoom room) {return room.id()+"\n"+room.name();}
+    private static void diagnostic(String stage) {System.out.println("BOOP_MUSIC stage="+stage);}
 
     static JSONObject exactArtist(JSONArray values,String query) {
         if(values==null) return null;
