@@ -1,5 +1,11 @@
 # BOOP current handoff
 
+## In progress: voice sharing in Voice Settings (Shield245 / Wall212)
+
+Ryan accepted the instant natural-voice previews and requested sharing across devices like colours, using the phone's current voice as the starting point. Phone sharing is enabled; its initial profile is Emma, pitch1.45, cadence1.25. Voice Settings now exposes the existing Build a Boop sharing runtime, selected effective voice, status and retry; open sliders follow received profiles without write echoes or moving an active touch drag. The observer is removed when the screen closes. No model, preview, protocol or artwork changes.
+
+131 focused local checks and15 speech lifecycle scenarios passed. Independent source review found no blocking issues. Signed CI, installation and bidirectional device verification are pending;244/211 remain the accepted installed rollback. Candidate branch astra-music-resolver-v242; owning branch boop-shield-weather-focus-v221 remains unchanged until verification.
+
 ## Current: fast natural voice previews installed on Shield244 / Pixel7 Wall211
 
 Ryan requested usable puppety natural-voice tuning after a roughly 12-second delay from voice names or TEST VOICE. The old installed Shield243 reproduced 16,128 ms to the first Emma playback (9,414 ms model load plus 6,672 ms synthesis); warm TEST VOICE took 5,266 ms. The new fixed demos play immediately from neutral PCM generated with the same pinned Kokoro voices. Both demos and newly generated natural replies apply saved pitch and cadence at playback. Slider ranges and stored settings are unchanged.

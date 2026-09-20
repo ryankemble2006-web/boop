@@ -49,6 +49,9 @@ text = once(
         testVoiceParams.setMargins(0, dp(6), 0, dp(12));
         voiceSettingsOverlay.addView(testVoice, testVoiceParams);
 
+        BoopVoiceSharingControls.install(this, voiceSettingsOverlay, voiceController,
+                pitchSlider, cadenceSlider);
+
         addNaturalVoiceSettings();
 """,
     "TEST VOICE placement",

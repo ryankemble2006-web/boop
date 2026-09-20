@@ -69,12 +69,12 @@ def test_weather_fetch_is_background_only_and_reuses_existing_executor():
     assert "refreshWeather();" in activity
 
 
-def test_shield_release_keeps_aligned_weather_in_v244():
+def test_shield_release_keeps_aligned_weather_in_v245():
     gradle = (ROOT / "split/shield/build.gradle").read_text()
     verify = (ROOT / "split/verify-apks.py").read_text()
-    assert "versionCode 244" in gradle
-    assert "versionName '1.2.244-shield'" in gradle
-    assert "version = 244 if body == 'shield' else 211" in verify
+    assert "versionCode 245" in gradle
+    assert "versionName '1.2.245-shield'" in gradle
+    assert "version = 245 if body == 'shield' else 212" in verify
     assert "android.permission.INTERNET" in verify
 
 def test_weather_sections_share_one_header_grid_and_centered_footer():
