@@ -2,21 +2,21 @@
 
 Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221` (kept long-lived so CI cache remains reusable). v222 snapshot branch: `boop-shield-hour-temp-nudge-v222`.
 
-## Current Shield: v224, signed and ready for Ryan's physical test
+## Current Shield: v225, signed and ready for Ryan's physical test
 
 The branch name deliberately remains v221 for live iteration. Do not create a fresh branch for every one-pixel/UI tweak unless there is a reason to fork; same-branch follow-ups are what let GitHub reuse this branch-scoped Gradle cache.
 
-Package `com.boop.shieldoverlay`, version `224` / `1.2.224-shield`.
+Package `com.boop.shieldoverlay`, version `225` / `1.2.225-shield`.
 
 v219's Now Playing alignment remains physically accepted as perfect. v220 accent colour, v217 reordering, v221 weather/focus behaviour and all voice/audio behaviour remain unchanged.
 
-### v224 Now Playing transport simplification
+### v225 lyrics-screen corner cleanup
 
-The Now Playing transport row now contains only **Prev / Play-Pause / Next**. Rew and Fwd were removed because Deezer does not expose them usefully and the progress bar already handles ±10-second seeking.
+The fullscreen lyrics artwork now uses the same shared rounded clipping/background path as HOME landscape banners: `FocusChrome.filled(..., 9, false)` plus `FocusChrome.clipRounded(artwork, 9)`. This replaces the custom outline-provider path that allowed album art to show beyond the rounded corner at the top-right.
 
-Prev remains exactly on the accepted v219 datum: the row keeps `controls.setTranslationX(-dp(4))`. The surviving buttons keep the existing `CONTROL_GAP_DP = 10`, so Pause and Next collapse left into the removed buttons' spaces without recentering the row.
+The tiny bottom-right lyric provider/licence credit is no longer drawn. The attribution data remains parsed internally; lyric lookup, timing, status text and transport behaviour are unchanged.
 
-v223 weather geometry, v221 return-focus behaviour, v220 accent colour, v217 reordering and all voice/audio behaviour remain unchanged.
+v224 transport simplification, v223 weather geometry, v221 return-focus behaviour, v220 accent colour, v217 reordering and all voice/audio behaviour remain unchanged.
 
 ### CI iteration speed
 
@@ -34,21 +34,21 @@ This does not shrink the APK delivered to Ryan, but it substantially reduces rep
 
 ## Verified signed artifact
 
-Production/build source: `16fbfdc632d821d7efd3911823a2035f3b8904b9`.
-Successful GitHub Actions run `35518326403`, job `106097941527`.
-Artifact `10606879001`: `BOOP-Shield-v224-Wall-v207-Signed`.
+Production/build source: `8b252a2250e07187095303b25cf1d27298b715f1`.
+Successful GitHub Actions run `35518868544`, job `106099355568`.
+Artifact `10607712461`: `BOOP-Shield-v225-Wall-v207-Signed`.
 
-Deliver **BOOP-Shield-v224.apk**, 160485737 bytes.
-Shield APK SHA-256: `ead4ecb9de285499d46d44dca49d3ed24f6322b9e590e1c956dfd9c9a4514a28`.
+Deliver **BOOP-Shield-v225.apk**, 160485741 bytes.
+Shield APK SHA-256: `b6625c5ad25a1b6e3afbd6e6e40ef76ae7db7c59b2c750e8748301dcd258d328`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `caaa3f168f5a6fef4713c32d4b043111a43042d93f29117a68c966add9293778`.
+Artifact ZIP SHA-256: `e8a31f636ac9e98889ec11f4154d036dba4c42d43dbcd3b8fab1f0937f2456f6`.
 
-Verification passed focused Now Playing/alignment checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+Verification passed focused lyrics-presentation checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
 
 Wall remains v207.
 
 ## Physical acceptance pending
 
-Ryan is the visual/ADB tester. Check that Prev has not moved, Rew/Fwd are gone, and Pause/Next bunch left with the original 10dp gaps.
+Ryan is the visual/ADB tester. Check the fullscreen lyrics artwork corners, especially top-right, and confirm the bottom-right licence/provider text is gone.
 
-Detailed record: `docs/handoffs/2026-09-20-shield-now-playing-transport-v224.md`.
+Detailed record: `docs/handoffs/2026-09-20-shield-lyrics-corners-v225.md`.

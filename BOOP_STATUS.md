@@ -2,17 +2,16 @@
 
 Updated 2026-09-20. Owner: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221`.
 
-Shield v224 / `1.2.224-shield` is signed and ready for Ryan's physical test.
+Shield v225 / `1.2.225-shield` is signed and ready for Ryan's physical test.
 
-v224 Now Playing transport change:
-- removed Rew and Fwd;
-- remaining controls are Prev / Play-Pause / Next;
-- Prev remains exactly on the accepted v219 position via `controls.setTranslationX(-dp(4))`;
-- existing 10dp inter-button gap is unchanged;
-- progress bar still handles ±10-second seek;
-- no row recentering.
+v225 fullscreen lyrics polish:
+- album art uses the exact shared HOME-banner rounded clipping/background path;
+- custom lyrics artwork outline provider removed;
+- bottom-right lyric provider/licence credit no longer drawn;
+- lyric data parsing, loading, timing, status and controls unchanged.
 
 Preserved unchanged:
+- v224 Prev / Play-Pause / Next transport;
 - v223 hourly temperature position;
 - v221 return-focus and forecast layout;
 - v220 accent colour;
@@ -22,13 +21,13 @@ Preserved unchanged:
 - voice/audio, assistant art and native runtime;
 - Wall v207.
 
-Build source `16fbfdc632d821d7efd3911823a2035f3b8904b9`.
-Successful run `35518326403`, job `106097941527`.
-Artifact `10606879001`, `BOOP-Shield-v224-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v224.apk`, 160485737 bytes, SHA-256 `ead4ecb9de285499d46d44dca49d3ed24f6322b9e590e1c956dfd9c9a4514a28`.
+Build source `8b252a2250e07187095303b25cf1d27298b715f1`.
+Successful run `35518868544`, job `106099355568`.
+Artifact `10607712461`, `BOOP-Shield-v225-Wall-v207-Signed`.
+Shield file `BOOP-Shield-v225.apk`, 160485741 bytes, SHA-256 `b6625c5ad25a1b6e3afbd6e6e40ef76ae7db7c59b2c750e8748301dcd258d328`.
 Permanent signer SHA-256 remains `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256 `caaa3f168f5a6fef4713c32d4b043111a43042d93f29117a68c966add9293778`.
+Artifact ZIP SHA-256 `e8a31f636ac9e98889ec11f4154d036dba4c42d43dbcd3b8fab1f0937f2456f6`.
 
 All CI gates passed and all 16 native libraries remain baseline-identical.
 
-Physical acceptance of the three-button transport row remains pending with Ryan.
+Physical acceptance of the lyrics-screen corner cleanup remains pending with Ryan.
