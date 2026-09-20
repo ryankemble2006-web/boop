@@ -22,7 +22,7 @@ import java.util.Locale;
 /** Borderless TV music composition. No dialog chrome, external player or audio-focus ownership. */
 public final class ShieldLyricsView extends FrameLayout {
     public interface Controls {
-        void previous(); void playPause(); void next(); void seek(long milliseconds); void close(); void browseAlbum();
+        void previous(); void playPause(); void next(); void seek(long milliseconds); void close(); void browseAlbum(); void browseArtist();
     }
     private final int accent;
     private final Controls controls;
@@ -103,11 +103,26 @@ public final class ShieldLyricsView extends FrameLayout {
         title.setEllipsize(TextUtils.TruncateAt.MARQUEE);
         title.setMarqueeRepeatLimit(1);
         title.setSelected(true);
-        artist = label("", 19, Color.rgb(162, 179, 189), false);
+        artist = label("", 19, Color.WHITE, false);
         title.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
         artist.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
         artist.setSingleLine(true);
         artist.setEllipsize(TextUtils.TruncateAt.END);
+        artist.setFocusable(true);
+        artist.setClickable(true);
+        BoopTvChrome.useTextOnlyFocus(artist);
+        artist.setOnClickListener(v -> {
+            if (v.isEnabled()) controls.browseArtist();
+        });
+        artist.setOnKeyListener((v, key, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (key == KeyEvent.KEYCODE_DPAD_UP)
+                return artist.isFocusable() ? artist.requestFocus()
+                        : artwork.isFocusable() && artwork.requestFocus();
+            if (key == KeyEvent.KEYCODE_DPAD_DOWN)
+                return progress.isFocusable() ? progress.requestFocus() : focusTransport();
+            return false;
+        });
         lyrics = new LyricsLinesView(context, accent);
         addView(lyrics);
         status = label("", 24, Color.rgb(155, 174, 184), false);
@@ -130,7 +145,8 @@ public final class ShieldLyricsView extends FrameLayout {
         addView(progress);
         artwork.setOnKeyListener((v, key, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN || key != KeyEvent.KEYCODE_DPAD_DOWN) return false;
-            return progress.isFocusable() ? progress.requestFocus() : focusTransport();
+            return artist.isFocusable() ? artist.requestFocus()
+                    : progress.isFocusable() ? progress.requestFocus() : focusTransport();
         });
 
         String[] descriptions = {"Previous track", "Pause", "Next track"};
@@ -174,6 +190,11 @@ public final class ShieldLyricsView extends FrameLayout {
                 ? "Browse album in Deezer" : "Open source player");
         title.setText(next == null ? "Now Playing" : next.title());
         artist.setText(next == null ? "" : next.subtitle());
+        boolean artistAvailable = next != null && !next.subtitle().isEmpty() && !next.title().isEmpty();
+        artist.setEnabled(artistAvailable);
+        artist.setFocusable(artistAvailable);
+        artist.setClickable(artistAvailable);
+        artist.setContentDescription(artistAvailable ? "Browse artist " + next.subtitle() + " in Deezer" : "Artist unavailable");
         duration.setText(next == null ? "" : time(next.durationMs()));
         boolean seek = next != null && next.canSeek() && next.durationMs() > 0 && knownClock;
         progress.setFocusable(seek);
