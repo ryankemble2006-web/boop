@@ -23,14 +23,15 @@ final class DeezerLyricsBrowser {
     void open(Activity activity, ShieldNowPlayingManager manager, NowPlayingSnapshot requested) {
         if (activity == null || manager == null || requested == null
                 || !DeezerLyricsPolicy.available(requested.packageName())) return;
-        String id = manager.deezerLyricsTrackId(requested);
-        if (id.isEmpty()) { message(activity, "Couldn't identify this track for lyrics."); return; }
-        String requestIdentity = requested.sessionId() + ":" + id;
+        String deezerId = manager.deezerLyricsTrackId(requested);
+        String cacheId = deezerId.isEmpty()
+                ? "meta:" + Integer.toHexString(requested.trackKey().hashCode()) : deezerId;
+        String requestIdentity = requested.sessionId() + ":" + cacheId;
         if (requestIdentity.equals(pinnedIdentity)) return;
         cancel();
         pinnedSnapshot = requested;
         pinnedIdentity = requestIdentity;
-        loader.load(id, requestIdentity, document -> {
+        loader.load(requested, cacheId, requestIdentity, document -> {
             if (!requestIdentity.equals(pinnedIdentity)) return;
             // A completed lookup must release the button even if a dialog or another
             // window briefly took focus. Never launch late, and never latch entry busy.
@@ -52,9 +53,11 @@ final class DeezerLyricsBrowser {
         });
     }
     private static String identity(ShieldNowPlayingManager manager, NowPlayingSnapshot requested) {
-        if (manager == null) return "";
+        if (manager == null || requested == null) return "";
         String id = manager.deezerLyricsTrackId(requested);
-        return id.isEmpty() ? "" : requested.sessionId() + ":" + id;
+        String cacheId = id.isEmpty()
+                ? "meta:" + Integer.toHexString(requested.trackKey().hashCode()) : id;
+        return requested.sessionId() + ":" + cacheId;
     }
     private static boolean validHost(Activity activity) {
         return !activity.isFinishing() && !activity.isDestroyed() && activity.hasWindowFocus();
