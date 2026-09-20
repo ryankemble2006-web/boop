@@ -27,7 +27,7 @@ def test_long_track_title_is_single_line_marquee_once_at_original_position():
     assert "title.setEllipsize(TextUtils.TruncateAt.MARQUEE);" in view
     assert "title.setMarqueeRepeatLimit(1);" in view
     assert "title.setSelected(true);" in view
-    assert "place(title, left, 448f * unit, 440f * unit, 42f * unit);" in view
+    assert "place(title, left, 448f * unit, progressWidth, 42f * unit);" in view
     assert "place(artist, left, 532f * unit, 440f * unit, 35f * unit);" in view
     assert "place(progress, left, 583f * unit, 397f * unit, 18f * unit);" in view
 
