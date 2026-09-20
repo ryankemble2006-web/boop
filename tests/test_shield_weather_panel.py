@@ -95,4 +95,5 @@ def test_weather_sections_share_one_header_grid_and_centered_footer():
     assert "line.setTextAlignment(TEXT_ALIGNMENT_CENTER)" in weather
     assert "cell.addView(line,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT))" in weather
     assert "line.setTranslationX(dp(2))" in weather
-    assert "forecastDays.setTranslationX(dp(9))" in weather\n    assert "temp.setTranslationX(dp(2)+1f)" in weather
+    assert "forecastDays.setTranslationX(dp(9))" in weather
+    assert "temp.setTranslationX(dp(2)+1f)" in weather
