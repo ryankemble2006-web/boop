@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v230. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v231. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -128,11 +128,20 @@ The fullscreen lyrics progress bar is the master horizontal datum. Preserve:
 
 Keep all v229 music-column geometry unchanged. The title alone uses `setIncludeFontPadding(false)` to eliminate slight glyph clipping inside its existing 42-design-pixel frame.
 
+## Lyrics artist action from v231
+
+Fullscreen lyrics artist behavior matches HOME:
+- text-only focus chrome via `BoopTvChrome.useTextOnlyFocus(artist)`;
+- artist focus is enabled only when artist/title data is available;
+- artwork Down -> artist; artist Down -> progress; progress Up -> artist; artist Up -> artwork;
+- click routes to the same `DeezerArtistBrowser` used by HOME;
+- album and artist browser operations cancel each other to prevent overlapping lookups.
+
 ## Latest verified artifact
 
-Build source `7187d9686cffb52a67d5c3ceb575e565a8827019`.
-Run `35521333151`, job `106105827783`; artifact `10608133140`, `BOOP-Shield-v230-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v230.apk`, 160485741 bytes, SHA-256 `8cfe8808bfe51f3620da2dabd4b31b6f1c2debd0201eac6376530e633831eba3`.
+Build source `d8fd4251e1788e3d056f40a96b8b5cdd04399ad3`.
+Run `35522094041`, job `106107816107`; artifact `10608946787`, `BOOP-Shield-v231-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v231.apk`, 160485741 bytes, SHA-256 `6ea6f021f272261ff59c01c757db02d8aa8d16c920bfe446819ccaf874007f37`.
 Permanent signer unchanged. All 16 native libraries remain baseline-identical.
 
-v229 centred lyrics layout, v228 marquee and v226 hard-mask corners remain retained. Wall stays v207.
+v230 title rendering, v229 centred lyrics layout, v228 marquee and v226 hard-mask corners remain retained. Wall stays v207.
