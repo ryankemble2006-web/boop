@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v222 on `boop-shield-hour-temp-nudge-v222`. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v222. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -81,7 +81,7 @@ When Shield HOME regains foreground from an external app, including a Shield tas
 
 The four **Next 4 hours** temperature values alone receive one extra physical-pixel nudge to the right after the shared +2dp weather optical correction: `temp.setTranslationX(dp(2)+1f)`. Do not apply that extra pixel to times, glyphs, rain percentages or the 3-day forecast unless Ryan explicitly requests it.
 
-The active Shield CI workflow uses writable Gradle caching with `--build-cache` and cancels superseded rapid UI builds. v222 proved the cache was restored and reused 77 app-build tasks, with the Gradle app build completing in 26 seconds.
+The active Shield CI workflow uses writable Gradle caching with `--build-cache` and cancels superseded rapid UI builds. Keep tiny sequential Shield UI iterations on the cache-hot active branch instead of creating a fresh version branch for every pixel tweak; use version branches as snapshots when useful. v222 proved the cache was restored and reused 77 app-build tasks, with the Gradle app build completing in 26 seconds.
 
 ## Latest verified artifact
 
