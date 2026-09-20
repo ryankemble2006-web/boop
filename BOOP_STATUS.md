@@ -1,22 +1,16 @@
 # BOOP status
 
-Updated 2026-09-20. Owner: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221`.
+Updated 2026-09-20. Owner lineage: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221`.
 
-Shield v233 / `1.2.233-shield` is signed and ready for Ryan's physical test.
+Shield v234 / `1.2.234-shield` is built, signed and archive-verified. Ryan accepted v233 as the baseline. Favourite controls still require actual Shield/Deezer and visual/D-pad validation.
 
-v233 hardens the LRCLIB fallback after v232 physically returned “Couldn't check lyrics just now”:
-- Deezer still gets first attempt;
-- LRCLIB gets a separate 6-second fallback window;
-- broad search uses LRCLIB `track_name + q`;
-- search 404 is treated as no match rather than service failure;
-- harmless leading “The”/trailing qualifiers are tolerated in metadata;
-- duration remains bounded and only synced LRC is accepted;
-- no lyrics UI/layout behavior changed.
+Lyrics: REMOVE heart left of the unchanged three transport buttons; ADD heart right. HOME Now Playing: one toggle after Next. A shared controller uses only advertised native Deezer heart ratings or exact published track-favourite actions. Unknown state, unsupported capability and unconfirmed requests fail visibly; no optimistic success or dislike substitution. Cast favourites are not included.
 
-Build source `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`.
-Successful run `35523758443`, job `106112227680`.
-Artifact `10608914071`, `BOOP-Shield-v233-Wall-v207-Signed`.
-Shield file `BOOP-Shield-v233.apk`, 160502125 bytes, SHA-256 `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`.
-Permanent signer unchanged; all 16 native libraries remain baseline-identical.
+Source `ccbd42cf3c4dc77614425f675e80fa8a3f146d20`.
+Successful signed run `35525392054`, job `106116533781`.
+Artifact `10609691434`, `BOOP-Shield-v234-Wall-v207-Signed`.
+Shield APK `BOOP-Shield-v234.apk`, 160518509 bytes.
+APK SHA-256 `58d151cd8a91142a3372e7efacdf59edc771dad8a7eddd69aa892b7d4f3876b9`.
+Permanent signer unchanged. All 16 native libraries and frozen art match the accepted baseline. Favourite workflow `35525392074` passed; 70 behavioural assertions, 94 focused source checks, full inherited/split/build/package verification passed.
 
-Physical fallback re-test pending with Ryan.
+No installation, permission change, Windows sync or physical provider success is claimed. Wall remains version207; its rebuilt shared-code artifact is not a separately requested update. Handoff: `SESSION_HANDOFF.md` and `docs/handoffs/2026-09-20-shield-favourite-hearts-v234.md`.

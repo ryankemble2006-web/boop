@@ -2,7 +2,7 @@
 
 Updated 2026-09-20.
 
-The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays v207; Shield `com.boop.shieldoverlay` is v233. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split branch remains `boop-wall-shield-split-v207`.
+The consumer apps remain split shells around shared BOOP code: Wall `com.boop.alpha1` stays version207; Shield `com.boop.shieldoverlay` is v234. The live Shield iteration branch stays `boop-shield-weather-focus-v221` so branch-scoped Gradle cache entries remain reusable; `boop-shield-hour-temp-nudge-v222` is the v222 snapshot branch. The owning split lineage remains `boop-wall-shield-split-v207`.
 
 ## Shield room-panel control rules
 
@@ -85,13 +85,13 @@ The active Shield CI workflow uses writable Gradle caching with `--build-cache` 
 
 ## Now Playing transport rule from v224
 
-The transport row is **Prev / Play-Pause / Next** only. Rew and Fwd are intentionally absent.
+The transport buttons remain **Prev / Play-Pause / Next**. Rew and Fwd are intentionally absent. v234 adds a separate favourite toggle after Next, without repositioning those three buttons.
 
 Preserve:
 - Prev's accepted v219 position via `controls.setTranslationX(-dp(4))`;
 - existing `CONTROL_GAP_DP = 10`;
-- progress bar ±10-second seeking;
-- Lyrics/Close-player navigation and the v219 progress geometry.
+- progress bar +/-10-second seeking;
+- Lyrics/Close-player access and the v219 progress geometry.
 
 Do not recenter the three-button row.
 
@@ -110,7 +110,7 @@ Fullscreen lyrics track title is one line at its original Y position. Use:
 - `setMarqueeRepeatLimit(1)`;
 - `setSelected(true)`.
 
-Geometry: title `448f * unit`, height `42f * unit`; artist stays `532f * unit`; progress stays `583f * unit`.
+Current geometry after v229: title `448f * unit`, height `42f * unit`; artist `520f * unit`; progress `583f * unit`. The earlier v228 artist Y532 is superseded by v229.
 
 ## Lyrics music-column rule from v229
 
@@ -120,9 +120,11 @@ The fullscreen lyrics progress bar is the master horizontal datum. Preserve:
 - title and artist laid out at progress width with centred gravity;
 - artwork bottom 418 -> title top 448 = 30 design pixels;
 - title bottom 490 -> artist top 520 = 30 design pixels;
-- transport row: Prev / Play-Pause / Next only;
+- transport buttons: Prev / Play-Pause / Next;
 - 3-button group centred on progress midpoint using existing 54px buttons and 17px gaps;
-- progress-bar left/right remains ±10-second seek.
+- progress-bar left/right remains +/-10-second seek.
+
+v234 adds hearts outside this accepted three-button group; it does not alter the positions above.
 
 ## Lyrics title rendering rule from v230
 
@@ -139,7 +141,7 @@ Fullscreen lyrics artist behavior matches HOME:
 
 ## Lyrics fallback rule from v233
 
-Provider order stays Deezer -> LRCLIB synced LRC.
+Ryan accepted v233 as good to build on, 2026-09-20. Provider order stays Deezer -> LRCLIB synced LRC.
 
 Timing/search rules:
 - Deezer primary window: 2.5 s;
@@ -151,11 +153,24 @@ Timing/search rules:
 - duration remains bounded within 3.5 s when known;
 - plain untimed lyrics are still never converted into fake synced lyrics.
 
+## Favourite hearts from v234
+
+Ryan approved explicit lyrics REMOVE on the left of the existing transport buttons, ADD on the right, and one toggle heart in HOME Now Playing. Lyrics hearts are 54-design-pixel controls at transportLeft-71 and transportLeft+213, preserving the existing three positions. HOME heart is 42dp after Next. Focus uses the chosen launcher accent, with explicit D-pad navigation.
+
+One lifecycle-bound controller shares provider state between both screens. Native `deezer.android.app` only. Send HEART ratings only when RATING_HEART and ACTION_SET_RATING are advertised; otherwise accept only an exact track-favourite-labelled published custom action and its actual identifier. Never reinterpret dislike, thumbs, artist or playlist actions. Cast favourites are not supported by this candidate.
+
+Unknown state is not unsaved. Toggle refuses unknown; explicit add/remove do not become blind toggles. Only a provider state receipt confirms success. Requests are single-flight, bounded to three seconds, rechecked against current session and title/artist/album/duration/media ID and invalidated by track changes. These are immediate application-side guards; Android rating commands are not atomic against provider-side track changes. No new permission, audio focus, credential, API account or provider launch.
+
+The installed Deezer app's actual capability, favourite round trip and v234 layout remain physically UNVERIFIED. If the heart is unknown or an unavailable message appears, inspect the actual provider controls rather than pretending the feature is working. CI tests use deterministic test-only Android boundaries, not the installed Deezer application. No automatic installation or Windows sync was performed.
+
 ## Latest verified artifact
 
-Build source `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`.
-Run `35523758443`, job `106112227680`; artifact `10608914071`, `BOOP-Shield-v233-Wall-v207-Signed`.
-Deliver `BOOP-Shield-v233.apk`, 160502125 bytes, SHA-256 `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`.
-Permanent signer unchanged. All 16 native libraries remain baseline-identical.
+Build source `ccbd42cf3c4dc77614425f675e80fa8a3f146d20`.
+Successful signed run `35525392054`, job `106116533781`; artifact `10609691434`, `BOOP-Shield-v234-Wall-v207-Signed`.
+Deliver `BOOP-Shield-v234.apk`, 160518509 bytes, SHA-256 `58d151cd8a91142a3372e7efacdf59edc771dad8a7eddd69aa892b7d4f3876b9`.
+Permanent signer `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
+Archive SHA-256 `5871cfe13020d5e4f9cf50abf9177195403978c3704bd1c5569548236ad10533`.
 
-v231 artist action and all accepted v230/v229/v228/v226 presentation behavior remain retained. Wall stays v207.
+70 favourite behavioural assertions and 94 focused source checks passed; favourite run `35525392074` passed. Full inherited/split/HA/build/package pipeline passed. Downloaded APK hash/size, v2 certificate fingerprint, 16 native libraries and frozen art independently checked against the receipt/baseline. Full apksigner verification ran in CI. Wall stays version207; its shared-code rebuild is not asserted byte-identical or delivered as a requested Wall update.
+
+Accepted v233 rollback: build source `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`, base documentation `52afeddb66dcca23aaf9ec5c17aa3218cc1eeb9c`, artifact `10608914071`, APK SHA-256 `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`. Preserve its accepted lyrics/audio behavior.

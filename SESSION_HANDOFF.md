@@ -1,54 +1,45 @@
 # BOOP current handoff
 
-Updated 2026-09-20. Owner branch: `boop-wall-shield-split-v207`. Current Shield iteration branch: `boop-shield-weather-focus-v221` (kept long-lived so CI cache remains reusable). v222 snapshot branch: `boop-shield-hour-temp-nudge-v222`.
+Updated 2026-09-20. Owner lineage: `boop-wall-shield-split-v207`. Live Shield iteration branch: `boop-shield-weather-focus-v221`. Keep this long-lived branch for the established writable Gradle cache; its suffix is not the app version.
 
-## Current Shield: v233, signed and ready for Ryan's physical test
+## Current Shield: v234 signed, favourite controls awaiting physical validation
 
-The branch name deliberately remains v221 for live iteration. Do not create a fresh branch for every one-pixel/UI tweak unless there is a reason to fork; same-branch follow-ups are what let GitHub reuse this branch-scoped Gradle cache.
+Ryan explicitly accepted v233 as the starting point and approved this layout: lyrics REMOVE heart to the left of Prev / Play-Pause / Next, ADD heart to the right; HOME Now Playing gets one toggle heart after Next. Existing transport positions, text/artwork/progress geometry and v233 lyric loading remain unchanged.
 
-Package `com.boop.shieldoverlay`, version `233` / `1.2.233-shield`
+Package `com.boop.shieldoverlay`, version `234` / `1.2.234-shield`.
+Source/build commit: `ccbd42cf3c4dc77614425f675e80fa8a3f146d20`.
+Successful signed workflow `35525392054`, job `106116533781`.
+Artifact `10609691434`: `BOOP-Shield-v234-Wall-v207-Signed`.
 
-v219's Now Playing alignment remains physically accepted as perfect. v220 accent colour, v217 reordering, v221 weather/focus behaviour and all voice/audio behaviour remain unchanged.
-
-### v233 hardened lyrics fallback
-
-Lyrics still use **Deezer timed lyrics first, LRCLIB synced lyrics second**, but v233 fixes the fallback failure seen on physical test.
-
-LRCLIB now receives its own 6-second window after Deezer's 2.5-second primary window. The broad search uses LRCLIB's documented `track_name + q` form; a search 404 is treated as a clean miss rather than a service error. Matching still requires track/artist identity and duration when known, while harmless metadata cosmetics such as a leading “The” are tolerated.
-
-v231 artist action, v230 title rendering, v229 centred column, v228 marquee and v226 hard-mask corners remain retained. v226 hard bitmap-mask corners remain retained and physically accepted by Ryan. v224 transport simplification, v223 weather geometry, v221 return-focus behaviour, v220 accent colour, v217 reordering and all voice/audio behaviour remain unchanged.
-
-### CI iteration speed
-
-The signed Shield/Wall workflow now:
-- restores and saves writable Gradle caches on the active Shield branch;
-- invokes Gradle with `--build-cache`;
-- cancels superseded in-progress builds during rapid UI iteration.
-
-The v222 production run confirmed the cache is genuinely active:
-- `GRADLE_BUILD_ACTION_CACHE_RESTORED=true`;
-- app build: **154 actionable tasks: 69 executed, 77 from cache, 8 up-to-date**;
-- Gradle app build completed in **26 seconds**.
-
-This does not shrink the APK delivered to Ryan, but it substantially reduces repeated CI compilation/dependency work.
-
-## Verified signed artifact
-
-Production/build source: `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`.
-Successful GitHub Actions run `35523758443`, job `106112227680`.
-Artifact `10608914071`: `BOOP-Shield-v233-Wall-v207-Signed`.
-
-Deliver **BOOP-Shield-v233.apk**, 160502125 bytes.
-Shield APK SHA-256: `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`.
+Deliver `BOOP-Shield-v234.apk`, **160518509 bytes**.
+APK SHA-256: `58d151cd8a91142a3372e7efacdf59edc771dad8a7eddd69aa892b7d4f3876b9`.
 Permanent certificate SHA-256: `f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde`.
-Artifact ZIP SHA-256: `eed3fd8f0fe5051ca3d2d03656d1446ffc04ad4ef949822b17c08fa55d103506`.
+Artifact ZIP SHA-256: `5871cfe13020d5e4f9cf50abf9177195403978c3704bd1c5569548236ad10533`.
 
-Verification passed focused fallback-window/search checks, inherited v206 checks, split materialization/integration, HA unit tests, both app builds and packaged signer/native/art verification. All 16 native libraries remain baseline-identical.
+## Control capability and acceptance boundary
 
-Wall remains v207.
+The new shared controller uses the existing selected Android media session, native `deezer.android.app` only. It sends heart ratings only when HEART plus SET_RATING are advertised, or actual provider-published custom actions with an exact track-favourite label. Dislike, thumbs, artist/playlist operations and guessed action identifiers are excluded.
 
-## Physical acceptance pending
+Unknown is not unsaved. The HOME toggle never guesses unknown state. Explicit lyrics buttons remain add/remove, not blind toggles. Provider confirmation is required for a saved/removed success message; pending is single-flight, bounded to three seconds and invalidated by track/session changes. Immediate caller-side identity checks include media ID where available, but Android's rating endpoint is not provider-side track-ID-atomic.
 
-Ryan is the physical tester. Re-test the same track that returned “Couldn't check lyrics just now”, especially Ying Tong. Ordinary Deezer lyric tracks should remain unchanged.
+**The installed Deezer app's capability and actual add/remove round trip were not inspected or tested on the Shield in this task.** Unsupported sessions show a neutral/unknown heart and explanatory message. This is a signed, capability-gated implementation, not a claim of physical Deezer success. Cast favourites are not supported by this candidate. Ryan owns layout, D-pad and provider acceptance.
 
-Detailed record: `docs/handoffs/2026-09-20-shield-lrclib-fallback-v233.md`.
+Physical test: on native Deezer, add an unfavourited track with the right lyrics heart; confirm in Deezer and HOME; remove with the left heart; verify HOME reflects the confirmed state. Also test a track transition during a request. An unavailable message must be reported as missing provider capability, not dismissed as successful integration.
+
+## Verification
+
+Test-first policy RED was observed in run `35524653617`, job `106114595440`, before implementation. The focused favourite workflow `35525392074` passed. Three behavioural tests exercise 70 assertions, including the actual controller against test-only deterministic Android boundaries. The 94 focused source checks passed; the full signed workflow additionally passed inherited v206 functional checks, split materialization/integration, HA unit-test task, both app builds and packaged signer/native/art checks.
+
+The downloaded archive and extracted Shield APK were independently checked for CRC, source receipt, SHA-256 and byte size. The actual APK v2 signing certificate fingerprint matches the permanent signer. All 16 native libraries and frozen artwork match the accepted baseline byte-for-byte. Cryptographic apksigner verification was performed in CI; extracting the certificate locally is not a second full signature-verifier claim. HA reports contain 20 tests with zero failures/errors/skips; unchanged Gradle tasks may be restored from cache.
+
+Self-review was performed; no independent reviewer, device/emulator install, visual test, permission change or Windows synchronization is claimed.
+
+## Preserve accepted work
+
+Ryan's v233 acceptance supersedes the prior pending fallback re-test. Preserve Deezer-first timed lyrics, separate LRCLIB six-second fallback window, `track_name + q` search, 404 clean misses and strict identity/duration matching. Preserve v231 artist browsing, v230 title clipping fix, v229 centred column/30px gaps, v228 marquee, v226 bitmap corners, v224 three-button transport, v223 weather geometry, v221 return focus, v220 accent slider, v217 reordering and all voice/audio/HA behaviour.
+
+Wall version remains v207 and no Wall APK is being delivered or installed for this Shield request. Both shells share compiled code, so the CI-produced Wall artifact is not asserted byte-identical to an earlier v207 APK.
+
+Accepted v233 rollback source `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`; docs/base `52afeddb66dcca23aaf9ec5c17aa3218cc1eeb9c`. Its APK SHA-256 remains `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`.
+
+Detailed record: `docs/handoffs/2026-09-20-shield-favourite-hearts-v234.md`. Durable rules: `BOOP_UNIFIED_MEMORY.md`.
