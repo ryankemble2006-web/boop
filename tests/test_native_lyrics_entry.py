@@ -29,6 +29,7 @@ STUBS = {
  static NativeLyricsLoader latest; int loads; final List<Consumer<DeezerLyricsDocument>> callbacks=new ArrayList<>();
  NativeLyricsLoader(){latest=this;}
  void load(String id,String identity,Consumer<DeezerLyricsDocument> done){loads++;callbacks.add(done);}
+ void load(NowPlayingSnapshot track,String id,String identity,Consumer<DeezerLyricsDocument> done){load(id,identity,done);}
  void cancel(){} void destroy(){}
  }
  final class DeezerLyricsDocument {
@@ -36,7 +37,7 @@ STUBS = {
  }
  final class NowPlayingSnapshot {
  final String id; NowPlayingSnapshot(String id){this.id=id;}
- String packageName(){return "deezer.android.app";} long sessionId(){return 1;}
+ String packageName(){return "deezer.android.app";} long sessionId(){return 1;} String trackKey(){return id;}
  }
  final class ShieldNowPlayingManager {
  String id="123";
