@@ -48,6 +48,45 @@ public final class DeezerLyricsDocument {
     private static DeezerLyricsDocument unavailable(String id) {
         return new DeezerLyricsDocument(Status.UNAVAILABLE, id, "", Collections.emptyList());
     }
+    static DeezerLyricsDocument unavailableFallback(String id) {
+        return unavailable(id);
+    }
+    static DeezerLyricsDocument fromLrc(String lrc, String id, long durationMs) {
+        if (lrc == null || lrc.length() > MAX_BODY) return unknown(id);
+        try {
+            java.util.regex.Pattern stamp = java.util.regex.Pattern.compile(
+                    "^\\[(\\d{1,3}):(\\d{2}(?:\\.\\d{1,3})?)\\]\\s?(.*)$");
+            List<Line> parsed = new ArrayList<>();
+            String[] rows = lrc.replace("\r", "").split("\n");
+            for (String row : rows) {
+                java.util.regex.Matcher match = stamp.matcher(row);
+                if (!match.matches()) continue;
+                long minutes = Long.parseLong(match.group(1));
+                double seconds = Double.parseDouble(match.group(2));
+                long start = Math.round((minutes * 60d + seconds) * 1000d);
+                if (start < 0 || start > MAX_TIME) return unknown(id);
+                String body = match.group(3) == null ? "" : match.group(3).trim();
+                if (body.length() > MAX_TEXT) return unknown(id);
+                parsed.add(new Line(start, start, body));
+                if (parsed.size() > MAX_LINES) return unknown(id);
+            }
+            if (parsed.isEmpty()) return unavailable(id);
+            parsed.sort(Comparator.comparingLong(Line::startMs));
+            List<Line> lines = new ArrayList<>();
+            boolean hasText = false;
+            for (int i = 0; i < parsed.size(); i++) {
+                Line current = parsed.get(i);
+                long end = i + 1 < parsed.size() ? parsed.get(i + 1).start
+                        : durationMs > current.start ? durationMs : Math.min(MAX_TIME, current.start + 10000L);
+                if (end < current.start) return unknown(id);
+                lines.add(new Line(current.start, end, current.text));
+                hasText |= !current.text.isEmpty();
+            }
+            return hasText ? new DeezerLyricsDocument(Status.AVAILABLE, id, "", lines) : unavailable(id);
+        } catch (RuntimeException malformed) {
+            return unknown(id);
+        }
+    }
     public static boolean validTrackId(String id) {
         return id != null && id.matches("[1-9][0-9]{0,18}");
     }
