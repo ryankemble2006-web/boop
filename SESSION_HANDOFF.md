@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## In progress: v235 invisible-heart candidate
+
+The latest user instruction prefers invisible operation and authorizes using the existing emulator/laptop, automatic installation of the verified Shield APK, then a normal next-track ready signal. A bounded native offscreen-display feasibility test now confirmed favourite saved -> unsaved -> saved without retaining a display or changing the final TV remote focus. Original favourite restored. No live recording or repeated UI polling. Source-owned v235 implementation and six focused tests are prepared; signed CI and final app route/install are not yet verified. Correct roles: Lyrics left outlined dislike+skip, Lyrics right and HOME toggles filled only when saved, using runtime accent-slider colour. See `docs/handoffs/2026-09-20-invisible-deezer-hearts-v235.md` for exact evidence and limits. This supersedes the earlier visible-handoff proposal below.
+
 Updated 2026-09-20 after Ryan's reported power outage. Owner lineage: `boop-wall-shield-split-v207`. Live Shield iteration branch: `boop-shield-weather-focus-v221`. Keep the long-lived branch; its suffix is not the app version.
 
 ## Latest: correct heart semantics established; native route still unresolved

@@ -174,3 +174,11 @@ Archive SHA-256 `5871cfe13020d5e4f9cf50abf9177195403978c3704bd1c5569548236ad1053
 70 favourite behavioural assertions and 94 focused source checks passed; favourite run `35525392074` passed. Full inherited/split/HA/build/package pipeline passed. Downloaded APK hash/size, v2 certificate fingerprint, 16 native libraries and frozen art independently checked against the receipt/baseline. Full apksigner verification ran in CI. Wall stays version207; its shared-code rebuild is not asserted byte-identical or delivered as a requested Wall update.
 
 Accepted v233 rollback: build source `9e319d7336e7b52d54c080ed8d3bd596c805ae3d`, base documentation `52afeddb66dcca23aaf9ec5c17aa3218cc1eeb9c`, artifact `10608914071`, APK SHA-256 `dfcc8522ca8137f3755abefe1e8b23eecab68a9122816089cec7f544700920d0`. Preserve its accepted lyrics/audio behavior.
+
+## Invisible native hearts: v235 candidate, 2026-09-20
+
+Corrected user-approved roles supersede the historical v234 add/remove description: LEFT Lyrics is dislike+immediate skip and stays outlined; RIGHT Lyrics and HOME Now Playing are favourites toggles. Only those two toggles fill when genuinely saved, using the current launcher accent slider colour at draw time. No fixed orange.
+
+Native Deezer301000101 exposes no rating/custom heart actions. A physical offscreen-display probe has now confirmed saved -> unsaved -> saved, restoring original state; final display0 focus and existing accessibility settings were retained. Production uses a short-lived source-built offscreen helper through the existing authenticated local HA/ADB route, own-app nonce hardware binding and cancellation checks. No main-display capture, recording, synthetic input, provider credential extraction or new login/permission. Read-only discovery is once per track/screen entry, not a progress polling loop. App-only source is v235 candidate; signed CI/install/final route still pending publication. Native probe success is not final app acceptance.
+
+User permits automatic verified Shield install and normal next-track ready signal; not dislike for attention. Do not revive live recording or repeated UI polling. The read-only API36 TV emulator lacks secondary activity support, unlike the real SDK30 Shield; keep capability gates. Detailed record: docs/handoffs/2026-09-20-invisible-deezer-hearts-v235.md.

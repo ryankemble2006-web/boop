@@ -151,8 +151,8 @@ public final class ShieldLyricsView extends FrameLayout {
                     : progress.isFocusable() ? progress.requestFocus() : focusTransport();
         });
 
-        removeHeart = new DeezerFavouriteButton(context, DeezerFavouriteButton.REMOVE, accent);
-        addHeart = new DeezerFavouriteButton(context, DeezerFavouriteButton.ADD, accent);
+        removeHeart = new DeezerFavouriteButton(context, DeezerFavouriteButton.DISLIKE, accent);
+        addHeart = new DeezerFavouriteButton(context, DeezerFavouriteButton.TOGGLE, accent);
         removeHeart.setOnKeyListener((v, key, event) -> handleFavouriteRowKey(0, key, event));
         addHeart.setOnKeyListener((v, key, event) -> handleFavouriteRowKey(4, key, event));
         addView(removeHeart);

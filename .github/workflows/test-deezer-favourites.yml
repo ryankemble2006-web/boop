@@ -4,6 +4,9 @@ on:
     branches: [boop-shield-weather-focus-v221]
     paths:
       - 'tests/test_deezer_favourites.py'
+      - 'tests/test_deezer_invisible_hearts.py'
+      - 'unified/deezer-bridge/**'
+      - 'unified/BoopDeezerHeartBackend.java'
       - 'tests/favourite_android_boundary.py'
       - 'unified/shield-home/src/main/java/com/boop/shieldhome/*Favourite*.java'
       - '.github/workflows/test-deezer-favourites.yml'
@@ -22,4 +25,4 @@ jobs:
       - name: Favourite behaviour checks
         run: |
           python -m pip install -q pytest
-          python -m pytest -q tests/test_deezer_favourites.py
+          python -m pytest -q tests/test_deezer_favourites.py tests/test_deezer_invisible_hearts.py

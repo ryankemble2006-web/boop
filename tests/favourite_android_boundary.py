@@ -21,6 +21,7 @@ import java.util.*;
 public final class Handler {
  private static final Map<Runnable,Long> tasks=new LinkedHashMap<>();
  public Handler(Looper ignored){}
+ public boolean post(Runnable r){r.run();return true;}
  public boolean postDelayed(Runnable r,long delay){tasks.put(r,SystemClock.now+delay);return true;}
  public void removeCallbacks(Runnable r){tasks.remove(r);}
  public static void advance(long ms){SystemClock.now+=ms;

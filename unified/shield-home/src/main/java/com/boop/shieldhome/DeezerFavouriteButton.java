@@ -8,10 +8,10 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.view.View;
 
-/** Small shared heart: fixed remove/add affordances for lyrics, one stateful toggle for Home. */
+/** Shared native favourites toggle and separate outlined dislike-and-skip action. */
 final class DeezerFavouriteButton extends View {
-    static final int REMOVE = -1, TOGGLE = 0, ADD = 1;
-    private final int mode, accent;
+    static final int DISLIKE = -1, TOGGLE = 0;
+    private final int mode;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path heart = new Path();
     private final DeezerFavouriteController controller;
@@ -22,11 +22,13 @@ final class DeezerFavouriteButton extends View {
 
     DeezerFavouriteButton(Context context, int mode, int accent) {
         super(context);
-        this.mode = mode; this.accent = accent;
+        this.mode = mode;
         controller = DeezerFavouriteController.get(context);
         setFocusable(true); setClickable(true);
-        setOnClickListener(v -> controller.change(snapshot, state,
-                mode == TOGGLE ? null : Boolean.valueOf(mode == ADD)));
+        setOnClickListener(v -> {
+            if (mode == DISLIKE) controller.dislike(snapshot);
+            else controller.change(snapshot, state, null);
+        });
         updateDescription();
     }
     void setSnapshot(NowPlayingSnapshot next) {
@@ -68,21 +70,20 @@ final class DeezerFavouriteButton extends View {
     }
     private boolean known() { return state != null && state.matches(snapshot); }
     private void updateDescription() {
-        String label = mode == ADD ? "Add to Deezer favourites" : mode == REMOVE
-                ? "Remove from Deezer favourites" : known() && state.saved == 1
-                ? "Remove from Deezer favourites" : "Add to Deezer favourites";
+        String label = mode == DISLIKE ? "Dislike this track and skip in Deezer"
+                : known() && state.saved == 1 ? "Remove from Deezer favourites" : "Add to Deezer favourites";
         if (known() && state.pending) label += ". Waiting for Deezer";
-        else if (!known() || (mode == TOGGLE && state.saved == -1)) label = mode == TOGGLE
-                ? "Deezer favourite state unavailable" : label + ". State unavailable";
+        else if (mode == TOGGLE && (!known() || state.saved == -1)) label = "Deezer favourite. Check and toggle";
         setContentDescription(label);
     }
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        int accent = FocusChrome.accentColor(getContext());
         boolean known = known();
         boolean saved = known && state.saved == 1;
         boolean pending = known && state.pending;
-        boolean available = known && !pending && (mode == ADD ? state.canAdd : mode == REMOVE
-                ? state.canRemove : state.saved == 1 ? state.canRemove : state.saved == 0 && state.canAdd);
+        boolean available = known && !pending && (mode == DISLIKE ? controller.canDislike()
+                : state.saved == 1 ? state.canRemove : state.canAdd);
         float scale = Math.min(getWidth(), getHeight()) / 54f;
         canvas.save();
         canvas.translate(getWidth() * 0.5f, getHeight() * 0.5f);
@@ -94,7 +95,8 @@ final class DeezerFavouriteButton extends View {
             paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(1.6f); paint.setColor(accent);
             canvas.drawCircle(0, 0, 25, paint);
         }
-        int ink = pending ? Color.rgb(151, 169, 178) : saved || hasFocus() ? accent
+        int ink = pending ? Color.rgb(151, 169, 178) : hasFocus() ? accent
+                : saved && mode == TOGGLE ? accent
                 : available ? Color.WHITE : Color.rgb(91, 107, 116);
         paint.setColor(ink);
         paint.setStrokeWidth(1.8f); paint.setStrokeJoin(Paint.Join.ROUND);
@@ -106,12 +108,10 @@ final class DeezerFavouriteButton extends View {
         heart.cubicTo(4, -15, 13, -14, 13, -5);
         heart.cubicTo(13, 2, 3, 9, 0, 12);
         heart.close(); canvas.drawPath(heart, paint);
-        if (mode != TOGGLE) {
-            paint.setStyle(Paint.Style.FILL); paint.setColor(Color.rgb(14, 23, 28));
-            canvas.drawCircle(12, 10, 7, paint);
-            paint.setColor(ink); paint.setStrokeWidth(1.8f); paint.setStrokeCap(Paint.Cap.ROUND);
-            canvas.drawLine(8, 10, 16, 10, paint);
-            if (mode == ADD) canvas.drawLine(12, 6, 12, 14, paint);
+        if (mode == DISLIKE) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setColor(ink); paint.setStrokeWidth(2f); paint.setStrokeCap(Paint.Cap.ROUND);
+            canvas.drawLine(-14, 13, 14, -14, paint);
         } else if (!known || state.saved == -1) {
             paint.setStyle(Paint.Style.FILL); paint.setColor(ink); paint.setTextSize(13);
             paint.setTextAlign(Paint.Align.CENTER); canvas.drawText("?", 0, 3, paint);

@@ -12,6 +12,10 @@ import android.os.SystemClock;
 import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 /** Shared, lifecycle-bound favourite control over BOOP's existing selected media session. */
 final class DeezerFavouriteController {
@@ -46,6 +50,15 @@ final class DeezerFavouriteController {
     private boolean heartRating;
     private long bindingGeneration;
     private State state = empty();
+    private Class<?> offscreenBackend;
+    private volatile long bridgeEpoch;
+    private long activeBridgeEpoch;
+    private boolean bridgeRunning;
+    private Thread bridgeWorker;
+    private String bridgeNonce = "", bridgeOperation = "", lastReadIdentity = "", savedIdentity = "";
+    private State bridgeOwner;
+    private long savedSession, lastReadSession;
+    private int bridgeSaved = -1;
     private final Runnable timeout = () -> {
         refresh();
         if (request.expired(SystemClock.elapsedRealtime())) {
@@ -64,9 +77,14 @@ final class DeezerFavouriteController {
     private DeezerFavouriteController(Context context) {
         this.context = context;
         manager = ShieldNowPlayingManager.get(context);
+        try { offscreenBackend = Class.forName("com.boop.alpha1.BoopDeezerHeartBackend"); }
+        catch (ClassNotFoundException separateShell) { offscreenBackend = null; }
     }
     Runnable subscribe(Listener listener) {
         requireMain();
+        if (listeners.isEmpty() && !bridgeRunning) {
+            lastReadIdentity = ""; savedIdentity = ""; bridgeSaved = -1;
+        }
         listeners.add(listener);
         if (unsubscribe == null) unsubscribe = manager.state().subscribe(ignored -> refresh());
         else refresh();
@@ -74,6 +92,8 @@ final class DeezerFavouriteController {
     }
     private void stopIfIdle() {
         if (!listeners.isEmpty() || request.pending()) return;
+        if (bridgeRunning && !"read".equals(bridgeOperation) && activeBridgeEpoch == bridgeEpoch) return;
+        cancelBridge();
         if (unsubscribe != null) { Runnable end = unsubscribe; unsubscribe = null; end.run(); }
         unbind();
         state = empty();
@@ -101,7 +121,7 @@ final class DeezerFavouriteController {
             }
             @Override public void onSessionDestroyed() {
                 if (generation != bindingGeneration) return;
-                unbind(); request.cancel(); handler.removeCallbacks(timeout);
+                unbind(); cancelBridge(); request.cancel(); handler.removeCallbacks(timeout);
                 state = empty(); publish(); stopIfIdle();
             }
         };
@@ -149,6 +169,15 @@ final class DeezerFavouriteController {
         } catch (RuntimeException unavailable) {
             unbind(); addAction = null; removeAction = null; heartRating = false;
         }
+        if (bridgeRunning && bridgeOwner != null && !DeezerFavouritePolicy.sameTrack(
+                bridgeOwner.session, bridgeOwner.mediaIdentity, next.session, next.mediaIdentity)) cancelBridge();
+        boolean invisible = offscreenBackend != null && next.session > 0
+                && !heartRating && addAction == null && removeAction == null;
+        if (invisible) {
+            int saved = DeezerFavouritePolicy.sameTrack(savedSession, savedIdentity, next.session, next.mediaIdentity)
+                    ? bridgeSaved : DeezerFavouritePolicy.UNKNOWN;
+            next = new State(next.session, next.track, next.mediaIdentity, saved, true, true, false);
+        }
         if (request.pending()) {
             if (!request.owns(next.session, next.mediaIdentity)) {
                 request.cancel(); handler.removeCallbacks(timeout);
@@ -161,9 +190,12 @@ final class DeezerFavouriteController {
             }
         }
         state = new State(next.session, next.track, next.mediaIdentity, next.saved,
-                next.canAdd, next.canRemove, request.pending());
+                next.canAdd, next.canRemove, request.pending()
+                        || (bridgeRunning && activeBridgeEpoch == bridgeEpoch));
         publish();
         stopIfIdle();
+        if (invisible && !listeners.isEmpty() && !bridgeRunning && !request.pending()
+                && (!state.mediaIdentity.equals(lastReadIdentity) || state.session != lastReadSession)) startBridge("read");
     }
     void change(NowPlayingSnapshot displayed, State displayedState, Boolean explicitTarget) {
         requireMain();
@@ -173,7 +205,11 @@ final class DeezerFavouriteController {
                         state.session, state.mediaIdentity) || player == null) {
             message("Track changed or favourites are unavailable here."); return;
         }
-        if (request.pending()) { message("Waiting for Deezer to confirm…"); return; }
+        if (request.pending() || bridgeRunning) { message("Waiting for Deezer to confirm…"); return; }
+        if (offscreenBackend != null && !heartRating && addAction == null && removeAction == null) {
+            if (explicitTarget != null && state.saved == (explicitTarget ? 1 : 0)) return;
+            startBridge("toggle"); return;
+        }
         if (explicitTarget == null && state.saved == DeezerFavouritePolicy.UNKNOWN) {
             message("Deezer isn't sharing this track's favourite state."); return;
         }
@@ -196,6 +232,79 @@ final class DeezerFavouriteController {
             message("Couldn't change Deezer favourites just now.");
         }
         refresh();
+    }
+    boolean canDislike() { return offscreenBackend != null && state.session > 0; }
+    void dislike(NowPlayingSnapshot displayed) {
+        requireMain(); refresh();
+        if (!state.matches(displayed) || !canDislike()) { message("Dislike is unavailable for this player."); return; }
+        if (bridgeRunning || request.pending()) { message("Waiting for Deezer to confirm…"); return; }
+        startBridge("dislike");
+    }
+    private void cancelBridge() {
+        if (!bridgeRunning || activeBridgeEpoch != bridgeEpoch) return;
+        bridgeEpoch++;
+        try { offscreenBackend.getMethod("cancel", String.class).invoke(null, bridgeNonce); }
+        catch (Exception ignored) { }
+        if (bridgeWorker != null) bridgeWorker.interrupt();
+    }
+    private void startBridge(String operation) {
+        if (bridgeRunning || offscreenBackend == null || player == null || state.session <= 0) return;
+        NowPlayingSnapshot current = manager.state().current();
+        if (!state.matches(current)) return;
+        MediaMetadata metadata = player.getMetadata();
+        if (metadata == null || !metadataMatches(current, metadata)) return;
+        final State owner = state;
+        final long generation = ++bridgeEpoch;
+        final String nonce = UUID.randomUUID().toString().replace("-", "");
+        Map<String,String> input = new HashMap<>();
+        input.put("nonce", nonce); input.put("operation", operation);
+        input.put("title", current.title()); input.put("artist", current.subtitle());
+        input.put("album", current.album()); input.put("duration", Long.toString(current.durationMs()));
+        input.put("media_id", text(metadata, MediaMetadata.METADATA_KEY_MEDIA_ID));
+        input.put("expected_saved", Integer.toString(owner.saved));
+        bridgeOwner = owner; bridgeNonce = nonce; bridgeOperation = operation;
+        activeBridgeEpoch = generation; bridgeRunning = true; lastReadIdentity = owner.mediaIdentity; lastReadSession = owner.session;
+        state = new State(owner.session, owner.track, owner.mediaIdentity, owner.saved, owner.canAdd, owner.canRemove, true);
+        publish();
+        Runnable watchdog = () -> {
+            if (generation != bridgeEpoch) return;
+            cancelBridge(); savedIdentity = ""; bridgeSaved = -1;
+            if (!"read".equals(operation)) message("Deezer did not confirm in time.");
+            refresh();
+        };
+        handler.postDelayed(watchdog, 30000);
+        bridgeWorker = new Thread(() -> {
+            Map<?,?> output = null;
+            try {
+                BooleanSupplier valid = () -> generation == bridgeEpoch && !Thread.currentThread().isInterrupted();
+                output = (Map<?,?>) offscreenBackend.getMethod("execute", Context.class, Map.class, BooleanSupplier.class)
+                        .invoke(null, context, input, valid);
+            } catch (Exception unavailable) { }
+            final Map<?,?> result = output;
+            handler.post(() -> {
+                handler.removeCallbacks(watchdog);
+                bridgeRunning = false; bridgeWorker = null; bridgeNonce = "";
+                if (generation == bridgeEpoch && DeezerFavouritePolicy.sameTrack(owner.session, owner.mediaIdentity,
+                        state.session, state.mediaIdentity)) {
+                    String status = result == null ? "UNAVAILABLE" : String.valueOf(result.get("status"));
+                    boolean receipt = result != null && nonce.equals(result.get("nonce")) && operation.equals(result.get("operation"));
+                    int saved = -1;
+                    if (receipt) try { saved = Integer.parseInt(String.valueOf(result.get("saved"))); } catch (RuntimeException ignored) { }
+                    if (receipt && ("OK".equals(status) || "STALE_STATE".equals(status)) && (saved == 0 || saved == 1)) {
+                        savedIdentity = owner.mediaIdentity; savedSession = owner.session; bridgeSaved = saved;
+                        if ("STALE_STATE".equals(status)) message("Favourite state refreshed. Press again to change it.");
+                        else if ("toggle".equals(operation)) message(saved == 1 ? "Added to Deezer favourites." : "Removed from Deezer favourites.");
+                    } else if (receipt && "DISLIKED".equals(status)) {
+                        savedIdentity = ""; bridgeSaved = -1;
+                    } else {
+                        savedIdentity = ""; bridgeSaved = -1;
+                        if (!"read".equals(operation)) message("Could not confirm the Deezer heart change.");
+                    }
+                }
+                refresh();
+            });
+        }, "BOOP-offscreen-heart");
+        bridgeWorker.start();
     }
     private void publish() {
         for (Listener listener : new ArrayList<>(listeners)) listener.changed(state);

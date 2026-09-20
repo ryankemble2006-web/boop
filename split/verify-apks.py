@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 234 if body == 'shield' else 207
+    version = 235 if body == 'shield' else 207
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
@@ -59,7 +59,7 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
     with zipfile.ZipFile(apk) as archive:
         assert archive.testzip() is None
         dex = b''.join(archive.read(n) for n in archive.namelist() if re.fullmatch(r'classes\d*\.dex',n))
-        for cls in ['BoopAppIdentity','BoopSetupState','BoopProfileActivity','UnifiedEntryActivity','BoopNaturalSpeechBackend','BoopSharedVoiceProfileRuntime','BoopCanonicalFaceView','BoopAppearanceActivity','LocalPlayerCloseGate','BoopClosePlayerActivity']:
+        for cls in ['BoopAppIdentity','BoopSetupState','BoopProfileActivity','UnifiedEntryActivity','BoopNaturalSpeechBackend','BoopSharedVoiceProfileRuntime','BoopCanonicalFaceView','BoopAppearanceActivity','LocalPlayerCloseGate','BoopClosePlayerActivity','BoopDeezerHeartBackend']:
             assert ('Lcom/boop/alpha1/'+cls+';').encode() in dex, cls
         for cls in ['ShieldHomeView','ShieldLyricsActivity','ShieldNowPlayingPuppetView','BassCaptureService','MusicBounceSource','BoopTvChrome','DeezerFavouritePolicy','DeezerFavouriteRequest','DeezerFavouriteController','DeezerFavouriteButton']:
             assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls

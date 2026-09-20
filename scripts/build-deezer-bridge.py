@@ -28,14 +28,14 @@ output.parent.mkdir(parents=True, exist_ok=True)
 with tempfile.TemporaryDirectory(prefix="boop-deezer-bridge-") as temp:
     work = Path(temp)
     subprocess.run([java_tool("javac"), "-encoding", "UTF-8", "-cp", str(android), "-d", str(work),
-                    str(root / "unified/deezer-bridge/DeezerMediaBridge.java")], check=True)
+                    *map(str, sorted((root / "unified/deezer-bridge").glob("*.java")))], check=True)
     jar = work / "bridge.jar"
     subprocess.run([java_tool("java"), "-cp", str(d8), "com.android.tools.r8.D8", "--min-api", "29",
-                    "--output", str(jar), *map(str, work.rglob("*.class"))], check=True)
+                    "--lib", str(android), "--output", str(jar), *map(str, work.rglob("*.class"))], check=True)
     payload = jar.read_bytes()
     digest = hashlib.sha256(payload).hexdigest()
     encoded = base64.b64encode(payload).decode("ascii")
     output.write_text("package com.boop.alpha1;\nfinal class DeezerBridgePayload {\n"
                       + ' static final String SHA256="' + digest + '";\n'
-                      + ' static final String BASE64="' + encoded + '";\n}\n', encoding="utf-8")
+                      + ' static final String BASE64=String.join("",' + ','.join('"'+encoded[i:i+12000]+'"' for i in range(0,len(encoded),12000)) + ');\n}\n', encoding="utf-8")
     print("Source-built Deezer bridge SHA256:", digest)
