@@ -60,13 +60,10 @@ final class DeezerNativeController {
         // HA exposes a shared latest-output attribute. A simultaneous heart lookup
         // can replace even its service snapshot, so retain this command's result.
         // The private directory and detached expiry also clean up after app exit.
-        // HA's ADB shell can pass its connection on fd 15 (and a tty on fd 10).
-        // Redirecting only stdio leaves that connection open until expiry.
-        StringBuilder detach=new StringBuilder("exec");
-        for(int fd=3;fd<64;fd++)detach.append(' ').append(fd).append(">&-");
-        detach.append("; ");
+        // A separate session is essential: nohup alone retains HA's ADB terminal
+        // and makes the service wait for expiry even with standard IO redirected.
         String wrapped="echo "+nonce+"; umask 077; if mkdir "+directory+"; then "
-                +"nohup sh -c '"+detach+"sleep 90; rm -f "+directory+"/pending "+directory+"/result; rmdir "+directory
+                +"setsid sh -c 'sleep 90; rm -f "+directory+"/pending "+directory+"/result; rmdir "+directory
                 +"' </dev/null >/dev/null 2>&1 & ("+command+") > "+directory+"/pending 2>&1; "
                 +"printf '\\n"+nonce+"_DONE\\n' >> "+directory+"/pending; "
                 +"mv "+directory+"/pending "+directory+"/result; cat "+directory+"/result; fi";
