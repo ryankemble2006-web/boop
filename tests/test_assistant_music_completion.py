@@ -1,5 +1,6 @@
 """Execute the real patched outcome callback without any speech-engine completion."""
 from pathlib import Path
+import ast
 import subprocess
 import sys
 
@@ -33,8 +34,23 @@ def test_accepted_music_finishes_one_shot_without_waiting_for_tts(tmp_path):
             'content.addView(section("VOICE")); wakeNameCard=card("BOOP\'s name",wakeName(),"Spoken wake name only. BOOP always works too.",left); wakeNameCard.setOnClickListener(v->showWakeNameDialog()); content.addView(wakeNameCard,spaced());\n', encoding='utf-8')
         subprocess.run([sys.executable, str(ROOT/'scripts/patch-unified-assistant-button.py')], cwd=tmp_path, check=True)
         source = main.read_text(encoding='utf-8')
+        # Apply the real later routing transformations too, including the relay's
+        # split outcome declaration and the foreground/clarification guards.
+        for script, anchor in (
+            ('patch-wall-chat-mode.py', '            CommandOutcome outcome ='),
+            ('patch-wall-openai-relay.py', '            CommandOutcome outcome ='),
+            ('patch-canonical-integration.py', 'if (outcome.status() == CommandOutcome.Status.ASSISTANT_REPLY)'),
+        ):
+            tree = ast.parse((ROOT/'scripts'/script).read_text(encoding='utf-8'))
+            matches = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                       and len(node.args) == 3 and isinstance(node.args[1], ast.Constant)
+                       and isinstance(node.args[1].value, str) and node.args[1].value.startswith(anchor)]
+            assert len(matches) == 1, script
+            old, new = (ast.literal_eval(arg) for arg in matches[0].args[1:])
+            assert source.count(old) == 1, script
+            source = source.replace(old, new, 1)
     handler = block(source, 'private void handleRecognizedSpeech(')
-    callback = block(handler[handler.index('CommandOutcome outcome ='):], 'runOnUiThread(() ->')
+    callback = block(handler[handler.index('CommandOutcome outcome'):], 'runOnUiThread(() ->')
     body = callback[callback.index('{')+1:-1]
     finish = block(source, 'private void finishAssistantOneShot()')
     completion = block(source, 'private void finishTtsUtterance()')
