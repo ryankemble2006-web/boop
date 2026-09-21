@@ -1,5 +1,13 @@
 # BOOP current handoff
 
+## Current: music mic-screen return installed on Shield249 / Pixel7 Wall216
+
+Accepted native music playback now closes a one-shot mic session immediately without synthesizing "Done". Questions retain their follow-up, while errors, Voice Settings and permanent Wall sessions retain their responses. Native command receipts also survive concurrent Home heart lookups through bounded read-only recovery; playback is never replayed. Temporary receipts expire automatically after 90 seconds using a detached Android shell session.
+
+Final signed source `8164250d5373de0d98c1c20202464cfa8892299d`; successful run `35548029997`; artifact `10616962640` (`BOOP-Shield-v249-Wall-v216-Signed`). Focused regression checks, speech lifecycle tests and the complete inherited/integration/HA/signed CI passed; independent review found no blockers. Both final APKs are installed with verified on-device hashes/versions and unchanged saved voice/appearance preferences. All 29 assets and 16 libraries per app match246/213; rollbacks are retained. Final installed production-client calls succeeded for Shield "music" and phone "play some music" through the existing HA connection, and production receipt expiry was verified.
+
+An earlier247 Activity check using the same callback resumed Home159 ms after accepted playback without queued speech. Final249 debugger-injected Activity checks were inconclusive and are not final UI acceptance; Ryan physically retested the Shield mic command and accepted the return timing as "fast enough". His separate white-circle visual request is a follow-up. Final APKs and receipts are retained in task outputs and Desktop/APKBOOP. Details: `docs/handoffs/2026-09-21-music-mic-return-v249.md`.
+
 ## Current: doubled voice range installed on Shield246 / Pixel7 Wall213
 
 Ryan physically accepted shared voice on both devices ("both work brilliantly") and requested double the pitch/cadence maxima for maximum whimsy. Pitch now reaches 2.90x and cadence 2.50x in both settings screens, Android/natural playback clamps and shared-profile validation. Existing minima/defaults and stored numeric settings are unchanged by installation. The existing HA helper marker is retained; both paired devices were upgraded before raising the sliders, since older builds reject values above their previous limits.
