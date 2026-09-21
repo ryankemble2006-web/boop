@@ -25,7 +25,7 @@ public class DeezerDirectTest {
                     if(changeAfterPrepare)changedRoom=true;
                 } else if(!prepared)output="BOOP_MEDIA_NEEDS_PREPARE";
             }
-            response=(stale?"old":nonce)+"\n"+output;
+            response=(stale?"old":nonce)+"\n"+output+"\n"+nonce+"_DONE";
             if(identityRead&&changeAfterIdentity)changedRoom=true;
             return "[]";
         }
@@ -46,7 +46,7 @@ public class DeezerDirectTest {
         }
     }
     @Test public void wrongHardwareNeverSendsPlayback()throws Exception {Rig r=new Rig();r.identity="02:00:00:00:00:02";r.fails("https://www.deezer.com/flow");assertEquals(1,r.commands.size());}
-    @Test public void staleIdentityNeverSendsPlayback()throws Exception {Rig r=new Rig();r.stale=true;r.fails("https://www.deezer.com/flow");assertEquals(1,r.commands.size());}
+    @Test public void staleIdentityNeverSendsPlayback()throws Exception {Rig r=new Rig();r.stale=true;r.fails("https://www.deezer.com/flow");assertEquals(4,r.commands.size());assertEquals(0,r.requests());}
     @Test public void roomChangeAfterIdentityNeverSendsPlayback()throws Exception {Rig r=new Rig();r.changeAfterIdentity=true;r.fails("https://www.deezer.com/flow");assertEquals(1,r.commands.size());}
     @Test public void invalidLinkNeverTouchesDevice()throws Exception {Rig r=new Rig();r.fails("https://evil.invalid/track/1;input keyevent 3");assertTrue(r.commands.isEmpty());}
     @Test public void failedNativeControlIsNotSuccess()throws Exception {Rig r=new Rig();r.fail=true;r.fails("https://www.deezer.com/flow");assertEquals(1,r.requests());}

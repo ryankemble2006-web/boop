@@ -56,19 +56,43 @@ final class DeezerNativeController {
     private String shell(String command) throws Exception {
         checkCurrent();
         String nonce="BOOP_"+UUID.randomUUID().toString().replace("-","");
-        String serviceReply=http.request(base+"/api/services/androidtv/adb_command",token,
-                new JSONObject().put("entity_id",entity).put("command","echo "+nonce+"; "+command));
-        checkCurrent();
-        // The native track change can start a simultaneous Shield heart lookup.
-        // Its ADB output must not replace this command's completed response.
-        String output=AdbCommandReceipt.fromService(serviceReply,entity,nonce);
-        if(output==null) {
-            JSONObject state=new JSONObject(http.request(base+"/api/states/"+entity,token,null));
-            checkCurrent();
-            output=AdbCommandReceipt.fromState(state,entity,nonce);
+        String directory="/data/local/tmp/boop_receipt_"+nonce;
+        // HA exposes a shared latest-output attribute. A simultaneous heart lookup
+        // can replace even its service snapshot, so retain this command's result.
+        // The private directory and detached expiry also clean up after app exit.
+        String wrapped="echo "+nonce+"; umask 077; if mkdir "+directory+"; then "
+                +"nohup sh -c 'sleep 90; rm -f "+directory+"/pending "+directory+"/result; rmdir "+directory
+                +"' </dev/null >/dev/null 2>&1 & ("+command+") > "+directory+"/pending 2>&1; "
+                +"printf '\\n"+nonce+"_DONE\\n' >> "+directory+"/pending; "
+                +"mv "+directory+"/pending "+directory+"/result; cat "+directory+"/result; fi";
+        String output=receipt(wrapped,nonce);
+        for(int attempt=0;output==null && attempt<3;attempt++) {
+            // Read the completed receipt only. Never replay an uncertain play/prepare.
+            output=receipt("echo "+nonce+"; cat "+directory+"/result",nonce);
         }
         if(output==null)throw new IOException("Stale ADB response");
         return output;
+    }
+    private String receipt(String command,String nonce) throws Exception {
+        checkCurrent();
+        String serviceReply;
+        try {
+            serviceReply=http.request(base+"/api/services/androidtv/adb_command",token,
+                    new JSONObject().put("entity_id",entity).put("command",command));
+        } catch(IOException uncertain) {
+            checkCurrent();
+            return null;
+        }
+        checkCurrent();
+        String output=AdbCommandReceipt.fromService(serviceReply,entity,nonce);
+        if(output==null) {
+            JSONObject state;
+            try { state=new JSONObject(http.request(base+"/api/states/"+entity,token,null)); }
+            catch(IOException uncertain) { checkCurrent();return null; }
+            checkCurrent();
+            output=AdbCommandReceipt.fromState(state,entity,nonce);
+        }
+        return output!=null && output.endsWith("\n"+nonce+"_DONE") ? output : null;
     }
     private void checkCurrent() throws IOException {
         BoopRoom current=rooms.currentRoom();

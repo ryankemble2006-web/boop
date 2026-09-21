@@ -4,8 +4,8 @@ android {
     namespace 'com.boop.shieldapp'
     defaultConfig {
         applicationId 'com.boop.shieldoverlay'
-        versionCode 247
-        versionName '1.2.247-shield'
+        versionCode 248
+        versionName '1.2.248-shield'
     }
     buildTypes { debug { signingConfig signingConfigs.boopDev } }
 }
