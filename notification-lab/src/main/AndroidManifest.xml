@@ -5,7 +5,7 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <application android:label="BOOP Test Sender" android:allowBackup="false"
         android:theme="@android:style/Theme.Material.NoActionBar"
-        android:icon="@android:drawable/ic_dialog_email" android:banner="@drawable/sender_banner">
+        android:icon="@drawable/sender_banner" android:banner="@drawable/sender_banner">
         <activity android:name="com.boop.alpha1.NotificationSenderActivity"
             android:exported="true" android:screenOrientation="landscape">
             <intent-filter>
