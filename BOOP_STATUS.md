@@ -1,5 +1,12 @@
 # BOOP status
 
+## Next task — confirmed by Ryan, 22 September 2026
+
+Voice/personality controls and sharing are done. EastEnders/Casualty follow-up checks are also done, per Ryan's direct report. Games are set aside. Next: a test app **on the Shield that sends notifications to the Pixel**; implementation and transport remain to be established.
+
+GitHub is the authority and primary development space. The chat-to-Codex personality/memory-transfer experiment is retired; do not load or recreate BOOP_PERSONALITY.md, BOOP_MEMORY.txt or local ASTRA_MEGA_MEMORY.txt as project authority. Keep factual source/build/acceptance handoffs and read the current owner before proposing work. See [the shared resync](https://github.com/ryankemble2006-web/boop/blob/main/docs/handoffs/2026-09-22-continuity-resync.md).
+
+
 ## Current: music mic-screen return installed on Shield249 / Pixel7 Wall216
 
 Accepted native music playback now closes a one-shot mic session immediately without synthesizing "Done". Questions retain their follow-up, while errors, Voice Settings and permanent Wall sessions retain their responses. Native command receipts also survive concurrent Home heart lookups through bounded read-only recovery; playback is never replayed. Temporary receipts expire automatically after 90 seconds using a detached Android shell session.
