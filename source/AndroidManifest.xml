@@ -64,6 +64,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".BoopNotificationLabActivity"
+            android:label="BOOP Notification Test" android:exported="true" />
         <activity
             android:name=".BoopDevMenuActivity"
             android:exported="false" />

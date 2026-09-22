@@ -144,6 +144,11 @@ if methods_marker not in text:
             developerMenuFace.wakeFromIdle();
         });
 
+        Button remoteTest = new Button(this);
+        remoteTest.setText("Test notifications from Shield");
+        remoteTest.setOnClickListener(v -> startActivity(new android.content.Intent(this, BoopNotificationLabActivity.class)));
+        column.addView(remoteTest, new LinearLayout.LayoutParams(-1, dp(56)));
+
         for (BoopDevMenuModel.Shelf shelf : BoopDevMenuModel.shelves()) {
             boolean animationShelf = "Animations".equals(shelf.title());
             addDeveloperShelf(

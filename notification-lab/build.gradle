@@ -1,12 +1,11 @@
 plugins { id 'com.android.application' }
 apply from: rootProject.file('split-app-shell.gradle')
 android {
-    namespace 'com.boop.wallapp'
+    namespace 'com.boop.notificationlab'
     defaultConfig {
-        applicationId 'com.boop.alpha1'
-        versionCode 217
-        versionName '1.2.217-wall'
+        applicationId 'com.boop.notificationlab'
+        versionCode 1
+        versionName '1.0'
     }
     buildTypes { debug { signingConfig signingConfigs.boopDev } }
 }
-dependencies { implementation project(':assistant-lib') }
