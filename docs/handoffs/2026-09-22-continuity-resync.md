@@ -17,8 +17,10 @@ Confirmed directly by Ryan on 22 September:
 - Games are set aside for now.
 - Next: a **test app running on the Shield to send notifications to the Pixel**. Preserve this direction; do not reverse sender and receiver. This records the requested next task, not a claim that the test app has been built or its transport/design settled.
 
-## Cleanup boundary
+## Cleanup completed
 
-Ryan requested cleanup of stale local text files and resynchronization around GitHub. The current conversation workspace was empty when inspected; the exact broader deletion scope is awaiting clarification. No local deletion is claimed here. Private personal material, signing keys and device/account data must not be copied into this public repository as part of project continuity.
+Ryan explicitly retired the chat-to-Codex personality/memory-transfer experiment. Removed `BOOP_PERSONALITY.md` from main and `BOOP_MEMORY.txt` from the active owner and candidate branches. Removed 55 matching local copies: seven personality files, 46 broad BOOP memory files, and the Desktop mega-memory plus its exported copy. Factual engineering handoffs, feature documentation, app source, assets and private signing material are retained.
 
-This is a documentation-only reconciliation. It does not restore the repository workflow instruction files deliberately removed from main on 17 September, alter app source, trigger a release, or authorize a device operation. Separate sessions must read the live handoff to receive the correction; publication is not automatic chat synchronization.
+The active owner and candidate share documentation commit `e657d33c53f8dff9d0ca8699b9799dba343299c2`. Current corrections appear at the top of their handoff and status files. Git history and older checkpoint branches were not rewritten; their old transfer documents are historical and must not be used as current authority.
+
+This is a documentation-only reconciliation. It does not restore the workflow instruction files deliberately removed from main on 17 September, alter app source or deliver a new release. Private personal material was not uploaded. Separate sessions must read live GitHub handoffs to see current work.
