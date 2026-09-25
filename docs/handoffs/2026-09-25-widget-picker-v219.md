@@ -12,6 +12,14 @@ The launcher previously invoked Android's stock `ACTION_APPWIDGET_PICK` chooser.
 - 20 existing launcher-swipe, launcher-polish, weather/version and split checks passed.
 - Yoga Pixel10 emulator: full-screen chooser visually checked at the phone's 1344x2992 size, density544 and font1.5; font2.0 also remained readable.
 - Selecting Analog reached Android's normal bind permission, then Clock configuration, then returned a saved widget to the launcher. Pending widget ID was cleared after success.
-- Signed CI, cancellation checks and physical in-place installation are still pending at this source checkpoint.
+- Back and Close cancellation both cleared the pending ID while retaining the existing widget. Landscape at font2.0 also remained usable. Independent code review found no important regressions.
+
+## Signed and physical delivery
+
+[Signed CI36196531200](https://github.com/ryankemble2006-web/boop/actions/runs/36196531200) passed at `01b911d8e79316db1b1f42865b93b5fc0945b9de`. The independently verified Wall219 APK SHA256 is `40ea16d0c44c58daea6675f5b71eb5995dae31f8282f1164b51f9b176f5e6279`. Permanent signing and every asset/native byte match the accepted Wall218 baseline.
+
+Installed in place on the physical Pixel10; installed APK hash matches. App ID and first-install time are unchanged. All22 copied shortcut destinations/labels remain present. Initial comparison found their positions unchanged apart from float serialization. Ryan subsequently added widgets and moved an icon during verification; those newer edits were preserved. Other saved settings are unchanged apart from notification-channel discovery metadata, and the notification listener is bound. Font1.5 and display density544 were retained.
+
+The full-screen picker was opened and visually checked on the actual phone. Ryan explicitly accepted it as “great widget menu”, then reported a separate pre-existing widget resizing/centering problem. That interaction repair is the next scoped task; picker acceptance does not establish that the old widget manipulation controls work well.
 
 The production version is Wall219. The existing two-shell CI also builds Shield251, but only the phone update is in scope for installation. Artwork, voice, notifications and the permanent signing identity are unchanged.
