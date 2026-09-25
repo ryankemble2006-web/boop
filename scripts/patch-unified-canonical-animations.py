@@ -134,7 +134,7 @@ canonical_shelf = '''
         scroll.setOnScrollChangeListener((v, x, y, ox, oy) -> developerAnimationScrollX = x);
         int saved = developerAnimationScrollX;
         scroll.post(() -> scroll.scrollTo(saved, 0));
-        column.addView(scroll, new LinearLayout.LayoutParams(-1, dp(70)));
+        column.addView(scroll, new LinearLayout.LayoutParams(-1, -2));
     }
 
 '''

@@ -103,6 +103,9 @@ public final class BoopNotificationListenerService extends NotificationListenerS
         String packageName = safe(sbn.getPackageName());
         String key = safe(sbn.getKey());
         Notification notification = sbn.getNotification();
+        // Android renders summaries alongside their child notifications. Mirror the
+        // children only, without reading a second copy of the summary's content.
+        if ((notification.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return null;
         NotificationChannel channel = rankingChannel(key, rankingMap);
         String channelId = channel != null
                 ? safe(channel.getId())
@@ -110,6 +113,11 @@ public final class BoopNotificationListenerService extends NotificationListenerS
         if (channelId.isEmpty()) {
             channelId = "default";
         }
+        // Showing our mirror makes Android post this status notification. Do not
+        // mirror it back into the user's bundle; other Android channels stay eligible.
+        if ("android".equals(packageName)
+                && ("com.android.server.wm.AlertWindowNotification - " + getPackageName())
+                        .equals(channelId)) return null;
 
         BoopNotificationChannelInfo channelInfo;
         if (channel != null) {
@@ -164,7 +172,8 @@ public final class BoopNotificationListenerService extends NotificationListenerS
                 title,
                 text,
                 prepared.sbn.getPostTime(),
-                autoCancel);
+                autoCancel,
+                (notification.flags & Notification.FLAG_ONLY_ALERT_ONCE) != 0);
         PendingIntent intent = notification.contentIntent;
         return new BoopNotificationRuntime.RuntimeRecord(envelope, intent, prepared.channelInfo);
     }

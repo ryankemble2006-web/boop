@@ -127,6 +127,10 @@ final class BoopNotificationPuppetView extends FrameLayout {
             return;
         }
         setVisibility(View.VISIBLE);
+        String packageName = cards.get(0).packageName();
+        boolean branded = cards.size() == 1
+                && BoopNotificationSignIdentity.brandedStyle(packageName) >= 0;
+        signView.setNotificationLabel(branded ? null : identityLabel(cards));
 
         LinearLayout card = new LinearLayout(getContext());
         card.setOrientation(LinearLayout.VERTICAL);
@@ -216,13 +220,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
     private int notificationStyle() {
         List<BoopNotificationEnvelope> list = cards();
         if (list.isEmpty()) return 0;
-        String pkg = list.get(0).packageName();
-        if (pkg == null) return 0;
-        String value = pkg.toLowerCase(java.util.Locale.ROOT);
-        if (value.contains("gmail") || value.contains("mail")) return 1;
-        if (value.contains("facebook")) return 2;
-        if (value.equals("x") || value.contains("twitter")) return 3;
-        return 0;
+        return Math.max(0, BoopNotificationSignIdentity.brandedStyle(list.get(0).packageName()));
     }
 
     private void resizeCanonicalEyes() {

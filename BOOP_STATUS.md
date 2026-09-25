@@ -1,5 +1,14 @@
 # BOOP status
 
+## Pocket polish candidate: Shield251 / Wall218 / Test Sender2 — 25 September 2026
+
+Ryan authorised autonomous emulator work while watching TV: clipping, natural commands, then portable notifications. This branch is `boop-pocket-polish-v251`, based on notification-lab owner `2a983a1752d6ddb9d5e9b92d5ddafbb21433180c`.
+
+Implemented scrolling/readable controls for short or enlarged layouts, optional Home-row focus scrolling, Home-accent lab outlines, more conversational verified music requests, and opt-in all-app notifications with persistent exclusions. Notification runtime now handles permission revocation, group summaries, only-alert-once updates, delayed unlock, correct app sign identity, and BOOP's own Android overlay-status notice.
+
+Local Android builds and focused tests pass. Yoga TV/Pixel emulators are the only devices changed. Permanent signed CI and final emulator evidence are being recorded in `docs/handoffs/2026-09-25-pocket-polish-v251.md`; physical Pixel10/Shield install, grants and Ryan's acceptance remain pending. No real AV playback or commands were sent.
+
+
 ## Next task â€” confirmed by Ryan, 22 September 2026
 
 Voice/personality controls and sharing are done. EastEnders/Casualty follow-up checks are also done, per Ryan's direct report. Games are set aside. Next: a test app **on the Shield that sends notifications to the Pixel**; implementation and transport remain to be established.

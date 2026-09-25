@@ -45,7 +45,11 @@ public final class BoopProfileActivity extends Activity {
         add(column, "Voice settings", () -> startActivity(new Intent(this, MainActivity.class)
                 .putExtra("boop_open_voice_settings", true)));
         add(column, "Home button setup", this::homeSetup);
-        add(column, "Notification access", () -> openSettings(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+        if (BoopDeviceProfile.resolve(this) != BoopDeviceProfile.Mode.SHIELD) {
+            add(column, "Notifications", () -> startActivity(new Intent(this, BoopNotificationSettingsActivity.class)));
+        } else {
+            add(column, "Notification access", () -> openSettings(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+        }
         if (BoopDeviceProfile.resolve(this) == BoopDeviceProfile.Mode.SHIELD) {
             add(column, "Home button compatibility", () -> new AlertDialog.Builder(this)
                     .setMessage("Use this only when Android does not offer BOOP as the Home app. Android Accessibility settings lets you choose BOOP Home button. This does not enable access automatically.")
