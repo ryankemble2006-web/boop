@@ -50,6 +50,14 @@ Ryan then authorised deployment to the real devices. At21:29UTC on25September, P
 
 Rollback APKs and private preference snapshots are retained locally under task `work/real-device-deployment/`; the user-facing installation receipt is `outputs/BOOP-pocket-polish/physical-installation.json`. Pixel already has notification-listener access and BOOP's master switch enabled. The new All apps option remains off, preserving the existing selected-app policy. Overlay app-op is still default, with no explicit grant recorded; use Profile → Notifications to finish the Android overlay/all-app setup when wanted. No Android permission or consent setting was changed. Real-device visual/acoustic, all-app popup/background/wake and physical LAN discovery acceptance remain pending.
 
+## Physical notification pairing recovered — 25 September 2026
+
+The real Shield sender initially found a stale `BOOP Phone sdk_gphone64_x86_64` mDNS record. Its Android11 NsdService resolve remained active after SERVICE_LOST, leaving the later Pixel advertisement queued and no selectable phone. A read-only direct LAN PING confirmed the current Pixel server and PIN worked. Force-stopping/reopening only `com.boop.notificationlab` cleared the stale resolver; the Pixel then resolved to its actual LAN endpoint and appeared in the sender. Shield UI reported accepted previews and the physical Pixel `BOOPNotifyLab` log confirmed FACEBOOK, WHATSAPP, GMAIL and X. The user continued Run all. This establishes physical authenticated transport; it does not infer visual/art or acoustic acceptance.
+
+No source/APK change was made for this recovery. Sender2 still lacks a timeout/recovery for an Android resolver that never calls back; force-stop/reopen is the verified recovery. Do not claim that limitation permanently fixed. A future bounded discovery recovery should cover lost services and silent resolver callbacks on older Android.
+
+Important diagnostic boundary: `uiautomator dump` on this Pixel triggers Switch Access's setup wizard after the read, backgrounds the lab and invalidates its session. Stop using that method on Pixel10. Direct `adb shell screencap`, activity-state reads and socket/log checks were verified without that interruption. Switch Access settings were not disabled or changed. Shield UI dumps did not trigger the phone issue.
+
 ## Remaining physical acceptance
 
 Runtime scenarios above are emulator/source evidence; the deployment section separately records verified physical installation. Pixel10 already has listener access; overlay/all-app setup still needs completion through the normal settings screens. Actual OEM background/wake behaviour, microphone recognition and acoustic music selection need Ryan's later device check. Android keeps original notifications; silence chosen native categories to avoid duplicate sounds. The later authorised physical installation is complete; it does not by itself establish runtime acceptance.
