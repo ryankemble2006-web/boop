@@ -58,6 +58,14 @@ No source/APK change was made for this recovery. Sender2 still lacks a timeout/r
 
 Important diagnostic boundary: `uiautomator dump` on this Pixel triggers Switch Access's setup wizard after the read, backgrounds the lab and invalidates its session. Stop using that method on Pixel10. Direct `adb shell screencap`, activity-state reads and socket/log checks were verified without that interruption. Switch Access settings were not disabled or changed. Shield UI dumps did not trigger the phone issue.
 
+## Real Gmail notification accepted — 25 September 2026
+
+Ryan initially reported an email alert without BOOP. Live checks found listener access connected, overlay permission allowed, master/all-app mode enabled and no exclusions. The earlier miss was not reproduced or assigned a proven cause. No source/APK, permission or user-setting change was made during this diagnosis.
+
+A harmless local Android notification (outside the preview lab) reached the production listener and opened `BoopNotificationLockActivity` on the dozing Pixel. Ryan then sent a fresh email and left it unread. Android's event log recorded Gmail's group summary at22:54:04.314 and real child at22:54:04.330; BOOP's lock activity started at22:54:04.762 with `BAL_ALLOW_SAW_PERMISSION`, its window became visible, and the phone became awake. The Gmail notification remained present. Ryan explicitly confirmed both “that worked that time” and “Yes, BOOP appeared”. This is real Gmail-to-BOOP physical visual acceptance, separate from the earlier synthetic lab pass.
+
+The metadata-only capture is bounded and ends after120seconds. No email body or sender/recipient address was captured in the saved diagnostic report. No Pixel UIAutomator or accessibility-setting change was used. The temporary shell test notification was subsequently absent from Android's active list. Other app-specific delivery and the unexplained first miss are not claimed fixed by this one successful test.
+
 ## Remaining physical acceptance
 
 Runtime scenarios above are emulator/source evidence; the deployment section separately records verified physical installation. Pixel10 already has listener access; overlay/all-app setup still needs completion through the normal settings screens. Actual OEM background/wake behaviour, microphone recognition and acoustic music selection need Ryan's later device check. Android keeps original notifications; silence chosen native categories to avoid duplicate sounds. The later authorised physical installation is complete; it does not by itself establish runtime acceptance.
