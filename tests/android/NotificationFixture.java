@@ -45,7 +45,9 @@ public final class NotificationFixture extends Activity {
             category.setSound(null, null); category.enableVibration(false);
             manager.createNotificationChannel(category);
             PendingIntent open = PendingIntent.getActivity(context, id,
-                    new Intent(context, NotificationFixture.class).putExtra("id", id),
+                    new Intent(context, NotificationFixture.class).putExtra("id", id)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    | Intent.FLAG_ACTIVITY_SINGLE_TOP),
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             String body = intent.getStringExtra("body");
             String title = intent.getStringExtra("title");
