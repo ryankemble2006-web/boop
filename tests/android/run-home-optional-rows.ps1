@@ -35,7 +35,7 @@ Invoke-Checked "$BuildTools/apksigner.bat" @('sign','--ks',"$OutputDirectory/pro
 Invoke-Checked $Adb @('-s',$Serial,'install','-r',"$OutputDirectory/probe.apk")
 $Result = & $Adb -s $Serial shell am instrument -w -e target_package $Package 'local.boop.homeaudit/local.boop.homeaudit.HomeOptionalRowsProbe\$ProbeInstrumentation'
 $Result | Tee-Object -FilePath "$OutputDirectory/$EvidenceLabel-test.txt"
-foreach ($Phase in @('initial','row1','row2','returned')) {
+foreach ($Phase in @('initial','row1','row2','returned','tall-room','tall-no-rows')) {
     Invoke-Checked $Adb @('-s',$Serial,'pull',"/sdcard/Android/data/local.boop.homeaudit/files/$Phase.png","$OutputDirectory/$EvidenceLabel-$Phase.png")
 }
 if (-not (($Result -join "`n").Contains('PASS optional rows'))) { throw 'Home optional-row navigation regression failed; see captured evidence.' }

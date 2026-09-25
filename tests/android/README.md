@@ -16,11 +16,20 @@ has no Internet permission and does not launch the BOOP application or connect
 to Home Assistant. It does not alter the installed BOOP APK or its saved data.
 
 Android instrumentation sends actual D-pad events. Assertions cover reaching
-both rows, complete visibility of the focused cards, selecting the second card,
+both rows, complete visibility including the enlarged focus borders, selecting the second card,
 and returning to favourites. Screenshots additionally check that scrolling never
-paints over the fixed navigation. The runner fails on any regression and saves
-the result plus initial, row1, row2 and returned screenshots outside the repo by
+paints over the fixed navigation (allowing small antialiasing-rounding differences).
+The runner fails on any regression and saves
+the result plus initial, row1, row2, returned, tall-room and tall-no-rows screenshots outside the repo by
 default, under the sibling `home-row-audit` directory.
+
+A second fixture uses an activity-local 160dpi resource context, one optional row,
+and a synthetic live room containing one lamp. It verifies that spare vertical
+space still exposes the complete room panel and device, and that D-pad traversal
+visits favourites, the optional row, then the room device and returns through the
+same controls. Device selection must reach the fixture callback. A third case
+removes optional rows and checks the existing favourites-to-room shortcut in both
+directions. This changes no emulator display settings or real Home Assistant state.
 
 These fixtures exercise emulator rendering and navigation. They do not establish
 physical Shield or user visual acceptance.

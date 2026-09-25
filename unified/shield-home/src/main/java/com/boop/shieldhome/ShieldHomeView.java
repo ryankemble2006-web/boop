@@ -171,7 +171,6 @@ public final class ShieldHomeView extends LinearLayout {
                     return super.computeScrollDeltaToGetChildRectOnScreen(focused);
                 }
             };
-            contentScroll.setFillViewport(true);
             contentScroll.setVerticalScrollBarEnabled(false);
             contentScroll.setFocusable(false);
             contentScroll.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
@@ -304,6 +303,14 @@ public final class ShieldHomeView extends LinearLayout {
     }
 
     private void returnFromRoomPanel() {
+        if (roomPanelHasOptionalRows && roomPanelView != null && roomPanelView.hasFocus()) {
+            View focused = roomPanelView.findFocus();
+            View previous = focused == null ? null : focused.focusSearch(View.FOCUS_UP);
+            for (android.view.ViewParent parent = previous == null ? null : previous.getParent();
+                    parent != null; parent = parent.getParent()) {
+                if (parent == roomPanelContent && previous.requestFocus()) return;
+            }
+        }
         if (roomPanelPreviousFavourite != null && roomPanelPreviousFavourite.isAttachedToWindow())
             roomPanelPreviousFavourite.requestFocus();
         else resetToFirstFavourite();
@@ -320,7 +327,7 @@ public final class ShieldHomeView extends LinearLayout {
         }
         if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
                 && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && roomPanelEnabled
-                && roomPanelView != null && focusedFavourite(findFocus())) {
+                && !roomPanelHasOptionalRows && roomPanelView != null && focusedFavourite(findFocus())) {
             View previous = findFocus();
             if (roomPanelView.focusControls()) { roomPanelPreviousFavourite = previous; return true; }
         }

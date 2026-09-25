@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Bitmap;
@@ -30,6 +31,7 @@ public final class HomeOptionalRowsProbe extends Activity {
     private View home;
     private final List<String> failures = new ArrayList<>();
     private String selected = "";
+    private String selectedRoomDevice = "";
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -38,9 +40,17 @@ public final class HomeOptionalRowsProbe extends Activity {
             Context installed = createPackageContext(getIntent().getStringExtra("target_package"),
                     Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
             ClassLoader loader = installed.getClassLoader();
+            boolean tallRoomPanel = getIntent().getBooleanExtra("tall_room_panel", false);
+            Configuration layoutConfiguration = new Configuration(installed.getResources().getConfiguration());
+            if (tallRoomPanel) {
+                // A taller logical viewport without changing the emulator's display or app settings.
+                layoutConfiguration.densityDpi = 160;
+                layoutConfiguration.fontScale = 1f;
+            }
+            Context layoutContext = installed.createConfigurationContext(layoutConfiguration);
             Context isolated = new ContextWrapper(this) {
-                @Override public Resources getResources() { return installed.getResources(); }
-                @Override public AssetManager getAssets() { return installed.getAssets(); }
+                @Override public Resources getResources() { return layoutContext.getResources(); }
+                @Override public AssetManager getAssets() { return layoutContext.getAssets(); }
                 @Override public ClassLoader getClassLoader() { return loader; }
             };
             Class<?> viewType = loader.loadClass("com.boop.shieldhome.ShieldHomeView");
@@ -59,11 +69,13 @@ public final class HomeOptionalRowsProbe extends Activity {
                     selected = String.valueOf(cardType.getMethod("title").invoke(args[0]));
                     Log.i(TAG, "SELECTED " + selected);
                 }
+                if (m.getName().equals("onRoomDeviceSelected")) selectedRoomDevice = String.valueOf(args[1]);
                 return null;
             });
             home = (View) viewType.getConstructor(Context.class).newInstance(isolated);
             viewType.getMethod("render", List.class, List.class, callbackType)
                     .invoke(home, List.of(), rows, callbacks);
+            if (tallRoomPanel) bindOfflineRoomState(loader, viewType);
             setContentView(home);
             handler.postDelayed(() -> {
                 View add = find(home, "Add favourites");
@@ -76,6 +88,21 @@ public final class HomeOptionalRowsProbe extends Activity {
             TextView error = new TextView(this);
             error.setText(failure.toString()); setContentView(error);
         }
+    }
+
+    private void bindOfflineRoomState(ClassLoader loader, Class<?> viewType) throws ReflectiveOperationException {
+        Class<?> areaType = loader.loadClass("com.boop.shieldoverlay.AreaInfo");
+        Class<?> entityType = loader.loadClass("com.boop.shieldoverlay.EntityCard");
+        Class<?> phaseType = loader.loadClass("com.boop.shieldoverlay.RoomPanelController$Phase");
+        Class<?> stateType = loader.loadClass("com.boop.shieldoverlay.RoomPanelController$State");
+        Object room = areaType.getConstructor(String.class, String.class).newInstance("audit_room", "Offline room");
+        Object lamp = entityType.getConstructor(String.class, String.class, String.class, String.class,
+                boolean.class, String.class).newInstance("light.audit_lamp", "audit_room", "Offline lamp", "off", false, null);
+        java.lang.reflect.Constructor<?> stateConstructor = stateType.getDeclaredConstructor(long.class,
+                areaType, phaseType, List.class, String.class, String.class);
+        stateConstructor.setAccessible(true);
+        Object state = stateConstructor.newInstance(1L, room, phaseType.getField("LIVE").get(null), List.of(lamp), null, null);
+        viewType.getMethod("setRoomPanelState", stateType, boolean.class).invoke(home, state, true);
     }
 
     /** Registered against this fixture package so key events traverse Android's real input route. */
@@ -116,8 +143,39 @@ public final class HomeOptionalRowsProbe extends Activity {
                 step(activity, KeyEvent.KEYCODE_DPAD_UP, "Offline row 1 card");
                 step(activity, KeyEvent.KEYCODE_DPAD_UP, "Add favourites");
                 capture(activity, "returned");
+                HomeOptionalRowsProbe tall = (HomeOptionalRowsProbe) startActivitySync(
+                        new Intent(getTargetContext(), HomeOptionalRowsProbe.class)
+                                .putExtra("target_package", arguments.getString("target_package", "com.boop.shieldoverlay"))
+                                .putExtra("tall_room_panel", true).putExtra("rows", 1)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK));
+                android.os.SystemClock.sleep(1800); waitForIdleSync();
+                runOnMainSync(() -> tall.checkTallRoomPanel(true));
+                step(tall, KeyEvent.KEYCODE_DPAD_DOWN, "Offline row 1 card");
+                step(tall, KeyEvent.KEYCODE_DPAD_DOWN, "Offline lamp, Off");
+                sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER); waitForIdleSync();
+                runOnMainSync(() -> {
+                    if (!"light.audit_lamp".equals(tall.selectedRoomDevice))
+                        tall.failures.add("D-pad center did not select the offline room device");
+                });
+                headerPixels = null;
+                capture(tall, "tall-room");
+                step(tall, KeyEvent.KEYCODE_DPAD_UP, "Offline row 1 card");
+                step(tall, KeyEvent.KEYCODE_DPAD_UP, "Add favourites");
+                activity.failures.addAll(tall.failures);
+                HomeOptionalRowsProbe noRows = (HomeOptionalRowsProbe) startActivitySync(
+                        new Intent(getTargetContext(), HomeOptionalRowsProbe.class)
+                                .putExtra("target_package", arguments.getString("target_package", "com.boop.shieldoverlay"))
+                                .putExtra("tall_room_panel", true).putExtra("rows", 0)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK));
+                android.os.SystemClock.sleep(1800); waitForIdleSync();
+                runOnMainSync(() -> noRows.checkTallRoomPanel(false));
+                step(noRows, KeyEvent.KEYCODE_DPAD_DOWN, "Offline lamp, Off");
+                headerPixels = null;
+                capture(noRows, "tall-no-rows");
+                step(noRows, KeyEvent.KEYCODE_DPAD_UP, "Add favourites");
+                activity.failures.addAll(noRows.failures);
                 String verdict = activity.failures.isEmpty()
-                        ? "PASS optional rows focus, visibility, selection and return"
+                        ? "PASS optional rows focus, visibility, selection and return; tall room panel visibility and action"
                         : "FAIL " + activity.failures;
                 result.putString("stream", verdict + "\n"); Log.i(TAG, verdict);
                 finish(activity.failures.isEmpty() ? Activity.RESULT_OK : Activity.RESULT_CANCELED, result);
@@ -156,6 +214,38 @@ public final class HomeOptionalRowsProbe extends Activity {
             }
             return false;
         }
+    }
+
+    private void checkTallRoomPanel(boolean expectOptionalRow) {
+        View panel = findType(home, "com.boop.shieldhome.ShieldRoomPanelView");
+        float density = home.getResources().getDisplayMetrics().density;
+        if (home.getHeight() / density < 900) failures.add("Tall room fixture needs at least 900dp height");
+        View row = find(home, "Offline row 1 card");
+        if (expectOptionalRow && (row == null || !fullyVisible(row)))
+            failures.add("Optional row missing in tall room fixture");
+        if (panel == null || panel.getVisibility() != View.VISIBLE || panel.getHeight() < 110 * density
+                || !fullyVisible(panel)) failures.add("Room panel hidden or clipped despite spare vertical space");
+        if (expectOptionalRow && panel != null && row != null) {
+            int[] panelPosition = new int[2], rowPosition = new int[2];
+            panel.getLocationOnScreen(panelPosition); row.getLocationOnScreen(rowPosition);
+            if (panelPosition[1] < rowPosition[1] + row.getHeight())
+                failures.add("Room panel overlaps the optional row");
+        }
+        View device = find(home, "Offline lamp, Off");
+        if (device == null || !device.isShown() || !fullyVisible(device))
+            failures.add("Offline room device is hidden or clipped");
+    }
+
+    private static View findType(View root, String name) {
+        if (root == null) return null;
+        if (name.equals(root.getClass().getName())) return root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findType(group.getChildAt(i), name); if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private void checkFocusedVisible(String label) {

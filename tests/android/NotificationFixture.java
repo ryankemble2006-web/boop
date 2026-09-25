@@ -48,9 +48,10 @@ public final class NotificationFixture extends Activity {
                     new Intent(context, NotificationFixture.class).putExtra("id", id),
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             String body = intent.getStringExtra("body");
+            String title = intent.getStringExtra("title");
             Notification.Builder builder = new Notification.Builder(context, channel)
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
-                    .setContentTitle("Pocket fixture " + id)
+                    .setContentTitle(title == null ? "Pocket fixture " + id : title)
                     .setContentText(body == null ? "Private synthetic message" : body)
                     .setContentIntent(open).setAutoCancel(true)
                     .setOnlyAlertOnce(intent.getBooleanExtra("only_once", false))
