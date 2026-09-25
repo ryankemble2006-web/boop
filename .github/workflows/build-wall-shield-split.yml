@@ -1,4 +1,4 @@
-name: Build signed BOOP Shield v251 and Wall v218
+name: Build signed BOOP Shield v251 and Wall v219
 on:
   push:
     branches: [boop-pocket-polish-v251, boop-notification-remote-lab-v250, boop-wall-shield-split-v207, boop-shield-room-panel-v213, boop-shield-ha-fast-v214, boop-shield-fan-capability-v215, boop-shield-weather-icon-fan-v216, boop-shield-grab-reorder-v217, boop-shield-now-playing-align-v218, boop-shield-now-playing-align-v219, boop-shield-accent-colour-v220, boop-shield-weather-focus-v221]
@@ -88,7 +88,7 @@ jobs:
           cp -R boop-build/BOOP-Alpha1/shield-lib/build/test-results/testDebugUnitTest split-artifact/ha-unit-tests
       - uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-v251-Wall-v218-Signed
+          name: BOOP-Shield-v251-Wall-v219-Signed
           path: split-artifact/
           if-no-files-found: error
       - name: Remove temporary signer
