@@ -2,7 +2,7 @@
 
 ## Scope and boundaries
 
-Owning branch `boop-pocket-polish-v251`, based on live notification branch `2a983a1752d6ddb9d5e9b92d5ddafbb21433180c`. Ryan requested autonomous Yoga emulator work while watching TV. Physical Pixel10, Shield, HA and AV state are untouched. Existing preferences, approved artwork and native libraries must remain intact.
+Owning branch `boop-pocket-polish-v251`, based on live notification branch `2a983a1752d6ddb9d5e9b92d5ddafbb21433180c`. Ryan requested autonomous Yoga emulator work while watching TV. The initial emulator pass left physical Pixel10, Shield, HA and AV state untouched; the subsequent authorised installation is recorded below. Existing preferences, approved artwork and native libraries must remain intact.
 
 ## Changes
 
@@ -42,8 +42,14 @@ All three use permanent certificate SHA256 `f5af40378ef06445b43f6001ae602fc18ce1
 
 Final exact-signed runtime smoke passed: expanded Home fixture ordinary/tall/no-optional scenarios; sender default border RGB77,184,255; signature permission granted to sender and provider query denied to untrusted shell; real phone Android notification popup and tap to fixture111; authenticated sender-to-phone Facebook preview and Stop acknowledgment. Earlier complete12-preview, custom Home colour, lock/privacy and large-text checks used local emulator builds during development; the exact signed smoke checks above confirm the final delivery. Physical LAN discovery and device acceptance remain separate.
 
-Delivery folder: `C:/Users/ryank/Documents/Codex/2026-09-25/fan/outputs/BOOP-pocket-polish`. It contains all three APKs, CI/independent receipts, the baseline-failure audit, emulator acceptance receipt and actual screenshots. No physical app was installed or modified. Future physical updates must preserve data with `adb install -r`.
+Delivery folder: `C:/Users/ryank/Documents/Codex/2026-09-25/fan/outputs/BOOP-pocket-polish`. It contains all three APKs, CI/independent receipts, the baseline-failure audit, emulator acceptance receipt and actual screenshots. At the end of the emulator pass, no physical app had been installed or modified. The subsequently authorised in-place updates are recorded below.
+
+## Physical installation — 25 September 2026
+
+Ryan then authorised deployment to the real devices. At21:29UTC on25September, Pixel10 was updated217→218, Shield249→251 and its separate Test Sender1→2 using `adb install -r`. All three installed APK SHA256s match the signed receipts. Application UIDs and first-install times are preserved; all saved user settings are preserved. Pixel's active notification listener refreshed only `observed_channels` discovery metadata; no consent, appearance, voice or playback preference changed. The sender's Home-accent signature permission is granted. YouTube remained the Shield's foreground activity in the same task; no app activity was launched and no AV command was sent.
+
+Rollback APKs and private preference snapshots are retained locally under task `work/real-device-deployment/`; the user-facing installation receipt is `outputs/BOOP-pocket-polish/physical-installation.json`. Pixel already has notification-listener access and BOOP's master switch enabled. The new All apps option remains off, preserving the existing selected-app policy. Overlay app-op is still default, with no explicit grant recorded; use Profile → Notifications to finish the Android overlay/all-app setup when wanted. No Android permission or consent setting was changed. Real-device visual/acoustic, all-app popup/background/wake and physical LAN discovery acceptance remain pending.
 
 ## Remaining physical acceptance
 
-These are emulator and source results. Pixel10 notification listener/overlay grants require the normal Android consent screens. Actual OEM background/wake behaviour, microphone recognition and acoustic music selection need Ryan's later device check. Android keeps original notifications; silence chosen native categories to avoid duplicate sounds. Real-device installation is not part of the TV-safe emulator pass.
+Runtime scenarios above are emulator/source evidence; the deployment section separately records verified physical installation. Pixel10 already has listener access; overlay/all-app setup still needs completion through the normal settings screens. Actual OEM background/wake behaviour, microphone recognition and acoustic music selection need Ryan's later device check. Android keeps original notifications; silence chosen native categories to avoid duplicate sounds. The later authorised physical installation is complete; it does not by itself establish runtime acceptance.

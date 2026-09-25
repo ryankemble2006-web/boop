@@ -1,12 +1,12 @@
 # BOOP status
 
-## Pocket polish ready for device acceptance: Shield251 / Wall218 / Test Sender2 — 25 September 2026
+## Pocket polish installed: Shield251 / Wall218 / Test Sender2 — 25 September 2026
 
 Ryan authorised autonomous emulator work while watching TV: clipping, natural commands, then portable notifications. This branch is `boop-pocket-polish-v251`, based on notification-lab owner `2a983a1752d6ddb9d5e9b92d5ddafbb21433180c`.
 
 Implemented scrolling/readable controls for short or enlarged layouts, optional Home-row focus scrolling, Home-accent lab outlines, more conversational verified music requests, and opt-in all-app notifications with persistent exclusions. Notification runtime now handles permission revocation, group summaries, only-alert-once updates, delayed unlock, correct app sign identity, and BOOP's own Android overlay-status notice.
 
-Final permanent-signed source `2460ab75ca880c812b95730322a5b9ad9bfc2fa1` passed [CI36190488635](https://github.com/ryankemble2006-web/boop/actions/runs/36190488635). Shield251, Wall218 and Sender2 signatures/assets/native libraries and installed emulator APK hashes are verified. Final Home/focus, real notification tap and authenticated sender-to-phone/Stop smoke tests pass. [PR11](https://github.com/ryankemble2006-web/boop/pull/11) and `docs/handoffs/2026-09-25-pocket-polish-v251.md` contain the evidence and inherited-test limitations. Yoga TV/Pixel emulators are the only devices changed; physical Pixel10/Shield installation, Android grants and Ryan's acceptance remain pending. No real AV playback or commands were sent.
+Final permanent-signed source `2460ab75ca880c812b95730322a5b9ad9bfc2fa1` passed [CI36190488635](https://github.com/ryankemble2006-web/boop/actions/runs/36190488635). Shield251, Wall218 and Sender2 signatures/assets/native libraries and installed emulator APK hashes are verified. Final Home/focus, real notification tap and authenticated sender-to-phone/Stop smoke tests pass. [PR11](https://github.com/ryankemble2006-web/boop/pull/11) and `docs/handoffs/2026-09-25-pocket-polish-v251.md` contain the evidence and inherited-test limitations. Ryan subsequently authorised physical deployment: Pixel10 Wall218, Shield251 and Sender2 are installed in place with matching APK hashes, preserved UIDs/install history and saved settings. YouTube remained foreground. Pixel's existing listener/master consent is retained; All apps remains off and overlay app-op remains default. Finish that optional setup via Profile → Notifications. Real-device visual/acoustic, popup/background/wake and LAN discovery acceptance remain pending. No real AV commands were sent.
 
 
 ## Next task — confirmed by Ryan, 22 September 2026
