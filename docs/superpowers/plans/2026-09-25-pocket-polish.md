@@ -17,29 +17,29 @@
 - Do not read or recreate retired personality transfer files.
 
 ## Task 1: UI audit and clipping fixes
-- [ ] Install accepted baseline in TV/Pixel emulators and record reachable screen inventory.
-- [ ] Capture relevant screens at normal/large text and narrow/landscape sizes; reproduce clipped or unreachable controls.
-- [ ] Fix source layout constraints, with behavioural regression checks where worthwhile. Verify real rendered screens and DPAD/Back navigation.
-- [ ] Commit scoped changes and evidence record.
+- [x] Install accepted baseline in TV/Pixel emulators and record reachable screen inventory.
+- [x] Capture relevant screens at normal/large text and narrow/landscape sizes; reproduce clipped or unreachable controls.
+- [x] Fix source layout constraints, with behavioural regression checks where worthwhile. Verify real rendered screens and DPAD/Back navigation.
+- [x] Commit scoped changes and evidence record.
 
 ## Task 2: Natural commands
 Files: unified/shared/MediaRequest.java, unified/DeezerCatalogue.java, tests/test_music_voice_selection.py, tests/java/MusicVoiceSelectionProbe.java and focused shared parser tests.
-- [ ] Add failing tests for conversational requests, provider variants, artist/title order and artist possessives across unrelated catalogue fixtures; pin non-media rejection and ambiguity.
-- [ ] Fix parsing/resolution at the earliest failing boundary, preserving catalogue identity verification, recording qualifiers, no replay, room/auth guards and existing Flow.
-- [ ] Run actual Java production paths against deterministic metadata and playback boundaries. Use no physical playback.
-- [ ] Commit independently.
+- [x] Add failing tests for conversational requests, provider variants, artist/title order and artist possessives across unrelated catalogue fixtures; pin non-media rejection and ambiguity.
+- [x] Fix parsing/resolution at the earliest failing boundary, preserving catalogue identity verification, recording qualifiers, no replay, room/auth guards and existing Flow.
+- [x] Run actual Java production paths against deterministic metadata and playback boundaries. Use no physical playback.
+- [x] Commit integrated source and regression evidence on the isolated branch.
 
 ## Task 3: Pocket notifications
 Files: source/BoopNotification*.java, notification-lab, related tests and materialization scripts.
-- [ ] Pair emulator sender/receiver and exercise 12 previews, Run all, Stop, background and re-entry.
-- [ ] Test real Android notification intake from a disposable fixture app on the emulator, including overlay, grouping, removal, opening, lock privacy and disabled state.
-- [ ] Fix reproduced runtime/permission/layout defects with regression coverage. Make supported portable settings discoverable without automatically granting live-phone access.
-- [ ] Document Android limits and any physical acceptance remaining.
+- [x] Pair emulator sender/receiver and exercise 12 previews, Run all, Stop, background and re-entry.
+- [x] Test real Android notification intake from a disposable fixture app on the emulator, including overlay, grouping, removal, opening, lock privacy and disabled state.
+- [x] Fix reproduced runtime/permission/layout defects with regression coverage. Make supported portable settings discoverable without automatically granting live-phone access.
+- [x] Document Android limits and any physical acceptance remaining.
 
 ## Delivery
-- [ ] Independent branch review; fix important findings and run appropriate checks.
-- [ ] Signed GitHub build, verify source/signature/assets, install and retest emulators.
-- [ ] Publish PR and updated factual handoff with evidence and remaining limitations.
+- [x] Independent branch review; fix important findings and run appropriate checks.
+- [x] Signed GitHub build, verify source/signature/assets, install and retest emulators.
+- [x] Publish PR and updated factual handoff with evidence and remaining limitations.
 
 ## Ledger
 - Full reset redeemed successfully; usage refreshed to 0% used.
