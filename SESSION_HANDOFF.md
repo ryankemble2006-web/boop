@@ -2,7 +2,7 @@
 
 ## Shield Seren Next Up — 26 September 2026
 
-Shield253 follow-up restores the original HA panel width and button sizes while retaining the below-Seren position. Local Android fixture measures identical original/Seren HA tiles (280 × 136 px); 45 focused checks and the preview build pass. Signed delivery is pending. See the follow-up section in the Seren handoff.
+Shield253 is installed: it restores the original HA panel width and button sizes while retaining the below-Seren position. The Android fixture measures identical original/Seren HA tiles (280 × 136 px); 45 focused checks, the preview build and signed CI36218463668 pass. Installed APK hash, permanent signer, unchanged preferences/UID/install history and all 29 assets/16 libraries are verified. Kodi remains foreground; no additional physical playback test was needed for this layout-only change. See the follow-up section in the Seren handoff.
 
 Shield252 is installed and Ryan confirmed one-click playback from a cold Kodi start. Seren posters sit below favourite apps; HA is one Down press below the initial screen. Source `768bfb0d` passed signed CI36217003838 and the installed hash matches, with unchanged preferences, assets, native libraries and UID. The measured cold launch reached fullscreen moving video in14.374seconds. Branch `boop-shield-seren-v252` / PR12 starts from the latest phone/Shield owner at `34612d7`, retaining Wall220 without deploying it. See [the Seren handoff](docs/handoffs/2026-09-26-shield-seren-v252.md) for direct local Kodi transport, verification, transition-timing caveat and rollback.
 
