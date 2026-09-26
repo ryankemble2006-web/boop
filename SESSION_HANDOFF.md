@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## Shield Seren Next Up — 26 September 2026
+
+Ryan approved a Seren poster row in BOOP Home and moving HA below the initial screen. Current work is `boop-shield-seren-v252`, based on the latest phone/Shield owner at `34612d7`. It retains Wall220 and deploys only Shield252. See [the Seren handoff](docs/handoffs/2026-09-26-shield-seren-v252.md) for direct local Kodi transport, emulator verification, rollback and delivery state. Signed build/install and physical playback are pending at this checkpoint.
+
 ## Current phone follow-up: Wall220 widget controls — 26 September 2026
 
 Wall219's full-screen widget picker is installed and accepted. The next fix adds persistent resize/centre controls and gentle icon alignment, preserving the existing phone layout. See `docs/handoffs/2026-09-26-home-widget-controls-v220.md` for current validation and installation state. Shield251 and Sender2 remain the accepted physical builds.
