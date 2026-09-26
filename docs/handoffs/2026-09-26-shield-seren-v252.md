@@ -1,5 +1,11 @@
 # Shield252: Seren Next Up on Home
 
+## Shield253: restore HA dimensions
+
+Ryan accepted the Seren row and requested the original HA control width and button sizes, keeping its new hidden position. The scroll child now uses the original `RoomPanelLayout` width, right reservation and height instead of a fixed 220 dp height. The existing offscreen gap and Seren playback path are unchanged.
+
+The Android fixture compares the original non-Seren panel with the relocated panel using the same display and four controls: both tiles measure 280 × 136 px. It also passes initial offscreen HA, D-pad traversal, exact episode selection, refreshed/empty feeds and artwork retry. The preview Android build and 45 focused regression checks pass. The standalone legacy fixture explicitly measures at its final layout parameters to avoid stale measurements from its initially hidden overlay. Signed build and physical installation are pending.
+
 Ryan approved a native Seren Next Up poster row in BOOP on Shield, with HA controls below the initial screen. Clicking a poster opens the exact episode through the existing Seren autoplay and pre-scrape configuration. The implementation uses Kodi's existing loopback JSON-RPC TCP server; the diagnostic laptop forward is not a runtime dependency. No HA, Kodi, source-provider or Android permission settings are changed.
 
 Branch `boop-shield-seren-v252` starts from current `boop-pocket-polish-v251` at `34612d7b3346a638bfbe6cf0edd022956ad152e3`. Physical Shield251 was verified against its accepted signed APK. The phone's Wall220 source is retained; this task deploys only Shield. The former weather-focus owner is older than the installed Shield and was not used as the implementation base.

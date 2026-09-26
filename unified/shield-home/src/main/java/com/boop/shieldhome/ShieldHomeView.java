@@ -223,7 +223,7 @@ public final class ShieldHomeView extends LinearLayout {
         if (serenEnabled) {
             serenRoomGap = new View(getContext());
             stageContent.addView(serenRoomGap, new LayoutParams(1, dp(16)));
-            stageContent.addView(roomPanelView, new LayoutParams(LayoutParams.MATCH_PARENT, dp(220)));
+            stageContent.addView(roomPanelView, new LayoutParams(LayoutParams.MATCH_PARENT, dp(110)));
             View bottomGutter = new View(getContext());
             stageContent.addView(bottomGutter, new LayoutParams(1, dp(16)));
         } else {
@@ -317,6 +317,9 @@ public final class ShieldHomeView extends LinearLayout {
         }
         bottom += roomPanelContent.getTop() + favouriteScroller.getTop() + favouriteRow.getTop();
         if (serenEnabled) {
+            // Move the original panel below Seren without enlarging its controls.
+            RoomPanelLayout.Bounds original = RoomPanelLayout.calculate(roomPanelStage.getWidth(),
+                    roomPanelStage.getHeight(), bottom, dp(16), roomPanelRight, dp(110));
             // Reclaim unused space below app labels, preserving their art and focus geometry.
             int favouriteHeight = bottom - favouriteScroller.getTop() - roomPanelContent.getTop() + dp(8);
             if (favouriteHeight > 0 && favouriteScroller.getLayoutParams().height != favouriteHeight) {
@@ -334,7 +337,14 @@ public final class ShieldHomeView extends LinearLayout {
             }
             roomPanelView.setVisibility(roomPanelEnabled ? VISIBLE : GONE);
             LayoutParams roomParams = (LayoutParams) roomPanelView.getLayoutParams();
-            if (roomParams.rightMargin != roomPanelRight) { roomParams.rightMargin = roomPanelRight; roomPanelView.setLayoutParams(roomParams); }
+            int panelHeight = Math.max(dp(110), original.height);
+            if (roomParams.width != original.width || roomParams.height != panelHeight
+                    || roomParams.rightMargin != original.right) {
+                roomParams.width = original.width;
+                roomParams.height = panelHeight;
+                roomParams.rightMargin = original.right;
+                roomPanelView.setLayoutParams(roomParams);
+            }
             return;
         }
         if (roomPanelHasOptionalRows) bottom = Math.max(bottom, roomPanelContent.getBottom());

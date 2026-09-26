@@ -6,9 +6,10 @@ import java.lang.reflect.*;import java.util.*;
 
 /** Uses real installed Home classes with isolated preferences, no network or playback. */
 public final class SerenRowsProbe extends Activity {
-    View home; String selected="", roomSelected=""; Throwable creationFailure;
+    View home, originalHome; String selected="", roomSelected=""; Throwable creationFailure;
     final List<String> failures=new ArrayList<>();
     Method bind; Constructor<?> episodeConstructor; List<Object> episodes;
+    int originalTileWidth, originalTileHeight;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);getWindow().getDecorView().setSystemUiVisibility(5894);
         try {
@@ -37,10 +38,17 @@ public final class SerenRowsProbe extends Activity {
             type.getMethod("render",List.class,List.class,callbacksType).invoke(home,List.of(),List.of(),callbacks);
             Class<?> area=loader.loadClass("com.boop.shieldoverlay.AreaInfo"),entity=loader.loadClass("com.boop.shieldoverlay.EntityCard"),phase=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$Phase"),stateType=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$State");
             Object room=area.getConstructor(String.class,String.class).newInstance("test_room","Home Assistant");
-            Object lamp=entity.getConstructor(String.class,String.class,String.class,String.class,boolean.class,String.class).newInstance("light.test","test_room","Test lamp","off",false,null);
+            List<Object> devices=new ArrayList<>();
+            for(int i=0;i<4;i++)devices.add(entity.getConstructor(String.class,String.class,String.class,String.class,boolean.class,String.class)
+                    .newInstance(i==0?"light.test":"light.test"+i,"test_room",i==0?"Test lamp":"Test lamp "+i,"off",false,null));
             Constructor<?> sc=stateType.getDeclaredConstructor(long.class,area,phase,List.class,String.class,String.class);sc.setAccessible(true);
-            type.getMethod("setRoomPanelState",stateType,boolean.class).invoke(home,sc.newInstance(1L,room,phase.getField("LIVE").get(null),List.of(lamp),null,null),true);
-            setContentView(home);
+            Object roomState=sc.newInstance(1L,room,phase.getField("LIVE").get(null),devices,null,null);
+            type.getMethod("setRoomPanelState",stateType,boolean.class).invoke(home,roomState,true);
+            // The unchanged pre-Seren path supplies the real measured sizing reference.
+            originalHome=(View)type.getConstructor(Context.class).newInstance(isolated);
+            type.getMethod("render",List.class,List.class,callbacksType).invoke(originalHome,List.of(),List.of(),callbacks);
+            type.getMethod("setRoomPanelState",stateType,boolean.class).invoke(originalHome,roomState,true);
+            setContentView(originalHome);
         } catch(Throwable e){creationFailure=e;TextView error=new TextView(this);error.setText(e.toString());setContentView(error);}
     }
     static View find(View view,String text){
@@ -48,6 +56,7 @@ public final class SerenRowsProbe extends Activity {
         if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++){View result=find(((ViewGroup)view).getChildAt(i),text);if(result!=null)return result;}return null;
     }
     static boolean full(View v){Rect r=new Rect();return v!=null&&v.getGlobalVisibleRect(r)&&r.height()>=v.getHeight()-2&&r.width()>=v.getWidth()-2;}
+    static void remeasure(View v){v.forceLayout();if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++)remeasure(((ViewGroup)v).getChildAt(i));}
     public static final class ProbeInstrumentation extends Instrumentation {
         Bundle args;
         public void onCreate(Bundle args){this.args=args;start();}
@@ -57,11 +66,35 @@ public final class SerenRowsProbe extends Activity {
             SystemClock.sleep(1800);waitForIdleSync();
             if(a.creationFailure!=null)throw new AssertionError("Cannot render Seren row",a.creationFailure);
             runOnMainSync(()->{
+                try {
+                    Field f=a.originalHome.getClass().getDeclaredField("roomPanelView");f.setAccessible(true);View panel=(View)f.get(a.originalHome);
+                    FrameLayout.LayoutParams p=(FrameLayout.LayoutParams)panel.getLayoutParams();
+                    int width=((View)panel.getParent()).getWidth()-p.leftMargin-p.rightMargin;
+                    // The legacy overlay is initially GONE; measure its now-final layout parameters.
+                    for(int pass=0;pass<2;pass++) {
+                        remeasure(panel);panel.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(p.height,View.MeasureSpec.EXACTLY));
+                        panel.layout(0,p.topMargin,width,p.topMargin+p.height);
+                    }
+                }catch(Exception e){throw new RuntimeException(e);}
+            });
+            SystemClock.sleep(200);waitForIdleSync();
+            runOnMainSync(()->{
+                View original=find(a.originalHome,"Test lamp, Off");
+                a.originalTileWidth=original.getWidth();a.originalTileHeight=original.getHeight();
+                a.setContentView(a.home);
+            });
+            SystemClock.sleep(1800);waitForIdleSync();
+            runOnMainSync(()->{
                 find(a.home,"Add favourites").requestFocus();
                 View card=find(a.home,"Example show 1: 01x02 Next episode");
                 if(!full(card))a.failures.add("First poster is not fully visible on initial screen");
                 Rect room=new Rect();View lamp=find(a.home,"Test lamp, Off");
                 if(lamp==null)a.failures.add("HA controls missing");else if(lamp.getGlobalVisibleRect(room))a.failures.add("HA should start off screen");
+                if(lamp!=null){
+                    String sizes="original="+a.originalTileWidth+"x"+a.originalTileHeight+", below Seren="+lamp.getWidth()+"x"+lamp.getHeight();
+                    android.util.Log.i("SerenSizeAudit",sizes);
+                    if(lamp.getWidth()!=a.originalTileWidth||lamp.getHeight()!=a.originalTileHeight)a.failures.add("HA button size changed: "+sizes);
+                }
             });
             capture("seren-initial");
             step(a,KeyEvent.KEYCODE_DPAD_DOWN,"Example show 1: 01x02 Next episode");
