@@ -74,7 +74,7 @@ def test_shield_release_keeps_aligned_weather_in_v251():
     verify = (ROOT / "split/verify-apks.py").read_text()
     assert "versionCode 251" in gradle
     assert "versionName '1.2.251-shield'" in gradle
-    assert "version = 251 if body == 'shield' else 219" in verify
+    assert "version = 251 if body == 'shield' else 220" in verify
     assert "android.permission.INTERNET" in verify
 
 def test_weather_sections_share_one_header_grid_and_centered_footer():

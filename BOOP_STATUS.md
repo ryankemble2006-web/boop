@@ -1,5 +1,10 @@
 # BOOP status
 
+## Current phone follow-up: Wall220 widget controls — 26 September 2026
+
+Wall219's full-screen widget picker is installed and accepted. The next fix adds persistent resize/centre controls and gentle icon alignment, preserving the existing phone layout. See `docs/handoffs/2026-09-26-home-widget-controls-v220.md` for current validation and installation state. Shield251 and Sender2 remain the accepted physical builds.
+
+
 ## Pocket polish installed: Shield251 / Wall218 / Test Sender2 — 25 September 2026
 
 Ryan authorised autonomous emulator work while watching TV: clipping, natural commands, then portable notifications. This branch is `boop-pocket-polish-v251`, based on notification-lab owner `2a983a1752d6ddb9d5e9b92d5ddafbb21433180c`.
