@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -158,8 +159,36 @@ public final class ShieldHomeView extends LinearLayout {
                     LayoutParams.MATCH_PARENT, dp(150)));
         }
 
-        homeStage.addView(stageContent, new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.TOP));
+        if (roomPanelHasOptionalRows) {
+            // Provider rows can extend below the screen. Let D-pad focus reveal
+            // them while the navigation and assistant overlay keep their places.
+            ScrollView contentScroll = new ScrollView(getContext()) {
+                @Override protected int computeScrollDeltaToGetChildRectOnScreen(android.graphics.Rect rect) {
+                    // Focus scales the card after ScrollView first reveals it.
+                    android.graphics.Rect focused = new android.graphics.Rect(rect);
+                    int gutter = Math.round(rect.height() * (TvAppCardView.FOCUSED_SCALE - 1f) / 2f) + dp(1);
+                    focused.inset(0, -gutter);
+                    return super.computeScrollDeltaToGetChildRectOnScreen(focused);
+                }
+            };
+            contentScroll.setVerticalScrollBarEnabled(false);
+            contentScroll.setFocusable(false);
+            contentScroll.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                    v.setClipBounds(new android.graphics.Rect(0, 0, right - left, bottom - top)));
+            // Include the outer horizontal gutter in the viewport so focused
+            // tiles can grow without drawing above the fixed navigation row.
+            stageContent.setPadding(getPaddingLeft(), 0, getPaddingRight(), 0);
+            contentScroll.addView(stageContent, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            FrameLayout.LayoutParams scrollParams = new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+            scrollParams.leftMargin = -getPaddingLeft();
+            scrollParams.rightMargin = -getPaddingRight();
+            homeStage.addView(contentScroll, scrollParams);
+        } else {
+            homeStage.addView(stageContent, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.TOP));
+        }
 
         roomPanelView = new ShieldRoomPanelView(getContext());
         roomPanelView.setActions((generation, entityId) -> {
@@ -274,6 +303,14 @@ public final class ShieldHomeView extends LinearLayout {
     }
 
     private void returnFromRoomPanel() {
+        if (roomPanelHasOptionalRows && roomPanelView != null && roomPanelView.hasFocus()) {
+            View focused = roomPanelView.findFocus();
+            View previous = focused == null ? null : focused.focusSearch(View.FOCUS_UP);
+            for (android.view.ViewParent parent = previous == null ? null : previous.getParent();
+                    parent != null; parent = parent.getParent()) {
+                if (parent == roomPanelContent && previous.requestFocus()) return;
+            }
+        }
         if (roomPanelPreviousFavourite != null && roomPanelPreviousFavourite.isAttachedToWindow())
             roomPanelPreviousFavourite.requestFocus();
         else resetToFirstFavourite();
@@ -290,7 +327,7 @@ public final class ShieldHomeView extends LinearLayout {
         }
         if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
                 && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && roomPanelEnabled
-                && roomPanelView != null && focusedFavourite(findFocus())) {
+                && !roomPanelHasOptionalRows && roomPanelView != null && focusedFavourite(findFocus())) {
             View previous = findFocus();
             if (roomPanelView.focusControls()) { roomPanelPreviousFavourite = previous; return true; }
         }

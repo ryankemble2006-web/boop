@@ -86,10 +86,13 @@ public final class BoopNotificationLabActivity extends Activity {
         if (!active) return;
         preview = false;
         root.removeAllViews();
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        root.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
         LinearLayout column = new LinearLayout(this);
         column.setOrientation(LinearLayout.VERTICAL); column.setGravity(Gravity.CENTER);
         column.setPadding(24, 24, 24, 24);
-        root.addView(column, new FrameLayout.LayoutParams(-1, -1));
+        scroll.addView(column, new FrameLayout.LayoutParams(-1, -2));
         column.addView(label("BOOP Notification Test", 27));
         column.addView(label("Open BOOP Test Sender on Shield", 19));
         column.addView(label(server != null && server.isRunning() ? code : "Not listening", 42));
@@ -97,6 +100,7 @@ public final class BoopNotificationLabActivity extends Activity {
         column.addView(label(addresses(), 15));
         column.addView(label("Fake previews only. Close this screen to disconnect.", 16));
         Button done = new Button(this); done.setText("Close test");
+        BoopLabFocus.apply(done, com.boop.shieldhome.BoopTvChrome.accentColor(this));
         done.setOnClickListener(v -> finish()); column.addView(done);
     }
     private String addresses() {

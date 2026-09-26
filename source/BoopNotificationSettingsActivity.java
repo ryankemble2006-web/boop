@@ -84,6 +84,22 @@ public final class BoopNotificationSettingsActivity extends Activity {
         content.removeAllViews();
         addText("Notifications", 30f, true, 0);
         addText(readiness(), 18f, false, 12);
+        if (!BoopNotificationPermissionState.hasListenerAccess(this)) {
+            Button access = button("Allow notification access");
+            access.setOnClickListener(v -> launchNotificationAccess());
+            addWithBottom(access, 12);
+        }
+        if (!BoopNotificationPermissionState.hasOverlayAccess(this)) {
+            Button display = button("Allow BOOP over other apps");
+            display.setOnClickListener(v -> {
+                try { startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:" + getPackageName()))); }
+                catch (RuntimeException unavailable) {
+                    Toast.makeText(this, "Open Android settings to allow display over other apps.", Toast.LENGTH_LONG).show();
+                }
+            });
+            addWithBottom(display, 12);
+        }
 
         Switch master = switchRow("BOOP Notifications", state.masterEnabled());
         master.setContentDescription("BOOP Notifications master switch");
@@ -104,6 +120,14 @@ public final class BoopNotificationSettingsActivity extends Activity {
                     false);
         });
         addWithBottom(master, 22);
+
+        Switch allApps = switchRow("All apps and new categories", state.allAppsEnabled());
+        allApps.setOnCheckedChangeListener((button, checked) -> persist(state.withAllAppsEnabled(checked), true));
+        addWithBottom(allApps, 6);
+        addText(state.allAppsEnabled()
+                ? "BOOP presents notifications from all apps, including new ones. Turn off any app or category below to exclude it."
+                : "Choose apps and categories below, or enable all apps to include new ones automatically.", 16f, false, 16);
+        addText("BOOP also appears over other apps. Android keeps the original notification; use its category settings below to silence duplicate alerts. Locked previews hide message text.", 16f, false, 22);
 
         TextView timeoutLabel = addText(timeoutLabel(), 19f, false, 4);
         SeekBar timeout = new SeekBar(this);
@@ -155,9 +179,7 @@ public final class BoopNotificationSettingsActivity extends Activity {
         Switch appSwitch = switchRow(app.label(), state.isAppEnabled(app.packageName()));
         appSwitch.setContentDescription("Allow BOOP notifications from " + app.label());
         appSwitch.setOnCheckedChangeListener((button, checked) -> {
-            Set<String> apps = new LinkedHashSet<>(state.enabledApps());
-            if (checked) apps.add(app.packageName()); else apps.remove(app.packageName());
-            persist(state.withEnabledApps(apps), true);
+            persist(state.withAppEnabled(app.packageName(), checked), true);
         });
         content.addView(appSwitch, matchWrap());
         addText(app.packageName(), 13f, false, 7);
@@ -168,7 +190,9 @@ public final class BoopNotificationSettingsActivity extends Activity {
         }
 
         if (channels == null || channels.isEmpty()) {
-            addText(NO_CATEGORIES, 15f, false, 18);
+            addText(state.allAppsEnabled()
+                    ? "New categories from this app are included automatically. They appear here after the app sends a notification."
+                    : NO_CATEGORIES, 15f, false, 18);
             return;
         }
 
@@ -186,11 +210,7 @@ public final class BoopNotificationSettingsActivity extends Activity {
                 state.isChannelEnabled(channel.packageName(), channel.channelId()));
         channelSwitch.setContentDescription("Allow BOOP notification category " + channelName);
         channelSwitch.setOnCheckedChangeListener((button, checked) -> {
-            Set<String> channels = new LinkedHashSet<>(state.enabledChannelKeys());
-            String key = BoopNotificationSettingsCodec.channelKey(
-                    channel.packageName(), channel.channelId());
-            if (checked) channels.add(key); else channels.remove(key);
-            persist(state.withEnabledChannelKeys(channels), false);
+            persist(state.withChannelEnabled(channel.packageName(), channel.channelId(), checked), false);
         });
         LinearLayout.LayoutParams switchParams = matchWrap();
         switchParams.setMargins(dp(20), 0, 0, 0);

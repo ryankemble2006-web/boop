@@ -1,5 +1,19 @@
 # BOOP status
 
+## Current phone follow-up: Wall220 widget controls — 26 September 2026
+
+Wall219's full-screen widget picker is installed and accepted. The next fix adds persistent resize/centre controls and gentle icon alignment, preserving the existing phone layout. See `docs/handoffs/2026-09-26-home-widget-controls-v220.md` for current validation and installation state. Shield251 and Sender2 remain the accepted physical builds.
+
+
+## Pocket polish installed: Shield251 / Wall218 / Test Sender2 — 25 September 2026
+
+Ryan authorised autonomous emulator work while watching TV: clipping, natural commands, then portable notifications. This branch is `boop-pocket-polish-v251`, based on notification-lab owner `2a983a1752d6ddb9d5e9b92d5ddafbb21433180c`.
+
+Implemented scrolling/readable controls for short or enlarged layouts, optional Home-row focus scrolling, Home-accent lab outlines, more conversational verified music requests, and opt-in all-app notifications with persistent exclusions. Notification runtime now handles permission revocation, group summaries, only-alert-once updates, delayed unlock, correct app sign identity, and BOOP's own Android overlay-status notice.
+
+Final permanent-signed source `2460ab75ca880c812b95730322a5b9ad9bfc2fa1` passed [CI36190488635](https://github.com/ryankemble2006-web/boop/actions/runs/36190488635). Shield251, Wall218 and Sender2 signatures/assets/native libraries and installed emulator APK hashes are verified. Final Home/focus, real notification tap and authenticated sender-to-phone/Stop smoke tests pass. [PR11](https://github.com/ryankemble2006-web/boop/pull/11) and `docs/handoffs/2026-09-25-pocket-polish-v251.md` contain the evidence and inherited-test limitations. Ryan subsequently authorised physical deployment: Pixel10 Wall218, Shield251 and Sender2 are installed in place with matching APK hashes, preserved UIDs/install history and saved settings. YouTube remained foreground. Pixel's existing listener/master consent is retained; All apps remains off and overlay app-op remains default. Finish that optional setup via Profile → Notifications. Real Shield-to-Pixel discovery/pairing and preview receipts now work after force-stopping/reopening a sender stuck on a stale emulator mDNS resolve. Ryan subsequently accepted the lab animations and a real Gmail notification: Gmail posted its child alert, BOOP woke the dozing Pixel and displayed its locked notification, and Ryan confirmed it appeared. The earlier email miss has no proven cause; other app-specific delivery and real music acoustic acceptance remain separate. Avoid Pixel UIAutomator dumps: they trigger Switch Access setup and close the foreground test session; direct screencap/log checks worked. No real AV commands were sent.
+
+
 ## Next task — confirmed by Ryan, 22 September 2026
 
 Voice/personality controls and sharing are done. EastEnders/Casualty follow-up checks are also done, per Ryan's direct report. Games are set aside. Next: a test app **on the Shield that sends notifications to the Pixel**; implementation and transport remain to be established.

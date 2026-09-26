@@ -14,6 +14,8 @@ public final class NotificationSenderActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private ExecutorService worker;
     private LinearLayout devices;
+    private LinearLayout controls;
+    private int accent = BoopLabAccent.DEFAULT_ACCENT;
     private TextView status;
     private EditText pin, address;
     private NsdManager nsd;
@@ -27,8 +29,10 @@ public final class NotificationSenderActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        accent = BoopLabAccent.fromShieldHome(this);
         ScrollView scroll = new ScrollView(this);
         LinearLayout column = new LinearLayout(this);
+        controls = column;
         column.setOrientation(LinearLayout.VERTICAL); column.setPadding(dp(36), dp(18), dp(36), dp(24));
         column.setBackgroundColor(Color.rgb(18,18,18)); scroll.addView(column); setContentView(scroll);
         TextView title = text("BOOP Test Sender", 26); column.addView(title);
@@ -37,6 +41,7 @@ public final class NotificationSenderActivity extends Activity {
         pin = new EditText(this); pin.setHint("Six-digit phone code"); pin.setTextColor(Color.WHITE);
         pin.setSingleLine(true); pin.setInputType(InputType.TYPE_CLASS_NUMBER);
         pin.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(6)});
+        pin.setMinHeight(dp(56)); BoopLabFocus.apply(pin, accent);
         pin.setContentDescription("Phone pairing code"); column.addView(pin);
         button(column,"Connect",()->send("PING",false,0));
         status = text("Looking for a phone on this network…",17); column.addView(status);
@@ -61,8 +66,21 @@ public final class NotificationSenderActivity extends Activity {
         address=new EditText(this); address.setHint("Phone address, e.g. 192.168.1.20:43210");
         address.setSingleLine(true); address.setTextColor(Color.WHITE); address.setVisibility(View.GONE);
         address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        address.setMinHeight(dp(56)); BoopLabFocus.apply(address, accent);
         column.addView(address);
         column.addView(text("Synthetic previews only • each lasts 8 seconds • Run all ends after one pass",14));
+    }
+    @Override public void onResume() {
+        super.onResume();
+        accent = BoopLabAccent.fromShieldHome(this);
+        refreshFocus(controls);
+    }
+    private void refreshFocus(View view) {
+        if (view instanceof Button || view instanceof EditText) BoopLabFocus.apply((TextView) view, accent);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) refreshFocus(group.getChildAt(i));
+        }
     }
     @Override public void onStart() {
         super.onStart(); active=true; session++; gate.close();
@@ -149,8 +167,10 @@ public final class NotificationSenderActivity extends Activity {
     private LinearLayout row(LinearLayout parent){LinearLayout r=new LinearLayout(this);r.setOrientation(LinearLayout.HORIZONTAL);parent.addView(r);return r;}
     private Button button(LinearLayout parent,String label,Runnable action){
         Button b=new Button(this);b.setText(label);b.setAllCaps(false);b.setTextSize(16);b.setFocusable(true);
+        b.setSingleLine(false);b.setEllipsize(null);b.setMinHeight(dp(56));
+        BoopLabFocus.apply(b,accent);
         b.setOnClickListener(v->action.run());
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(parent.getOrientation()==LinearLayout.HORIZONTAL?0:-1,dp(56),parent.getOrientation()==LinearLayout.HORIZONTAL?1:0);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(parent.getOrientation()==LinearLayout.HORIZONTAL?0:-1,LinearLayout.LayoutParams.WRAP_CONTENT,parent.getOrientation()==LinearLayout.HORIZONTAL?1:0);
         p.setMargins(dp(3),dp(3),dp(3),dp(3));parent.addView(b,p);return b;
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}

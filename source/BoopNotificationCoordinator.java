@@ -56,10 +56,15 @@ final class BoopNotificationCoordinator {
             return Decision.ignore();
         }
 
+        boolean existing = active.containsKey(envelope.key());
         active.put(envelope.key(), envelope);
 
         if (visibleKeys.contains(envelope.key())) {
             return new Decision(Kind.UPDATE, false, visibleBundleLocked());
+        }
+
+        if (existing && envelope.onlyAlertOnce()) {
+            return Decision.ignore();
         }
 
         if (visibleKeys.isEmpty()) {

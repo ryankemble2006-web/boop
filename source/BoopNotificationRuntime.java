@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.lang.ref.WeakReference;
 
 final class BoopNotificationRuntime {
     static final long BURST_WINDOW_MS = 4_000L;
@@ -56,6 +57,7 @@ final class BoopNotificationRuntime {
     private BoopNotificationListenerService attachedListener;
     private BoopNotificationHost wallHost;
     private BoopNotificationSurface activeSurface;
+    private WeakReference<BoopNotificationLockActivity> lockHost = new WeakReference<>(null);
 
     private BoopNotificationRuntime(Application application) {
         this.application = application;
@@ -108,6 +110,7 @@ final class BoopNotificationRuntime {
 
     synchronized void refreshSettings() {
         settings = settingsStore.load();
+        if (!ensureListenerAccess()) return;
         if (attachedListener != null) {
             attachedListener.rebuildActiveNotifications();
             return;
@@ -131,11 +134,38 @@ final class BoopNotificationRuntime {
     synchronized void detachListener(BoopNotificationListenerService listener) {
         if (attachedListener == listener) {
             attachedListener = null;
+            purgeNotificationContent();
         }
     }
 
+    private synchronized void purgeNotificationContent() {
+        records.clear();
+        coordinator.rebuild(List.of(), settings);
+        scheduleHideAllSurfaces();
+    }
+
+    private synchronized boolean ensureListenerAccess() {
+        if (BoopNotificationPermissionState.hasListenerAccess(application)) return true;
+        purgeNotificationContent();
+        return false;
+    }
+
+    synchronized void registerLockHost(BoopNotificationLockActivity host) {
+        lockHost = new WeakReference<>(host);
+    }
+
+    synchronized void unregisterLockHost(BoopNotificationLockActivity host) {
+        if (lockHost.get() == host) lockHost.clear();
+    }
+
+    private void hideLockSurface() {
+        BoopNotificationLockActivity host;
+        synchronized (this) { host = lockHost.get(); }
+        if (host != null) host.dismissFromRuntime();
+    }
+
     synchronized BoopNotificationCoordinator.Decision post(RuntimeRecord record, long nowMs) {
-        if (record == null) {
+        if (record == null || !ensureListenerAccess()) {
             return BoopNotificationCoordinator.Decision.ignore();
         }
         BoopNotificationEnvelope envelope = record.envelope();
@@ -154,6 +184,7 @@ final class BoopNotificationRuntime {
     }
 
     synchronized void rebuild(Collection<RuntimeRecord> activeRecords) {
+        if (!ensureListenerAccess()) return;
         records.clear();
         List<BoopNotificationEnvelope> envelopes = new ArrayList<>();
         if (activeRecords != null) {
@@ -189,14 +220,17 @@ final class BoopNotificationRuntime {
     }
 
     synchronized RuntimeRecord record(String key) {
+        if (!ensureListenerAccess()) return null;
         return key == null ? null : records.get(key);
     }
 
     synchronized List<BoopNotificationEnvelope> activeNotifications() {
+        if (!ensureListenerAccess()) return List.of();
         return coordinator.activeNotifications();
     }
 
     synchronized List<BoopNotificationEnvelope> visibleBundle() {
+        if (!ensureListenerAccess()) return List.of();
         return coordinator.visibleBundle();
     }
 
@@ -233,6 +267,7 @@ final class BoopNotificationRuntime {
     }
 
     BoopNotificationTapLauncher.Result openNotification(Context context, String key) {
+        if (!ensureListenerAccess()) return BoopNotificationTapLauncher.Result.CANCELLED;
         final RuntimeRecord current;
         synchronized (this) {
             current = key == null ? null : records.get(key);
@@ -249,16 +284,14 @@ final class BoopNotificationRuntime {
             return result;
         }
 
-        if (BoopNotificationTapPolicy.shouldCancelAfterSuccessfulSend(
-                current.envelope().autoCancel(), true)) {
-            cancelAfterSuccessfulAutoCancelTap(current.envelope().key());
-        }
+        // PendingIntent.send confirms dispatch, not that Android displayed the target.
+        // Keep the source notification: BAL can reject a launch without throwing.
         onPresentationDismissed();
         return result;
     }
 
     boolean openInbox(Context context) {
-        if (context == null) return false;
+        if (context == null || !ensureListenerAccess()) return false;
         Intent intent = new Intent(context, BoopNotificationInboxActivity.class);
         if (!(context instanceof Activity)) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -296,6 +329,7 @@ final class BoopNotificationRuntime {
     }
 
     private void presentVisibleBundle(BoopNotificationCoordinator.Kind kind) {
+        if (!ensureListenerAccess()) return;
         final List<BoopNotificationEnvelope> bundle;
         final long timeoutMs;
         final BoopNotificationHost currentWallHost;
@@ -343,6 +377,7 @@ final class BoopNotificationRuntime {
             return;
         }
 
+        hideLockSurface();
         if (surface == BoopNotificationSurface.IN_PLACE) {
             overlayController.hide();
             if (currentWallHost == null) {
@@ -381,6 +416,7 @@ final class BoopNotificationRuntime {
         }
         if (currentWallHost != null) currentWallHost.hide();
         overlayController.hide();
+        hideLockSurface();
     }
 
     private void rebuildCoordinatorFromCurrentRecords() {

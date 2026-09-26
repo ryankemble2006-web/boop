@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
+import android.view.MotionEvent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.opengl.GLSurfaceView;
@@ -17,6 +18,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ScrollView;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,6 +39,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
     private final com.boop.eyes.CanonicalEyeRenderer eyeRenderer;
     private final com.boop.eyes.NotificationSignView signView;
     private final FrameLayout cardHost;
+    private final BoundedCardScroll cardScroll;
     private final PowerManager powerManager;
     private final com.boop.eyes.AnimationClock signClock =
             new com.boop.eyes.AnimationClock(SystemClock.uptimeMillis());
@@ -84,12 +87,16 @@ final class BoopNotificationPuppetView extends FrameLayout {
         addView(signView, match());
 
         cardHost = new FrameLayout(context);
+        cardScroll = new BoundedCardScroll(context);
+        cardScroll.setFillViewport(false);
+        cardScroll.setClipToPadding(true);
+        cardScroll.setContentDescription("Notification details, scroll for more");
+        cardHost.addView(cardScroll, new FrameLayout.LayoutParams(-1, -2));
         FrameLayout.LayoutParams hostParams = new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
         int margin = dp(28);
         hostParams.setMargins(margin, margin, margin, margin);
         addView(cardHost, hostParams);
-        addOnLayoutChangeListener((v,l,top,r,b,ol,ot,or,ob)->resizeCanonicalEyes());
 
         rebuildCard();
         setOnClickListener(v -> openCurrentPresentation());
@@ -120,13 +127,18 @@ final class BoopNotificationPuppetView extends FrameLayout {
     }
 
     private void rebuildCard() {
-        cardHost.removeAllViews();
+        cardScroll.removeAllViews();
+        cardScroll.scrollTo(0, 0);
         List<BoopNotificationEnvelope> cards = cards();
         if (cards.isEmpty()) {
             setVisibility(View.GONE);
             return;
         }
         setVisibility(View.VISIBLE);
+        String packageName = cards.get(0).packageName();
+        boolean branded = cards.size() == 1
+                && BoopNotificationSignIdentity.brandedStyle(packageName) >= 0;
+        signView.setNotificationLabel(branded ? null : identityLabel(cards));
 
         LinearLayout card = new LinearLayout(getContext());
         card.setOrientation(LinearLayout.VERTICAL);
@@ -135,6 +147,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
         int vertical = dp(20);
         card.setPadding(horizontal, vertical, horizontal, vertical);
         card.setBackground(cardBackground());
+        card.setOnClickListener(v -> openCurrentPresentation());
 
         LinearLayout identityRow = new LinearLayout(getContext());
         identityRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -150,8 +163,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
 
         TextView app = text(identityLabel(cards), 21f, true);
         identityRow.addView(app, new LinearLayout.LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT));
+                0, LayoutParams.WRAP_CONTENT, 1f));
 
         if (cards.size() > 1) {
             TextView count = text(String.valueOf(cards.size()), 14f, true);
@@ -172,20 +184,18 @@ final class BoopNotificationPuppetView extends FrameLayout {
             BoopNotificationEnvelope first = cards.get(0);
             if (!empty(first.title())) {
                 TextView title = text(first.title(), 19f, true);
-                title.setMaxLines(2);
                 card.addView(title, wrapBottom(6));
             }
             if (!empty(first.text())) {
                 TextView body = text(first.text(), 17f, false);
-                body.setMaxLines(4);
                 card.addView(body, wrapBottom(0));
             }
         }
 
-        cardHost.addView(card, new FrameLayout.LayoutParams(
+        cardScroll.addView(card, new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER));
+                Gravity.TOP | Gravity.CENTER_HORIZONTAL));
         setContentDescription(contentDescription(cards));
     }
 
@@ -216,20 +226,75 @@ final class BoopNotificationPuppetView extends FrameLayout {
     private int notificationStyle() {
         List<BoopNotificationEnvelope> list = cards();
         if (list.isEmpty()) return 0;
-        String pkg = list.get(0).packageName();
-        if (pkg == null) return 0;
-        String value = pkg.toLowerCase(java.util.Locale.ROOT);
-        if (value.contains("gmail") || value.contains("mail")) return 1;
-        if (value.contains("facebook")) return 2;
-        if (value.equals("x") || value.contains("twitter")) return 3;
-        return 0;
+        return Math.max(0, BoopNotificationSignIdentity.brandedStyle(list.get(0).packageName()));
     }
 
-    private void resizeCanonicalEyes() {
-        int h = Math.max(1, Math.round(getHeight() * 0.64f));
-        if (eyeSurface.getLayoutParams().height != h) {
-            FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, h);
-            eyeSurface.setLayoutParams(p);
+    @Override protected void onMeasure(int widthSpec, int heightSpec) {
+        int width = MeasureSpec.getSize(widthSpec);
+        int height = MeasureSpec.getSize(heightSpec);
+        int margin = dp(28);
+        float portraitScale = Math.min(width / 1000f, height / 680f);
+        // The original sign is centered at canonical y=510. Its rotated
+        // 800x400 board and bob reach at most ~494 units below the canvas
+        // midpoint (340), so reserve 500 without changing the artwork/motion.
+        // The entrance still rises from below, as in the original renderer.
+        int portraitCardHeight = (int) Math.floor(height / 2f - 500f * portraitScale)
+                - margin - dp(8);
+        boolean sideBySide = (width > height && height > 0) || portraitCardHeight < dp(112);
+        int artworkWidth = sideBySide ? width / 2 : width;
+
+        // Only the host bounds change. Both panes retain the same canonical art,
+        // motion and text sizes; the card cannot cover the landscape art pane.
+        FrameLayout.LayoutParams eyes = (FrameLayout.LayoutParams) eyeSurface.getLayoutParams();
+        eyes.width = artworkWidth;
+        eyes.height = Math.max(1, Math.round(height * 0.64f));
+        eyes.gravity = Gravity.TOP | Gravity.LEFT;
+        FrameLayout.LayoutParams sign = (FrameLayout.LayoutParams) signView.getLayoutParams();
+        sign.width = artworkWidth;
+        sign.height = LayoutParams.MATCH_PARENT;
+        sign.gravity = Gravity.TOP | Gravity.LEFT;
+        FrameLayout.LayoutParams card = (FrameLayout.LayoutParams) cardHost.getLayoutParams();
+        card.width = Math.max(1, (sideBySide ? width - artworkWidth : width) - margin * 2);
+        card.height = LayoutParams.WRAP_CONTENT;
+        card.gravity = sideBySide ? Gravity.RIGHT | Gravity.CENTER_VERTICAL : Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        card.setMargins(margin, margin, margin, margin);
+        cardScroll.maxHeight = Math.max(1, sideBySide ? height - margin * 2 : portraitCardHeight);
+        super.onMeasure(widthSpec, heightSpec);
+    }
+
+    private final class BoundedCardScroll extends ScrollView {
+        int maxHeight = Integer.MAX_VALUE;
+        float startX, startY;
+        boolean tracking;
+
+        BoundedCardScroll(Context context) { super(context); }
+
+        @Override public boolean dispatchTouchEvent(MotionEvent event) {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                startX = event.getX(); startY = event.getY(); tracking = true;
+            } else if (event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                tracking = false;
+            } else if (event.getActionMasked() == MotionEvent.ACTION_UP && tracking) {
+                tracking = false;
+                float dx = Math.abs(event.getX() - startX);
+                float dy = Math.abs(event.getY() - startY);
+                if (dx > dy && BoopNotificationSwipeGesture.isDismiss(startX, startY,
+                        event.getX(), event.getY(), getResources().getDisplayMetrics().density)) {
+                    MotionEvent cancel = MotionEvent.obtain(event);
+                    cancel.setAction(MotionEvent.ACTION_CANCEL);
+                    super.dispatchTouchEvent(cancel);
+                    cancel.recycle();
+                    callback.onDismiss();
+                    return true;
+                }
+            }
+            return super.dispatchTouchEvent(event);
+        }
+
+        @Override protected void onMeasure(int widthSpec, int heightSpec) {
+            int limit = MeasureSpec.getMode(heightSpec) == MeasureSpec.UNSPECIFIED ? maxHeight
+                    : Math.min(maxHeight, MeasureSpec.getSize(heightSpec));
+            super.onMeasure(widthSpec, MeasureSpec.makeMeasureSpec(limit, MeasureSpec.AT_MOST));
         }
     }
 
@@ -322,7 +387,7 @@ final class BoopNotificationPuppetView extends FrameLayout {
 
     private LinearLayout.LayoutParams wrapBottom(int bottomDp) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LayoutParams.WRAP_CONTENT,
+                LayoutParams.MATCH_PARENT,
                 LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, dp(bottomDp));
         return params;
