@@ -2,7 +2,7 @@
 
 ## Shield Seren Next Up — 26 September 2026
 
-Ryan approved a Seren poster row in BOOP Home and moving HA below the initial screen. Current work is `boop-shield-seren-v252`, based on the latest phone/Shield owner at `34612d7`. It retains Wall220 and deploys only Shield252. See [the Seren handoff](docs/handoffs/2026-09-26-shield-seren-v252.md) for direct local Kodi transport, emulator verification, rollback and delivery state. Signed build/install and physical playback are pending at this checkpoint.
+Shield252 is installed and Ryan confirmed one-click playback from a cold Kodi start. Seren posters sit below favourite apps; HA is one Down press below the initial screen. Source `768bfb0d` passed signed CI36217003838 and the installed hash matches, with unchanged preferences, assets, native libraries and UID. The measured cold launch reached fullscreen moving video in14.374seconds. Branch `boop-shield-seren-v252` / PR12 starts from the latest phone/Shield owner at `34612d7`, retaining Wall220 without deploying it. See [the Seren handoff](docs/handoffs/2026-09-26-shield-seren-v252.md) for direct local Kodi transport, verification, transition-timing caveat and rollback.
 
 ## Current phone follow-up: Wall220 widget controls — 26 September 2026
 
