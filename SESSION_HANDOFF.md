@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## Shield256 lyrics layout installed — 27 September 2026
+
+Lookup now sits beneath play/pause, Queue to its left, with exact transport background/focus colours and the configured accent. Source d4d4cab4 / signed CI36354379412 passed; installed APK hash, signer, preferences and assets/native libraries verified. Physical layout acceptance pending. See docs/handoffs/2026-09-27-shield-lyrics-layout-v256.md.
+
 ## Editable lyrics lookup255 â€” 27 September 2026
 
 Ryan accepted254's lyrics lookup and speed and requested editable title/artist lookup. Ready on `boop-shield-lyrics-lookup-v255`: Lookup on the lyrics screen and an editor after failed Home lookup; edits are temporary and playback stays untouched. Source `b4a1cd02`, 23 focused checks, real TV emulator editing and signed CI36353445793 pass. Downloaded artifact identity/signature and unchanged assets/native libraries are verified. See `docs/handoffs/2026-09-27-shield-lyrics-lookup-v255.md`. Ryan authorised installation: Shield255 is installed with matching APK hash, unchanged preferences and preserved UID/install history. Physical Lookup acceptance remains pending. No physical controls used for this feature.
