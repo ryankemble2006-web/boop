@@ -37,3 +37,10 @@ def test_uncertain_toggle_gets_one_read_only_reconciliation(tmp_path):
     assert 'readValues.put("operation","read")' in backend
     assert 'readValues.put("nonce",UUID.randomUUID()' in backend
     assert 'readValues.put("expected_saved","-1")' in backend
+
+
+def test_expanded_native_artist_credit_and_transport_no_replay(tmp_path):
+    harness = ROOT / 'tests/java/Heart257Probe.java'
+    subprocess.run(['javac', '-d', str(tmp_path), str(SRC/'DeezerHeartRules.java'),
+                    str(ROOT/'unified/DeezerHeartTransport.java'), str(harness)], check=True)
+    subprocess.run(['java', '-cp', str(tmp_path), 'com.boop.alpha1.Heart257Probe'], check=True)
