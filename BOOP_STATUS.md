@@ -1,5 +1,9 @@
 # BOOP status
 
+## Editable lyrics lookup255 — 27 September 2026
+
+In progress on `boop-shield-lyrics-lookup-v255`: temporary title/artist editor, fresh lookup, stale-result protection. Shield254 is physically accepted and remains installed. See `docs/handoffs/2026-09-27-shield-lyrics-lookup-v255.md`.
+
 ## Shield lyrics254 — 27 September 2026
 
 Shield254 is installed from `7b8740c2` on `boop-shield-lyrics-v254`: LRCLIB primary, Deezer fallback, bounded transient retries. Signed CI36351789171 and three installed production-loader lookups pass. Settings, signer, assets and native libraries are preserved. Manual Home-button acceptance remains separate. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md`.

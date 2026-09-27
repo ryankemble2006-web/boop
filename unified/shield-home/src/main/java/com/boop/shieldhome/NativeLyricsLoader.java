@@ -52,11 +52,21 @@ final class NativeLyricsLoader {
     }
     void load(NowPlayingSnapshot track, String id, String identity,
             Consumer<DeezerLyricsDocument> completion) {
+        load(track, id, identity, false, completion);
+    }
+    void reload(NowPlayingSnapshot track, String id, String identity,
+            Consumer<DeezerLyricsDocument> completion) {
+        cancel();
+        synchronized (NativeLyricsLoader.class) { CACHE.remove(id); }
+        load(track, id, identity, true, completion);
+    }
+    private void load(NowPlayingSnapshot track, String id, String identity, boolean fresh,
+            Consumer<DeezerLyricsDocument> completion) {
         if (worker.isShutdown() || identity.equals(pending)) return;
         cancel();
         long ticket = gate.begin(identity);
         pending = identity;
-        DeezerLyricsDocument hit = cached(id);
+        DeezerLyricsDocument hit = fresh ? null : cached(id);
         if (hit != null) {
             pending = "";
             completion.accept(hit);

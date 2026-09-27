@@ -24,6 +24,7 @@ public final class ShieldLyricsView extends FrameLayout {
     public interface Controls {
         void previous(); void playPause(); void next(); void seek(long milliseconds); void close(); void browseAlbum(); void browseArtist();
         default void queue() { }
+        default void lookup() { }
     }
     private static final float MUSIC_COLUMN_SHIFT = 38f;
     private final int accent;
@@ -31,6 +32,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private final ImageView artwork;
     private final TextView title, artist, status, elapsed, duration;
     private final TextView queueButton;
+    private final TextView lookupButton;
     private final LyricsLinesView lyrics;
     private final TransportButton[] buttons = new TransportButton[3];
     private final PositionBar progress;
@@ -179,6 +181,7 @@ public final class ShieldLyricsView extends FrameLayout {
             button.setOnKeyListener((v, key, event) -> handleFavouriteRowKey(kind + 1, key, event));
             addView(button);
         }
+        lookupButton = label("Lookup", 18, Color.WHITE, true);
         queueButton = label("Queue", 18, Color.WHITE, true);
         queueButton.setGravity(Gravity.CENTER);
         queueButton.setIncludeFontPadding(false);
@@ -191,8 +194,24 @@ public final class ShieldLyricsView extends FrameLayout {
         queueButton.setOnKeyListener((v, key, event) -> {
             if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (key == KeyEvent.KEYCODE_DPAD_UP) return focusTransport();
+            if (key == KeyEvent.KEYCODE_DPAD_RIGHT && lookupButton.isShown()) return lookupButton.requestFocus();
             return key == KeyEvent.KEYCODE_DPAD_DOWN || key == KeyEvent.KEYCODE_DPAD_LEFT
                     || key == KeyEvent.KEYCODE_DPAD_RIGHT;
+        });
+        lookupButton.setGravity(Gravity.CENTER);
+        lookupButton.setIncludeFontPadding(false);
+        lookupButton.setSingleLine(true);
+        lookupButton.setContentDescription("Edit title and artist to look up lyrics");
+        lookupButton.setBackground(FocusChrome.filled(context, Color.rgb(14, 23, 28), 9, false));
+        lookupButton.setOnFocusChangeListener((v, focused) -> v.setBackground(
+                FocusChrome.filled(getContext(), Color.rgb(14, 23, 28), 9, focused)));
+        lookupButton.setOnClickListener(v -> { if (v.isEnabled()) controls.lookup(); });
+        lookupButton.setOnKeyListener((v, key, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (key == KeyEvent.KEYCODE_DPAD_UP) return focusTransport();
+            if (key == KeyEvent.KEYCODE_DPAD_LEFT)
+                return queueButton.isShown() ? queueButton.requestFocus() : focusTransport();
+            return key == KeyEvent.KEYCODE_DPAD_DOWN || key == KeyEvent.KEYCODE_DPAD_RIGHT;
         });
         setQueueAvailable(false);
         post(() -> { if (buttons[1].isFocusable()) buttons[1].requestFocus(); });
@@ -203,6 +222,12 @@ public final class ShieldLyricsView extends FrameLayout {
                 || !snapshot.trackKey().equals(next.trackKey())
                 || Math.abs(snapshot.estimatedPositionMs(now) - next.estimatedPositionMs(now)) > 1500L) snapClock = true;
         snapshot = next;
+        boolean canLookup = next != null && DeezerLyricsPolicy.available(next.packageName());
+        if (!canLookup && lookupButton.hasFocus()) focusTransport();
+        lookupButton.setVisibility(canLookup ? VISIBLE : GONE);
+        lookupButton.setFocusable(canLookup);
+        lookupButton.setEnabled(canLookup);
+        lookupButton.setClickable(canLookup);
         removeHeart.setSnapshot(next);
         addHeart.setSnapshot(next);
         clockKnown = knownClock;
@@ -245,6 +270,7 @@ public final class ShieldLyricsView extends FrameLayout {
     private boolean handleFavouriteRowKey(int slot, int key, KeyEvent event) {
         if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
         if (key == KeyEvent.KEYCODE_DPAD_DOWN && queueButton.isShown()) return queueButton.requestFocus();
+        if (key == KeyEvent.KEYCODE_DPAD_DOWN && lookupButton.isShown()) return lookupButton.requestFocus();
         if (key == KeyEvent.KEYCODE_DPAD_UP)
             return progress.isFocusable() ? progress.requestFocus()
                     : artist.isFocusable() ? artist.requestFocus()
@@ -257,6 +283,7 @@ public final class ShieldLyricsView extends FrameLayout {
             if (candidate.getVisibility() == VISIBLE && candidate.isFocusable() && candidate.isEnabled())
                 return candidate.requestFocus();
         }
+        if (direction > 0 && lookupButton.isShown()) return lookupButton.requestFocus();
         return true;
     }
     private boolean focusTransport() {
@@ -331,6 +358,8 @@ public final class ShieldLyricsView extends FrameLayout {
         size(title, 28); size(artist, 19); size(status, 24);
 size(elapsed, 12); size(duration, 12);
         place(queueButton, progressCenter - 56f * unit, 703f * unit, 112f * unit, 38f * unit);
+        place(lookupButton, lyricsX, 650f * unit, 140f * unit, 44f * unit);
+        size(lookupButton, 18);
         size(queueButton, 18);
         // Keep every accepted gap; translate the whole music column, never the lyric text.
         for (View item : new View[]{artwork, title, artist, progress, elapsed, duration, removeHeart, addHeart, queueButton})

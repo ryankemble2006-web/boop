@@ -27,9 +27,17 @@ public final class LyricsResilienceCheck {
         return new LrclibLyricsClient().load(new NowPlayingSnapshot(),"123",new DeezerLyricsClient.Call(),DeezerLyricsClient.nowMs()+budget);
     }
     static DeezerLyricsDocument load(String id) throws Exception {
+        return load(id, false);
+    }
+    static DeezerLyricsDocument load(String id, boolean refresh) throws Exception {
         NativeLyricsLoader loader=new NativeLyricsLoader(); CountDownLatch done=new CountDownLatch(1);
         DeezerLyricsDocument[] result=new DeezerLyricsDocument[1];
-        loader.load(new NowPlayingSnapshot(),id,id,d->{result[0]=d;done.countDown();});
+        java.util.function.Consumer<DeezerLyricsDocument> callback=d->{result[0]=d;done.countDown();};
+        if (refresh) {
+            try {NativeLyricsLoader.class.getDeclaredMethod("reload",NowPlayingSnapshot.class,String.class,String.class,java.util.function.Consumer.class)
+                .invoke(loader,new NowPlayingSnapshot(),id,id,callback);}
+            catch(NoSuchMethodException missing){throw new AssertionError("Manual lookup must support bypassing the previous successful cache",missing);}
+        } else loader.load(new NowPlayingSnapshot(),id,id,callback);
         try {if(!done.await(5,TimeUnit.SECONDS))throw new AssertionError("loader callback missing");return result[0];}
         finally {loader.destroy();}
     }
@@ -77,6 +85,10 @@ public final class LyricsResilienceCheck {
         reset(ok(valid));
         expect(load("101").status()==DeezerLyricsDocument.Status.AVAILABLE,"LRCLIB success should complete lookup");
         expect(requests.size()==1 && requests.get(0).contains("lrclib.net"),"LRCLIB success must never contact Deezer");
+        reset();
+        expect(load("101").status()==DeezerLyricsDocument.Status.AVAILABLE && requests.isEmpty(),"Normal screen entry reuses the successful lookup");
+        reset(ok(valid));
+        expect(load("101",true).status()==DeezerLyricsDocument.Status.AVAILABLE && requests.size()==1,"Explicit lookup must contact provider even when previous lyrics are cached");
         reset(new Response(503,""),new Response(503,""),ok("{\"jwt\":\"a.b.c\"}"),ok("{\"data\":{\"track\":{\"id\":\"102\",\"lyrics\":{\"synchronizedLines\":[{\"line\":\"Test\",\"milliseconds\":1000,\"duration\":2000}],\"synchronizedWordByWordLines\":[]}}}}"));
         expect(load("102").status()==DeezerLyricsDocument.Status.AVAILABLE,"Deezer must rescue LRCLIB failure");
         expect(requests.size()==4 && requests.get(2).contains("auth.deezer.com"),"Deezer is only contacted after LRCLIB retry");
