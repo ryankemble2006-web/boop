@@ -106,12 +106,17 @@ public final class BoopDeezerHeartBackend {
             android.util.Log.i("BOOPHeart","transport=local");
             return new DeezerHeartTransport.Connection(){
                 public String execute(String command)throws Exception {check(current);return adb.execute(command,14000).output;}
-                public void close()throws IOException{adb.close();}
+                public void close(){closeLocal(adb,file);}
             };
         }catch(Exception unavailable){
-            try{adb.execute("rm -f "+file+" "+file+".request "+file+".b64",1000);}catch(Exception ignored){}
-            adb.close();throw unavailable;
+            closeLocal(adb,file);throw unavailable;
         }
+    }
+    private static void closeLocal(com.boop.shieldturbo.power.AdbWire adb,String file) {
+        // Cleanup belongs to this nonce even if a track change cancelled the request.
+        boolean interrupted=Thread.interrupted();
+        try {adb.execute("rm -f "+file+" "+file+".request "+file+".b64",1000);}catch(Exception ignored){}
+        finally {try{adb.close();}catch(IOException ignored){}if(interrupted)Thread.currentThread().interrupt();}
     }
     private static String resolve(String base,String token,String identity,String nonce,BooleanSupplier current)throws Exception {
         String candidate=cachedBase.equals(base)?cachedEntity:"";

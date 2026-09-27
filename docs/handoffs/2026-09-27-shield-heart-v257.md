@@ -1,0 +1,13 @@
+# Shield257: expanded artist credits and local heart transport
+
+Ryan physically accepted256's Lookup position/colour, then reported intermittent "Could not confirm the Deezer heart change", specifically on the current track. Preserve the accepted lyrics layout.
+
+A bounded read-only native probe reproduced the failure on Always. Media-session artist was `Waze & Odyssey`; the native player displayed `Waze & Odyssey, George Michael, Mary J. Blige, Tommy Theo`. Native title/transport geometry were correct, but strict artist equality rejected the heart before any click. Source now accepts an exact lead credit followed by Deezer's comma separator and nonempty additional credits. Exact title, media-session token, album, duration, media ID and context checks remain; prefix artist collisions and a matching later guest credit are rejected.
+
+Heart operations prefer the existing loopback AdbWire transport and saved BOOP key. The physical key was no longer trusted. Ryan explicitly authorised Android's approval prompt, which completed successfully. Background heart calls cannot display approval or create a new key. Each operation still validates its private nonce marker. Missing/untrusted local connection or staging failure can fall back to the existing authenticated HA route before dispatch only. A lost native response never replays a toggle.
+
+Review caught AdbWire's2048-character command limit. Payload and request are now staged using bounded1500-character chunks, with the compiled payload hash verified before native execution. Request arguments come from the staged encoded file, keeping dispatch bounded even for long metadata. Owned staging files are removed on completion/cancellation; cleanup cannot turn a valid receipt into failure. No private key or credentials leave the device.
+
+Validation:24 focused tests passed, including expanded credits, collisions, staged-byte preservation/command limits, pre-dispatch fallback, cancellation and no mutation replay. The actual app and source-built bridge compile. Independent review found no remaining blocker after staging fix. A read-only probe using the new compiled backend/helper on the physical Shield returned confirmed unsaved state for Flashdance (Album Mix) in3330ms. An attempted comparison against the installed HA backend was unsuitable because the diagnostic app_process lacks its AndroidKeyStore provider; no percentage speedup is claimed. Later probes overlapped track changes/native operations and were rejected. No diagnostic favourite/dislike click was sent. Original Always mutation and final installed-button acceptance remain Ryan's physical retest.
+
+Final signed CI/artifact/install verification pending.
