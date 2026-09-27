@@ -46,6 +46,8 @@ jobs:
           sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Verify lyrics provider order and transient network recovery
         run: python -m pytest -q tests/test_lyrics_resilience.py tests/test_lyrics_lookup_query.py tests/test_native_lyrics_entry.py
+      - name: Verify native Deezer resume and foreground video audio priority
+        run: python -m pytest -q tests/test_audio_mode_resume.py tests/test_audio_mode_integration.py
       - name: Existing v206 functional checks
         run: python split/run-inherited-checks.py
       - name: Materialize both shells and execute focused integration checks
