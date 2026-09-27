@@ -2,7 +2,7 @@
 
 ## Shield lyrics254 — 27 September 2026
 
-In progress on `boop-shield-lyrics-v254`, based on accepted Shield253 `b065b911`. Ryan requested LRCLIB primary / Deezer fallback and repair of the intermittent Home lyrics failure. Physical probes found a transient LRCLIB503 for David Essex, with a subsequent successful search. The fix and focused regressions pass locally; signed CI and installed-device validation are pending. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md`.
+Shield254 is installed from source `7b8740c2` on `boop-shield-lyrics-v254`, with successful signed CI36351789171. LRCLIB is primary, Deezer fallback, with bounded retries for transient errors. Three fresh installed production-loader calls returned David Essex's44timed lines in432–522ms. Installed hash/signer, all preferences,29assets and16native libraries are verified. Kodi had become foreground and Deezer was paused; no playback was changed for a remote-button test. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md` for evidence and the separate manual UI acceptance boundary.
 
 ## Shield Seren Next Up — 26 September 2026
 

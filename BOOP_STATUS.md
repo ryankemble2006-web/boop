@@ -2,7 +2,7 @@
 
 ## Shield lyrics254 — 27 September 2026
 
-In progress on `boop-shield-lyrics-v254`: LRCLIB primary, Deezer fallback, bounded transient retries. Focused regressions pass; signed CI and installed-device checks pending. Accepted physical baseline remains Shield253. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md`.
+Shield254 is installed from `7b8740c2` on `boop-shield-lyrics-v254`: LRCLIB primary, Deezer fallback, bounded transient retries. Signed CI36351789171 and three installed production-loader lookups pass. Settings, signer, assets and native libraries are preserved. Manual Home-button acceptance remains separate. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md`.
 
 ## Current phone follow-up: Wall220 widget controls — 26 September 2026
 
