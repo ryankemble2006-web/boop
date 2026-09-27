@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## Shield258 Home heart state installed - 27 September 2026
+
+Home preserves confirmed hearts during revalidation and unknown/stale displayed hearts cannot blindly toggle. Cancelled-read handoffs and bounded read retries are covered.25 focused tests and signed CI36356290334 / source0f67b4f7 pass. Installed hash/signature/settings/assets verified. Physical Home acceptance pending. See docs/handoffs/2026-09-27-shield-home-heart-v258.md.
+
 ## Shield257 heart fix installed — 27 September 2026
 
 Expanded native artist credits no longer reject the correct current heart. Existing approved loopback ADB is preferred; HA fallback is pre-dispatch only. Source42afa0e6 / signed CI36355450822 passed. Installed signature/hash/settings/assets verified; actual installed read confirmed state in3647ms. Favourite-button retest pending. Ryan accepted256 lyrics layout and it remains unchanged. See docs/handoffs/2026-09-27-shield-heart-v257.md.
