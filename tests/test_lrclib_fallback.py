@@ -4,12 +4,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "unified/shield-home/src/main/java/com/boop/shieldhome"
 
 
-def test_lrclib_is_second_source_after_deezer_and_uses_synced_only():
+def test_lrclib_is_primary_and_uses_synced_only():
     loader = (SRC / "NativeLyricsLoader.java").read_text(encoding="utf-8")
     client = (SRC / "LrclibLyricsClient.java").read_text(encoding="utf-8")
     document = (SRC / "DeezerLyricsDocument.java").read_text(encoding="utf-8")
-    assert "client.load(id, request, primaryDeadline)" in loader
-    assert "fallback.load(track, id, request, fallbackDeadline)" in loader
+    assert "primary.load(track, id, request, primaryDeadline)" in loader
+    assert "fallback.load(id, request, fallbackDeadline)" in loader
     assert 'https://lrclib.net/api' in client
     assert '"/get?track_name="' in client
     assert '"/search?track_name="' in client
@@ -35,12 +35,12 @@ def test_home_preflight_and_open_lyrics_activity_both_use_metadata_fallback():
     assert '"meta:" + Integer.toHexString' in activity
 
 
-def test_lrclib_gets_its_own_fallback_window_and_broad_search():
+def test_lrclib_gets_its_own_primary_window_and_broad_search():
     loader = (SRC / "NativeLyricsLoader.java").read_text(encoding="utf-8")
     client = (SRC / "LrclibLyricsClient.java").read_text(encoding="utf-8")
     assert "private static final long WAIT_MS = 9000L;" in loader
     assert "private static final long LRCLIB_WAIT_MS = 6000L;" in loader
-    assert "fallbackDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + LRCLIB_WAIT_MS)" in loader
+    assert "primaryDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + LRCLIB_WAIT_MS)" in loader
     assert '"/search?track_name=" + enc(track.title())' in client
     assert '"&q=" + enc(track.title())' in client
     assert "request(url, call, deadline, true)" in client

@@ -1,5 +1,9 @@
 # BOOP status
 
+## Shield lyrics254 — 27 September 2026
+
+Shield254 is installed from `7b8740c2` on `boop-shield-lyrics-v254`: LRCLIB primary, Deezer fallback, bounded transient retries. Signed CI36351789171 and three installed production-loader lookups pass. Settings, signer, assets and native libraries are preserved. Manual Home-button acceptance remains separate. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md`.
+
 ## Current phone follow-up: Wall220 widget controls — 26 September 2026
 
 Wall219's full-screen widget picker is installed and accepted. The next fix adds persistent resize/centre controls and gentle icon alignment, preserving the existing phone layout. See `docs/handoffs/2026-09-26-home-widget-controls-v220.md` for current validation and installation state. Shield251 and Sender2 remain the accepted physical builds.
