@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## Shield lyrics254 — 27 September 2026
+
+In progress on `boop-shield-lyrics-v254`, based on accepted Shield253 `b065b911`. Ryan requested LRCLIB primary / Deezer fallback and repair of the intermittent Home lyrics failure. Physical probes found a transient LRCLIB503 for David Essex, with a subsequent successful search. The fix and focused regressions pass locally; signed CI and installed-device validation are pending. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md`.
+
 ## Shield Seren Next Up — 26 September 2026
 
 Shield253 is installed: it restores the original HA panel width and button sizes while retaining the below-Seren position. The Android fixture measures identical original/Seren HA tiles (280 × 136 px); 45 focused checks, the preview build and signed CI36218463668 pass. Installed APK hash, permanent signer, unchanged preferences/UID/install history and all 29 assets/16 libraries are verified. Kodi remains foreground; no additional physical playback test was needed for this layout-only change. See the follow-up section in the Seren handoff.

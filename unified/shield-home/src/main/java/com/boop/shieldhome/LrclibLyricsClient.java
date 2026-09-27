@@ -8,7 +8,7 @@ import java.net.URLEncoder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Keyless synced-lyrics fallback. Deezer remains the primary source. */
+/** Keyless synced-lyrics primary, with one bounded retry for transient transport failures. */
 final class LrclibLyricsClient {
     private static final String BASE = "https://lrclib.net/api";
     private static final int MAX_RESPONSE = 524288;
@@ -62,30 +62,56 @@ final class LrclibLyricsClient {
 
     private static String request(String address, DeezerLyricsClient.Call call,
             long deadline, boolean notFoundIsNull) throws Exception {
-        if (call.cancelled() || DeezerLyricsClient.nowMs() >= deadline) return null;
-        HttpURLConnection connection=(HttpURLConnection)new URL(address).openConnection();
-        connection.setInstanceFollowRedirects(false);
-        connection.setConnectTimeout(1800);
-        connection.setReadTimeout(1800);
-        connection.setRequestProperty("User-Agent","BOOP-Shield/1");
-        call.attach(connection);
-        try {
-            int code=connection.getResponseCode();
-            if (code==404 && notFoundIsNull) return null;
-            if (code!=200) throw new java.io.IOException("LRCLIB HTTP "+code);
-            StringBuilder body=new StringBuilder();
-            try(Reader reader=new InputStreamReader(connection.getInputStream(),"UTF-8")) {
-                char[] buffer=new char[4096]; int count;
-                while((count=reader.read(buffer))!=-1) {
-                    if(body.length()+count>MAX_RESPONSE) throw new java.io.IOException("LRCLIB response too large");
-                    body.append(buffer,0,count);
+        for (int attempt=0; attempt<2; attempt++) {
+            int remaining=remainingTimeout(call, deadline);
+            HttpURLConnection connection=(HttpURLConnection)new URL(address).openConnection();
+            connection.setInstanceFollowRedirects(false);
+            connection.setConnectTimeout(remaining);
+            connection.setReadTimeout(remaining);
+            connection.setRequestProperty("User-Agent","BOOP-Shield/1");
+            boolean retryable=true;
+            call.attach(connection);
+            try {
+                int code=connection.getResponseCode();
+                remainingTimeout(call, deadline);
+                if (code==404 && notFoundIsNull) return null;
+                if (code!=200) {
+                    retryable=code==500 || code==502 || code==503 || code==504;
+                    throw new java.io.IOException("LRCLIB HTTP "+code);
                 }
+                StringBuilder body=new StringBuilder();
+                try(Reader reader=new InputStreamReader(connection.getInputStream(),"UTF-8")) {
+                    char[] buffer=new char[4096]; int count;
+                    while (true) {
+                        connection.setReadTimeout(remainingTimeout(call, deadline));
+                        count=reader.read(buffer);
+                        remainingTimeout(call, deadline);
+                        if (count==-1) break;
+                        if(body.length()+count>MAX_RESPONSE) {
+                            retryable=false;
+                            throw new java.io.IOException("LRCLIB response too large");
+                        }
+                        body.append(buffer,0,count);
+                    }
+                }
+                return body.toString();
+            } catch (java.io.IOException failure) {
+                if (attempt==1 || !retryable || call.cancelled()
+                        || DeezerLyricsClient.nowMs()>=deadline) throw failure;
+            } finally {
+                call.detach(connection);
+                connection.disconnect();
             }
-            return body.toString();
-        } finally {
-            call.detach(connection);
-            connection.disconnect();
         }
+        throw new java.io.IOException("LRCLIB lookup failed");
+    }
+
+    private static int remainingTimeout(DeezerLyricsClient.Call call, long deadline)
+            throws java.io.IOException {
+        if (call.cancelled()) throw new java.io.InterruptedIOException("Lyrics lookup cancelled");
+        long remaining=deadline-DeezerLyricsClient.nowMs();
+        if (remaining<=0) throw new java.net.SocketTimeoutException("Lyrics lookup deadline");
+        return (int)Math.min(1800L,remaining);
     }
 
     private static DeezerLyricsDocument parseCandidate(JSONObject candidate,
