@@ -2,7 +2,7 @@
 
 ## Editable lyrics lookup255 — 27 September 2026
 
-Ready on `boop-shield-lyrics-lookup-v255`: temporary title/artist editor, fresh lookup, stale-result protection. Source `b4a1cd02`, 23 focused checks, TV emulator editing and signed CI36353445793 pass. Signer, package/version and all assets/native libraries verified. Shield255 is not installed; physically accepted254 remains installed pending a playback break. See `docs/handoffs/2026-09-27-shield-lyrics-lookup-v255.md`.
+Ready on `boop-shield-lyrics-lookup-v255`: temporary title/artist editor, fresh lookup, stale-result protection. Source `b4a1cd02`, 23 focused checks, TV emulator editing and signed CI36353445793 pass. Signer, package/version and all assets/native libraries verified. Shield255 is now installed with matching APK hash, unchanged preferences and preserved UID/install history. Physical Lookup acceptance remains pending. See `docs/handoffs/2026-09-27-shield-lyrics-lookup-v255.md`.
 
 ## Shield lyrics254 — 27 September 2026
 
