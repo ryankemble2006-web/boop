@@ -289,7 +289,7 @@ public final class ShieldLyricsView extends FrameLayout {
     }
     private android.graphics.drawable.GradientDrawable transportSurface(boolean focused) {
         android.graphics.drawable.GradientDrawable surface = new android.graphics.drawable.GradientDrawable();
-        surface.setColor(Color.BLACK);
+        surface.setColor(focused ? Color.rgb(22, 49, 58) : Color.rgb(14, 23, 28));
         surface.setCornerRadius(9f * unit);
         if (focused) surface.setStroke(Math.max(1, Math.round(1.6f * unit)), accent);
         return surface;
