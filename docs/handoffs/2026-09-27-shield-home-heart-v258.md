@@ -1,0 +1,9 @@
+# Shield258: Home favourite state and lifecycle
+
+Ryan accepts257's heart action in Lyrics, but Home can show an outline for a saved track; pressing it reports removal, then a second press adds/fills it. Preserve the accepted lyrics layout and257 transport/credit fixes.
+
+The shared controller permitted an unknown offscreen favourite state to dispatch a blind toggle. A deterministic test reproduced an unavailable initial read followed by a toggle. The controller also discarded confirmed state on last-listener reattachment, and a cancelled read still winding down could prevent the rebuilt Home from starting a replacement read. The latter was independently found in review and reproduced before correction.
+
+Unknown-state presses now perform a read only. If the displayed saved state differs from a newly refreshed state, that press refreshes the display without mutation. Confirmed state is retained for the same session/recording across Home/Lyrics lifecycle changes and read failures/timeouts; revalidation still runs when a screen returns. Failed reads get at most three automatic attempts per recording with a one-second retry gap. Playback progress does not trigger polling. Track changes, detachment and epochs cancel or reject stale work; first-listener reattachment restarts a cancelled read after its worker exits. Mutation timeout still invalidates uncertain state. Unknown accessibility wording now says Check Deezer favourite status.
+
+25 focused checks pass, including seven real-controller boundary cases: unknown click, cached handoff, bounded retries, stale visible state, old-track retry rejection, cancelled in-flight read handoff and read watchdog. The Android app compiles. Independent review found no remaining blockers. Signed CI, install verification and physical Home acceptance pending.

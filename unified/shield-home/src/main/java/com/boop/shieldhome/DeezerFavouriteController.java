@@ -59,6 +59,10 @@ final class DeezerFavouriteController {
     private State bridgeOwner;
     private long savedSession, lastReadSession;
     private int bridgeSaved = -1;
+    private int readAttempts;
+    private long readAttemptSession;
+    private String readAttemptIdentity = "";
+    private Runnable retryRead;
     private final Runnable timeout = () -> {
         refresh();
         if (request.expired(SystemClock.elapsedRealtime())) {
@@ -82,8 +86,9 @@ final class DeezerFavouriteController {
     }
     Runnable subscribe(Listener listener) {
         requireMain();
-        if (listeners.isEmpty() && !bridgeRunning) {
-            lastReadIdentity = ""; savedIdentity = ""; bridgeSaved = -1;
+        if (listeners.isEmpty() && (!bridgeRunning || "read".equals(bridgeOperation))) {
+            // Revalidate when a screen returns, without discarding a confirmed same-track heart.
+            lastReadIdentity = ""; readAttemptIdentity = ""; readAttempts = 0;
         }
         listeners.add(listener);
         if (unsubscribe == null) unsubscribe = manager.state().subscribe(ignored -> refresh());
@@ -93,6 +98,7 @@ final class DeezerFavouriteController {
     private void stopIfIdle() {
         if (!listeners.isEmpty() || request.pending()) return;
         if (bridgeRunning && !"read".equals(bridgeOperation) && activeBridgeEpoch == bridgeEpoch) return;
+        clearReadRetry();
         cancelBridge();
         if (unsubscribe != null) { Runnable end = unsubscribe; unsubscribe = null; end.run(); }
         unbind();
@@ -206,7 +212,13 @@ final class DeezerFavouriteController {
             message("Track changed or favourites are unavailable here."); return;
         }
         if (request.pending() || bridgeRunning) { message("Waiting for Deezer to confirm…"); return; }
+        if (explicitTarget == null && displayedState.saved != state.saved && state.saved >= 0) {
+            message("Favourite state refreshed. Press again to change it."); return;
+        }
         if (offscreenBackend != null && !heartRating && addAction == null && removeAction == null) {
+            if (state.saved == DeezerFavouritePolicy.UNKNOWN) {
+                message("Checking Deezer favourite status..."); startBridge("read"); return;
+            }
             if (explicitTarget != null && state.saved == (explicitTarget ? 1 : 0)) return;
             startBridge("toggle"); return;
         }
@@ -240,7 +252,12 @@ final class DeezerFavouriteController {
         if (bridgeRunning || request.pending()) { message("Waiting for Deezer to confirm…"); return; }
         startBridge("dislike");
     }
+    private void clearReadRetry() {
+        if (retryRead != null) handler.removeCallbacks(retryRead);
+        retryRead = null;
+    }
     private void cancelBridge() {
+        clearReadRetry();
         if (!bridgeRunning || activeBridgeEpoch != bridgeEpoch) return;
         bridgeEpoch++;
         try { offscreenBackend.getMethod("cancel", String.class).invoke(null, bridgeNonce); }
@@ -254,6 +271,11 @@ final class DeezerFavouriteController {
         MediaMetadata metadata = player.getMetadata();
         if (metadata == null || !metadataMatches(current, metadata)) return;
         final State owner = state;
+        clearReadRetry();
+        if (!DeezerFavouritePolicy.sameTrack(readAttemptSession, readAttemptIdentity, owner.session, owner.mediaIdentity)) {
+            readAttemptSession = owner.session; readAttemptIdentity = owner.mediaIdentity; readAttempts = 0;
+        }
+        if ("read".equals(operation)) readAttempts++;
         final long generation = ++bridgeEpoch;
         final String nonce = UUID.randomUUID().toString().replace("-", "");
         Map<String,String> input = new HashMap<>();
@@ -268,8 +290,13 @@ final class DeezerFavouriteController {
         publish();
         Runnable watchdog = () -> {
             if (generation != bridgeEpoch) return;
-            cancelBridge(); savedIdentity = ""; bridgeSaved = -1;
-            if (!"read".equals(operation)) message("Deezer did not confirm in time.");
+            cancelBridge();
+            if ("read".equals(operation)) {
+                if (readAttempts < 3) lastReadIdentity = "";
+            } else {
+                savedIdentity = ""; bridgeSaved = -1;
+                message("Deezer did not confirm in time.");
+            }
             refresh();
         };
         handler.postDelayed(watchdog, 30000);
@@ -284,6 +311,7 @@ final class DeezerFavouriteController {
             handler.post(() -> {
                 handler.removeCallbacks(watchdog);
                 bridgeRunning = false; bridgeWorker = null; bridgeNonce = "";
+                boolean retry = false;
                 if (generation == bridgeEpoch && DeezerFavouritePolicy.sameTrack(owner.session, owner.mediaIdentity,
                         state.session, state.mediaIdentity)) {
                     String status = result == null ? "UNAVAILABLE" : String.valueOf(result.get("status"));
@@ -297,11 +325,23 @@ final class DeezerFavouriteController {
                     } else if (receipt && "DISLIKED".equals(status)) {
                         savedIdentity = ""; bridgeSaved = -1;
                     } else {
-                        savedIdentity = ""; bridgeSaved = -1;
-                        if (!"read".equals(operation)) message("Could not confirm the Deezer heart change.");
+                        if ("read".equals(operation)) retry = readAttempts < 3;
+                        else {
+                            savedIdentity = ""; bridgeSaved = -1;
+                            message("Could not confirm the Deezer heart change.");
+                        }
                     }
                 }
                 refresh();
+                if (retry && !listeners.isEmpty() && generation == bridgeEpoch) {
+                    retryRead = () -> {
+                        retryRead = null;
+                        if (!listeners.isEmpty() && !bridgeRunning && generation == bridgeEpoch
+                                && DeezerFavouritePolicy.sameTrack(owner.session, owner.mediaIdentity, state.session, state.mediaIdentity))
+                            startBridge("read");
+                    };
+                    handler.postDelayed(retryRead, 1000);
+                }
             });
         }, "BOOP-offscreen-heart");
         bridgeWorker.start();
