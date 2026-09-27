@@ -20,8 +20,8 @@ adb('shell','am','force-stop',package)
 adb('shell','am','start','-W','-n',package+'/com.boop.shieldhome.LyricsLookupFixture')
 time.sleep(.5)
 assert contains(tree('screen'),'Lookup')
-key(20);key(22)
-assert focused(tree('lookup-focused'),'Lookup'), 'D-pad must reach Lookup from Queue'
+key(20)
+assert focused(tree('lookup-focused'),'Lookup'), 'Down from Play/Pause must reach Lookup'
 key(23)
 assert focused(tree('editor'),'Example Song (Remastered 2020)')
 (out/'editor.png').write_bytes(adb('exec-out','screencap','-p'))
