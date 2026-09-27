@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## Shield257 heart fix installed — 27 September 2026
+
+Expanded native artist credits no longer reject the correct current heart. Existing approved loopback ADB is preferred; HA fallback is pre-dispatch only. Source42afa0e6 / signed CI36355450822 passed. Installed signature/hash/settings/assets verified; actual installed read confirmed state in3647ms. Favourite-button retest pending. Ryan accepted256 lyrics layout and it remains unchanged. See docs/handoffs/2026-09-27-shield-heart-v257.md.
+
 ## Shield256 lyrics layout installed — 27 September 2026
 
 Lookup now sits beneath play/pause, Queue to its left, with exact transport background/focus colours and the configured accent. Source d4d4cab4 / signed CI36354379412 passed; installed APK hash, signer, preferences and assets/native libraries verified. Physical layout acceptance pending. See docs/handoffs/2026-09-27-shield-lyrics-layout-v256.md.

@@ -2,6 +2,14 @@ package com.boop.bridge;
 /** Pure fail-closed policy shared by the source-built native UI bridge and its tests. */
 public final class DeezerHeartRules {
     private DeezerHeartRules() { }
+    /** The session exposes the lead artist; the TV player can expand the credit list.
+     * Only an exact leading credit followed by Deezer's comma separator is accepted.
+     */
+    public static boolean artistMatches(String expected,String displayed) {
+        if(expected==null||expected.isEmpty()||displayed==null)return false;
+        return expected.equals(displayed) || (displayed.startsWith(expected+", ")
+                && !displayed.substring(expected.length()+2).trim().isEmpty());
+    }
     public static boolean requestAllowed(String operation, int expected) {
         return expected >= -1 && expected <= 1 && ("read".equals(operation)
                 || "toggle".equals(operation) || "dislike".equals(operation));

@@ -213,7 +213,7 @@ public final class DeezerHeartBridge {
     private AccessibilityNodeInfo selectHeart(List<AccessibilityNodeInfo> nodes,boolean dislike)throws IOException {
         boolean title=false,artist=false;Rect lyrics=null;
         for(AccessibilityNodeInfo n:nodes){if(!provider(n))continue;String t=n.getText()==null?"":n.getText().toString();
-            title|=t.equals(request.optString("title"));artist|=t.equals(request.optString("artist"));
+            title|=t.equals(request.optString("title"));artist|=DeezerHeartRules.artistMatches(request.optString("artist"),t);
             if("Lyrics".contentEquals(n.getContentDescription()==null?"":n.getContentDescription())){lyrics=new Rect();n.getBoundsInScreen(lyrics);}}
         if(!title||!artist||lyrics==null)throw new IOException("Native player identity changed");
         TreeMap<Integer,AccessibilityNodeInfo> row=new TreeMap<>();Rect b=new Rect();
