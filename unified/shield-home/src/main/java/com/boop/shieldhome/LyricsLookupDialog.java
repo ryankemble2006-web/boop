@@ -54,6 +54,18 @@ final class LyricsLookupDialog extends Dialog {
         panel.addView(actions,actionParams);
         artist.setNextFocusDownId(find.getId());find.setNextFocusUpId(artist.getId());cancel.setNextFocusUpId(artist.getId());
         cancel.setNextFocusRightId(find.getId());find.setNextFocusLeftId(cancel.getId());
+        title.setOnKeyListener((v,key,event)->{
+            if(event.getAction()==android.view.KeyEvent.ACTION_DOWN && key==android.view.KeyEvent.KEYCODE_DPAD_DOWN){
+                hideKeyboard();artist.requestFocus();return true;
+            }
+            return false;
+        });
+        artist.setOnKeyListener((v,key,event)->{
+            if(event.getAction()!=android.view.KeyEvent.ACTION_DOWN)return false;
+            if(key==android.view.KeyEvent.KEYCODE_DPAD_DOWN){hideKeyboard();find.requestFocus();return true;}
+            if(key==android.view.KeyEvent.KEYCODE_DPAD_UP){hideKeyboard();title.requestFocus();return true;}
+            return false;
+        });
         ScrollView scroll=new ScrollView(getContext());scroll.setFillViewport(true);scroll.addView(panel);setContentView(scroll);
         setCanceledOnTouchOutside(true);
         Window window=getWindow();
@@ -75,7 +87,12 @@ final class LyricsLookupDialog extends Dialog {
         if(t.isEmpty()){title.setError("Enter a track title");title.requestFocus();return;}
         if(a.isEmpty()){artist.setError("Enter an artist");artist.requestFocus();return;}
         NowPlayingSnapshot query=LyricsLookupQuery.edit(original,t,a);
-        dismiss(); search.accept(query);
+        hideKeyboard();dismiss(); search.accept(query);
+    }
+    private void hideKeyboard(){
+        android.view.inputmethod.InputMethodManager keyboard=(android.view.inputmethod.InputMethodManager)
+                getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if(keyboard!=null)keyboard.hideSoftInputFromWindow(title.getWindowToken(),0);
     }
     private EditText field(String value){
         EditText field=new EditText(getContext());field.setId(View.generateViewId());
