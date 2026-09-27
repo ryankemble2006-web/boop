@@ -1,5 +1,13 @@
 # BOOP status
 
+## Shield256 lyrics layout installed � 27 September 2026
+
+Lookup now sits beneath play/pause, Queue to its left, with exact transport background/focus colours and the configured accent. Source d4d4cab4 / signed CI36354379412 passed; installed APK hash, signer, preferences and assets/native libraries verified. Physical layout acceptance pending. See docs/handoffs/2026-09-27-shield-lyrics-layout-v256.md.
+
+## Editable lyrics lookup255 — 27 September 2026
+
+Ready on `boop-shield-lyrics-lookup-v255`: temporary title/artist editor, fresh lookup, stale-result protection. Source `b4a1cd02`, 23 focused checks, TV emulator editing and signed CI36353445793 pass. Signer, package/version and all assets/native libraries verified. Shield255 is now installed with matching APK hash, unchanged preferences and preserved UID/install history. Physical Lookup acceptance remains pending. See `docs/handoffs/2026-09-27-shield-lyrics-lookup-v255.md`.
+
 ## Shield lyrics254 — 27 September 2026
 
 Shield254 is installed from `7b8740c2` on `boop-shield-lyrics-v254`: LRCLIB primary, Deezer fallback, bounded transient retries. Signed CI36351789171 and three installed production-loader lookups pass. Settings, signer, assets and native libraries are preserved. Manual Home-button acceptance remains separate. See `docs/handoffs/2026-09-27-shield-lyrics-v254.md`.
