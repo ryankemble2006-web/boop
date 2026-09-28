@@ -1,5 +1,9 @@
 # BOOP current handoff
 
+## Shield 259 native Deezer resume and heading removal installed - 28 September 2026
+
+Home/lyrics resume selects native music mode before Deezer Play, and playing native Deezer is now recognised by the session observer. Foreground video priority remains. The fixed Seren Next Up heading is removed with row geometry preserved. Source `42dd4087`, 12 focused checks, independent review and signed CI `36360183708` pass. Installed APK hash, permanent signer, preferences, UID/install history and all assets/native libraries are verified; a live Home screenshot confirms heading removal. Kodi's competing idle audio keepalive is separately Off and persisted. After the pre-existing 48 kHz mixer track was replaced by a fresh native track, Ryan confirmed two Kodi -> Home -> unpause cycles with clean 44.1 kHz audio. Android independently showed DIRECT 44100 Hz after both, Kodi retained its PID, and runtime/saved keepalive remained Off. See `docs/handoffs/2026-09-28-shield-next-up-heading-v259.md`.
+
 ## Shield258 Home heart state installed - 27 September 2026
 
 Home preserves confirmed hearts during revalidation and unknown/stale displayed hearts cannot blindly toggle. Cancelled-read handoffs and bounded read retries are covered.25 focused tests and signed CI36356290334 / source0f67b4f7 pass. Installed hash/signature/settings/assets verified. Physical Home acceptance pending. See docs/handoffs/2026-09-27-shield-home-heart-v258.md.

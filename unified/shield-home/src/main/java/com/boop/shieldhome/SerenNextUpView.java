@@ -32,7 +32,6 @@ final class SerenNextUpView extends LinearLayout {
     SerenNextUpView(Context context) {
         super(context); setOrientation(VERTICAL); setClipChildren(false); setClipToPadding(false);
         LinearLayout heading = new LinearLayout(context); heading.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = text("Seren · Next Up", 20); heading.addView(title, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(32)));
         detail = text("", 14); detail.setTextColor(Color.LTGRAY); detail.setSingleLine(true); detail.setEllipsize(TextUtils.TruncateAt.END);
         detail.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         LayoutParams info = new LayoutParams(0, dp(32), 1); info.leftMargin = dp(16); heading.addView(detail, info);

@@ -178,7 +178,8 @@ public final class ShieldNowPlayingManager {
                     controls.pause(); return true;
                 case RESUME:
                     if(!snapshot.canPlayPause()) return false;
-                    controls.play(); return true;
+                    AudioModeController.get(applicationContext).resume(controller.getPackageName(), controls::play);
+                    return true;
                 case NEXT:
                     if(!snapshot.canNext()) return false;
                     controls.skipToNext(); return true;
@@ -205,7 +206,7 @@ public final class ShieldNowPlayingManager {
             if (snapshot.isPlaying()) {
                 controls.pause();
             } else {
-                controls.play();
+                AudioModeController.get(applicationContext).resume(controller.getPackageName(), controls::play);
             }
         });
     }
@@ -626,8 +627,8 @@ public final class ShieldNowPlayingManager {
             PlaybackState playback = binding.controller.getPlaybackState();
             boolean playing = playback != null && playback.getState() == PlaybackState.STATE_PLAYING;
             long actions = playback == null ? 0L : playback.getActions();
-            AudioModeController.get(applicationContext).applyCast(
-                    AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing, actions));
+            AudioModeController.get(applicationContext).applyPlayback(
+                    AudioModePolicy.forPlayback(binding.controller.getPackageName(), contentType, playing, actions));
             state.update(snapshot(binding));
             queueController.update(selectedController, selectedId);
             return;
