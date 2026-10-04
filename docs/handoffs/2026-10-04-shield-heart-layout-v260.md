@@ -63,3 +63,13 @@ sanitised verification receipt are retained in this chat's outputs.
 No upgrade has been installed and no diagnostic favourite mutation was sent.
 Physical Home/lyrics button acceptance and visual lyrics acceptance remain
 pending. Build: https://github.com/ryankemble2006-web/boop/actions/runs/37173408925
+
+## Installation authorised and verified
+
+Ryan explicitly requested installation. In-place install succeeded. Installed
+version260 and APK SHA256 match the independently verified signed artifact.
+App UID and original first-install timestamp are unchanged, and the before/after
+app file listing matches. Preference values were not independently hashed: the
+shell diagnostic listed files rather than calculating the intended preference
+hashes. No setting changes were requested or sent. No post-install playback or
+heart mutation was sent; physical Home/lyrics-button acceptance remains pending.

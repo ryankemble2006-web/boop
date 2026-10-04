@@ -1,5 +1,15 @@
 # BOOP durable project memory
 
+## Shield260 installed - 4 October 2026
+
+Ryan explicitly authorised installation. In-place upgrade succeeded; installed
+version260 and APK hash match the verified signed artifact. App UID, original
+install history and app file listing are preserved. Preference values were not
+independently hashed: the diagnostic shell invocation listed files rather than
+hashing preferences. No playback commands or heart mutation were sent after
+installation. Physical Home/lyrics button acceptance remains Ryan's retest.
+See docs/handoffs/2026-10-04-shield-heart-layout-v260.md.
+
 ## Shield260 signed release ready - 4 October 2026
 
 Source41b910f3 passed complete signed CI37173408925 and independent artifact
