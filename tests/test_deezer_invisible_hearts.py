@@ -129,6 +129,10 @@ public final class AlbumHeartProbe {
   int[][] flow={{64,398,112,446},{120,398,168,446},{520,398,568,446},{584,398,632,446},{648,398,696,446},{712,398,760,446}};
   yes(index(album,false,"album_partner")==0,"The real album favourite is the first control, not Shuffle");
   yes(index(album,false,"playlist_partner")==0,"Recognised finite playlist layout");
+  yes(index(album,false,"track_mix_partner")==0,"Live track mix can expose the same single-heart queue layout");
+  yes(index(album,true,"track_mix_partner")==-1,"Single-heart track mix has no dislike control");
+  yes(index(flow,false,"track_mix_partner")==1,"Track mix can also expose the two-heart recommendation layout");
+  yes(index(flow,true,"track_mix_partner")==0,"Two-heart track mix retains its native dislike");
   yes(index(album,true,"album_partner")==-1,"No native dislike in an album");
   yes(index(album,true,"playlist_partner")==-1,"Never substitute a playlist heart for dislike");
   yes(index(flow,false,"flow_partner")==1,"Flow keeps second favourite");

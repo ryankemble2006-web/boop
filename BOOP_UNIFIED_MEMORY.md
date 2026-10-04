@@ -1,5 +1,15 @@
 # BOOP durable project memory
 
+## Shield260 heart repair prepared - 4 October 2026
+
+Track-mix sessions now recognise both verified native heart rows; finite queues
+still reject dislike. Requested failed reads show an error; background reads
+remain quiet. Home and lyrics share this repair. 27 focused tests, 9 additional
+checks and code review pass; live read-only prototype succeeds and installed
+lyrics retrieval passes. Signed CI/artifact verification and installation are
+pending. Physical button acceptance remains separate. See
+ docs/handoffs/2026-10-04-shield-heart-layout-v260.md.
+
 ## Current: music mic-screen return installed on Shield249 / Pixel7 Wall216
 
 Accepted native music playback now closes a one-shot mic session immediately without synthesizing "Done". Questions retain their follow-up, while errors, Voice Settings and permanent Wall sessions retain their responses. Native command receipts also survive concurrent Home heart lookups through bounded read-only recovery; playback is never replayed. Temporary receipts expire automatically after 90 seconds using a detached Android shell session.

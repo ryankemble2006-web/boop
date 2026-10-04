@@ -20,5 +20,5 @@ public final class BoopDeezerHeartBackend {
     source=ROOT/'unified/shield-home/src/main/java/com/boop/shieldhome'
     files=[source/(name+'.java') for name in ['DeezerFavouritePolicy','DeezerFavouriteRequest','DeezerFavouriteController','NowPlayingSnapshot','NowPlayingState','NowPlayingActionPolicy','NowPlayingSelectionPolicy']]
     subprocess.run(['javac','-encoding','UTF-8','-d',str(tmp_path),*map(str,files),str(ROOT/'tests/java/HomeHeartProbe.java'),*map(str,tmp_path.rglob('*.java'))],check=True)
-    for case in ['unknown','handoff','retry','stale','track','inflight','timeout']:
+    for case in ['unknown','handoff','retry','stale','track','inflight','timeout','feedback','feedback-timeout']:
         subprocess.run(['java','-cp',str(tmp_path),'com.boop.shieldhome.HomeHeartProbe',case],check=True,timeout=12)

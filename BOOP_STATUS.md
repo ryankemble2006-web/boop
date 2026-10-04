@@ -1,5 +1,15 @@
 # BOOP status
 
+## Shield260 heart repair prepared - 4 October 2026
+
+Track-mix sessions now recognise both verified native heart rows; finite queues
+still reject dislike. Requested failed reads show an error; background reads
+remain quiet. Home and lyrics share this repair. 27 focused tests, 9 additional
+checks and code review pass; live read-only prototype succeeds and installed
+lyrics retrieval passes. Signed CI/artifact verification and installation are
+pending. Physical button acceptance remains separate. See
+ docs/handoffs/2026-10-04-shield-heart-layout-v260.md.
+
 ## Shield258 Home heart state installed - 27 September 2026
 
 Home preserves confirmed hearts during revalidation and unknown/stale displayed hearts cannot blindly toggle. Cancelled-read handoffs and bounded read retries are covered.25 focused tests and signed CI36356290334 / source0f67b4f7 pass. Installed hash/signature/settings/assets verified. Physical Home acceptance pending. See docs/handoffs/2026-09-27-shield-home-heart-v258.md.

@@ -24,7 +24,16 @@ public final class HomeHeartProbe {
    case "retry":
     for(int calls=1;calls<=3;calls++) {final int n=calls;waitFor(()->BoopDeezerHeartBackend.calls==n);reply("UNAVAILABLE",-1);Handler.advance(1000);}
     Thread.sleep(30);yes(BoopDeezerHeartBackend.calls==3,"Automatic read retries are bounded");
-    for(int i=0;i<20;i++)p.actionsChanged();Handler.advance(10000);yes(BoopDeezerHeartBackend.calls==3,"Playback ticks cannot loop failed reads");break;
+    for(int i=0;i<20;i++)p.actionsChanged();Handler.advance(10000);yes(BoopDeezerHeartBackend.calls==3,"Playback ticks cannot loop failed reads");
+    yes(android.widget.Toast.messages.isEmpty(),"Automatic reads must remain quiet");break;
+   case "feedback":
+    reply("UNAVAILABLE",-1);controller.change(song,state,null);waitFor(()->BoopDeezerHeartBackend.calls==2);
+    reply("UNAVAILABLE",-1);Handler.advance(1000);waitFor(()->BoopDeezerHeartBackend.calls==3);reply("UNAVAILABLE",-1);
+    yes(android.widget.Toast.messages.contains("Couldn't read Deezer favourite status. Try again or open Deezer."),"Requested read failure must not end silently");
+    yes(state.saved==-1,"Failed read must never manufacture a favourite");break;
+   case "feedback-timeout":
+    reply("UNAVAILABLE",-1);controller.change(song,state,null);waitFor(()->BoopDeezerHeartBackend.calls==2);Handler.advance(30000);Thread.sleep(30);
+    yes(android.widget.Toast.messages.contains("Couldn't read Deezer favourite status. Try again or open Deezer."),"Requested read watchdog needs visible feedback");break;
    case "stale":
     reply("OK",0);DeezerFavouriteController.State old=state;controller.change(song,state,null);waitFor(()->BoopDeezerHeartBackend.calls==2);reply("OK",1);
     controller.change(song,old,null);Thread.sleep(30);yes(BoopDeezerHeartBackend.calls==2&&state.saved==1,"An old empty heart cannot remove a now-saved track");break;

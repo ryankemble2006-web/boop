@@ -217,7 +217,7 @@ final class DeezerFavouriteController {
         }
         if (offscreenBackend != null && !heartRating && addAction == null && removeAction == null) {
             if (state.saved == DeezerFavouritePolicy.UNKNOWN) {
-                message("Checking Deezer favourite status..."); startBridge("read"); return;
+                message("Checking Deezer favourite status..."); startBridge("read", true); return;
             }
             if (explicitTarget != null && state.saved == (explicitTarget ? 1 : 0)) return;
             startBridge("toggle"); return;
@@ -265,6 +265,9 @@ final class DeezerFavouriteController {
         if (bridgeWorker != null) bridgeWorker.interrupt();
     }
     private void startBridge(String operation) {
+        startBridge(operation, false);
+    }
+    private void startBridge(String operation, boolean requestedRead) {
         if (bridgeRunning || offscreenBackend == null || player == null || state.session <= 0) return;
         NowPlayingSnapshot current = manager.state().current();
         if (!state.matches(current)) return;
@@ -292,6 +295,7 @@ final class DeezerFavouriteController {
             if (generation != bridgeEpoch) return;
             cancelBridge();
             if ("read".equals(operation)) {
+                if (requestedRead) message("Couldn't read Deezer favourite status. Try again or open Deezer.");
                 if (readAttempts < 3) lastReadIdentity = "";
             } else {
                 savedIdentity = ""; bridgeSaved = -1;
@@ -325,7 +329,11 @@ final class DeezerFavouriteController {
                     } else if (receipt && "DISLIKED".equals(status)) {
                         savedIdentity = ""; bridgeSaved = -1;
                     } else {
-                        if ("read".equals(operation)) retry = readAttempts < 3;
+                        if ("read".equals(operation)) {
+                            retry = readAttempts < 3;
+                            if (requestedRead && !retry)
+                                message("Couldn't read Deezer favourite status. Try again or open Deezer.");
+                        }
                         else {
                             savedIdentity = ""; bridgeSaved = -1;
                             message("Could not confirm the Deezer heart change.");
@@ -338,7 +346,7 @@ final class DeezerFavouriteController {
                         retryRead = null;
                         if (!listeners.isEmpty() && !bridgeRunning && generation == bridgeEpoch
                                 && DeezerFavouritePolicy.sameTrack(owner.session, owner.mediaIdentity, state.session, state.mediaIdentity))
-                            startBridge("read");
+                            startBridge("read", requestedRead);
                     };
                     handler.postDelayed(retryRead, 1000);
                 }

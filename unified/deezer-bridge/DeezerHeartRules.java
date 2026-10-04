@@ -38,8 +38,18 @@ public final class DeezerHeartRules {
      * Its first middle control is NOT a favourite, and it has no dislike control.
      */
     public static int heartIndex(int[][] row, int lyricsY, boolean dislike, String contextType) {
+        // Deezer can retain a track-mix session while showing a finite queue.
+        // Identify one of the two verified rows; never assume the first control
+        // is a dislike, or the second control is a heart, from context alone.
+        if ("track_mix_partner".equals(contextType)) {
+            int recommendation = heartIndex(row, lyricsY, dislike);
+            return recommendation >= 0 ? recommendation : finiteHeartIndex(row, lyricsY, dislike);
+        }
         if (!"album_partner".equals(contextType) && !"playlist_partner".equals(contextType))
             return heartIndex(row, lyricsY, dislike);
+        return finiteHeartIndex(row, lyricsY, dislike);
+    }
+    private static int finiteHeartIndex(int[][] row, int lyricsY, boolean dislike) {
         if (dislike || row == null || row.length != 6) return -1;
         int[] left = {64, 488, 552, 616, 680, 744};
         for (int i = 0; i < row.length; i++) {
