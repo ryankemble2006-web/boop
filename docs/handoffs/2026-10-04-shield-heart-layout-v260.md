@@ -42,3 +42,24 @@ returned OK saved0 for She's A Rainbow. No favourite/dislike mutation was sent.
 Shield becomes260; Wall220 and permanent signing are preserved. Signed build,
 artifact verification, installation and physical button acceptance are separate
 pending steps. No installation is authorised merely by repository syncing.
+
+## Signed release ready - 4 October 2026
+
+Final code source41b910f3b7514685403f85ee126bf86b4eab7c84 passed the complete
+signed workflow37173408925, including inherited checks, generated integration,
+lyrics/audio/HA tests, compilation and both APK verifiers. The first build failed
+only because the preserved weather release guard still expected259; that guard
+now expects260 with its weather/permission checks preserved. All8weather tests
+also passed locally. The production bridge compiled locally using CI's Java17;
+the installed Android Studio JBR25 was unsuitable for this D8 version.
+
+Independent downloaded-artifact verification confirms package/version260, source
+commit, SHA25622530ad82f0ed083b88029a2d68ac55a003dc98fdb6b15adb8b202694ff88067,
+permanent signer f5af40378ef06445b43f6001ae602fc18ce16eefbabdefd23afe178a47b5cdde,
+all29assets and16native libraries identical to the hash-verified accepted259APK.
+The APK includes requested-read failure feedback. A Shield-only APK and a
+sanitised verification receipt are retained in this chat's outputs.
+
+No upgrade has been installed and no diagnostic favourite mutation was sent.
+Physical Home/lyrics button acceptance and visual lyrics acceptance remain
+pending. Build: https://github.com/ryankemble2006-web/boop/actions/runs/37173408925

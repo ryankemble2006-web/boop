@@ -1,5 +1,14 @@
 # BOOP status
 
+## Shield260 signed release ready - 4 October 2026
+
+Source41b910f3 passed complete signed CI37173408925 and independent artifact
+verification. Package/version260, permanent signer, source/hash and all29assets
+and16native libraries match the accepted259baseline. Home/lyrics heart repair
+and requested-read feedback are ready; lyrics retrieval passed live. No update
+is installed. Physical Home/lyrics button and visual lyrics acceptance remain
+pending. See docs/handoffs/2026-10-04-shield-heart-layout-v260.md.
+
 ## Shield260 heart repair prepared - 4 October 2026
 
 Track-mix sessions now recognise both verified native heart rows; finite queues
