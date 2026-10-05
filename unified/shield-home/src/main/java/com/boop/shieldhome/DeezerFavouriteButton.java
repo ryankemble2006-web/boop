@@ -73,7 +73,7 @@ final class DeezerFavouriteButton extends View {
         String label = mode == DISLIKE ? "Dislike this track and skip in Deezer"
                 : known() && state.saved == 1 ? "Remove from Deezer favourites" : "Add to Deezer favourites";
         if (known() && state.pending) label += ". Waiting for Deezer";
-        else if (mode == TOGGLE && (!known() || state.saved == -1)) label = "Deezer favourite. Check and toggle";
+        else if (mode == TOGGLE && (!known() || state.saved == -1)) label = "Check Deezer favourite status";
         setContentDescription(label);
     }
     @Override protected void onDraw(Canvas canvas) {
