@@ -13,6 +13,9 @@ final class BoopNotificationSettingsStore {
     private static final String KEY_ENABLED_APPS = "enabled_apps";
     private static final String KEY_ENABLED_CHANNELS = "enabled_channels";
     private static final String KEY_OBSERVED_CHANNELS = "observed_channels";
+    private static final String KEY_ALL_APPS = "all_apps";
+    private static final String KEY_EXCLUDED_APPS = "excluded_apps";
+    private static final String KEY_EXCLUDED_CHANNELS = "excluded_channels";
 
     private final SharedPreferences preferences;
 
@@ -26,7 +29,10 @@ final class BoopNotificationSettingsStore {
                 preferences.getBoolean(KEY_MASTER_ENABLED, false),
                 preferences.getLong(KEY_TIMEOUT_MS, BoopNotificationSettingsState.DEFAULT_TIMEOUT_MS),
                 copy(preferences.getStringSet(KEY_ENABLED_APPS, Collections.emptySet())),
-                copy(preferences.getStringSet(KEY_ENABLED_CHANNELS, Collections.emptySet())));
+                copy(preferences.getStringSet(KEY_ENABLED_CHANNELS, Collections.emptySet())),
+                preferences.getBoolean(KEY_ALL_APPS, false),
+                copy(preferences.getStringSet(KEY_EXCLUDED_APPS, Collections.emptySet())),
+                copy(preferences.getStringSet(KEY_EXCLUDED_CHANNELS, Collections.emptySet())));
     }
 
     void save(BoopNotificationSettingsState state) {
@@ -37,6 +43,9 @@ final class BoopNotificationSettingsStore {
                 .putLong(KEY_TIMEOUT_MS, safe.timeoutMs())
                 .putStringSet(KEY_ENABLED_APPS, new LinkedHashSet<>(safe.enabledApps()))
                 .putStringSet(KEY_ENABLED_CHANNELS, new LinkedHashSet<>(safe.enabledChannelKeys()))
+                .putBoolean(KEY_ALL_APPS, safe.allAppsEnabled())
+                .putStringSet(KEY_EXCLUDED_APPS, new LinkedHashSet<>(safe.excludedApps()))
+                .putStringSet(KEY_EXCLUDED_CHANNELS, new LinkedHashSet<>(safe.excludedChannelKeys()))
                 .apply();
     }
 

@@ -12,6 +12,7 @@ final class BoopNotificationEnvelope {
     private final String text;
     private final long postTimeMs;
     private final boolean autoCancel;
+    private final boolean onlyAlertOnce;
 
     BoopNotificationEnvelope(
             String key,
@@ -23,6 +24,14 @@ final class BoopNotificationEnvelope {
             String text,
             long postTimeMs,
             boolean autoCancel) {
+        this(key, packageName, appLabel, channelId, channelName, title, text,
+                postTimeMs, autoCancel, false);
+    }
+
+    BoopNotificationEnvelope(
+            String key, String packageName, String appLabel, String channelId,
+            String channelName, String title, String text, long postTimeMs,
+            boolean autoCancel, boolean onlyAlertOnce) {
         this.key = safe(key);
         this.packageName = safe(packageName);
         this.appLabel = safe(appLabel);
@@ -32,6 +41,7 @@ final class BoopNotificationEnvelope {
         this.text = text;
         this.postTimeMs = postTimeMs;
         this.autoCancel = autoCancel;
+        this.onlyAlertOnce = onlyAlertOnce;
     }
 
     String key() { return key; }
@@ -43,11 +53,12 @@ final class BoopNotificationEnvelope {
     String text() { return text; }
     long postTimeMs() { return postTimeMs; }
     boolean autoCancel() { return autoCancel; }
+    boolean onlyAlertOnce() { return onlyAlertOnce; }
 
     BoopNotificationEnvelope redactedForLockScreen() {
         return new BoopNotificationEnvelope(
                 key, packageName, appLabel, channelId, channelName,
-                null, null, postTimeMs, autoCancel);
+                null, null, postTimeMs, autoCancel, onlyAlertOnce);
     }
 
     private static String safe(String value) {
@@ -61,6 +72,7 @@ final class BoopNotificationEnvelope {
         BoopNotificationEnvelope that = (BoopNotificationEnvelope) other;
         return postTimeMs == that.postTimeMs
                 && autoCancel == that.autoCancel
+                && onlyAlertOnce == that.onlyAlertOnce
                 && key.equals(that.key)
                 && packageName.equals(that.packageName)
                 && appLabel.equals(that.appLabel)
@@ -73,6 +85,6 @@ final class BoopNotificationEnvelope {
     @Override
     public int hashCode() {
         return Objects.hash(key, packageName, appLabel, channelId, channelName,
-                title, text, postTimeMs, autoCancel);
+                title, text, postTimeMs, autoCancel, onlyAlertOnce);
     }
 }

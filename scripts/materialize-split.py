@@ -22,7 +22,7 @@ assert not (ROOT / 'assistant-lib/build.gradle').exists(), 'Split already materi
 
 # Keep byte-level evidence for EVERY generated Java file and every current asset.
 def digest_tree():
-    return {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+    return {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in ROOT.rglob('*') if p.is_file()
             and ('/src/main/java/' in p.as_posix() or '/src/main/assets/' in p.as_posix())}
 before = digest_tree()

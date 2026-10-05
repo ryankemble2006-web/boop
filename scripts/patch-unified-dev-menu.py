@@ -118,9 +118,13 @@ if methods_marker not in text:
         column.setGravity(Gravity.CENTER_HORIZONTAL);
         column.setBackgroundColor(Color.BLACK);
         column.setPadding(dp(24), dp(14), dp(24), dp(14));
-        developerMenuOverlay.addView(column, new FrameLayout.LayoutParams(
+        ScrollView menuScroll = new ScrollView(this);
+        menuScroll.setFillViewport(true);
+        menuScroll.setContentDescription("Scrollable BOOP developer menu");
+        developerMenuOverlay.addView(menuScroll, new FrameLayout.LayoutParams(-1, -1));
+        menuScroll.addView(column, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
+                FrameLayout.LayoutParams.WRAP_CONTENT));
 
         TextView title = voiceSettingLabel("BOOP Dev Lab", 26f, true);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
@@ -132,7 +136,7 @@ if methods_marker not in text:
         developerMenuFace = new BoopFaceView(this);
         LinearLayout.LayoutParams faceParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
+                dp(160),
                 1.0f);
         faceParams.setMargins(0, 0, 0, dp(4));
         column.addView(developerMenuFace, faceParams);
@@ -169,6 +173,7 @@ if methods_marker not in text:
                 dp(56));
         doneParams.setMargins(0, dp(4), 0, 0);
         column.addView(done, doneParams);
+        BoopReadableControls.fitText(column);
     }
 
     private void addDeveloperShelf(
@@ -231,7 +236,7 @@ if methods_marker not in text:
 
         LinearLayout.LayoutParams shelfParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                dp(70));
+                LinearLayout.LayoutParams.WRAP_CONTENT);
         shelfParams.setMargins(0, 0, 0, dp(2));
         column.addView(shelfScroll, shelfParams);
     }

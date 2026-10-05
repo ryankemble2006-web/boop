@@ -158,6 +158,7 @@ python3 scripts/patch-tablet-recipes.py
 python3 scripts/patch-unified-canonical-animations.py
 
 python3 scripts/patch-unified-v148-single-face.py
+python3 scripts/patch-unified-readable-controls.py
 
 # Retain queued acknowledgements until speech initialization completes.
 python3 scripts/patch-unified-voice-startup.py

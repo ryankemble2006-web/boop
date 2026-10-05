@@ -47,6 +47,7 @@ public final class NotificationSignView extends View {
         });
     }
     public void show(SignMotion.Pose pose,int style){this.pose=pose;this.style=Math.floorMod(style,4);freddie=false;invalidate();}
+    public void setNotificationLabel(String label){feltSign.setNotificationLabel(label);invalidate();}
     public void showFreddie(SignMotion.Pose pose){this.pose=pose;freddie=true;invalidate();}
     private Bitmap sampleFinger(float[] digit,boolean mirror){
         float rx=digit[0],ry=digit[1],tx=digit[2],ty=digit[3],width=digit[4];

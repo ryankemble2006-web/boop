@@ -10,6 +10,7 @@ final class FeltSignProp {
  private final Paint art=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
  private final Paint lettering=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
  private final RectF destination=new RectF(-400,-200,400,200);
+ private String notificationLabel;
  private static final int[] COLOURS={0xff13754e,0xffae322d,0xff2057a9,0xff323b52};
  FeltSignProp(Context context,Bitmap[] thumbs){
   this.thumbs=thumbs.clone();
@@ -26,6 +27,7 @@ final class FeltSignProp {
   lettering.setTextAlign(Paint.Align.CENTER);
  }
  Bitmap artwork(){return sign;}
+ void setNotificationLabel(String label){notificationLabel=label;}
  void setArtwork(Bitmap image,Bitmap[] colouredThumbs){
   sign=image;
   System.arraycopy(colouredThumbs,0,thumbs,0,2);
@@ -44,8 +46,12 @@ final class FeltSignProp {
   canvas.drawBitmap(sign,null,destination,art);
   int colour=COLOURS[Math.floorMod(style,4)];
   lettering.setShader(null);lettering.setColorFilter(null);lettering.setColor(colour);
-  lettering.setTextSize(26);canvas.drawText(FeltSignRig.name(style),0,-30,lettering);
-  String words=FeltSignRig.words(style);
+  String heading=notificationLabel==null?FeltSignRig.name(style):notificationLabel.toUpperCase(java.util.Locale.ROOT);
+  lettering.setTextSize(26);
+  float headingWidth=lettering.measureText(heading);
+  if(headingWidth>460)lettering.setTextSize(26*460/headingWidth);
+  canvas.drawText(heading,0,-30,lettering);
+  String words=notificationLabel==null?FeltSignRig.words(style):"NOTIFICATION";
   lettering.setTextSize(49);
   float width=lettering.measureText(words);
   if(width>460)lettering.setTextSize(49*460/width);

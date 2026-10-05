@@ -18,7 +18,9 @@ final class BoopNotificationSettingsCodec {
         return (safe.masterEnabled() ? "1" : "0") + "|"
                 + safe.timeoutMs() + "|"
                 + joinEncoded(safe.enabledApps()) + "|"
-                + String.join(",", safe.enabledChannelKeys());
+                + String.join(",", safe.enabledChannelKeys()) + "|"
+                + (safe.allAppsEnabled() ? "1" : "0") + "|"
+                + joinEncoded(safe.excludedApps()) + "|" + String.join(",", safe.excludedChannelKeys());
     }
 
     static BoopNotificationSettingsState decodeState(String encoded) {
@@ -26,7 +28,7 @@ final class BoopNotificationSettingsCodec {
             return BoopNotificationSettingsState.defaults();
         }
         String[] parts = encoded.split("\\|", -1);
-        if (parts.length != 4) {
+        if (parts.length != 4 && parts.length != 7) {
             throw new IllegalArgumentException("invalid notification settings");
         }
         try {
@@ -34,7 +36,10 @@ final class BoopNotificationSettingsCodec {
                     "1".equals(parts[0]),
                     Long.parseLong(parts[1]),
                     decodeSet(parts[2]),
-                    rawSet(parts[3]));
+                    rawSet(parts[3]),
+                    parts.length == 7 && "1".equals(parts[4]),
+                    parts.length == 7 ? decodeSet(parts[5]) : Set.of(),
+                    parts.length == 7 ? rawSet(parts[6]) : Set.of());
         } catch (RuntimeException failure) {
             throw new IllegalArgumentException("invalid notification settings", failure);
         }

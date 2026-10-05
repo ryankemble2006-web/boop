@@ -108,8 +108,9 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
             final int style = i; add(signs, signNames[i], () -> showSign(style));
         }
         reveal = new Button(this); reveal.setText("Show controls"); reveal.setAllCaps(false);
+        reveal.setMinWidth(dp(145)); reveal.setMinHeight(dp(48));
         reveal.setOnClickListener(v -> setControlsHidden(false));
-        FrameLayout.LayoutParams revealParams = new FrameLayout.LayoutParams(dp(145), dp(48), Gravity.TOP | Gravity.END);
+        FrameLayout.LayoutParams revealParams = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
         frame.addView(reveal, revealParams);
         setContentView(frame);
         readIntent(getIntent());
@@ -133,14 +134,16 @@ public final class BoopCanonicalAnimationActivity extends Activity implements Ch
         scroll.setHorizontalScrollBarEnabled(false);
         LinearLayout row = new LinearLayout(this);
         scroll.addView(row);
-        parent.addView(scroll, new LinearLayout.LayoutParams(-1, dp(48)));
+        parent.addView(scroll, new LinearLayout.LayoutParams(-1, -2));
         return row;
     }
     private Button add(LinearLayout row, String text, Runnable action) {
         Button button = new Button(this); button.setText(text); button.setTextSize(14);
         button.setAllCaps(false); button.setFocusable(true);
+        button.setSingleLine(true);
+        button.setMinWidth(dp(130)); button.setMinHeight(dp(48));
         button.setOnClickListener(v -> action.run());
-        row.addView(button, new LinearLayout.LayoutParams(dp(130), dp(48)));
+        row.addView(button, new LinearLayout.LayoutParams(-2, -2));
         return button;
     }
     private void select(String id) {

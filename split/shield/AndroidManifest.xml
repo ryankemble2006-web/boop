@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <permission android:name="com.boop.shieldoverlay.permission.READ_HOME_ACCENT"
+        android:protectionLevel="signature" />
     <uses-feature android:name="android.software.leanback" android:required="true" />
     <application android:name="com.boop.alpha1.UnifiedApplication" android:allowBackup="false"
         android:label="BOOP Shield" android:icon="@drawable/boop_eyes" android:banner="@drawable/boop_tv_banner">
@@ -21,5 +23,9 @@
         <provider android:name="com.boop.alpha1.JohnnyStateProvider"
             android:authorities="com.boop.alpha1.johnny_states;com.boop.shieldoverlay.johnny_states"
             android:exported="true" android:grantUriPermissions="false" />
+        <provider android:name="com.boop.alpha1.BoopHomeAccentProvider"
+            android:authorities="com.boop.shieldoverlay.home_accent"
+            android:exported="true" android:grantUriPermissions="false"
+            android:permission="com.boop.shieldoverlay.permission.READ_HOME_ACCENT" />
     </application>
 </manifest>

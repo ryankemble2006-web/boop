@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 250 if body == 'shield' else 217
+    version = 251 if body == 'shield' else 220
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
@@ -73,6 +73,8 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
         assert b'applicationPackageName' in dex, 'Runtime close-marker owner missing from APK'
         assert b'Unsupported BOOP application' in dex, 'Close-marker owner validation missing from APK'
         assert b'Lcom/boop/launcher/MainActivity;' in dex, 'Built-in launcher lost'
+        assert b'Lcom/boop/launcher/WidgetPickerActivity;' in dex, 'Full-screen widget picker missing'
+        assert 'com.boop.launcher.WidgetPickerActivity' in manifest, 'Widget picker not registered'
         assert b'setup_intro_completed' in dex and b'Set up ' in dex
         for filename in ['boop-png-study.png','boop-hidden-felt.png','boop-felt-sign-blank.png','eyes.frag']:
             assert archive.read('assets/'+filename) == Path('unified/animation/assets',filename).read_bytes(), filename

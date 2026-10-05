@@ -49,6 +49,12 @@ public final class BoopNotificationLockActivity extends Activity {
         setShowWhenLocked(true);
         setTurnScreenOn(true);
         getWindow().getDecorView().setBackgroundColor(Color.BLACK);
+        try {
+            BoopNotificationRuntime.get(this).registerLockHost(this);
+        } catch (RuntimeException unavailable) {
+            finish();
+            return;
+        }
         renderLockedPresentation();
     }
 
@@ -89,6 +95,9 @@ public final class BoopNotificationLockActivity extends Activity {
     @Override
     protected void onDestroy() {
         authenticationInProgress = false;
+        try {
+            BoopNotificationRuntime.get(this).unregisterLockHost(this);
+        } catch (RuntimeException ignored) { }
         puppetView = null;
         handler.removeCallbacks(timeoutRunnable);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -137,7 +146,15 @@ public final class BoopNotificationLockActivity extends Activity {
             puppetView.updatePresentation(presentation);
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        handler.postDelayed(timeoutRunnable, Math.max(1L, runtime.settings().timeoutMs()));
+        if (!authenticationInProgress) {
+            handler.postDelayed(timeoutRunnable, Math.max(1L, runtime.settings().timeoutMs()));
+        }
+    }
+
+    void dismissFromRuntime() {
+        authenticationInProgress = false;
+        handler.removeCallbacks(timeoutRunnable);
+        finish();
     }
 
     private void dismissMirror() {
@@ -151,7 +168,7 @@ public final class BoopNotificationLockActivity extends Activity {
     }
 
     private void authenticateThen(Runnable afterAuthentication) {
-        if (authenticationInProgress || afterAuthentication == null) return;
+        if (authenticationInProgress || afterAuthentication == null || isFinishing() || isDestroyed()) return;
 
         KeyguardManager keyguard = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
         if (keyguard == null || !keyguard.isKeyguardLocked()) {
@@ -160,21 +177,28 @@ public final class BoopNotificationLockActivity extends Activity {
         }
 
         authenticationInProgress = true;
+        handler.removeCallbacks(timeoutRunnable);
         keyguard.requestDismissKeyguard(this, new KeyguardManager.KeyguardDismissCallback() {
             @Override
             public void onDismissSucceeded() {
+                if (!authenticationInProgress || isFinishing() || isDestroyed()) return;
                 authenticationInProgress = false;
                 afterAuthentication.run();
+                if (!isFinishing() && !isDestroyed()) renderLockedPresentation();
             }
 
             @Override
             public void onDismissCancelled() {
+                if (!authenticationInProgress || isFinishing() || isDestroyed()) return;
                 authenticationInProgress = false;
+                renderLockedPresentation();
             }
 
             @Override
             public void onDismissError() {
+                if (!authenticationInProgress || isFinishing() || isDestroyed()) return;
                 authenticationInProgress = false;
+                renderLockedPresentation();
             }
         });
     }

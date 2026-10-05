@@ -14,16 +14,27 @@ final class BoopNotificationSettingsState {
     private final long timeoutMs;
     private final Set<String> enabledApps;
     private final Set<String> enabledChannelKeys;
+    private final boolean allAppsEnabled;
+    private final Set<String> excludedApps, excludedChannelKeys;
 
     BoopNotificationSettingsState(
             boolean masterEnabled,
             long timeoutMs,
             Set<String> enabledApps,
             Set<String> enabledChannelKeys) {
+        this(masterEnabled, timeoutMs, enabledApps, enabledChannelKeys, false, null, null);
+    }
+
+    BoopNotificationSettingsState(boolean masterEnabled, long timeoutMs,
+            Set<String> enabledApps, Set<String> enabledChannelKeys, boolean allAppsEnabled,
+            Set<String> excludedApps, Set<String> excludedChannelKeys) {
         this.masterEnabled = masterEnabled;
         this.timeoutMs = clampTimeout(timeoutMs);
         this.enabledApps = immutableCopy(enabledApps);
         this.enabledChannelKeys = immutableCopy(enabledChannelKeys);
+        this.allAppsEnabled = allAppsEnabled;
+        this.excludedApps = immutableCopy(excludedApps);
+        this.excludedChannelKeys = immutableCopy(excludedChannelKeys);
     }
 
     static BoopNotificationSettingsState defaults() {
@@ -32,36 +43,66 @@ final class BoopNotificationSettingsState {
     }
 
     boolean masterEnabled() { return masterEnabled; }
+    boolean allAppsEnabled() { return allAppsEnabled; }
+    Set<String> excludedApps() { return excludedApps; }
+    Set<String> excludedChannelKeys() { return excludedChannelKeys; }
+    BoopNotificationSettingsState withAllAppsEnabled(boolean enabled) {
+        return new BoopNotificationSettingsState(masterEnabled, timeoutMs, enabledApps,
+                enabledChannelKeys, enabled, excludedApps, excludedChannelKeys);
+    }
+    BoopNotificationSettingsState withAppEnabled(String app, boolean enabled) {
+        if (allAppsEnabled) return new BoopNotificationSettingsState(masterEnabled, timeoutMs,
+                enabledApps, enabledChannelKeys, true, changed(excludedApps, app, !enabled), excludedChannelKeys);
+        return new BoopNotificationSettingsState(masterEnabled, timeoutMs, changed(enabledApps, app, enabled),
+                enabledChannelKeys, false, changed(excludedApps, app, !enabled), excludedChannelKeys);
+    }
+    BoopNotificationSettingsState withChannelEnabled(String app, String channel, boolean enabled) {
+        String key = BoopNotificationSettingsCodec.channelKey(app, channel);
+        if (allAppsEnabled) return new BoopNotificationSettingsState(masterEnabled, timeoutMs,
+                enabledApps, enabledChannelKeys, true, excludedApps, changed(excludedChannelKeys, key, !enabled));
+        return new BoopNotificationSettingsState(masterEnabled, timeoutMs, enabledApps,
+                changed(enabledChannelKeys, key, enabled), false, excludedApps, changed(excludedChannelKeys, key, !enabled));
+    }
+    private static Set<String> changed(Set<String> original, String value, boolean enabled) {
+        Set<String> result = new LinkedHashSet<>(original);
+        if (enabled) result.add(value); else result.remove(value);
+        return result;
+    }
     long timeoutMs() { return timeoutMs; }
     Set<String> enabledApps() { return enabledApps; }
     Set<String> enabledChannelKeys() { return enabledChannelKeys; }
 
     boolean isAppEnabled(String packageName) {
-        return packageName != null && enabledApps.contains(packageName);
+        return packageName != null && !packageName.isEmpty()
+                && !excludedApps.contains(packageName) && (allAppsEnabled || enabledApps.contains(packageName));
     }
 
     boolean isChannelEnabled(String packageName, String channelId) {
-        if (packageName == null || channelId == null) {
+        if (packageName == null || packageName.isEmpty() || channelId == null || channelId.isEmpty()) {
             return false;
         }
-        return enabledChannelKeys.contains(
-                BoopNotificationSettingsCodec.channelKey(packageName, channelId));
+        String key = BoopNotificationSettingsCodec.channelKey(packageName, channelId);
+        return !excludedChannelKeys.contains(key) && (allAppsEnabled || enabledChannelKeys.contains(key));
     }
 
     BoopNotificationSettingsState withMasterEnabled(boolean enabled) {
-        return new BoopNotificationSettingsState(enabled, timeoutMs, enabledApps, enabledChannelKeys);
+        return new BoopNotificationSettingsState(enabled, timeoutMs, enabledApps, enabledChannelKeys,
+                allAppsEnabled, excludedApps, excludedChannelKeys);
     }
 
     BoopNotificationSettingsState withTimeoutMs(long timeout) {
-        return new BoopNotificationSettingsState(masterEnabled, timeout, enabledApps, enabledChannelKeys);
+        return new BoopNotificationSettingsState(masterEnabled, timeout, enabledApps, enabledChannelKeys,
+                allAppsEnabled, excludedApps, excludedChannelKeys);
     }
 
     BoopNotificationSettingsState withEnabledApps(Set<String> apps) {
-        return new BoopNotificationSettingsState(masterEnabled, timeoutMs, apps, enabledChannelKeys);
+        return new BoopNotificationSettingsState(masterEnabled, timeoutMs, apps, enabledChannelKeys,
+                allAppsEnabled, excludedApps, excludedChannelKeys);
     }
 
     BoopNotificationSettingsState withEnabledChannelKeys(Set<String> channels) {
-        return new BoopNotificationSettingsState(masterEnabled, timeoutMs, enabledApps, channels);
+        return new BoopNotificationSettingsState(masterEnabled, timeoutMs, enabledApps, channels,
+                allAppsEnabled, excludedApps, excludedChannelKeys);
     }
 
     private static Set<String> immutableCopy(Set<String> values) {
@@ -83,11 +124,15 @@ final class BoopNotificationSettingsState {
         return masterEnabled == that.masterEnabled
                 && timeoutMs == that.timeoutMs
                 && enabledApps.equals(that.enabledApps)
-                && enabledChannelKeys.equals(that.enabledChannelKeys);
+                && enabledChannelKeys.equals(that.enabledChannelKeys)
+                && allAppsEnabled == that.allAppsEnabled
+                && excludedApps.equals(that.excludedApps)
+                && excludedChannelKeys.equals(that.excludedChannelKeys);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(masterEnabled, timeoutMs, enabledApps, enabledChannelKeys);
+        return Objects.hash(masterEnabled, timeoutMs, enabledApps, enabledChannelKeys,
+                allAppsEnabled, excludedApps, excludedChannelKeys);
     }
 }

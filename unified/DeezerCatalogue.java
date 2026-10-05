@@ -25,7 +25,14 @@ final class DeezerCatalogue {
     static Selection resolve(DeezerArtistClient.Http http,MediaRequest request)throws Exception {
         if(request.kind==MediaRequest.Kind.DEEZER_FLOW)
             return new Selection("Deezer Flow","","","Flow",true,false);
-        String query=request.query.trim(), intent="";
+        String query=request.query.trim();
+        Selection literal=resolveQuery(http,query);
+        if(literal!=null)return literal;
+        String polite=MediaRequest.withoutCourtesy(query);
+        return polite.equals(query)?null:resolveQuery(http,polite);
+    }
+    private static Selection resolveQuery(DeezerArtistClient.Http http,String query)throws Exception {
+        String intent="";
         String lower=normal(query);
         for(String prefix:new String[]{"the artist ","artist ","the band ","band ","the song ","song ","the track ","track "}) {
             if(lower.startsWith(prefix)) {intent=prefix.contains("artist")||prefix.contains("band")?"artist":"track";
@@ -36,11 +43,8 @@ final class DeezerCatalogue {
         JSONObject artist=DeezerArtistClient.exactArtist(artists,query);
         JSONArray tracks=get(http,"search/track",query);
         if(artist==null)artist=corroboratedArtist(artists,tracks,query);
-        String title=query, requestedArtist="";
-        int by=normal(query).lastIndexOf(" by ");
-        if(by>0) {title=query.substring(0,by).trim();requestedArtist=query.substring(by+4).trim();}
         Map<String,JSONArray> identities=new HashMap<>();
-        Map<String,Selection> literal=new LinkedHashMap<>(), combined=new LinkedHashMap<>();
+        Map<String,Selection> literal=new LinkedHashMap<>(), combined=new LinkedHashMap<>(), suggested=new LinkedHashMap<>();
         if(tracks!=null && !intent.equals("artist"))for(int i=0;i<tracks.length();i++) {
             JSONObject song=tracks.optJSONObject(i);
             if(song==null || song.optLong("id")<=0 || !song.optBoolean("readable",true))continue;
@@ -49,17 +53,13 @@ final class DeezerCatalogue {
             String name=performer.optString("name"), songTitle=song.optString("title");
             if(name.trim().isEmpty() || songTitle.trim().isEmpty())continue;
             String base=recordingTitle(songTitle);
-            boolean explicit=!requestedArtist.isEmpty() && normal(requestedArtist).equals(normal(name))
-                    && (normal(title).equals(normal(base)) || normal(title).equals(normal(songTitle)));
-            boolean composite=requestedArtist.isEmpty() && (normal(query).equals(normal(name+" "+base))
-                    || normal(query).equals(normal(base+" "+name))
-                    || normal(query).equals(normal(name+"'s "+base))
-                    || normal(query).equals(normal(name+" "+songTitle))
-                    || normal(query).equals(normal(songTitle+" "+name))
-                    || normal(query).equals(normal(name+"'s "+songTitle)));
-            boolean exact=requestedArtist.isEmpty() && (normal(title).equals(normal(base)) || normal(title).equals(normal(songTitle)));
-            if(!explicit && !composite && !exact)continue;
-            if(!requestedArtist.isEmpty() || composite) {
+            // Compare complete catalogue titles before interpreting connecting words.
+            // "by" may belong to either the song or the artist's actual name.
+            boolean composite=combinedRequest(query,name,base) || combinedRequest(query,name,songTitle);
+            boolean exact=normal(query).equals(normal(base)) || normal(query).equals(normal(songTitle));
+            boolean shortened=shortPossessive(query,name,base) || shortPossessive(query,name,songTitle);
+            if(!composite && !exact && !shortened)continue;
+            if(composite || shortened) {
                 String key=normal(name);
                 if(!identities.containsKey(key)) {
                     JSONArray identity=normal(query).equals(normal(name))?artists:get(http,"search/artist",name);
@@ -68,14 +68,14 @@ final class DeezerCatalogue {
                 if(!containsArtist(identities.get(key),performer))continue;
             }
             Selection selected=new Selection(songTitle+" by "+name,"https://www.deezer.com/track/"+song.getLong("id"),"",songTitle,false,true);
-            Map<String,Selection> candidates=(explicit||composite)?combined:literal;
+            Map<String,Selection> candidates=composite?combined:exact?literal:suggested;
             String identity=performer.optLong("id")+":"+normal(base);
             // Prefer the unqualified recording when both it and a remaster exist.
             Selection prior=candidates.get(identity);
             if(prior==null || (normal(songTitle).equals(normal(base)) && !normal(prior.label).equals(normal(base))))candidates.put(identity,selected);
         }
         // Duplicate exact artists are ambiguous even when track ranking favours one.
-        if(combined.isEmpty() && artist==null && !intent.equals("track") && requestedArtist.isEmpty() && artists!=null) {
+        if(combined.isEmpty() && suggested.isEmpty() && artist==null && !intent.equals("track") && artists!=null) {
             Set<Long> ids=new HashSet<>();
             for(int i=0;i<artists.length();i++) {JSONObject row=artists.optJSONObject(i);
                 if(row!=null && row.optLong("id")>0 && normal(query).equals(normal(row.optString("name"))))ids.add(row.optLong("id"));}
@@ -85,13 +85,33 @@ final class DeezerCatalogue {
         List<Selection> choices=new ArrayList<>();
         if(!combined.isEmpty())choices.addAll(combined.values());
         else {
-            if(artist!=null && requestedArtist.isEmpty() && !intent.equals("track"))
+            if(artist!=null && !intent.equals("track"))
                 choices.add(new Selection(artist.getString("name"),"https://www.deezer.com/artist/"+artist.getLong("id"),artist.getString("name"),"Play top tracks",false,false));
             if(!intent.equals("artist"))choices.addAll(literal.values());
         }
+        boolean needsConfirmation=choices.isEmpty() && !suggested.isEmpty();
+        if(needsConfirmation)choices.addAll(suggested.values());
+        // A shortened name is a possible identity, never permission to silently expand it.
+        if(choices.size()==1 && needsConfirmation)return new Selection("","","","",false,false,choices,
+                "Do you mean "+choices.get(0).name+"?");
         if(choices.size()==1)return choices.get(0);
         if(choices.size()>1)return ambiguity(choices);
         return null;
+    }
+    private static boolean combinedRequest(String query,String artist,String title) {
+        String value=normal(query), name=normal(artist), song=normal(title);
+        return value.equals(name+" "+song) || value.equals(song+" "+name)
+                || value.equals(song+" by "+name) || value.equals(name+"'s "+song)
+                || (name.endsWith("s") && value.equals(name+"' "+song));
+    }
+    private static boolean shortPossessive(String query,String artist,String title) {
+        String value=normal(query), suffix=" "+normal(title);
+        if(!value.endsWith(suffix))return false;
+        String name=value.substring(0,value.length()-suffix.length());
+        if(name.endsWith("'s"))name=name.substring(0,name.length()-2);
+        else if(name.endsWith("'"))name=name.substring(0,name.length()-1);
+        else return false;
+        return !name.isEmpty() && normal(artist).startsWith(name+" ");
     }
     private static Selection ambiguity(List<Selection> choices) {
         boolean hasArtist=false,hasSong=false;
@@ -126,6 +146,7 @@ final class DeezerCatalogue {
     static Selection answer(Selection pending,String text) {
         String value=normal(text).replaceAll("[.!?]+$","");
         if(value.startsWith("play "))value=value.substring(5);
+        if(pending.choices.size()==1 && value.matches("yes( please)?"))return pending.choices.get(0);
         boolean artist=value.matches("(the )?(artist|band)( please)?");
         boolean song=value.matches("(the )?(song|track)( please)?");
         Selection match=null;
