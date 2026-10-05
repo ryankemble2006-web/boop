@@ -26,8 +26,8 @@ final class NativeLyricsLoader {
     }
     private final Handler main = new Handler(Looper.getMainLooper());
     private final LyricsRequestGate gate = new LyricsRequestGate();
-    private final DeezerTimedLyricsClient client = new DeezerTimedLyricsClient();
-    private final LrclibLyricsClient fallback = new LrclibLyricsClient();
+    private final LrclibLyricsClient primary = new LrclibLyricsClient();
+    private final DeezerTimedLyricsClient fallback = new DeezerTimedLyricsClient();
     private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "boop-native-lyrics"); thread.setDaemon(true); return thread;
     });
@@ -72,16 +72,18 @@ final class NativeLyricsLoader {
         };
         main.postDelayed(timeout, WAIT_MS);
         task = worker.submit(() -> {
-            long primaryDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + DEEZER_WAIT_MS);
-            DeezerLyricsDocument document = client.load(id, request, primaryDeadline);
+            long primaryDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + LRCLIB_WAIT_MS);
+            DeezerLyricsDocument document = primary.load(track, id, request, primaryDeadline);
             if (document.status() != DeezerLyricsDocument.Status.AVAILABLE
-                    && track != null && !request.cancelled()
+                    && !request.cancelled()
                     && DeezerLyricsClient.nowMs() < deadline) {
-                long fallbackDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + LRCLIB_WAIT_MS);
-                DeezerLyricsDocument second = fallback.load(track, id, request, fallbackDeadline);
-                if (second.status() == DeezerLyricsDocument.Status.AVAILABLE
-                        || document.status() == DeezerLyricsDocument.Status.UNAVAILABLE)
+                long fallbackDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + DEEZER_WAIT_MS);
+                DeezerLyricsDocument second = fallback.load(id, request, fallbackDeadline);
+                if (second.status() == DeezerLyricsDocument.Status.AVAILABLE)
                     document = second;
+                else if (document.status() != DeezerLyricsDocument.Status.UNAVAILABLE
+                        || second.status() != DeezerLyricsDocument.Status.UNAVAILABLE)
+                    document = DeezerLyricsDocument.unknown(id);
             }
             final DeezerLyricsDocument result = document;
             main.post(() -> {
