@@ -15,8 +15,8 @@ def test_shield_audio_mode_is_wired():
     assert 'nowPlayingManager.reapplyAudioMode()' in launcher
     assert 'void reapplyAudioMode()' in manager
     assert 'long actions = playback == null ? 0L : playback.getActions();' in manager
-    assert 'applyCast(' in manager
-    assert 'AudioModePolicy.forCast(binding.controller.getPackageName(), contentType, playing, actions)' in manager
+    assert 'applyPlayback(' in manager
+    assert 'AudioModePolicy.forPlayback(binding.controller.getPackageName(), contentType, playing, actions)' in manager
     assert 'onAudioInfoChanged' in manager
     assert 'getParameters' in controller
     assert 'lastMode' not in controller

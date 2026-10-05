@@ -25,7 +25,6 @@ final class AudioModeController {
 
     private final AudioManager audioManager;
     private AudioModePolicy.Mode foregroundLaunch = AudioModePolicy.Mode.IGNORE;
-    private AudioModePolicy.Mode lastCast = AudioModePolicy.Mode.IGNORE;
 
     private AudioModeController(Context context) {
         audioManager = context.getSystemService(AudioManager.class);
@@ -36,14 +35,19 @@ final class AudioModeController {
         applyResolved(foregroundLaunch);
     }
 
-    synchronized void applyCast(AudioModePolicy.Mode mode) {
-        if (mode != null && mode != AudioModePolicy.Mode.IGNORE) lastCast = mode;
+    synchronized void applyPlayback(AudioModePolicy.Mode mode) {
         applyResolved(AudioModePolicy.arbitrate(foregroundLaunch, mode));
     }
 
     synchronized void clearForegroundLaunch() {
         foregroundLaunch = AudioModePolicy.Mode.IGNORE;
-        applyResolved(AudioModePolicy.arbitrate(foregroundLaunch, lastCast));
+        // Home immediately re-evaluates the live session; do not replay a stale mode.
+    }
+
+    synchronized void resume(String packageName, Runnable play) {
+        // Restore the route before Deezer creates/resumes its AudioTrack.
+        applyPlayback(AudioModePolicy.forResume(packageName));
+        play.run();
     }
 
     private void applyResolved(AudioModePolicy.Mode mode) {

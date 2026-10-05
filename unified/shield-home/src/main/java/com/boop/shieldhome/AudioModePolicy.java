@@ -30,9 +30,20 @@ final class AudioModePolicy {
         return previous && next ? Mode.NATIVE_MUSIC : Mode.NORMAL_VIDEO;
     }
 
-    static Mode arbitrate(Mode foregroundLaunch, Mode castMode) {
+    static Mode forPlayback(String packageName, int contentType, boolean playing, long actions) {
+        if (!playing) return Mode.IGNORE;
+        Mode nativeMusic = forResume(packageName);
+        if (nativeMusic != Mode.IGNORE) return nativeMusic;
+        return forCast(packageName, contentType, playing, actions);
+    }
+
+    static Mode forResume(String packageName) {
+        return DEEZER.equals(clean(packageName)) ? Mode.NATIVE_MUSIC : Mode.IGNORE;
+    }
+
+    static Mode arbitrate(Mode foregroundLaunch, Mode playbackMode) {
         if (foregroundLaunch != null && foregroundLaunch != Mode.IGNORE) return foregroundLaunch;
-        return castMode == null ? Mode.IGNORE : castMode;
+        return playbackMode == null ? Mode.IGNORE : playbackMode;
     }
 
     private static String clean(String value) {
