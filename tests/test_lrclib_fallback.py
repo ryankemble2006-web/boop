@@ -29,8 +29,8 @@ def test_lrclib_candidate_is_identity_checked_and_duration_bounded():
 def test_home_preflight_and_open_lyrics_activity_both_use_metadata_fallback():
     browser = (SRC / "DeezerLyricsBrowser.java").read_text(encoding="utf-8")
     activity = (SRC / "ShieldLyricsActivity.java").read_text(encoding="utf-8")
-    assert "loader.load(requested, cacheId, requestIdentity, document ->" in browser
-    assert "loader.load(snapshot, cacheId, next, document ->" in activity
+    assert "loader.load(requested, cacheId, requestIdentity, completion)" in browser
+    assert "loader.load(snapshot, cacheId, next, completion)" in activity
     assert '"meta:" + Integer.toHexString' in browser
     assert '"meta:" + Integer.toHexString' in activity
 

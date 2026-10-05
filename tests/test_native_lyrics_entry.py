@@ -30,20 +30,33 @@ STUBS = {
  NativeLyricsLoader(){latest=this;}
  void load(String id,String identity,Consumer<DeezerLyricsDocument> done){loads++;callbacks.add(done);}
  void load(NowPlayingSnapshot track,String id,String identity,Consumer<DeezerLyricsDocument> done){load(id,identity,done);}
+ void reload(NowPlayingSnapshot track,String id,String identity,Consumer<DeezerLyricsDocument> done){load(id,identity,done);}
  void cancel(){} void destroy(){}
  }
  final class DeezerLyricsDocument {
- enum Status {AVAILABLE,UNAVAILABLE,UNKNOWN} Status status(){return Status.AVAILABLE;}
+ enum Status {AVAILABLE,UNAVAILABLE,UNKNOWN} Status value=Status.AVAILABLE; Status status(){return value;}
+ DeezerLyricsDocument(){} DeezerLyricsDocument(Status s){value=s;}
  }
  final class NowPlayingSnapshot {
- final String id; NowPlayingSnapshot(String id){this.id=id;}
+ final String id,album; final long duration; NowPlayingSnapshot(String id){this(id,"",218000);}
+ NowPlayingSnapshot(String id,String album,long duration){this.id=id;this.album=album;this.duration=duration;}
+ String album(){return album;} long durationMs(){return duration;}
  String packageName(){return "deezer.android.app";} long sessionId(){return 1;} String trackKey(){return id;}
  }
  final class ShieldNowPlayingManager {
- String id="123";
- String deezerLyricsTrackId(NowPlayingSnapshot requested){return requested.id.equals(id)?id:"";}
+ String id="123",album=""; long duration=218000; boolean metadataOnly;
+ NowPlayingState state(){return new NowPlayingState(new NowPlayingSnapshot(id,album,duration));}
+ String deezerLyricsTrackId(NowPlayingSnapshot requested){return !metadataOnly&&requested.id.equals(id)?id:"";}
  }
+ final class NowPlayingState {final NowPlayingSnapshot snapshot; NowPlayingState(NowPlayingSnapshot s){snapshot=s;} NowPlayingSnapshot current(){return snapshot;}}
  final class ShieldLyricsActivity {}
+ final class LyricsLookupDialog {
+ static LyricsLookupDialog latest; boolean showing; final Consumer<NowPlayingSnapshot> search; Consumer<Object> dismiss;
+ LyricsLookupDialog(android.app.Activity a,NowPlayingSnapshot s,String message,Consumer<NowPlayingSnapshot> search){latest=this;this.search=search;}
+ void setOnDismissListener(Consumer<Object> c){dismiss=c;} void show(){showing=true;} boolean isShowing(){return showing;}
+ void dismiss(){showing=false;}
+ void submit(NowPlayingSnapshot query){dismiss();search.accept(query);if(dismiss!=null)dismiss.accept(this);}
+ }
  ''',
  'com/boop/shieldhome/NativeLyricsEntryCheck.java': '''package com.boop.shieldhome;
  public final class NativeLyricsEntryCheck {
@@ -72,6 +85,31 @@ STUBS = {
   browser.open(activity,manager,new NowPlayingSnapshot("456")); int paused=loader.callbacks.size()-1;
   browser.onHostPaused(); loader.callbacks.get(paused).accept(new DeezerLyricsDocument());
   equal(2,activity.launches,"Paused host rejects late completion");
+  browser.open(activity,manager,new NowPlayingSnapshot("456"));
+  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNAVAILABLE));
+  if(LyricsLookupDialog.latest==null||!LyricsLookupDialog.latest.isShowing())throw new AssertionError("Missing lyrics must offer the editable lookup from Home");
+  int before=loader.loads;LyricsLookupDialog.latest.submit(new NowPlayingSnapshot("456"));
+  equal(before+1,loader.loads,"Edited lookup retries from Home");
+  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument());
+  equal(3,activity.launches,"Successful corrected query opens native lyrics");
+  browser.open(activity,manager,new NowPlayingSnapshot("456"));
+  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNKNOWN));
+  LyricsLookupDialog stale=LyricsLookupDialog.latest;before=loader.loads;
+  manager.id="789";browser.onTrackChanged(manager);stale.search.accept(new NowPlayingSnapshot("456"));
+  equal(before,loader.loads,"Track change rejects a late editor submission");
+  if(stale.isShowing())throw new AssertionError("Track change must dismiss the old editor");
+  manager.metadataOnly=true;browser.open(activity,manager,new NowPlayingSnapshot("789"));
+  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNAVAILABLE));
+  stale=LyricsLookupDialog.latest;before=loader.loads;
+  manager.id="999";browser.onTrackChanged(manager);stale.search.accept(new NowPlayingSnapshot("789"));
+  equal(before,loader.loads,"Metadata-only track change rejects old editor submission");
+  if(stale.isShowing())throw new AssertionError("Metadata-only track change must dismiss old editor");
+  browser.open(activity,manager,new NowPlayingSnapshot("999"));
+  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNAVAILABLE));
+  stale=LyricsLookupDialog.latest;before=loader.loads;manager.album="Live";manager.duration=250000;
+  browser.onTrackChanged(manager);stale.search.accept(new NowPlayingSnapshot("999"));
+  equal(before,loader.loads,"Same title different recording rejects old editor submission");
+  if(stale.isShowing())throw new AssertionError("Different recording must dismiss old editor");
   System.out.println("PASS: "+checks+" real Lyrics entry control-flow checks.");
  }
  }'''

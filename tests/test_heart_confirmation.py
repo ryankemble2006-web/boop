@@ -23,7 +23,7 @@ def test_lyrics_heading_removed_without_reflowing_accepted_content():
     assert 'eyebrow' not in text, 'Remove the decorative heading, not the accepted music geometry'
     assert 'MUSIC_COLUMN_SHIFT = 38f' in text
     assert 'place(artwork, artLeft, 116f * unit, artSize, artSize);' in text
-    assert 'place(queueButton, progressCenter - 56f * unit, 703f * unit, 112f * unit, 38f * unit);' in text
+    assert 'place(queueButton, progressCenter - 180f * unit, 703f * unit, 112f * unit, 38f * unit);' in text
 
 
 def test_uncertain_toggle_gets_one_read_only_reconciliation(tmp_path):

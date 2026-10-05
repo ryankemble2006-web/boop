@@ -47,6 +47,7 @@ final class NowPlayingSnapshot {
  final String track,pkg; final int state; final long session;
  NowPlayingSnapshot(String track,String pkg,int state,long session){this.track=track;this.pkg=pkg;this.state=state;this.session=session;}
  String packageName(){return pkg;} long sessionId(){return session;} int playbackState(){return state;} String trackKey(){return pkg+"\\n"+track;}
+ String album(){return "Album";} long durationMs(){return 218000;}
 }
 final class NowPlayingSelectionPolicy {static boolean eligible(int state){return state==2||state==3||state==6||state==8;}}
 final class FocusChrome {static int accentColor(android.app.Activity activity){return 0;}}
@@ -61,6 +62,7 @@ final class NativeLyricsLoader {
  NativeLyricsLoader(){latest=this;}
  void load(String id,String identity,Consumer<DeezerLyricsDocument> done){ids.add(id);callbacks.add(done);}
  void load(NowPlayingSnapshot track,String id,String identity,Consumer<DeezerLyricsDocument> done){load(id,identity,done);}
+ void reload(NowPlayingSnapshot track,String id,String identity,Consumer<DeezerLyricsDocument> done){load(id,identity,done);}
  void cancel(){cancellations++;} void destroy(){destroyed=true;}
  void reply(int index,DeezerLyricsDocument.Status result){callbacks.get(index).accept(new DeezerLyricsDocument(ids.get(index),result));}
 }
@@ -68,6 +70,13 @@ final class DeezerAlbumBrowser {
  static int opens,cancellations; static NowPlayingSnapshot requested;
  void open(android.app.Activity a,ShieldNowPlayingManager m,NowPlayingSnapshot s){opens++;requested=s;}
  void cancel(){cancellations++;}
+}
+final class LyricsLookupDialog {
+ static LyricsLookupDialog latest; boolean showing; final Consumer<NowPlayingSnapshot> search; Consumer<Object> dismiss;
+ LyricsLookupDialog(android.app.Activity a,NowPlayingSnapshot s,String message,Consumer<NowPlayingSnapshot> search){latest=this;this.search=search;}
+ void setOnDismissListener(Consumer<Object> c){dismiss=c;} void show(){showing=true;} boolean isShowing(){return showing;}
+ void dismiss(){showing=false;if(dismiss!=null)dismiss.accept(this);}
+ void submit(NowPlayingSnapshot query){dismiss();search.accept(query);}
 }
 final class DeezerArtistBrowser {
  static int opens,cancellations; static NowPlayingSnapshot requested;
@@ -99,7 +108,7 @@ final class ShieldNowPlayingManager {
  void previous(){previous++;} void next(){next++;} void togglePlayPause(){toggle++;} void seekBy(long delta){seek=delta;}
 }
 final class ShieldLyricsView extends android.view.View {
- interface Controls {void previous();void playPause();void next();void seek(long delta);void close();default void browseAlbum(){} default void browseArtist(){} default void queue(){} }
+ interface Controls {void previous();void playPause();void next();void seek(long delta);void close();default void browseAlbum(){} default void browseArtist(){} default void queue(){} default void lookup(){} }
  static ShieldLyricsView latest; final Controls controls; NowPlayingSnapshot snapshot; DeezerLyricsDocument document;
  String status=""; boolean running; int updates; boolean queueVisible;
  void setQueueAvailable(boolean v){queueVisible=v;}
@@ -163,6 +172,15 @@ public final class UnifiedLyricsActivityCheck {
   view.controls.queue();eq(1,ShieldQueueDialog.opens,"Flow never opens a queue");
   manager.queue.update(true,2);eq(false,view.queueVisible,"Another session cannot expose queue");
   manager.queue.update(true,1);eq(true,view.queueVisible,"Album restores Queue");
+  view.controls.lookup();
+  if(LyricsLookupDialog.latest==null||!LyricsLookupDialog.latest.isShowing())throw new AssertionError("Lookup button must open metadata editor");
+  int lookups=loader.ids.size();LyricsLookupDialog.latest.submit(track("edited"));
+  eq(lookups+1,loader.ids.size(),"Explicit search starts a fresh request");
+  eq("808",loader.ids.get(loader.ids.size()-1),"Edited query remains pinned to original recording cache");
+  view.controls.lookup();LyricsLookupDialog oldEditor=LyricsLookupDialog.latest;
+  manager.bus.update(track("909"));lookups=loader.ids.size();oldEditor.search.accept(track("edited"));
+  eq(lookups,loader.ids.size(),"Old editor cannot search for the new track");
+  eq(false,oldEditor.isShowing(),"Track change dismisses editor");
   int cancelled=DeezerAlbumBrowser.cancellations;activity.dispatchPause();
   eq(false,ShieldQueueDialog.latest.isShowing(),"Leaving Lyrics dismisses its Queue");
   eq(cancelled+1,DeezerAlbumBrowser.cancellations,"Pause cancels pending album lookup");

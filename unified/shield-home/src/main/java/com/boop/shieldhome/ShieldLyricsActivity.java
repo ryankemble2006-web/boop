@@ -19,6 +19,8 @@ public final class ShieldLyricsActivity extends Activity {
     private Runnable unsubscribe;
     private Runnable unsubscribeQueue;
     private ShieldQueueDialog queueDialog;
+    private LyricsLookupDialog lookupDialog;
+    private NowPlayingSnapshot lookupQuery;
     private String identity = "";
     private boolean started;
 
@@ -36,6 +38,7 @@ public final class ShieldLyricsActivity extends Activity {
             @Override public void next() { manager.next(); }
             @Override public void seek(long milliseconds) { manager.seekBy(milliseconds); }
             @Override public void close() { finish(); }
+            @Override public void lookup() { openLookup(); }
             @Override public void queue() {
                 if (!started || isFinishing() || !manager.queue().current().visible) return;
                 if (queueDialog != null && queueDialog.isShowing()) return;
@@ -83,9 +86,11 @@ public final class ShieldLyricsActivity extends Activity {
         queueChanged(manager.queue().current());
         String deezerId = snapshot == null ? "" : manager.deezerLyricsTrackId(snapshot);
         String cacheId = snapshot == null ? "" : deezerId.isEmpty()
-                ? "meta:" + Integer.toHexString(snapshot.trackKey().hashCode()) : deezerId;
+                ? "meta:" + Integer.toHexString((snapshot.trackKey()+"\n"+snapshot.album()+"\n"+snapshot.durationMs()).hashCode()) : deezerId;
         String next = snapshot == null ? "" : snapshot.sessionId() + ":" + cacheId;
         if (next.equals(identity) && !next.isEmpty()) return;
+        dismissLookup();
+        lookupQuery = null;
         identity = next;
         loader.cancel();
         presentation.setDocument(null);
@@ -94,8 +99,13 @@ public final class ShieldLyricsActivity extends Activity {
         } else if (!DeezerLyricsPolicy.available(snapshot.packageName())) {
             presentation.setStatus("Lyrics are available here for Deezer.");
         } else {
+            findLyrics(snapshot, cacheId, next, false);
+        }
+    }
+    private void findLyrics(NowPlayingSnapshot snapshot, String cacheId, String next, boolean fresh) {
+            presentation.setDocument(null);
             presentation.setStatus("Finding lyrics…");
-            loader.load(snapshot, cacheId, next, document -> {
+            java.util.function.Consumer<DeezerLyricsDocument> completion = document -> {
                 if (!started || !next.equals(identity) || isFinishing()) return;
                 if (document.status() == DeezerLyricsDocument.Status.AVAILABLE) {
                     presentation.setDocument(document);
@@ -105,8 +115,29 @@ public final class ShieldLyricsActivity extends Activity {
                     presentation.setStatus(document.status() == DeezerLyricsDocument.Status.UNAVAILABLE
                             ? "No lyrics for this track." : "Couldn't check lyrics just now.");
                 }
-            });
-        }
+            };
+            if (fresh) loader.reload(snapshot, cacheId, next, completion);
+            else loader.load(snapshot, cacheId, next, completion);
+    }
+    private void openLookup() {
+        if (!started || isFinishing() || (lookupDialog != null && lookupDialog.isShowing())) return;
+        NowPlayingSnapshot original = manager.state().current();
+        if (original == null || !DeezerLyricsPolicy.available(original.packageName())) return;
+        String expected = identity;
+        String deezerId = manager.deezerLyricsTrackId(original);
+        String cacheId = deezerId.isEmpty() ? "meta:" + Integer.toHexString((original.trackKey()+"\n"+original.album()+"\n"+original.durationMs()).hashCode()) : deezerId;
+        LyricsLookupDialog dialog = new LyricsLookupDialog(this, lookupQuery == null ? original : lookupQuery, "", edited -> {
+            if (!started || isFinishing() || !expected.equals(identity)) return;
+            lookupQuery = edited;
+            findLyrics(edited, cacheId, expected, true);
+        });
+        lookupDialog = dialog;
+        dialog.setOnDismissListener(ignored -> { if (lookupDialog == dialog) lookupDialog = null; });
+        dialog.show();
+    }
+    private void dismissLookup() {
+        if (lookupDialog != null) lookupDialog.dismiss();
+        lookupDialog = null;
     }
     private boolean clockKnown(NowPlayingSnapshot snapshot) {
         if (snapshot == null) return false;
@@ -117,12 +148,14 @@ public final class ShieldLyricsActivity extends Activity {
         } catch (RuntimeException unavailable) { return false; }
     }
     @Override protected void onPause() {
+        dismissLookup();
         if (queueDialog != null) queueDialog.dismiss();
         albumBrowser.cancel();
         artistBrowser.cancel();
         super.onPause();
     }
     @Override protected void onStop() {
+        dismissLookup();
         albumBrowser.cancel();
         artistBrowser.cancel();
         started = false;
