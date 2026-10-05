@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="local.boop.serenaudit">
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="36" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <queries><package android:name="com.boop.shieldoverlay" /></queries>
+    <application android:label="Seren row audit" android:theme="@android:style/Theme.Material.NoActionBar" android:debuggable="true" android:usesCleartextTraffic="true">
+        <activity android:name="local.boop.serenaudit.SerenRowsProbe" android:exported="true" android:screenOrientation="landscape" />
+    </application>
+    <instrumentation android:name="local.boop.serenaudit.SerenRowsProbe$ProbeInstrumentation" android:targetPackage="local.boop.serenaudit" />
+</manifest>

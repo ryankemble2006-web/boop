@@ -46,6 +46,8 @@ public final class ShieldHomeView extends LinearLayout {
         default void onCloseNowPlayingSource() { }
         default void onCloseMediaApps() { }
         default void onRoomDeviceSelected(long generation, String entityId) { }
+        default void onSerenEpisodeSelected(SerenEpisode episode) { }
+        default void onOpenKodi() { }
     }
 
     private FavouriteGrabSession grabSession;
@@ -69,6 +71,21 @@ public final class ShieldHomeView extends LinearLayout {
     private int roomPanelRight;
     private int roomPanelTarget = -1;
     private View roomPanelPreviousFavourite;
+    private boolean serenEnabled;
+    private SerenNextUpView serenView;
+    private View serenRoomGap;
+    private List<SerenEpisode> serenEpisodes = List.of();
+    private String serenStatus = "";
+    private SerenPosterLoader serenPosters;
+
+    public void setSerenEnabled(boolean enabled) { serenEnabled = enabled; }
+    void setSeren(List<SerenEpisode> episodes, String status, SerenPosterLoader posters) {
+        serenEpisodes = episodes; serenStatus = status; serenPosters = posters;
+        if (serenView != null) serenView.bind(episodes, status, posters,
+                episode -> { if (activeCallbacks != null) activeCallbacks.onSerenEpisodeSelected(episode); },
+                () -> { if (activeCallbacks != null) activeCallbacks.onOpenKodi(); });
+    }
+    boolean focusSeren(String file) { return serenView != null && serenView.focusEpisode(file); }
 
     public ShieldHomeView(Context context) {
         this(context, null);
@@ -99,6 +116,8 @@ public final class ShieldHomeView extends LinearLayout {
         roomPanelPreviousFavourite = null;
         roomPanelView = null;
         roomPanelHasOptionalRows = false;
+        serenView = null;
+        serenRoomGap = null;
         removeAllViews();
         activeCallbacks = callbacks;
         nowPlayingSnapshot = snapshot;
@@ -147,6 +166,12 @@ public final class ShieldHomeView extends LinearLayout {
         stageContent.addView(appRow(safeFavourites, callbacks), new LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(215)));
 
+        if (serenEnabled) {
+            serenView = new SerenNextUpView(getContext());
+            stageContent.addView(serenView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            setSeren(serenEpisodes, serenStatus, serenPosters);
+        }
+
         for (HomeRow row : safeOptionalRows) {
             if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
             roomPanelHasOptionalRows = true;
@@ -159,7 +184,7 @@ public final class ShieldHomeView extends LinearLayout {
                     LayoutParams.MATCH_PARENT, dp(150)));
         }
 
-        if (roomPanelHasOptionalRows) {
+        if (roomPanelHasOptionalRows || serenEnabled) {
             // Provider rows can extend below the screen. Let D-pad focus reveal
             // them while the navigation and assistant overlay keep their places.
             ScrollView contentScroll = new ScrollView(getContext()) {
@@ -195,8 +220,16 @@ public final class ShieldHomeView extends LinearLayout {
             if (activeCallbacks != null) activeCallbacks.onRoomDeviceSelected(generation, entityId);
         }, this::returnFromRoomPanel);
         roomPanelView.bind(roomPanelState);
-        homeStage.addView(roomPanelView, new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, 0, Gravity.START | Gravity.TOP));
+        if (serenEnabled) {
+            serenRoomGap = new View(getContext());
+            stageContent.addView(serenRoomGap, new LayoutParams(1, dp(16)));
+            stageContent.addView(roomPanelView, new LayoutParams(LayoutParams.MATCH_PARENT, dp(110)));
+            View bottomGutter = new View(getContext());
+            stageContent.addView(bottomGutter, new LayoutParams(1, dp(16)));
+        } else {
+            homeStage.addView(roomPanelView, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, 0, Gravity.START | Gravity.TOP));
+        }
         roomPanelView.setVisibility(GONE);
         homeStage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
         stageContent.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
@@ -283,6 +316,37 @@ public final class ShieldHomeView extends LinearLayout {
             bottom = Math.max(bottom, tile.getTop() + visibleBottom);
         }
         bottom += roomPanelContent.getTop() + favouriteScroller.getTop() + favouriteRow.getTop();
+        if (serenEnabled) {
+            // Move the original panel below Seren without enlarging its controls.
+            RoomPanelLayout.Bounds original = RoomPanelLayout.calculate(roomPanelStage.getWidth(),
+                    roomPanelStage.getHeight(), bottom, dp(16), roomPanelRight, dp(110));
+            // Reclaim unused space below app labels, preserving their art and focus geometry.
+            int favouriteHeight = bottom - favouriteScroller.getTop() - roomPanelContent.getTop() + dp(8);
+            if (favouriteHeight > 0 && favouriteScroller.getLayoutParams().height != favouriteHeight) {
+                favouriteScroller.getLayoutParams().height = favouriteHeight;
+                favouriteScroller.requestLayout();
+            }
+            if (serenView != null) {
+                serenView.fitHeight(roomPanelStage.getHeight() - favouriteScroller.getTop() - favouriteHeight);
+                LayoutParams rowParams = (LayoutParams) serenView.getLayoutParams();
+                if (rowParams.rightMargin != roomPanelRight) { rowParams.rightMargin = roomPanelRight; serenView.setLayoutParams(rowParams); }
+            }
+            if (serenRoomGap != null) {
+                int gap = Math.max(dp(16), roomPanelStage.getHeight() - serenRoomGap.getTop() + dp(8));
+                if (serenRoomGap.getLayoutParams().height != gap) { serenRoomGap.getLayoutParams().height = gap; serenRoomGap.requestLayout(); }
+            }
+            roomPanelView.setVisibility(roomPanelEnabled ? VISIBLE : GONE);
+            LayoutParams roomParams = (LayoutParams) roomPanelView.getLayoutParams();
+            int panelHeight = Math.max(dp(110), original.height);
+            if (roomParams.width != original.width || roomParams.height != panelHeight
+                    || roomParams.rightMargin != original.right) {
+                roomParams.width = original.width;
+                roomParams.height = panelHeight;
+                roomParams.rightMargin = original.right;
+                roomPanelView.setLayoutParams(roomParams);
+            }
+            return;
+        }
         if (roomPanelHasOptionalRows) bottom = Math.max(bottom, roomPanelContent.getBottom());
         RoomPanelLayout.Bounds bounds = RoomPanelLayout.calculate(roomPanelStage.getWidth(),
                 roomPanelStage.getHeight(), bottom, dp(16), roomPanelRight, dp(110));
@@ -303,7 +367,8 @@ public final class ShieldHomeView extends LinearLayout {
     }
 
     private void returnFromRoomPanel() {
-        if (roomPanelHasOptionalRows && roomPanelView != null && roomPanelView.hasFocus()) {
+        if (serenEnabled && !roomPanelHasOptionalRows && serenView != null && serenView.focusEpisode(null)) return;
+        if ((roomPanelHasOptionalRows || serenEnabled) && roomPanelView != null && roomPanelView.hasFocus()) {
             View focused = roomPanelView.findFocus();
             View previous = focused == null ? null : focused.focusSearch(View.FOCUS_UP);
             for (android.view.ViewParent parent = previous == null ? null : previous.getParent();
@@ -325,9 +390,21 @@ public final class ShieldHomeView extends LinearLayout {
         if (handleGrabKeyEvent(event)) {
             return true;
         }
+        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN && serenView != null) {
+            if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && focusedFavourite(findFocus())) {
+                View previous = findFocus();
+                if (serenView.focusEpisode(null)) { roomPanelPreviousFavourite = previous; return true; }
+            }
+            if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && serenView.hasFocus()) {
+                if (roomPanelPreviousFavourite != null && roomPanelPreviousFavourite.isAttachedToWindow())
+                    roomPanelPreviousFavourite.requestFocus();
+                else resetToFirstFavourite();
+                return true;
+            }
+        }
         if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
                 && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && roomPanelEnabled
-                && !roomPanelHasOptionalRows && roomPanelView != null && focusedFavourite(findFocus())) {
+                && !roomPanelHasOptionalRows && !serenEnabled && roomPanelView != null && focusedFavourite(findFocus())) {
             View previous = findFocus();
             if (roomPanelView.focusControls()) { roomPanelPreviousFavourite = previous; return true; }
         }

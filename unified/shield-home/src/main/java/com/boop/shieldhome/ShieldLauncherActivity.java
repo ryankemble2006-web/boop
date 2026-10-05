@@ -84,6 +84,9 @@ public final class ShieldLauncherActivity extends Activity {
     private boolean destroyed;
     private boolean resumed;
     private int optionalGeneration;
+    private SerenNextUpSession serenSession;
+    private String serenStatus = "";
+    private String serenReturnFile;
 
     private final BackPressGesture backPressGesture = new BackPressGesture();
     private Handler inputHandler;
@@ -127,6 +130,14 @@ public final class ShieldLauncherActivity extends Activity {
         });
 
         registerPackageReceiver();
+        if (getPackageManager().getLeanbackLaunchIntentForPackage("org.xbmc.kodi") != null) {
+            serenSession = new SerenNextUpSession(this, (episodes, status) -> {
+                if (destroyed) return;
+                serenStatus = status;
+                if (currentPage == Page.HOME && currentView instanceof ShieldHomeView && serenSession != null)
+                    ((ShieldHomeView) currentView).setSeren(episodes, status, serenSession.posters);
+            });
+        }
         showHome();
         reloadApps();
         refreshWeather();
@@ -154,7 +165,14 @@ public final class ShieldLauncherActivity extends Activity {
         if (root != null && store != null && currentPage == Page.SETTINGS) {
             showSettings();
         }
-        focusFirstFavourite();
+        if (serenSession != null) serenSession.refresh(true);
+        String returnFile = serenReturnFile;
+        serenReturnFile = null;
+        if (returnFile != null && currentView instanceof ShieldHomeView) {
+            ShieldHomeView home = (ShieldHomeView) currentView;
+            home.post(() -> { if (currentView == home) home.focusSeren(returnFile); });
+        }
+        else focusFirstFavourite();
     }
 
     private void onNowPlayingChanged(NowPlayingSnapshot snapshot) {
@@ -261,6 +279,8 @@ public final class ShieldLauncherActivity extends Activity {
         List<TvAppEntry> favourites = favouriteEntries();
 
         ShieldHomeView view = new ShieldHomeView(this);
+        view.setSerenEnabled(serenSession != null);
+        if (serenSession != null) view.setSeren(serenSession.current(), serenStatus, serenSession.posters);
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
         view.render(favourites, List.of(), nowPlayingSnapshot, callbacks);
         view.setWeather(weatherSnapshot);
@@ -327,6 +347,16 @@ public final class ShieldLauncherActivity extends Activity {
 
     private ShieldHomeView.Callbacks homeCallbacks() {
         return new ShieldHomeView.Callbacks() {
+            @Override public void onSerenEpisodeSelected(SerenEpisode episode) {
+                if (serenSession == null) return;
+                serenSession.play(episode, () -> {
+                    if (!openKodi()) return false;
+                    serenReturnFile = episode.file;
+                    return true;
+                },
+                        message -> android.widget.Toast.makeText(ShieldLauncherActivity.this, message, android.widget.Toast.LENGTH_LONG).show());
+            }
+            @Override public void onOpenKodi() { openKodi(); }
             @Override public void onRoomDeviceSelected(long generation, String entityId) {
                 if (resumed && currentPage == Page.HOME && store.smartHomePanelEnabled() && roomPanelSession != null)
                     roomPanelSession.toggle(generation, entityId);
@@ -748,6 +778,17 @@ public final class ShieldLauncherActivity extends Activity {
         }
     }
 
+    private boolean openKodi() {
+        try {
+            Intent intent = getPackageManager().getLeanbackLaunchIntentForPackage("org.xbmc.kodi");
+            if (intent == null) intent = getPackageManager().getLaunchIntentForPackage("org.xbmc.kodi");
+            if (intent == null) return false;
+            AudioModeController.get(this).applyLaunch(AudioModePolicy.forLaunch("org.xbmc.kodi"));
+            startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException | SecurityException unavailable) { return false; }
+    }
+
     static String systemSettingsAction() {
         return Settings.ACTION_SETTINGS;
     }
@@ -1087,6 +1128,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onDestroy() {
         destroyed = true;
+        if (serenSession != null) { serenSession.close(); serenSession = null; }
         if (queueDialog != null) queueDialog.dismiss();
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
