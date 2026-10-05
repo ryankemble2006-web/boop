@@ -32,7 +32,7 @@ def tool(name, *args):
 # depend on the retention period of a downloadable GitHub Actions artifact.
 
 for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','com.boop.shieldoverlay','BOOP Shield')]:
-    version = 260 if body == 'shield' else 220
+    version = 261 if body == 'shield' else 220
     apk = root / f'{body}-app/build/outputs/apk/debug/{body}-app-debug.apk'
     assert apk.is_file(), str(apk)
     badging = tool('aapt','dump','badging',apk)
@@ -65,7 +65,7 @@ for body, package, label in [('wall','com.boop.alpha1','BOOP Wall'), ('shield','
             assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls
         for cls in ['RoomPanelController', 'RoomPanelSession']:
             assert ('Lcom/boop/shieldoverlay/'+cls+';').encode() in dex, cls
-        for cls in ['ShieldRoomPanelView', 'RoomPanelLayout']:
+        for cls in ['ShieldRoomPanelView', 'RoomPanelLayout', 'ShieldRoomPickerDialog', 'SerenPosterLayout']:
             assert ('Lcom/boop/shieldhome/'+cls+';').encode() in dex, cls
         assert b'LOCAL_QUESTION' in dex and b'prepareMusicTurn' in dex and b'BOOP_MUSIC stage=' in dex
         assert b'smartHomePanelEnabled' in dex

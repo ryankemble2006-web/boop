@@ -35,7 +35,7 @@ Invoke-Checked "$BuildTools/apksigner.bat" @('sign','--ks',"$OutputDirectory/pro
 Invoke-Checked $Adb @('-s',$Serial,'install','-r',"$OutputDirectory/probe.apk")
 $Result = & $Adb -s $Serial shell am instrument -w -e target_package $Package 'local.boop.serenaudit/local.boop.serenaudit.SerenRowsProbe\$ProbeInstrumentation'
 $Result | Tee-Object -FilePath "$OutputDirectory/$EvidenceLabel-test.txt"
-foreach ($Phase in @('seren-initial','seren-focused','seren-ha','seren-returned')) {
+foreach ($Phase in @('seren-initial','seren-focused','seren-room-heading','seren-room-picker','seren-ha','seren-returned','seren-width-17','seren-width-57','seren-width-111')) {
     Invoke-Checked $Adb @('-s',$Serial,'pull',"/sdcard/Android/data/local.boop.serenaudit/files/$Phase.png","$OutputDirectory/$EvidenceLabel-$Phase.png")
 }
 if (-not (($Result -join "`n").Contains('PASS Seren'))) { throw 'Seren row navigation regression failed; see captured evidence.' }

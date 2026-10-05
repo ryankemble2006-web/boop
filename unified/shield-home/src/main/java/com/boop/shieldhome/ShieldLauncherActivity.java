@@ -73,6 +73,7 @@ public final class ShieldLauncherActivity extends Activity {
     private FrameLayout root;
     private View currentView;
     private AlertDialog favouritePicker;
+    private AlertDialog roomPicker;
     private ShieldQueueDialog queueDialog;
 
     private List<TvAppEntry> installedApps = List.of();
@@ -147,6 +148,7 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         if (queueDialog != null) queueDialog.dismiss();
         showHome(true);
     }
@@ -360,6 +362,12 @@ public final class ShieldLauncherActivity extends Activity {
             @Override public void onRoomDeviceSelected(long generation, String entityId) {
                 if (resumed && currentPage == Page.HOME && store.smartHomePanelEnabled() && roomPanelSession != null)
                     roomPanelSession.toggle(generation, entityId);
+            }
+            @Override public void onRoomHeadingSelected() {
+                if (resumed && currentPage == Page.HOME && roomPanelSession != null) {
+                    if (roomPicker != null) roomPicker.dismiss();
+                    roomPicker = ShieldRoomPickerDialog.show(ShieldLauncherActivity.this, roomPanelSession);
+                }
             }
 
             @Override public void onAppSelected(TvAppEntry entry) {
@@ -1127,6 +1135,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         destroyed = true;
         if (serenSession != null) { serenSession.close(); serenSession = null; }
         if (queueDialog != null) queueDialog.dismiss();
@@ -1163,6 +1172,7 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onPause() {
         resumed = false;
+        if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         if (queueDialog != null) queueDialog.dismiss();
         refreshRoomPanelSession();
         if (favouritePicker != null) favouritePicker.dismiss();

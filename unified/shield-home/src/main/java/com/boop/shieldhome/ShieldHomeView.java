@@ -46,6 +46,7 @@ public final class ShieldHomeView extends LinearLayout {
         default void onCloseNowPlayingSource() { }
         default void onCloseMediaApps() { }
         default void onRoomDeviceSelected(long generation, String entityId) { }
+        default void onRoomHeadingSelected() { }
         default void onSerenEpisodeSelected(SerenEpisode episode) { }
         default void onOpenKodi() { }
     }
@@ -220,6 +221,7 @@ public final class ShieldHomeView extends LinearLayout {
             if (activeCallbacks != null) activeCallbacks.onRoomDeviceSelected(generation, entityId);
         }, this::returnFromRoomPanel);
         roomPanelView.bind(roomPanelState);
+        roomPanelView.setRoomPicker(() -> { if (activeCallbacks != null) activeCallbacks.onRoomHeadingSelected(); });
         if (serenEnabled) {
             serenRoomGap = new View(getContext());
             stageContent.addView(serenRoomGap, new LayoutParams(1, dp(16)));
@@ -391,6 +393,9 @@ public final class ShieldHomeView extends LinearLayout {
             return true;
         }
         if (event != null && event.getAction() == KeyEvent.ACTION_DOWN && serenView != null) {
+            if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && serenView.hasFocus()
+                    && !roomPanelHasOptionalRows && roomPanelEnabled && roomPanelView != null
+                    && roomPanelView.focusHeading()) return true;
             if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && focusedFavourite(findFocus())) {
                 View previous = findFocus();
                 if (serenView.focusEpisode(null)) { roomPanelPreviousFavourite = previous; return true; }
@@ -406,7 +411,7 @@ public final class ShieldHomeView extends LinearLayout {
                 && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && roomPanelEnabled
                 && !roomPanelHasOptionalRows && !serenEnabled && roomPanelView != null && focusedFavourite(findFocus())) {
             View previous = findFocus();
-            if (roomPanelView.focusControls()) { roomPanelPreviousFavourite = previous; return true; }
+            if (roomPanelView.focusHeading()) { roomPanelPreviousFavourite = previous; return true; }
         }
         return super.dispatchKeyEvent(event);
     }

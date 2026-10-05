@@ -1,5 +1,13 @@
 # BOOP current handoff
 
+## Shield261 Home room picker prepared - 5 October 2026
+
+Persistent room selection, chosen-colour heading focus and complete Seren poster
+windows implemented.43focused checks and real emulator UI fixture pass; reviewed.
+Full signed CI/APK verification pending. No physical installation or acceptance.
+See docs/handoffs/2026-10-05-shield-home-rooms-v261.md.
+
+
 ## Shield260 installed - 4 October 2026
 
 Ryan explicitly authorised installation. In-place upgrade succeeded; installed

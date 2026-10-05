@@ -6,7 +6,7 @@ import java.lang.reflect.*;import java.util.*;
 
 /** Uses real installed Home classes with isolated preferences, no network or playback. */
 public final class SerenRowsProbe extends Activity {
-    View home, originalHome; String selected="", roomSelected=""; Throwable creationFailure;
+    View home, originalHome; String selected="", roomSelected=""; int roomPickerOpens; Context isolatedContext; ClassLoader installedLoader; Object originalRoomState; Throwable creationFailure;
     final List<String> failures=new ArrayList<>();
     Method bind; Constructor<?> episodeConstructor; List<Object> episodes;
     int originalTileWidth, originalTileHeight;
@@ -22,6 +22,10 @@ public final class SerenRowsProbe extends Activity {
                 public AssetManager getAssets(){return layout.getAssets();}
                 public ClassLoader getClassLoader(){return loader;}
             };
+            isolatedContext=isolated; installedLoader=loader;
+            Class<?> storeType=loader.loadClass("com.boop.shieldhome.ShieldHomeStore");
+            Object preferences=storeType.getConstructor(Context.class).newInstance(isolated);
+            storeType.getMethod("setAccentHue",int.class).invoke(preferences,20);
             Class<?> type=loader.loadClass("com.boop.shieldhome.ShieldHomeView");
             Class<?> episodeType=loader.loadClass("com.boop.shieldhome.SerenEpisode");
             Class<?> callbacksType=loader.loadClass("com.boop.shieldhome.ShieldHomeView$Callbacks");
@@ -30,6 +34,7 @@ public final class SerenRowsProbe extends Activity {
             episodes=new ArrayList<>();for(int i=1;i<=12;i++)episodes.add(constructor.newInstance("Example show "+i,"01x02 Next episode","plugin://plugin.video.seren/?action=getSources&action_args="+i,""));
             Object callbacks=Proxy.newProxyInstance(loader,new Class<?>[]{callbacksType},(p,m,args)->{
                 if(m.getName().equals("onSerenEpisodeSelected")){Field f=episodeType.getDeclaredField("file");f.setAccessible(true);selected=(String)f.get(args[0]);}
+                if(m.getName().equals("onRoomHeadingSelected"))roomPickerOpens++;
                 if(m.getName().equals("onRoomDeviceSelected"))roomSelected=(String)args[1];return null;
             });
             home=(View)type.getConstructor(Context.class).newInstance(isolated);
@@ -37,12 +42,12 @@ public final class SerenRowsProbe extends Activity {
             bind=type.getDeclaredMethod("setSeren",List.class,String.class,loader.loadClass("com.boop.shieldhome.SerenPosterLoader"));bind.setAccessible(true);bind.invoke(home,episodes,"",null);
             type.getMethod("render",List.class,List.class,callbacksType).invoke(home,List.of(),List.of(),callbacks);
             Class<?> area=loader.loadClass("com.boop.shieldoverlay.AreaInfo"),entity=loader.loadClass("com.boop.shieldoverlay.EntityCard"),phase=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$Phase"),stateType=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$State");
-            Object room=area.getConstructor(String.class,String.class).newInstance("test_room","Home Assistant");
+            Object room=area.getConstructor(String.class,String.class).newInstance("test_room","Test room");
             List<Object> devices=new ArrayList<>();
             for(int i=0;i<4;i++)devices.add(entity.getConstructor(String.class,String.class,String.class,String.class,boolean.class,String.class)
                     .newInstance(i==0?"light.test":"light.test"+i,"test_room",i==0?"Test lamp":"Test lamp "+i,"off",false,null));
             Constructor<?> sc=stateType.getDeclaredConstructor(long.class,area,phase,List.class,String.class,String.class);sc.setAccessible(true);
-            Object roomState=sc.newInstance(1L,room,phase.getField("LIVE").get(null),devices,null,null);
+            Object roomState=sc.newInstance(1L,room,phase.getField("LIVE").get(null),devices,null,null); originalRoomState=roomState;
             type.getMethod("setRoomPanelState",stateType,boolean.class).invoke(home,roomState,true);
             // The unchanged pre-Seren path supplies the real measured sizing reference.
             originalHome=(View)type.getConstructor(Context.class).newInstance(isolated);
@@ -96,16 +101,35 @@ public final class SerenRowsProbe extends Activity {
                     if(lamp.getWidth()!=a.originalTileWidth||lamp.getHeight()!=a.originalTileHeight)a.failures.add("HA button size changed: "+sizes);
                 }
             });
+            assertWholePosters(a);
             capture("seren-initial");
             step(a,KeyEvent.KEYCODE_DPAD_DOWN,"Example show 1: 01x02 Next episode");
             step(a,KeyEvent.KEYCODE_DPAD_RIGHT,"Example show 2: 01x02 Next episode");
             sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
             if(!a.selected.endsWith("action_args=2"))a.failures.add("Clicked wrong episode");
+            assertWholePosters(a);
+            for(int i=0;i<10;i++)step(a,KeyEvent.KEYCODE_DPAD_RIGHT,"Example show "+(i+3)+": 01x02 Next episode");
+            assertWholePosters(a);
+            for(int i=0;i<10;i++)sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_LEFT);
+            SystemClock.sleep(450);waitForIdleSync();
+            resizedPosterWindows(a);
             capture("seren-focused");
+            step(a,KeyEvent.KEYCODE_DPAD_DOWN,"Test room");
+            runOnMainSync(()->{try{
+                TextView title=(TextView)find(a.home,"Test room");
+                Class<?> chrome=a.installedLoader.loadClass("com.boop.shieldhome.FocusChrome");
+                Method accent=chrome.getDeclaredMethod("accentColor",Context.class);accent.setAccessible(true);
+                if(title.getCurrentTextColor()!=(Integer)accent.invoke(null,a.isolatedContext))a.failures.add("Room heading does not use chosen accent");
+            }catch(Exception e){throw new RuntimeException(e);}});
+            sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
+            if(a.roomPickerOpens!=1)a.failures.add("Room heading click does not open picker");
+            capture("seren-room-heading");
+            persistentRoom(a);SystemClock.sleep(350);waitForIdleSync();
             step(a,KeyEvent.KEYCODE_DPAD_DOWN,"Test lamp, Off");
             sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
             if(!a.roomSelected.equals("light.test"))a.failures.add("HA action inaccessible");
             capture("seren-ha");
+            step(a,KeyEvent.KEYCODE_DPAD_UP,"Test room");
             step(a,KeyEvent.KEYCODE_DPAD_UP,"Example show 2: 01x02 Next episode");
             step(a,KeyEvent.KEYCODE_DPAD_UP,"Add favourites");capture("seren-returned");
             runOnMainSync(()->{try{
@@ -125,6 +149,85 @@ public final class SerenRowsProbe extends Activity {
             result.putString("stream",verdict+"\n");finish(a.failures.isEmpty()?Activity.RESULT_OK:Activity.RESULT_CANCELED,result);
         }catch(Throwable t){result.putString("stream","FAIL "+android.util.Log.getStackTraceString(t));finish(Activity.RESULT_CANCELED,result);}}
         void step(SerenRowsProbe a,int key,String expected){sendKeyDownUpSync(key);SystemClock.sleep(450);waitForIdleSync();runOnMainSync(()->{View v=find(a.home,expected);if(v==null||!v.hasFocus()||!full(v))a.failures.add("Focus/visibility: "+expected);});}
+        void assertWholePosters(SerenRowsProbe a){
+            runOnMainSync(()->{for(int i=1;i<=12;i++){
+                View v=find(a.home,"Example show "+i+": 01x02 Next episode");Rect visible=new Rect();
+                if(v!=null&&v.getGlobalVisibleRect(visible)&&visible.width()>0&&!full(v))
+                    a.failures.add("Partial poster visible: "+i+" width="+visible.width()+"/"+v.getWidth());
+            }});
+        }
+        void resizedPosterWindows(SerenRowsProbe a)throws Exception{
+            Field f=a.home.getClass().getDeclaredField("serenView");f.setAccessible(true);View seren=(View)f.get(a.home);
+            int original=seren.getWidth();
+            for(int delta:new int[]{17,57,111}){
+                runOnMainSync(()->{seren.getLayoutParams().width=original-delta;seren.requestLayout();});
+                SystemClock.sleep(200);waitForIdleSync();
+                runOnMainSync(()->{try{
+                    Field sf=seren.getClass().getDeclaredField("scroll"),rf=seren.getClass().getDeclaredField("row"),pf=seren.getClass().getDeclaredField("posterLayout");sf.setAccessible(true);rf.setAccessible(true);pf.setAccessible(true);
+                    View sc=(View)sf.get(seren);Object geometry=pf.get(seren);Field vp=geometry.getClass().getDeclaredField("viewportWidth");vp.setAccessible(true);
+                    android.util.Log.i("PosterResizeAudit","parent="+seren.getWidth()+", scroll="+sc.getWidth()+", param="+sc.getLayoutParams().width+", expected="+vp.get(geometry)+", x="+sc.getScrollX());
+                }catch(Exception e){throw new RuntimeException(e);}});
+                capture("seren-width-"+delta);assertWholePosters(a);
+            }
+            runOnMainSync(()->{seren.getLayoutParams().width=ViewGroup.LayoutParams.MATCH_PARENT;seren.requestLayout();});
+            SystemClock.sleep(250);waitForIdleSync();assertWholePosters(a);
+        }
+        void persistentRoom(SerenRowsProbe a)throws Exception{
+            ClassLoader loader=a.installedLoader;
+            Class<?> sessionType=loader.loadClass("com.boop.shieldoverlay.RoomPanelSession");
+            Class<?> listener=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$Listener");
+            Class<?> area=loader.loadClass("com.boop.shieldoverlay.AreaInfo");
+            Class<?> picker=loader.loadClass("com.boop.shieldhome.ShieldRoomPickerDialog");
+            Class<?> rooms=loader.loadClass("com.boop.shieldhome.ShieldRoomPickerDialog$Rooms");
+            Class<?> callback=loader.loadClass("com.boop.shieldoverlay.HomeAssistantRepository$AreasCallback");
+            Class<?> state=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$State");
+            Class<?> phase=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$Phase");
+            Object sink=Proxy.newProxyInstance(loader,new Class<?>[]{listener},(p,m,args)->null);
+            Object[] session=new Object[1];AlertDialog[] dialog=new AlertDialog[1];
+            Object living=area.getConstructor(String.class,String.class).newInstance("test_room","Test room");
+            Object kitchen=area.getConstructor(String.class,String.class).newInstance("kitchen","Kitchen");
+            Method show=picker.getDeclaredMethod("show",Context.class,rooms);show.setAccessible(true);
+            Object source=Proxy.newProxyInstance(loader,new Class<?>[]{rooms},(p,m,args)->{
+                if(m.getName().equals("selectedRoom"))return sessionType.getMethod("selectedRoom").invoke(session[0]);
+                if(m.getName().equals("selectRoom")){
+                    sessionType.getMethod("selectRoom",area).invoke(session[0],args[0]);
+                    Constructor<?> c=state.getDeclaredConstructor(long.class,area,phase,List.class,String.class,String.class);c.setAccessible(true);
+                    Object panelState=args[0]==living?a.originalRoomState:c.newInstance(2L,args[0],phase.getField("LIVE").get(null),List.of(),null,null);
+                    a.home.getClass().getMethod("setRoomPanelState",state,boolean.class).invoke(a.home,panelState,true);
+                    return null;
+                }
+                if(m.getName().equals("loadRooms")){
+                    callback.getMethod("onResult",List.class,String.class).invoke(args[0],List.of(living,kitchen),null);
+                    return (Runnable)()->{};
+                }
+                return null;
+            });
+            runOnMainSync(()->{try{
+                session[0]=sessionType.getConstructor(Context.class,listener).newInstance(a.isolatedContext,sink);
+                sessionType.getMethod("selectRoom",area).invoke(session[0],living);
+                dialog[0]=(AlertDialog)show.invoke(null,a,source);
+            }catch(Exception e){throw new RuntimeException(e);}});
+            SystemClock.sleep(300);waitForIdleSync();capture("seren-room-picker");
+            sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);waitForIdleSync();
+            sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
+            runOnMainSync(()->{try{
+                if(dialog[0].isShowing()||find(a.home,"Kitchen")==null)a.failures.add("Room picker did not replace Home room");
+                sessionType.getMethod("close").invoke(session[0]);
+                session[0]=sessionType.getConstructor(Context.class,listener).newInstance(a.isolatedContext,sink);
+                Object saved=sessionType.getMethod("selectedRoom").invoke(session[0]);
+                if(!"kitchen".equals(area.getMethod("id").invoke(saved)))a.failures.add("Room selection did not persist across sessions");
+                dialog[0]=(AlertDialog)show.invoke(null,a,source);
+            }catch(Exception e){throw new RuntimeException(e);}});
+            SystemClock.sleep(300);waitForIdleSync();
+            sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP);waitForIdleSync();
+            sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
+            runOnMainSync(()->{try{
+                if(dialog[0].isShowing()||find(a.home,"Test room")==null)a.failures.add("Could not swap room back");
+                Object saved=sessionType.getMethod("selectedRoom").invoke(session[0]);
+                if(!"test_room".equals(area.getMethod("id").invoke(saved)))a.failures.add("Swap back was not saved");
+                sessionType.getMethod("close").invoke(session[0]);
+            }catch(Exception e){throw new RuntimeException(e);}});
+        }
         void artworkRetry(SerenRowsProbe a)throws Exception{
             java.util.concurrent.atomic.AtomicInteger requests=new java.util.concurrent.atomic.AtomicInteger();
             Bitmap pixel=Bitmap.createBitmap(4,6,Bitmap.Config.ARGB_8888);pixel.eraseColor(Color.GREEN);

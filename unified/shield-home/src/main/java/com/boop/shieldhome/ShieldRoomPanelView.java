@@ -36,6 +36,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
     private String focusedId;
     private Runnable exitUp;
     private Toggle toggle;
+    private Runnable chooseRoom;
     private FavouriteGrabSession grabSession;
     private Tile grabbedTile;
 
@@ -52,6 +53,21 @@ public final class ShieldRoomPanelView extends LinearLayout {
         heading.setGravity(Gravity.CENTER_VERTICAL);
         title = text("Home", 22, Color.WHITE);
         title.setSingleLine(true); title.setEllipsize(TextUtils.TruncateAt.END);
+        title.setFocusable(true); title.setClickable(true); title.setDefaultFocusHighlightEnabled(false);
+        BoopTvChrome.useTextOnlyFocus(title);
+        title.setOnFocusChangeListener((v, focused) -> title.setTextColor(
+                focused ? FocusChrome.accentColor(getContext()) : Color.WHITE));
+        title.setOnClickListener(v -> { if (chooseRoom != null) chooseRoom.run(); });
+        title.setOnKeyListener((v, key, event) -> {
+            if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    if (key == KeyEvent.KEYCODE_DPAD_UP && exitUp != null) exitUp.run();
+                    else if (key == KeyEvent.KEYCODE_DPAD_DOWN) focusControls();
+                }
+                return true;
+            }
+            return false;
+        });
         heading.addView(title, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
         status = text("", 13, Color.LTGRAY);
         status.setPadding(dp(12), 0, 0, 0);
@@ -85,9 +101,12 @@ public final class ShieldRoomPanelView extends LinearLayout {
     }
 
     public void setActions(Toggle toggle, Runnable exitUp) { this.toggle = toggle; this.exitUp = exitUp; }
+    public void setRoomPicker(Runnable chooseRoom) { this.chooseRoom = chooseRoom; }
+    public boolean focusHeading() { return getVisibility() == VISIBLE && title.requestFocus(); }
 
     public void bind(RoomPanelController.State next) {
         boolean heldFocus = hasFocus();
+        boolean headingFocused = title.hasFocus();
         int oldIndex = row.indexOfChild(row.findFocus());
         String previousRoom = state == null || state.room == null ? null : state.room.id();
         String nextRoom = next == null || next.room == null ? null : next.room.id();
@@ -153,11 +172,12 @@ public final class ShieldRoomPanelView extends LinearLayout {
         if (rebuild) {
             resizeTiles();
             if (roomChanged) scroller.scrollTo(0, 0);
-            if (heldFocus) {
+            if (headingFocused) title.requestFocus();
+            else if (heldFocus) {
                 Tile previous = tiles.get(focusedId);
                 if (previous != null) previous.requestFocus();
                 else if (row.getChildCount() > 0) row.getChildAt(Math.max(0,Math.min(oldIndex,row.getChildCount()-1))).requestFocus();
-                else if (exitUp != null) exitUp.run();
+                else title.requestFocus();
             }
         }
     }
@@ -300,7 +320,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
                     return true;
                 }
                 if(key==KeyEvent.KEYCODE_DPAD_UP || key==KeyEvent.KEYCODE_DPAD_DOWN) {
-                    if(key==KeyEvent.KEYCODE_DPAD_UP && event.getAction()==KeyEvent.ACTION_DOWN && exitUp!=null) exitUp.run();
+                    if(key==KeyEvent.KEYCODE_DPAD_UP && event.getAction()==KeyEvent.ACTION_DOWN) title.requestFocus();
                     return true;
                 }
                 return false;

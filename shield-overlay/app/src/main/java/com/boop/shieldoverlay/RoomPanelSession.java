@@ -21,6 +21,8 @@ public final class RoomPanelSession implements AutoCloseable {
             .callTimeout(15, TimeUnit.SECONDS).pingInterval(20, TimeUnit.SECONDS).build();
     private final RoomPanelController controller;
     private boolean closed;
+    private boolean started;
+    private RoomList roomList;
 
     public RoomPanelSession(Context context, RoomPanelController.Listener listener) {
         this.context = context.getApplicationContext();
@@ -35,17 +37,81 @@ public final class RoomPanelSession implements AutoCloseable {
         }, listener);
     }
 
-    public void start() { if (!closed) controller.start(); }
-    public void stop() { if (!closed) controller.stop(); }
+    public void start() { if (!closed) { started = true; controller.start(); } }
+    public void stop() { if (!closed) { started = false; controller.stop(); } }
+    public AreaInfo selectedRoom() { return preferences.selectedRoom(); }
+    public void selectRoom(AreaInfo room) {
+        if (closed || room == null) return;
+        preferences.setSelectedRoom(room);
+        if (started) controller.start();
+    }
+    /** Load the same HA areas used in device setup, without disturbing live panel controls. */
+    public Runnable loadRooms(HomeAssistantRepository.AreasCallback callback) {
+        if (roomList != null) roomList.cancel();
+        if (closed) return () -> { };
+        roomList = new RoomList(callback);
+        roomList.load();
+        RoomList request = roomList;
+        return request::cancel;
+    }
     public void toggle(long generation, String entityId) { if (!closed) controller.toggle(generation, entityId); }
     @Override public void close() {
         if (closed) return;
         controller.stop(); closed = true;
+        if (roomList != null) roomList.cancel();
         auth.shutdownNow();
         main.removeCallbacksAndMessages(null);
         client.dispatcher().cancelAll();
         client.connectionPool().evictAll();
         client.dispatcher().executorService().shutdown();
+    }
+
+    private final class RoomList {
+        final HomeAssistantRepository.AreasCallback callback;
+        HomeAssistantWebSocket socket;
+        boolean cancelled;
+        final Runnable timeout = () -> finish(null, "I couldn't load your rooms. Please try again.");
+        RoomList(HomeAssistantRepository.AreasCallback callback) { this.callback = callback; }
+        void load() {
+            main.postDelayed(timeout, 20000);
+            auth.execute(() -> {
+                try {
+                    HomeAssistantSession.Access access = new HomeAssistantSession(
+                            new SecureCredentialStore(context), new HomeAssistantAuthClient(client)).ensureAccessToken();
+                    main.post(() -> {
+                        if (cancelled || closed) return;
+                        socket = new HomeAssistantWebSocket(client);
+                        try { socket.connect(access.baseUrl(), access.accessToken(), new HomeAssistantWebSocket.Listener() {
+                            public void onReady() {
+                                main.post(() -> {
+                                    if (cancelled || closed) return;
+                                    new HomeAssistantRepository((type, body, result) -> {
+                                        if (cancelled || closed) return;
+                                        try { socket.send(type, body, result); }
+                                        catch (RuntimeException unavailable) {
+                                            result.onResult(false, null, "Home Assistant is unavailable. Please try again.");
+                                        }
+                                    }).loadAreas((areas, error) -> main.post(() -> finish(areas, error)));
+                                });
+                            }
+                            public void onOffline(String message) { main.post(() -> finish(null, "Home Assistant is unavailable. Please try again.")); }
+                            public void onReauthRequired(String message) { main.post(() -> finish(null, "Reconnect Home Assistant in BOOP settings.")); }
+                        }); } catch (RuntimeException error) { finish(null, "Home Assistant is unavailable. Please try again."); }
+                    });
+                } catch (Exception error) { main.post(() -> finish(null, "I couldn't reach the house right now.")); }
+            });
+        }
+        void finish(java.util.List<AreaInfo> areas, String error) {
+            if (cancelled || closed) return;
+            cancel();
+            callback.onResult(areas, error);
+        }
+        void cancel() {
+            cancelled = true;
+            if (roomList == this) roomList = null;
+            main.removeCallbacks(timeout);
+            if (socket != null) { socket.close(); socket = null; }
+        }
     }
 
     private final class Link implements RoomPanelController.Connection {
