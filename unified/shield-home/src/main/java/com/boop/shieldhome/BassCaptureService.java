@@ -6,24 +6,24 @@ import android.media.*;
 import android.media.projection.*;
 import android.os.*;
 import android.util.Log;
-/** Explicit ten-minute Deezer bass canary. Audio is processed in memory, never saved. */
+/** Consent-based live playback spectrum. PCM stays in memory and is never saved. */
 public final class BassCaptureService extends Service {
  static volatile String status="Ready";
  private volatile boolean stopped;
  private volatile AudioRecord recorder;
  private Thread worker;
  private MediaProjection projection;
- private long owner;
+ private long owner; private long spectrumOwner;
  private final Handler main=new Handler(Looper.getMainLooper());
- private final Runnable timeout=()->stopSelf();
+
  private final MediaProjection.Callback callback=new MediaProjection.Callback(){@Override public void onStop(){stopSelf();}};
  @Override public IBinder onBind(Intent intent){return null;}
  @Override public int onStartCommand(Intent intent,int flags,int id){
   if(worker!=null)return START_NOT_STICKY;
   try{
    NotificationManager nm=getSystemService(NotificationManager.class);
-   nm.createNotificationChannel(new NotificationChannel("bass-capture","Bass bounce test",NotificationManager.IMPORTANCE_LOW));
-   Notification note=new Notification.Builder(this,"bass-capture").setSmallIcon(android.R.drawable.ic_media_play).setContentTitle("BOOP bass bounce").setContentText("Deezer bass test: stops after ten minutes").build();
+   nm.createNotificationChannel(new NotificationChannel("bass-capture","Music spectrum",NotificationManager.IMPORTANCE_LOW));
+   Notification note=new Notification.Builder(this,"bass-capture").setSmallIcon(android.R.drawable.ic_media_play).setContentTitle("Music spectrum").setContentText("Real playback audio; stop in spectrum settings").build();
    startForeground(17201,note,ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION);
    if(intent==null)throw new IllegalStateException("No consent");
    Intent consent=intent.getParcelableExtra("consent");
@@ -31,8 +31,8 @@ public final class BassCaptureService extends Service {
    projection=getSystemService(MediaProjectionManager.class).getMediaProjection(intent.getIntExtra("result",0),consent);
    if(projection==null)throw new IllegalStateException("Projection unavailable");
    projection.registerCallback(callback,main);
-   int uid=getPackageManager().getApplicationInfo("deezer.android.app",0).uid;
-   AudioPlaybackCaptureConfiguration capture=new AudioPlaybackCaptureConfiguration.Builder(projection).addMatchingUid(uid).addMatchingUsage(AudioAttributes.USAGE_MEDIA).build();
+
+   AudioPlaybackCaptureConfiguration capture=new AudioPlaybackCaptureConfiguration.Builder(projection).addMatchingUsage(AudioAttributes.USAGE_MEDIA).addMatchingUsage(AudioAttributes.USAGE_GAME).addMatchingUsage(AudioAttributes.USAGE_UNKNOWN).build();
    AudioFormat format=new AudioFormat.Builder().setEncoding(AudioFormat.ENCODING_PCM_16BIT).setSampleRate(44100).setChannelMask(AudioFormat.CHANNEL_IN_STEREO).build();
    int minimum=AudioRecord.getMinBufferSize(44100,AudioFormat.CHANNEL_IN_STEREO,AudioFormat.ENCODING_PCM_16BIT);
    if(minimum<=0)throw new IllegalStateException("Unsupported capture buffer");
@@ -40,16 +40,16 @@ public final class BassCaptureService extends Service {
    recorder=active;
    if(active.getState()!=AudioRecord.STATE_INITIALIZED)throw new IllegalStateException("Recorder uninitialized");
    active.startRecording();
-   owner=BassCaptureState.start();status="Deezer bass capture active";
-   Log.i("BOOP-BassCapture",status+"; requested 44100 stereo, 35-120Hz attacks, 256-frame reads");
-   main.postDelayed(timeout,600000);
-   worker=new Thread(()->measure(active,id,owner),"BOOP-BassCapture");worker.start();
-  }catch(Exception e){status="Capture unavailable: "+e.getMessage();Log.i("BOOP-BassCapture",status);stopSelf();}
+   owner=BassCaptureState.start();spectrumOwner=SpectrumState.start();status="Live PCM spectrum active";
+   Log.w("BOOP-BassCapture",status+"; requested 44100 stereo PCM; 20 logarithmic frequency bands");
+
+   worker=new Thread(()->measure(active,id,owner,spectrumOwner),"BOOP-BassCapture");worker.start();
+  }catch(Exception e){status="Capture unavailable: "+e.getMessage();Log.w("BOOP-BassCapture",status);stopSelf();}
   return START_NOT_STICKY;
  }
- private void measure(AudioRecord active,int startId,long token){
+ private void measure(AudioRecord active,int startId,long token,long spectrumToken){
   android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-  short[] block=new short[512];BassEnergy bass=new BassEnergy(44100);BassOnset onset=new BassOnset();
+  short[] block=new short[2048];PcmSpectrum spectrum=new PcmSpectrum(active.getSampleRate());BassEnergy bass=new BassEnergy(44100);BassOnset onset=new BassOnset();
   long hitAt=Long.MIN_VALUE,hits=0,frames=0;
   long last=SystemClock.uptimeMillis(),reads=0;float maximum=0;
   try{
@@ -57,25 +57,25 @@ public final class BassCaptureService extends Service {
     int count=active.read(block,0,block.length,AudioRecord.READ_BLOCKING);
     if(count<=0){if(!stopped)throw new IllegalStateException("Read "+count);break;}
     long now=SystemClock.uptimeMillis();float energy=bass.raw(block,count);
-    frames+=count/2;
+    SpectrumState.publish(spectrumToken,spectrum.feed(block,count),now);frames+=count/2;
     if(onset.update(energy,frames*1000/44100)){hitAt=now;hits++;}
     float level=hitAt==Long.MIN_VALUE?0:Math.max(0,1-(now-hitAt)/100f);
     BassCaptureState.publish(token,level,now);reads++;maximum=Math.max(maximum,level);
-    if(now-last>=5000){Log.i("BOOP-BassCapture","Bass attacks: reads="+reads+" hits="+hits+" peakLevel="+maximum);last=now;reads=0;hits=0;maximum=0;}
+    if(now-last>=5000){Log.w("BOOP-BassCapture","Bass attacks: reads="+reads+" hits="+hits+" peakLevel="+maximum);last=now;reads=0;hits=0;maximum=0;}
    }
-  }catch(Exception e){if(!stopped){status="Capture ended: "+e.getMessage();Log.i("BOOP-BassCapture",status);}}
+  }catch(Exception e){if(!stopped){status="Capture ended: "+e.getMessage();Log.w("BOOP-BassCapture",status);}}
   finally{
-   BassCaptureState.stop(token);
+   BassCaptureState.stop(token);SpectrumState.stop(spectrumToken);
    try{active.release();}catch(Exception ignored){}
    main.post(()->stopSelf(startId));
   }
  }
  @Override public void onDestroy(){
-  stopped=true;main.removeCallbacks(timeout);BassCaptureState.stop(owner);
+  stopped=true;BassCaptureState.stop(owner);SpectrumState.stop(spectrumOwner);
   AudioRecord old=recorder;recorder=null;
   if(old!=null){try{old.stop();}catch(Exception ignored){}if(worker==null)old.release();}
   if(projection!=null){projection.unregisterCallback(callback);projection.stop();projection=null;}
-  status="Bass capture stopped";Log.i("BOOP-BassCapture",status);
+  status="Spectrum capture stopped";Log.w("BOOP-BassCapture",status);
   stopForeground(true);super.onDestroy();
  }
 }

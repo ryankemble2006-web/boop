@@ -41,7 +41,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private final TextView playPauseButton;
     private final TextView nextButton;
     private final DeezerFavouriteButton favouriteButton;
-    private final ShieldNowPlayingPuppetView puppetView;
+    private final ShieldSpectrumView puppetView;
 
     private NowPlayingSnapshot snapshot;
     private ShieldHomeView.Callbacks callbacks;
@@ -222,7 +222,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         puppetBay.setClickable(false);
         row.addView(puppetBay, new LinearLayout.LayoutParams(
                 dp(MASCOT_BAY_DP), LayoutParams.MATCH_PARENT));
-        puppetView = new ShieldNowPlayingPuppetView(context);
+        puppetView = new ShieldSpectrumView(context);
         puppetBay.addView(puppetView, new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 

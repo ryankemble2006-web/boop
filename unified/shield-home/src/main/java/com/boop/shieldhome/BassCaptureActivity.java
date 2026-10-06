@@ -14,11 +14,11 @@ public final class BassCaptureActivity extends Activity {
  @Override public void onCreate(Bundle state){
   super.onCreate(state);
   LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(60,50,60,30);
-  TextView title=new TextView(this);title.setText("BOOP bass bounce test");title.setTextSize(28);root.addView(title);
+  TextView title=new TextView(this);title.setText("Music spectrum");title.setTextSize(28);root.addView(title);
   TextView explanation=new TextView(this);explanation.setText("Bounce to Deezer bass around 35–120 Hz for ten minutes. Music stays at its current audio rate. No audio recording is saved. Android will ask for capture access.");explanation.setTextSize(20);root.addView(explanation);
-  Button start=new Button(this);start.setText("Start bass bounce");root.addView(start);
+  Button start=new Button(this);start.setText("Enable spectrum");root.addView(start);
   start.setOnClickListener(v->begin());start.requestFocus();
-  Button stop=new Button(this);stop.setText("Stop bass bounce");root.addView(stop);stop.setOnClickListener(v->stopService(new Intent(this,BassCaptureService.class)));
+  Button stop=new Button(this);stop.setText("Stop spectrum");root.addView(stop);stop.setOnClickListener(v->stopService(new Intent(this,BassCaptureService.class)));
   status=new TextView(this);status.setTextSize(22);root.addView(status);setContentView(root);
  }
  private void begin(){
