@@ -235,6 +235,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
         subtitle.setClickable(artistAvailable);
         subtitle.setContentDescription("Browse artist " + snapshot.subtitle() + " in Deezer");
         stateLabel.setText(stateText(snapshot.playbackState()));
+        // Different glyphs can change visible spacing without changing TextView height.
+        title.getParent().requestLayout();
         playPauseButton.setText(snapshot.isPlaying() ? "Pause" : "Play");
         boolean deezerLyrics = DeezerLyricsPolicy.available(snapshot.packageName());
         lyricsButton.setVisibility(deezerLyrics ? VISIBLE : GONE);
