@@ -105,21 +105,16 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
         LinearLayout titleRow = new LinearLayout(context);
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
-        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        titleRow.setGravity(Gravity.TOP);
         titleRow.setClipChildren(false);
         titleRow.setClipToPadding(false);
         details.addView(titleRow, new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(70)));
-
-        LinearLayout textStack = new LinearLayout(context);
-        textStack.setOrientation(LinearLayout.VERTICAL);
-        titleRow.addView(textStack, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+                LayoutParams.MATCH_PARENT, dp(40)));
 
         title = text(24, Color.WHITE);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
-        textStack.addView(title, new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(40)));
+        titleRow.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
 
         subtitle = text(18, Color.WHITE);
         subtitle.setSingleLine(true);
@@ -133,7 +128,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         });
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(30));
-        textStack.addView(subtitle, subtitleParams);
+        details.addView(subtitle, subtitleParams);
 
         LinearLayout statusRow = new LinearLayout(context);
         statusRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -154,7 +149,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         LinearLayout.LayoutParams lyricsParams = new LinearLayout.LayoutParams(dp(70), dp(32));
         lyricsParams.leftMargin = dp(8);
         lyricsParams.rightMargin = dp(8);
-        statusRow.addView(lyricsButton, lyricsParams);
+        titleRow.addView(lyricsButton, lyricsParams);
 
         queueButton = actionButton("Queue");
         queueButton.setContentDescription("Browse the current album or playlist queue");
@@ -164,7 +159,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         queueButton.setPadding(dp(6), 0, dp(6), 0);
         LinearLayout.LayoutParams queueParams = new LinearLayout.LayoutParams(dp(70), dp(32));
         queueParams.rightMargin = dp(8);
-        statusRow.addView(queueButton, queueParams);
+        titleRow.addView(queueButton, queueParams);
 
         sourceButton = actionButton("Flow");
         sourceButton.setContentDescription("Start your Deezer Flow");
@@ -174,7 +169,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         sourceButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         sourceButton.setPadding(dp(6), 0, dp(6), 0);
         LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(70), dp(32));
-        statusRow.addView(sourceButton, sourceParams);
+        titleRow.addView(sourceButton, sourceParams);
 
         progress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(1000);
