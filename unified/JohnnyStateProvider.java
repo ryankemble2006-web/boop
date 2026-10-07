@@ -52,6 +52,7 @@ public final class JohnnyStateProvider extends ContentProvider {
         long identity = Binder.clearCallingIdentity();
         try {
             Bundle out = new Bundle();
+            out.putInt("accentColor", com.boop.shieldhome.BoopTvChrome.accentColor(getContext()));
             out.putString("json", snapshot());
             return out;
         } finally { Binder.restoreCallingIdentity(identity); }
