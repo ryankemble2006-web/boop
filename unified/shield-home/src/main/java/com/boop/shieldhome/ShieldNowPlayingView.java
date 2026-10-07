@@ -3,6 +3,7 @@ package com.boop.shieldhome;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.media.session.PlaybackState;
 import android.os.Handler;
@@ -23,7 +24,8 @@ import android.widget.TextView;
 /** Remote-first Now Playing card. It owns only media UI and never rerenders launcher rows. */
 public final class ShieldNowPlayingView extends FrameLayout {
     private static final long PROGRESS_TICK_MS = 500L;
-    private static final int CONTROL_GAP_DP = 10;
+    private static final int CONTROL_GAP_DP = 8;
+    private static final int CONTROL_HEIGHT_DP = 32;
     private static final int ARTWORK_CORNER_DP = 10;
     static final int MASCOT_BAY_DP = 230;
     // Centre of the third favourites banner, measured from this card's left edge.
@@ -44,6 +46,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private final TextView playPauseButton;
     private final TextView nextButton;
     private final DeezerFavouriteButton favouriteButton;
+    private final LinearLayout controls;
     private final ShieldSpectrumView puppetView;
 
     private NowPlayingSnapshot snapshot;
@@ -96,26 +99,17 @@ public final class ShieldNowPlayingView extends FrameLayout {
         artParams.rightMargin = dp(20);
         row.addView(artwork, artParams);
 
-        LinearLayout details = new LinearLayout(context);
+        LinearLayout details = new OpticalStack(context);
         details.setOrientation(LinearLayout.VERTICAL);
         details.setGravity(Gravity.TOP);
         details.setClipChildren(false);
         details.setClipToPadding(false);
         row.addView(details, new LinearLayout.LayoutParams(dp(PLAYBACK_END_DP - 18 - 154 - 20), dp(154)));
 
-        LinearLayout titleRow = new LinearLayout(context);
-        titleRow.setOrientation(LinearLayout.HORIZONTAL);
-        titleRow.setBaselineAligned(false);
-        titleRow.setGravity(Gravity.TOP);
-        titleRow.setClipChildren(false);
-        titleRow.setClipToPadding(false);
-        details.addView(titleRow, new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(40)));
-
-        title = text(24, Color.WHITE);
+        title = text(26, Color.WHITE);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
-        titleRow.addView(title, new LinearLayout.LayoutParams(0, dp(40), 1f));
+        details.addView(title, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         subtitle = text(18, Color.WHITE);
         subtitle.setSingleLine(true);
@@ -128,49 +122,29 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (callbacks != null && v.isEnabled()) callbacks.onBrowseNowPlayingArtist();
         });
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(30));
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         details.addView(subtitle, subtitleParams);
 
-        LinearLayout statusRow = new LinearLayout(context);
-        statusRow.setGravity(Gravity.CENTER_VERTICAL);
-        statusRow.setClipChildren(false);
-        details.addView(statusRow, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(32)));
         stateLabel = text(14, Color.LTGRAY);
         stateLabel.setSingleLine(true);
         stateLabel.setEllipsize(TextUtils.TruncateAt.END);
-        statusRow.addView(stateLabel, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
-        stateLabel.setGravity(Gravity.CENTER_VERTICAL);
+        details.addView(stateLabel, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         lyricsButton = actionButton("Lyrics");
         lyricsButton.setOnClickListener(v -> {
             if (callbacks != null) callbacks.onOpenNowPlayingLyrics();
         });
-        lyricsButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        lyricsButton.setPadding(dp(6), 0, dp(6), 0);
-        LinearLayout.LayoutParams lyricsParams = new LinearLayout.LayoutParams(dp(70), dp(32));
-        lyricsParams.leftMargin = dp(8);
-        lyricsParams.rightMargin = dp(8);
-        titleRow.addView(lyricsButton, lyricsParams);
 
         queueButton = actionButton("Queue");
         queueButton.setContentDescription("Browse the current album or playlist queue");
         queueButton.setOnClickListener(v -> { if (callbacks != null) callbacks.onNowPlayingQueue(); });
         queueButton.setVisibility(GONE);
-        queueButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        queueButton.setPadding(dp(6), 0, dp(6), 0);
-        LinearLayout.LayoutParams queueParams = new LinearLayout.LayoutParams(dp(70), dp(32));
-        queueParams.rightMargin = dp(8);
-        titleRow.addView(queueButton, queueParams);
 
         sourceButton = actionButton("Flow");
         sourceButton.setContentDescription("Start your Deezer Flow");
         sourceButton.setOnClickListener(v -> {
             if (callbacks != null) callbacks.onNowPlayingFlow();
         });
-        sourceButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        sourceButton.setPadding(dp(6), 0, dp(6), 0);
-        LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(70), dp(32));
-        titleRow.addView(sourceButton, sourceParams);
 
         progress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(1000);
@@ -183,22 +157,18 @@ public final class ShieldNowPlayingView extends FrameLayout {
                 .setDuration(TvAppCardView.FOCUS_DURATION_MS).start());
         progress.setOnKeyListener(this::handleProgressKey);
         LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(6));
-        progressParams.topMargin = dp(2);
+                LayoutParams.MATCH_PARENT, dp(4));
         details.addView(progress, progressParams);
 
-        LinearLayout controls = new LinearLayout(context);
+        controls = new LinearLayout(context);
         controls.setOrientation(LinearLayout.HORIZONTAL);
+        controls.setBaselineAligned(false);
         controls.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         controls.setClipChildren(false);
         controls.setClipToPadding(false);
-        // The progress track is the horizontal datum for the whole media stack.
-        // Keep transport chrome on that same left edge instead of adding its own inset.
         controls.setPadding(0, 0, 0, 0);
-        controls.setTranslationX(-dp(4));
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(42));
-        controlsParams.topMargin = dp(2);
+                LayoutParams.MATCH_PARENT, dp(CONTROL_HEIGHT_DP));
         details.addView(controls, controlsParams);
 
         previousButton = controlButton("Prev", () -> {
@@ -216,9 +186,13 @@ public final class ShieldNowPlayingView extends FrameLayout {
         addControl(controls, nextButton);
         favouriteButton = new DeezerFavouriteButton(context, DeezerFavouriteButton.TOGGLE,
                 FocusChrome.accentColor(context));
-        LinearLayout.LayoutParams favouriteParams = new LinearLayout.LayoutParams(dp(42), dp(42));
-        favouriteParams.rightMargin = dp(CONTROL_GAP_DP);
-        controls.addView(favouriteButton, favouriteParams);
+        favouriteButton.useButtonChrome();
+        installFocusPop(favouriteButton);
+        addControl(controls, favouriteButton);
+        addControl(controls, lyricsButton);
+        addControl(controls, queueButton);
+        addControl(controls, sourceButton);
+        updateControlSpacing();
         installEdgeFocusNavigation();
 
         // Keep the entire remaining width for the PCM spectrum, even during silence.
@@ -265,9 +239,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         boolean deezerLyrics = DeezerLyricsPolicy.available(snapshot.packageName());
         lyricsButton.setVisibility(deezerLyrics ? VISIBLE : GONE);
         setControlEnabled(lyricsButton, deezerLyrics);
-        LinearLayout.LayoutParams sourceLayout = (LinearLayout.LayoutParams) sourceButton.getLayoutParams();
-        sourceLayout.leftMargin = deezerLyrics ? 0 : dp(12);
-        sourceButton.setLayoutParams(sourceLayout);
+        updateControlSpacing();
 
         setControlEnabled(previousButton, snapshot.canPrevious());
         setControlEnabled(playPauseButton, snapshot.canPlayPause());
@@ -295,6 +267,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         queueButton.setVisibility(show ? VISIBLE : GONE);
         queueButton.setFocusable(show);
         queueButton.setEnabled(show);
+        updateControlSpacing();
     }
 
     @Override protected void onDetachedFromWindow() {
@@ -331,10 +304,19 @@ public final class ShieldNowPlayingView extends FrameLayout {
         tickerRunning = false;
     }
 
-    private void addControl(LinearLayout row, TextView button) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(70), dp(42));
-        params.rightMargin = dp(CONTROL_GAP_DP);
-        row.addView(button, params);
+    private void addControl(LinearLayout row, View button) {
+        row.addView(button, new LinearLayout.LayoutParams(0, dp(CONTROL_HEIGHT_DP), 1f));
+    }
+
+    private void updateControlSpacing() {
+        boolean first = true;
+        for (int i = 0; i < controls.getChildCount(); i++) {
+            View button = controls.getChildAt(i);
+            LinearLayout.LayoutParams p = (LinearLayout.LayoutParams) button.getLayoutParams();
+            int gap = first || button.getVisibility() == GONE ? 0 : dp(CONTROL_GAP_DP);
+            if (p.leftMargin != gap) { p.leftMargin = gap; button.setLayoutParams(p); }
+            if (button.getVisibility() != GONE) first = false;
+        }
     }
 
     private boolean handleProgressKey(View v, int keyCode, KeyEvent event) {
@@ -418,14 +400,14 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
                 (queueButton.getVisibility() == VISIBLE ? queueButton : sourceButton).requestFocus(); return true;
             }
-            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) { progress.requestFocus(); return true; }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable()) { progress.requestFocus(); return true; }
             return false;
         });
         queueButton.setOnKeyListener((v, keyCode, event) -> {
             if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { lyricsButton.requestFocus(); return true; }
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { sourceButton.requestFocus(); return true; }
-            if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) { progress.requestFocus(); return true; }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable()) { progress.requestFocus(); return true; }
             return false;
         });
         sourceButton.setOnKeyListener((v, keyCode, event) -> {
@@ -438,7 +420,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
                 return true;
             }
             if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
-                    && keyCode == KeyEvent.KEYCODE_DPAD_DOWN && progress.isFocusable()) {
+                    && keyCode == KeyEvent.KEYCODE_DPAD_UP && progress.isFocusable()) {
                 progress.requestFocus();
                 return true;
             }
@@ -448,8 +430,6 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
     private TextView controlButton(String label, Runnable action) {
         TextView button = actionButton(label);
-        button.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-        button.setPadding(dp(6), dp(4), dp(6), dp(4));
         button.setOnClickListener(v -> {
             if (v.isEnabled()) action.run();
         });
@@ -457,12 +437,14 @@ public final class ShieldNowPlayingView extends FrameLayout {
     }
 
     private TextView actionButton(String label) {
-        TextView view = text(16, Color.WHITE);
+        TextView view = text(14, Color.WHITE);
         view.setText(label);
+        view.setSingleLine(true);
+        view.setEllipsize(TextUtils.TruncateAt.END);
         view.setGravity(Gravity.CENTER);
         view.setFocusable(true);
         view.setClickable(true);
-        view.setPadding(dp(8), dp(5), dp(8), dp(5));
+        view.setPadding(dp(4), 0, dp(4), 0);
         view.setBackground(buttonBackground(false));
         installFocusPop(view);
         return view;
@@ -491,13 +473,45 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
     private TextView text(int sp, int colour) {
         TextView view = new TextView(getContext());
+        view.setIncludeFontPadding(false);
         view.setTextColor(colour);
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         return view;
     }
 
-    private LinearLayout.LayoutParams wrap() {
-        return new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    /** Distribute the visible text and control edges, excluding invisible font leading. */
+    private static final class OpticalStack extends LinearLayout {
+        OpticalStack(Context context) { super(context); }
+
+        private Rect ink(View child) {
+            Rect bounds = new Rect(0, 0, child.getMeasuredWidth(), child.getMeasuredHeight());
+            if (child instanceof TextView) {
+                TextView label = (TextView) child;
+                String value = label.getText().toString();
+                if (value.isEmpty()) value = "Ag";
+                label.getPaint().getTextBounds(value, 0, value.length(), bounds);
+                bounds.offset(0, label.getBaseline());
+            }
+            return bounds;
+        }
+
+        @Override protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+            int used = 0, count = 0;
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                if (child.getVisibility() != GONE) { used += ink(child).height(); count++; }
+            }
+            float gap = count > 1 ? Math.max(0, (getHeight() - used) / (float) (count - 1)) : 0;
+            float cursor = 0;
+            for (int i = 0; i < getChildCount(); i++) {
+                View child = getChildAt(i);
+                if (child.getVisibility() == GONE) continue;
+                Rect bounds = ink(child);
+                int y = Math.round(cursor - bounds.top);
+                child.layout(0, y, child.getMeasuredWidth(), y + child.getMeasuredHeight());
+                cursor += bounds.height() + gap;
+            }
+        }
     }
 
     private GradientDrawable artworkBackground() {

@@ -107,7 +107,7 @@ public final class SerenRowsProbe extends Activity {
                     if(Math.abs(c[1]+cover.getHeight()-b[1]-bars.getHeight())>1)a.failures.add("Spectrum base is not aligned with album cover");
                     if(Math.abs(p[0]+track.getWidth()-m[0]-Math.round(607*density))>2)a.failures.add("Track does not end at third favourites centre");
                     if(bars.getWidth()<Math.round(400*density))a.failures.add("Spectrum did not fill available space");
-                    for(String key:new String[]{"lyricsButton","sourceButton"}){Field bf=media.getClass().getDeclaredField(key);bf.setAccessible(true);View button=(View)bf.get(media);int[] xy=new int[2];button.getLocationOnScreen(xy);if(xy[0]+button.getWidth()>p[0]+track.getWidth()+1||xy[1]+button.getHeight()>p[1])a.failures.add("Auxiliary button overlaps progress or spectrum");}
+                    for(String key:new String[]{"lyricsButton","sourceButton"}){Field bf=media.getClass().getDeclaredField(key);bf.setAccessible(true);View button=(View)bf.get(media);int[] xy=new int[2];button.getLocationOnScreen(xy);if(xy[0]+button.getWidth()>p[0]+track.getWidth()+1||xy[1]<p[1]+track.getHeight())a.failures.add("Auxiliary button overlaps progress or spectrum");}
                 }catch(Exception e){throw new RuntimeException(e);}
                 View card=find(a.home,"Example show 1: 01x02 Next episode");
                 if(!full(card))a.failures.add("First poster is not fully visible on initial screen");

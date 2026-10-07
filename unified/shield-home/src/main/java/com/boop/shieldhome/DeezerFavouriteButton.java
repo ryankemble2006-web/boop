@@ -19,6 +19,7 @@ final class DeezerFavouriteButton extends View {
     private NowPlayingSnapshot snapshot;
     private Runnable unsubscribe;
     private boolean subscribed;
+    private boolean buttonChrome;
 
     DeezerFavouriteButton(Context context, int mode, int accent) {
         super(context);
@@ -30,6 +31,10 @@ final class DeezerFavouriteButton extends View {
             else controller.change(snapshot, state, null);
         });
         updateDescription();
+    }
+    void useButtonChrome() {
+        buttonChrome = true;
+        setBackground(FocusChrome.filled(getContext(), Color.rgb(34, 34, 34), 9, hasFocus()));
     }
     void setSnapshot(NowPlayingSnapshot next) {
         snapshot = next;
@@ -66,7 +71,9 @@ final class DeezerFavouriteButton extends View {
         if (controller != null) updateSubscription();
     }
     @Override protected void onFocusChanged(boolean gain, int direction, Rect previous) {
-        super.onFocusChanged(gain, direction, previous); invalidate();
+        super.onFocusChanged(gain, direction, previous);
+        if (buttonChrome) setBackground(FocusChrome.filled(getContext(), Color.rgb(34, 34, 34), 9, gain));
+        invalidate();
     }
     private boolean known() { return state != null && state.matches(snapshot); }
     private void updateDescription() {
@@ -90,8 +97,8 @@ final class DeezerFavouriteButton extends View {
         canvas.scale(scale, scale);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(hasFocus() ? Color.rgb(22, 49, 58) : Color.rgb(14, 23, 28));
-        canvas.drawCircle(0, 0, 25, paint);
-        if (hasFocus()) {
+        if (!buttonChrome) canvas.drawCircle(0, 0, 25, paint);
+        if (hasFocus() && !buttonChrome) {
             paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(1.6f); paint.setColor(accent);
             canvas.drawCircle(0, 0, 25, paint);
         }
