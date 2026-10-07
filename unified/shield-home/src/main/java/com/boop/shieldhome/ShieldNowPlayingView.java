@@ -105,6 +105,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
         LinearLayout titleRow = new LinearLayout(context);
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
+        titleRow.setBaselineAligned(false);
         titleRow.setGravity(Gravity.TOP);
         titleRow.setClipChildren(false);
         titleRow.setClipToPadding(false);
