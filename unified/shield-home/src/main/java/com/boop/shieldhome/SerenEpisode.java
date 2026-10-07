@@ -41,8 +41,12 @@ final class SerenEpisode {
             if (detail.isEmpty()) detail = String.format(Locale.ROOT, "S%02d E%02d",
                     item.optInt("season"), item.optInt("episode"));
             JSONObject art = item.optJSONObject("art");
-            String poster = art == null ? "" : artwork(art.optString("tvshow.poster"));
-            if (poster.isEmpty() && art != null) poster = artwork(art.optString("poster"));
+            String poster = art == null ? "" : artwork(art.optString("thumb"));
+            if (poster.isEmpty()) poster = artwork(item.optString("thumbnail"));
+            if (poster.isEmpty() && art != null) for (String key : new String[]{"tvshow.landscape", "landscape", "tvshow.fanart", "fanart"}) {
+                poster = artwork(art.optString(key));
+                if (!poster.isEmpty()) break;
+            }
             if (poster.isEmpty()) poster = artwork(item.optString("thumbnail"));
             out.add(new SerenEpisode(show, detail, path, poster));
         }

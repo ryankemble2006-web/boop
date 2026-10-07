@@ -26,7 +26,7 @@ final class SerenNextUpView extends LinearLayout {
     private Consumer<SerenEpisode> select;
     private Runnable open;
     private String signature = "";
-    private int posterHeight = 150;
+    private final int posterHeight = TvAppCardView.HOME_ARTWORK_HEIGHT_DP;
     private String lastFocusedFile;
     private SerenPosterLayout posterLayout;
     private final Runnable snapPosters = this::snapPosters;
@@ -100,7 +100,7 @@ final class SerenNextUpView extends LinearLayout {
                 }
             });
             tile.setOnClickListener(v -> { if (this.select != null) this.select.accept(e); });
-            LayoutParams p = new LayoutParams(dp(posterHeight * 2 / 3), dp(posterHeight)); p.rightMargin = dp(12);
+            LayoutParams p = new LayoutParams(dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP), dp(posterHeight)); p.rightMargin = dp(12);
             row.addView(tile, p);
         }
         empty.setVisibility(entries.isEmpty() ? VISIBLE : GONE);
@@ -116,20 +116,9 @@ final class SerenNextUpView extends LinearLayout {
         if (!hasFocus()) detail.setText(status);
         post(this::loadVisible);
     }
-    void fitHeight(int availablePx) {
-        int height = Math.max(100, Math.min(210, Math.round(availablePx / getResources().getDisplayMetrics().density) - 42));
-        if (height == posterHeight) return;
-        posterHeight = height;
-        scroll.getLayoutParams().height = dp(height + 10); scroll.requestLayout();
-        for (int i=0; i<row.getChildCount(); i++) {
-            View tile=row.getChildAt(i); tile.getLayoutParams().width=dp(height * 2 / 3);
-            tile.getLayoutParams().height=dp(height); tile.requestLayout();
-        }
-        fitWidth();
-    }
     private void fitWidth() {
         if (getWidth() <= 0 || row.getChildCount() == 0) return;
-        posterLayout = SerenPosterLayout.fit(getWidth(), dp(posterHeight * 2 / 3), dp(12), dp(5), row.getChildCount());
+        posterLayout = SerenPosterLayout.fit(getWidth(), dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP), dp(12), dp(5), row.getChildCount());
         if (scroll.getLayoutParams().width != posterLayout.viewportWidth) {
             scroll.getLayoutParams().width = posterLayout.viewportWidth;
             scroll.requestLayout();

@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 /** Remote-first app card with only local focus/selection animation. */
 public final class TvAppCardView extends FrameLayout {
+    static final int HOME_ARTWORK_WIDTH_DP = 230, HOME_ARTWORK_HEIGHT_DP = 129;
     public static final float FOCUSED_SCALE = 1.08f;
     public static final float GRABBED_SCALE = 1.14f;
     private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.00f;
@@ -197,7 +198,7 @@ public final class TvAppCardView extends FrameLayout {
 
     private void configureArtworkSize(boolean banner) {
         LinearLayout.LayoutParams params = banner
-                ? new LinearLayout.LayoutParams(dp(230), dp(129))
+                ? new LinearLayout.LayoutParams(dp(HOME_ARTWORK_WIDTH_DP), dp(HOME_ARTWORK_HEIGHT_DP))
                 : new LinearLayout.LayoutParams(dp(76), dp(76));
         params.bottomMargin = banner ? dp(6) : dp(10);
         iconView.setLayoutParams(params);

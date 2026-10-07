@@ -329,7 +329,7 @@ public final class ShieldHomeView extends LinearLayout {
                 favouriteScroller.requestLayout();
             }
             if (serenView != null) {
-                serenView.fitHeight(roomPanelStage.getHeight() - favouriteScroller.getTop() - favouriteHeight);
+
                 LayoutParams rowParams = (LayoutParams) serenView.getLayoutParams();
                 if (rowParams.rightMargin != roomPanelRight) { rowParams.rightMargin = roomPanelRight; serenView.setLayoutParams(rowParams); }
             }

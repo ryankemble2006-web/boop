@@ -23,7 +23,7 @@ public class SerenProbe {
       .put("showtitle","A show").put("label","[COLOR red]A show[/COLOR]: 02x03 The & episode")
       .put("season",2).put("episode",3).put("art",new JSONObject()
         .put("tvshow.poster","image://https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Fw500%2Fshow.jpg/")
-        .put("poster","https://example.test/season.jpg"));
+        .put("poster","https://example.test/season.jpg").put("tvshow.fanart","image://https%3A%2F%2Fexample.test%2Fshow-wide.jpg/"));
   }
   public static void main(String[] args) throws Exception {
     JSONArray files=new JSONArray().put(episode(LINK)).put(episode(LINK))
@@ -35,7 +35,11 @@ public class SerenProbe {
     SerenEpisode e=list.get(0);
     check(e.title.equals("A show"),"show identity");
     check(e.detail.contains("02x03")&&!e.detail.contains("[COLOR"),"clean episode label");
-    check(e.poster.equals("https://image.tmdb.org/t/p/w500/show.jpg"),"series poster first");
+    check(e.poster.equals("https://example.test/show-wide.jpg"),"landscape fanart instead of portrait poster");
+    JSONObject thumbEntry=episode(LINK);thumbEntry.getJSONObject("art").put("thumb","image://https%3A%2F%2Fexample.test%2Fepisode.jpg/");
+    check(SerenEpisode.parse(new JSONObject().put("files",new JSONArray().put(thumbEntry))).get(0).poster.equals("https://example.test/episode.jpg"),"episode thumbnail wins over fanart");
+    thumbEntry.getJSONObject("art").remove("thumb");thumbEntry.put("thumbnail","https://example.test/item-thumb.jpg");
+    check(SerenEpisode.parse(new JSONObject().put("files",new JSONArray().put(thumbEntry))).get(0).poster.equals("https://example.test/item-thumb.jpg"),"item thumbnail wins over fanart");
     check(e.file.equals(LINK),"opaque plugin arguments preserved byte for byte");
     check(SerenEpisode.playbackParams(e).getJSONObject("item").getString("file").equals(LINK+"&forceresumeon=true"),"no extra resume click");
     check(SerenEpisode.artwork("image://https%3A%2F%2Fx.test%2Fa%2Bb.jpg/").equals("https://x.test/a+b.jpg"),"art plus preserved");
