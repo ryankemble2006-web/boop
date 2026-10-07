@@ -181,14 +181,14 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (callbacks != null) callbacks.onNowPlayingNext();
         });
 
+        favouriteButton = new DeezerFavouriteButton(context, DeezerFavouriteButton.TOGGLE,
+                FocusChrome.accentColor(context));
+        favouriteButton.useStandaloneHeart();
+        controls.addView(favouriteButton, new LinearLayout.LayoutParams(
+                dp(CONTROL_HEIGHT_DP), dp(CONTROL_HEIGHT_DP)));
         addControl(controls, previousButton);
         addControl(controls, playPauseButton);
         addControl(controls, nextButton);
-        favouriteButton = new DeezerFavouriteButton(context, DeezerFavouriteButton.TOGGLE,
-                FocusChrome.accentColor(context));
-        favouriteButton.useButtonChrome();
-        installFocusPop(favouriteButton);
-        addControl(controls, favouriteButton);
         addControl(controls, lyricsButton);
         addControl(controls, queueButton);
         addControl(controls, sourceButton);
@@ -368,7 +368,12 @@ public final class ShieldNowPlayingView extends FrameLayout {
             }
             return false;
         };
-        previousButton.setOnKeyListener(upToProgress);
+        previousButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                    && keyCode == KeyEvent.KEYCODE_DPAD_LEFT && favouriteButton.getVisibility() == VISIBLE)
+                return favouriteButton.requestFocus();
+            return upToProgress.onKey(v, keyCode, event);
+        });
         playPauseButton.setOnKeyListener(upToProgress);
         nextButton.setOnKeyListener((v, keyCode, event) -> {
             if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
@@ -379,26 +384,22 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                (favouriteButton.getVisibility() == VISIBLE ? favouriteButton
-                        : lyricsButton.getVisibility() == VISIBLE ? lyricsButton : sourceButton).requestFocus();
+                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton
+                        : queueButton.getVisibility() == VISIBLE ? queueButton : sourceButton).requestFocus();
                 return true;
             }
             return false;
         });
         favouriteButton.setOnKeyListener((v, keyCode, event) -> {
             if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
-            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { nextButton.requestFocus(); return true; }
-            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                (lyricsButton.getVisibility() == VISIBLE ? lyricsButton : sourceButton).requestFocus();
-                return true;
-            }
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return artwork.requestFocus();
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) return previousButton.requestFocus();
             return upToProgress.onKey(v, keyCode, event);
         });
         lyricsButton.setOnKeyListener((v, keyCode, event) -> {
             if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                (favouriteButton.getVisibility() == VISIBLE ? favouriteButton : nextButton).requestFocus();
-                return true;
+                return nextButton.requestFocus();
             }
             if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
                 (queueButton.getVisibility() == VISIBLE ? queueButton : sourceButton).requestFocus(); return true;
@@ -422,8 +423,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                 (queueButton.getVisibility() == VISIBLE ? queueButton
-                        : lyricsButton.getVisibility() == VISIBLE ? lyricsButton
-                        : favouriteButton.getVisibility() == VISIBLE ? favouriteButton : nextButton).requestFocus();
+                        : lyricsButton.getVisibility() == VISIBLE ? lyricsButton : nextButton).requestFocus();
                 return true;
             }
             if (event != null && event.getAction() == KeyEvent.ACTION_DOWN

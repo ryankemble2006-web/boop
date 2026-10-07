@@ -44,7 +44,7 @@ public final class SerenRowsProbe extends Activity {
             Class<?> snapshotType=loader.loadClass("com.boop.shieldhome.NowPlayingSnapshot");
             Bitmap cover=Bitmap.createBitmap(154,154,Bitmap.Config.ARGB_8888);cover.eraseColor(Color.DKGRAY);
             Object snapshot=snapshotType.getConstructor(long.class,String.class,String.class,String.class,int.class,long.class,long.class,long.class,float.class,long.class,Bitmap.class)
-                .newInstance(999L,"deezer.android.app","Test track","Layout check",2,518L|android.media.session.PlaybackState.ACTION_SEEK_TO,30000L,180000L,1f,0L,cover);
+                .newInstance(999L,"deezer.android.app","Test track","Layout check",2,518L|android.media.session.PlaybackState.ACTION_SEEK_TO|android.media.session.PlaybackState.ACTION_SKIP_TO_PREVIOUS|android.media.session.PlaybackState.ACTION_SKIP_TO_NEXT,30000L,180000L,1f,0L,cover);
             type.getMethod("setNowPlaying",snapshotType).invoke(home,snapshot);
             Class<?> area=loader.loadClass("com.boop.shieldoverlay.AreaInfo"),entity=loader.loadClass("com.boop.shieldoverlay.EntityCard"),phase=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$Phase"),stateType=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$State");
             Object room=area.getConstructor(String.class,String.class).newInstance("test_room","Test room");
@@ -120,6 +120,9 @@ public final class SerenRowsProbe extends Activity {
                 }
             });
             assertWholePosters(a);
+            runOnMainSync(()->find(a.home,"Check Deezer favourite status").requestFocus());
+            step(a,KeyEvent.KEYCODE_DPAD_RIGHT,"Prev");
+            step(a,KeyEvent.KEYCODE_DPAD_LEFT,"Check Deezer favourite status");
             runOnMainSync(()->find(a.home,"Flow").requestFocus());
             step(a,KeyEvent.KEYCODE_DPAD_RIGHT,"Enable spectrum");
             step(a,KeyEvent.KEYCODE_DPAD_LEFT,"Flow");

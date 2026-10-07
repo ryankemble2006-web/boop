@@ -19,7 +19,7 @@ final class DeezerFavouriteButton extends View {
     private NowPlayingSnapshot snapshot;
     private Runnable unsubscribe;
     private boolean subscribed;
-    private boolean buttonChrome;
+    private boolean standaloneHeart;
 
     DeezerFavouriteButton(Context context, int mode, int accent) {
         super(context);
@@ -32,9 +32,9 @@ final class DeezerFavouriteButton extends View {
         });
         updateDescription();
     }
-    void useButtonChrome() {
-        buttonChrome = true;
-        setBackground(FocusChrome.filled(getContext(), Color.rgb(34, 34, 34), 9, hasFocus()));
+    void useStandaloneHeart() {
+        standaloneHeart = true;
+        setBackground(null);
     }
     void setSnapshot(NowPlayingSnapshot next) {
         snapshot = next;
@@ -72,7 +72,6 @@ final class DeezerFavouriteButton extends View {
     }
     @Override protected void onFocusChanged(boolean gain, int direction, Rect previous) {
         super.onFocusChanged(gain, direction, previous);
-        if (buttonChrome) setBackground(FocusChrome.filled(getContext(), Color.rgb(34, 34, 34), 9, gain));
         invalidate();
     }
     private boolean known() { return state != null && state.matches(snapshot); }
@@ -91,14 +90,18 @@ final class DeezerFavouriteButton extends View {
         boolean pending = known && state.pending;
         boolean available = known && !pending && (mode == DISLIKE ? controller.canDislike()
                 : state.saved == 1 ? state.canRemove : state.canAdd);
+        if (standaloneHeart) {
+            drawStandaloneHeart(canvas, accent, known, saved, pending, available);
+            return;
+        }
         float scale = Math.min(getWidth(), getHeight()) / 54f;
         canvas.save();
         canvas.translate(getWidth() * 0.5f, getHeight() * 0.5f);
         canvas.scale(scale, scale);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(hasFocus() ? Color.rgb(22, 49, 58) : Color.rgb(14, 23, 28));
-        if (!buttonChrome) canvas.drawCircle(0, 0, 25, paint);
-        if (hasFocus() && !buttonChrome) {
+        canvas.drawCircle(0, 0, 25, paint);
+        if (hasFocus()) {
             paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(1.6f); paint.setColor(accent);
             canvas.drawCircle(0, 0, 25, paint);
         }
@@ -126,6 +129,49 @@ final class DeezerFavouriteButton extends View {
         if (pending) {
             paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(2); paint.setColor(accent);
             canvas.drawArc(-20, -20, 20, 20, -90, 250, false, paint);
+        }
+        canvas.restore();
+    }
+
+    private void drawStandaloneHeart(Canvas canvas, int accent, boolean known,
+            boolean saved, boolean pending, boolean available) {
+        float density = getResources().getDisplayMetrics().density;
+        float stroke = (hasFocus() ? 2f : 1.2f) * density;
+        float inset = stroke * 0.5f;
+        float w = getWidth() - stroke, h = getHeight() - stroke;
+        canvas.save();
+        canvas.translate(inset, inset);
+        heart.reset();
+        heart.moveTo(w * .5f, h);
+        heart.cubicTo(w * .4f, h * .9f, 0, h * .6f, 0, h * .3f);
+        heart.cubicTo(0, h * .04f, w * .15f, 0, w * .25f, 0);
+        heart.cubicTo(w * .36f, 0, w * .46f, h * .06f, w * .5f, h * .17f);
+        heart.cubicTo(w * .54f, h * .06f, w * .64f, 0, w * .75f, 0);
+        heart.cubicTo(w * .85f, 0, w, h * .04f, w, h * .3f);
+        heart.cubicTo(w, h * .6f, w * .6f, h * .9f, w * .5f, h);
+        heart.close();
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(saved ? accent : Color.rgb(34, 34, 34));
+        canvas.drawPath(heart, paint);
+        int ink = hasFocus() ? (saved ? Color.WHITE : accent)
+                : pending ? Color.rgb(151, 169, 178)
+                : available ? Color.WHITE : Color.rgb(91, 107, 116);
+        {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(stroke);
+            paint.setStrokeJoin(Paint.Join.ROUND);
+            paint.setColor(saved && !hasFocus() && !pending ? accent : ink);
+            canvas.drawPath(heart, paint);
+        }
+        if (!known || state.saved == -1) {
+            paint.setStyle(Paint.Style.FILL); paint.setColor(ink);
+            paint.setTextSize(h * .4f); paint.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText("?", w * .5f, h * .61f, paint);
+        }
+        if (pending) {
+            paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(density);
+            paint.setColor(accent);
+            canvas.drawArc(w * .25f, h * .23f, w * .75f, h * .73f, -90, 250, false, paint);
         }
         canvas.restore();
     }
