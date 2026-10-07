@@ -1,15 +1,65 @@
 package com.boop.shieldhome;
-/** Windowed stereo PCM power spectrum. Fixed dBFS scale, no generated motion or auto gain. */
+
+/** Continuous stereo band energy, 20 Hz–16 kHz. Fixed dBFS scale; no AGC or synthetic motion. */
 final class PcmSpectrum {
- static final int BANDS=64,N=32768,HOP=1024;
- private final int rate;private final double[][] ring=new double[2][N];private final double[] re=new double[N],im=new double[N],power=new double[N/2+1],window=new double[N];private int cursor,filled,hop;private float[] latest=new float[BANDS];
- PcmSpectrum(int rate){this.rate=rate;for(int i=0;i<N;i++)window[i]=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));}
- static double edge(int band){return 20*Math.pow(800,band/(double)BANDS);}
- float[] feed(short[] pcm,int count){for(int i=0;i+1<count;i+=2){ring[0][cursor]=pcm[i]/32768.0;ring[1][cursor]=pcm[i+1]/32768.0;cursor=(cursor+1)%N;filled=Math.min(N,filled+1);if(++hop>=HOP&&filled==N){hop=0;analyse();}}return latest.clone();}
- private void analyse(){java.util.Arrays.fill(power,0);for(int c=0;c<2;c++){for(int i=0;i<N;i++){re[i]=ring[c][(cursor+i)%N]*window[i];im[i]=0;}fft();for(int k=1;k<=N/2;k++)power[k]+=(re[k]*re[k]+im[k]*im[k])*0.5;}
-  float[] bands=new float[BANDS];for(int b=0;b<BANDS;b++){int low=Math.max(1,(int)Math.ceil(edge(b)*N/rate)),high=Math.min(N/2,(int)Math.ceil(edge(b+1)*N/rate)-1);double sum=0;for(int k=low;k<=high;k++)sum+=power[k];double rms=Math.sqrt(sum*2/(N*(double)N*0.375));double db=rms>0?20*Math.log10(rms):-120;bands[b]=(float)Math.max(0,Math.min(1,(db+72)/72));}latest=bands;
- }
- private void fft(){for(int i=1,j=0;i<N;i++){int bit=N>>1;for(; (j&bit)!=0;bit>>=1)j^=bit;j^=bit;if(i<j){double t=re[i];re[i]=re[j];re[j]=t;}}
-  for(int len=2;len<=N;len<<=1){double angle=-2*Math.PI/len,cr=Math.cos(angle),ci=Math.sin(angle);for(int start=0;start<N;start+=len){double wr=1,wi=0;for(int j=0;j<len/2;j++){int a=start+j,b=a+len/2;double tr=wr*re[b]-wi*im[b],ti=wr*im[b]+wi*re[b];re[b]=re[a]-tr;im[b]=im[a]-ti;re[a]+=tr;im[a]+=ti;double next=wr*cr-wi*ci;wi=wr*ci+wi*cr;wr=next;}}}
- }
+    static final int BANDS = 64;
+    private final Band[] filters = new Band[BANDS];
+    private final float[] latest = new float[BANDS];
+
+    PcmSpectrum(int rate) {
+        if (rate < 32000) throw new IllegalArgumentException("Spectrum needs at least 32 kHz PCM");
+        for (int i = 0; i < BANDS; i++) filters[i] = new Band(rate, Math.sqrt(edge(i) * edge(i + 1)));
+    }
+
+    static double edge(int band) { return 20 * Math.pow(800, band / (double) BANDS); }
+
+    float[] feed(short[] pcm, int count) {
+        if (pcm == null || count < 2) return latest.clone();
+        int end = Math.min(pcm.length, count) & ~1;
+        for (int b = 0; b < BANDS; b++) {
+            double power = filters[b].measure(pcm, end);
+            double db = power > 0 ? 10 * Math.log10(power) : -120;
+            latest[b] = (float) Math.max(0, Math.min(1, (db + 72) / 72));
+        }
+        return latest.clone();
+    }
+
+    private static final class Band {
+        final double gain, a1, a2, smoothing;
+        double l1, l2, l3, l4, r1, r2, r3, r4, power;
+
+        Band(int rate, double hz) {
+            // RBJ constant-0dB bandpass, with digital bandwidth warping compensation:
+            // https://www.w3.org/TR/audio-eq-cookbook/#formulae
+            // Two cascaded sections give steeper rejection. Broaden each section by
+            // 1/sqrt(sqrt(2)-1), so their combined -3dB width matches one displayed band.
+            double omega = 2 * Math.PI * hz / rate;
+            double bandwidth = Math.log(800) / BANDS / Math.sqrt(Math.sqrt(2) - 1);
+            double alpha = Math.sin(omega) * Math.sinh(bandwidth * .5 * omega / Math.sin(omega));
+            gain = alpha / (1 + alpha);
+            a1 = -2 * Math.cos(omega) / (1 + alpha);
+            a2 = (1 - alpha) / (1 + alpha);
+            // Average stereo power, not stereo samples: opposite-phase audio must survive.
+            // Half a period smooths carrier ripple; high bands need only a 3ms envelope.
+            smoothing = 1 - Math.exp(-1 / (rate * Math.max(.003, .5 / hz)));
+        }
+
+        double measure(short[] pcm, int end) {
+            double ll1 = l1, ll2 = l2, ll3 = l3, ll4 = l4;
+            double rr1 = r1, rr2 = r2, rr3 = r3, rr4 = r4, p = power;
+            for (int i = 0; i < end; i += 2) {
+                double left = pcm[i] / 32768.0, right = pcm[i + 1] / 32768.0;
+                double yl = gain * left + ll1, yr = gain * right + rr1;
+                ll1 = -a1 * yl + ll2; ll2 = -gain * left - a2 * yl;
+                rr1 = -a1 * yr + rr2; rr2 = -gain * right - a2 * yr;
+                double outL = gain * yl + ll3, outR = gain * yr + rr3;
+                ll3 = -a1 * outL + ll4; ll4 = -gain * yl - a2 * outL;
+                rr3 = -a1 * outR + rr4; rr4 = -gain * yr - a2 * outR;
+                p += smoothing * ((outL * outL + outR * outR) * .5 - p);
+            }
+            l1 = ll1; l2 = ll2; l3 = ll3; l4 = ll4;
+            r1 = rr1; r2 = rr2; r3 = rr3; r4 = rr4; power = p;
+            return p;
+        }
+    }
 }
