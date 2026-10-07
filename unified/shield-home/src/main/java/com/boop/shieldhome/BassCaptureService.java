@@ -41,7 +41,7 @@ public final class BassCaptureService extends Service {
    if(active.getState()!=AudioRecord.STATE_INITIALIZED)throw new IllegalStateException("Recorder uninitialized");
    active.startRecording();
    owner=BassCaptureState.start();spectrumOwner=SpectrumState.start();status="Live PCM spectrum active";
-   Log.w("BOOP-BassCapture",status+"; requested 44100 stereo PCM; 20 logarithmic frequency bands");
+   Log.w("BOOP-BassCapture",status+"; requested 44100 stereo PCM; "+PcmSpectrum.BANDS+" logarithmic frequency bands");
 
    worker=new Thread(()->measure(active,id,owner,spectrumOwner),"BOOP-BassCapture");worker.start();
   }catch(Exception e){status="Capture unavailable: "+e.getMessage();Log.w("BOOP-BassCapture",status);stopSelf();}

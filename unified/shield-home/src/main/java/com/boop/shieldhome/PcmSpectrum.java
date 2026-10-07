@@ -1,7 +1,7 @@
 package com.boop.shieldhome;
 /** Windowed stereo PCM power spectrum. Fixed dBFS scale, no generated motion or auto gain. */
 final class PcmSpectrum {
- static final int BANDS=20,N=16384,HOP=1024;
+ static final int BANDS=64,N=32768,HOP=1024;
  private final int rate;private final double[][] ring=new double[2][N];private final double[] re=new double[N],im=new double[N],power=new double[N/2+1],window=new double[N];private int cursor,filled,hop;private float[] latest=new float[BANDS];
  PcmSpectrum(int rate){this.rate=rate;for(int i=0;i<N;i++)window[i]=0.5-0.5*Math.cos(2*Math.PI*i/(N-1));}
  static double edge(int band){return 20*Math.pow(800,band/(double)BANDS);}

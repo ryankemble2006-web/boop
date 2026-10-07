@@ -26,6 +26,9 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private static final int CONTROL_GAP_DP = 10;
     private static final int ARTWORK_CORNER_DP = 10;
     static final int MASCOT_BAY_DP = 230;
+    // Centre of the third favourites banner, measured from this card's left edge.
+    private static final int PLAYBACK_END_DP = 2 * (TvAppCardView.HOME_ARTWORK_WIDTH_DP + 16)
+            + TvAppCardView.HOME_ARTWORK_WIDTH_DP / 2;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ImageView artwork;
@@ -95,10 +98,10 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
         LinearLayout details = new LinearLayout(context);
         details.setOrientation(LinearLayout.VERTICAL);
-        details.setGravity(Gravity.CENTER_VERTICAL);
+        details.setGravity(Gravity.TOP);
         details.setClipChildren(false);
         details.setClipToPadding(false);
-        row.addView(details, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
+        row.addView(details, new LinearLayout.LayoutParams(dp(PLAYBACK_END_DP - 18 - 154 - 20), dp(154)));
 
         LinearLayout titleRow = new LinearLayout(context);
         titleRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -106,17 +109,17 @@ public final class ShieldNowPlayingView extends FrameLayout {
         titleRow.setClipChildren(false);
         titleRow.setClipToPadding(false);
         details.addView(titleRow, new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                LayoutParams.MATCH_PARENT, dp(70)));
 
         LinearLayout textStack = new LinearLayout(context);
         textStack.setOrientation(LinearLayout.VERTICAL);
-        titleRow.addView(textStack, new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        titleRow.addView(textStack, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         title = text(24, Color.WHITE);
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
         textStack.addView(title, new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                LayoutParams.MATCH_PARENT, dp(40)));
 
         subtitle = text(18, Color.WHITE);
         subtitle.setSingleLine(true);
@@ -129,41 +132,49 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (callbacks != null && v.isEnabled()) callbacks.onBrowseNowPlayingArtist();
         });
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-        subtitleParams.topMargin = dp(2);
+                LayoutParams.MATCH_PARENT, dp(30));
         textStack.addView(subtitle, subtitleParams);
+
+        LinearLayout statusRow = new LinearLayout(context);
+        statusRow.setGravity(Gravity.CENTER_VERTICAL);
+        statusRow.setClipChildren(false);
+        details.addView(statusRow, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(32)));
+        stateLabel = text(14, Color.LTGRAY);
+        stateLabel.setSingleLine(true);
+        stateLabel.setEllipsize(TextUtils.TruncateAt.END);
+        statusRow.addView(stateLabel, new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
+        stateLabel.setGravity(Gravity.CENTER_VERTICAL);
 
         lyricsButton = actionButton("Lyrics");
         lyricsButton.setOnClickListener(v -> {
             if (callbacks != null) callbacks.onOpenNowPlayingLyrics();
         });
-        LinearLayout.LayoutParams lyricsParams = new LinearLayout.LayoutParams(dp(92), dp(44));
-        lyricsParams.leftMargin = dp(12);
+        lyricsButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        lyricsButton.setPadding(dp(6), 0, dp(6), 0);
+        LinearLayout.LayoutParams lyricsParams = new LinearLayout.LayoutParams(dp(70), dp(32));
+        lyricsParams.leftMargin = dp(8);
         lyricsParams.rightMargin = dp(8);
-        titleRow.addView(lyricsButton, lyricsParams);
+        statusRow.addView(lyricsButton, lyricsParams);
 
         queueButton = actionButton("Queue");
         queueButton.setContentDescription("Browse the current album or playlist queue");
         queueButton.setOnClickListener(v -> { if (callbacks != null) callbacks.onNowPlayingQueue(); });
         queueButton.setVisibility(GONE);
-        LinearLayout.LayoutParams queueParams = new LinearLayout.LayoutParams(dp(78), dp(44));
+        queueButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        queueButton.setPadding(dp(6), 0, dp(6), 0);
+        LinearLayout.LayoutParams queueParams = new LinearLayout.LayoutParams(dp(70), dp(32));
         queueParams.rightMargin = dp(8);
-        titleRow.addView(queueButton, queueParams);
+        statusRow.addView(queueButton, queueParams);
 
         sourceButton = actionButton("Flow");
         sourceButton.setContentDescription("Start your Deezer Flow");
         sourceButton.setOnClickListener(v -> {
             if (callbacks != null) callbacks.onNowPlayingFlow();
         });
-        LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(130), dp(44));
-        sourceParams.leftMargin = dp(12);
-        sourceParams.rightMargin = dp(8);
-        titleRow.addView(sourceButton, sourceParams);
-
-        stateLabel = text(14, Color.LTGRAY);
-        LinearLayout.LayoutParams stateParams = wrap();
-        stateParams.topMargin = dp(5);
-        details.addView(stateLabel, stateParams);
+        sourceButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        sourceButton.setPadding(dp(6), 0, dp(6), 0);
+        LinearLayout.LayoutParams sourceParams = new LinearLayout.LayoutParams(dp(70), dp(32));
+        statusRow.addView(sourceButton, sourceParams);
 
         progress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(1000);
@@ -176,9 +187,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
                 .setDuration(TvAppCardView.FOCUS_DURATION_MS).start());
         progress.setOnKeyListener(this::handleProgressKey);
         LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(8));
-        progressParams.topMargin = dp(9);
-        progressParams.rightMargin = dp(8);
+                LayoutParams.MATCH_PARENT, dp(6));
+        progressParams.topMargin = dp(2);
         details.addView(progress, progressParams);
 
         LinearLayout controls = new LinearLayout(context);
@@ -191,8 +201,8 @@ public final class ShieldNowPlayingView extends FrameLayout {
         controls.setPadding(0, 0, 0, 0);
         controls.setTranslationX(-dp(4));
         LinearLayout.LayoutParams controlsParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, dp(46));
-        controlsParams.topMargin = dp(4);
+                LayoutParams.MATCH_PARENT, dp(42));
+        controlsParams.topMargin = dp(2);
         details.addView(controls, controlsParams);
 
         previousButton = controlButton("Prev", () -> {
@@ -215,13 +225,13 @@ public final class ShieldNowPlayingView extends FrameLayout {
         controls.addView(favouriteButton, favouriteParams);
         installEdgeFocusNavigation();
 
-        // Media ownership can hide the puppet while a seek buffers. Keep its bay
-        // in the row so media controls cannot expand behind the GL eye surface.
+        // Keep the entire remaining width for the PCM spectrum, even during silence.
         LinearLayout puppetBay = new LinearLayout(context);
         puppetBay.setFocusable(false);
         puppetBay.setClickable(false);
-        row.addView(puppetBay, new LinearLayout.LayoutParams(
-                dp(MASCOT_BAY_DP), LayoutParams.MATCH_PARENT));
+        LinearLayout.LayoutParams spectrumParams = new LinearLayout.LayoutParams(0, dp(154), 1f);
+        spectrumParams.leftMargin = dp(20);
+        row.addView(puppetBay, spectrumParams);
         puppetView = new ShieldSpectrumView(context);
         puppetBay.addView(puppetView, new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));

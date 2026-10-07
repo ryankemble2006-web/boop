@@ -41,6 +41,11 @@ public final class SerenRowsProbe extends Activity {
             type.getMethod("setSerenEnabled",boolean.class).invoke(home,true);
             bind=type.getDeclaredMethod("setSeren",List.class,String.class,loader.loadClass("com.boop.shieldhome.SerenPosterLoader"));bind.setAccessible(true);bind.invoke(home,episodes,"",null);
             type.getMethod("render",List.class,List.class,callbacksType).invoke(home,List.of(),List.of(),callbacks);
+            Class<?> snapshotType=loader.loadClass("com.boop.shieldhome.NowPlayingSnapshot");
+            Bitmap cover=Bitmap.createBitmap(154,154,Bitmap.Config.ARGB_8888);cover.eraseColor(Color.DKGRAY);
+            Object snapshot=snapshotType.getConstructor(long.class,String.class,String.class,String.class,int.class,long.class,long.class,long.class,float.class,long.class,Bitmap.class)
+                .newInstance(999L,"deezer.android.app","Test track","Layout check",2,518L,30000L,180000L,1f,0L,cover);
+            type.getMethod("setNowPlaying",snapshotType).invoke(home,snapshot);
             Class<?> area=loader.loadClass("com.boop.shieldoverlay.AreaInfo"),entity=loader.loadClass("com.boop.shieldoverlay.EntityCard"),phase=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$Phase"),stateType=loader.loadClass("com.boop.shieldoverlay.RoomPanelController$State");
             Object room=area.getConstructor(String.class,String.class).newInstance("test_room","Test room");
             List<Object> devices=new ArrayList<>();
@@ -52,6 +57,7 @@ public final class SerenRowsProbe extends Activity {
             // The unchanged pre-Seren path supplies the real measured sizing reference.
             originalHome=(View)type.getConstructor(Context.class).newInstance(isolated);
             type.getMethod("render",List.class,List.class,callbacksType).invoke(originalHome,List.of(),List.of(),callbacks);
+            type.getMethod("setNowPlaying",snapshotType).invoke(originalHome,snapshot);
             type.getMethod("setRoomPanelState",stateType,boolean.class).invoke(originalHome,roomState,true);
             setContentView(originalHome);
         } catch(Throwable e){creationFailure=e;TextView error=new TextView(this);error.setText(e.toString());setContentView(error);}
@@ -91,6 +97,18 @@ public final class SerenRowsProbe extends Activity {
             SystemClock.sleep(1800);waitForIdleSync();
             runOnMainSync(()->{
                 find(a.home,"Add favourites").requestFocus();
+                try {
+                    Field np=a.home.getClass().getDeclaredField("nowPlayingView");np.setAccessible(true);View media=(View)np.get(a.home);
+                    Field art=media.getClass().getDeclaredField("artwork"),spectrum=media.getClass().getDeclaredField("puppetView"),progress=media.getClass().getDeclaredField("progress");
+                    art.setAccessible(true);spectrum.setAccessible(true);progress.setAccessible(true);
+                    View cover=(View)art.get(media),bars=(View)spectrum.get(media),track=(View)progress.get(media);
+                    int[] c=new int[2],b=new int[2],p=new int[2],m=new int[2];cover.getLocationOnScreen(c);bars.getLocationOnScreen(b);track.getLocationOnScreen(p);media.getLocationOnScreen(m);
+                    float density=media.getResources().getDisplayMetrics().density;
+                    if(Math.abs(c[1]+cover.getHeight()-b[1]-bars.getHeight())>1)a.failures.add("Spectrum base is not aligned with album cover");
+                    if(Math.abs(p[0]+track.getWidth()-m[0]-Math.round(607*density))>2)a.failures.add("Track does not end at third favourites centre");
+                    if(bars.getWidth()<Math.round(400*density))a.failures.add("Spectrum did not fill available space");
+                    for(String key:new String[]{"lyricsButton","sourceButton"}){Field bf=media.getClass().getDeclaredField(key);bf.setAccessible(true);View button=(View)bf.get(media);int[] xy=new int[2];button.getLocationOnScreen(xy);if(xy[0]+button.getWidth()>p[0]+track.getWidth()+1||xy[1]+button.getHeight()>p[1])a.failures.add("Auxiliary button overlaps progress or spectrum");}
+                }catch(Exception e){throw new RuntimeException(e);}
                 View card=find(a.home,"Example show 1: 01x02 Next episode");
                 if(!full(card))a.failures.add("First poster is not fully visible on initial screen");
                 Rect room=new Rect();View lamp=find(a.home,"Test lamp, Off");
