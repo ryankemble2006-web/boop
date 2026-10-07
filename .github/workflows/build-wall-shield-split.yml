@@ -9,7 +9,7 @@ on:
         description: Exact SHA256 of the locally verified input
         required: true
 permissions:
-  contents: write
+  contents: read
 jobs:
   sign:
     runs-on: ubuntu-latest
