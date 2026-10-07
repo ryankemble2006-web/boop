@@ -15,7 +15,7 @@ public final class BassCaptureActivity extends Activity {
   super.onCreate(state);
   LinearLayout root=new LinearLayout(this);root.setOrientation(1);root.setPadding(60,50,60,30);
   TextView title=new TextView(this);title.setText("Music spectrum");title.setTextSize(28);root.addView(title);
-  TextView explanation=new TextView(this);explanation.setText("Bounce to Deezer bass around 35–120 Hz for ten minutes. Music stays at its current audio rate. No audio recording is saved. Android will ask for capture access.");explanation.setTextSize(20);root.addView(explanation);
+  TextView explanation=new TextView(this);explanation.setText("Frequency bars follow real playback audio. Your Home colour sets the bars; peak markers are white. No music is saved. Android will ask for capture access.");explanation.setTextSize(20);root.addView(explanation);
   Button start=new Button(this);start.setText("Enable spectrum");root.addView(start);
   start.setOnClickListener(v->begin());start.requestFocus();
   Button stop=new Button(this);stop.setText("Stop spectrum");root.addView(stop);stop.setOnClickListener(v->stopService(new Intent(this,BassCaptureService.class)));
