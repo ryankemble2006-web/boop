@@ -203,6 +203,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         spectrumParams.leftMargin = dp(20);
         row.addView(puppetBay, spectrumParams);
         puppetView = new ShieldSpectrumView(context);
+        puppetView.setLeftNavigation(sourceButton);
         puppetBay.addView(puppetView, new LinearLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
@@ -413,6 +414,10 @@ public final class ShieldNowPlayingView extends FrameLayout {
             return false;
         });
         sourceButton.setOnKeyListener((v, keyCode, event) -> {
+            if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                    && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                return puppetView.focusControl();
+            }
             if (event != null
                     && event.getAction() == KeyEvent.ACTION_DOWN
                     && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
