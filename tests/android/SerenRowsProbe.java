@@ -113,6 +113,7 @@ public final class SerenRowsProbe extends Activity {
             for(int i=0;i<10;i++)sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_LEFT);
             SystemClock.sleep(450);waitForIdleSync();
             resizedPosterWindows(a);
+            runOnMainSync(()->{try{Field f=a.home.getClass().getDeclaredField("roomPanelView");f.setAccessible(true);View panel=(View)f.get(a.home);if(panel.getAlpha()!=0f)a.failures.add("Room panel peeks while Seren focused");}catch(Exception e){throw new RuntimeException(e);}});
             capture("seren-focused");
             step(a,KeyEvent.KEYCODE_DPAD_DOWN,"Test room");
             runOnMainSync(()->{try{
@@ -124,6 +125,7 @@ public final class SerenRowsProbe extends Activity {
             sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
             if(a.roomPickerOpens!=1)a.failures.add("Room heading click does not open picker");
             capture("seren-room-heading");
+            runOnMainSync(()->{try{Field f=a.home.getClass().getDeclaredField("roomPanelView");f.setAccessible(true);View panel=(View)f.get(a.home);if(panel.getAlpha()!=1f)a.failures.add("Room panel was not revealed on scroll");}catch(Exception e){throw new RuntimeException(e);}});
             persistentRoom(a);SystemClock.sleep(350);waitForIdleSync();
             step(a,KeyEvent.KEYCODE_DPAD_DOWN,"Test lamp, Off");
             sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);waitForIdleSync();
@@ -150,11 +152,17 @@ public final class SerenRowsProbe extends Activity {
         }catch(Throwable t){result.putString("stream","FAIL "+android.util.Log.getStackTraceString(t));finish(Activity.RESULT_CANCELED,result);}}
         void step(SerenRowsProbe a,int key,String expected){sendKeyDownUpSync(key);SystemClock.sleep(450);waitForIdleSync();runOnMainSync(()->{View v=find(a.home,expected);if(v==null||!v.hasFocus()||!full(v))a.failures.add("Focus/visibility: "+expected);});}
         void assertWholePosters(SerenRowsProbe a){
-            runOnMainSync(()->{for(int i=1;i<=12;i++){
-                View v=find(a.home,"Example show "+i+": 01x02 Next episode");Rect visible=new Rect();
-                if(v!=null&&v.getGlobalVisibleRect(visible)&&visible.width()>0&&!full(v))
-                    a.failures.add("Partial poster visible: "+i+" width="+visible.width()+"/"+v.getWidth());
-            }});
+            runOnMainSync(()->{try{
+                Field f=a.home.getClass().getDeclaredField("serenView");f.setAccessible(true);View seren=(View)f.get(a.home);
+                Field sf=seren.getClass().getDeclaredField("scroll"),df=seren.getClass().getDeclaredField("detail");sf.setAccessible(true);df.setAccessible(true);
+                View sc=(View)sf.get(seren),detail=(View)df.get(seren);
+                if(sc.getWidth()!=seren.getWidth())a.failures.add("Seren does not fill row width");
+                View first=find(a.home,"Example show 1: 01x02 Next episode"),fav=find(a.home,"Add favourites");
+                if(first!=null&&first.getWidth()!=fav.getWidth())a.failures.add("Seren tile width differs from favourites");
+                int[] textXY=new int[2],tileXY=new int[2];detail.getLocationOnScreen(textXY);first.getLocationOnScreen(tileXY);
+                if(textXY[1]<tileXY[1]+first.getHeight())a.failures.add("Episode title is above tiles");
+                if((((TextView)detail).getGravity()&Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK)!=Gravity.START)a.failures.add("Episode title is not left aligned");
+            }catch(Exception e){throw new RuntimeException(e);}});
         }
         void resizedPosterWindows(SerenRowsProbe a)throws Exception{
             Field f=a.home.getClass().getDeclaredField("serenView");f.setAccessible(true);View seren=(View)f.get(a.home);
@@ -162,11 +170,6 @@ public final class SerenRowsProbe extends Activity {
             for(int delta:new int[]{17,57,111}){
                 runOnMainSync(()->{seren.getLayoutParams().width=original-delta;seren.requestLayout();});
                 SystemClock.sleep(200);waitForIdleSync();
-                runOnMainSync(()->{try{
-                    Field sf=seren.getClass().getDeclaredField("scroll"),rf=seren.getClass().getDeclaredField("row"),pf=seren.getClass().getDeclaredField("posterLayout");sf.setAccessible(true);rf.setAccessible(true);pf.setAccessible(true);
-                    View sc=(View)sf.get(seren);Object geometry=pf.get(seren);Field vp=geometry.getClass().getDeclaredField("viewportWidth");vp.setAccessible(true);
-                    android.util.Log.i("PosterResizeAudit","parent="+seren.getWidth()+", scroll="+sc.getWidth()+", param="+sc.getLayoutParams().width+", expected="+vp.get(geometry)+", x="+sc.getScrollX());
-                }catch(Exception e){throw new RuntimeException(e);}});
                 capture("seren-width-"+delta);assertWholePosters(a);
             }
             runOnMainSync(()->{seren.getLayoutParams().width=ViewGroup.LayoutParams.MATCH_PARENT;seren.requestLayout();});

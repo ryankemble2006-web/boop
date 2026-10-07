@@ -28,23 +28,16 @@ final class SerenNextUpView extends LinearLayout {
     private String signature = "";
     private final int posterHeight = TvAppCardView.HOME_ARTWORK_HEIGHT_DP;
     private String lastFocusedFile;
-    private SerenPosterLayout posterLayout;
-    private final Runnable snapPosters = this::snapPosters;
 
     SerenNextUpView(Context context) {
         super(context); setOrientation(VERTICAL); setClipChildren(false); setClipToPadding(false);
         LinearLayout heading = new LinearLayout(context); heading.setGravity(Gravity.CENTER_VERTICAL);
         detail = text("", 14); detail.setTextColor(Color.LTGRAY); detail.setSingleLine(true); detail.setEllipsize(TextUtils.TruncateAt.END);
-        detail.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        LayoutParams info = new LayoutParams(0, dp(32), 1); info.leftMargin = dp(16); heading.addView(detail, info);
-        addView(heading, new LayoutParams(LayoutParams.MATCH_PARENT, dp(32)));
-        scroll = new HorizontalScrollView(context) {
-            @Override public boolean requestChildRectangleOnScreen(View child, Rect rectangle, boolean immediate) {
-                post(SerenNextUpView.this::revealFocusedPoster);
-                return false;
-            }
-        }; scroll.setFocusable(false); scroll.setHorizontalScrollBarEnabled(false);
-        scroll.setClipChildren(true); scroll.setClipToPadding(true); scroll.setPadding(dp(5), dp(5), dp(5), dp(5));
+        detail.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        LayoutParams info = new LayoutParams(0, dp(24), 1); heading.addView(detail, info);
+        scroll = new HorizontalScrollView(context);
+        scroll.setFocusable(false); scroll.setHorizontalScrollBarEnabled(false);
+        scroll.setClipChildren(true); scroll.setClipToPadding(true); scroll.setPadding(0, dp(5), 0, dp(5));
         row = new LinearLayout(context); row.setOrientation(HORIZONTAL); row.setClipChildren(false);
         scroll.addView(row, new FrameLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
         addView(scroll, new LayoutParams(LayoutParams.MATCH_PARENT, dp(posterHeight + 10)));
@@ -52,12 +45,9 @@ final class SerenNextUpView extends LinearLayout {
         empty.setFocusable(true); empty.setClickable(true); empty.setOnClickListener(v -> { if (open != null) open.run(); });
         empty.setOnFocusChangeListener((v, focused) -> empty.setBackground(FocusChrome.filled(context, Color.rgb(25,25,25), 8, focused)));
         addView(empty, new LayoutParams(LayoutParams.MATCH_PARENT, dp(100)));
+        addView(heading, new LayoutParams(LayoutParams.MATCH_PARENT, dp(24)));
         scroll.setVisibility(GONE);
-        scroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
-            loadVisible();
-            scroll.removeCallbacks(snapPosters);
-            scroll.postDelayed(snapPosters, 100);
-        });
+        scroll.getViewTreeObserver().addOnScrollChangedListener(this::loadVisible);
         addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> {
             setClipBounds(new Rect(0, 0, r-l, b-t));
             fitWidth();
@@ -96,11 +86,10 @@ final class SerenNextUpView extends LinearLayout {
                 tile.setForeground(FocusChrome.filled(getContext(), Color.TRANSPARENT, 7, selected));
                 if (selected) {
                     lastFocusedFile = e.file; detail.setText(e.title + " · " + e.detail);
-                    post(this::revealFocusedPoster);
                 }
             });
             tile.setOnClickListener(v -> { if (this.select != null) this.select.accept(e); });
-            LayoutParams p = new LayoutParams(dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP), dp(posterHeight)); p.rightMargin = dp(12);
+            LayoutParams p = new LayoutParams(dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP), dp(posterHeight)); p.rightMargin = dp(16);
             row.addView(tile, p);
         }
         empty.setVisibility(entries.isEmpty() ? VISIBLE : GONE);
@@ -118,36 +107,13 @@ final class SerenNextUpView extends LinearLayout {
     }
     private void fitWidth() {
         if (getWidth() <= 0 || row.getChildCount() == 0) return;
-        posterLayout = SerenPosterLayout.fit(getWidth(), dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP), dp(12), dp(5), row.getChildCount());
-        if (scroll.getLayoutParams().width != posterLayout.viewportWidth) {
-            scroll.getLayoutParams().width = posterLayout.viewportWidth;
-            scroll.requestLayout();
-        }
         for (int i=0; i<row.getChildCount(); i++) {
             LayoutParams p=(LayoutParams)row.getChildAt(i).getLayoutParams();
-            int margin=i+1==row.getChildCount()?0:dp(12);
-            if (p.width != posterLayout.posterWidth || p.rightMargin != margin) {
-                p.width=posterLayout.posterWidth; p.rightMargin=margin; row.getChildAt(i).requestLayout();
+            int margin=i+1==row.getChildCount()?0:dp(16);
+            if (p.width != dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP) || p.rightMargin != margin) {
+                p.width=dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP); p.rightMargin=margin; row.getChildAt(i).requestLayout();
             }
         }
-        post(this::revealFocusedPoster);
-    }
-    private void snapPosters() {
-        if (posterLayout == null) return;
-        int offset=posterLayout.snapOffset(scroll.getScrollX(), row.getChildCount());
-        if (scroll.getScrollX()!=offset) scroll.scrollTo(offset,0);
-    }
-    private void revealFocusedPoster() {
-        if (posterLayout == null) return;
-        int index=row.indexOfChild(row.findFocus());
-        int offset=index<0 ? posterLayout.snapOffset(scroll.getScrollX(), row.getChildCount())
-                : posterLayout.offsetForFocus(index, scroll.getScrollX(), row.getChildCount());
-        if (scroll.getScrollX()!=offset) scroll.scrollTo(offset,0);
-    }
-    @Override protected void onDetachedFromWindow() {
-        scroll.removeCallbacks(snapPosters);
-        removeCallbacks(snapPosters);
-        super.onDetachedFromWindow();
     }
     boolean focusEpisode(String file) {
         View target = row.findViewWithTag(file);

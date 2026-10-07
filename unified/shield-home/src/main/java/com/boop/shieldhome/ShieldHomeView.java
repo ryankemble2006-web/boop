@@ -75,6 +75,7 @@ public final class ShieldHomeView extends LinearLayout {
     private boolean serenEnabled;
     private SerenNextUpView serenView;
     private View serenRoomGap;
+    private ScrollView homeContentScroll;
     private List<SerenEpisode> serenEpisodes = List.of();
     private String serenStatus = "";
     private SerenPosterLoader serenPosters;
@@ -119,6 +120,7 @@ public final class ShieldHomeView extends LinearLayout {
         roomPanelHasOptionalRows = false;
         serenView = null;
         serenRoomGap = null;
+        homeContentScroll = null;
         removeAllViews();
         activeCallbacks = callbacks;
         nowPlayingSnapshot = snapshot;
@@ -192,11 +194,20 @@ public final class ShieldHomeView extends LinearLayout {
                 @Override protected int computeScrollDeltaToGetChildRectOnScreen(android.graphics.Rect rect) {
                     // Focus scales the card after ScrollView first reveals it.
                     android.graphics.Rect focused = new android.graphics.Rect(rect);
+                    if (roomPanelView != null && roomPanelView.hasFocus()) {
+                        focused.top = roomPanelView.getTop();
+                        focused.bottom = roomPanelView.getBottom();
+                    } else if (serenView != null && serenView.hasFocus()) {
+                        focused.top = serenView.getTop();
+                        focused.bottom = serenView.getBottom();
+                    }
                     int gutter = Math.round(rect.height() * (TvAppCardView.FOCUSED_SCALE - 1f) / 2f) + dp(1);
                     focused.inset(0, -gutter);
                     return super.computeScrollDeltaToGetChildRectOnScreen(focused);
                 }
             };
+            homeContentScroll = contentScroll;
+            contentScroll.setOnScrollChangeListener((v,x,y,oldX,oldY) -> updateRoomReveal());
             contentScroll.setVerticalScrollBarEnabled(false);
             contentScroll.setFocusable(false);
             contentScroll.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
@@ -316,6 +327,10 @@ public final class ShieldHomeView extends LinearLayout {
                 if (add.getChildCount() > 0) visibleBottom = add.getChildAt(add.getChildCount()-1).getBottom();
             }
             bottom = Math.max(bottom, tile.getTop() + visibleBottom);
+            if (serenEnabled && visibleBottom > 0 && tile.getLayoutParams().height != visibleBottom) {
+                tile.getLayoutParams().height = visibleBottom;
+                tile.requestLayout();
+            }
         }
         bottom += roomPanelContent.getTop() + favouriteScroller.getTop() + favouriteRow.getTop();
         if (serenEnabled) {
@@ -323,7 +338,7 @@ public final class ShieldHomeView extends LinearLayout {
             RoomPanelLayout.Bounds original = RoomPanelLayout.calculate(roomPanelStage.getWidth(),
                     roomPanelStage.getHeight(), bottom, dp(16), roomPanelRight, dp(110));
             // Reclaim unused space below app labels, preserving their art and focus geometry.
-            int favouriteHeight = bottom - favouriteScroller.getTop() - roomPanelContent.getTop() + dp(8);
+            int favouriteHeight = bottom - favouriteScroller.getTop() - roomPanelContent.getTop() + dp(11);
             if (favouriteHeight > 0 && favouriteScroller.getLayoutParams().height != favouriteHeight) {
                 favouriteScroller.getLayoutParams().height = favouriteHeight;
                 favouriteScroller.requestLayout();
@@ -331,10 +346,10 @@ public final class ShieldHomeView extends LinearLayout {
             if (serenView != null) {
 
                 LayoutParams rowParams = (LayoutParams) serenView.getLayoutParams();
-                if (rowParams.rightMargin != roomPanelRight) { rowParams.rightMargin = roomPanelRight; serenView.setLayoutParams(rowParams); }
+                if (rowParams.rightMargin != 0) { rowParams.rightMargin = 0; serenView.setLayoutParams(rowParams); }
             }
             if (serenRoomGap != null) {
-                int gap = Math.max(dp(16), roomPanelStage.getHeight() - serenRoomGap.getTop() + dp(8));
+                int gap = Math.max(dp(16), roomPanelStage.getHeight() - serenRoomGap.getTop() + dp(16));
                 if (serenRoomGap.getLayoutParams().height != gap) { serenRoomGap.getLayoutParams().height = gap; serenRoomGap.requestLayout(); }
             }
             roomPanelView.setVisibility(roomPanelEnabled ? VISIBLE : GONE);
@@ -347,6 +362,7 @@ public final class ShieldHomeView extends LinearLayout {
                 roomParams.rightMargin = original.right;
                 roomPanelView.setLayoutParams(roomParams);
             }
+            updateRoomReveal();
             return;
         }
         if (roomPanelHasOptionalRows) bottom = Math.max(bottom, roomPanelContent.getBottom());
@@ -360,6 +376,14 @@ public final class ShieldHomeView extends LinearLayout {
             p.topMargin = bounds.top; p.height = bounds.height; p.rightMargin = bounds.right;
             roomPanelView.setLayoutParams(p);
         }
+    }
+
+    private void updateRoomReveal() {
+        if (!serenEnabled || homeContentScroll == null || roomPanelView == null) return;
+        int top = homeContentScroll.getScrollY();
+        boolean revealed = top > 0 && roomPanelView.getTop() >= top
+                && roomPanelView.getBottom() <= top + homeContentScroll.getHeight();
+        roomPanelView.setAlpha(revealed ? 1f : 0f);
     }
 
     private boolean focusedFavourite(View focus) {
@@ -607,6 +631,8 @@ public final class ShieldHomeView extends LinearLayout {
         favouriteScroller.setFillViewport(false);
         favouriteScroller.setClipChildren(false);
         favouriteScroller.setClipToPadding(false);
+        favouriteScroller.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) ->
+                v.setClipBounds(new android.graphics.Rect(0, -dp(20), r-l, b-t+dp(20))));
 
         favouriteRow = new LinearLayout(getContext());
         favouriteRow.setOrientation(HORIZONTAL);
