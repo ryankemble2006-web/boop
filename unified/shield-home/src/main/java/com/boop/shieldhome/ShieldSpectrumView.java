@@ -11,11 +11,12 @@ public final class ShieldSpectrumView extends FrameLayout {
  @Override protected void onAttachedToWindow(){super.onAttachedToWindow();attached=true;post(tick);}
  @Override protected void onDetachedFromWindow(){attached=false;removeCallbacks(tick);super.onDetachedFromWindow();}
  private final class Bars extends View {
-  private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);private final float[] levels=new float[PcmSpectrum.BANDS],peak=new float[PcmSpectrum.BANDS];private final long[] hold=new long[PcmSpectrum.BANDS];private long previous;
+  private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);private final float[] levels=new float[PcmSpectrum.BANDS],shown=new float[PcmSpectrum.BANDS],peak=new float[PcmSpectrum.BANDS];private final long[] hold=new long[PcmSpectrum.BANDS];private long previous;
   Bars(Context c){super(c);setFocusable(false);setClickable(false);}
-  @Override protected void onDraw(Canvas canvas){long now=SystemClock.uptimeMillis();float dt=previous==0?0.016f:Math.min(0.1f,(now-previous)/1000f);previous=now;if(playing)SpectrumState.copyLevels(now,levels);else java.util.Arrays.fill(levels,0);float density=getResources().getDisplayMetrics().density,base=getHeight(),available=Math.max(0,getHeight()-6*density),step=getWidth()/(float)PcmSpectrum.BANDS;int accent=FocusChrome.accentColor(getContext());
-   // Coloured bars show current measured power directly. Only white peak caps hold/decay.
-   for(int i=0;i<levels.length;i++){float level=levels[i];if(level>peak[i]){peak[i]=level;hold[i]=now+450;}else if(now>hold[i])peak[i]=Math.max(level,peak[i]-dt*0.65f);float x=i*step,w=step*0.72f;paint.setColor(accent);if(level>0)canvas.drawRect(x,base-level*available,x+w,base,paint);paint.setColor(Color.WHITE);if(peak[i]>0)canvas.drawRect(x,base-peak[i]*available-3*density,x+w,base-peak[i]*available-2*density,paint);}
+  @Override protected void onDraw(Canvas canvas){long now=SystemClock.uptimeMillis();float dt=previous==0?0.016f:Math.min(0.1f,(now-previous)/1000f);previous=now;boolean fresh=playing&&SpectrumState.copyLevels(now,levels)>=0;if(!fresh){java.util.Arrays.fill(levels,0);java.util.Arrays.fill(shown,0);}float density=getResources().getDisplayMetrics().density,base=getHeight(),available=Math.max(0,getHeight()-6*density),step=getWidth()/(float)PcmSpectrum.BANDS;int accent=FocusChrome.accentColor(getContext());float release=(float)Math.exp(-dt/0.025f);
+   // Immediate attack; a 25ms release constant softens downward steps (90% settled in 58ms).
+   // Only measured drops are eased. Pause/stale capture clears bars immediately.
+   for(int i=0;i<levels.length;i++){float level=levels[i]>=shown[i]?levels[i]:levels[i]+(shown[i]-levels[i])*release;shown[i]=level;if(level>peak[i]){peak[i]=level;hold[i]=now+450;}else if(now>hold[i])peak[i]=Math.max(level,peak[i]-dt*0.65f);float x=i*step,w=step*0.72f;paint.setColor(accent);if(level>0)canvas.drawRect(x,base-level*available,x+w,base,paint);paint.setColor(Color.WHITE);if(peak[i]>0)canvas.drawRect(x,base-peak[i]*available-3*density,x+w,base-peak[i]*available-2*density,paint);}
   }
  }
 }
