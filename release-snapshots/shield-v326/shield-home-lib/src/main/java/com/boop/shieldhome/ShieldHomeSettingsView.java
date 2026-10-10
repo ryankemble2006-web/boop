@@ -1,0 +1,193 @@
+package com.boop.shieldhome;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.util.AttributeSet;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
+/** Presentation-only launcher controls; platform actions are owned by the activity. */
+public final class ShieldHomeSettingsView extends LinearLayout {
+    public interface Callbacks {
+        void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled);
+        void onChooseHomeApp();
+        default void onMakeBoopHome() { onChooseHomeApp(); }
+        default void onRetireStockHome() { }
+        default void onRestoreStockHome() { onChooseHomeApp(); }
+        default void onEnableHomeOverride() { onChooseHomeApp(); }
+        default void onOpenNowPlayingAccess() { }
+        default void onChooseNowPlayingPlayer() { }
+        default void onSetSmartHomePanelEnabled(boolean enabled) { }
+        default void onSetAccentHue(int hue) { }
+        default void onSetAccentRgb(int red, int green, int blue) { }
+        void onBackHome();
+    }
+
+    public ShieldHomeSettingsView(Context context) { this(context, null); }
+
+    public ShieldHomeSettingsView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        setOrientation(VERTICAL);
+        setGravity(Gravity.CENTER_VERTICAL);
+        setBackgroundColor(Color.BLACK);
+        setPadding(dp(52), dp(30), dp(52), dp(28));
+        setClipChildren(false);
+        setClipToPadding(false);
+    }
+
+    public static String launcherSettingsLabel() { return "Launcher Settings"; }
+
+    public void render(boolean playNext, boolean appChannels, Callbacks callbacks) {
+        render(playNext, appChannels, false, false, "Automatic", callbacks);
+    }
+
+    public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled, Callbacks callbacks) {
+        render(playNext, appChannels, homeOverrideEnabled, false, "Automatic", callbacks);
+    }
+
+    public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled,
+                       boolean nowPlayingAccess, String nowPlayingPlayerLabel, Callbacks callbacks) {
+        render(playNext, appChannels, homeOverrideEnabled, nowPlayingAccess, nowPlayingPlayerLabel, true, callbacks);
+    }
+
+    public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled,
+                       boolean nowPlayingAccess, String nowPlayingPlayerLabel, boolean smartHomePanel, Callbacks callbacks) {
+        render(playNext, appChannels, homeOverrideEnabled, nowPlayingAccess, nowPlayingPlayerLabel,
+                smartHomePanel, ShieldHomeStore.DEFAULT_ACCENT_HUE, callbacks);
+    }
+
+    public void render(boolean playNext, boolean appChannels, boolean homeOverrideEnabled,
+                       boolean nowPlayingAccess, String nowPlayingPlayerLabel, boolean smartHomePanel,
+                       int accentHue, Callbacks callbacks) {
+        removeAllViews();
+        TextView title = text(launcherSettingsLabel(), 28); addView(title, wrap()); addSpacer(dp(18));
+        TextView homeSection = text("Shield Home", 20); addView(homeSection, wrap()); addSpacer(dp(10));
+
+        TextView overrideHome = action("BOOP device and room settings");
+        overrideHome.setOnClickListener(v -> { if (callbacks != null) callbacks.onEnableHomeOverride(); });
+        addView(overrideHome, rowParams()); addSpacer(dp(10));
+
+        final boolean[] panelEnabled = {smartHomePanel};
+        TextView roomPanel = action("Smart home panel: " + (smartHomePanel ? "ON" : "OFF"));
+        roomPanel.setOnClickListener(v -> {
+            panelEnabled[0] = !panelEnabled[0];
+            roomPanel.setText("Smart home panel: " + (panelEnabled[0] ? "ON" : "OFF"));
+            if (callbacks != null) callbacks.onSetSmartHomePanelEnabled(panelEnabled[0]);
+        });
+        addView(roomPanel, rowParams()); addSpacer(dp(8));
+
+        int initialColour = new ShieldHomeStore(getContext()).accentColor();
+        final int[] channels = {Color.red(initialColour), Color.green(initialColour), Color.blue(initialColour)};
+        TextView accentLabel = text("Highlight colour", 16);
+        accentLabel.setTextColor(initialColour);
+        addView(accentLabel, wrap()); addSpacer(dp(4));
+        TextView colourValue = text(String.format(java.util.Locale.US, "#%06X", initialColour & 0xffffff), 15);
+        colourValue.setTextColor(initialColour);
+        addView(colourValue, wrap());
+        String[] names = {"Red", "Green", "Blue"};
+        int[] tints = {Color.RED, Color.GREEN, Color.BLUE};
+        for (int i = 0; i < 3; i++) {
+            final int channel = i;
+            TextView value = text(names[i] + ": " + channels[i], 15);
+            addView(value, wrap());
+            SeekBar slider = new SeekBar(getContext());
+            slider.setTag("launcher-settings:rgb:" + i);
+            slider.setMax(255); slider.setKeyProgressIncrement(1); slider.setProgress(channels[i]);
+            slider.setFocusable(true); slider.setClickable(true); slider.setSplitTrack(false);
+            slider.setContentDescription("Highlight " + names[i] + ", 0 to 255");
+            slider.setProgressTintList(ColorStateList.valueOf(tints[i]));
+            slider.setThumbTintList(ColorStateList.valueOf(tints[i]));
+            slider.setOnFocusChangeListener((v, focused) ->
+                    v.setForeground(focused ? FocusChrome.outline(getContext(), 8) : null));
+            slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                    channels[channel] = progress;
+                    int preview = Color.rgb(channels[0], channels[1], channels[2]);
+                    value.setText(names[channel] + ": " + progress);
+                    accentLabel.setTextColor(preview); colourValue.setTextColor(preview);
+                    colourValue.setText(String.format(java.util.Locale.US, "#%06X", preview & 0xffffff));
+                    if (fromUser && callbacks != null) callbacks.onSetAccentRgb(channels[0], channels[1], channels[2]);
+                }
+                @Override public void onStartTrackingTouch(SeekBar bar) { }
+                @Override public void onStopTrackingTouch(SeekBar bar) { }
+            });
+            addView(slider, new LayoutParams(dp(440), dp(38)));
+        }
+        addSpacer(dp(8));
+
+        TextView roomHint = text("Uses your existing ‘Set this device room’ selection.", 15);
+        roomHint.setTextColor(Color.LTGRAY);
+        addView(roomHint, wrap()); addSpacer(dp(12));
+
+        TextView stockInfo = action("Home Assistant controls");
+        stockInfo.setOnClickListener(v -> { if (callbacks != null) callbacks.onRetireStockHome(); });
+        addView(stockInfo, rowParams()); addSpacer(dp(10));
+
+        TextView restoreHome = action("Android settings");
+        restoreHome.setOnClickListener(v -> { if (callbacks != null) callbacks.onRestoreStockHome(); });
+        addView(restoreHome, rowParams()); addSpacer(dp(10));
+
+        TextView startupManager = action("Startup Manager");
+        startupManager.setOnClickListener(v -> getContext().startActivity(new Intent(getContext(), ShieldStartupManagerActivity.class)));
+        addView(startupManager, rowParams()); addSpacer(dp(20));
+
+        TextView nowPlayingSection = text("Now Playing", 20); addView(nowPlayingSection, wrap()); addSpacer(dp(10));
+        TextView access = action("Media access: " + (nowPlayingAccess ? "ON" : "OFF"));
+        access.setOnClickListener(v -> { if (callbacks != null) callbacks.onOpenNowPlayingAccess(); });
+        addView(access, rowParams()); addSpacer(dp(10));
+
+        TextView musicAudio = action("Music audio access: "
+                + (MusicAudioPermissionActivity.hasAudioAccess(getContext()) ? "Allowed" : "Ask"));
+        musicAudio.setOnClickListener(v -> getContext().startActivity(
+                new Intent(getContext(), MusicAudioPermissionActivity.class)));
+        addView(musicAudio, rowParams()); addSpacer(dp(10));
+
+
+        String playerLabel = nowPlayingPlayerLabel == null || nowPlayingPlayerLabel.trim().isEmpty() ? "Automatic" : nowPlayingPlayerLabel.trim();
+        TextView player = action("Player: " + playerLabel);
+        player.setOnClickListener(v -> { if (callbacks != null) callbacks.onChooseNowPlayingPlayer(); });
+        addView(player, rowParams()); addSpacer(dp(20));
+
+        TextView section = text("Optional rows", 20); addView(section, wrap()); addSpacer(dp(10));
+        TextView playNextRow = action("Play Next: " + (playNext ? "ON" : "OFF"));
+        playNextRow.setOnClickListener(v -> { if (callbacks != null) callbacks.onSetRowEnabled(OptionalRowRegistry.Key.PLAY_NEXT, !playNext); });
+        addView(playNextRow, rowParams()); addSpacer(dp(10));
+
+        TextView channelsRow = action("App content rows: " + (appChannels ? "ON" : "OFF"));
+        channelsRow.setOnClickListener(v -> { if (callbacks != null) callbacks.onSetRowEnabled(OptionalRowRegistry.Key.APP_CHANNELS, !appChannels); });
+        addView(channelsRow, rowParams()); addSpacer(dp(20));
+
+        TextView back = action("Back to Home");
+        back.setOnClickListener(v -> { if (callbacks != null) callbacks.onBackHome(); });
+        addView(back, rowParams());
+    }
+
+    private TextView text(String value, int sp) {
+        TextView view = new TextView(getContext()); view.setText(value); view.setTextColor(Color.WHITE);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp); return view;
+    }
+    private TextView action(String value) {
+        TextView view = text(value, 19);
+        view.setTag("launcher-settings:" + value.split(":", 2)[0]);
+        view.setGravity(Gravity.CENTER_VERTICAL); view.setFocusable(true); view.setClickable(true);
+        view.setPadding(dp(20), dp(10), dp(20), dp(10)); view.setBackground(actionBackground(false));
+        // Shared TV chrome owns focus. A local scale animation fights its fixed-size
+        // outline and makes the entire row pulse while ScrollView follows focus.
+        view.setDefaultFocusHighlightEnabled(false);
+        view.setStateListAnimator(null);
+        view.setBackgroundTintList(null);
+        return view;
+    }
+    private GradientDrawable actionBackground(boolean focused) { return FocusChrome.filled(getContext(), Color.rgb(42,42,42), 10, focused); }
+    private LayoutParams rowParams() { return new LayoutParams(dp(440), dp(62)); }
+    private LayoutParams wrap() { return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT); }
+    private void addSpacer(int height) { View spacer = new View(getContext()); addView(spacer, new LayoutParams(1, height)); }
+    private int dp(int value) { return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, getResources().getDisplayMetrics())); }
+}
