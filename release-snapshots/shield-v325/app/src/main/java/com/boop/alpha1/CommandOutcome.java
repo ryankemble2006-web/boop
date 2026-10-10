@@ -1,0 +1,143 @@
+package com.boop.alpha1;
+
+final class CommandOutcome {
+    enum Status {
+        SUCCESS,
+        LOCAL_REPLY,
+        LOCAL_QUESTION,
+        TARGET_OFFLINE,
+        AMBIGUOUS_TARGET,
+        NO_MATCH,
+        NO_TARGET,
+        FAILED,
+        UNREACHABLE,
+        AUTH_REQUIRED,
+        ASSISTANT_REPLY,
+        ASSISTANT_NO_AGENT,
+        ASSISTANT_UNREACHABLE,
+        ASSISTANT_FAILED,
+        ASSISTANT_SETUP_REQUIRED,
+        ASSISTANT_AUTH_REQUIRED,
+        ASSISTANT_QUOTA,
+        ASSISTANT_RATE_LIMIT,
+        ASSISTANT_TIMEOUT,
+        ASSISTANT_SERVICE
+    }
+
+    private final Status status;
+    private final String targetName;
+    private final String area;
+    private final String assistantSpeech;
+    private final boolean acceptedMusicPlayback;
+
+    private CommandOutcome(Status status, String targetName, String area) {
+        this(status, targetName, area, "");
+    }
+
+    private CommandOutcome(
+            Status status,
+            String targetName,
+            String area,
+            String assistantSpeech) {
+        this(status, targetName, area, assistantSpeech, false);
+    }
+
+    private CommandOutcome(Status status, String targetName, String area,
+            String assistantSpeech, boolean acceptedMusicPlayback) {
+        this.status = status;
+        this.targetName = targetName == null ? "" : targetName;
+        this.area = area == null ? "" : area;
+        this.assistantSpeech = assistantSpeech == null ? "" : assistantSpeech;
+        this.acceptedMusicPlayback = acceptedMusicPlayback;
+    }
+
+    static CommandOutcome success(String targetName) {
+        return new CommandOutcome(Status.SUCCESS, targetName, "");
+    }
+
+    static CommandOutcome targetOffline(String targetName, String area) {
+        return new CommandOutcome(Status.TARGET_OFFLINE, targetName, area);
+    }
+
+    static CommandOutcome localReply(String speech) {
+        return new CommandOutcome(Status.LOCAL_REPLY, "", "", speech);
+    }
+
+    static CommandOutcome musicPlaybackAccepted() {
+        return new CommandOutcome(Status.LOCAL_REPLY, "", "", "Done", true);
+    }
+
+    static CommandOutcome localQuestion(String speech) {
+        return new CommandOutcome(Status.LOCAL_QUESTION, "", "", speech);
+    }
+
+    static CommandOutcome ambiguousTarget() {
+        return new CommandOutcome(Status.AMBIGUOUS_TARGET, "", "");
+    }
+
+    static CommandOutcome noMatch() {
+        return new CommandOutcome(Status.NO_MATCH, "", "");
+    }
+
+    static CommandOutcome noTarget() {
+        return new CommandOutcome(Status.NO_TARGET, "", "");
+    }
+
+    static CommandOutcome failed() {
+        return new CommandOutcome(Status.FAILED, "", "");
+    }
+
+    static CommandOutcome unreachable() {
+        return new CommandOutcome(Status.UNREACHABLE, "", "");
+    }
+
+    static CommandOutcome authRequired() {
+        return new CommandOutcome(Status.AUTH_REQUIRED, "", "");
+    }
+
+    static CommandOutcome assistantReply(String speech) {
+        return new CommandOutcome(Status.ASSISTANT_REPLY, "", "", speech);
+    }
+
+    static CommandOutcome assistantNoAgent() {
+        return new CommandOutcome(Status.ASSISTANT_NO_AGENT, "", "");
+    }
+
+    static CommandOutcome assistantUnreachable() {
+        return new CommandOutcome(Status.ASSISTANT_UNREACHABLE, "", "");
+    }
+
+    static CommandOutcome assistantFailed() {
+        return new CommandOutcome(Status.ASSISTANT_FAILED, "", "");
+    }
+
+    static CommandOutcome assistantSetupRequired() {
+        return new CommandOutcome(Status.ASSISTANT_SETUP_REQUIRED, "", "");
+    }
+
+    static CommandOutcome assistantAuthRequired() {
+        return new CommandOutcome(Status.ASSISTANT_AUTH_REQUIRED, "", "");
+    }
+
+    static CommandOutcome assistantQuota() {
+        return new CommandOutcome(Status.ASSISTANT_QUOTA, "", "");
+    }
+
+    static CommandOutcome assistantRateLimit() {
+        return new CommandOutcome(Status.ASSISTANT_RATE_LIMIT, "", "");
+    }
+
+    static CommandOutcome assistantTimeout() {
+        return new CommandOutcome(Status.ASSISTANT_TIMEOUT, "", "");
+    }
+
+    static CommandOutcome assistantService() {
+        return new CommandOutcome(Status.ASSISTANT_SERVICE, "", "");
+    }
+
+    Status status() { return status; }
+    String targetName() { return targetName; }
+    String area() { return area; }
+    String assistantSpeech() { return assistantSpeech; }
+    boolean hasAcceptedMusicPlayback() { return acceptedMusicPlayback; }
+}
