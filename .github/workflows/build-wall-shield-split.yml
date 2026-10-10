@@ -8,6 +8,9 @@ on:
       sha256:
         description: Exact SHA256 of the locally verified input
         required: true
+      download_url:
+        description: Exact GitHub release asset URL for the locally built APK
+        required: true
 permissions:
   contents: read
 jobs:
@@ -28,11 +31,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ASSET_ID: ${{ inputs.asset_id }}
           INPUT_SHA256: ${{ inputs.sha256 }}
+          DOWNLOAD_URL: ${{ inputs.download_url }}
         run: |
           set -euo pipefail
           [[ "$ASSET_ID" =~ ^[0-9]+$ ]]
           [[ "$INPUT_SHA256" =~ ^[0-9a-f]{64}$ ]]
-          gh api -H 'Accept: application/octet-stream' "/repos/${GITHUB_REPOSITORY}/releases/assets/${ASSET_ID}" > input.apk
+          [[ "$DOWNLOAD_URL" == https://github.com/ryankemble2006-web/boop/releases/download/* ]]
+          curl --fail --location --silent --show-error "$DOWNLOAD_URL" --output input.apk
           printf '%s  input.apk\n' "$INPUT_SHA256" | sha256sum -c -
       - name: Sign only with unchanged permanent BOOP key
         env:
