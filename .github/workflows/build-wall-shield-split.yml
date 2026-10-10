@@ -103,6 +103,7 @@ jobs:
           sha256sum "$aar" "$vendor/sherpa-onnx-1.13.7.aar"
 
       - name: Load the unchanged GitHub signing key
+        id: signing
         env:
           BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
@@ -122,14 +123,23 @@ jobs:
           keytool -list -keystore "$key" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
           echo "BOOP_SIGNING_STORE_FILE=$key" >> "$GITHUB_ENV"
 
-      - name: Run unit tests and build the signed Shield APK
+      - name: Run Android unit tests
+        id: unit-tests
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          gradle -p "$SHIELD_SNAPSHOT_DIR" \
+            :assistant-lib:testDebugUnitTest \
+            --no-daemon --stacktrace
+
+      - name: Build the signed Shield APK
+        if: always() && steps.signing.outcome == 'success'
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           gradle -p "$SHIELD_SNAPSHOT_DIR" \
-            :assistant-lib:testDebugUnitTest \
             :shield-app:assembleDebug \
             --no-daemon --stacktrace
 
@@ -151,7 +161,7 @@ jobs:
           expected="$(tr -d '[:space:]' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           grep -F "Signer #1 certificate SHA-256 digest: $expected" dist/certificate.txt
           sha256sum "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/SHA256SUMS
-          printf 'commit=%s\nversion=%s\nvisual_check=manual_on_physical_shield\n' "$GITHUB_SHA" "$SHIELD_VERSION" > dist/build-receipt.txt
+          printf 'commit=%s\nversion=%s\ntests=%s\nvisual_check=manual_on_physical_shield\n' "$GITHUB_SHA" "$SHIELD_VERSION" "${{ steps.unit-tests.outcome }}" > dist/build-receipt.txt
 
       - name: Upload signed APK and build receipt
         uses: actions/upload-artifact@v4
@@ -160,6 +170,27 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Upload Android unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Shield-v${{ steps.snapshot.outputs.version }}-unit-test-reports
+          path: |
+            ${{ steps.snapshot.outputs.dir }}/assistant-lib/build/test-results/testDebugUnitTest/
+            ${{ steps.snapshot.outputs.dir }}/assistant-lib/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Require unit tests to pass
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.unit-tests.outcome }}
+        run: |
+          if [[ "$TEST_OUTCOME" != "success" ]]; then
+            echo "::error::Android unit tests failed; see the uploaded test reports."
+            exit 1
+          fi
 
       - name: Remove temporary signing material
         if: always()
