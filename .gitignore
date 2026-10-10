@@ -1,4 +1,5 @@
 .gradle/
+/.worktrees/
 # Local diagnostics and generated caches are not project handoff material.
 .superpowers/
 __pycache__/
