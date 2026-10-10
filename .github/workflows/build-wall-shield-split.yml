@@ -126,6 +126,9 @@ jobs:
       - name: Run Android unit tests
         id: unit-tests
         continue-on-error: true
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           gradle -p "$SHIELD_SNAPSHOT_DIR" \
