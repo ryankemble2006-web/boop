@@ -40,12 +40,33 @@ final class FocusChrome {
     }
 
     static GradientDrawable artworkOutline(Context context, int cornerRadiusDp) {
-        GradientDrawable outline = new GradientDrawable();
-        outline.setColor(Color.TRANSPARENT);
-        int strokePx = dp(context, ARTWORK_BORDER_DP);
-        outline.setCornerRadius(artworkStrokeRadius(dp(context, cornerRadiusDp), strokePx));
-        outline.setStroke(strokePx, accentColor(context));
-        return outline;
+        return new ArtworkOutline(dp(context, cornerRadiusDp), dp(context, ARTWORK_BORDER_DP) + 2,
+                accentColor(context));
+    }
+
+    /** Opaque ring fills all the way to the artwork's outer silhouette. */
+    static final class ArtworkOutline extends GradientDrawable {
+        final float radiusPx, strokePx;
+        private final int colour;
+        ArtworkOutline(float radius, float stroke, int colour) {
+            radiusPx = radius; strokePx = stroke; this.colour = colour;
+        }
+        @Override public void draw(android.graphics.Canvas canvas) {
+            drawArtworkOutline(canvas, new android.graphics.RectF(getBounds()), radiusPx, strokePx, colour);
+        }
+    }
+    static void drawArtworkOutline(android.graphics.Canvas canvas, android.graphics.RectF bounds,
+            float radius, float stroke, int colour) {
+        android.graphics.Path ring = new android.graphics.Path();
+        ring.setFillType(android.graphics.Path.FillType.EVEN_ODD);
+        ring.addRoundRect(bounds, radius, radius, android.graphics.Path.Direction.CW);
+        android.graphics.RectF inner = new android.graphics.RectF(bounds);
+        inner.inset(stroke, stroke);
+        if (inner.width() > 0 && inner.height() > 0)
+            ring.addRoundRect(inner, Math.max(0, radius - stroke), Math.max(0, radius - stroke),
+                    android.graphics.Path.Direction.CW);
+        android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(colour); canvas.drawPath(ring, paint);
     }
 
     static float artworkStrokeRadius(float outerRadiusPx, float strokeWidthPx) {

@@ -38,6 +38,11 @@ public final class ShieldLyricsActivity extends Activity {
             @Override public void next() { manager.next(); }
             @Override public void seek(long milliseconds) { manager.seekBy(milliseconds); }
             @Override public void close() { finish(); }
+            @Override public void flow() {
+                if (!started || isFinishing()) return;
+                if (!manager.playDeezerFlow()) android.widget.Toast.makeText(ShieldLyricsActivity.this,
+                        "Flow needs an active native Deezer player.", android.widget.Toast.LENGTH_SHORT).show();
+            }
             @Override public void lookup() { openLookup(); }
             @Override public void queue() {
                 if (!started || isFinishing() || !manager.queue().current().visible) return;
@@ -97,7 +102,7 @@ public final class ShieldLyricsActivity extends Activity {
         if (snapshot == null || !NowPlayingSelectionPolicy.eligible(snapshot.playbackState())) {
             presentation.setStatus("Nothing playing.");
         } else if (!DeezerLyricsPolicy.available(snapshot.packageName())) {
-            presentation.setStatus("Lyrics are available here for Deezer.");
+            presentation.showSpectrumFallback();
         } else {
             findLyrics(snapshot, cacheId, next, false);
         }
@@ -112,8 +117,7 @@ public final class ShieldLyricsActivity extends Activity {
                     presentation.setStatus("");
                 } else {
                     presentation.setDocument(null);
-                    presentation.setStatus(document.status() == DeezerLyricsDocument.Status.UNAVAILABLE
-                            ? "No lyrics for this track." : "Couldn't check lyrics just now.");
+                    presentation.showSpectrumFallback();
                 }
             };
             if (fresh) loader.reload(snapshot, cacheId, next, completion);

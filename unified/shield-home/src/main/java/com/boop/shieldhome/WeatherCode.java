@@ -2,6 +2,16 @@ package com.boop.shieldhome;
 
 final class WeatherCode {
     private WeatherCode() { }
+    static int icon(int code) {
+        if (code == 0) return R.drawable.boop_icon_sun;
+        if (code == 1 || code == 2) return R.drawable.boop_icon_cloud_sun;
+        if (code == 45 || code == 48) return R.drawable.boop_icon_cloud_fog;
+        if (code >= 51 && code <= 57) return R.drawable.boop_icon_cloud_drizzle;
+        if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return R.drawable.boop_icon_cloud_rain;
+        if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return R.drawable.boop_icon_cloud_snow;
+        if (code >= 95 && code <= 99) return R.drawable.boop_icon_cloud_lightning;
+        return R.drawable.boop_icon_cloud;
+    }
     static String label(int code) {
         if (code == 0) return "Clear sky";
         if (code == 1) return "Mainly clear";

@@ -26,12 +26,12 @@ def test_lrclib_candidate_is_identity_checked_and_duration_bounded():
     assert "Math.abs(duration*1000.0-track.durationMs()) <= 3500.0" in client
 
 
-def test_home_preflight_and_open_lyrics_activity_both_use_metadata_fallback():
+def test_home_opens_presentation_and_activity_uses_metadata_fallback():
     browser = (SRC / "DeezerLyricsBrowser.java").read_text(encoding="utf-8")
     activity = (SRC / "ShieldLyricsActivity.java").read_text(encoding="utf-8")
-    assert "loader.load(requested, cacheId, requestIdentity, completion)" in browser
+    assert "new Intent(activity,ShieldLyricsActivity.class)" in browser
     assert "loader.load(snapshot, cacheId, next, completion)" in activity
-    assert '"meta:" + Integer.toHexString' in browser
+    assert "NativeLyricsLoader" not in browser
     assert '"meta:" + Integer.toHexString' in activity
 
 

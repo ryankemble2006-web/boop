@@ -18,6 +18,7 @@ public final class ShieldHomeStore {
     private static final String KEY_NOW_PLAYING_PLAYER = "now_playing_player_package_v1";
     private static final String KEY_ROOM_CONTROL_ORDER_PREFIX = "room_control_order_v1:";
     private static final String KEY_ACCENT_HUE = "accent_hue_v1";
+    private static final String KEY_ACCENT_RGB = "accent_rgb_v1";
     static final int DEFAULT_ACCENT_HUE = 204;
 
     public interface Preferences {
@@ -132,7 +133,20 @@ public final class ShieldHomeStore {
         }
     }
 
+    /** Preserve the old hue selection until an explicit RGB colour is saved. */
+    public int accentColor() {
+        String raw = preferences.getString(KEY_ACCENT_RGB, "");
+        try { if (raw != null && !raw.isEmpty()) return 0xff000000 | (Integer.parseInt(raw) & 0xffffff); }
+        catch (NumberFormatException ignored) { }
+        return BoopTvChrome.colorForHue(accentHue());
+    }
+    public void setAccentRgb(int red, int green, int blue) {
+        int rgb = (channel(red) << 16) | (channel(green) << 8) | channel(blue);
+        preferences.putString(KEY_ACCENT_RGB, Integer.toString(rgb));
+    }
+    private static int channel(int value) { return Math.max(0, Math.min(255, value)); }
     public void setAccentHue(int hue) {
+        preferences.putString(KEY_ACCENT_RGB, "");
         preferences.putString(KEY_ACCENT_HUE, Integer.toString(Math.max(0, Math.min(359, hue))));
     }
 

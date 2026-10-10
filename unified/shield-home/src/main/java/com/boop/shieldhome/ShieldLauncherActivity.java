@@ -42,8 +42,9 @@ public final class ShieldLauncherActivity extends Activity {
     private final DeezerArtistBrowser artistBrowser = new DeezerArtistBrowser();
     private final DeezerLyricsBrowser lyricsBrowser = new DeezerLyricsBrowser();
 
-    public static final long PAGE_TRANSITION_MS = 140L;
+    public static final long PAGE_TRANSITION_MS = 105L;
     static final long SHIELD_SETTINGS_HOLD_MS = 250L;
+    static final String ACTION_OPEN_SHIELD_SETTINGS = "com.boop.action.OPEN_SHIELD_SETTINGS";
     private static final String SETUP_PREFS = "boop_shield_home_setup_v1";
     private static final String KEY_HOME_PROMPT_SHOWN = "home_prompt_shown_v2";
     private static final String KEY_HOME_OVERRIDE_PROMPT_SHOWN = "home_override_prompt_shown_v1";
@@ -84,10 +85,14 @@ public final class ShieldLauncherActivity extends Activity {
     private boolean receiverRegistered;
     private boolean destroyed;
     private boolean resumed;
+    private boolean appsLoaded;
     private int optionalGeneration;
     private SerenNextUpSession serenSession;
     private String serenStatus = "";
     private String serenReturnFile;
+    private String homeReturnFocus;
+    private String settingsReturnFocus;
+    private int settingsReturnScrollY;
 
     private final BackPressGesture backPressGesture = new BackPressGesture();
     private Handler inputHandler;
@@ -97,16 +102,18 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        if (state != null) {
+            homeReturnFocus = state.getString("home_return_focus");
+            settingsReturnFocus = state.getString("settings_return_focus");
+            settingsReturnScrollY = state.getInt("settings_return_scroll_y", 0);
+        }
 
         inputHandler = new Handler(Looper.getMainLooper());
         backHoldRunnable = () -> {
             if (destroyed || !backPressGesture.onHoldTriggered()) {
                 return;
             }
-            if (currentView instanceof ShieldHomeView) {
-                ((ShieldHomeView) currentView).resetToFirstFavourite();
-            }
-            openSystemSettings();
+            focusAndOpenSystemSettings();
         };
         weatherRefreshRunnable = this::refreshWeather;
 
@@ -140,9 +147,22 @@ public final class ShieldLauncherActivity extends Activity {
             });
         }
         showHome();
+        if (ACTION_OPEN_SHIELD_SETTINGS.equals(getIntent().getAction())) {
+            getIntent().setAction(Intent.ACTION_MAIN);
+            focusAndOpenSystemSettings();
+        } else if (isFlowRequest(getIntent())) {
+            getIntent().removeExtra("boop_background_flow");
+            getIntent().setAction(Intent.ACTION_MAIN);
+            requestBackgroundFlow();
+        }
         reloadApps();
         refreshWeather();
         // Unified profile selection does not request accessibility or replace Android HOME.
+    }
+
+    private static boolean isFlowRequest(Intent intent) {
+        return intent != null && (intent.getBooleanExtra("boop_background_flow", false)
+                || "com.boop.action.DEEZER_FLOW".equals(intent.getAction()));
     }
 
     @Override protected void onNewIntent(Intent intent) {
@@ -150,11 +170,26 @@ public final class ShieldLauncherActivity extends Activity {
         setIntent(intent);
         if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         if (queueDialog != null) queueDialog.dismiss();
-        showHome(true);
+        if (intent != null && ACTION_OPEN_SHIELD_SETTINGS.equals(intent.getAction())) {
+            intent.setAction(Intent.ACTION_MAIN);
+            focusAndOpenSystemSettings();
+            return;
+        }
+        if (intent != null && (intent.hasCategory(Intent.CATEGORY_HOME)
+                || isFlowRequest(intent))) returnToFirstFavourite();
+        else showHome(false);
+        if (intent != null && isFlowRequest(intent)) {
+            intent.removeExtra("boop_background_flow");
+            intent.setAction(Intent.ACTION_MAIN);
+            requestBackgroundFlow();
+        }
     }
 
     @Override protected void onResume() {
         super.onResume();
+        // TV Recents temporarily makes the launcher translucent for its return animation.
+        // Force-closing its final task can leave that conversion in place, retaining its scrim.
+        if (android.os.Build.VERSION.SDK_INT >= 30) setTranslucent(false);
         resumed = true;
         AudioModeController.get(this).clearForegroundLaunch();
         com.boop.shared.BoopState.INSTANCE.homeVisible(currentPage == Page.HOME);
@@ -174,7 +209,11 @@ public final class ShieldLauncherActivity extends Activity {
             ShieldHomeView home = (ShieldHomeView) currentView;
             home.post(() -> { if (currentView == home) home.focusSeren(returnFile); });
         }
-        else focusFirstFavourite();
+        else {
+            if (returningFromHeldBackSettings) homeReturnFocus = "tag:home:system-settings";
+            restoreHomeFocus();
+            returningFromHeldBackSettings = false;
+        }
     }
 
     private void onNowPlayingChanged(NowPlayingSnapshot snapshot) {
@@ -239,6 +278,7 @@ public final class ShieldLauncherActivity extends Activity {
                 if (destroyed) {
                     return;
                 }
+                appsLoaded = true;
                 installedApps = loadedApps;
                 favouriteComponents = loadedFavourites;
                 showCurrentPage();
@@ -270,6 +310,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showHome(boolean focusFirstFavourite, String focusComponent) {
+        rememberHomeFocus();
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
         artistBrowser.cancel();
@@ -285,6 +326,7 @@ public final class ShieldLauncherActivity extends Activity {
         if (serenSession != null) view.setSeren(serenSession.current(), serenStatus, serenSession.posters);
         ShieldHomeView.Callbacks callbacks = homeCallbacks();
         view.render(favourites, List.of(), nowPlayingSnapshot, callbacks);
+        view.setTraktSyncing(serenSession != null && serenSession.isSyncing());
         view.setWeather(weatherSnapshot);
         view.setRoomPanelState(roomPanelState, store.smartHomePanelEnabled());
         transitionTo(view);
@@ -292,6 +334,8 @@ public final class ShieldLauncherActivity extends Activity {
             view.post(() -> view.focusFavourite(focusComponent));
         } else if (focusFirstFavourite) {
             view.post(view::resetToFirstFavourite);
+        } else {
+            restoreHomeFocus();
         }
 
         List<HomeRowProvider> providers;
@@ -359,6 +403,13 @@ public final class ShieldLauncherActivity extends Activity {
                         message -> android.widget.Toast.makeText(ShieldLauncherActivity.this, message, android.widget.Toast.LENGTH_LONG).show());
             }
             @Override public void onOpenKodi() { openKodi(); }
+            @Override public void onSyncTrakt() {
+                if (serenSession == null) return;
+                serenSession.syncTrakt(busy -> {
+                    if (currentView instanceof ShieldHomeView) ((ShieldHomeView) currentView).setTraktSyncing(busy);
+                }, message -> android.widget.Toast.makeText(ShieldLauncherActivity.this, message,
+                        android.widget.Toast.LENGTH_LONG).show());
+            }
             @Override public void onRoomDeviceSelected(long generation, String entityId) {
                 if (resumed && currentPage == Page.HOME && store.smartHomePanelEnabled() && roomPanelSession != null)
                     roomPanelSession.toggle(generation, entityId);
@@ -473,12 +524,13 @@ public final class ShieldLauncherActivity extends Activity {
                         && nowPlayingManager.closeMediaApps(ShieldLauncherActivity.this);
                 if (!closed)
                     android.widget.Toast.makeText(ShieldLauncherActivity.this,"Failed",android.widget.Toast.LENGTH_SHORT).show();
-                focusFirstFavourite();
+                restoreHomeFocus();
             }
         };
     }
 
     private void showApps() {
+        rememberHomeFocus();
         albumBrowser.cancel();
         artistBrowser.cancel();
         lyricsBrowser.cancel();
@@ -501,6 +553,8 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showSettings() {
+        rememberHomeFocus();
+        rememberSettingsFocus();
         albumBrowser.cancel();
         artistBrowser.cancel();
         lyricsBrowser.cancel();
@@ -528,6 +582,9 @@ public final class ShieldLauncherActivity extends Activity {
             @Override public void onSetSmartHomePanelEnabled(boolean enabled) {
                 store.setSmartHomePanelEnabled(enabled);
                 refreshRoomPanelSession();
+            }
+            @Override public void onSetAccentRgb(int red, int green, int blue) {
+                store.setAccentRgb(red, green, blue);
             }
             @Override public void onSetAccentHue(int hue) {
                 store.setAccentHue(hue);
@@ -576,6 +633,17 @@ public final class ShieldLauncherActivity extends Activity {
         scroll.setFillViewport(true);
         scroll.addView(view);
         transitionTo(scroll);
+        String returnFocus = settingsReturnFocus;
+        int returnScrollY = settingsReturnScrollY;
+        scroll.post(() -> {
+            if (currentView != scroll) return;
+            scroll.scrollTo(0, returnScrollY);
+            View target = returnFocus == null ? null : view.findViewWithTag(returnFocus);
+            if (target != null && target.isFocusable() && target.isEnabled()) {
+                target.requestFocus();
+                target.requestRectangleOnScreen(new android.graphics.Rect(0, 0, target.getWidth(), target.getHeight()), true);
+            }
+        });
     }
 
     private String nowPlayingPlayerLabel(String packageName) {
@@ -811,6 +879,22 @@ public final class ShieldLauncherActivity extends Activity {
 
     static String homeOverrideSettingsAction() {
         return Settings.ACTION_ACCESSIBILITY_SETTINGS;
+    }
+
+    private boolean returningFromHeldBackSettings;
+
+    private void focusAndOpenSystemSettings() {
+        albumBrowser.cancel();
+        artistBrowser.cancel();
+        if (currentPage != Page.HOME) showHome(false);
+        homeReturnFocus = "tag:home:system-settings";
+        ShieldHomeView home = (ShieldHomeView) currentView;
+        home.post(() -> {
+            if (destroyed || currentView != home) return;
+            home.restoreFocus(homeReturnFocus);
+            returningFromHeldBackSettings = true;
+            openSystemSettings();
+        });
     }
 
     private void openSystemSettings() {
@@ -1108,12 +1192,61 @@ public final class ShieldLauncherActivity extends Activity {
         return super.dispatchKeyEvent(event);
     }
 
+    private void rememberSettingsFocus() {
+        if (currentPage != Page.SETTINGS || !(currentView instanceof android.widget.ScrollView)) return;
+        View focused = currentView.findFocus();
+        if (focused != null && focused.getTag() instanceof String)
+            settingsReturnFocus = (String) focused.getTag();
+        settingsReturnScrollY = currentView.getScrollY();
+    }
+
+    private void rememberHomeFocus() {
+        if (!appsLoaded && homeReturnFocus != null) return;
+        if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
+            String focus = ((ShieldHomeView) currentView).focusToken();
+            if (focus != null) homeReturnFocus = focus;
+        }
+    }
+
+    private void restoreHomeFocus() {
+        if (currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) return;
+        ShieldHomeView home = (ShieldHomeView) currentView;
+        home.post(() -> {
+            if (currentView != home) return;
+            if (!home.restoreFocus(homeReturnFocus)) home.resetToFirstFavourite();
+        });
+    }
+
+    @Override protected void onSaveInstanceState(Bundle state) {
+        rememberHomeFocus();
+        rememberSettingsFocus();
+        state.putString("home_return_focus", homeReturnFocus);
+        state.putString("settings_return_focus", settingsReturnFocus);
+        state.putInt("settings_return_scroll_y", settingsReturnScrollY);
+        super.onSaveInstanceState(state);
+    }
+
     private void focusFirstFavourite() {
         if (currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) {
             return;
         }
         ShieldHomeView home = (ShieldHomeView) currentView;
         home.post(home::resetToFirstFavourite);
+    }
+
+    private void returnToFirstFavourite() {
+        if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
+            ((ShieldHomeView) currentView).resetToFirstFavourite();
+            homeReturnFocus = ((ShieldHomeView) currentView).focusToken();
+        } else {
+            showHome(true);
+            currentView.post(this::rememberHomeFocus);
+        }
+    }
+
+    private void requestBackgroundFlow() {
+        if (nowPlayingManager == null || !nowPlayingManager.playDeezerFlow())
+            android.widget.Toast.makeText(this, "Deezer Flow is unavailable.", android.widget.Toast.LENGTH_SHORT).show();
     }
 
     private void handleShortBack() {
@@ -1123,7 +1256,7 @@ public final class ShieldLauncherActivity extends Activity {
             ((ShieldHomeView) currentView).resetToFirstFavourite();
             return;
         }
-        showHome(true);
+        showHome(false);
     }
 
     private int dp(int value) {
@@ -1171,6 +1304,8 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     @Override protected void onPause() {
+        if (!returningFromHeldBackSettings) rememberHomeFocus();
+        rememberSettingsFocus();
         resumed = false;
         if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         if (queueDialog != null) queueDialog.dismiss();

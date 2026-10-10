@@ -99,7 +99,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         frame("Startup Manager","Choose what starts, what stays, and what gets out of the way.",0,callbacks);
         // The new actions do not squeeze the existing dashboard at large text sizes.
         LinearLayout rootBody=body;
-        ScrollView overviewScroll=new ScrollView(getContext());overviewScroll.setVerticalScrollBarEnabled(false);
+        ScrollView overviewScroll=new ScrollView(getContext());overviewScroll.setVerticalScrollBarEnabled(false);overviewScroll.setOverScrollMode(OVER_SCROLL_NEVER);
         body=column();overviewScroll.addView(body);
         rootBody.addView(overviewScroll,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
         LinearLayout badges=row();
@@ -127,8 +127,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
         TextView autoButton=button("After boot: "+(auto?"ON":"OFF"),"startup:overview:auto",()->callbacks.onSetAuto(!auto));
         TextView link=button("Check local link","startup:overview:link",callbacks::onCheckLocalLink);
         TextView back=button("Back","startup:overview:back",callbacks::onBack);
-        weighted(utilities,autoButton); hspace(utilities,8); weighted(utilities,link); hspace(utilities,8); weighted(utilities,back);
-        body.addView(utilities,new LayoutParams(LayoutParams.MATCH_PARENT,dp(44)));
+        weightedContent(utilities,autoButton); hspace(utilities,8); weightedContent(utilities,link); hspace(utilities,8); weightedContent(utilities,back);
+        body.addView(utilities,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
         if(status.isEmpty()) status=lastSummary;
         body=rootBody;footer(callbacks);
         useDefaults.setNextFocusRightId(undoDefaults.getId());undoDefaults.setNextFocusLeftId(useDefaults.getId());
@@ -155,18 +155,18 @@ public final class ShieldStartupManagerView extends LinearLayout {
             TextView chip=button(filterName(option),"startup:filter:"+option,()->callbacks.onFilter(option));
             chip.setGravity(Gravity.CENTER); chip.setTextSize(13);
             if(option==filter) chip.setTextColor(FocusChrome.accentColor(getContext()));
-            weighted(chips,chip); hspace(chips,6); filters.add(chip);
+            weightedContent(chips,chip); hspace(chips,6); filters.add(chip);
         }
-        body.addView(chips,new LayoutParams(LayoutParams.MATCH_PARENT,dp(42))); space(body,12);
+        body.addView(chips,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)); space(body,12);
         LinearLayout split=row(); split.setGravity(Gravity.TOP);
-        ScrollView scroll=new ScrollView(getContext()); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
+        ScrollView scroll=new ScrollView(getContext()); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false); scroll.setOverScrollMode(OVER_SCROLL_NEVER);
         LinearLayout list=column(); scroll.addView(list);
         split.addView(scroll,new LayoutParams(0,LayoutParams.MATCH_PARENT,0.70f)); hspace(split,14);
         LinearLayout pane=column(); pane.setPadding(dp(16),dp(15),dp(16),dp(12));
         pane.setBackground(FocusChrome.filled(getContext(),PANEL,14,false));
         pane.addView(caption("SELECTED PACKAGE",11)); space(pane,12);
         detail=text("Choose a package to inspect its controls.",15,false);
-        ScrollView detailsScroll=new ScrollView(getContext()); detailsScroll.setVerticalScrollBarEnabled(false);
+        ScrollView detailsScroll=new ScrollView(getContext()); detailsScroll.setVerticalScrollBarEnabled(false);detailsScroll.setOverScrollMode(OVER_SCROLL_NEVER);
         detailsScroll.addView(detail); pane.addView(detailsScroll,new LayoutParams(LayoutParams.MATCH_PARENT,0,1));
         space(pane,10); pane.addView(caption("App data is kept. Restore saves the original settings.",12));
         split.addView(pane,new LayoutParams(0,LayoutParams.MATCH_PARENT,0.30f));
@@ -209,8 +209,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
         TextView back=button("Back","startup:packages:back",callbacks::onBack);
         TextView refresh=button("Refresh","startup:packages:refresh",callbacks::onRefresh);
         TextView run=button("Run boot cleanup","startup:packages:run",callbacks::onRunNow);
-        weighted(utilities,back); hspace(utilities,8); weighted(utilities,refresh); hspace(utilities,8); weighted(utilities,run);
-        body.addView(utilities,new LayoutParams(LayoutParams.MATCH_PARENT,dp(42)));
+        weightedContent(utilities,back); hspace(utilities,8); weightedContent(utilities,refresh); hspace(utilities,8); weightedContent(utilities,run);
+        body.addView(utilities,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
         footer(callbacks);
         wireMatrix(matrix,ids,filters,back,focusPackage,focusAction,StartupManagerNav.Screen.PACKAGES);
         for(int i=0;i<filters.size();i++) {
@@ -231,8 +231,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
     public void renderRestore(List<StartupRestoreRecord> records,Set<String> selected,String focusPackage,Callbacks callbacks) {
         frame("Restore changes","The original state is saved before BOOP changes anything.",4,callbacks);
         TextView batch=button("Restore selected  ("+selected.size()+")","startup:restore:batch",callbacks::onRestoreSelected);
-        body.addView(batch,new LayoutParams(LayoutParams.MATCH_PARENT,dp(46))); space(body,12);
-        ScrollView scroll=new ScrollView(getContext()); scroll.setVerticalScrollBarEnabled(false);
+        body.addView(batch,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)); space(body,12);
+        ScrollView scroll=new ScrollView(getContext()); scroll.setVerticalScrollBarEnabled(false); scroll.setOverScrollMode(OVER_SCROLL_NEVER);
         LinearLayout list=column(); List<List<TextView>> matrix=new ArrayList<>(); List<String> ids=new ArrayList<>();
         for(StartupRestoreRecord record:records) {
             String pkg=record.packageName(); ids.add(pkg); LinearLayout card=row();
@@ -248,7 +248,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         if(records.isEmpty())list.addView(caption("Nothing to undo. No BOOP package changes are saved.",18));
         scroll.addView(list); body.addView(scroll,new LayoutParams(LayoutParams.MATCH_PARENT,0,1)); space(body,10);
         TextView back=button("Back","startup:restore:back",callbacks::onBack);
-        body.addView(back,new LayoutParams(LayoutParams.MATCH_PARENT,dp(42))); footer(callbacks);
+        body.addView(back,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)); footer(callbacks);
         wireMatrix(matrix,ids,List.of(batch),back,focusPackage,0,StartupManagerNav.Screen.RESTORE);
         batch.setNextFocusLeftId(navigation.get(4).getId());
         if(!matrix.isEmpty())batch.setNextFocusDownId(matrix.get(0).get(0).getId());
@@ -298,6 +298,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
     }
     private TextView button(String label,String tag,Runnable action) {
         TextView v=text(label,15,false); v.setGravity(Gravity.CENTER_VERTICAL); v.setPadding(dp(10),dp(5),dp(10),dp(5));
+        v.setDefaultFocusHighlightEnabled(false);
         v.setFocusable(true); v.setClickable(true); v.setId(View.generateViewId()); v.setTag(tag);
         v.setContentDescription(label); v.setBackground(FocusChrome.filled(getContext(),CARD,10,false));
         v.setOnFocusChangeListener(this::focus); v.setOnClickListener(ignored->action.run()); return v;

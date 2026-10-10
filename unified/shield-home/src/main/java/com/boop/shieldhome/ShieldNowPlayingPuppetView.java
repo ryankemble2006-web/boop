@@ -46,6 +46,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private boolean frameScheduled;
     private boolean homeVisible = true;
     private boolean animationPaused;
+    private boolean settingsButtonPresentation;
     private com.boop.shared.BoopState.Owner presentationOwner = com.boop.shared.BoopState.Owner.HOME_NOW_PLAYING;
     private Runnable unsubscribeShared;
     public interface VisibilityListener { void onVisibilityChanged(boolean visible); }
@@ -61,6 +62,16 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         super.setVisibility(visibility);
         if (before != visibility && visibilityListener != null)
             visibilityListener.onVisibilityChanged(visibility == VISIBLE);
+    }
+
+    /** Keep the settings character available independently of media ownership. */
+    public void setSettingsButtonPresentation() {
+        settingsButtonPresentation = true;
+        applyCurrentState();
+    }
+
+    public void setFocusColour(Integer colour) {
+        puppet.eyeColourBinding.setFocusColour(colour);
     }
 
     public void setPresentationOwner(com.boop.shared.BoopState.Owner owner) {
@@ -140,7 +151,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
     private void applyCurrentState() {
         boolean visible = isAttachedToWindow() && getWindowVisibility() == VISIBLE && homeVisible
                 && mode != NowPlayingPuppetPolicy.Mode.HIDDEN
-                && com.boop.shared.BoopState.INSTANCE.snapshot().owner == presentationOwner;
+                && (settingsButtonPresentation
+                    || com.boop.shared.BoopState.INSTANCE.snapshot().owner == presentationOwner);
         if (!visible) {
             puppet.setSurfaceActive(false);
             pauseCanonicalAnimation();
@@ -208,7 +220,8 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
 
     private void lockToMascotBay() {
         // The idle Home host owns its own size and bottom-corner placement.
-        if (presentationOwner != com.boop.shared.BoopState.Owner.HOME_NOW_PLAYING) {
+        if (settingsButtonPresentation
+                || presentationOwner != com.boop.shared.BoopState.Owner.HOME_NOW_PLAYING) {
             return;
         }
         android.view.ViewGroup.LayoutParams current = getLayoutParams();
@@ -272,6 +285,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
         private final GLSurfaceView eyeSurface;
         private final com.boop.eyes.CanonicalEyeRenderer eyeRenderer;
         private final MusicBounceRenderer musicRenderer;
+        private final com.boop.eyes.EyeColourBinding eyeColourBinding;
         private boolean surfaceRequested;
         private boolean surfaceResumed;
 
@@ -294,7 +308,7 @@ public final class ShieldNowPlayingPuppetView extends FrameLayout {
             eyeSurface.setRenderer(musicRenderer);
             eyeSurface.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
             eyeSurface.setVisibility(INVISIBLE);
-            com.boop.eyes.EyeColourBinding.install(eyeSurface, eyeRenderer);
+            eyeColourBinding = com.boop.eyes.EyeColourBinding.install(eyeSurface, eyeRenderer);
             eyeSurface.setFocusable(false);
             eyeSurface.setClickable(false);
             addView(eyeSurface, new FrameLayout.LayoutParams(

@@ -20,6 +20,8 @@ final class DeezerFavouriteButton extends View {
     private Runnable unsubscribe;
     private boolean subscribed;
     private boolean standaloneHeart;
+    private int visibleHeight;
+    private float glyphSizeDp = 38.28f;
 
     DeezerFavouriteButton(Context context, int mode, int accent) {
         super(context);
@@ -72,7 +74,20 @@ final class DeezerFavouriteButton extends View {
     }
     @Override protected void onFocusChanged(boolean gain, int direction, Rect previous) {
         super.onFocusChanged(gain, direction, previous);
+        if (standaloneHeart) setBackground(null);
         invalidate();
+    }
+    void setVisibleHeight(int pixels) {
+        if (visibleHeight == pixels) return;
+        visibleHeight = pixels;
+        glyphSizeDp = PrecisionIcons.sizeForInkHeight(getContext(),
+                mode == DISLIKE ? R.drawable.boop_icon_heart_negative : R.drawable.boop_icon_heart,
+                pixels, 38.28f);
+        invalidate();
+    }
+    Rect inkBounds() {
+        return PrecisionIcons.inkBounds(getContext(),mode==DISLIKE?R.drawable.boop_icon_heart_negative:R.drawable.boop_icon_heart,
+                glyphSizeDp,getMeasuredWidth(),getMeasuredHeight());
     }
     private boolean known() { return state != null && state.matches(snapshot); }
     private void updateDescription() {
@@ -135,44 +150,30 @@ final class DeezerFavouriteButton extends View {
 
     private void drawStandaloneHeart(Canvas canvas, int accent, boolean known,
             boolean saved, boolean pending, boolean available) {
-        float density = getResources().getDisplayMetrics().density;
-        float stroke = (hasFocus() ? 2f : 1.2f) * density;
-        float inset = stroke * 0.5f;
-        float w = getWidth() - stroke, h = getHeight() - stroke;
-        canvas.save();
-        canvas.translate(inset, inset);
-        heart.reset();
-        heart.moveTo(w * .5f, h);
-        heart.cubicTo(w * .4f, h * .9f, 0, h * .6f, 0, h * .3f);
-        heart.cubicTo(0, h * .04f, w * .15f, 0, w * .25f, 0);
-        heart.cubicTo(w * .36f, 0, w * .46f, h * .06f, w * .5f, h * .17f);
-        heart.cubicTo(w * .54f, h * .06f, w * .64f, 0, w * .75f, 0);
-        heart.cubicTo(w * .85f, 0, w, h * .04f, w, h * .3f);
-        heart.cubicTo(w, h * .6f, w * .6f, h * .9f, w * .5f, h);
-        heart.close();
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(saved ? accent : Color.rgb(34, 34, 34));
-        canvas.drawPath(heart, paint);
-        int ink = hasFocus() ? (saved ? Color.WHITE : accent)
-                : pending ? Color.rgb(151, 169, 178)
-                : available ? Color.WHITE : Color.rgb(91, 107, 116);
-        {
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(stroke);
-            paint.setStrokeJoin(Paint.Join.ROUND);
-            paint.setColor(saved && !hasFocus() && !pending ? accent : ink);
-            canvas.drawPath(heart, paint);
+        android.graphics.drawable.Drawable glyph;
+        if (mode == TOGGLE) {
+            glyph = getContext().getDrawable(saved ? R.drawable.boop_icon_heart_filled : R.drawable.boop_icon_heart).mutate();
+            glyph.setTint(saved || hasFocus() ? accent : Color.WHITE);
+        } else {
+            glyph = PrecisionIcons.drawable(getContext(), R.drawable.boop_icon_heart_negative, glyphSizeDp);
+            glyph.setState(hasFocus() ? new int[]{android.R.attr.state_focused} : new int[0]);
         }
-        if (!known || state.saved == -1) {
-            paint.setStyle(Paint.Style.FILL); paint.setColor(ink);
-            paint.setTextSize(h * .4f); paint.setTextAlign(Paint.Align.CENTER);
-            canvas.drawText("?", w * .5f, h * .61f, paint);
+        int size = Math.min(PrecisionIcons.dp(getContext(), glyphSizeDp * PrecisionIcons.SCALE), Math.min(getWidth(), getHeight()));
+        glyph.setBounds((getWidth()-size)/2, (getHeight()-size)/2,
+                (getWidth()+size)/2, (getHeight()+size)/2);
+        glyph.setAlpha(pending ? 140 : 255);
+        glyph.draw(canvas);
+        if (mode == TOGGLE && saved && hasFocus()) {
+            android.graphics.drawable.Drawable outline = getContext().getDrawable(R.drawable.boop_icon_heart).mutate();
+            outline.setTint(Color.WHITE);outline.setBounds(glyph.getBounds());
+            outline.setAlpha(pending ? 140 : 255);outline.draw(canvas);
         }
         if (pending) {
-            paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(density);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(getResources().getDisplayMetrics().density);
             paint.setColor(accent);
-            canvas.drawArc(w * .25f, h * .23f, w * .75f, h * .73f, -90, 250, false, paint);
+            float x=getWidth()/2f, y=getHeight()/2f, r=size/5f;
+            canvas.drawArc(x-r,y-r,x+r,y+r,-90,250,false,paint);
         }
-        canvas.restore();
     }
 }

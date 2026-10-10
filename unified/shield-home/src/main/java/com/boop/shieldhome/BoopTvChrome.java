@@ -24,11 +24,11 @@ import java.util.WeakHashMap;
 public final class BoopTvChrome {
     public static final int BORDER_DP = 4;
     public static final int CORNER_DP = 10;
-    public static final float FOCUSED_SCALE = 1.04f;
+    public static final float FOCUSED_SCALE = 1f;
     private static final int NORMAL_FILL = Color.rgb(34, 34, 34);
-    private static final long FOCUS_DURATION_MS = 120L;
 
-    private static final Set<View> DECORATED = Collections.newSetFromMap(new WeakHashMap<>());
+    private record AppliedState(boolean focused, int accent, GradientDrawable background) { }
+    private static final WeakHashMap<TextView, AppliedState> APPLIED_STATES = new WeakHashMap<>();
     private static final Set<View> INSTALLED_ROOTS = Collections.newSetFromMap(new WeakHashMap<>());
     private static final Set<View> TEXT_ONLY_ACTIONS = Collections.newSetFromMap(new WeakHashMap<>());
 
@@ -124,10 +124,8 @@ public final class BoopTvChrome {
     }
 
     public static int accentColor(Context context) {
-        int hue = context == null
-                ? ShieldHomeStore.DEFAULT_ACCENT_HUE
-                : new ShieldHomeStore(context).accentHue();
-        return colorForHue(hue);
+        return context == null ? colorForHue(ShieldHomeStore.DEFAULT_ACCENT_HUE)
+                : new ShieldHomeStore(context).accentColor();
     }
 
     public static int colorForHue(int hue) {
@@ -163,13 +161,12 @@ public final class BoopTvChrome {
             tintSlider((SeekBar) view);
         }
         if (eligible(view)) {
-            synchronized (DECORATED) {
-                DECORATED.add(view);
-            }
             applyState((TextView) view, view.hasFocus());
         }
         if (!(view instanceof ViewGroup)) return;
         ViewGroup group = (ViewGroup) view;
+        if (group instanceof android.widget.ScrollView || group instanceof android.widget.HorizontalScrollView)
+            group.setOverScrollMode(View.OVER_SCROLL_NEVER);
         for (int i = 0; i < group.getChildCount(); i++) {
             decorateTree(group.getChildAt(i));
         }
@@ -187,13 +184,25 @@ public final class BoopTvChrome {
 
     private static void applyState(TextView view, boolean focused) {
         if (view == null || isTextOnlyAction(view)) return;
+        int accent = accentColor(view.getContext());
+        AppliedState previous = APPLIED_STATES.get(view);
+        // Global layout runs during scrolling. Unchanged chrome must not request
+        // another layout or restart a property animation on every frame.
+        if (previous != null && previous.focused() == focused && previous.accent() == accent
+                && view.getBackground() == previous.background()
+                && view.getCurrentTextColor() == Color.WHITE
+                && view.getScaleX() == 1f && view.getScaleY() == 1f) return;
+        view.setDefaultFocusHighlightEnabled(false);
+        view.setStateListAnimator(null);
+        view.setBackgroundTintList(null);
+        if (view.getScaleX() != 1f || view.getScaleY() != 1f) {
+            view.animate().cancel();
+            view.setScaleX(1f); view.setScaleY(1f);
+        }
         view.setTextColor(Color.WHITE);
-        view.setBackground(filled(view.getContext(), NORMAL_FILL, CORNER_DP, focused));
-        view.animate()
-                .scaleX(focused ? FOCUSED_SCALE : 1f)
-                .scaleY(focused ? FOCUSED_SCALE : 1f)
-                .setDuration(FOCUS_DURATION_MS)
-                .start();
+        GradientDrawable background = filled(view.getContext(), NORMAL_FILL, CORNER_DP, focused);
+        view.setBackground(background);
+        APPLIED_STATES.put(view, new AppliedState(focused, accent, background));
     }
 
     private static int dp(Context context, int value) {

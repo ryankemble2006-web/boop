@@ -21,7 +21,7 @@ import java.util.Map;
 
 /** Room and working devices only. State updates retain the selected remote control. */
 public final class TvHomeView extends ScrollView {
-    private static final int CYAN = Color.rgb(61, 220, 255);
+    private int accent() { return TvMenuChrome.accent(getContext()); }
     private static final int PANEL = Color.rgb(22, 22, 24);
     private final LinearLayout devices;
     private final DeviceRow roomCard;
@@ -38,6 +38,7 @@ public final class TvHomeView extends ScrollView {
         setSmoothScrollingEnabled(true);
         setBackgroundColor(Color.BLACK);
         setFocusable(false);
+        setOverScrollMode(OVER_SCROLL_NEVER);
         setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
         LinearLayout content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);
@@ -145,7 +146,7 @@ public final class TvHomeView extends ScrollView {
     }
 
     private TextView section(String value) {
-        TextView view = text(value, 18, CYAN);
+        TextView view = text(value, 18, accent());
         view.setLetterSpacing(.1f);
         view.setPadding(0, dp(18), 0, dp(12));
         return view;
@@ -158,18 +159,14 @@ public final class TvHomeView extends ScrollView {
     }
 
     private GradientDrawable background(boolean focused) {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setColor(focused ? CYAN : PANEL);
-        drawable.setCornerRadius(dp(22));
-        drawable.setStroke(dp(2), focused ? Color.WHITE : Color.rgb(58, 58, 64));
-        return drawable;
+        return TvMenuChrome.background(getContext(), focused);
     }
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 
     private final class DeviceRow extends LinearLayout {
         private final TextView name = text("", 27, Color.WHITE);
-        private final TextView value = text("", 23, CYAN);
+        private final TextView value = text("", 23, accent());
         private final GradientDrawable idle = background(false);
         private final GradientDrawable focused = background(true);
 
@@ -181,6 +178,7 @@ public final class TvHomeView extends ScrollView {
             setFocusable(true);
             setClickable(true);
             setStateListAnimator(null);
+            setDefaultFocusHighlightEnabled(false);
             setDescendantFocusability(FOCUS_BLOCK_DESCENDANTS);
             addView(name, new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
             value.setPadding(dp(20), 0, 0, 0);
@@ -201,8 +199,8 @@ public final class TvHomeView extends ScrollView {
         private void applyFocus(boolean hasFocus) {
             setBackground(hasFocus ? focused : idle);
             setPadding(dp(30), dp(20), dp(30), dp(20));
-            name.setTextColor(hasFocus ? Color.BLACK : Color.WHITE);
-            value.setTextColor(hasFocus ? Color.BLACK : CYAN);
+            name.setTextColor(Color.WHITE);
+            value.setTextColor(accent());
         }
     }
 }

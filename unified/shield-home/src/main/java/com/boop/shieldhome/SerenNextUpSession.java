@@ -17,8 +17,12 @@ import org.json.JSONObject;
 final class SerenNextUpSession implements AutoCloseable {
     interface Listener { void updated(List<SerenEpisode> episodes, String status); }
     final SerenPosterLoader posters;
+    private final BackgroundKodiSync backgroundKodi;
     private final SerenNextUpCache cache;
     private final KodiJsonRpc reader = new KodiJsonRpc(), player = new KodiJsonRpc();
+    private final KodiJsonRpc syncRpc = new KodiJsonRpc();
+    private final ExecutorService syncs = Executors.newSingleThreadExecutor();
+    private final AtomicBoolean syncing = new AtomicBoolean();
     private final ExecutorService reads = Executors.newSingleThreadExecutor(), plays = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
     private final AtomicBoolean refreshing = new AtomicBoolean();
@@ -30,6 +34,7 @@ final class SerenNextUpSession implements AutoCloseable {
 
     SerenNextUpSession(Context context, Listener listener) {
         this.listener = listener;
+        backgroundKodi = new BackgroundKodiSync(context);
         posters = new SerenPosterLoader(context);
         cache = new SerenNextUpCache(new File(context.getFilesDir(), "seren-next-up.json"));
         playback = new SerenPlayback(plays, new SerenPlayback.Port() {
@@ -67,8 +72,50 @@ final class SerenNextUpSession implements AutoCloseable {
     void play(SerenEpisode episode, BooleanSupplier launch, Consumer<String> error) {
         playback.start(episode,launch,message->main.post(()->{if(!closed)error.accept(message);}));
     }
+    boolean isSyncing() { return syncing.get(); }
+    void syncTrakt(Consumer<Boolean> busy, Consumer<String> result) {
+        if (closed || !syncing.compareAndSet(false, true)) return;
+        busy.accept(true);
+        syncs.execute(() -> {
+            String message;
+            try {
+                String requestId = java.util.UUID.randomUUID().toString();
+                String status = SerenTraktSync.run(new SerenTraktSync.Port() {
+                    public boolean ready() {
+                        try { syncRpc.call("JSONRPC.Ping", new JSONObject(), 1200); return true; }
+                        catch (Exception unavailable) { return false; }
+                    }
+                    public boolean launchKodi() throws Exception { return backgroundKodi.open(); }
+                    public void returnToLauncher() { /* Kodi was never visible. */ }
+                    public void execute(String id) { throw new AssertionError("Startup sync must not be duplicated"); }
+                    public String status(String id) throws Exception {
+                        String label = "Window(Home).Property(BOOP.TraktStartupSync)";
+                        JSONObject response = syncRpc.call("XBMC.GetInfoLabels", new JSONObject()
+                                .put("labels", new org.json.JSONArray().put(label)), 5000).getJSONObject("result");
+                        return response.optString(label);
+                    }
+                    public long nowMs() { return android.os.SystemClock.elapsedRealtime(); }
+                    public void sleep(long ms) throws Exception { Thread.sleep(ms); }
+                    public boolean cancelled() { return closed || Thread.currentThread().isInterrupted(); }
+                }, requestId);
+                if ("done".equals(status) || "unchanged".equals(status)) {
+                    // Read before removing the hidden display: Kodi owns the Seren service.
+                    JSONObject feed = syncRpc.call("Files.GetDirectory", SerenEpisode.directoryParams(), 30000).getJSONObject("result");
+                    entries = cache.accept(feed); publish(entries.isEmpty() ? "You're caught up" : "");
+                    message = "unchanged".equals(status) ? "Already up to date — no Trakt changes" : "Trakt synced — Next Up refreshed";
+                    android.util.Log.i("BOOPKodiSync", "Seren startup done; Next Up refreshed: " + entries.size());
+                }
+                else if ("no_auth".equals(status)) message = "Connect Trakt in Seren first";
+                else message = "Trakt sync unavailable — saved episodes kept";
+            } catch (Exception unavailable) { message = "Could not sync Trakt — saved episodes kept"; }
+            backgroundKodi.close();
+            syncing.set(false);
+            String completed = message;
+            main.post(() -> { if (!closed) { busy.accept(false); result.accept(completed); } });
+        });
+    }
     @Override public void close() {
-        closed=true;playback.close();reader.close();player.close();reads.shutdownNow();plays.shutdownNow();
-        posters.close();main.removeCallbacksAndMessages(null);
+        closed=true;backgroundKodi.close();playback.close();reader.close();player.close();reads.shutdownNow();plays.shutdownNow();
+        syncRpc.close();syncs.shutdownNow();posters.close();main.removeCallbacksAndMessages(null);
     }
 }

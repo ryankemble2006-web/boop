@@ -19,13 +19,14 @@ import android.widget.TextView;
 
 /** Remote-first app card with only local focus/selection animation. */
 public final class TvAppCardView extends FrameLayout {
+    static final int DRAWER_ARTWORK_DP = 103;
     static final int HOME_ARTWORK_WIDTH_DP = 230, HOME_ARTWORK_HEIGHT_DP = 129;
     public static final float FOCUSED_SCALE = 1.08f;
     public static final float GRABBED_SCALE = 1.14f;
     private static final float HOME_ARTWORK_FOCUSED_SCALE = 1.00f;
     private static final float HOME_ARTWORK_GRABBED_SCALE = 1.14f;
     private static final int HOME_ARTWORK_CORNER_DP = 8;
-    public static final long FOCUS_DURATION_MS = 120L;
+    public static final long FOCUS_DURATION_MS = 90L;
 
     private final ImageView iconView;
     private final TextView labelView;
@@ -55,9 +56,9 @@ public final class TvAppCardView extends FrameLayout {
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         addView(content, contentParams);
 
-        iconView = new ImageView(context);
+        iconView = new FocusArtworkView(context);
         iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(76), dp(76));
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dp(DRAWER_ARTWORK_DP), dp(DRAWER_ARTWORK_DP));
         iconParams.bottomMargin = dp(10);
         content.addView(iconView, iconParams);
 
@@ -189,7 +190,7 @@ public final class TvAppCardView extends FrameLayout {
         if (homeFavourite) {
             setPadding(horizontal, 0, horizontal, 0);
         } else {
-            setPadding(horizontal, dp(14), horizontal, dp(12));
+            setPadding(horizontal, dp(8), horizontal, dp(8));
         }
         content.setGravity(homeFavourite
                 ? Gravity.TOP | Gravity.CENTER_HORIZONTAL
@@ -199,7 +200,9 @@ public final class TvAppCardView extends FrameLayout {
     private void configureArtworkSize(boolean banner) {
         LinearLayout.LayoutParams params = banner
                 ? new LinearLayout.LayoutParams(dp(HOME_ARTWORK_WIDTH_DP), dp(HOME_ARTWORK_HEIGHT_DP))
-                : new LinearLayout.LayoutParams(dp(76), dp(76));
+                : new LinearLayout.LayoutParams(
+                        dp(homeFavourite ? 76 : DRAWER_ARTWORK_DP),
+                        dp(homeFavourite ? 76 : DRAWER_ARTWORK_DP));
         params.bottomMargin = banner ? dp(6) : dp(10);
         iconView.setLayoutParams(params);
     }
@@ -208,19 +211,13 @@ public final class TvAppCardView extends FrameLayout {
         boolean focused = hasFocus();
         boolean selected = isSelected();
         boolean emphasized = focused || selected;
-        boolean showPlate = AppCardChromePolicy.showPlate(
-                homeFavourite, focused, selected, grabbed);
-        setBackground(showPlate ? cardBackground() : new ColorDrawable(Color.TRANSPARENT));
-
-        if (homeFavourite) {
-            setForeground(null);
-            iconView.setForeground(emphasized
-                    ? FocusChrome.artworkOutline(getContext(), HOME_ARTWORK_CORNER_DP)
-                    : null);
-        } else {
-            iconView.setForeground(null);
-            setForeground(emphasized ? FocusChrome.outline(getContext(), 12) : null);
-        }
+        setBackground(new ColorDrawable(Color.TRANSPARENT));
+        setForeground(null);
+        iconView.setForeground(emphasized
+                ? FocusChrome.artworkOutline(getContext(), HOME_ARTWORK_CORNER_DP)
+                : null);
+        labelView.setTextColor(!homeFavourite && emphasized
+                ? FocusChrome.accentColor(getContext()) : Color.WHITE);
         animateEmphasis(emphasized);
     }
 
@@ -244,7 +241,7 @@ public final class TvAppCardView extends FrameLayout {
         iconView.animate().cancel();
         iconView.setScaleX(1f);
         iconView.setScaleY(1f);
-        float target = grabbed ? GRABBED_SCALE : (emphasized ? FOCUSED_SCALE : 1f);
+        float target = grabbed ? GRABBED_SCALE : 1f;
         animate()
                 .scaleX(target)
                 .scaleY(target)
@@ -254,13 +251,6 @@ public final class TvAppCardView extends FrameLayout {
 
     private GradientDrawable homeArtworkBackground() {
         return FocusChrome.filled(getContext(), Color.rgb(28, 28, 28), HOME_ARTWORK_CORNER_DP, false);
-    }
-
-    private GradientDrawable cardBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setColor(Color.rgb(38, 38, 38));
-        background.setCornerRadius(dp(12));
-        return background;
     }
 
     private int dp(int value) {

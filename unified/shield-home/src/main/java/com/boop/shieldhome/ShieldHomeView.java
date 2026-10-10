@@ -45,6 +45,7 @@ public final class ShieldHomeView extends LinearLayout {
         default void onNowPlayingQueue() { }
         default void onCloseNowPlayingSource() { }
         default void onCloseMediaApps() { }
+        default void onSyncTrakt() { }
         default void onRoomDeviceSelected(long generation, String entityId) { }
         default void onRoomHeadingSelected() { }
         default void onSerenEpisodeSelected(SerenEpisode episode) { }
@@ -74,6 +75,31 @@ public final class ShieldHomeView extends LinearLayout {
     private View roomPanelPreviousFavourite;
     private boolean serenEnabled;
     private SerenNextUpView serenView;
+    private TextView syncTraktButton;
+    private boolean traktSyncing;
+    // Functional busy feedback must still work when system animation scale is zero.
+    private final Runnable traktSpinFrame = new Runnable() {
+        @Override public void run() {
+            if (!traktSyncing || !isAttachedToWindow() || traktArrows == null) return;
+            traktArrows.setLevel((int) ((android.os.SystemClock.elapsedRealtime() % 1000L) * 10L));
+            postOnAnimation(this);
+        }
+    };
+    private SyncArrowDrawable traktArrows;
+
+    void setTraktSyncing(boolean busy) {
+        traktSyncing = busy;
+        removeCallbacks(traktSpinFrame);
+        if (traktArrows != null) {
+            traktArrows.setLevel(0);
+            if (busy && isAttachedToWindow()) postOnAnimation(traktSpinFrame);
+        }
+        if (syncTraktButton != null) {
+            syncTraktButton.setText(busy ? "Syncing…" : "Sync Trakt");
+            syncTraktButton.setEnabled(!busy);
+            syncTraktButton.setAlpha(busy ? 0.6f : 1f);
+        }
+    }
     private View serenRoomGap;
     private ScrollView homeContentScroll;
     private List<SerenEpisode> serenEpisodes = List.of();
@@ -112,6 +138,7 @@ public final class ShieldHomeView extends LinearLayout {
             List<HomeRow> optionalRows,
             NowPlayingSnapshot snapshot,
             Callbacks callbacks) {
+        String previousFocus = focusToken();
         if (homeAssistantPuppet != null) homeAssistantPuppet.setVisibilityListener(null);
         if (roomPanelResize != null) { roomPanelResize.cancel(); roomPanelResize = null; }
         roomPanelTarget = -1;
@@ -247,18 +274,9 @@ public final class ShieldHomeView extends LinearLayout {
         homeStage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
         stageContent.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
 
-        homeAssistantPuppet = new ShieldNowPlayingPuppetView(getContext());
-        homeAssistantPuppet.setPresentationOwner(com.boop.shared.BoopState.Owner.NONE);
-        homeAssistantPuppet.setSnapshot(idleAssistantSnapshot());
-        homeAssistantPuppet.setVisibilityListener(this::resizeForBoop);
-        FrameLayout.LayoutParams assistantParams = new FrameLayout.LayoutParams(
-                dp(360), dp(220), Gravity.END | Gravity.BOTTOM);
-        assistantParams.rightMargin = dp(-42);
-        assistantParams.bottomMargin = dp(-30);
-        homeStage.addView(homeAssistantPuppet, assistantParams);
-
         addView(homeStage, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
         setNowPlaying(snapshot);
+        if (previousFocus != null) post(() -> restoreFocus(previousFocus));
     }
 
     /** Updates only the media subview. Favourite/app rows are intentionally left untouched. */
@@ -305,7 +323,7 @@ public final class ShieldHomeView extends LinearLayout {
             return;
         }
         roomPanelResize = android.animation.ValueAnimator.ofInt(roomPanelRight, target);
-        roomPanelResize.setDuration(200L);
+        roomPanelResize.setDuration(150L);
         roomPanelResize.setInterpolator(new android.view.animation.DecelerateInterpolator());
         roomPanelResize.addUpdateListener(value -> {
             roomPanelRight = (Integer) value.getAnimatedValue();
@@ -407,7 +425,13 @@ public final class ShieldHomeView extends LinearLayout {
         else resetToFirstFavourite();
     }
 
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        setTraktSyncing(traktSyncing);
+    }
     @Override protected void onDetachedFromWindow() {
+        removeCallbacks(traktSpinFrame);
+
         if (roomPanelResize != null) { roomPanelResize.cancel(); roomPanelResize = null; }
         super.onDetachedFromWindow();
     }
@@ -510,6 +534,43 @@ public final class ShieldHomeView extends LinearLayout {
         return requested || first.hasFocus();
     }
 
+    String focusToken() {
+        View focus = findFocus();
+        while (focus != null && focus != this) {
+            if (focus.getTag() != null) return "tag:" + focus.getTag();
+            CharSequence description = focus.getContentDescription();
+            if (description != null && description.length() > 0) return "description:" + description;
+            if (!(focus.getParent() instanceof View)) break;
+            focus = (View) focus.getParent();
+        }
+        return null;
+    }
+
+    boolean restoreFocus(String token) {
+        View target = findFocusTarget(this, token);
+        if (target == null) return false;
+        if (target.getParent() == favouriteRow) return focusFavouriteView(target);
+        boolean restored = target.requestFocus();
+        if (restored) target.requestRectangleOnScreen(new android.graphics.Rect(0, 0, target.getWidth(), target.getHeight()), true);
+        return restored;
+    }
+
+    private View findFocusTarget(View view, String token) {
+        if (token == null) return null;
+        if (view.isFocusable() && view.isEnabled() && view.getVisibility() == VISIBLE) {
+            if (view.getTag() != null && token.equals("tag:" + view.getTag())) return view;
+            if (view.getContentDescription() != null && token.equals("description:" + view.getContentDescription())) return view;
+        }
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup)view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findFocusTarget(group.getChildAt(i), token);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
     boolean focusAddFavourite() {
         return focusFavouriteView(addFavouriteTile);
     }
@@ -577,36 +638,96 @@ public final class ShieldHomeView extends LinearLayout {
         return tile;
     }
 
+    /** Equal visible gaps from the first caption to the fixed BOOP settings bay. */
+    private static final class UniformNavRow extends LinearLayout {
+        UniformNavRow(Context context) { super(context); }
+        private int boopVisibleLeft(View boop) {
+            // Fixed transparent inset of the canonical settings eyes; GPU pixels are not in View.draw().
+            return boop.getLeft()+Math.round(21*getResources().getDisplayMetrics().density);
+        }
+        private android.graphics.Rect captionInk(TextView view) {
+            String value=view.getText().toString();android.graphics.Rect ink=new android.graphics.Rect();
+            view.getPaint().getTextBounds(value,0,value.length(),ink);
+            ink.offset(Math.round((view.getMeasuredWidth()-view.getPaint().measureText(value))/2f),0);
+            return ink;
+        }
+        @Override protected void onLayout(boolean changed,int l,int t,int r,int b) {
+            super.onLayout(changed,l,t,r,b);
+            View boop=getChildAt(getChildCount()-1);
+            TextView apps=(TextView)getChildAt(0);
+            android.graphics.Rect appsInk=captionInk(apps);
+            float appsCenter=appsInk.width()/2f;
+            float middle=getWidth()/2f;
+            float eyesCenter=(boopVisibleLeft(boop)+getWidth())/2f;
+            float[] centers={appsCenter,(appsCenter+middle)/2f,middle,(middle+eyesCenter)/2f};
+            for(int n=0;n<4;n++) {
+                TextView action=(TextView)getChildAt(n);android.graphics.Rect ink=captionInk(action);
+                int left=Math.round(centers[n]-(ink.left+ink.right)/2f),top=getHeight()-action.getMeasuredHeight();
+                action.layout(left,top,left+action.getMeasuredWidth(),top+action.getMeasuredHeight());
+            }
+        }
+    }
+
     private View navRow(Callbacks callbacks) {
-        LinearLayout row = new LinearLayout(getContext());
+        LinearLayout row = new UniformNavRow(getContext());
         row.setOrientation(HORIZONTAL);
         row.setGravity(Gravity.BOTTOM);
         row.setClipChildren(false);
         row.setClipToPadding(false);
 
         TextView apps = navButton("Apps", "Apps", R.drawable.boop_home_apps);
+        apps.setTag("home:apps");
         apps.setOnClickListener(v -> callbacks.onOpenApps());
-        row.addView(apps, new LayoutParams(dp(144), dp(60)));
+        row.addView(apps, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 
         TextView homeRows = navButton("Home settings", ShieldHomeSettingsView.launcherSettingsLabel(),
                 R.drawable.boop_home_sliders);
+        homeRows.setTag("home:settings");
         homeRows.setOnClickListener(v -> callbacks.onOpenHomeRows());
-        LayoutParams homeRowsParams = new LayoutParams(dp(144), dp(60));
+        LayoutParams homeRowsParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         homeRowsParams.leftMargin = dp(16);
         row.addView(homeRows, homeRowsParams);
         TextView closeMedia = navButton("Close media", "Close media apps", R.drawable.boop_home_close_media);
+        closeMedia.setTag("home:close-media");
         closeMedia.setOnClickListener(v -> callbacks.onCloseMediaApps());
-        LayoutParams closeMediaParams = new LayoutParams(dp(144), dp(60));
+        LayoutParams closeMediaParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         closeMediaParams.leftMargin = dp(16);
         row.addView(closeMedia, closeMediaParams);
+        syncTraktButton = navButton("Sync Trakt", "Sync Trakt in Seren and refresh Next Up", R.drawable.boop_home_sync_trakt);
+        android.graphics.drawable.Drawable arrows = syncTraktButton.getCompoundDrawables()[1];
+        traktArrows = new SyncArrowDrawable(arrows);
+        traktArrows.setBounds(new android.graphics.Rect(arrows.getBounds()));
+        syncTraktButton.setCompoundDrawables(null, traktArrows, null, null);
+        syncTraktButton.setTag("home:sync");
+        syncTraktButton.setOnClickListener(v -> callbacks.onSyncTrakt());
+        LayoutParams syncParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        syncParams.leftMargin = dp(16);
+        row.addView(syncTraktButton, syncParams);
+        setTraktSyncing(traktSyncing);
 
         View spacer = new View(getContext());
         row.addView(spacer, new LayoutParams(0, 1, 1f));
 
-        TextView settings = navButton("Shield settings", "Shield settings", R.drawable.boop_home_settings);
+        FrameLayout settings = new FrameLayout(getContext());
+        settings.setClipChildren(false);
+        settings.setClipToPadding(false);
+        settings.setFocusable(true);
+        settings.setClickable(true);
+        settings.setTag("home:system-settings");
+        settings.setContentDescription("Shield settings");
+        settings.setTooltipText("Shield settings");
         settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
-        LayoutParams settingsParams = new LayoutParams(dp(144), dp(60));
-        row.addView(settings, settingsParams);
+        ShieldNowPlayingPuppetView settingsBoop = new ShieldNowPlayingPuppetView(getContext());
+        settingsBoop.setTranslationX(dp(21));
+        settingsBoop.setTranslationY(-dp(1));
+        settingsBoop.setSettingsButtonPresentation();
+        settings.setForeground(null);
+        settings.setOnFocusChangeListener((v, focused) ->
+                settingsBoop.setFocusColour(focused ? FocusChrome.accentColor(getContext()) : null));
+        settingsBoop.setSnapshot(idleAssistantSnapshot());
+        settings.addView(settingsBoop, new FrameLayout.LayoutParams(
+                dp(166), dp(83), Gravity.END | Gravity.CENTER_VERTICAL));
+        row.addView(settings, new LayoutParams(dp(144), dp(60)));
         return row;
     }
 
@@ -823,13 +944,23 @@ public final class ShieldHomeView extends LinearLayout {
         view.setTooltipText(description);
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         view.setSingleLine(true);
-        view.setIncludeFontPadding(false);
-        view.setPadding(dp(8), dp(6), dp(8), dp(6));
+        view.setIncludeFontPadding(true);
+        view.setMinHeight(dp(60));
+        view.setPadding(0, dp(2), 0, dp(2));
+        view.setMinWidth(dp(44));
         android.graphics.drawable.Drawable icon = getContext().getDrawable(iconResource).mutate();
-        icon.setTint(FocusChrome.accentColor(getContext()));
-        icon.setBounds(0, 0, dp(26), dp(26));
+        icon = PrecisionIcons.drawable(getContext(), iconResource, 34.32f);
+        icon.setBounds(0, 0, PrecisionIcons.dp(getContext(), 34.32f * PrecisionIcons.SCALE), PrecisionIcons.dp(getContext(), 34.32f * PrecisionIcons.SCALE));
         view.setCompoundDrawables(null, icon, null, null);
         view.setCompoundDrawablePadding(dp(3));
+        BoopTvChrome.useTextOnlyFocus(view);
+        view.setBackground(null);
+        view.setOnFocusChangeListener((v, focused) -> {
+            v.setBackground(null);
+            v.animate().scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS).start();
+        });
         return view;
     }
 

@@ -10,7 +10,7 @@ import org.junit.Test;
 public final class ShieldLauncherActivityContractTest {
     @Test public void launcherIsInternalActivityWithLocalPageTiming() {
         assertTrue(Activity.class.isAssignableFrom(ShieldLauncherActivity.class));
-        assertEquals(140L, ShieldLauncherActivity.PAGE_TRANSITION_MS);
+        assertEquals(105L, ShieldLauncherActivity.PAGE_TRANSITION_MS);
         assertEquals(250L, ShieldLauncherActivity.SHIELD_SETTINGS_HOLD_MS);
     }
 

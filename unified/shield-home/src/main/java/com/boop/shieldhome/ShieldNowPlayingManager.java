@@ -48,6 +48,7 @@ public final class ShieldNowPlayingManager {
     private final ShieldHomeStore store;
     private final NowPlayingState state = new NowPlayingState();
     private final DeezerFlowController flowController = new DeezerFlowController();
+    private final BackgroundDeezerFlow backgroundFlow;
     private final DeezerQueueController queueController;
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
     private final LinkedHashMap<String, Bitmap> notificationArtwork = new LinkedHashMap<>();
@@ -85,6 +86,7 @@ public final class ShieldNowPlayingManager {
 
     private ShieldNowPlayingManager(Context applicationContext) {
         this.applicationContext = applicationContext;
+        backgroundFlow = new BackgroundDeezerFlow(applicationContext);
         notificationManager = applicationContext.getSystemService(NotificationManager.class);
         mediaSessionManager = applicationContext.getSystemService(MediaSessionManager.class);
         listenerComponent = new ComponentName(
@@ -218,13 +220,18 @@ public final class ShieldNowPlayingManager {
     /** Explicit Flow shortcut on the native session. No foreground launch or shell round trip. */
     public boolean playDeezerFlow() {
         if (Looper.myLooper() != Looper.getMainLooper()) return false;
+        refreshAccessOnMain();
         DeezerFlowController.Result result = flowController.request(selectedController, state.current(),
                 SystemClock.elapsedRealtime());
         if (result == DeezerFlowController.Result.REQUESTED) {
             queueController.suppressForFlow();
             android.util.Log.i("BOOPFlow", "Native Deezer Flow requested");
         }
-        return result != DeezerFlowController.Result.UNAVAILABLE;
+        if (result != DeezerFlowController.Result.UNAVAILABLE) return true;
+        return backgroundFlow.request(() -> {
+            queueController.suppressForFlow();
+            refreshAccessOnMain();
+        });
     }
 
     public void next() {

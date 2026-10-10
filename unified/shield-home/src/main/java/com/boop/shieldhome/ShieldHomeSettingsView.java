@@ -26,6 +26,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         default void onChooseNowPlayingPlayer() { }
         default void onSetSmartHomePanelEnabled(boolean enabled) { }
         default void onSetAccentHue(int hue) { }
+        default void onSetAccentRgb(int red, int green, int blue) { }
         void onBackHome();
     }
 
@@ -82,42 +83,44 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         });
         addView(roomPanel, rowParams()); addSpacer(dp(8));
 
-        int stableHue = Math.max(0, Math.min(359, accentHue));
+        int initialColour = new ShieldHomeStore(getContext()).accentColor();
+        final int[] channels = {Color.red(initialColour), Color.green(initialColour), Color.blue(initialColour)};
         TextView accentLabel = text("Highlight colour", 16);
-        accentLabel.setTextColor(BoopTvChrome.colorForHue(stableHue));
+        accentLabel.setTextColor(initialColour);
         addView(accentLabel, wrap()); addSpacer(dp(4));
-
-        SeekBar accentSlider = new SeekBar(getContext());
-        accentSlider.setMax(359);
-        accentSlider.setProgress(stableHue);
-        accentSlider.setFocusable(true);
-        accentSlider.setClickable(true);
-        accentSlider.setContentDescription("Highlight colour");
-        accentSlider.setSplitTrack(false);
-        GradientDrawable spectrum = new GradientDrawable(
-                GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[] {
-                        Color.rgb(255,77,77), Color.rgb(255,255,77), Color.rgb(77,255,77),
-                        Color.rgb(77,255,255), Color.rgb(77,77,255), Color.rgb(255,77,255),
-                        Color.rgb(255,77,77)
-                });
-        spectrum.setCornerRadius(dp(5));
-        accentSlider.setProgressDrawable(spectrum);
-        accentSlider.setThumbTintList(ColorStateList.valueOf(BoopTvChrome.colorForHue(stableHue)));
-        accentSlider.setOnFocusChangeListener((v, focused) ->
-                v.setForeground(focused ? FocusChrome.outline(getContext(), 8) : null));
-        accentSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                int preview = BoopTvChrome.colorForHue(progress);
-                accentLabel.setTextColor(preview);
-                seekBar.setThumbTintList(ColorStateList.valueOf(preview));
-                if (seekBar.hasFocus()) seekBar.setForeground(FocusChrome.outline(getContext(), 8));
-                if (fromUser && callbacks != null) callbacks.onSetAccentHue(progress);
-            }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
-            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
-        });
-        addView(accentSlider, new LayoutParams(dp(440), dp(38))); addSpacer(dp(8));
+        TextView colourValue = text(String.format(java.util.Locale.US, "#%06X", initialColour & 0xffffff), 15);
+        colourValue.setTextColor(initialColour);
+        addView(colourValue, wrap());
+        String[] names = {"Red", "Green", "Blue"};
+        int[] tints = {Color.RED, Color.GREEN, Color.BLUE};
+        for (int i = 0; i < 3; i++) {
+            final int channel = i;
+            TextView value = text(names[i] + ": " + channels[i], 15);
+            addView(value, wrap());
+            SeekBar slider = new SeekBar(getContext());
+            slider.setTag("launcher-settings:rgb:" + i);
+            slider.setMax(255); slider.setKeyProgressIncrement(1); slider.setProgress(channels[i]);
+            slider.setFocusable(true); slider.setClickable(true); slider.setSplitTrack(false);
+            slider.setContentDescription("Highlight " + names[i] + ", 0 to 255");
+            slider.setProgressTintList(ColorStateList.valueOf(tints[i]));
+            slider.setThumbTintList(ColorStateList.valueOf(tints[i]));
+            slider.setOnFocusChangeListener((v, focused) ->
+                    v.setForeground(focused ? FocusChrome.outline(getContext(), 8) : null));
+            slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                    channels[channel] = progress;
+                    int preview = Color.rgb(channels[0], channels[1], channels[2]);
+                    value.setText(names[channel] + ": " + progress);
+                    accentLabel.setTextColor(preview); colourValue.setTextColor(preview);
+                    colourValue.setText(String.format(java.util.Locale.US, "#%06X", preview & 0xffffff));
+                    if (fromUser && callbacks != null) callbacks.onSetAccentRgb(channels[0], channels[1], channels[2]);
+                }
+                @Override public void onStartTrackingTouch(SeekBar bar) { }
+                @Override public void onStopTrackingTouch(SeekBar bar) { }
+            });
+            addView(slider, new LayoutParams(dp(440), dp(38)));
+        }
+        addSpacer(dp(8));
 
         TextView roomHint = text("Uses your existing ‘Set this device room’ selection.", 15);
         roomHint.setTextColor(Color.LTGRAY);
@@ -171,11 +174,15 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp); return view;
     }
     private TextView action(String value) {
-        TextView view = text(value, 19); view.setGravity(Gravity.CENTER_VERTICAL); view.setFocusable(true); view.setClickable(true);
+        TextView view = text(value, 19);
+        view.setTag("launcher-settings:" + value.split(":", 2)[0]);
+        view.setGravity(Gravity.CENTER_VERTICAL); view.setFocusable(true); view.setClickable(true);
         view.setPadding(dp(20), dp(10), dp(20), dp(10)); view.setBackground(actionBackground(false));
-        view.setOnFocusChangeListener((v, focused) -> { v.setBackground(actionBackground(focused));
-            v.animate().scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f).scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
-                    .setDuration(TvAppCardView.FOCUS_DURATION_MS).start(); });
+        // Shared TV chrome owns focus. A local scale animation fights its fixed-size
+        // outline and makes the entire row pulse while ScrollView follows focus.
+        view.setDefaultFocusHighlightEnabled(false);
+        view.setStateListAnimator(null);
+        view.setBackgroundTintList(null);
         return view;
     }
     private GradientDrawable actionBackground(boolean focused) { return FocusChrome.filled(getContext(), Color.rgb(42,42,42), 10, focused); }

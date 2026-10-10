@@ -9,6 +9,10 @@
     </queries>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <application>
+        <activity android:name="com.boop.shieldhome.DeezerFlowShortcutActivity" android:exported="true" android:taskAffinity="" android:excludeFromRecents="true"
+            android:label="Deezer Flow (background)" android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter><action android:name="android.intent.action.CREATE_SHORTCUT"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
+        </activity>
         <activity android:name="com.boop.shieldhome.BassCaptureActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />
         <service android:name="com.boop.shieldhome.BassCaptureService" android:exported="false" android:foregroundServiceType="mediaProjection" />
         <activity android:name="com.boop.shieldhome.MusicAudioPermissionActivity" android:exported="false" android:theme="@android:style/Theme.Material.NoActionBar" />

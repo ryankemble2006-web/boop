@@ -60,11 +60,11 @@ public final class ShieldAppsView extends LinearLayout {
         grid.setNumColumns(5);
         grid.setColumnWidth(dp(190));
         grid.setHorizontalSpacing(dp(18));
-        grid.setVerticalSpacing(dp(18));
+        grid.setVerticalSpacing(dp(3));
         grid.setStretchMode(GridView.STRETCH_SPACING_UNIFORM);
         grid.setGravity(Gravity.CENTER_HORIZONTAL);
-        grid.setClipChildren(false);
-        grid.setClipToPadding(false);
+        grid.setClipChildren(true);
+        grid.setClipToPadding(true);
         grid.setPadding(dp(12), dp(18), dp(12), dp(18));
         grid.setSelector(android.R.color.transparent);
         grid.setAdapter(new AppsAdapter(getContext(), safeApps, safeFavourites));
@@ -112,7 +112,7 @@ public final class ShieldAppsView extends LinearLayout {
             card.bind(entry, favourites.contains(entry.component()));
             card.setFocusable(false);
             card.setClickable(false);
-            card.setLayoutParams(new GridView.LayoutParams(dp(context, 190), dp(context, 145)));
+            card.setLayoutParams(new GridView.LayoutParams(dp(context, 190), dp(context, 160)));
             return card;
         }
 

@@ -40,6 +40,10 @@ public class SerenProbe {
     check(SerenEpisode.parse(new JSONObject().put("files",new JSONArray().put(thumbEntry))).get(0).poster.equals("https://example.test/episode.jpg"),"episode thumbnail wins over fanart");
     thumbEntry.getJSONObject("art").remove("thumb");thumbEntry.put("thumbnail","https://example.test/item-thumb.jpg");
     check(SerenEpisode.parse(new JSONObject().put("files",new JSONArray().put(thumbEntry))).get(0).poster.equals("https://example.test/item-thumb.jpg"),"item thumbnail wins over fanart");
+    JSONObject plotted=episode(LINK).put("plot","[B]An episode overview[/B] with detail.");
+    check(SerenEpisode.parse(new JSONObject().put("files",new JSONArray().put(plotted))).get(0).overview.equals("An episode overview with detail."),"clean episode overview" );
+    check(e.overview.isEmpty(),"missing overview stays empty" );
+    check(SerenEpisode.directoryParams().getJSONArray("properties").toString().contains("plot"),"request episode plot" );
     check(e.file.equals(LINK),"opaque plugin arguments preserved byte for byte");
     check(SerenEpisode.playbackParams(e).getJSONObject("item").getString("file").equals(LINK+"&forceresumeon=true"),"no extra resume click");
     check(SerenEpisode.artwork("image://https%3A%2F%2Fx.test%2Fa%2Bb.jpg/").equals("https://x.test/a+b.jpg"),"art plus preserved");

@@ -12,7 +12,7 @@ public final class ShieldLauncherViewsTest {
     @Test public void appCardUsesLocalFocusAnimationContract() {
         assertTrue(FrameLayout.class.isAssignableFrom(TvAppCardView.class));
         assertEquals(1.08f, TvAppCardView.FOCUSED_SCALE, 0.0001f);
-        assertEquals(120L, TvAppCardView.FOCUS_DURATION_MS);
+        assertEquals(90L, TvAppCardView.FOCUS_DURATION_MS);
     }
 
     @Test public void homeCallbacksExposeApprovedRemoteActions() {

@@ -13,15 +13,19 @@ import org.json.JSONObject;
 
 /** Keeps Seren's opaque episode URL intact; never reconstructs an episode from a title. */
 final class SerenEpisode {
-    final String title, detail, file, poster;
+    final String title, detail, file, poster, overview;
     SerenEpisode(String title, String detail, String file, String poster) {
+        this(title, detail, file, poster, "");
+    }
+    SerenEpisode(String title, String detail, String file, String poster, String overview) {
         this.title = title; this.detail = detail; this.file = file; this.poster = poster;
+        this.overview = overview;
     }
 
     static JSONObject directoryParams() throws org.json.JSONException {
         return new JSONObject().put("directory", "plugin://plugin.video.seren/?action=showsNextUp")
                 .put("media", "video").put("properties", new JSONArray()
-                        .put("title").put("showtitle").put("season").put("episode").put("art").put("thumbnail"));
+                        .put("title").put("showtitle").put("season").put("episode").put("plot").put("art").put("thumbnail"));
     }
 
     static List<SerenEpisode> parse(JSONObject result) throws IOException {
@@ -48,7 +52,7 @@ final class SerenEpisode {
                 if (!poster.isEmpty()) break;
             }
             if (poster.isEmpty()) poster = artwork(item.optString("thumbnail"));
-            out.add(new SerenEpisode(show, detail, path, poster));
+            out.add(new SerenEpisode(show, detail, path, poster, clean(item.optString("plot")).replaceAll("\\s+", " ")));
         }
         if (files.length() > 0 && out.isEmpty()) throw new IOException("Kodi returned no usable Next Up entries");
         return List.copyOf(out);

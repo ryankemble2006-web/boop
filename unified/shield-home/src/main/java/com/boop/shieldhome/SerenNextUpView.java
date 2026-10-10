@@ -3,7 +3,6 @@ package com.boop.shieldhome;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -17,7 +16,8 @@ import java.util.function.Consumer;
 
 /** Stable native poster row. Refreshes never rebuild the rest of Home. */
 final class SerenNextUpView extends LinearLayout {
-    private final TextView detail, empty;
+    private final SerenMarqueeTextView detail;
+    private final TextView empty;
     private final HorizontalScrollView scroll;
     private final LinearLayout row;
     private List<SerenEpisode> entries = List.of();
@@ -26,13 +26,20 @@ final class SerenNextUpView extends LinearLayout {
     private Consumer<SerenEpisode> select;
     private Runnable open;
     private String signature = "";
-    private final int posterHeight = TvAppCardView.HOME_ARTWORK_HEIGHT_DP;
+    private final int posterWidthPx, posterHeightPx, posterGapPx;
     private String lastFocusedFile;
 
     SerenNextUpView(Context context) {
-        super(context); setOrientation(VERTICAL); setClipChildren(false); setClipToPadding(false);
+        super(context);
+        // Match favourites once. Playback can change resource density while Home survives.
+        // Refreshes and focus must never recalculate the card dimensions.
+        posterWidthPx = dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP);
+        posterHeightPx = dp(TvAppCardView.HOME_ARTWORK_HEIGHT_DP);
+        posterGapPx = dp(16);
+        setOrientation(VERTICAL); setClipChildren(false); setClipToPadding(false);
         LinearLayout heading = new LinearLayout(context); heading.setGravity(Gravity.CENTER_VERTICAL);
-        detail = text("", 14); detail.setTextColor(Color.LTGRAY); detail.setSingleLine(true); detail.setEllipsize(TextUtils.TruncateAt.END);
+        detail = new SerenMarqueeTextView(context);
+        detail.setTextSize(14); detail.setTextColor(Color.LTGRAY); detail.setIncludeFontPadding(false);
         detail.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         LayoutParams info = new LayoutParams(0, dp(24), 1); heading.addView(detail, info);
         scroll = new HorizontalScrollView(context);
@@ -40,7 +47,7 @@ final class SerenNextUpView extends LinearLayout {
         scroll.setClipChildren(true); scroll.setClipToPadding(true); scroll.setPadding(0, dp(5), 0, dp(5));
         row = new LinearLayout(context); row.setOrientation(HORIZONTAL); row.setClipChildren(false);
         scroll.addView(row, new FrameLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
-        addView(scroll, new LayoutParams(LayoutParams.MATCH_PARENT, dp(posterHeight + 10)));
+        addView(scroll, new LayoutParams(LayoutParams.MATCH_PARENT, posterHeightPx + dp(10)));
         empty = text("Open Kodi to load your Next Up episodes", 17); empty.setGravity(Gravity.CENTER);
         empty.setFocusable(true); empty.setClickable(true); empty.setOnClickListener(v -> { if (open != null) open.run(); });
         empty.setOnFocusChangeListener((v, focused) -> empty.setBackground(FocusChrome.filled(context, Color.rgb(25,25,25), 8, focused)));
@@ -50,7 +57,6 @@ final class SerenNextUpView extends LinearLayout {
         scroll.getViewTreeObserver().addOnScrollChangedListener(this::loadVisible);
         addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> {
             setClipBounds(new Rect(0, 0, r-l, b-t));
-            fitWidth();
             loadVisible();
         });
     }
@@ -59,9 +65,9 @@ final class SerenNextUpView extends LinearLayout {
         this.select = select; this.open = open; this.artwork = loader;
         empty.setText(status.isEmpty() ? "Open Kodi to load your Next Up episodes" : status + " · Open Kodi");
         StringBuilder key = new StringBuilder();
-        for (SerenEpisode e : next) key.append(e.file).append(e.poster).append(e.title).append(e.detail);
+        for (SerenEpisode e : next) key.append(e.file).append(e.poster).append(e.title).append(e.detail).append(e.overview);
         if (signature.equals(key.toString()) && entries.size() == next.size()) {
-            if (!hasFocus()) detail.setText(status);
+            if (!hasFocus()) detail.showText(status);
             post(this::loadVisible);
             return;
         }
@@ -75,7 +81,7 @@ final class SerenNextUpView extends LinearLayout {
         signature = key.toString(); entries = List.copyOf(next); row.removeAllViews(); images.clear();
         for (SerenEpisode e : entries) {
             FrameLayout tile = new FrameLayout(getContext()); tile.setFocusable(true); tile.setClickable(true);
-            tile.setTag(e.file); tile.setContentDescription(e.title + ": " + e.detail);
+            tile.setTag(e.file); tile.setContentDescription(episodeDescription(e));
             TextView label = text(e.title, 15); label.setGravity(Gravity.CENTER); label.setMaxLines(3);
             tile.addView(label, new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
             ImageView image = new ImageView(getContext()); image.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -84,17 +90,19 @@ final class SerenNextUpView extends LinearLayout {
             tile.setBackgroundColor(Color.rgb(28,28,28));
             tile.setOnFocusChangeListener((v, selected) -> {
                 tile.setForeground(FocusChrome.filled(getContext(), Color.TRANSPARENT, 7, selected));
+                // Row refresh temporarily removes focus before restoring the same card.
+                // Evaluate after restoration so it cannot restart the current description.
+                detail.post(() -> detail.setSelected(row.hasFocus()));
                 if (selected) {
-                    lastFocusedFile = e.file; detail.setText(e.title + " · " + e.detail);
+                    lastFocusedFile = e.file; detail.showText(episodeDescription(e));
                 }
             });
             tile.setOnClickListener(v -> { if (this.select != null) this.select.accept(e); });
-            LayoutParams p = new LayoutParams(dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP), dp(posterHeight)); p.rightMargin = dp(16);
+            LayoutParams p = new LayoutParams(posterWidthPx, posterHeightPx); p.rightMargin = posterGapPx;
             row.addView(tile, p);
         }
         empty.setVisibility(entries.isEmpty() ? VISIBLE : GONE);
         scroll.setVisibility(entries.isEmpty() ? GONE : VISIBLE);
-        fitWidth();
         if (restore) {
             View target = focused == null ? null : row.findViewWithTag(focused);
             if (target == null && focusedShow != null) for (int i = 0; i < entries.size(); i++)
@@ -102,19 +110,15 @@ final class SerenNextUpView extends LinearLayout {
             if (target == null && !entries.isEmpty()) target = row.getChildAt(Math.min(focusedIndex, entries.size() - 1));
             (target == null ? empty : target).requestFocus();
         }
-        if (!hasFocus()) detail.setText(status);
+        if (!hasFocus()) detail.showText(status);
         post(this::loadVisible);
     }
-    private void fitWidth() {
-        if (getWidth() <= 0 || row.getChildCount() == 0) return;
-        for (int i=0; i<row.getChildCount(); i++) {
-            LayoutParams p=(LayoutParams)row.getChildAt(i).getLayoutParams();
-            int margin=i+1==row.getChildCount()?0:dp(16);
-            if (p.width != dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP) || p.rightMargin != margin) {
-                p.width=dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP); p.rightMargin=margin; row.getChildAt(i).requestLayout();
-            }
-        }
+    private static String episodeDescription(SerenEpisode episode) {
+        String title = episode.title + " - " + episode.detail;
+        if (episode.overview.isEmpty()) return title;
+        return title + " - " + episode.overview;
     }
+
     boolean focusEpisode(String file) {
         View target = row.findViewWithTag(file);
         if (target == null && lastFocusedFile != null) target = row.findViewWithTag(lastFocusedFile);

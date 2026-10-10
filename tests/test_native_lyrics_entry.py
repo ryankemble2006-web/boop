@@ -58,61 +58,26 @@ STUBS = {
  void submit(NowPlayingSnapshot query){dismiss();search.accept(query);if(dismiss!=null)dismiss.accept(this);}
  }
  ''',
- 'com/boop/shieldhome/NativeLyricsEntryCheck.java': '''package com.boop.shieldhome;
+ 'com/boop/shieldhome/NativeLyricsEntryCheck.java': """package com.boop.shieldhome;
  public final class NativeLyricsEntryCheck {
- static int checks;
- static void equal(int expected,int actual,String why){if(expected!=actual)throw new AssertionError(why+": "+actual);checks++;}
+ static void equal(int expected,int actual,String why){if(expected!=actual)throw new AssertionError(why+": "+actual);}
  public static void main(String[] args){
   android.app.Activity activity=new android.app.Activity();
   ShieldNowPlayingManager manager=new ShieldNowPlayingManager();
-  NowPlayingSnapshot track=new NowPlayingSnapshot("123");
-  DeezerLyricsBrowser browser=new DeezerLyricsBrowser(); NativeLyricsLoader loader=NativeLyricsLoader.latest;
-  browser.open(activity,manager,track); browser.open(activity,manager,track);
-  equal(1,loader.loads,"Repeated press coalesces one pending lookup");
-  activity.focused=false; loader.callbacks.get(0).accept(new DeezerLyricsDocument());
-  equal(0,activity.launches,"Losing host focus must not open a late screen");
-  activity.focused=true; browser.open(activity,manager,track);
-  equal(2,loader.loads,"A completed hidden-host lookup must not permanently latch the Lyrics button");
-  loader.callbacks.get(1).accept(new DeezerLyricsDocument());
-  equal(1,activity.launches,"Fresh press after focus returns opens BOOP lyrics");
-  browser.open(activity,manager,track); int old=loader.callbacks.size()-1;
-  manager.id="456"; browser.onTrackChanged(manager);
-  browser.open(activity,manager,new NowPlayingSnapshot("456")); int fresh=loader.callbacks.size()-1;
-  loader.callbacks.get(old).accept(new DeezerLyricsDocument());
-  equal(1,activity.launches,"Late previous recording cannot open lyrics");
-  loader.callbacks.get(fresh).accept(new DeezerLyricsDocument());
-  equal(2,activity.launches,"New recording still opens");
-  browser.open(activity,manager,new NowPlayingSnapshot("456")); int paused=loader.callbacks.size()-1;
-  browser.onHostPaused(); loader.callbacks.get(paused).accept(new DeezerLyricsDocument());
-  equal(2,activity.launches,"Paused host rejects late completion");
-  browser.open(activity,manager,new NowPlayingSnapshot("456"));
-  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNAVAILABLE));
-  if(LyricsLookupDialog.latest==null||!LyricsLookupDialog.latest.isShowing())throw new AssertionError("Missing lyrics must offer the editable lookup from Home");
-  int before=loader.loads;LyricsLookupDialog.latest.submit(new NowPlayingSnapshot("456"));
-  equal(before+1,loader.loads,"Edited lookup retries from Home");
-  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument());
-  equal(3,activity.launches,"Successful corrected query opens native lyrics");
-  browser.open(activity,manager,new NowPlayingSnapshot("456"));
-  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNKNOWN));
-  LyricsLookupDialog stale=LyricsLookupDialog.latest;before=loader.loads;
-  manager.id="789";browser.onTrackChanged(manager);stale.search.accept(new NowPlayingSnapshot("456"));
-  equal(before,loader.loads,"Track change rejects a late editor submission");
-  if(stale.isShowing())throw new AssertionError("Track change must dismiss the old editor");
-  manager.metadataOnly=true;browser.open(activity,manager,new NowPlayingSnapshot("789"));
-  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNAVAILABLE));
-  stale=LyricsLookupDialog.latest;before=loader.loads;
-  manager.id="999";browser.onTrackChanged(manager);stale.search.accept(new NowPlayingSnapshot("789"));
-  equal(before,loader.loads,"Metadata-only track change rejects old editor submission");
-  if(stale.isShowing())throw new AssertionError("Metadata-only track change must dismiss old editor");
-  browser.open(activity,manager,new NowPlayingSnapshot("999"));
-  loader.callbacks.get(loader.callbacks.size()-1).accept(new DeezerLyricsDocument(DeezerLyricsDocument.Status.UNAVAILABLE));
-  stale=LyricsLookupDialog.latest;before=loader.loads;manager.album="Live";manager.duration=250000;
-  browser.onTrackChanged(manager);stale.search.accept(new NowPlayingSnapshot("999"));
-  equal(before,loader.loads,"Same title different recording rejects old editor submission");
-  if(stale.isShowing())throw new AssertionError("Different recording must dismiss old editor");
-  System.out.println("PASS: "+checks+" real Lyrics entry control-flow checks.");
+  DeezerLyricsBrowser browser=new DeezerLyricsBrowser();
+  browser.open(activity,manager,new NowPlayingSnapshot("123"));
+  equal(1,activity.launches,"Home must open presentation immediately without preflight lookup");
+  if(NativeLyricsLoader.latest!=null && NativeLyricsLoader.latest.loads!=0)throw new AssertionError("Lookup belongs to presentation");
+  activity.focused=false;browser.open(activity,manager,new NowPlayingSnapshot("456"));
+  equal(1,activity.launches,"Hidden host cannot launch presentation");
+  activity.focused=true;browser.open(activity,manager,new NowPlayingSnapshot("456"));
+  equal(2,activity.launches,"Entry recovers after focus returns");
+  browser.open(activity,manager,null);equal(2,activity.launches,"Null track ignored");
+  browser.onHostPaused();browser.onTrackChanged(manager);browser.destroy();
+  System.out.println("PASS immediate Home lyrics/spectrum entry");
  }
- }'''
+ }"""
+
 }
 with tempfile.TemporaryDirectory(prefix='boop-lyrics-entry-') as folder:
     root = Path(folder)

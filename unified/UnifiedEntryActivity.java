@@ -51,9 +51,11 @@ public final class UnifiedEntryActivity extends Activity {
         }
         boolean homeIntent = getIntent() != null && getIntent().hasCategory(Intent.CATEGORY_HOME);
         ShieldEntryRoute.Target destination = ShieldEntryRoute.resolve(mode, homeIntent);
-        startActivity(new Intent(Intent.ACTION_MAIN)
+        Intent destinationIntent = new Intent(Intent.ACTION_MAIN)
                 .setClassName(getPackageName(), destination.className())
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        if (homeIntent) destinationIntent.addCategory(Intent.CATEGORY_HOME);
+        startActivity(destinationIntent);
         if (destination.suppressEntryTransition()) overridePendingTransition(0, 0);
         finish();
     }

@@ -21,8 +21,9 @@ public class FocusCardView extends TextView {
         setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         setMinHeight(dp(78));
         setStateListAnimator(null);
-        idle = background(Color.rgb(22, 22, 24), Color.rgb(58, 58, 64));
-        focused = background(Color.rgb(61, 220, 255), Color.WHITE);
+        setDefaultFocusHighlightEnabled(false);
+        idle = TvMenuChrome.background(context, false);
+        focused = TvMenuChrome.background(context, true);
         applyFocus(false);
         setOnFocusChangeListener((view, hasFocus) -> applyFocus(hasFocus));
     }
@@ -41,7 +42,7 @@ public class FocusCardView extends TextView {
     private void applyFocus(boolean hasFocus) {
         setBackground(hasFocus ? focused : idle);
         setPadding(dp(26), dp(18), dp(26), dp(18));
-        setTextColor(hasFocus ? Color.BLACK : Color.WHITE);
+        setTextColor(Color.WHITE);
     }
 
     protected int dp(int value) { return Math.max(1, Math.round(value * getResources().getDisplayMetrics().density)); }

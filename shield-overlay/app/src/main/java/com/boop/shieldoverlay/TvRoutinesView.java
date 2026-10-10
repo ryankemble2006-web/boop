@@ -57,6 +57,7 @@ public final class TvRoutinesView extends ScrollView {
         setFillViewport(true);
         setBackgroundColor(Color.BLACK);
         setClipToPadding(false);
+        setOverScrollMode(OVER_SCROLL_NEVER);
 
         content = new LinearLayout(context);
         content.setOrientation(LinearLayout.VERTICAL);

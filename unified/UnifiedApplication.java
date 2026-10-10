@@ -48,8 +48,12 @@ public final class UnifiedApplication extends Application {
             @Override public void onActivityStarted(Activity activity) { }
             @Override public void onActivityResumed(Activity activity) {
                 com.boop.shieldhome.BoopTvChrome.install(activity);
+                if (BoopDeviceProfile.resolve(activity) == BoopDeviceProfile.Mode.SHIELD)
+                    com.boop.shieldhome.LauncherRemoteNavigation.install(activity);
             }
-            @Override public void onActivityPaused(Activity activity) { }
+            @Override public void onActivityPaused(Activity activity) {
+                com.boop.shieldhome.LauncherRemoteNavigation.cancel(activity);
+            }
             @Override public void onActivityStopped(Activity activity) { }
             @Override public void onActivitySaveInstanceState(Activity activity, Bundle outState) { }
             @Override public void onActivityDestroyed(Activity activity) { }

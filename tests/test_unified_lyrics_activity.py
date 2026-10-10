@@ -115,7 +115,7 @@ final class ShieldLyricsView extends android.view.View {
  ShieldLyricsView(android.app.Activity activity,int accent,Controls controls){latest=this;this.controls=controls;}
  void setRunning(boolean value){running=value;}
  void setSnapshot(NowPlayingSnapshot snapshot,boolean known){this.snapshot=snapshot;updates++;}
- void setDocument(DeezerLyricsDocument value){document=value;} void setStatus(String text){status=text;}
+ void setDocument(DeezerLyricsDocument value){document=value;} void setStatus(String text){status=text;} void showSpectrumFallback(){status="spectrum";}
 }
 ''',
 'com/boop/shieldhome/UnifiedLyricsActivityCheck.java': '''package com.boop.shieldhome;
@@ -137,9 +137,9 @@ public final class UnifiedLyricsActivityCheck {
   loader.reply(0,DeezerLyricsDocument.Status.AVAILABLE);eq(null,view.document,"Previous-recording response discarded");
   loader.reply(1,DeezerLyricsDocument.Status.AVAILABLE);eq("456",view.document.id,"New lyrics replace old without reopening");
   manager.bus.update(track("789"));loader.reply(2,DeezerLyricsDocument.Status.UNAVAILABLE);
-  eq(null,view.document,"Absent lyrics do not retain previous recording");eq("No lyrics for this track.",view.status,"Absent state reported");
+  eq(null,view.document,"Absent lyrics do not retain previous recording");eq("spectrum",view.status,"Absent lyrics show spectrum");
   manager.bus.update(track("101"));loader.reply(3,DeezerLyricsDocument.Status.UNKNOWN);
-  eq("Couldn't check lyrics just now.",view.status,"Service uncertainty is not catalogue absence");
+  eq("spectrum",view.status,"Exhausted sources show spectrum");
   manager.bus.update(track("202"));loader.reply(4,DeezerLyricsDocument.Status.AVAILABLE);
   eq("202",view.document.id,"Later available track recovers automatically");
   int requests=loader.ids.size();manager.bus.update(new NowPlayingSnapshot("303","other.player",3,2));

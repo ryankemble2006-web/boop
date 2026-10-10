@@ -20,12 +20,12 @@ def test_lyrics_provider_credit_is_not_drawn():
     assert "credit.setText(" not in view
 
 
-def test_long_track_title_is_single_line_marquee_once_at_original_position():
+def test_long_track_title_uses_stable_marquee_at_original_position():
     view = VIEW.read_text(encoding="utf-8")
     assert "title.setSingleLine(true);" in view
     assert "title.setHorizontallyScrolling(true);" in view
-    assert "title.setEllipsize(TextUtils.TruncateAt.MARQUEE);" in view
-    assert "title.setMarqueeRepeatLimit(1);" in view
+    assert "title = new SerenMarqueeTextView(context);" in view
+    assert 'title.showText(next == null ? "Now Playing" : next.title());' in view
     assert "title.setSelected(true);" in view
     assert "place(title, left, 448f * unit, progressWidth, 42f * unit);" in view
     assert "place(artist, left, 520f * unit, progressWidth, 35f * unit);" in view
