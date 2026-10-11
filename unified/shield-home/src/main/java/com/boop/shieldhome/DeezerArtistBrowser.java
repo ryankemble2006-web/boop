@@ -12,11 +12,18 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /** An explicit artist click opens a page. No playback command or background lookup. */
 final class DeezerArtistBrowser {
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "boop-artist-browse");
+        t.setDaemon(true);
+        return t;
+    });
     private long generation;
     private boolean busy;
     private NowPlayingSnapshot pending;
@@ -38,7 +45,7 @@ final class DeezerArtistBrowser {
         busy = true;
         pending = requested;
         message(activity, "Opening artist...");
-        new Thread(() -> {
+        executor.execute(() -> {
             long found = 0;
             try { found = lookup(requested, recordingId); }
             catch (Exception unavailable) { /* Plain failure on the main thread below. */ }
@@ -63,7 +70,7 @@ final class DeezerArtistBrowser {
                     }
                 }
             });
-        }, "boop-artist-browse").start();
+        });
     }
 
     private static boolean sameRequest(NowPlayingSnapshot a, NowPlayingSnapshot b) {

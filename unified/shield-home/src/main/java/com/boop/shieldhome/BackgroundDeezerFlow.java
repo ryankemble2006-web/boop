@@ -31,6 +31,12 @@ final class BackgroundDeezerFlow {
     private VirtualDisplay display;
     private ImageReader images;
 
+    private final java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "BOOP-background-flow");
+        t.setDaemon(true);
+        return t;
+    });
+
     BackgroundDeezerFlow(Context context) { this.context = context.getApplicationContext(); }
 
     boolean request(Runnable requested) {
@@ -57,7 +63,7 @@ final class BackgroundDeezerFlow {
             pending = true;
             lastRequest = SystemClock.elapsedRealtime();
             int displayId = display.getDisplay().getDisplayId();
-            new Thread(() -> wakePlayer(displayId, requested), "BOOP-background-flow").start();
+            executor.execute(() -> wakePlayer(displayId, requested));
             return true;
         } catch (Exception unavailable) {
             release();

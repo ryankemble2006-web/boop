@@ -12,11 +12,18 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /** User-triggered public metadata lookup. Never sends a playback command. */
 final class DeezerAlbumBrowser {
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "boop-album-browse");
+        t.setDaemon(true);
+        return t;
+    });
     private long generation;
     private boolean busy;
     synchronized void cancel() { generation++; busy=false; }
@@ -29,7 +36,7 @@ final class DeezerAlbumBrowser {
         final long operation=++generation;
         busy=true;
         message(activity,"Finding album…");
-        new Thread(() -> {
+        executor.execute(() -> {
             long album=0;
             try { album=lookup(requested); } catch(Exception unavailable) { /* Plain local failure below. */ }
             final long albumId=album;
@@ -49,7 +56,7 @@ final class DeezerAlbumBrowser {
                     } catch(RuntimeException unavailable) { message(activity,"Deezer couldn't open that album."); }
                 }
             });
-        },"boop-album-browse").start();
+        });
     }
 
     private static long lookup(NowPlayingSnapshot track) throws Exception {
