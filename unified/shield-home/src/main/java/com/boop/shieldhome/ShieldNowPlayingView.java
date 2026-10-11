@@ -605,8 +605,9 @@ public final class ShieldNowPlayingView extends FrameLayout {
                 View child = getChildAt(i);
                 if (child.getVisibility() != GONE) { used += ink(child).height(); count++; }
             }
-            float gap = count > 1 ? Math.max(0, (getHeight() - used) / (float) (count - 1)) : 0;
-            float cursor = 0;
+            int inset = 4;
+            float gap = count > 1 ? Math.max(0, (getHeight() - inset * 2 - used) / (float) (count - 1)) : 0;
+            float cursor = inset;
             for (int i = 0; i < getChildCount(); i++) {
                 View child = getChildAt(i);
                 if (child.getVisibility() == GONE) continue;
