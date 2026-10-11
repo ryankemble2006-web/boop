@@ -59,8 +59,8 @@ public final class ShieldAppsView extends LinearLayout {
         GridView grid = new GridView(getContext());
         grid.setNumColumns(5);
         grid.setColumnWidth(dp(190));
-        grid.setHorizontalSpacing(dp(18));
-        grid.setVerticalSpacing(dp(3));
+        grid.setHorizontalSpacing(dp(20));
+        grid.setVerticalSpacing(dp(20));
         grid.setStretchMode(GridView.STRETCH_SPACING_UNIFORM);
         grid.setGravity(Gravity.CENTER_HORIZONTAL);
         grid.setClipChildren(true);
@@ -77,7 +77,7 @@ public final class ShieldAppsView extends LinearLayout {
         });
 
         LayoutParams gridParams = new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f);
-        gridParams.topMargin = dp(14);
+        gridParams.topMargin = dp(18);
         addView(grid, gridParams);
     }
 

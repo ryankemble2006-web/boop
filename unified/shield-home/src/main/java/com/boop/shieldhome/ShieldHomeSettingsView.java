@@ -37,7 +37,7 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         setOrientation(VERTICAL);
         setGravity(Gravity.CENTER_VERTICAL);
         setBackgroundColor(Color.BLACK);
-        setPadding(dp(52), dp(30), dp(52), dp(28));
+        setPadding(dp(48), dp(26), dp(48), dp(26));
         setClipChildren(false);
         setClipToPadding(false);
     }

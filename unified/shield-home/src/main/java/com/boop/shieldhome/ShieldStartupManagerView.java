@@ -49,18 +49,18 @@ public final class ShieldStartupManagerView extends LinearLayout {
     private final List<TextView> navigation=new ArrayList<>();
     public ShieldStartupManagerView(Context context) {
         super(context); setBackgroundColor(Color.BLACK);
-        setPadding(dp(26),dp(22),dp(26),dp(20));
+        setPadding(dp(44),dp(24),dp(44),dp(24));
     }
     public void setStatus(String text,boolean working) { status=text==null?"":text; busy=working; }
 
     private void frame(String title,String subtitle,int selected,Callbacks callbacks) {
         removeAllViews(); setOrientation(HORIZONTAL); navigation.clear();
-        rail=column(); rail.setPadding(dp(12),dp(14),dp(12),dp(12));
+        rail=column(); rail.setPadding(dp(14),dp(18),dp(14),dp(16));
         rail.setBackground(FocusChrome.filled(getContext(),PANEL,16,false));
-        addView(rail,new LayoutParams(dp(170),LayoutParams.MATCH_PARENT));
-        TextView wordmark=text("BOOP",26,true); wordmark.setTextColor(FocusChrome.accentColor(getContext()));
-        rail.addView(wordmark); rail.addView(caption("YOUR SHIELD. YOUR RULES.",10)); space(rail,22);
-        String[] labels={"Overview","Packages","Boot cleanup","Background","Restore"};
+        addView(rail,new LayoutParams(dp(180),LayoutParams.MATCH_PARENT));
+        TextView wordmark=text("STARTUP",24,true); wordmark.setTextColor(FocusChrome.accentColor(getContext()));
+        rail.addView(wordmark); space(rail,18);
+        String[] labels={"Overview","Packages","Boot Clean","Background","Restore"};
         Runnable[] actions={callbacks::onOpenOverview,
             ()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.DISABLE),
             ()->callbacks.onOpenPackages(StartupManagerUiModel.Mode.BOOT_CLEAN),
@@ -68,15 +68,14 @@ public final class ShieldStartupManagerView extends LinearLayout {
         for(int i=0;i<labels.length;i++) {
             TextView item=button(labels[i],"startup:nav:"+i,actions[i]); item.setTextSize(14);
             if(i==selected) item.setTextColor(FocusChrome.accentColor(getContext()));
-            item.setSingleLine(true); item.setMinHeight(dp(46));
-            rail.addView(item,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)); space(rail,7);
+            item.setSingleLine(true); item.setMinHeight(dp(44));
+            rail.addView(item,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT)); space(rail,6);
             navigation.add(item);
         }
         rail.addView(new View(getContext()),new LayoutParams(1,0,1));
-        rail.addView(caption("Core recovery stays protected.\nEverything else stays visible.",12));
-        addView(new View(getContext()),new LayoutParams(dp(22),1));
+        addView(new View(getContext()),new LayoutParams(dp(26),1));
         body=column(); addView(body,new LayoutParams(0,LayoutParams.MATCH_PARENT,1));
-        body.addView(text(title,29,true)); body.addView(caption(subtitle,14)); space(body,14);
+        body.addView(text(title,28,true)); body.addView(caption(subtitle,14)); space(body,14);
     }
     private void footer(Callbacks callbacks) {
         space(body,8);

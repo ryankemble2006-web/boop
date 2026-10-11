@@ -124,7 +124,7 @@ public final class ShieldHomeView extends LinearLayout {
         setOrientation(VERTICAL);
         setGravity(Gravity.CENTER_VERTICAL);
         setBackgroundColor(Color.BLACK);
-        setPadding(dp(42), dp(28), dp(42), dp(30));
+        setPadding(dp(48), dp(22), dp(48), dp(26));
         setClipChildren(false);
         setClipToPadding(false);
     }
@@ -171,7 +171,7 @@ public final class ShieldHomeView extends LinearLayout {
         }
 
         addView(navRow(callbacks), new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        addSpacer(dp(16));
+        addSpacer(dp(22));
 
         FrameLayout homeStage = new FrameLayout(getContext());
         roomPanelStage = homeStage;
@@ -190,13 +190,15 @@ public final class ShieldHomeView extends LinearLayout {
         nowPlayingView = new ShieldNowPlayingView(getContext());
         heroSlot.addView(nowPlayingView, new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        stageContent.addView(heroSlot, new LayoutParams(LayoutParams.MATCH_PARENT, dp(182)));
+        stageContent.addView(heroSlot, new LayoutParams(LayoutParams.MATCH_PARENT, dp(178)));
         nowPlayingSpacer = new View(getContext());
-        stageContent.addView(nowPlayingSpacer, new LayoutParams(1, dp(16)));
+        stageContent.addView(nowPlayingSpacer, new LayoutParams(1, dp(24)));
         stageContent.addView(appRow(safeFavourites, callbacks), new LayoutParams(
                 LayoutParams.MATCH_PARENT, dp(215)));
 
         if (serenEnabled) {
+            View beforeNextUp = new View(getContext());
+            stageContent.addView(beforeNextUp, new LayoutParams(1, dp(26)));
             serenView = new SerenNextUpView(getContext());
             stageContent.addView(serenView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
             setSeren(serenEpisodes, serenStatus, serenPosters);
@@ -206,10 +208,10 @@ public final class ShieldHomeView extends LinearLayout {
             if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
             roomPanelHasOptionalRows = true;
             View beforeTitle = new View(getContext());
-            stageContent.addView(beforeTitle, new LayoutParams(1, dp(16)));
+            stageContent.addView(beforeTitle, new LayoutParams(1, dp(28)));
             stageContent.addView(sectionTitle(row.title()), wrap());
             View beforeCards = new View(getContext());
-            stageContent.addView(beforeCards, new LayoutParams(1, dp(16)));
+            stageContent.addView(beforeCards, new LayoutParams(1, dp(10)));
             stageContent.addView(contentRow(row.cards(), callbacks), new LayoutParams(
                     LayoutParams.MATCH_PARENT, dp(150)));
         }
