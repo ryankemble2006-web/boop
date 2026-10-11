@@ -612,7 +612,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
                 View child = getChildAt(i);
                 if (child.getVisibility() == GONE) continue;
                 Rect bounds = ink(child);
-                float nudge = (child == subtitle) ? -8f : (child == progress) ? -4f : 0f;
+                float nudge = (child instanceof ProgressBar) ? -4f : ((child instanceof TextView) && !(child instanceof SerenMarqueeTextView)) ? -8f : 0f;
                 int y = Math.round(cursor + nudge - bounds.top);
                 // MATCH_PARENT marquee text can measure wider than its column.
                 // Its actual viewport must share the progress and control right edge.
