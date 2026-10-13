@@ -110,7 +110,6 @@ public final class ShieldLyricsView extends FrameLayout {
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setIncludeFontPadding(false);
         title.setSingleLine(true);
-        title.setHorizontallyScrolling(true);
         title.setSelected(true);
         title.setRepeatScroll(false);
         addView(title);
