@@ -43,9 +43,6 @@ public final class ShieldLyricsView extends FrameLayout {
     private final PositionBar progress;
     private final DeezerFavouriteButton removeHeart, addHeart;
     private NowPlayingSnapshot snapshot;
-    private String retainedTitle = "";
-    private long retainedTitleSession = Long.MIN_VALUE;
-    private String retainedTitlePackage = "", retainedTitleArtist = "", retainedTitleAlbum = "";
     private boolean clockKnown;
     private boolean running;
     private boolean posted;
@@ -274,7 +271,8 @@ public final class ShieldLyricsView extends FrameLayout {
                 || Math.abs(snapshot.estimatedPositionMs(now) - next.estimatedPositionMs(now)) > 1500L) snapClock = true;
         if(snapshot == null || next == null || snapshot.sessionId()!=next.sessionId()
                 || !snapshot.trackKey().equals(next.trackKey())) spectrumMode.newTrack();
-        String displayTitle = titleForSnapshot(next);
+        String nextTitle = next == null || next.title().isEmpty() ? "Now Playing" : next.title();
+        boolean titleChanged = !TextUtils.equals(title.getText(), nextTitle);
         snapshot = next;
         spectrum.setSnapshot(next);
         boolean canFlow = next != null && "deezer.android.app".equals(next.packageName())
@@ -301,10 +299,11 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setClickable(albumAvailable);
         artwork.setContentDescription(next != null && "deezer.android.app".equals(next.packageName())
                 ? "Browse album in Deezer" : "Open source player");
-        title.showText(displayTitle);
-        title.setContentDescription(displayTitle);
+        title.showText(nextTitle);
+        title.setContentDescription(nextTitle);
+        if (titleChanged) title.getParent().requestLayout();
         setLabelIfChanged(artist, next == null ? "" : next.subtitle());
-        boolean artistAvailable = next != null && !next.subtitle().isEmpty() && !retainedTitle.isEmpty();
+        boolean artistAvailable = next != null && !next.subtitle().isEmpty() && !next.title().isEmpty();
         artist.setEnabled(artistAvailable);
         artist.setFocusable(artistAvailable);
         artist.setClickable(artistAvailable);
@@ -606,27 +605,6 @@ size(elapsed, 12); size(duration, 12);
         if (!TextUtils.equals(label.getText(), value)) label.setText(value);
     }
 
-    private String titleForSnapshot(NowPlayingSnapshot next) {
-        if (next == null) {
-            retainedTitle = "";
-            retainedTitleSession = Long.MIN_VALUE;
-            retainedTitlePackage = retainedTitleArtist = retainedTitleAlbum = "";
-            return "Now Playing";
-        }
-        boolean sourceChanged = retainedTitleSession != next.sessionId()
-                || !TextUtils.equals(retainedTitlePackage, next.packageName());
-        boolean artistChanged = !retainedTitleArtist.isEmpty() && !next.subtitle().isEmpty()
-                && !TextUtils.equals(retainedTitleArtist, next.subtitle());
-        boolean albumChanged = !retainedTitleAlbum.isEmpty() && !next.album().isEmpty()
-                && !TextUtils.equals(retainedTitleAlbum, next.album());
-        if (sourceChanged || artistChanged || albumChanged) retainedTitle = "";
-        retainedTitleSession = next.sessionId();
-        retainedTitlePackage = next.packageName();
-        if (!next.subtitle().isEmpty()) retainedTitleArtist = next.subtitle();
-        if (!next.album().isEmpty()) retainedTitleAlbum = next.album();
-        if (!next.title().isEmpty()) retainedTitle = next.title();
-        return retainedTitle.isEmpty() ? "Now Playing" : retainedTitle;
-    }
     private void size(TextView text, float pixels) {
         float scale = getResources().getDisplayMetrics().scaledDensity / getResources().getDisplayMetrics().density;
         text.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixels * unit * Math.min(1.4f, Math.max(1f, scale)));
