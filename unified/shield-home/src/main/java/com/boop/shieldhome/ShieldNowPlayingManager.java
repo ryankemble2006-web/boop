@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaDescription;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -657,17 +658,19 @@ public final class ShieldNowPlayingManager {
         float speed = playback == null ? 0f : playback.getPlaybackSpeed();
         long updateTime = playback == null ? 0L : playback.getLastPositionUpdateTime();
 
-        String title = metadataText(metadata, MediaMetadata.METADATA_KEY_TITLE);
-        if (title.isEmpty()) {
-            title = metadataText(metadata, MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
-        }
-        String subtitle = metadataText(metadata, MediaMetadata.METADATA_KEY_ARTIST);
-        if (subtitle.isEmpty()) {
-            subtitle = metadataText(metadata, MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE);
-        }
-        if (subtitle.isEmpty()) {
-            subtitle = metadataText(metadata, MediaMetadata.METADATA_KEY_ALBUM_ARTIST);
-        }
+        MediaDescription description = metadata == null ? null : metadata.getDescription();
+        NowPlayingMetadataFields mediaFields = NowPlayingMetadataFields.resolve(
+                metadataText(metadata, MediaMetadata.METADATA_KEY_TITLE),
+                metadataText(metadata, MediaMetadata.METADATA_KEY_DISPLAY_TITLE),
+                metadataText(metadata, MediaMetadata.METADATA_KEY_ARTIST),
+                metadataText(metadata, MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE),
+                metadataText(metadata, MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
+                description == null || description.getTitle() == null
+                        ? "" : description.getTitle().toString(),
+                description == null || description.getSubtitle() == null
+                        ? "" : description.getSubtitle().toString());
+        String title = mediaFields.title();
+        String subtitle = mediaFields.artist();
         long duration = metadata == null ? 0L : metadata.getLong(MediaMetadata.METADATA_KEY_DURATION);
         String packageName = controller.getPackageName();
         Bitmap resolvedArtwork = artworkResolver.resolve(
