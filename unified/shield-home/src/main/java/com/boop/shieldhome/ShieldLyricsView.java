@@ -112,8 +112,8 @@ public final class ShieldLyricsView extends FrameLayout {
         title.setRepeatScroll(false);
         addView(title);
         artist = label("", 18, Color.WHITE, false);
-        title.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-        artist.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        title.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
+        artist.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
         artist.setSingleLine(true);
         artist.setEllipsize(TextUtils.TruncateAt.END);
         artist.setFocusable(true);

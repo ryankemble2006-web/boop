@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.text.Layout;
 import android.view.Choreographer;
+import android.view.Gravity;
 import android.widget.TextView;
 
 /** Public-API marquee with a stable timeline and an exact 5% speed increase. */
@@ -97,11 +98,25 @@ final class SerenMarqueeTextView extends TextView implements Choreographer.Frame
         int left = getCompoundPaddingLeft();
         int width = getWidth() - left - getCompoundPaddingRight();
         float lineWidth = layout.getLineWidth(0);
-        if (lineWidth <= width) { super.onDraw(canvas); return; }
-        float offset = progress.position(lineWidth, width, density);
         getPaint().setColor(getCurrentTextColor());
         int saved = canvas.save();
         canvas.clipRect(left, getCompoundPaddingTop(), left + width, getHeight() - getCompoundPaddingBottom());
+        if (lineWidth <= width) {
+            int gravity = Gravity.getAbsoluteGravity(getGravity(), getLayoutDirection())
+                    & Gravity.HORIZONTAL_GRAVITY_MASK;
+            float textLeft = left;
+            if (gravity == Gravity.CENTER_HORIZONTAL) {
+                textLeft += (width - lineWidth) / 2f;
+            } else if (gravity == Gravity.RIGHT) {
+                textLeft += width - lineWidth;
+            }
+            canvas.translate(textLeft - layout.getLineLeft(0),
+                    getBaseline() - layout.getLineBaseline(0));
+            layout.draw(canvas);
+            canvas.restoreToCount(saved);
+            return;
+        }
+        float offset = progress.position(lineWidth, width, density);
         canvas.translate(left - layout.getLineLeft(0) - offset, getBaseline() - layout.getLineBaseline(0));
         layout.draw(canvas);
         if (lineWidth > width) {
