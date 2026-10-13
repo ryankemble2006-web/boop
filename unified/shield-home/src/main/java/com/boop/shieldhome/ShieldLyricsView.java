@@ -43,6 +43,9 @@ public final class ShieldLyricsView extends FrameLayout {
     private final PositionBar progress;
     private final DeezerFavouriteButton removeHeart, addHeart;
     private NowPlayingSnapshot snapshot;
+    private String retainedTitle = "";
+    private long retainedTitleSession = Long.MIN_VALUE;
+    private String retainedTitlePackage = "", retainedTitleArtist = "", retainedTitleAlbum = "";
     private boolean clockKnown;
     private boolean running;
     private boolean posted;
@@ -112,6 +115,7 @@ public final class ShieldLyricsView extends FrameLayout {
         title.setSingleLine(true);
         title.setHorizontallyScrolling(true);
         title.setSelected(true);
+        title.setRepeatScroll(false);
         addView(title);
         artist = label("", 19, Color.WHITE, false);
         title.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
@@ -270,6 +274,7 @@ public final class ShieldLyricsView extends FrameLayout {
                 || Math.abs(snapshot.estimatedPositionMs(now) - next.estimatedPositionMs(now)) > 1500L) snapClock = true;
         if(snapshot == null || next == null || snapshot.sessionId()!=next.sessionId()
                 || !snapshot.trackKey().equals(next.trackKey())) spectrumMode.newTrack();
+        String displayTitle = titleForSnapshot(next);
         snapshot = next;
         spectrum.setSnapshot(next);
         boolean canFlow = next != null && "deezer.android.app".equals(next.packageName())
@@ -296,9 +301,10 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setClickable(albumAvailable);
         artwork.setContentDescription(next != null && "deezer.android.app".equals(next.packageName())
                 ? "Browse album in Deezer" : "Open source player");
-        title.showText(next == null ? "Now Playing" : next.title());
+        title.showText(displayTitle);
+        title.setContentDescription(displayTitle);
         setLabelIfChanged(artist, next == null ? "" : next.subtitle());
-        boolean artistAvailable = next != null && !next.subtitle().isEmpty() && !next.title().isEmpty();
+        boolean artistAvailable = next != null && !next.subtitle().isEmpty() && !retainedTitle.isEmpty();
         artist.setEnabled(artistAvailable);
         artist.setFocusable(artistAvailable);
         artist.setClickable(artistAvailable);
@@ -411,7 +417,7 @@ public final class ShieldLyricsView extends FrameLayout {
         }
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         alignMusicControls();
-        centerMusicColumn();
+        layoutMusicColumn();
     }
     /** Optical centres and edge gaps keep the controls balanced around the fixed pause. */
     private void alignMusicControls() {
@@ -446,16 +452,100 @@ public final class ShieldLyricsView extends FrameLayout {
         super.onLayout(changed, left, top, right, bottom);
         lyrics.setHighlightCenterY(artwork.getBottom() + artwork.getTranslationY());
     }
-    /** Centre visible artwork-to-microphone pixels, rather than the icon touch target. */
-    private void centerMusicColumn() {
-        FrameLayout.LayoutParams art = (FrameLayout.LayoutParams)artwork.getLayoutParams();
-        FrameLayout.LayoutParams mic = (FrameLayout.LayoutParams)lyricsModeButton.getLayoutParams();
-        float bottom = mic.topMargin + lyricsModeButton.inkBounds().bottom;
-        float shift = (getMeasuredHeight() - art.topMargin - bottom) / 2f;
-        for (View item : new View[]{artwork, title, artist, progress, elapsed, duration,
-                removeHeart, addHeart, queueButton, lookupButton, lyricsModeButton, spectrumModeButton, flowButton})
-            item.setTranslationY(shift);
-        for (PrecisionIcons.Control button : buttons) button.setTranslationY(shift);
+    /** Distribute equal black gaps around the visible pixels of each now-playing group. */
+    private void layoutMusicColumn() {
+        float artHeight = artwork.getMeasuredHeight();
+        float[] artistInk = textInk(artist);
+        float[] titleInk = textInk(title);
+        float[] progressInk = progressInk();
+        float[] transportInk = iconInk(removeHeart, buttons[0], buttons[1], buttons[2], addHeart);
+        float[] lowerInk = iconInk(queueButton, lookupButton, lyricsModeButton,
+                spectrumModeButton, flowButton);
+        float[] heights = {artHeight, artistInk[1] - artistInk[0], titleInk[1] - titleInk[0],
+                progressInk[1] - progressInk[0], transportInk[1] - transportInk[0],
+                lowerInk[1] - lowerInk[0]};
+        float contentHeight = 0f;
+        for (float height : heights) contentHeight += height;
+        float gap = Math.max(0f, (getMeasuredHeight() - contentHeight) / 7f);
+
+        float targetTop = gap;
+        setTranslation(artwork, targetTop - topMargin(artwork));
+        targetTop += artHeight + gap;
+        setTranslation(artist, targetTop - topMargin(artist) - artistInk[0]);
+        targetTop += heights[1] + gap;
+        setTranslation(title, targetTop - topMargin(title) - titleInk[0]);
+        targetTop += heights[2] + gap;
+        float progressShift = targetTop - progressInk[0];
+        for (View item : new View[]{progress, elapsed, duration}) item.setTranslationY(progressShift);
+        targetTop += heights[3] + gap;
+        translateGroup(new View[]{removeHeart, buttons[0], buttons[1], buttons[2], addHeart},
+                targetTop, transportInk[0]);
+        targetTop += heights[4] + gap;
+        translateGroup(new View[]{queueButton, lookupButton, lyricsModeButton,
+                spectrumModeButton, flowButton}, targetTop, lowerInk[0]);
+    }
+
+    private float[] textInk(TextView view) {
+        CharSequence value = view.getText();
+        if (TextUtils.isEmpty(value)) return new float[]{0f, 0f};
+        android.graphics.Rect bounds = new android.graphics.Rect();
+        String text = value.toString();
+        view.getPaint().getTextBounds(text, 0, text.length(), bounds);
+        int baseline = view.getBaseline();
+        if (bounds.isEmpty()) {
+            android.graphics.Paint.FontMetricsInt metrics = view.getPaint().getFontMetricsInt();
+            bounds.set(0, metrics.top, 0, metrics.bottom);
+        }
+        return new float[]{baseline + bounds.top, baseline + bounds.bottom};
+    }
+
+    private float[] progressInk() {
+        float top = topMargin(progress);
+        float halfStroke = (progress.hasFocus() ? 4f : 2f) * unit * .5f;
+        float center = top + progress.getMeasuredHeight() * .5f;
+        float bottom = center + halfStroke;
+        top = center - halfStroke;
+        if (!TextUtils.isEmpty(elapsed.getText())) {
+            float[] elapsedInk = textInk(elapsed);
+            top = Math.min(top, topMargin(elapsed) + elapsedInk[0]);
+            bottom = Math.max(bottom, topMargin(elapsed) + elapsedInk[1]);
+        }
+        if (!TextUtils.isEmpty(duration.getText())) {
+            float[] durationInk = textInk(duration);
+            top = Math.min(top, topMargin(duration) + durationInk[0]);
+            bottom = Math.max(bottom, topMargin(duration) + durationInk[1]);
+        }
+        return new float[]{top, bottom};
+    }
+
+    private float[] iconInk(View... views) {
+        float top = Float.MAX_VALUE;
+        float bottom = Float.MIN_VALUE;
+        for (View view : views) {
+            if (view.getVisibility() != VISIBLE) continue;
+            android.graphics.Rect ink;
+            if (view instanceof PrecisionIcons.Control) ink = ((PrecisionIcons.Control) view).inkBounds();
+            else if (view instanceof DeezerFavouriteButton) ink = ((DeezerFavouriteButton) view).inkBounds();
+            else ink = new android.graphics.Rect(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+            if (ink.isEmpty()) continue;
+            top = Math.min(top, topMargin(view) + ink.top);
+            bottom = Math.max(bottom, topMargin(view) + ink.bottom);
+        }
+        if (top == Float.MAX_VALUE) return new float[]{0f, 0f};
+        return new float[]{top, bottom};
+    }
+
+    private float topMargin(View view) {
+        return ((FrameLayout.LayoutParams) view.getLayoutParams()).topMargin;
+    }
+
+    private void setTranslation(View view, float translation) {
+        view.setTranslationY(translation);
+    }
+
+    private void translateGroup(View[] views, float targetTop, float currentTop) {
+        float shift = targetTop - currentTop;
+        for (View view : views) view.setTranslationY(shift);
     }
     private void measureGeometry(int w, int h) {
         unit = Math.min(w / 1280f, h / 720f);
@@ -466,31 +556,44 @@ public final class ShieldLyricsView extends FrameLayout {
         float artLeft = progressCenter - artSize * 0.5f;
         float transportSpan = (3f * 54f + 2f * 17f) * unit;
         float transportLeft = progressCenter - transportSpan * 0.5f;
-        place(artwork, artLeft, 116f * unit, artSize, artSize);
-        place(title, left, 448f * unit, progressWidth, 42f * unit);
-        place(artist, left, 520f * unit, progressWidth, 35f * unit);
+        float artistHeight = 35f * unit;
+        float titleHeight = 42f * unit;
+        float progressAndTimeHeight = 42f * unit;
+        float transportHeight = 54f * unit;
+        float lowerControlsHeight = 54f * unit;
+        float gap = Math.max(0f, (h - artSize - artistHeight - titleHeight
+                - progressAndTimeHeight - transportHeight - lowerControlsHeight) / 7f);
+        float artTop = gap;
+        float artistTop = artTop + artSize + gap;
+        float titleTop = artistTop + artistHeight + gap;
+        float progressTop = titleTop + titleHeight + gap;
+        float transportTop = progressTop + progressAndTimeHeight + gap;
+        float lowerControlsTop = transportTop + transportHeight + gap;
+        place(artwork, artLeft, artTop, artSize, artSize);
+        place(artist, left, artistTop, progressWidth, artistHeight);
+        place(title, left, titleTop, progressWidth, titleHeight);
         float lyricsX = 590f * unit;
         place(lyrics, lyricsX, 52f * unit, w - lyricsX - 66f * unit, 550f * unit);
         float spectrumWidth = w - lyricsX - 66f * unit;
         // Mirrored visible bars are symmetric about this screen-centred axis at every level.
         place(spectrum, lyricsX, (h - 270f * unit) * .5f, spectrumWidth, 270f * unit);
         place(status, lyricsX, 180f * unit, w - lyricsX - 85f * unit, 260f * unit);
-        place(progress, left, 583f * unit, progressWidth, 18f * unit);
-        place(elapsed, left, 601f * unit, 80f * unit, 24f * unit);
-        place(duration, left + 317f * unit, 601f * unit, 80f * unit, 24f * unit);
+        place(progress, left, progressTop, progressWidth, 18f * unit);
+        place(elapsed, left, progressTop + 18f * unit, 80f * unit, 24f * unit);
+        place(duration, left + 317f * unit, progressTop + 18f * unit, 80f * unit, 24f * unit);
         for (int i = 0; i < buttons.length; i++)
-            place(buttons[i], transportLeft + i * 71f * unit, 632f * unit, 54f * unit, 54f * unit);
+            place(buttons[i], transportLeft + i * 71f * unit, transportTop, 54f * unit, 54f * unit);
         // Hearts flank the accepted transport geometry; none of the original three moves.
-        place(removeHeart, transportLeft - 71f * unit, 632f * unit, 54f * unit, 54f * unit);
-        place(addHeart, transportLeft + 213f * unit, 632f * unit, 54f * unit, 54f * unit);
+        place(removeHeart, transportLeft - 71f * unit, transportTop, 54f * unit, 54f * unit);
+        place(addHeart, transportLeft + 213f * unit, transportTop, 54f * unit, 54f * unit);
         size(title, 28); size(artist, 19); size(status, 24);
 size(elapsed, 12); size(duration, 12);
-        place(queueButton, transportLeft - 71f * unit, 703f * unit, 54f * unit, 54f * unit);
-        place(lookupButton, transportLeft, 703f * unit, 54f * unit, 54f * unit);
-        place(lyricsModeButton, transportLeft + 71f * unit, 703f * unit, 54f * unit, 54f * unit);
-        place(spectrumModeButton, transportLeft + 142f * unit, 703f * unit, 54f * unit, 54f * unit);
+        place(queueButton, transportLeft - 71f * unit, lowerControlsTop, 54f * unit, 54f * unit);
+        place(lookupButton, transportLeft, lowerControlsTop, 54f * unit, 54f * unit);
+        place(lyricsModeButton, transportLeft + 71f * unit, lowerControlsTop, 54f * unit, 54f * unit);
+        place(spectrumModeButton, transportLeft + 142f * unit, lowerControlsTop, 54f * unit, 54f * unit);
 
-        place(flowButton, transportLeft + 213f * unit, 703f * unit, 54f * unit, 54f * unit);
+        place(flowButton, transportLeft + 213f * unit, lowerControlsTop, 54f * unit, 54f * unit);
 
         artwork.invalidate();
     }
@@ -501,6 +604,28 @@ size(elapsed, 12); size(duration, 12);
     }
     private static void setLabelIfChanged(TextView label, String value) {
         if (!TextUtils.equals(label.getText(), value)) label.setText(value);
+    }
+
+    private String titleForSnapshot(NowPlayingSnapshot next) {
+        if (next == null) {
+            retainedTitle = "";
+            retainedTitleSession = Long.MIN_VALUE;
+            retainedTitlePackage = retainedTitleArtist = retainedTitleAlbum = "";
+            return "Now Playing";
+        }
+        boolean sourceChanged = retainedTitleSession != next.sessionId()
+                || !TextUtils.equals(retainedTitlePackage, next.packageName());
+        boolean artistChanged = !retainedTitleArtist.isEmpty() && !next.subtitle().isEmpty()
+                && !TextUtils.equals(retainedTitleArtist, next.subtitle());
+        boolean albumChanged = !retainedTitleAlbum.isEmpty() && !next.album().isEmpty()
+                && !TextUtils.equals(retainedTitleAlbum, next.album());
+        if (sourceChanged || artistChanged || albumChanged) retainedTitle = "";
+        retainedTitleSession = next.sessionId();
+        retainedTitlePackage = next.packageName();
+        if (!next.subtitle().isEmpty()) retainedTitleArtist = next.subtitle();
+        if (!next.album().isEmpty()) retainedTitleAlbum = next.album();
+        if (!next.title().isEmpty()) retainedTitle = next.title();
+        return retainedTitle.isEmpty() ? "Now Playing" : retainedTitle;
     }
     private void size(TextView text, float pixels) {
         float scale = getResources().getDisplayMetrics().scaledDensity / getResources().getDisplayMetrics().density;

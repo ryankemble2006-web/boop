@@ -24,10 +24,15 @@ final class SerenMarqueeTextView extends TextView implements Choreographer.Frame
     @Override public void scrollTo(int x, int y) { super.scrollTo(0, y); }
 
     void showText(String value) {
-        if (!progress.setText(value)) return;
-        setText(value);
+        boolean changed = progress.setText(value);
+        if (!android.text.TextUtils.equals(getText(), value)) setText(value);
         invalidate();
-        scheduleFrame();
+        if (changed) scheduleFrame();
+    }
+
+    void setRepeatScroll(boolean repeat) {
+        progress.setRepeat(repeat);
+        updateAnimation();
     }
 
     @Override public void setSelected(boolean selected) {
@@ -55,7 +60,9 @@ final class SerenMarqueeTextView extends TextView implements Choreographer.Frame
     private boolean shouldScroll() {
         Layout layout = getLayout();
         return isAttachedToWindow() && visible && isSelected() && layout != null
-                && layout.getLineWidth(0) > getWidth() - getCompoundPaddingLeft() - getCompoundPaddingRight();
+                && layout.getLineWidth(0) > getWidth() - getCompoundPaddingLeft() - getCompoundPaddingRight()
+                && !progress.isComplete(layout.getLineWidth(0),
+                        getWidth() - getCompoundPaddingLeft() - getCompoundPaddingRight(), density);
     }
 
     private void updateAnimation() {
