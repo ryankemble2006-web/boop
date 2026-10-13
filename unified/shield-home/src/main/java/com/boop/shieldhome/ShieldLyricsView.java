@@ -105,20 +105,15 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setClipToOutline(false);
         addView(artwork);
         title = new SerenMarqueeTextView(context);
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 29);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24);
         title.setTextColor(Color.WHITE);
-        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setIncludeFontPadding(false);
-        title.setSingleLine(true);
-        // The custom marquee scrolls on its own; Android's horizontal layout
-        // offset breaks the centered single-line title when the text is short.
-        title.setHorizontallyScrolling(false);
         title.setSelected(true);
         title.setRepeatScroll(false);
         addView(title);
-        artist = label("", 19, Color.WHITE, false);
-        title.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
-        artist.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
+        artist = label("", 18, Color.WHITE, false);
+        title.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+        artist.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         artist.setSingleLine(true);
         artist.setEllipsize(TextUtils.TruncateAt.END);
         artist.setFocusable(true);
