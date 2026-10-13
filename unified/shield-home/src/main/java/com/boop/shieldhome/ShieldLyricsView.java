@@ -110,6 +110,9 @@ public final class ShieldLyricsView extends FrameLayout {
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setIncludeFontPadding(false);
         title.setSingleLine(true);
+        // The custom marquee scrolls on its own; Android's horizontal layout
+        // offset breaks the centered single-line title when the text is short.
+        title.setHorizontallyScrolling(false);
         title.setSelected(true);
         title.setRepeatScroll(false);
         addView(title);
