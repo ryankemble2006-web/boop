@@ -32,6 +32,7 @@ final class SerenMarqueeState {
         double pixelsPerMs = SPEED_DP_PER_SECOND * density / 1000d;
         if (!repeat) {
             double distance = lineWidth - viewportWidth;
+            if (elapsedMs * pixelsPerMs >= distance) return 0;
             return (float) Math.min(distance, elapsedMs * pixelsPerMs);
         }
         // Same one-third-viewport gap and 1200ms repeat pause as Android's marquee.
