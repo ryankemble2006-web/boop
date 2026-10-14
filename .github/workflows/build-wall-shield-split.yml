@@ -191,7 +191,8 @@ jobs:
           TEST_OUTCOME: ${{ steps.unit-tests.outcome }}
         run: |
           if [[ "$TEST_OUTCOME" != "success" ]]; then
-            echo "::warning::Some Android unit tests failed; proceeding with signed APK."
+            echo "::error::Android unit tests failed; blocking Shield release."
+            exit 1
           fi
 
       - name: Remove temporary signing material
