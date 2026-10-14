@@ -110,22 +110,48 @@ public final class DeezerHeartBridge {
         if(displayId<=0 || !((ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE))
                 .isActivityStartAllowedOnDisplay(context,displayId,intent))throw new IOException("No offscreen launch");
         stage="launch";run("am","start","--display",String.valueOf(displayId),"-f","0x18000000","-n",COMPONENT);
-        Thread.sleep(850);checkOwner();
+        checkOwner();
         stage="accessibility";openUi();
-        stage="navigation";List<AccessibilityNodeInfo> nodes=scan();
+        stage="navigation";
+        AccessibilityNodeInfo now=null;
+        long navDeadline=SystemClock.elapsedRealtime()+4000;
+        while(SystemClock.elapsedRealtime()<navDeadline && now==null) {
+            checkOwner();
+            List<AccessibilityNodeInfo> nodes=scan();
+            try {
+                boolean home=false,search=false,favourites=false;Rect b=new Rect();
+                for(AccessibilityNodeInfo n:nodes){if(!usable(n))continue;n.getBoundsInScreen(b);
+                    home|=b.equals(new Rect(16,16,72,72));search|=b.equals(new Rect(16,76,72,132));
+                    favourites|=b.equals(new Rect(16,136,72,192));
+                    if(b.equals(new Rect(16,580,72,644))){if(now!=null)throw new IOException("Ambiguous player entry");now=n;}}
+                if(now!=null && (home||search||favourites)) break;
+            } finally {
+                if(now==null) recycle(nodes);
+            }
+            Thread.sleep(150);
+        }
+        if(now==null)throw new IOException("Navigation changed");
+        checkTrack();if(!now.performAction(AccessibilityNodeInfo.ACTION_CLICK))throw new IOException("Player unavailable");
+        stage="heart-read";
+        List<AccessibilityNodeInfo> nodes=null;
+        AccessibilityNodeInfo heart=null;
+        long heartDeadline=SystemClock.elapsedRealtime()+4000;
+        while(SystemClock.elapsedRealtime()<heartDeadline && heart==null) {
+            checkOwner();
+            nodes=scan();
+            try {
+                heart=selectHeart(nodes,false);
+            } catch(IOException notReadyYet) {
+                recycle(nodes);
+                nodes=null;
+                heart=null;
+            }
+            if(heart!=null) break;
+            Thread.sleep(150);
+        }
+        if(heart==null||nodes==null)throw new IOException("Player UI not ready");
         try {
-            // Version-pinned nav rail: identify its geometry and one NOW PLAYING entry, never tap coordinates.
-            AccessibilityNodeInfo now=null;boolean home=false,search=false,favourites=false;Rect b=new Rect();
-            for(AccessibilityNodeInfo n:nodes){if(!usable(n))continue;n.getBoundsInScreen(b);
-                home|=b.equals(new Rect(16,16,72,72));search|=b.equals(new Rect(16,76,72,132));
-                favourites|=b.equals(new Rect(16,136,72,192));
-                if(b.equals(new Rect(16,580,72,644))){if(now!=null)throw new IOException("Ambiguous player entry");now=n;}}
-            if(!home||!search||!favourites||now==null)throw new IOException("Navigation changed");
-            checkTrack();if(!now.performAction(AccessibilityNodeInfo.ACTION_CLICK))throw new IOException("Player unavailable");
-        }finally{recycle(nodes);}
-        Thread.sleep(600);nodes=scan();
-        try {
-            stage="heart-read";AccessibilityNodeInfo heart=selectHeart(nodes,false);int saved=state(heart);
+            int saved=state(heart);
             if(saved<0)throw new IOException("Unknown native heart");
             checkOwner();checkTrack();
             if("read".equals(operation)){end("OK",saved);return;}

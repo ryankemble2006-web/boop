@@ -1,0 +1,12 @@
+plugins { id 'com.android.application' }
+apply from: rootProject.file('split-app-shell.gradle')
+android {
+    namespace 'com.boop.shieldapp'
+    defaultConfig {
+        applicationId 'com.boop.shieldoverlay'
+        versionCode 348
+        versionName '1.2.348-shield'
+    }
+    buildTypes { debug { signingConfig signingConfigs.boopDev } }
+}
+dependencies { implementation project(':assistant-lib') }
