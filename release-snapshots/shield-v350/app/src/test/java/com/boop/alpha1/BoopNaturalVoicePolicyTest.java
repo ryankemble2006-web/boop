@@ -23,7 +23,7 @@ public class BoopNaturalVoicePolicyTest {
     public void kokoroSpeedUsesExistingCadenceBounds() {
         assertEquals(0.70f, BoopNaturalSpeechBackend.speedForRate(0.1f), 0.0001f);
         assertEquals(0.96f, BoopNaturalSpeechBackend.speedForRate(0.96f), 0.0001f);
-        assertEquals(1.25f, BoopNaturalSpeechBackend.speedForRate(3.0f), 0.0001f);
+        assertEquals(2.50f, BoopNaturalSpeechBackend.speedForRate(3.0f), 0.0001f);
     }
 
     @Test

@@ -18,7 +18,7 @@ public class DeezerNativeTest {
         DeezerCatalogue.Selection s=DeezerCatalogue.resolve((url,token,body)->{
             assertNull(token); assertNull(body);
             if(url.contains("search/artist")) return "{\"data\":[]}";
-            if(url.contains("search/track")) return "{\"data\":[{\"id\":7,\"title\":\"Bohemian Rhapsody\",\"artist\":{\"name\":\"Queen\"},\"album\":{\"id\":9}},{\"id\":8,\"title\":\"Don't Stop Me Now\",\"artist\":{\"id\":279863,\"name\":\"Bohemian Rhapsody\"}}]}";
+            if(url.contains("search/track")) return "{\"data\":[{\"id\":7,\"title\":\"Bohemian Rhapsody\",\"artist\":{\"id\":412,\"name\":\"Queen\"},\"album\":{\"id\":9}},{\"id\":8,\"title\":\"Don't Stop Me Now\",\"artist\":{\"id\":279863,\"name\":\"Bohemian Rhapsody\"}}]}";
             throw new AssertionError("No album browsing required");
         },MediaRequest.parse("play Bohemian Rhapsody"));
         assertNotNull(s); assertEquals("https://www.deezer.com/track/7",s.url); assertEquals("Bohemian Rhapsody by Queen",s.name);
@@ -28,14 +28,21 @@ public class DeezerNativeTest {
     }
     @Test public void rankedTrackArtistDisambiguatesDuplicateArtistNames() throws Exception {
         DeezerCatalogue.Selection s=DeezerCatalogue.resolve((u,t,b)->u.contains("search/artist")
-            ? "{\"data\":[{\"id\":1,\"name\":\"Queen\"},{\"id\":2,\"name\":\"Queen\"}]}"
-            : "{\"data\":[{\"id\":7,\"title\":\"Bohemian Rhapsody\",\"artist\":{\"id\":412,\"name\":\"Queen\"}}]}",MediaRequest.parse("play Queen"));
+            ? "{\"data\":[{\"id\":412,\"name\":\"Queen\"},{\"id\":2,\"name\":\"Queen\"}]}"
+            : "{\"data\":[{\"id\":7,\"title\":\"Bohemian Rhapsody\",\"artist\":{\"id\":412,\"name\":\"Queen\"}},{\"id\":8,\"title\":\"Don't Stop Me Now\",\"artist\":{\"id\":412,\"name\":\"Queen\"}}]}",MediaRequest.parse("play Queen"));
         assertEquals("https://www.deezer.com/artist/412",s.url);
     }
     @Test public void artistNameWinsEvenWhenNamesakeSongRanksFirst() throws Exception {
         DeezerCatalogue.Selection selected=lennon("play John Lennon");
-        assertEquals("https://www.deezer.com/artist/226",selected.url);
-        assertFalse(selected.track);
+        assertTrue(selected.ambiguous());
+        assertEquals("Do you mean the artist John Lennon, or the song?", selected.question);
+        DeezerCatalogue.Selection answered=DeezerCatalogue.answer(selected, "the artist");
+        assertNotNull(answered);
+        assertEquals("https://www.deezer.com/artist/226", answered.url);
+        assertFalse(answered.track);
+        DeezerCatalogue.Selection explicit=lennon("play artist John Lennon");
+        assertEquals("https://www.deezer.com/artist/226", explicit.url);
+        assertFalse(explicit.track);
     }
     @Test public void explicitPerformerStillSelectsNamesakeSong() throws Exception {
         assertEquals("https://www.deezer.com/track/112736672",lennon("play John Lennon by SCH").url);
