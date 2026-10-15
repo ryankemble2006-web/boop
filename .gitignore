@@ -20,3 +20,6 @@ local.properties
 
 # Reproducible Android materialization and local outputs.
 /boop-build/
+BOOP-Shield-*-signed/
+BOOP-Shield-*-unit-test-reports/
+dist/

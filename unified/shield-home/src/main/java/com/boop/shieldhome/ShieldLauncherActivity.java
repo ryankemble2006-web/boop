@@ -15,6 +15,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +25,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.FrameLayout;
 
@@ -102,6 +105,9 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        getWindow().setFormat(PixelFormat.OPAQUE);
+        getWindow().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         if (state != null) {
             homeReturnFocus = state.getString("home_return_focus");
             settingsReturnFocus = state.getString("settings_return_focus");
@@ -168,6 +174,7 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        restoreOpaqueWindow();
         if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         if (queueDialog != null) queueDialog.dismiss();
         if (intent != null && ACTION_OPEN_SHIELD_SETTINGS.equals(intent.getAction())) {
@@ -185,11 +192,38 @@ public final class ShieldLauncherActivity extends Activity {
         }
     }
 
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            restoreOpaqueWindow();
+        }
+    }
+
+    private void restoreOpaqueWindow() {
+        try {
+            java.lang.reflect.Method convert = Activity.class.getDeclaredMethod("convertFromTranslucent");
+            convert.setAccessible(true);
+            convert.invoke(this);
+        } catch (Throwable ignored) {
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                java.lang.reflect.Field field = Activity.class.getDeclaredField("mTranslucent");
+                field.setAccessible(true);
+                field.setBoolean(this, true);
+                setTranslucent(false);
+            } catch (Throwable t) {
+                try {
+                    setTranslucent(false);
+                } catch (Throwable ignored) {}
+            }
+        }
+        overridePendingTransition(0, 0);
+    }
+
     @Override protected void onResume() {
         super.onResume();
-        // TV Recents temporarily makes the launcher translucent for its return animation.
-        // Force-closing its final task can leave that conversion in place, retaining its scrim.
-        if (android.os.Build.VERSION.SDK_INT >= 30) setTranslucent(false);
+        restoreOpaqueWindow();
         resumed = true;
         AudioModeController.get(this).clearForegroundLaunch();
         com.boop.shared.BoopState.INSTANCE.homeVisible(currentPage == Page.HOME);

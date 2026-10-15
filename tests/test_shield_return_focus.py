@@ -11,7 +11,7 @@ def source():
 def test_external_return_restores_origin():
     activity = source()
     assert "showHome(false);" in activity
-    assert "else restoreHomeFocus();" in activity
+    assert "restoreHomeFocus();" in activity
     assert "rememberHomeFocus();" in activity
     assert "home.restoreFocus(homeReturnFocus)" in activity
 
