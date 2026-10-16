@@ -6,21 +6,11 @@ as downloadable artifacts after tests and build verification complete.
 
 - Package: `com.boop.shieldoverlay`
 - Version: `1.2.365-shield` (`versionCode 365`)
-- Unclipped Tile Focus Borders & Symmetrical Scroll Clearance:
-  - Overrode `computeScrollDeltaToGetChildRectOnScreen` on `HorizontalScrollView` in `ShieldRoomPanelView` to apply a persistent `16dp` horizontal breathing room inset (`target.inset(-dp(16), 0)`), preventing Android's default scroll calculation from docking boundary tiles flush against viewport clipping boundaries.
-  - Configured `scroller` padding to `dp(16)` horizontal and `dp(6)` vertical with `setClipToPadding(false)` and `setClipChildren(true)` to keep carousel tiles strictly inside viewport while allowing the 1.03x scale and retro orange focus stroke to expand cleanly into padding without edge truncation.
-  - Sized all carousel tiles equally via `RoomPanelLayout.tileWidth` across the padded viewport width, configured equal `12dp` internal inter-tile gaps, and set `16dp` trailing rightMargin on the last tile child.
-  - Maintained boundary D-pad stop clamps and unclipped bottom vertical card gutter.
-- Visual verification: tested live over ADB on NVIDIA Shield TV Pro.
-
-## Living Room carousel layout refinement
-
-The following follow-up keeps the v365 package and version identifiers above.
-The original visual-verification line describes the initial v365 build; use the
-GitHub Actions artifact for signing and build evidence for this refinement.
-
-- Uses one `8dp` leading and trailing gutter for focus clearance, with a single
-  matching `8dp` focus-scroll rectangle expansion.
-- Keeps `12dp` between tiles and removes the extra trailing margin after the
-  last tile, so the two edge gutters are equal.
-- Doubles the focused Living Room tile outline from `2dp` to `4dp`.
+- Living Room carousel edge layout:
+  - Extends the horizontal scroller across the panel's `18dp` side insets while
+    keeping the panel itself as the clipping boundary.
+  - Places real `16dp` leading and trailing gutters in the measured row content,
+    with `16dp` between each tile to match the widgets above.
+  - Expands focus-scroll rectangles by `16dp` so the first and last tiles retain
+    their edge clearance at the horizontal scroll limits.
+  - Doubles the focused tile outline from `2dp` to `4dp`.

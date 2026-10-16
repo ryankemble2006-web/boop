@@ -26,7 +26,9 @@ import java.util.Map;
 
 /** Native BOOP charcoal panel. Entity identity, focus and scroll survive live state changes. */
 public final class ShieldRoomPanelView extends LinearLayout {
-    private static final int FOCUS_SCROLL_GUTTER_DP = 8;
+    private static final int FOCUS_SCROLL_GUTTER_DP = 16;
+    private static final int TILE_GAP_DP = 16;
+    private static final int PANEL_HORIZONTAL_INSET_DP = 18;
     private static final int FOCUSED_TILE_STROKE_DP = BoopTvChrome.FOCUS_STROKE_DP * 2;
 
     public interface Toggle { void onToggle(long generation, String entityId); }
@@ -48,7 +50,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
         orderStore = new ShieldHomeStore(context);
         setOrientation(VERTICAL);
         setClipChildren(true);
-        setClipToPadding(true);
+        setClipToPadding(false);
         setPadding(dp(18), dp(12), dp(18), dp(12));
         setFocusable(false);
         setBackground(BoopTvChrome.cardSurface(context, 16));
@@ -96,13 +98,17 @@ public final class ShieldRoomPanelView extends LinearLayout {
         scroller.setFillViewport(true);
         scroller.setClipChildren(true);
         scroller.setClipToPadding(false);
-        scroller.setPadding(dp(FOCUS_SCROLL_GUTTER_DP), dp(6), dp(FOCUS_SCROLL_GUTTER_DP), dp(6));
+        scroller.setPadding(0, dp(6), 0, dp(6));
         row = new LinearLayout(context);
         row.setOrientation(HORIZONTAL);
         row.setClipChildren(false);
         row.setClipToPadding(false);
+        row.setPadding(dp(FOCUS_SCROLL_GUTTER_DP), 0, dp(FOCUS_SCROLL_GUTTER_DP), 0);
         scroller.addView(row, new HorizontalScrollView.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
-        addView(scroller, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
+        LayoutParams scrollerParams = new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f);
+        scrollerParams.leftMargin = -dp(PANEL_HORIZONTAL_INSET_DP);
+        scrollerParams.rightMargin = -dp(PANEL_HORIZONTAL_INSET_DP);
+        addView(scroller, scrollerParams);
         notice = text("", 12, BoopTvChrome.TEXT_SECONDARY);
         notice.setMaxLines(2);
         addView(notice, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
@@ -258,13 +264,13 @@ public final class ShieldRoomPanelView extends LinearLayout {
         return (previous == null ? row.getChildAt(0) : previous).requestFocus();
     }
     private void resizeTiles() {
-        int width = scroller.getWidth() - scroller.getPaddingLeft() - scroller.getPaddingRight();
+        int width = scroller.getWidth() - row.getPaddingLeft() - row.getPaddingRight();
         if (width <= 0) return;
-        int size = RoomPanelLayout.tileWidth(width, row.getChildCount(), dp(12), dp(150));
+        int size = RoomPanelLayout.tileWidth(width, row.getChildCount(), dp(TILE_GAP_DP), dp(150));
         for (int i=0; i<row.getChildCount(); i++) {
             View tile = row.getChildAt(i);
             LayoutParams p=(LayoutParams)tile.getLayoutParams();
-            int gap=i+1==row.getChildCount()?0:dp(12);
+            int gap=i+1==row.getChildCount()?0:dp(TILE_GAP_DP);
             if (p.width!=size || p.rightMargin!=gap) { p.width=size; p.rightMargin=gap; tile.setLayoutParams(p); }
         }
         View focus=row.findFocus();
