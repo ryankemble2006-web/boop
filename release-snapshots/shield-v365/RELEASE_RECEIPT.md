@@ -12,3 +12,15 @@ as downloadable artifacts after tests and build verification complete.
   - Sized all carousel tiles equally via `RoomPanelLayout.tileWidth` across the padded viewport width, configured equal `12dp` internal inter-tile gaps, and set `16dp` trailing rightMargin on the last tile child.
   - Maintained boundary D-pad stop clamps and unclipped bottom vertical card gutter.
 - Visual verification: tested live over ADB on NVIDIA Shield TV Pro.
+
+## Living Room carousel layout refinement
+
+The following follow-up keeps the v365 package and version identifiers above.
+The original visual-verification line describes the initial v365 build; use the
+GitHub Actions artifact for signing and build evidence for this refinement.
+
+- Uses one `8dp` leading and trailing gutter for focus clearance, with a single
+  matching `8dp` focus-scroll rectangle expansion.
+- Keeps `12dp` between tiles and removes the extra trailing margin after the
+  last tile, so the two edge gutters are equal.
+- Doubles the focused Living Room tile outline from `2dp` to `4dp`.

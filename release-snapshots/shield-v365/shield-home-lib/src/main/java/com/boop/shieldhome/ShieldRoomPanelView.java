@@ -26,6 +26,9 @@ import java.util.Map;
 
 /** Native BOOP charcoal panel. Entity identity, focus and scroll survive live state changes. */
 public final class ShieldRoomPanelView extends LinearLayout {
+    private static final int FOCUS_SCROLL_GUTTER_DP = 8;
+    private static final int FOCUSED_TILE_STROKE_DP = BoopTvChrome.FOCUS_STROKE_DP * 2;
+
     public interface Toggle { void onToggle(long generation, String entityId); }
     private final TextView title, status, empty, notice;
     private final HorizontalScrollView scroller;
@@ -87,21 +90,13 @@ public final class ShieldRoomPanelView extends LinearLayout {
         empty = text("", 15, BoopTvChrome.TEXT_SECONDARY);
         empty.setMaxLines(3);
         addView(empty, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
-        scroller = new HorizontalScrollView(context) {
-            @Override
-            protected int computeScrollDeltaToGetChildRectOnScreen(Rect rect) {
-                if (getChildCount() == 0 || rect == null) return 0;
-                Rect target = new Rect(rect);
-                target.inset(-dp(16), 0);
-                return super.computeScrollDeltaToGetChildRectOnScreen(target);
-            }
-        };
+        scroller = new HorizontalScrollView(context);
         scroller.setHorizontalScrollBarEnabled(false);
         scroller.setFocusable(false);
         scroller.setFillViewport(true);
         scroller.setClipChildren(true);
         scroller.setClipToPadding(false);
-        scroller.setPadding(dp(16), dp(6), dp(16), dp(6));
+        scroller.setPadding(dp(FOCUS_SCROLL_GUTTER_DP), dp(6), dp(FOCUS_SCROLL_GUTTER_DP), dp(6));
         row = new LinearLayout(context);
         row.setOrientation(HORIZONTAL);
         row.setClipChildren(false);
@@ -247,7 +242,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
             grabbedTile.post(() -> {
                 if (grabbedTile != null && grabbedTile.hasFocus()) {
                     Rect target = new Rect(0, 0, grabbedTile.getWidth(), grabbedTile.getHeight());
-                    target.inset(-dp(16), -dp(6));
+                    target.inset(-dp(FOCUS_SCROLL_GUTTER_DP), -dp(6));
                     grabbedTile.requestRectangleOnScreen(target, true);
                 }
             });
@@ -269,14 +264,14 @@ public final class ShieldRoomPanelView extends LinearLayout {
         for (int i=0; i<row.getChildCount(); i++) {
             View tile = row.getChildAt(i);
             LayoutParams p=(LayoutParams)tile.getLayoutParams();
-            int gap=i+1==row.getChildCount()?dp(16):dp(12);
+            int gap=i+1==row.getChildCount()?0:dp(12);
             if (p.width!=size || p.rightMargin!=gap) { p.width=size; p.rightMargin=gap; tile.setLayoutParams(p); }
         }
         View focus=row.findFocus();
         if (focus!=null) focus.post(() -> {
             if (focus.hasFocus()) {
                 Rect target = new Rect(0, 0, focus.getWidth(), focus.getHeight());
-                target.inset(-dp(16), -dp(6));
+                target.inset(-dp(FOCUS_SCROLL_GUTTER_DP), -dp(6));
                 focus.requestRectangleOnScreen(target, true);
             }
         });
@@ -316,7 +311,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
                     post(() -> {
                         if (hasFocus()) {
                             Rect target = new Rect(0, 0, getWidth(), getHeight());
-                            target.inset(-dp(16), -dp(6));
+                            target.inset(-dp(FOCUS_SCROLL_GUTTER_DP), -dp(6));
                             requestRectangleOnScreen(target, true);
                         }
                     });
@@ -407,7 +402,9 @@ public final class ShieldRoomPanelView extends LinearLayout {
                 normalFill = BoopTvChrome.SURFACE_CARD;
             }
             GradientDrawable d = FocusChrome.filled(getContext(), normalFill, 14, focused);
-            if (!focused) {
+            if (focused) {
+                d.setStroke(dp(FOCUSED_TILE_STROKE_DP), accent);
+            } else {
                 if (activeOn) {
                     int r = (accent >> 16) & 0xFF;
                     int g = (accent >> 8) & 0xFF;
