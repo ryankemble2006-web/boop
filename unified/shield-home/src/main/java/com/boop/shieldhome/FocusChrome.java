@@ -11,7 +11,7 @@ import android.view.ViewOutlineProvider;
 /** Shared TV focus chrome so Home and every BOOP TV menu use one accent/style. */
 final class FocusChrome {
     static final int BORDER_DP = BoopTvChrome.BORDER_DP;
-    static final int ARTWORK_BORDER_DP = BoopTvChrome.BORDER_DP;
+    static final int ARTWORK_BORDER_DP = 5;
 
     private FocusChrome() { }
 

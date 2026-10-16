@@ -1,0 +1,68 @@
+{
+  "format": "s16le-mono",
+  "sampleRate": 24000,
+  "generationSpeed": 1.0,
+  "silenceScale": 0.2,
+  "sherpaVersion": "1.13.7",
+  "packVersion": "kokoro-multi-lang-v1_0",
+  "archiveSha256": "c5f7e2d2caf082bc1d20fb70334a61d99d20b484500aad32e7cf84c128ea3298",
+  "generatorAppSource": "a026b967e69429b4c95fd698b571297c0e6f9ba3",
+  "clips": [
+    {
+      "file": "21-name.pcm",
+      "speakerId": 21,
+      "text": "Hello. I'm Emma.",
+      "samples": 31694,
+      "sha256": "1fe45534fdb2f7510fc2780b917ee4d3befb97c29bb15584285764da14b7c3ec"
+    },
+    {
+      "file": "21-test.pcm",
+      "speakerId": 21,
+      "text": "This is how BOOP sounds.",
+      "samples": 38144,
+      "sha256": "e8adf0015fb498a04b13a3083c675d456ed112e78c165384ceacb6a64e96ad4d"
+    },
+    {
+      "file": "22-name.pcm",
+      "speakerId": 22,
+      "text": "Hello. I'm Isabella.",
+      "samples": 52686,
+      "sha256": "06724447cf14f434060a7e86c9b967ce27d429718863bf2524fff04375203226"
+    },
+    {
+      "file": "22-test.pcm",
+      "speakerId": 22,
+      "text": "This is how BOOP sounds.",
+      "samples": 39226,
+      "sha256": "9251211b0c359325b3c4a3ec19576f859ab57c18d1502dfe734a37ad7180f652"
+    },
+    {
+      "file": "25-name.pcm",
+      "speakerId": 25,
+      "text": "Hello. I'm Fable.",
+      "samples": 51740,
+      "sha256": "e89c87be8eb8e3dfceda255190f95bbc82ec45414d625649ec9142cbc3cd793e"
+    },
+    {
+      "file": "25-test.pcm",
+      "speakerId": 25,
+      "text": "This is how BOOP sounds.",
+      "samples": 50935,
+      "sha256": "34d909666818d280d8f1f3ba9a0ac4b44af1288b626f1e82568588d803c3a35f"
+    },
+    {
+      "file": "26-name.pcm",
+      "speakerId": 26,
+      "text": "Hello. I'm George.",
+      "samples": 47263,
+      "sha256": "30715b6b5e7e0e0200195ed9555e4a3378a35b004b7095adcaacc3bb6a46de8c"
+    },
+    {
+      "file": "26-test.pcm",
+      "speakerId": 26,
+      "text": "This is how BOOP sounds.",
+      "samples": 41432,
+      "sha256": "d43e051f6fc09825ef73548d75e1010049071c83c2d8e1e781c24067b9eec3d3"
+    }
+  ]
+}
