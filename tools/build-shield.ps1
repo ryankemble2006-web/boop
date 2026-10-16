@@ -254,8 +254,14 @@ try {
         '--notes', 'Temporary handoff of a locally built APK for permanent signing. Delete after successful download.'
     ) -FailureMessage 'Could not create the temporary GitHub draft release.'
     $releaseCreated = $true
-    $releaseId = (& gh api "repos/$repo/releases/tags/$releaseTag" --jq '.id').Trim()
-    if ($LASTEXITCODE -ne 0 -or -not $releaseId) { throw "Could not resolve the temporary draft release ID for $releaseTag." }
+    $releaseListJson = & gh api "repos/$repo/releases?per_page=100"
+    if ($LASTEXITCODE -ne 0) { throw 'Could not list GitHub releases to resolve the temporary draft ID.' }
+    $releaseList = @($releaseListJson | ConvertFrom-Json)
+    $draft = $releaseList |
+        Where-Object { $_.tag_name -eq $releaseTag -and $_.draft } |
+        Select-Object -First 1
+    $releaseId = if ($draft) { [string]$draft.id } else { $null }
+    if (-not $releaseId) { throw "Could not resolve the temporary draft release ID for $releaseTag." }
 
     Invoke-CheckedNative -Executable $git -Arguments @('-C', $repoRoot, 'tag', $triggerTag, $commit) -FailureMessage 'Could not create the temporary signature trigger tag.'
     Invoke-CheckedNative -Executable $git -Arguments @('-C', $repoRoot, 'push', 'origin', "refs/tags/$triggerTag") -FailureMessage 'Could not push the temporary signature trigger tag.'
@@ -321,18 +327,15 @@ try {
     }
     $localTagDeleteResult = & $git -C $repoRoot tag -d $triggerTag 2>&1
 
-    Write-Host "Deleting temporary draft release and tag $releaseTag..."
-    $deleteResult = & gh release delete $releaseTag --repo $repo --yes --cleanup-tag 2>&1
+    Write-Host "Deleting temporary draft release $releaseTag..."
+    $deleteResult = & gh release delete $releaseTag --repo $repo --yes 2>&1
     if ($LASTEXITCODE -eq 0) {
         $releaseCreated = $false
     } else {
         if ($releaseId) {
             $apiDeleteResult = & gh api --method DELETE "repos/$repo/releases/$releaseId" 2>&1
             if ($LASTEXITCODE -eq 0) {
-                $tagDeleteResult = & gh api --method DELETE "repos/$repo/git/refs/tags/$releaseTag" 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    $releaseCreated = $false
-                }
+                $releaseCreated = $false
             }
         }
         if ($releaseCreated) {

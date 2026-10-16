@@ -8,7 +8,7 @@ From the repository root, run:
 
 The command selects the newest release-snapshots/shield-vN, materializes the bundled Sherpa AAR into an ignored local Maven directory, runs the Shield unit tests, builds and verifies the APK on this computer, then requests the permanent signature from GitHub. The local signing key is temporary and discarded after the build.
 
-GitHub only signs the APK produced here. The script sends that APK and its commit/hash receipt to a temporary draft release, pushes a one-time signature trigger tag on the same commit, downloads and verifies the signed APK, then deletes the draft and both temporary tags. The final APK and receipts remain under the ignored boop-build/shield-vN/<commit>/ directory.
+GitHub only signs the APK produced here. The script sends that APK and its commit/hash receipt to a temporary draft release, pushes a one-time signature trigger tag on the same commit, downloads and verifies the signed APK, then deletes the draft and trigger tag. The final APK and receipts remain under the ignored boop-build/shield-vN/<commit>/ directory.
 
 To run only the local tests and build without using GitHub:
 

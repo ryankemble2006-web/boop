@@ -49,7 +49,8 @@ jobs:
           tag_commit="$BASH_REMATCH[2]"
           nonce="$BASH_REMATCH[3]"
           draft_tag="codex-local-sign-v$tag_version-$tag_commit-$nonce"
-          release="$(gh api --header 'Accept: application/vnd.github+json' "repos/$GITHUB_REPOSITORY/releases/tags/$draft_tag")"
+          release_list="$(gh api --header 'Accept: application/vnd.github+json' "repos/$GITHUB_REPOSITORY/releases?per_page=100")"
+          release="$(jq -ce --arg tag "$draft_tag" '[.[] | select(.tag_name == $tag and .draft == true)] | if length == 1 then .[0] else error("expected exactly one temporary draft release") end' <<< "$release_list")"
           [[ "$(jq -r '.draft' <<< "$release")" == 'true' ]]
           apk_asset_count="$(jq '[.assets[] | select(.name | test("^BOOP-Shield-v[0-9]+-local\\.apk$"))] | length' <<< "$release")"
           [[ "$apk_asset_count" == '1' ]]
