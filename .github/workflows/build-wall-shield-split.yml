@@ -1,106 +1,109 @@
-name: Sign locally built BOOP Shield APK
-
-run-name: Sign BOOP Shield tag ${{ github.ref_name }}
+name: Build and sign BOOP Shield
 
 on:
   push:
-    tags:
-      - 'codex-sign-trigger-v*'
+    branches:
+      - shield-v325-live
+    paths:
+      - 'release-snapshots/**'
+      - '.github/workflows/build-wall-shield-split.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: shield-sign-${{ github.ref }}
+  group: shield-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  sign-local-apk:
-    name: Sign the locally built Shield APK
+  build-test-sign:
+    name: Test, build, and sign current Shield snapshot
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
     steps:
-      - name: Check out the exact local build commit
+      - name: Check out source and version history
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          fetch-depth: 0
 
-      - name: Set up Java for Android signing tools
+      - name: Select the newest versioned Shield source
+        id: snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_file="$(find release-snapshots -mindepth 3 -maxdepth 3 -path '*/shield-app/build.gradle' -type f | sort -V | tail -n 1)"
+          [[ -n "$snapshot_file" ]]
+          snapshot_dir="${snapshot_file%/shield-app/build.gradle}"
+          snapshot_version="$(basename "$snapshot_dir" | sed -E 's/^shield-v([0-9]+)$/\1/')"
+          [[ "$snapshot_version" =~ ^[0-9]+$ ]]
+          version_code="$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*$/\1/p' "$snapshot_file" | head -n 1)"
+          version_name="$(sed -nE "s/^[[:space:]]*versionName[[:space:]]+['\"]([^'\"]+)['\"].*$/\1/p" "$snapshot_file" | head -n 1)"
+          [[ "$version_code" == "$snapshot_version" ]]
+          [[ "$version_name" == "1.2.${version_code}-shield" ]]
+          echo "dir=$snapshot_dir" >> "$GITHUB_OUTPUT"
+          echo "version=$version_code" >> "$GITHUB_OUTPUT"
+          echo "SHIELD_SNAPSHOT_DIR=$snapshot_dir" >> "$GITHUB_ENV"
+          echo "SHIELD_VERSION=$version_code" >> "$GITHUB_ENV"
+          echo "Using $snapshot_dir ($version_name)"
+
+      - name: Require a one-step version bump for Shield source changes
+        if: github.event_name == 'push'
+        env:
+          BASE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+          CURRENT_SNAPSHOT: ${{ steps.snapshot.outputs.dir }}
+          CURRENT_VERSION: ${{ steps.snapshot.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          if ! git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- release-snapshots/ | grep -Eq '^release-snapshots/shield-v[0-9]+/(app/(src/main|libs)/|app/build\.gradle$|shield-app/|assistant-lib/|shield-lib/|shield-home-lib/|launcher-lib/|animation-lib/|build\.gradle$|settings\.gradle$|gradle\.properties$|split-app-shell\.gradle$)'; then
+            echo 'No Shield source or build inputs changed; version gate not needed.'
+            exit 0
+          fi
+          previous_file="$(git ls-tree -r --name-only "$BASE_SHA" release-snapshots/ | grep -E '^release-snapshots/shield-v[0-9]+/shield-app/build\.gradle$' | sort -V | tail -n 1)"
+          [[ -n "$previous_file" ]]
+          previous_version="$(git show "$BASE_SHA:$previous_file" | sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*$/\1/p' | head -n 1)"
+          expected_version="$((previous_version + 1))"
+          if [[ "$CURRENT_VERSION" != "$expected_version" ]]; then
+            echo "::error::Shield source changed: versionCode must advance from $previous_version to $expected_version (current is $CURRENT_VERSION)."
+            exit 1
+          fi
+          [[ "$CURRENT_SNAPSHOT" == "release-snapshots/shield-v${expected_version}" ]]
+          echo "Version bump verified: $previous_version -> $CURRENT_VERSION"
+
+      - name: Set up Java 17 and Android SDK 36
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - uses: android-actions/setup-android@v3
         with:
-          packages: 'build-tools;36.0.0'
+          packages: 'platforms;android-36 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
 
-      - name: Download and validate the temporary draft APK
-        id: input
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SIGN_TAG: ${{ github.ref_name }}
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Materialize the bundled Sherpa AAR in the snapshot Maven repository
         shell: bash
         run: |
           set -euo pipefail
-          [[ "$SIGN_TAG" =~ ^codex-sign-trigger-v([0-9]+)-([a-f0-9]{8})-([a-f0-9]{8})-([0-9]+)-([0-9]+)$ ]]
-          tag_version="$BASH_REMATCH[1]"
-          tag_commit="$BASH_REMATCH[2]"
-          nonce="$BASH_REMATCH[3]"
-          apk_asset_id="$BASH_REMATCH[4]"
-          receipt_asset_id="$BASH_REMATCH[5]"
-          mkdir -p "$RUNNER_TEMP/input"
-          gh api --header 'Accept: application/octet-stream' "repos/$GITHUB_REPOSITORY/releases/assets/$apk_asset_id" > "$RUNNER_TEMP/input/local.apk"
-          gh api --header 'Accept: application/octet-stream' "repos/$GITHUB_REPOSITORY/releases/assets/$receipt_asset_id" > "$RUNNER_TEMP/input/build-receipt.json"
-          [[ -s "$RUNNER_TEMP/input/local.apk" && -s "$RUNNER_TEMP/input/build-receipt.json" ]]
-          receipt="$RUNNER_TEMP/input/build-receipt.json"
-          commit="$(jq -r '.commit' "$receipt")"
-          branch="$(jq -r '.branch' "$receipt")"
-          version="$(jq -r '.versionCode' "$receipt")"
-          version_name="$(jq -r '.versionName' "$receipt")"
-          package="$(jq -r '.package' "$receipt")"
-          input_sha="$(sha256sum "$RUNNER_TEMP/input/local.apk" | cut -d ' ' -f 1)"
-          [[ "$commit" == "$GITHUB_SHA" ]]
-          [[ "$commit" == "$tag_commit"* ]]
-          [[ "$branch" =~ ^[A-Za-z0-9._/-]+$ ]]
-          [[ "$branch" =~ ^shield-v[0-9]+-live$ ]]
-          [[ "$package" == 'com.boop.shieldoverlay' ]]
-          [[ "$input_sha" == "$(jq -r '.localApkSha256' "$receipt")" ]]
-          [[ "$(jq -r '.localUnitTests' "$receipt")" == 'passed' ]]
-          [[ "$(jq -r '.gradleVersion' "$receipt")" == '9.6.0' ]]
-          [[ "$version" == "$tag_version" ]]
-          [[ "$version" =~ ^[0-9]+$ ]]
-          [[ "$version_name" == "1.2.$version-shield" ]]
+          aar="$SHIELD_SNAPSHOT_DIR/app/libs/sherpa-onnx-1.13.7.aar"
+          [[ -s "$aar" ]]
+          vendor="$SHIELD_SNAPSHOT_DIR/local-maven/com/boop/vendor/sherpa-onnx/1.13.7"
+          mkdir -p "$vendor"
+          cp "$aar" "$vendor/sherpa-onnx-1.13.7.aar"
+          cat > "$vendor/sherpa-onnx-1.13.7.pom" <<'POM'
+          <project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.boop.vendor</groupId><artifactId>sherpa-onnx</artifactId><version>1.13.7</version><packaging>aar</packaging></project>
+          POM
+          sha256sum "$aar" "$vendor/sherpa-onnx-1.13.7.aar"
 
-          branch_sha="$(git ls-remote "https://github.com/$GITHUB_REPOSITORY.git" "refs/heads/$branch" | cut -f1)"
-          [[ -n "$branch_sha" ]]
-          [[ "$branch_sha" == "$GITHUB_SHA" ]]
-          snapshot_file="$(find release-snapshots -mindepth 3 -maxdepth 3 -path '*/shield-app/build.gradle' -type f | sort -V | tail -n 1)"
-          [[ -n "$snapshot_file" ]]
-          snapshot_dir="$(printf '%s' "$snapshot_file" | sed 's|/shield-app/build.gradle$||')"
-          snapshot_version="$(basename "$snapshot_dir" | sed -E 's/^shield-v([0-9]+)$/\1/')"
-          current_version="$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*$/\1/p' "$snapshot_file" | head -n 1)"
-          [[ "$version" == "$snapshot_version" && "$version" == "$current_version" ]]
-          printf 'version=%s\nversion_name=%s\n' "$version" "$version_name" >> "$GITHUB_OUTPUT"
-          echo "Validated local APK for commit $commit and Shield v$version"
-
-      - name: Verify local APK package, version, and alignment
-        env:
-          SHIELD_VERSION: ${{ steps.input.outputs.version }}
-          SHIELD_VERSION_NAME: ${{ steps.input.outputs.version_name }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          apk="$RUNNER_TEMP/input/local.apk"
-          tools="$ANDROID_HOME/build-tools/36.0.0"
-          "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/package.txt"
-          grep -F "package: name='com.boop.shieldoverlay'" "$RUNNER_TEMP/package.txt"
-          grep -F "versionCode='$SHIELD_VERSION'" "$RUNNER_TEMP/package.txt"
-          grep -F "versionName='$SHIELD_VERSION_NAME'" "$RUNNER_TEMP/package.txt"
-          "$tools/zipalign" -c -v 4 "$apk"
-
-      - name: Load the unchanged permanent signing key
+      - name: Load the unchanged GitHub signing key
+        id: signing
         env:
           BOOP_DEV_KEYSTORE_B64: ${{ secrets.BOOP_DEV_KEYSTORE_B64 }}
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
@@ -109,8 +112,7 @@ jobs:
         run: |
           set -euo pipefail
           for name in BOOP_DEV_KEYSTORE_B64 BOOP_DEV_STORE_PASSWORD BOOP_DEV_KEY_PASSWORD; do
-            secret_value="$(printenv "$name" || true)"
-            if [[ -z "$secret_value" ]]; then
+            if [[ -z "${!name:-}" ]]; then
               echo "::error::Missing existing signing secret: $name"
               exit 1
             fi
@@ -121,40 +123,77 @@ jobs:
           keytool -list -keystore "$key" -storepass "$BOOP_DEV_STORE_PASSWORD" -alias boop-dev >/dev/null
           echo "BOOP_SIGNING_STORE_FILE=$key" >> "$GITHUB_ENV"
 
-      - name: Apply the permanent GitHub signature
+      - name: Run Android unit tests
+        id: unit-tests
+        continue-on-error: true
         env:
-          SHIELD_VERSION: ${{ steps.input.outputs.version }}
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          gradle -p "$SHIELD_SNAPSHOT_DIR" \
+            :assistant-lib:testDebugUnitTest \
+            --no-daemon --stacktrace
+
+      - name: Build the signed Shield APK
+        if: always() && steps.signing.outcome == 'success'
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          gradle -p "$SHIELD_SNAPSHOT_DIR" \
+            :shield-app:assembleDebug \
+            --no-daemon --stacktrace
+
+      - name: Verify package, version, alignment, and permanent signer
         shell: bash
         run: |
           set -euo pipefail
+          apk="$SHIELD_SNAPSHOT_DIR/shield-app/build/outputs/apk/debug/shield-app-debug.apk"
+          [[ -s "$apk" ]]
           mkdir -p dist
+          cp "$apk" "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
           tools="$ANDROID_HOME/build-tools/36.0.0"
-          signed="dist/BOOP-Shield-v$SHIELD_VERSION-signed.apk"
-          "$tools/apksigner" sign \
-            --ks "$BOOP_SIGNING_STORE_FILE" --ks-key-alias boop-dev \
-            --ks-pass env:BOOP_DEV_STORE_PASSWORD --key-pass env:BOOP_DEV_KEY_PASSWORD \
-            --out "$signed" "$RUNNER_TEMP/input/local.apk"
-          "$tools/apksigner" verify --print-certs "$signed" > dist/certificate.txt
+          "$tools/aapt" dump badging "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/package.txt
+          grep -F "package: name='com.boop.shieldoverlay'" dist/package.txt
+          grep -F "versionCode='${SHIELD_VERSION}'" dist/package.txt
+          grep -F "versionName='1.2.${SHIELD_VERSION}-shield'" dist/package.txt
+          "$tools/zipalign" -c -v 4 "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
+          "$tools/apksigner" verify --print-certs "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/certificate.txt
           expected="$(tr -d '[:space:]' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           grep -F "Signer #1 certificate SHA-256 digest: $expected" dist/certificate.txt
-          "$tools/zipalign" -c -v 4 "$signed"
-          signed_sha="$(sha256sum "$signed" | cut -d ' ' -f 1)"
-          (cd dist && sha256sum "BOOP-Shield-v$SHIELD_VERSION-signed.apk" > SHA256SUMS)
-          jq --arg signed_sha "$signed_sha" \
-            --arg certificate_sha "$expected" \
-            --arg run_id "$GITHUB_RUN_ID" \
-            '. + {signedApk: "BOOP-Shield-v\(.versionCode)-signed.apk", signedApkSha256: $signed_sha, permanentCertificateSha256: $certificate_sha, signingWorkflowRun: $run_id}' \
-            "$RUNNER_TEMP/input/build-receipt.json" > dist/build-receipt.json
+          sha256sum "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/SHA256SUMS
+          printf 'commit=%s\nversion=%s\ntests=%s\nvisual_check=manual_on_physical_shield\n' "$GITHUB_SHA" "$SHIELD_VERSION" "${{ steps.unit-tests.outcome }}" > dist/build-receipt.txt
 
-      - name: Upload signed APK and receipt
+      - name: Upload signed APK and build receipt
         uses: actions/upload-artifact@v4
         with:
-          name: BOOP-Shield-v${{ steps.input.outputs.version }}-signed
+          name: BOOP-Shield-v${{ steps.snapshot.outputs.version }}-signed
           path: dist/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Upload Android unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BOOP-Shield-v${{ steps.snapshot.outputs.version }}-unit-test-reports
+          path: |
+            ${{ steps.snapshot.outputs.dir }}/assistant-lib/build/test-results/testDebugUnitTest/
+            ${{ steps.snapshot.outputs.dir }}/assistant-lib/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Require unit tests to pass
+        if: always()
+        env:
+          TEST_OUTCOME: ${{ steps.unit-tests.outcome }}
+        run: |
+          if [[ "$TEST_OUTCOME" != "success" ]]; then
+            echo "::error::Android unit tests failed; blocking Shield release."
+            exit 1
+          fi
 
       - name: Remove temporary signing material
         if: always()
