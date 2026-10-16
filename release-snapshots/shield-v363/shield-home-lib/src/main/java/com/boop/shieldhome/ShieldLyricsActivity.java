@@ -1,0 +1,191 @@
+package com.boop.shieldhome;
+
+import android.app.Activity;
+import android.media.session.MediaController;
+import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
+import android.os.Bundle;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.WindowManager;
+
+/** BOOP-owned presentation following the existing media session, without taking audio focus. */
+public final class ShieldLyricsActivity extends Activity {
+    private final DeezerAlbumBrowser albumBrowser = new DeezerAlbumBrowser();
+    private final DeezerArtistBrowser artistBrowser = new DeezerArtistBrowser();
+    private final NativeLyricsLoader loader = new NativeLyricsLoader();
+    private ShieldNowPlayingManager manager;
+    private ShieldLyricsView presentation;
+    private Runnable unsubscribe;
+    private Runnable unsubscribeQueue;
+    private ShieldQueueDialog queueDialog;
+    private LyricsLookupDialog lookupDialog;
+    private NowPlayingSnapshot lookupQuery;
+    private String identity = "";
+    private boolean started;
+
+    @Override protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        manager = ShieldNowPlayingManager.get(this);
+        presentation = new ShieldLyricsView(this, FocusChrome.accentColor(this), new ShieldLyricsView.Controls() {
+            @Override public void previous() { manager.previous(); }
+            @Override public void playPause() { manager.togglePlayPause(); }
+            @Override public void next() { manager.next(); }
+            @Override public void seek(long milliseconds) { manager.seekBy(milliseconds); }
+            @Override public void close() { finish(); }
+            @Override public void flow() {
+                if (!started || isFinishing()) return;
+                if (!manager.playDeezerFlow()) android.widget.Toast.makeText(ShieldLyricsActivity.this,
+                        "Flow needs an active native Deezer player.", android.widget.Toast.LENGTH_SHORT).show();
+            }
+            @Override public void lookup() { openLookup(); }
+            @Override public void queue() {
+                if (!started || isFinishing() || !manager.queue().current().visible) return;
+                if (queueDialog != null && queueDialog.isShowing()) return;
+                queueDialog = new ShieldQueueDialog(ShieldLyricsActivity.this, manager.queue());
+                queueDialog.show();
+                if (queueDialog.getWindow() != null) queueDialog.getWindow().getDecorView()
+                        .setSystemUiVisibility(getWindow().getDecorView().getSystemUiVisibility());
+            }
+            @Override public void browseAlbum() {
+                artistBrowser.cancel();
+                if (!started || isFinishing()) return;
+                NowPlayingSnapshot current = manager.state().current();
+                if (current == null) return;
+                if ("deezer.android.app".equals(current.packageName()))
+                    albumBrowser.open(ShieldLyricsActivity.this, manager, current);
+                else manager.openSource(ShieldLyricsActivity.this);
+            }
+            @Override public void browseArtist() {
+                albumBrowser.cancel();
+                if (!started || isFinishing()) return;
+                NowPlayingSnapshot current = manager.state().current();
+                if (current != null) artistBrowser.open(
+                        ShieldLyricsActivity.this, manager, current);
+            }
+        });
+        setContentView(presentation);
+    }
+    @Override protected void onStart() {
+        super.onStart();
+        started = true;
+        identity = "";
+        presentation.setRunning(true);
+        unsubscribe = manager.state().subscribe(this::changed);
+        unsubscribeQueue = manager.queue().subscribe(this::queueChanged);
+        manager.refreshAccess();
+    }
+    private void queueChanged(DeezerQueueController.State state) {
+        if (!started || isFinishing()) return;
+        NowPlayingSnapshot current = manager.state().current();
+        presentation.setQueueAvailable(state.visible && current != null && state.session == current.sessionId());
+    }
+    private void changed(NowPlayingSnapshot snapshot) {
+        if (!started || isFinishing()) return;
+        presentation.setSnapshot(snapshot, clockKnown(snapshot));
+        queueChanged(manager.queue().current());
+        String deezerId = snapshot == null ? "" : manager.deezerLyricsTrackId(snapshot);
+        String cacheId = snapshot == null ? "" : deezerId.isEmpty()
+                ? "meta:" + Integer.toHexString((snapshot.trackKey()+"\n"+snapshot.album()+"\n"+snapshot.durationMs()).hashCode()) : deezerId;
+        String next = snapshot == null ? "" : snapshot.sessionId() + ":" + cacheId;
+        if (next.equals(identity) && !next.isEmpty()) return;
+        dismissLookup();
+        lookupQuery = null;
+        identity = next;
+        loader.cancel();
+        presentation.setDocument(null);
+        if (snapshot == null || !NowPlayingSelectionPolicy.eligible(snapshot.playbackState())) {
+            presentation.setStatus("Nothing playing.");
+        } else if (!DeezerLyricsPolicy.available(snapshot.packageName())) {
+            presentation.showSpectrumFallback();
+        } else {
+            findLyrics(snapshot, cacheId, next, false);
+        }
+    }
+    private void findLyrics(NowPlayingSnapshot snapshot, String cacheId, String next, boolean fresh) {
+            presentation.setDocument(null);
+            presentation.setStatus("Finding lyrics…");
+            java.util.function.Consumer<DeezerLyricsDocument> completion = document -> {
+                if (!started || !next.equals(identity) || isFinishing()) return;
+                if (document.status() == DeezerLyricsDocument.Status.AVAILABLE) {
+                    presentation.setDocument(document);
+                    presentation.setStatus("");
+                } else {
+                    presentation.setDocument(null);
+                    presentation.showSpectrumFallback();
+                }
+            };
+            if (fresh) loader.reload(snapshot, cacheId, next, completion);
+            else loader.load(snapshot, cacheId, next, completion);
+    }
+    private void openLookup() {
+        if (!started || isFinishing() || (lookupDialog != null && lookupDialog.isShowing())) return;
+        NowPlayingSnapshot original = manager.state().current();
+        if (original == null || !DeezerLyricsPolicy.available(original.packageName())) return;
+        String expected = identity;
+        String deezerId = manager.deezerLyricsTrackId(original);
+        String cacheId = deezerId.isEmpty() ? "meta:" + Integer.toHexString((original.trackKey()+"\n"+original.album()+"\n"+original.durationMs()).hashCode()) : deezerId;
+        LyricsLookupDialog dialog = new LyricsLookupDialog(this, lookupQuery == null ? original : lookupQuery, "", edited -> {
+            if (!started || isFinishing() || !expected.equals(identity)) return;
+            lookupQuery = edited;
+            findLyrics(edited, cacheId, expected, true);
+        });
+        lookupDialog = dialog;
+        dialog.setOnDismissListener(ignored -> { if (lookupDialog == dialog) lookupDialog = null; });
+        dialog.show();
+    }
+    private void dismissLookup() {
+        if (lookupDialog != null) lookupDialog.dismiss();
+        lookupDialog = null;
+    }
+    private boolean clockKnown(NowPlayingSnapshot snapshot) {
+        if (snapshot == null) return false;
+        try {
+            MediaSession.Token token = manager.sessionToken(snapshot.sessionId());
+            PlaybackState state = token == null ? null : new MediaController(this, token).getPlaybackState();
+            return state != null && state.getPosition() >= 0 && state.getLastPositionUpdateTime() > 0;
+        } catch (RuntimeException unavailable) { return false; }
+    }
+    @Override protected void onPause() {
+        dismissLookup();
+        if (queueDialog != null) queueDialog.dismiss();
+        albumBrowser.cancel();
+        artistBrowser.cancel();
+        super.onPause();
+    }
+    @Override protected void onStop() {
+        dismissLookup();
+        albumBrowser.cancel();
+        artistBrowser.cancel();
+        started = false;
+        loader.cancel();
+        if (unsubscribe != null) unsubscribe.run();
+        unsubscribe = null;
+        if (unsubscribeQueue != null) unsubscribeQueue.run();
+        unsubscribeQueue = null;
+        presentation.setQueueAvailable(false);
+        presentation.setRunning(false);
+        super.onStop();
+    }
+    @Override protected void onDestroy() { albumBrowser.cancel(); artistBrowser.cancel(); loader.destroy(); super.onDestroy(); }
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            switch (event.getKeyCode()) {
+                case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: manager.togglePlayPause(); return true;
+                case KeyEvent.KEYCODE_MEDIA_NEXT: manager.next(); return true;
+                case KeyEvent.KEYCODE_MEDIA_PREVIOUS: manager.previous(); return true;
+                default: break;
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+    @Override public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+}
