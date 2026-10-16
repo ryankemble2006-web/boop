@@ -1,0 +1,1027 @@
+package com.boop.shieldhome;
+
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.media.session.PlaybackState;
+import android.net.Uri;
+import android.util.AttributeSet;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/** Presentation-only Shield HOME surface. Data discovery and persistence live elsewhere. */
+public final class ShieldHomeView extends LinearLayout {
+    public interface Callbacks {
+        void onAppSelected(TvAppEntry entry);
+        void onFavouriteOrderCommitted(List<String> components);
+        void onOpenApps();
+        default void onAddFavourite() { onOpenApps(); }
+        void onOpenHomeRows();
+        void onOpenSystemSettings();
+        void onContentSelected(HomeContentCard card);
+        default void onNowPlayingPrevious() { }
+        default void onNowPlayingRewind() { }
+        default void onNowPlayingPlayPause() { }
+        default void onNowPlayingFastForward() { }
+        default void onNowPlayingNext() { }
+        default void onNowPlayingSeekBy(long deltaMs) { }
+        default void onOpenNowPlayingLyrics() { }
+        default void onOpenNowPlayingSource() { }
+        default void onBrowseNowPlayingAlbum() { onOpenNowPlayingSource(); }
+        default void onBrowseNowPlayingArtist() { }
+        default void onNowPlayingFlow() { }
+        default void onNowPlayingQueue() { }
+        default void onCloseNowPlayingSource() { }
+        default void onCloseMediaApps() { }
+        default void onSyncTrakt() { }
+        default void onRoomDeviceSelected(long generation, String entityId) { }
+        default void onRoomHeadingSelected() { }
+        default void onSerenEpisodeSelected(SerenEpisode episode) { }
+        default void onOpenKodi() { }
+    }
+
+    private FavouriteGrabSession grabSession;
+    private HorizontalScrollView favouriteScroller;
+    private LinearLayout favouriteRow;
+    private View addFavouriteTile;
+    private TvAppCardView grabbedCard;
+    private ShieldNowPlayingView nowPlayingView;
+    private ShieldWeatherView weatherView;
+    private ShieldNowPlayingPuppetView homeAssistantPuppet;
+    private View nowPlayingSpacer;
+    private NowPlayingSnapshot nowPlayingSnapshot;
+    private Callbacks activeCallbacks;
+    private ShieldRoomPanelView roomPanelView;
+    private FrameLayout roomPanelStage;
+    private LinearLayout roomPanelContent;
+    private com.boop.shieldoverlay.RoomPanelController.State roomPanelState;
+    private boolean roomPanelEnabled = true;
+    private boolean roomPanelHasOptionalRows;
+    private android.animation.ValueAnimator roomPanelResize;
+    private int roomPanelRight;
+    private int roomPanelTarget = -1;
+    private View roomPanelPreviousFavourite;
+    private boolean serenEnabled;
+    private SerenNextUpView serenView;
+    private TextView syncTraktButton;
+    private boolean traktSyncing;
+    // Functional busy feedback must still work when system animation scale is zero.
+    private final Runnable traktSpinFrame = new Runnable() {
+        @Override public void run() {
+            if (!traktSyncing || !isAttachedToWindow() || traktArrows == null) return;
+            traktArrows.setLevel((int) ((android.os.SystemClock.elapsedRealtime() % 1000L) * 10L));
+            postOnAnimation(this);
+        }
+    };
+    private SyncArrowDrawable traktArrows;
+
+    void setTraktSyncing(boolean busy) {
+        traktSyncing = busy;
+        removeCallbacks(traktSpinFrame);
+        if (traktArrows != null) {
+            traktArrows.setLevel(0);
+            if (busy && isAttachedToWindow()) postOnAnimation(traktSpinFrame);
+        }
+        if (syncTraktButton != null) {
+            syncTraktButton.setText(busy ? "Syncing…" : "Sync Trakt");
+            syncTraktButton.setEnabled(!busy);
+            syncTraktButton.setAlpha(busy ? 0.6f : 1f);
+        }
+    }
+    private View serenRoomGap;
+    private ScrollView homeContentScroll;
+    private List<SerenEpisode> serenEpisodes = List.of();
+    private String serenStatus = "";
+    private SerenPosterLoader serenPosters;
+
+    public void setSerenEnabled(boolean enabled) { serenEnabled = enabled; }
+    void setSeren(List<SerenEpisode> episodes, String status, SerenPosterLoader posters) {
+        serenEpisodes = episodes; serenStatus = status; serenPosters = posters;
+        if (serenView != null) serenView.bind(episodes, status, posters,
+                episode -> { if (activeCallbacks != null) activeCallbacks.onSerenEpisodeSelected(episode); },
+                () -> { if (activeCallbacks != null) activeCallbacks.onOpenKodi(); });
+    }
+    boolean focusSeren(String file) { return serenView != null && serenView.focusEpisode(file); }
+
+    public ShieldHomeView(Context context) {
+        this(context, null);
+    }
+
+    public ShieldHomeView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        setOrientation(VERTICAL);
+        setGravity(Gravity.CENTER_VERTICAL);
+        setBackgroundColor(Color.BLACK);
+        setPadding(dp(48), dp(22), dp(48), dp(26));
+        setClipChildren(false);
+        setClipToPadding(false);
+    }
+
+    public void render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks callbacks) {
+        render(favourites, optionalRows, null, callbacks);
+    }
+
+    public void render(
+            List<TvAppEntry> favourites,
+            List<HomeRow> optionalRows,
+            NowPlayingSnapshot snapshot,
+            Callbacks callbacks) {
+        String previousFocus = focusToken();
+        if (homeAssistantPuppet != null) homeAssistantPuppet.setVisibilityListener(null);
+        if (roomPanelResize != null) { roomPanelResize.cancel(); roomPanelResize = null; }
+        roomPanelTarget = -1;
+        roomPanelPreviousFavourite = null;
+        roomPanelView = null;
+        roomPanelHasOptionalRows = false;
+        serenView = null;
+        serenRoomGap = null;
+        homeContentScroll = null;
+        removeAllViews();
+        activeCallbacks = callbacks;
+        nowPlayingSnapshot = snapshot;
+        favouriteScroller = null;
+        favouriteRow = null;
+        addFavouriteTile = null;
+        nowPlayingView = null;
+        weatherView = null;
+        homeAssistantPuppet = null;
+        nowPlayingSpacer = null;
+
+        List<TvAppEntry> safeFavourites = favourites == null ? List.of() : favourites;
+        List<HomeRow> safeOptionalRows = optionalRows == null ? List.of() : optionalRows;
+
+        if (grabSession != null) {
+            safeFavourites = orderEntries(safeFavourites, grabSession.current());
+            if (grabSession.index() < 0) {
+                grabSession = null;
+                grabbedCard = null;
+            }
+        }
+
+        addView(navRow(callbacks), new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        addSpacer(dp(22));
+
+        FrameLayout homeStage = new FrameLayout(getContext());
+        roomPanelStage = homeStage;
+        homeStage.setClipChildren(false);
+        homeStage.setClipToPadding(false);
+        LinearLayout stageContent = new LinearLayout(getContext());
+        roomPanelContent = stageContent;
+        stageContent.setOrientation(VERTICAL);
+        stageContent.setClipChildren(false);
+        stageContent.setClipToPadding(false);
+
+        FrameLayout heroSlot = new FrameLayout(getContext());
+        weatherView = new ShieldWeatherView(getContext());
+        heroSlot.addView(weatherView, new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        nowPlayingView = new ShieldNowPlayingView(getContext());
+        heroSlot.addView(nowPlayingView, new FrameLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        stageContent.addView(heroSlot, new LayoutParams(LayoutParams.MATCH_PARENT, dp(178)));
+        nowPlayingSpacer = new View(getContext());
+        stageContent.addView(nowPlayingSpacer, new LayoutParams(1, dp(24)));
+        stageContent.addView(appRow(safeFavourites, callbacks), new LayoutParams(
+                LayoutParams.MATCH_PARENT, dp(215)));
+
+        if (serenEnabled) {
+            View beforeNextUp = new View(getContext());
+            stageContent.addView(beforeNextUp, new LayoutParams(1, dp(26)));
+            serenView = new SerenNextUpView(getContext());
+            stageContent.addView(serenView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            setSeren(serenEpisodes, serenStatus, serenPosters);
+        }
+
+        for (HomeRow row : safeOptionalRows) {
+            if (row == null || row.cards() == null || row.cards().isEmpty()) continue;
+            roomPanelHasOptionalRows = true;
+            View beforeTitle = new View(getContext());
+            stageContent.addView(beforeTitle, new LayoutParams(1, dp(28)));
+            stageContent.addView(sectionTitle(row.title()), wrap());
+            View beforeCards = new View(getContext());
+            stageContent.addView(beforeCards, new LayoutParams(1, dp(10)));
+            stageContent.addView(contentRow(row.cards(), callbacks), new LayoutParams(
+                    LayoutParams.MATCH_PARENT, dp(150)));
+        }
+
+        if (roomPanelHasOptionalRows || serenEnabled) {
+            // Provider rows can extend below the screen. Let D-pad focus reveal
+            // them while the navigation and assistant overlay keep their places.
+            ScrollView contentScroll = new ScrollView(getContext()) {
+                @Override protected int computeScrollDeltaToGetChildRectOnScreen(android.graphics.Rect rect) {
+                    // Focus scales the card after ScrollView first reveals it.
+                    android.graphics.Rect focused = new android.graphics.Rect(rect);
+                    if (roomPanelView != null && roomPanelView.hasFocus()) {
+                        focused.top = roomPanelView.getTop();
+                        focused.bottom = roomPanelView.getBottom();
+                    } else if (serenView != null && serenView.hasFocus()) {
+                        focused.top = serenView.getTop();
+                        focused.bottom = serenView.getBottom();
+                    }
+                    int gutter = Math.round(rect.height() * (TvAppCardView.FOCUSED_SCALE - 1f) / 2f) + dp(1);
+                    focused.inset(0, -gutter);
+                    return super.computeScrollDeltaToGetChildRectOnScreen(focused);
+                }
+            };
+            homeContentScroll = contentScroll;
+            contentScroll.setOnScrollChangeListener((v,x,y,oldX,oldY) -> updateRoomReveal());
+            contentScroll.setVerticalScrollBarEnabled(false);
+            contentScroll.setFocusable(false);
+            contentScroll.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                    v.setClipBounds(new android.graphics.Rect(0, 0, right - left, bottom - top)));
+            // Include the outer horizontal gutter in the viewport so focused
+            // tiles can grow without drawing above the fixed navigation row.
+            stageContent.setPadding(getPaddingLeft(), 0, getPaddingRight(), 0);
+            contentScroll.addView(stageContent, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            FrameLayout.LayoutParams scrollParams = new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+            scrollParams.leftMargin = -getPaddingLeft();
+            scrollParams.rightMargin = -getPaddingRight();
+            homeStage.addView(contentScroll, scrollParams);
+        } else {
+            homeStage.addView(stageContent, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.TOP));
+        }
+
+        roomPanelView = new ShieldRoomPanelView(getContext());
+        roomPanelView.setActions((generation, entityId) -> {
+            if (activeCallbacks != null) activeCallbacks.onRoomDeviceSelected(generation, entityId);
+        }, this::returnFromRoomPanel);
+        roomPanelView.bind(roomPanelState);
+        roomPanelView.setRoomPicker(() -> { if (activeCallbacks != null) activeCallbacks.onRoomHeadingSelected(); });
+        if (serenEnabled) {
+            serenRoomGap = new View(getContext());
+            stageContent.addView(serenRoomGap, new LayoutParams(1, dp(16)));
+            stageContent.addView(roomPanelView, new LayoutParams(LayoutParams.MATCH_PARENT, dp(110)));
+            View bottomGutter = new View(getContext());
+            stageContent.addView(bottomGutter, new LayoutParams(1, dp(16)));
+        } else {
+            homeStage.addView(roomPanelView, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, 0, Gravity.START | Gravity.TOP));
+        }
+        roomPanelView.setVisibility(GONE);
+        homeStage.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
+        stageContent.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> updateRoomPanelBounds());
+
+        addView(homeStage, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
+        setNowPlaying(snapshot);
+        if (previousFocus != null) post(() -> restoreFocus(previousFocus));
+    }
+
+    /** Updates only the media subview. Favourite/app rows are intentionally left untouched. */
+    public void setNowPlaying(NowPlayingSnapshot snapshot) {
+        nowPlayingSnapshot = snapshot;
+        ShieldNowPlayingView panel = nowPlayingView;
+        if (panel == null) {
+            return;
+        }
+        panel.bind(snapshot, activeCallbacks);
+        boolean visible = snapshot != null
+                && NowPlayingSelectionPolicy.eligible(snapshot.playbackState());
+        panel.setVisibility(visible ? VISIBLE : INVISIBLE);
+        if (weatherView != null) weatherView.setVisibility(visible ? INVISIBLE : VISIBLE);
+        if (homeAssistantPuppet != null) {
+            homeAssistantPuppet.setHomeVisible(!visible);
+        }
+    }
+
+    public void setWeather(WeatherSnapshot snapshot) {
+        if (weatherView != null) {
+            weatherView.bind(snapshot, System.currentTimeMillis());
+            boolean mediaVisible = nowPlayingSnapshot != null
+                    && NowPlayingSelectionPolicy.eligible(nowPlayingSnapshot.playbackState());
+            weatherView.setVisibility(mediaVisible ? INVISIBLE : VISIBLE);
+        }
+    }
+
+    public void setRoomPanelState(com.boop.shieldoverlay.RoomPanelController.State state, boolean enabled) {
+        roomPanelState = state;
+        roomPanelEnabled = enabled;
+        if (roomPanelView != null) roomPanelView.bind(state);
+        updateRoomPanelBounds();
+    }
+
+    private void resizeForBoop(boolean visible) {
+        int target = visible ? dp(336) : 0;
+        if (target == roomPanelTarget) return;
+        roomPanelTarget = target;
+        if (roomPanelResize != null) roomPanelResize.cancel();
+        if (!isAttachedToWindow() || getWidth() == 0 || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            roomPanelRight = target;
+            updateRoomPanelBounds();
+            return;
+        }
+        roomPanelResize = android.animation.ValueAnimator.ofInt(roomPanelRight, target);
+        roomPanelResize.setDuration(150L);
+        roomPanelResize.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        roomPanelResize.addUpdateListener(value -> {
+            roomPanelRight = (Integer) value.getAnimatedValue();
+            updateRoomPanelBounds();
+        });
+        roomPanelResize.start();
+    }
+
+    private void updateRoomPanelBounds() {
+        if (roomPanelView == null || roomPanelStage == null || roomPanelContent == null
+                || favouriteScroller == null || favouriteRow == null || roomPanelStage.getHeight() == 0) return;
+        int bottom = 0;
+        for (int i = 0; i < favouriteRow.getChildCount(); i++) {
+            View tile = favouriteRow.getChildAt(i);
+            int visibleBottom = tile.getHeight();
+            if (tile instanceof TvAppCardView) visibleBottom = ((TvAppCardView) tile).homeContentBottom();
+            else if (tile instanceof LinearLayout) {
+                LinearLayout add = (LinearLayout) tile;
+                if (add.getChildCount() > 0) visibleBottom = add.getChildAt(add.getChildCount()-1).getBottom();
+            }
+            bottom = Math.max(bottom, tile.getTop() + visibleBottom);
+            if (serenEnabled && visibleBottom > 0 && tile.getLayoutParams().height != visibleBottom) {
+                tile.getLayoutParams().height = visibleBottom;
+                tile.requestLayout();
+            }
+        }
+        bottom += roomPanelContent.getTop() + favouriteScroller.getTop() + favouriteRow.getTop();
+        if (serenEnabled) {
+            // Move the original panel below Seren without enlarging its controls.
+            RoomPanelLayout.Bounds original = RoomPanelLayout.calculate(roomPanelStage.getWidth(),
+                    roomPanelStage.getHeight(), bottom, dp(16), roomPanelRight, dp(110));
+            // Reclaim unused space below app labels, preserving their art and focus geometry.
+            int favouriteHeight = bottom - favouriteScroller.getTop() - roomPanelContent.getTop() + dp(11);
+            if (favouriteHeight > 0 && favouriteScroller.getLayoutParams().height != favouriteHeight) {
+                favouriteScroller.getLayoutParams().height = favouriteHeight;
+                favouriteScroller.requestLayout();
+            }
+            if (serenView != null) {
+
+                LayoutParams rowParams = (LayoutParams) serenView.getLayoutParams();
+                if (rowParams.rightMargin != 0) { rowParams.rightMargin = 0; serenView.setLayoutParams(rowParams); }
+            }
+            if (serenRoomGap != null) {
+                int gap = Math.max(dp(16), roomPanelStage.getHeight() - serenRoomGap.getTop() + dp(16));
+                if (serenRoomGap.getLayoutParams().height != gap) { serenRoomGap.getLayoutParams().height = gap; serenRoomGap.requestLayout(); }
+            }
+            roomPanelView.setVisibility(roomPanelEnabled ? VISIBLE : GONE);
+            LayoutParams roomParams = (LayoutParams) roomPanelView.getLayoutParams();
+            int panelHeight = Math.max(dp(110), original.height);
+            if (roomParams.width != original.width || roomParams.height != panelHeight
+                    || roomParams.rightMargin != original.right) {
+                roomParams.width = original.width;
+                roomParams.height = panelHeight;
+                roomParams.rightMargin = original.right;
+                roomPanelView.setLayoutParams(roomParams);
+            }
+            updateRoomReveal();
+            return;
+        }
+        if (roomPanelHasOptionalRows) bottom = Math.max(bottom, roomPanelContent.getBottom());
+        RoomPanelLayout.Bounds bounds = RoomPanelLayout.calculate(roomPanelStage.getWidth(),
+                roomPanelStage.getHeight(), bottom, dp(16), roomPanelRight, dp(110));
+        boolean visible = roomPanelEnabled && bounds.height > 0;
+        if (!visible && roomPanelView.hasFocus()) returnFromRoomPanel();
+        roomPanelView.setVisibility(visible ? VISIBLE : GONE);
+        FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) roomPanelView.getLayoutParams();
+        if (p.topMargin != bounds.top || p.height != bounds.height || p.rightMargin != bounds.right) {
+            p.topMargin = bounds.top; p.height = bounds.height; p.rightMargin = bounds.right;
+            roomPanelView.setLayoutParams(p);
+        }
+    }
+
+    private void updateRoomReveal() {
+        if (!serenEnabled || homeContentScroll == null || roomPanelView == null) return;
+        int top = homeContentScroll.getScrollY();
+        boolean revealed = top > 0 && roomPanelView.getTop() >= top
+                && roomPanelView.getBottom() <= top + homeContentScroll.getHeight();
+        roomPanelView.setAlpha(revealed ? 1f : 0f);
+    }
+
+    private boolean focusedFavourite(View focus) {
+        for (android.view.ViewParent p = focus == null ? null : focus.getParent(); p != null; p = p.getParent())
+            if (p == favouriteRow) return true;
+        return false;
+    }
+
+    private void returnFromRoomPanel() {
+        if (serenEnabled && !roomPanelHasOptionalRows && serenView != null && serenView.focusEpisode(null)) return;
+        if ((roomPanelHasOptionalRows || serenEnabled) && roomPanelView != null && roomPanelView.hasFocus()) {
+            View focused = roomPanelView.findFocus();
+            View previous = focused == null ? null : focused.focusSearch(View.FOCUS_UP);
+            for (android.view.ViewParent parent = previous == null ? null : previous.getParent();
+                    parent != null; parent = parent.getParent()) {
+                if (parent == roomPanelContent && previous.requestFocus()) return;
+            }
+        }
+        if (roomPanelPreviousFavourite != null && roomPanelPreviousFavourite.isAttachedToWindow())
+            roomPanelPreviousFavourite.requestFocus();
+        else resetToFirstFavourite();
+    }
+
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        setTraktSyncing(traktSyncing);
+    }
+    @Override protected void onDetachedFromWindow() {
+        removeCallbacks(traktSpinFrame);
+
+        if (roomPanelResize != null) { roomPanelResize.cancel(); roomPanelResize = null; }
+        super.onDetachedFromWindow();
+    }
+
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (handleGrabKeyEvent(event)) {
+            return true;
+        }
+        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN && serenView != null) {
+            if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && serenView.hasFocus()
+                    && !roomPanelHasOptionalRows && roomPanelEnabled && roomPanelView != null
+                    && roomPanelView.focusHeading()) return true;
+            if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && focusedFavourite(findFocus())) {
+                View previous = findFocus();
+                if (serenView.focusEpisode(null)) { roomPanelPreviousFavourite = previous; return true; }
+            }
+            if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && serenView.hasFocus()) {
+                if (roomPanelPreviousFavourite != null && roomPanelPreviousFavourite.isAttachedToWindow())
+                    roomPanelPreviousFavourite.requestFocus();
+                else resetToFirstFavourite();
+                return true;
+            }
+        }
+        if (event != null && event.getAction() == KeyEvent.ACTION_DOWN
+                && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && roomPanelEnabled
+                && !roomPanelHasOptionalRows && !serenEnabled && roomPanelView != null && focusedFavourite(findFocus())) {
+            View previous = findFocus();
+            if (roomPanelView.focusHeading()) { roomPanelPreviousFavourite = previous; return true; }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    private boolean handleGrabKeyEvent(KeyEvent event) {
+        if (grabSession == null || grabbedCard == null || event == null) {
+            return false;
+        }
+
+        int keyCode = event.getKeyCode();
+        boolean grabOwnedKey = keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+                || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT
+                || keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+                || keyCode == KeyEvent.KEYCODE_ENTER
+                || keyCode == KeyEvent.KEYCODE_DPAD_UP
+                || keyCode == KeyEvent.KEYCODE_DPAD_DOWN;
+        if (!grabOwnedKey) {
+            return false;
+        }
+
+        if (event.getAction() == KeyEvent.ACTION_UP) {
+            return true;
+        }
+        if (event.getAction() != KeyEvent.ACTION_DOWN) {
+            return true;
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+            if (grabSession.move(-1)) {
+                reorderFavouriteChildren(grabSession.current());
+            }
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+            if (grabSession.move(1)) {
+                reorderFavouriteChildren(grabSession.current());
+            }
+            return true;
+        }
+        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+            if (event.getRepeatCount() == 0 && activeCallbacks != null) {
+                commitGrab(activeCallbacks);
+            }
+            return true;
+        }
+
+        return true;
+    }
+
+    boolean resetToFirstFavourite() {
+        if (grabSession != null) {
+            List<String> original = grabSession.cancel();
+            reorderFavouriteChildren(original);
+            if (grabbedCard != null) {
+                grabbedCard.setGrabbed(false);
+            }
+            grabSession = null;
+            grabbedCard = null;
+        }
+
+        if (favouriteRow == null || favouriteRow.getChildCount() == 0) {
+            return false;
+        }
+        View first = favouriteRow.getChildAt(0);
+        if (first == null) {
+            return false;
+        }
+        boolean requested = first.requestFocus();
+        if (favouriteScroller != null) {
+            favouriteScroller.post(() -> favouriteScroller.smoothScrollTo(0, 0));
+        }
+        return requested || first.hasFocus();
+    }
+
+    String focusToken() {
+        View focus = findFocus();
+        while (focus != null && focus != this) {
+            if (focus.getTag() != null) return "tag:" + focus.getTag();
+            CharSequence description = focus.getContentDescription();
+            if (description != null && description.length() > 0) return "description:" + description;
+            if (!(focus.getParent() instanceof View)) break;
+            focus = (View) focus.getParent();
+        }
+        return null;
+    }
+
+    boolean restoreFocus(String token) {
+        View target = findFocusTarget(this, token);
+        if (target == null) return false;
+        if (target.getParent() == favouriteRow) return focusFavouriteView(target);
+        boolean restored = target.requestFocus();
+        if (restored) target.requestRectangleOnScreen(new android.graphics.Rect(0, 0, target.getWidth(), target.getHeight()), true);
+        return restored;
+    }
+
+    private View findFocusTarget(View view, String token) {
+        if (token == null) return null;
+        if (view.isFocusable() && view.isEnabled() && view.getVisibility() == VISIBLE) {
+            if (view.getTag() != null && token.equals("tag:" + view.getTag())) return view;
+            if (view.getContentDescription() != null && token.equals("description:" + view.getContentDescription())) return view;
+        }
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup)view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findFocusTarget(group.getChildAt(i), token);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    boolean focusAddFavourite() {
+        return focusFavouriteView(addFavouriteTile);
+    }
+
+    boolean focusFavourite(String component) {
+        if (favouriteRow == null || component == null) return false;
+        return focusFavouriteView(favouriteRow.findViewWithTag(component));
+    }
+
+    private boolean focusFavouriteView(View target) {
+        if (target == null || favouriteScroller == null) return false;
+        boolean focused = target.requestFocus();
+        target.post(() -> {
+            if (target.getParent() == favouriteRow) {
+                favouriteScroller.smoothScrollTo(Math.max(0, target.getRight()
+                        - favouriteScroller.getWidth() + dp(16)), 0);
+            }
+        });
+        return focused;
+    }
+
+    private View createAddFavouriteTile(Callbacks callbacks) {
+        LinearLayout tile = new LinearLayout(getContext());
+        tile.setOrientation(VERTICAL);
+        tile.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        tile.setPadding(0, 0, 0, 0);
+        tile.setClipChildren(false);
+        tile.setClipToPadding(false);
+        tile.setFocusable(true);
+        tile.setClickable(true);
+        tile.setContentDescription("Add favourites");
+        BoopTvChrome.markCustomStyled(tile);
+        View plus = new View(getContext()) {
+            private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+            @Override protected void onDraw(android.graphics.Canvas canvas) {
+                super.onDraw(canvas);
+                float cx = getWidth() / 2f;
+                float cy = getHeight() / 2f;
+                int accent = FocusChrome.accentColor(getContext());
+                boolean isFocused = tile.hasFocus();
+                float radius = dp(22);
+                paint.setStyle(android.graphics.Paint.Style.FILL);
+                paint.setColor(Color.argb(isFocused ? 48 : 24, Color.red(accent), Color.green(accent), Color.blue(accent)));
+                canvas.drawCircle(cx, cy, radius, paint);
+                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                paint.setStrokeWidth(dp(2));
+                paint.setColor(Color.argb(isFocused ? 220 : 120, Color.red(accent), Color.green(accent), Color.blue(accent)));
+                canvas.drawCircle(cx, cy, radius, paint);
+                paint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+                paint.setStrokeWidth(dp(2) + 0.5f);
+                paint.setColor(isFocused ? Color.WHITE : accent);
+                float arm = dp(9);
+                canvas.drawLine(cx - arm, cy, cx + arm, cy, paint);
+                canvas.drawLine(cx, cy - arm, cx, cy + arm, paint);
+            }
+        };
+        plus.setBackground(FocusChrome.filled(getContext(), BoopTvChrome.SURFACE_PANEL, 12, false));
+        LayoutParams art = new LayoutParams(dp(230), dp(129));
+        art.bottomMargin = dp(6);
+        tile.addView(plus, art);
+        TextView caption = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(caption);
+        caption.setText("Add favourites");
+        caption.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        caption.setLetterSpacing(0.02f);
+        caption.setTextColor(BoopTvChrome.TEXT_SECONDARY);
+        caption.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15.5f);
+        caption.setGravity(Gravity.CENTER);
+        caption.setSingleLine(true);
+        tile.addView(caption, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        tile.setOnClickListener(v -> { if (callbacks != null) callbacks.onAddFavourite(); });
+        tile.setOnFocusChangeListener((v, focused) -> {
+            plus.setBackground(FocusChrome.filled(getContext(),
+                    focused ? BoopTvChrome.SURFACE_ELEVATED : BoopTvChrome.SURFACE_PANEL, 12, false));
+            plus.setForeground(focused ? FocusChrome.artworkOutline(getContext(), 12) : FocusChrome.artworkIdleOutline(getContext(), 12));
+            caption.setTextColor(focused ? Color.WHITE : BoopTvChrome.TEXT_SECONDARY);
+            plus.invalidate();
+            plus.animate().scaleX(focused ? 1.04f : 1f).scaleY(focused ? 1.04f : 1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS).start();
+        });
+        tile.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) return true;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && favouriteRow != null) {
+                int previous = favouriteRow.indexOfChild(v) - 1;
+                if (previous >= 0 && event != null && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    favouriteRow.getChildAt(previous).requestFocus();
+                }
+                return true;
+            }
+            return false;
+        });
+        return tile;
+    }
+
+    /** Equal visible gaps from the first caption to the fixed BOOP settings bay. */
+    private static final class UniformNavRow extends LinearLayout {
+        UniformNavRow(Context context) { super(context); }
+        private int boopVisibleLeft(View boop) {
+            // Fixed transparent inset of the canonical settings eyes; GPU pixels are not in View.draw().
+            return boop.getLeft()+Math.round(21*getResources().getDisplayMetrics().density);
+        }
+        private android.graphics.Rect captionInk(TextView view) {
+            String value=view.getText().toString();android.graphics.Rect ink=new android.graphics.Rect();
+            view.getPaint().getTextBounds(value,0,value.length(),ink);
+            ink.offset(Math.round((view.getMeasuredWidth()-view.getPaint().measureText(value))/2f),0);
+            return ink;
+        }
+        @Override protected void onLayout(boolean changed,int l,int t,int r,int b) {
+            super.onLayout(changed,l,t,r,b);
+            View boop=getChildAt(getChildCount()-1);
+            TextView apps=(TextView)getChildAt(0);
+            android.graphics.Rect appsInk=captionInk(apps);
+            float appsCenter=appsInk.width()/2f;
+            float middle=getWidth()/2f;
+            float eyesCenter=(boopVisibleLeft(boop)+getWidth())/2f;
+            float[] centers={appsCenter,(appsCenter+middle)/2f,middle,(middle+eyesCenter)/2f};
+            for(int n=0;n<4;n++) {
+                TextView action=(TextView)getChildAt(n);android.graphics.Rect ink=captionInk(action);
+                int left=Math.round(centers[n]-(ink.left+ink.right)/2f),top=getHeight()-action.getMeasuredHeight();
+                action.layout(left,top,left+action.getMeasuredWidth(),top+action.getMeasuredHeight());
+            }
+        }
+    }
+
+    private View navRow(Callbacks callbacks) {
+        LinearLayout row = new UniformNavRow(getContext());
+        row.setOrientation(HORIZONTAL);
+        row.setGravity(Gravity.BOTTOM);
+        row.setClipChildren(false);
+        row.setClipToPadding(false);
+
+        TextView apps = navButton("Apps", "Apps", R.drawable.boop_home_apps);
+        apps.setTag("home:apps");
+        apps.setOnClickListener(v -> callbacks.onOpenApps());
+        row.addView(apps, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+
+        TextView homeRows = navButton("Home settings", ShieldHomeSettingsView.launcherSettingsLabel(),
+                R.drawable.boop_home_sliders);
+        homeRows.setTag("home:settings");
+        homeRows.setOnClickListener(v -> callbacks.onOpenHomeRows());
+        LayoutParams homeRowsParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        homeRowsParams.leftMargin = dp(16);
+        row.addView(homeRows, homeRowsParams);
+        TextView closeMedia = navButton("Close media", "Close media apps", R.drawable.boop_home_close_media);
+        closeMedia.setTag("home:close-media");
+        closeMedia.setOnClickListener(v -> callbacks.onCloseMediaApps());
+        LayoutParams closeMediaParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        closeMediaParams.leftMargin = dp(16);
+        row.addView(closeMedia, closeMediaParams);
+        syncTraktButton = navButton("Sync Trakt", "Sync Trakt in Seren and refresh Next Up", R.drawable.boop_home_sync_trakt);
+        android.graphics.drawable.Drawable arrows = syncTraktButton.getCompoundDrawables()[1];
+        traktArrows = new SyncArrowDrawable(arrows);
+        traktArrows.setBounds(new android.graphics.Rect(arrows.getBounds()));
+        syncTraktButton.setCompoundDrawables(null, traktArrows, null, null);
+        syncTraktButton.setTag("home:sync");
+        syncTraktButton.setOnClickListener(v -> callbacks.onSyncTrakt());
+        LayoutParams syncParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        syncParams.leftMargin = dp(16);
+        row.addView(syncTraktButton, syncParams);
+        setTraktSyncing(traktSyncing);
+
+        View spacer = new View(getContext());
+        row.addView(spacer, new LayoutParams(0, 1, 1f));
+
+        FrameLayout settings = new FrameLayout(getContext());
+        settings.setClipChildren(false);
+        settings.setClipToPadding(false);
+        settings.setFocusable(true);
+        settings.setClickable(true);
+        settings.setTag("home:system-settings");
+        settings.setContentDescription("Shield settings");
+        settings.setTooltipText("Shield settings");
+        settings.setOnClickListener(v -> callbacks.onOpenSystemSettings());
+        ShieldNowPlayingPuppetView settingsBoop = new ShieldNowPlayingPuppetView(getContext());
+        settingsBoop.setTranslationX(dp(21));
+        settingsBoop.setTranslationY(-dp(1));
+        settingsBoop.setSettingsButtonPresentation();
+        settings.setForeground(null);
+        settings.setOnFocusChangeListener((v, focused) ->
+                settingsBoop.setFocusColour(focused ? FocusChrome.accentColor(getContext()) : null));
+        settingsBoop.setSnapshot(idleAssistantSnapshot());
+        settings.addView(settingsBoop, new FrameLayout.LayoutParams(
+                dp(166), dp(83), Gravity.END | Gravity.CENTER_VERTICAL));
+        row.addView(settings, new LayoutParams(dp(144), dp(60)));
+        return row;
+    }
+
+    private NowPlayingSnapshot idleAssistantSnapshot() {
+        return new NowPlayingSnapshot(
+                -1L,
+                "",
+                "",
+                "",
+                PlaybackState.STATE_BUFFERING,
+                0L,
+                0L,
+                0L,
+                1f,
+                0L,
+                null);
+    }
+
+    private View appRow(List<TvAppEntry> favourites, Callbacks callbacks) {
+        favouriteScroller = new HorizontalScrollView(getContext());
+        favouriteScroller.setHorizontalScrollBarEnabled(false);
+        favouriteScroller.setFillViewport(false);
+        favouriteScroller.setClipChildren(false);
+        favouriteScroller.setClipToPadding(false);
+        favouriteScroller.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) ->
+                v.setClipBounds(new android.graphics.Rect(0, -dp(20), r-l, b-t+dp(20))));
+
+        favouriteRow = new LinearLayout(getContext());
+        favouriteRow.setOrientation(HORIZONTAL);
+        favouriteRow.setGravity(Gravity.TOP);
+        favouriteRow.setClipChildren(false);
+        favouriteRow.setClipToPadding(false);
+
+        String grabbedComponent = grabSession == null ? null : grabSession.grabbedComponent();
+        for (int index = 0; index < favourites.size(); index++) {
+            TvAppEntry entry = favourites.get(index);
+            TvAppCardView card = new TvAppCardView(getContext());
+            card.bindFavourite(entry);
+            card.setTag(entry.component());
+            card.setOnClickListener(v -> {
+                if (grabSession != null && v == grabbedCard) {
+                    commitGrab(callbacks);
+                } else {
+                    callbacks.onAppSelected(entry);
+                }
+            });
+            card.setOnLongClickListener(v -> {
+                beginGrab(entry, card);
+                return true;
+            });
+            card.setOnKeyListener((v, keyCode, event) -> {
+                // Resolve position at key time: a grabbed card may have moved.
+                boolean isFirstFavourite = favouriteRow != null
+                        && favouriteRow.indexOfChild(v) == 0;
+                if (grabSession == null && isFirstFavourite
+                        && keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                    return true;
+                }
+                boolean isLastFavourite = favouriteRow != null
+                        && favouriteRow.indexOfChild(v) == favouriteRow.getChildCount() - 2;
+                if (grabSession == null && isLastFavourite
+                        && keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                    if (event != null && event.getAction() == KeyEvent.ACTION_DOWN) focusAddFavourite();
+                    return true;
+                }
+                return false;
+            });
+            LayoutParams params = new LayoutParams(dp(230), dp(185));
+            params.rightMargin = dp(16);
+            favouriteRow.addView(card, params);
+
+            if (grabbedComponent != null && grabbedComponent.equals(entry.component())) {
+                grabbedCard = card;
+                card.setGrabbed(true);
+                card.post(card::requestFocus);
+            }
+        }
+        addFavouriteTile = createAddFavouriteTile(callbacks);
+        LayoutParams addParams = new LayoutParams(dp(230), dp(185));
+        addParams.rightMargin = dp(16);
+        favouriteRow.addView(addFavouriteTile, addParams);
+        favouriteScroller.addView(favouriteRow, new HorizontalScrollView.LayoutParams(
+                LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+        return favouriteScroller;
+    }
+
+    private void beginGrab(TvAppEntry entry, TvAppCardView card) {
+        if (entry == null || card == null || favouriteRow == null) {
+            return;
+        }
+        ArrayList<String> current = new ArrayList<>();
+        for (int i = 0; i < favouriteRow.getChildCount(); i++) {
+            Object tag = favouriteRow.getChildAt(i).getTag();
+            if (tag instanceof String) current.add((String) tag);
+        }
+        grabSession = FavouriteGrabSession.begin(current, entry.component());
+        if (grabbedCard != null && grabbedCard != card) {
+            grabbedCard.setGrabbed(false);
+        }
+        grabbedCard = card;
+        card.setGrabbed(true);
+        card.requestFocus();
+        scrollGrabbedIntoView();
+    }
+
+    private void commitGrab(Callbacks callbacks) {
+        if (grabSession == null) return;
+        List<String> committed = grabSession.commit();
+        clearGrabState();
+        callbacks.onFavouriteOrderCommitted(committed);
+    }
+
+    private void clearGrabState() {
+        if (grabbedCard != null) {
+            grabbedCard.setGrabbed(false);
+            grabbedCard.requestFocus();
+        }
+        grabSession = null;
+        grabbedCard = null;
+    }
+
+    private void reorderFavouriteChildren(List<String> order) {
+        if (favouriteRow == null || order == null) return;
+        Map<String, View> byComponent = new HashMap<>();
+        for (int i = 0; i < favouriteRow.getChildCount(); i++) {
+            View child = favouriteRow.getChildAt(i);
+            Object tag = child.getTag();
+            if (tag instanceof String) byComponent.put((String) tag, child);
+        }
+        favouriteRow.removeAllViews();
+        for (String component : order) {
+            View child = byComponent.get(component);
+            if (child != null) {
+                favouriteRow.addView(child);
+            }
+        }
+        if (addFavouriteTile != null) favouriteRow.addView(addFavouriteTile);
+        if (grabbedCard != null) {
+            grabbedCard.requestFocus();
+            scrollGrabbedIntoView();
+        }
+    }
+
+    private void scrollGrabbedIntoView() {
+        if (favouriteScroller == null || grabbedCard == null) return;
+        grabbedCard.post(() -> favouriteScroller.smoothScrollTo(
+                Math.max(0, grabbedCard.getLeft() - dp(70)), 0));
+    }
+
+    private List<TvAppEntry> orderEntries(List<TvAppEntry> entries, List<String> order) {
+        Map<String, TvAppEntry> byComponent = new HashMap<>();
+        for (TvAppEntry entry : entries) {
+            if (entry != null) byComponent.put(entry.component(), entry);
+        }
+        ArrayList<TvAppEntry> out = new ArrayList<>();
+        for (String component : order) {
+            TvAppEntry entry = byComponent.remove(component);
+            if (entry != null) out.add(entry);
+        }
+        out.addAll(byComponent.values());
+        return out;
+    }
+
+    private View contentRow(List<HomeContentCard> cards, Callbacks callbacks) {
+        HorizontalScrollView scroller = new HorizontalScrollView(getContext());
+        scroller.setHorizontalScrollBarEnabled(false);
+        scroller.setClipChildren(false);
+
+        LinearLayout row = new LinearLayout(getContext());
+        row.setOrientation(HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setClipChildren(false);
+
+        for (HomeContentCard card : cards) {
+            TextView tile = actionButton(card.title());
+            tile.setContentDescription(card.title());
+            tile.setOnClickListener(v -> callbacks.onContentSelected(card));
+            tile.setTag(card.intentUri() == null ? null : Uri.parse(card.intentUri()));
+            LayoutParams params = new LayoutParams(dp(250), dp(118));
+            params.rightMargin = dp(16);
+            row.addView(tile, params);
+        }
+        scroller.addView(row, new HorizontalScrollView.LayoutParams(
+                LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
+        return scroller;
+    }
+
+    private TextView sectionTitle(String text) {
+        TextView title = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(title);
+        title.setText(text == null ? "" : text);
+        title.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        title.setLetterSpacing(0.02f);
+        title.setTextColor(BoopTvChrome.TEXT_PRIMARY);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        return title;
+    }
+
+    private TextView actionButton(String text) {
+        TextView view = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(view);
+        view.setText(text == null ? "" : text);
+        view.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        view.setLetterSpacing(0.015f);
+        view.setTextColor(BoopTvChrome.TEXT_PRIMARY);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        view.setGravity(Gravity.CENTER);
+        view.setFocusable(true);
+        view.setClickable(true);
+        view.setPadding(dp(16), dp(8), dp(16), dp(8));
+        view.setBackground(actionBackground(false));
+        view.setOnFocusChangeListener((v, focused) -> {
+            v.setBackground(actionBackground(focused));
+            v.animate()
+                    .scaleX(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .scaleY(focused ? TvAppCardView.FOCUSED_SCALE : 1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS)
+                    .start();
+        });
+        return view;
+    }
+
+    private TextView navButton(String caption, String description, int iconResource) {
+        TextView view = actionButton(caption);
+        view.setContentDescription(description);
+        view.setTooltipText(description);
+        view.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        view.setLetterSpacing(0.025f);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f);
+        view.setSingleLine(true);
+        view.setIncludeFontPadding(true);
+        view.setMinHeight(dp(60));
+        view.setPadding(0, dp(2), 0, dp(2));
+        view.setMinWidth(dp(44));
+        android.graphics.drawable.Drawable icon = getContext().getDrawable(iconResource).mutate();
+        icon = PrecisionIcons.drawable(getContext(), iconResource, 34.32f);
+        icon.setBounds(0, 0, PrecisionIcons.dp(getContext(), 34.32f * PrecisionIcons.SCALE), PrecisionIcons.dp(getContext(), 34.32f * PrecisionIcons.SCALE));
+        view.setCompoundDrawables(null, icon, null, null);
+        view.setCompoundDrawablePadding(dp(4));
+        BoopTvChrome.useTextOnlyFocus(view);
+        view.setBackground(null);
+        view.setOnFocusChangeListener((v, focused) -> {
+            v.setBackground(null);
+            v.animate().scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(TvAppCardView.FOCUS_DURATION_MS).start();
+        });
+        return view;
+    }
+
+    private GradientDrawable actionBackground(boolean focused) {
+        return FocusChrome.filled(getContext(), BoopTvChrome.SURFACE_CARD, 14, focused);
+    }
+
+    private LayoutParams wrap() {
+        return new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    }
+
+    private void addSpacer(int height) {
+        View spacer = new View(getContext());
+        addView(spacer, new LayoutParams(1, height));
+    }
+
+    private int dp(int value) {
+        return Math.round(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, value, getResources().getDisplayMetrics()));
+    }
+}
