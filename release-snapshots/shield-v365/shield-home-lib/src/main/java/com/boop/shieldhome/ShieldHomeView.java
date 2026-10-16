@@ -448,7 +448,11 @@ public final class ShieldHomeView extends LinearLayout {
                     && roomPanelView.focusHeading()) return true;
             if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && focusedFavourite(findFocus())) {
                 View previous = findFocus();
-                if (serenView.focusEpisode(null)) { roomPanelPreviousFavourite = previous; return true; }
+                if (serenView.focusEpisode(null)) {
+                    roomPanelPreviousFavourite = previous;
+                    resetFavouriteScrollerToStart();
+                    return true;
+                }
             }
             if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_UP && serenView.hasFocus()) {
                 if (roomPanelPreviousFavourite != null && roomPanelPreviousFavourite.isAttachedToWindow())
@@ -461,7 +465,11 @@ public final class ShieldHomeView extends LinearLayout {
                 && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_DOWN && roomPanelEnabled
                 && !roomPanelHasOptionalRows && !serenEnabled && roomPanelView != null && focusedFavourite(findFocus())) {
             View previous = findFocus();
-            if (roomPanelView.focusHeading()) { roomPanelPreviousFavourite = previous; return true; }
+            if (roomPanelView.focusHeading()) {
+                roomPanelPreviousFavourite = previous;
+                resetFavouriteScrollerToStart();
+                return true;
+            }
         }
         return super.dispatchKeyEvent(event);
     }
@@ -530,10 +538,13 @@ public final class ShieldHomeView extends LinearLayout {
             return false;
         }
         boolean requested = first.requestFocus();
-        if (favouriteScroller != null) {
-            favouriteScroller.post(() -> favouriteScroller.smoothScrollTo(0, 0));
-        }
+        resetFavouriteScrollerToStart();
         return requested || first.hasFocus();
+    }
+
+    private void resetFavouriteScrollerToStart() {
+        HorizontalScrollView scroller = favouriteScroller;
+        if (scroller != null) scroller.post(() -> scroller.smoothScrollTo(0, 0));
     }
 
     String focusToken() {

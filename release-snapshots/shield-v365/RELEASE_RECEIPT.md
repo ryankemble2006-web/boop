@@ -14,3 +14,6 @@ as downloadable artifacts after tests and build verification complete.
   - Expands focus-scroll rectangles by `16dp` so the first and last tiles retain
     their edge clearance at the horizontal scroll limits.
   - Doubles the focused tile outline from `2dp` to `4dp`.
+- Pressing DPAD-down from a favourite now returns that carousel to its starting
+  horizontal position when focus successfully moves to Seren or the Living
+  Room panel.
