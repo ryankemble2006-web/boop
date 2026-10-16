@@ -245,7 +245,6 @@ try {
     $shortCommit = $commit.Substring(0, 8)
     $randomTag = [guid]::NewGuid().ToString('N').Substring(0, 8)
     $releaseTag = "codex-local-sign-v$versionCode-$shortCommit-$randomTag"
-    $triggerTag = "codex-sign-trigger-v$versionCode-$shortCommit-$randomTag"
     Write-Host "Uploading the locally built APK to temporary draft $releaseTag for signing..."
     Invoke-CheckedNative -Executable 'gh' -Arguments @(
         'release', 'create', $releaseTag, $localApk, $receiptPath,
@@ -262,6 +261,12 @@ try {
         Select-Object -First 1
     $releaseId = if ($draft) { [string]$draft.id } else { $null }
     if (-not $releaseId) { throw "Could not resolve the temporary draft release ID for $releaseTag." }
+    $apkAssets = @($draft.assets | Where-Object { $_.name -eq "BOOP-Shield-v$versionCode-local.apk" })
+    $receiptAssets = @($draft.assets | Where-Object { $_.name -eq 'build-receipt.json' })
+    if ($apkAssets.Count -ne 1 -or $receiptAssets.Count -ne 1) {
+        throw "Temporary draft $releaseTag does not contain exactly one local APK and receipt."
+    }
+    $triggerTag = "codex-sign-trigger-v$versionCode-$shortCommit-$randomTag-$($apkAssets[0].id)-$($receiptAssets[0].id)"
 
     Invoke-CheckedNative -Executable $git -Arguments @('-C', $repoRoot, 'tag', $triggerTag, $commit) -FailureMessage 'Could not create the temporary signature trigger tag.'
     Invoke-CheckedNative -Executable $git -Arguments @('-C', $repoRoot, 'push', 'origin', "refs/tags/$triggerTag") -FailureMessage 'Could not push the temporary signature trigger tag.'
