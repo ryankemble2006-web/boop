@@ -56,14 +56,14 @@ final class LyricsLookupDialog extends Dialog {
         cancel.setNextFocusRightId(find.getId());find.setNextFocusLeftId(cancel.getId());
         title.setOnKeyListener((v,key,event)->{
             if(event.getAction()==android.view.KeyEvent.ACTION_DOWN && key==android.view.KeyEvent.KEYCODE_DPAD_DOWN){
-                hideKeyboard();artist.requestFocus();return true;
+                artist.requestFocus();return true;
             }
             return false;
         });
         artist.setOnKeyListener((v,key,event)->{
             if(event.getAction()!=android.view.KeyEvent.ACTION_DOWN)return false;
             if(key==android.view.KeyEvent.KEYCODE_DPAD_DOWN){hideKeyboard();find.requestFocus();return true;}
-            if(key==android.view.KeyEvent.KEYCODE_DPAD_UP){hideKeyboard();title.requestFocus();return true;}
+            if(key==android.view.KeyEvent.KEYCODE_DPAD_UP){title.requestFocus();return true;}
             return false;
         });
         ScrollView scroll=new ScrollView(getContext());scroll.setFillViewport(true);scroll.addView(panel);setContentView(scroll);
@@ -73,7 +73,7 @@ final class LyricsLookupDialog extends Dialog {
             GradientDrawable surface=new GradientDrawable();surface.setColor(Color.rgb(24,24,24));surface.setCornerRadius(dp(14));
             window.setBackgroundDrawable(surface);
             window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);window.setDimAmount(.65f);
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
         title.requestFocus();title.setSelection(title.length());
     }
@@ -81,11 +81,12 @@ final class LyricsLookupDialog extends Dialog {
         super.onStart(); Window window=getWindow();
         if(window!=null){window.setLayout(Math.min(dp(620),activity.getResources().getDisplayMetrics().widthPixels-dp(48)),
                 Math.min(dp(390),activity.getResources().getDisplayMetrics().heightPixels-dp(48)));}
+        requestKeyboard(title);
     }
     private void submit(){
         String t=title.getText().toString().trim(),a=artist.getText().toString().trim();
-        if(t.isEmpty()){title.setError("Enter a track title");title.requestFocus();return;}
-        if(a.isEmpty()){artist.setError("Enter an artist");artist.requestFocus();return;}
+        if(t.isEmpty()){title.setError("Enter a track title");title.requestFocus();requestKeyboard(title);return;}
+        if(a.isEmpty()){artist.setError("Enter an artist");artist.requestFocus();requestKeyboard(artist);return;}
         NowPlayingSnapshot query=LyricsLookupQuery.edit(original,t,a);
         hideKeyboard();dismiss(); search.accept(query);
     }
@@ -94,11 +95,21 @@ final class LyricsLookupDialog extends Dialog {
                 getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
         if(keyboard!=null)keyboard.hideSoftInputFromWindow(title.getWindowToken(),0);
     }
+    private void requestKeyboard(EditText field){
+        if(field==null)return;
+        field.post(()->{
+            if(!isShowing()||!field.hasFocus())return;
+            android.view.inputmethod.InputMethodManager keyboard=(android.view.inputmethod.InputMethodManager)
+                    getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+            if(keyboard!=null)keyboard.showSoftInput(field,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+        });
+    }
     private EditText field(String value){
         EditText field=new EditText(getContext());field.setId(View.generateViewId());
         field.setSingleLine(true);field.setTextColor(Color.WHITE);field.setTextSize(19);
         field.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         field.setFilters(new InputFilter[]{new InputFilter.LengthFilter(256)});field.setText(value);
+        field.setOnFocusChangeListener((v,focused)->{if(focused)requestKeyboard(field);});
         field.setPadding(dp(10),dp(6),dp(10),dp(6));return field;
     }
     private TextView button(String text,View.OnClickListener action){

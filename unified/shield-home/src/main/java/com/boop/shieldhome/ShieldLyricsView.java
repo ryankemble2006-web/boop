@@ -23,6 +23,8 @@ import java.util.Locale;
 public final class ShieldLyricsView extends FrameLayout {
     public interface Controls {
         void previous(); void playPause(); void next(); void seek(long milliseconds); void close(); void browseAlbum(); void browseArtist();
+        default boolean canStartTrackMix(NowPlayingSnapshot track) { return false; }
+        default void trackMix() { }
         default void queue() { }
         default void lookup() { }
         default void flow() { }
@@ -109,6 +111,10 @@ public final class ShieldLyricsView extends FrameLayout {
         title.setTextColor(Color.WHITE);
         title.setIncludeFontPadding(false);
         title.setSelected(true);
+        title.setFocusable(false);
+        title.setClickable(false);
+        BoopTvChrome.useTextOnlyFocus(title);
+        title.setOnClickListener(v -> { if (v.isEnabled()) controls.trackMix(); });
         title.setRepeatScroll(false);
         addView(title);
         artist = label("", 18, Color.WHITE, false);
@@ -151,6 +157,17 @@ public final class ShieldLyricsView extends FrameLayout {
             if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
             if (key == KeyEvent.KEYCODE_DPAD_UP)
                 return artwork.isFocusable() && artwork.requestFocus();
+            if (key == KeyEvent.KEYCODE_DPAD_DOWN) {
+                if (title.isFocusable()) return title.requestFocus();
+                return progress.isFocusable() ? progress.requestFocus() : focusTransport();
+            }
+            return false;
+        });
+        title.setOnKeyListener((v, key, event) -> {
+            if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;
+            if (key == KeyEvent.KEYCODE_DPAD_UP)
+                return artist.isFocusable() ? artist.requestFocus()
+                        : artwork.isFocusable() && artwork.requestFocus();
             if (key == KeyEvent.KEYCODE_DPAD_DOWN)
                 return progress.isFocusable() ? progress.requestFocus() : focusTransport();
             return false;
@@ -162,7 +179,8 @@ public final class ShieldLyricsView extends FrameLayout {
             if (key == KeyEvent.KEYCODE_DPAD_LEFT) { controls.seek(-10000L); return true; }
             if (key == KeyEvent.KEYCODE_DPAD_RIGHT) { controls.seek(10000L); return true; }
             if (key == KeyEvent.KEYCODE_DPAD_UP)
-                return artist.isFocusable() ? artist.requestFocus()
+                return title.isFocusable() ? title.requestFocus()
+                        : artist.isFocusable() ? artist.requestFocus()
                         : artwork.isFocusable() && artwork.requestFocus();
             if (key == KeyEvent.KEYCODE_DPAD_DOWN) return focusTransport();
             return false;
@@ -171,6 +189,7 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setOnKeyListener((v, key, event) -> {
             if (event.getAction() != KeyEvent.ACTION_DOWN || key != KeyEvent.KEYCODE_DPAD_DOWN) return false;
             return artist.isFocusable() ? artist.requestFocus()
+                    : title.isFocusable() ? title.requestFocus()
                     : progress.isFocusable() ? progress.requestFocus() : focusTransport();
         });
 
@@ -297,7 +316,6 @@ public final class ShieldLyricsView extends FrameLayout {
         artwork.setContentDescription(next != null && "deezer.android.app".equals(next.packageName())
                 ? "Browse album in Deezer" : "Open source player");
         title.showText(nextTitle);
-        title.setContentDescription(nextTitle);
         if (titleChanged) title.getParent().requestLayout();
         setLabelIfChanged(artist, next == null ? "" : next.subtitle());
         boolean artistAvailable = next != null && !next.subtitle().isEmpty() && !next.title().isEmpty();
@@ -305,6 +323,7 @@ public final class ShieldLyricsView extends FrameLayout {
         artist.setFocusable(artistAvailable);
         artist.setClickable(artistAvailable);
         artist.setContentDescription(artistAvailable ? "Browse artist " + next.subtitle() + " in Deezer" : "Artist unavailable");
+        bindTrackMixAction(next);
         setLabelIfChanged(duration, next == null ? "" : time(next.durationMs()));
         boolean seek = next != null && next.canSeek() && next.durationMs() > 0 && knownClock;
         progress.setFocusable(seek);
@@ -327,6 +346,23 @@ public final class ShieldLyricsView extends FrameLayout {
         queueButton.setFocusable(available);
         queueButton.setEnabled(available);
         queueButton.setClickable(available);
+    }
+    private void bindTrackMixAction(NowPlayingSnapshot current) {
+        boolean available = current != null && controls != null
+                && "deezer.android.app".equals(current.packageName())
+                && controls.canStartTrackMix(current);
+        boolean moveFocus = !available && title.hasFocus();
+        title.setEnabled(available);
+        title.setFocusable(available);
+        title.setClickable(available);
+        title.setContentDescription(available
+                ? "Launch a Deezer Track Mix based on " + title.getText()
+                : "Now Playing track title " + title.getText());
+        if (moveFocus) {
+            if (artist.isFocusable() && artist.isEnabled()) artist.requestFocus();
+            else if (artwork.isFocusable()) artwork.requestFocus();
+            else focusTransport();
+        }
     }
     private boolean handleFavouriteRowKey(int slot, int key, KeyEvent event) {
         if (event == null || event.getAction() != KeyEvent.ACTION_DOWN) return false;

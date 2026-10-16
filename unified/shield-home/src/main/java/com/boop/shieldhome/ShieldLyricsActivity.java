@@ -43,6 +43,12 @@ public final class ShieldLyricsActivity extends Activity {
                 if (!manager.playDeezerFlow()) android.widget.Toast.makeText(ShieldLyricsActivity.this,
                         "Flow needs an active native Deezer player.", android.widget.Toast.LENGTH_SHORT).show();
             }
+            @Override public boolean canStartTrackMix(NowPlayingSnapshot track) {
+                return manager != null && manager.canPlayDeezerTrackMix(track);
+            }
+            @Override public void trackMix() {
+                if (manager != null) manager.playDeezerTrackMix();
+            }
             @Override public void lookup() { openLookup(); }
             @Override public void queue() {
                 if (!started || isFinishing() || !manager.queue().current().visible) return;
