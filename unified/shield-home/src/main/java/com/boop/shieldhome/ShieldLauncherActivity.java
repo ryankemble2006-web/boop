@@ -89,6 +89,8 @@ public final class ShieldLauncherActivity extends Activity {
     private boolean destroyed;
     private boolean resumed;
     private boolean appsLoaded;
+    private final HomeStartupFocusGate homeStartupFocusGate = new HomeStartupFocusGate();
+    private BroadcastReceiver screenStateReceiver;
     private int optionalGeneration;
     private SerenNextUpSession serenSession;
     private String serenStatus = "";
@@ -100,6 +102,7 @@ public final class ShieldLauncherActivity extends Activity {
     private final BackPressGesture backPressGesture = new BackPressGesture();
     private Handler inputHandler;
     private Runnable backHoldRunnable;
+    private Runnable deezerStartupWarmupRunnable;
     private Runnable weatherRefreshRunnable;
     private static final long WEATHER_REFRESH_MS = 30L * 60L * 1000L;
 
@@ -109,7 +112,6 @@ public final class ShieldLauncherActivity extends Activity {
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.BLACK));
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
         if (state != null) {
-            homeReturnFocus = state.getString("home_return_focus");
             settingsReturnFocus = state.getString("settings_return_focus");
             settingsReturnScrollY = state.getInt("settings_return_scroll_y", 0);
         }
@@ -128,6 +130,7 @@ public final class ShieldLauncherActivity extends Activity {
         setContentView(root, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT));
+        registerScreenStateReceiver();
 
         repository = new TvAppRepository(this);
         store = new ShieldHomeStore(this);
@@ -152,7 +155,7 @@ public final class ShieldLauncherActivity extends Activity {
                     ((ShieldHomeView) currentView).setSeren(episodes, status, serenSession.posters);
             });
         }
-        showHome();
+        showHome(false);
         if (ACTION_OPEN_SHIELD_SETTINGS.equals(getIntent().getAction())) {
             getIntent().setAction(Intent.ACTION_MAIN);
             focusAndOpenSystemSettings();
@@ -160,6 +163,8 @@ public final class ShieldLauncherActivity extends Activity {
             getIntent().removeExtra("boop_background_flow");
             getIntent().setAction(Intent.ACTION_MAIN);
             requestBackgroundFlow();
+        } else {
+            scheduleDeezerStartupWarmup();
         }
         reloadApps();
         refreshWeather();
@@ -171,6 +176,24 @@ public final class ShieldLauncherActivity extends Activity {
                 || "com.boop.action.DEEZER_FLOW".equals(intent.getAction()));
     }
 
+    private void scheduleDeezerStartupWarmup() {
+        if (deezerStartupWarmupRunnable != null || inputHandler == null) return;
+        deezerStartupWarmupRunnable = () -> {
+            deezerStartupWarmupRunnable = null;
+            if (!destroyed && currentPage == Page.HOME && nowPlayingManager != null) {
+                nowPlayingManager.warmDeezerInBackground();
+            }
+        };
+        inputHandler.postDelayed(deezerStartupWarmupRunnable, 1500);
+    }
+
+    private void cancelDeezerStartupWarmup() {
+        if (inputHandler != null && deezerStartupWarmupRunnable != null) {
+            inputHandler.removeCallbacks(deezerStartupWarmupRunnable);
+            deezerStartupWarmupRunnable = null;
+        }
+    }
+
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
@@ -178,14 +201,14 @@ public final class ShieldLauncherActivity extends Activity {
         if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         if (queueDialog != null) queueDialog.dismiss();
         if (intent != null && ACTION_OPEN_SHIELD_SETTINGS.equals(intent.getAction())) {
+            cancelDeezerStartupWarmup();
             intent.setAction(Intent.ACTION_MAIN);
             focusAndOpenSystemSettings();
             return;
         }
-        if (intent != null && (intent.hasCategory(Intent.CATEGORY_HOME)
-                || isFlowRequest(intent))) returnToFirstFavourite();
-        else showHome(false);
+        returnToFirstFavourite();
         if (intent != null && isFlowRequest(intent)) {
+            cancelDeezerStartupWarmup();
             intent.removeExtra("boop_background_flow");
             intent.setAction(Intent.ACTION_MAIN);
             requestBackgroundFlow();
@@ -231,6 +254,16 @@ public final class ShieldLauncherActivity extends Activity {
             nowPlayingManager.refreshAccess();
             nowPlayingManager.reapplyAudioMode();
         }
+        if (currentPage == Page.HOME) {
+            scheduleDeezerStartupWarmup();
+        }
+        boolean focusFirstFavourite = currentPage == Page.HOME
+                && homeStartupFocusGate.consumeWhenReady(appsLoaded);
+        if (focusFirstFavourite) {
+            homeReturnFocus = null;
+            serenReturnFile = null;
+            focusFirstFavourite();
+        }
         refreshWeather();
         refreshRoomPanelSession();
         if (root != null && store != null && currentPage == Page.SETTINGS) {
@@ -239,11 +272,13 @@ public final class ShieldLauncherActivity extends Activity {
         if (serenSession != null) serenSession.refresh(true);
         String returnFile = serenReturnFile;
         serenReturnFile = null;
-        if (returnFile != null && currentView instanceof ShieldHomeView) {
+        if (focusFirstFavourite) {
+            returningFromHeldBackSettings = false;
+        } else if (returnFile != null && currentView instanceof ShieldHomeView) {
             ShieldHomeView home = (ShieldHomeView) currentView;
             home.post(() -> { if (currentView == home) home.focusSeren(returnFile); });
         }
-        else {
+        else if (!focusFirstFavourite && !homeStartupFocusGate.isPending()) {
             if (returningFromHeldBackSettings) homeReturnFocus = "tag:home:system-settings";
             restoreHomeFocus();
             returningFromHeldBackSettings = false;
@@ -330,7 +365,7 @@ public final class ShieldLauncherActivity extends Activity {
                 break;
             case HOME:
             default:
-                showHome();
+                showHome(homeStartupFocusGate.consumeWhenReady(appsLoaded));
                 break;
         }
     }
@@ -344,7 +379,10 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void showHome(boolean focusFirstFavourite, String focusComponent) {
-        rememberHomeFocus();
+        final boolean resetFocusToFirstFavourite = focusFirstFavourite
+                || homeStartupFocusGate.consumeWhenReady(appsLoaded);
+        if (resetFocusToFirstFavourite) homeReturnFocus = null;
+        else rememberHomeFocus();
         if (favouritePicker != null) favouritePicker.dismiss();
         albumBrowser.cancel();
         artistBrowser.cancel();
@@ -366,7 +404,7 @@ public final class ShieldLauncherActivity extends Activity {
         transitionTo(view);
         if (focusComponent != null) {
             view.post(() -> view.focusFavourite(focusComponent));
-        } else if (focusFirstFavourite) {
+        } else if (resetFocusToFirstFavourite) {
             view.post(view::resetToFirstFavourite);
         } else {
             restoreHomeFocus();
@@ -418,7 +456,7 @@ public final class ShieldLauncherActivity extends Activity {
                 view.setRoomPanelState(roomPanelState, store.smartHomePanelEnabled());
                 if (focusComponent != null) {
                     view.post(() -> view.focusFavourite(focusComponent));
-                } else if (focusFirstFavourite) {
+                } else if (resetFocusToFirstFavourite) {
                     view.post(view::resetToFirstFavourite);
                 }
             });
@@ -1166,6 +1204,37 @@ public final class ShieldLauncherActivity extends Activity {
         receiverRegistered = true;
     }
 
+    private void registerScreenStateReceiver() {
+        screenStateReceiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context context, Intent intent) {
+                if (intent == null) return;
+                if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                    homeStartupFocusGate.request();
+                    homeReturnFocus = null;
+                    returningFromHeldBackSettings = false;
+                } else if (Intent.ACTION_SCREEN_ON.equals(intent.getAction()) && resumed) {
+                    focusFirstFavouriteIfRequested();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(screenStateReceiver, filter);
+        }
+    }
+
+    private void focusFirstFavouriteIfRequested() {
+        if (currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)
+                || !homeStartupFocusGate.consumeWhenReady(appsLoaded)) return;
+        homeReturnFocus = null;
+        serenReturnFile = null;
+        focusFirstFavourite();
+    }
+
     private void transitionTo(View next) {
         if (root == null || next == null) {
             return;
@@ -1241,6 +1310,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void rememberHomeFocus() {
+        if (homeStartupFocusGate.isPending()) return;
         if (!appsLoaded && homeReturnFocus != null) return;
         if (currentPage == Page.HOME && currentView instanceof ShieldHomeView) {
             String focus = ((ShieldHomeView) currentView).focusToken();
@@ -1249,7 +1319,8 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     private void restoreHomeFocus() {
-        if (currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) return;
+        if (!appsLoaded || homeStartupFocusGate.isPending()
+                || currentPage != Page.HOME || !(currentView instanceof ShieldHomeView)) return;
         ShieldHomeView home = (ShieldHomeView) currentView;
         home.post(() -> {
             if (currentView != home) return;
@@ -1260,7 +1331,6 @@ public final class ShieldLauncherActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle state) {
         rememberHomeFocus();
         rememberSettingsFocus();
-        state.putString("home_return_focus", homeReturnFocus);
         state.putString("settings_return_focus", settingsReturnFocus);
         state.putInt("settings_return_scroll_y", settingsReturnScrollY);
         super.onSaveInstanceState(state);
@@ -1309,6 +1379,14 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override protected void onDestroy() {
         if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
+        if (screenStateReceiver != null) {
+            try {
+                unregisterReceiver(screenStateReceiver);
+            } catch (IllegalArgumentException ignored) {
+                // Receiver may already have been detached by framework teardown.
+            }
+            screenStateReceiver = null;
+        }
         destroyed = true;
         if (serenSession != null) { serenSession.close(); serenSession = null; }
         if (queueDialog != null) queueDialog.dismiss();
@@ -1324,6 +1402,7 @@ public final class ShieldLauncherActivity extends Activity {
         if (inputHandler != null && backHoldRunnable != null) {
             inputHandler.removeCallbacks(backHoldRunnable);
         }
+        cancelDeezerStartupWarmup();
         if (inputHandler != null && weatherRefreshRunnable != null) {
             inputHandler.removeCallbacks(weatherRefreshRunnable);
         }
@@ -1344,9 +1423,10 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     @Override protected void onPause() {
-        if (!returningFromHeldBackSettings) rememberHomeFocus();
+        if (!returningFromHeldBackSettings && !homeStartupFocusGate.isPending()) rememberHomeFocus();
         rememberSettingsFocus();
         resumed = false;
+        cancelDeezerStartupWarmup();
         if (roomPicker != null) { roomPicker.dismiss(); roomPicker = null; }
         if (queueDialog != null) queueDialog.dismiss();
         refreshRoomPanelSession();

@@ -236,6 +236,15 @@ public final class ShieldNowPlayingManager {
         });
     }
 
+    /** Warm Deezer silently after a fresh Shield Home launch. */
+    public void warmDeezerInBackground() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            backgroundFlow.warmUp();
+        } else {
+            mainHandler.post(backgroundFlow::warmUp);
+        }
+    }
+
     boolean canPlayDeezerTrackMix(NowPlayingSnapshot requested) {
         if (Looper.myLooper() != Looper.getMainLooper()) return false;
         String trackId = deezerLyricsTrackId(requested);
