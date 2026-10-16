@@ -3,7 +3,6 @@ package com.boop.shieldhome;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
-import android.net.Uri;
 import android.os.Bundle;
 
 /** Requests a Deezer Track Mix from the exact current track through the native media session. */
@@ -11,6 +10,7 @@ final class DeezerTrackMixController {
     enum Result { REQUESTED, IGNORED, UNAVAILABLE }
 
     private static final String DEEZER_PACKAGE = "deezer.android.app";
+    private static final String TRACK_MIX_MEDIA_ID_PREFIX = "TRACK_MIX&&";
     private static final long REPEAT_GUARD_MS = 1200L;
 
     private MediaSession.Token lastToken;
@@ -28,8 +28,9 @@ final class DeezerTrackMixController {
             if (token.equals(lastToken) && trackId.equals(lastTrackId)
                     && nowMs >= lastRequestMs && nowMs - lastRequestMs < REPEAT_GUARD_MS)
                 return Result.IGNORED;
-            Uri trackUri = Uri.parse("https://www.deezer.com/track/" + trackId);
-            controller.getTransportControls().playFromUri(trackUri, new Bundle());
+            // Deezer decodes this native media ID into its TrackMix playable.
+            controller.getTransportControls().playFromMediaId(
+                    TRACK_MIX_MEDIA_ID_PREFIX + trackId, new Bundle());
             lastToken = token;
             lastTrackId = trackId;
             lastRequestMs = nowMs;
@@ -50,7 +51,7 @@ final class DeezerTrackMixController {
                     && controller.getSessionToken() != null
                     && live != null
                     && NowPlayingSelectionPolicy.eligible(live.getState())
-                    && (live.getActions() & PlaybackState.ACTION_PLAY_FROM_URI) != 0;
+                    && (live.getActions() & PlaybackState.ACTION_PLAY_FROM_MEDIA_ID) != 0;
         } catch (RuntimeException unavailable) {
             return false;
         }
