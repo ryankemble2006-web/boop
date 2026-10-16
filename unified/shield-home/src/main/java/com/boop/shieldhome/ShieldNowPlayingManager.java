@@ -49,6 +49,7 @@ public final class ShieldNowPlayingManager {
     private final ShieldHomeStore store;
     private final NowPlayingState state = new NowPlayingState();
     private final DeezerFlowController flowController = new DeezerFlowController();
+    private final DeezerTrackMixController trackMixController = new DeezerTrackMixController();
     private final BackgroundDeezerFlow backgroundFlow;
     private final DeezerQueueController queueController;
     private final LinkedHashMap<MediaSession.Token, Binding> bindings = new LinkedHashMap<>();
@@ -233,6 +234,26 @@ public final class ShieldNowPlayingManager {
             queueController.suppressForFlow();
             refreshAccessOnMain();
         });
+    }
+
+    boolean canPlayDeezerTrackMix(NowPlayingSnapshot requested) {
+        if (Looper.myLooper() != Looper.getMainLooper()) return false;
+        String trackId = deezerLyricsTrackId(requested);
+        return trackMixController.canRequest(selectedController, requested, trackId);
+    }
+
+    /** Requests Deezer's Track Mix from the exact current track through its live session. */
+    public boolean playDeezerTrackMix() {
+        if (Looper.myLooper() != Looper.getMainLooper()) return false;
+        refreshAccessOnMain();
+        NowPlayingSnapshot current = state.current();
+        String trackId = deezerLyricsTrackId(current);
+        DeezerTrackMixController.Result result = trackMixController.request(
+                selectedController, current, trackId, SystemClock.elapsedRealtime());
+        if (result == DeezerTrackMixController.Result.REQUESTED) {
+            android.util.Log.i("BOOPDeezerTrackMix", "Native Deezer Track Mix requested");
+        }
+        return result != DeezerTrackMixController.Result.UNAVAILABLE;
     }
 
     public void next() {

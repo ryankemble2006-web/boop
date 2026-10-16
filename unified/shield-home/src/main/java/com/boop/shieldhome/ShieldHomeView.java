@@ -42,6 +42,8 @@ public final class ShieldHomeView extends LinearLayout {
         default void onBrowseNowPlayingAlbum() { onOpenNowPlayingSource(); }
         default void onBrowseNowPlayingArtist() { }
         default void onNowPlayingFlow() { }
+        default boolean canStartNowPlayingTrackMix(NowPlayingSnapshot snapshot) { return false; }
+        default void onNowPlayingTrackMix() { }
         default void onNowPlayingQueue() { }
         default void onCloseNowPlayingSource() { }
         default void onCloseMediaApps() { }

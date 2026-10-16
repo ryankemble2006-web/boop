@@ -549,6 +549,12 @@ public final class ShieldLauncherActivity extends Activity {
                     android.widget.Toast.makeText(ShieldLauncherActivity.this,
                             "Flow needs an active native Deezer player.", android.widget.Toast.LENGTH_SHORT).show();
             }
+            @Override public boolean canStartNowPlayingTrackMix(NowPlayingSnapshot snapshot) {
+                return nowPlayingManager != null && nowPlayingManager.canPlayDeezerTrackMix(snapshot);
+            }
+            @Override public void onNowPlayingTrackMix() {
+                if (nowPlayingManager != null) nowPlayingManager.playDeezerTrackMix();
+            }
             @Override public void onCloseNowPlayingSource() {
                 if(nowPlayingManager==null || !nowPlayingManager.closeSource(ShieldLauncherActivity.this))
                     android.widget.Toast.makeText(ShieldLauncherActivity.this,"Failed",android.widget.Toast.LENGTH_SHORT).show();

@@ -111,6 +111,12 @@ public final class ShieldNowPlayingView extends FrameLayout {
         title.setTextColor(Color.WHITE);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
         title.setSelected(true);
+        title.setFocusable(false);
+        title.setClickable(false);
+        BoopTvChrome.useTextOnlyFocus(title);
+        title.setOnClickListener(v -> {
+            if (callbacks != null && v.isEnabled()) callbacks.onNowPlayingTrackMix();
+        });
         details.addView(title, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         subtitle = text(18, Color.WHITE);
@@ -227,6 +233,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         puppetView.setSnapshot(snapshot);
 
         if (snapshot == null || !NowPlayingSelectionPolicy.eligible(snapshot.playbackState())) {
+            bindTrackMixAction(null);
             setVisibility(GONE);
             artwork.setImageDrawable(null);
             return;
@@ -243,6 +250,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         subtitle.setFocusable(artistAvailable);
         subtitle.setClickable(artistAvailable);
         subtitle.setContentDescription("Browse artist " + snapshot.subtitle() + " in Deezer");
+        bindTrackMixAction(snapshot);
         String state = stateText(snapshot.playbackState());
         if (!TextUtils.equals(stateLabel.getText(), state)) stateLabel.setText(state);
         // Different glyphs can change visible spacing without changing TextView height.
@@ -260,6 +268,23 @@ public final class ShieldNowPlayingView extends FrameLayout {
         updateProgress(snapshot, SystemClock.elapsedRealtime());
         if (snapshot.isPlaying()) {
             startTicker();
+        }
+    }
+
+    private void bindTrackMixAction(NowPlayingSnapshot current) {
+        boolean available = current != null && callbacks != null
+                && "deezer.android.app".equals(current.packageName())
+                && callbacks.canStartNowPlayingTrackMix(current);
+        boolean moveFocus = !available && title.hasFocus();
+        title.setEnabled(available);
+        title.setFocusable(available);
+        title.setClickable(available);
+        title.setContentDescription(available
+                ? "Launch a Deezer Track Mix based on " + title.getText()
+                : "Now Playing track title " + title.getText());
+        if (moveFocus) {
+            if (subtitle.isEnabled() && subtitle.isFocusable()) subtitle.requestFocus();
+            else artwork.requestFocus();
         }
     }
 
