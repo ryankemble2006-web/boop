@@ -222,13 +222,26 @@ public final class ShieldHomeView extends LinearLayout {
             // Provider rows can extend below the screen. Let D-pad focus reveal
             // them while the navigation and assistant overlay keep their places.
             ScrollView contentScroll = new ScrollView(getContext()) {
+                private View currentFocusTarget;
+
+                @Override public void requestChildFocus(View child, View focused) {
+                    currentFocusTarget = focused;
+                    super.requestChildFocus(child, focused);
+                    if (nowPlayingView != null && isDescendant(nowPlayingView, focused)) {
+                        post(() -> smoothScrollTo(0, 0));
+                    }
+                }
+
                 @Override protected int computeScrollDeltaToGetChildRectOnScreen(android.graphics.Rect rect) {
+                    if (nowPlayingView != null && (nowPlayingView.hasFocus() || isDescendant(nowPlayingView, currentFocusTarget))) {
+                        return -getScrollY();
+                    }
                     // Focus scales the card after ScrollView first reveals it.
                     android.graphics.Rect focused = new android.graphics.Rect(rect);
-                    if (roomPanelView != null && roomPanelView.hasFocus()) {
+                    if (roomPanelView != null && (roomPanelView.hasFocus() || isDescendant(roomPanelView, currentFocusTarget))) {
                         focused.top = roomPanelView.getTop();
                         focused.bottom = roomPanelView.getBottom();
-                    } else if (serenView != null && serenView.hasFocus()) {
+                    } else if (serenView != null && (serenView.hasFocus() || isDescendant(serenView, currentFocusTarget))) {
                         focused.top = serenView.getTop();
                         focused.bottom = serenView.getBottom();
                     }
@@ -984,5 +997,16 @@ public final class ShieldHomeView extends LinearLayout {
     private int dp(int value) {
         return Math.round(TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, value, getResources().getDisplayMetrics()));
+    }
+
+    private static boolean isDescendant(View parent, View child) {
+        if (parent == null || child == null) return false;
+        if (parent == child) return true;
+        android.view.ViewParent p = child.getParent();
+        while (p instanceof View) {
+            if (p == parent) return true;
+            p = p.getParent();
+        }
+        return false;
     }
 }
