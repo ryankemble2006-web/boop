@@ -663,9 +663,17 @@ public final class ShieldLauncherActivity extends Activity {
             }
             @Override public void onSetAccentRgb(int red, int green, int blue) {
                 store.setAccentRgb(red, green, blue);
+                try {
+                    getContentResolver().notifyChange(
+                            Uri.parse("content://com.boop.shieldoverlay.home_accent/accent"), null);
+                } catch (RuntimeException ignored) { }
             }
             @Override public void onSetAccentHue(int hue) {
                 store.setAccentHue(hue);
+                try {
+                    getContentResolver().notifyChange(
+                            Uri.parse("content://com.boop.shieldoverlay.home_accent/accent"), null);
+                } catch (RuntimeException ignored) { }
             }
             @Override public void onSetRowEnabled(OptionalRowRegistry.Key key, boolean enabled) {
                 store.setRowEnabled(key, enabled);

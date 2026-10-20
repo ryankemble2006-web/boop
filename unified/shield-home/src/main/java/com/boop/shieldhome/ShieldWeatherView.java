@@ -23,7 +23,7 @@ final class ShieldWeatherView extends LinearLayout {
     ShieldWeatherView(Context context) {
         super(context);
         setOrientation(VERTICAL);
-        setPadding(0,dp(10),0,dp(8));
+        setPadding(0,dp(6),0,dp(4));
         setBackground(null);
         setFocusable(false);
         setClickable(false);
@@ -77,12 +77,15 @@ final class ShieldWeatherView extends LinearLayout {
         LinearLayout body=column();body.setGravity(Gravity.CENTER);
         LinearLayout hero=row();hero.setGravity(Gravity.CENTER);
         ImageView icon=weatherIcon(s.code);
-        LayoutParams iconParams=new LayoutParams(dp(38),dp(44));iconParams.rightMargin=dp(6);
+        LayoutParams iconParams=new LayoutParams(dp(38),dp(44));iconParams.rightMargin=dp(8);
         hero.addView(icon,iconParams);
-        hero.addView(text(Math.round(s.temp)+"C",38,true,Color.WHITE),new LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT));
+        TextView heroTemp=text(Math.round(s.temp)+"°C",38,false,BoopTvChrome.TEXT_PRIMARY);
+        heroTemp.setTypeface(BoopTvChrome.FONT_LIGHT);
+        heroTemp.setLetterSpacing(-0.02f);
+        hero.addView(heroTemp,new LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT));
         body.addView(hero,new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
-        addCenteredLine(body,text(WeatherCode.label(s.code),12,false,Color.LTGRAY),false);
-        addCenteredLine(body,text("Feels "+Math.round(s.feels)+"C",11,false,Color.LTGRAY),false);
+        addCenteredLine(body,text(WeatherCode.label(s.code),12.5f,true,BoopTvChrome.TEXT_PRIMARY),false);
+        addCenteredLine(body,text("Feels like "+Math.round(s.feels)+"°C",11,false,BoopTvChrome.TEXT_SECONDARY),false);
         box.addView(body,new LayoutParams(LayoutParams.MATCH_PARENT,0,1f));
         return box;
     }
@@ -97,9 +100,9 @@ final class ShieldWeatherView extends LinearLayout {
         for(WeatherSnapshot.Hour h:s.hours){
             LinearLayout cell=column();
             cell.setGravity(Gravity.CENTER);
-            addCenteredLine(cell,text(clock(h.time),11,false,Color.LTGRAY),false);
+            addCenteredLine(cell,text(clock(h.time),11,false,BoopTvChrome.TEXT_SECONDARY),false);
             addWeatherIcon(cell,h.code);
-            TextView temp=text(Math.round(h.temp)+"C",14,true,Color.WHITE);
+            TextView temp=text(Math.round(h.temp)+"°",14.5f,true,BoopTvChrome.TEXT_PRIMARY);
             addCenteredLine(cell,temp,false);
             addRain(cell,h.rain);
             strip.addView(cell,new LayoutParams(0,LayoutParams.MATCH_PARENT,1f));
@@ -120,9 +123,9 @@ final class ShieldWeatherView extends LinearLayout {
             LinearLayout cell=column();
             cell.setGravity(Gravity.CENTER);
             String label=i==0?"Today":i==1?"Tomorrow":weekday(d.date);
-            addCenteredLine(cell,text(label,11,false,Color.LTGRAY),false);
+            addCenteredLine(cell,text(label,11,false,BoopTvChrome.TEXT_SECONDARY),false);
             addWeatherIcon(cell,d.code);
-            TextView temperature=text(Math.round(d.high)+"C / "+Math.round(d.low)+"C",12,true,Color.WHITE);
+            TextView temperature=text(Math.round(d.high)+"° / "+Math.round(d.low)+"°",12.5f,true,BoopTvChrome.TEXT_PRIMARY);
             addCenteredLine(cell,temperature,false);
             lastDayTemperature=temperature;
             addRain(cell,d.rain);
@@ -133,7 +136,8 @@ final class ShieldWeatherView extends LinearLayout {
     }
 
     private void addHeader(LinearLayout box,String value){
-        TextView title=text(value,13,true,Color.WHITE);
+        TextView title=text(value == null ? "" : value.toUpperCase(Locale.UK),11.5f,true,BoopTvChrome.TEXT_SECONDARY);
+        title.setLetterSpacing(0.08f);
         title.setGravity(Gravity.CENTER);
         title.setSingleLine(true);
         box.addView(title,new LayoutParams(LayoutParams.MATCH_PARENT,dp(HEADER_DP)));
@@ -226,7 +230,18 @@ final class ShieldWeatherView extends LinearLayout {
     }
     private LinearLayout row(){ LinearLayout v=new LinearLayout(getContext()); v.setOrientation(HORIZONTAL); return v; }
     private LinearLayout column(){ LinearLayout v=new LinearLayout(getContext()); v.setOrientation(VERTICAL); return v; }
-    private TextView text(String value,float size,boolean bold,int color){ TextView v=new TextView(getContext()); v.setText(value); v.setTextColor(color); v.setTextSize(TypedValue.COMPLEX_UNIT_SP,size); v.setIncludeFontPadding(false); if(bold)v.setTypeface(v.getTypeface(),1); return v; }
+    private TextView text(String value,float size,boolean bold,int color){
+        TextView v=new TextView(getContext());
+        BoopTvChrome.markCustomStyled(v);
+        v.setText(value);
+        v.setTextColor(color);
+        v.setTextSize(TypedValue.COMPLEX_UNIT_SP,size);
+        v.setIncludeFontPadding(false);
+        v.setFontFeatureSettings("tnum");
+        v.setTypeface(bold ? BoopTvChrome.FONT_MEDIUM : BoopTvChrome.FONT_REGULAR);
+        v.setLetterSpacing(bold ? 0.015f : 0.01f);
+        return v;
+    }
     private String clock(String iso){ if(iso==null)return ""; int t=iso.indexOf('T'); return t>=0&&iso.length()>=t+6?iso.substring(t+1,t+6):iso; }
     private String weekday(String iso){ try{return LocalDate.parse(iso).format(DateTimeFormatter.ofPattern("EEE",Locale.UK));}catch(Exception e){return iso;} }
     private int accent(){ return FocusChrome.accentColor(getContext()); }
