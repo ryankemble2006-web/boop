@@ -135,7 +135,7 @@ jobs:
             :assistant-lib:testDebugUnitTest \
             --no-daemon --stacktrace
 
-      - name: Build the signed Shield APK
+      - name: Build the signed Shield and Wall APKs
         if: always() && steps.signing.outcome == 'success'
         env:
           BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
@@ -144,6 +144,7 @@ jobs:
           set -euo pipefail
           gradle -p "$SHIELD_SNAPSHOT_DIR" \
             :shield-app:assembleDebug \
+            :wall-app:assembleDebug \
             --no-daemon --stacktrace
 
       - name: Verify package, version, alignment, and permanent signer
@@ -153,16 +154,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          apk="$SHIELD_SNAPSHOT_DIR/shield-app/build/outputs/apk/debug/shield-app-debug.apk"
-          [[ -s "$apk" ]]
           tools="$ANDROID_HOME/build-tools/36.0.0"
           mkdir -p dist
+          expected="$(tr -d '[:space:]' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
+
+          # 1. Shield APK
+          shield_apk="$SHIELD_SNAPSHOT_DIR/shield-app/build/outputs/apk/debug/shield-app-debug.apk"
+          [[ -s "$shield_apk" ]]
 
           # Eradicate any Gradle metadata from the APK archive
-          zip -d "$apk" 'META-INF/com/android/build/gradle/*' || true
+          zip -d "$shield_apk" 'META-INF/com/android/build/gradle/*' || true
 
           # Align cleanly to 4-byte boundaries with page-aligned native libs
-          "$tools/zipalign" -f -p 4 "$apk" "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
+          "$tools/zipalign" -f -p 4 "$shield_apk" "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
 
           # Sign with permanent boop-dev key
           "$tools/apksigner" sign \
@@ -176,16 +180,40 @@ jobs:
           grep -F "versionName='1.2.${SHIELD_VERSION}-shield'" dist/package.txt
           "$tools/zipalign" -c -v 4 "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
           "$tools/apksigner" verify --print-certs "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/certificate.txt
-          expected="$(tr -d '[:space:]' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           grep -F "Signer #1 certificate SHA-256 digest: $expected" dist/certificate.txt
 
-          # Strictly assert that zero Gradle files or metadata exist inside the final APK
+          # Strictly assert that zero Gradle files or metadata exist inside the final Shield APK
           if unzip -l "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" | grep -i "gradle"; then
-            echo "::error::Gradle metadata files detected inside APK!"
+            echo "::error::Gradle metadata files detected inside Shield APK!"
             exit 1
           fi
 
-          sha256sum "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/SHA256SUMS
+          # 2. Wall APK (for Pixel / Phone)
+          wall_apk="$SHIELD_SNAPSHOT_DIR/wall-app/build/outputs/apk/debug/wall-app-debug.apk"
+          if [[ -s "$wall_apk" ]]; then
+            wall_version="$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*$/\1/p' "$SHIELD_SNAPSHOT_DIR/wall-app/build.gradle" | head -n 1)"
+            zip -d "$wall_apk" 'META-INF/com/android/build/gradle/*' || true
+            "$tools/zipalign" -f -p 4 "$wall_apk" "dist/BOOP-Wall-v${wall_version}.apk"
+            "$tools/apksigner" sign \
+              --ks "$BOOP_SIGNING_STORE_FILE" --ks-key-alias boop-dev \
+              --ks-pass env:BOOP_DEV_STORE_PASSWORD --key-pass env:BOOP_DEV_KEY_PASSWORD \
+              --out "dist/BOOP-Wall-v${wall_version}.apk" "dist/BOOP-Wall-v${wall_version}.apk"
+
+            "$tools/aapt" dump badging "dist/BOOP-Wall-v${wall_version}.apk" > dist/wall-package.txt
+            grep -F "package: name='com.boop.alpha1'" dist/wall-package.txt
+            grep -F "versionCode='${wall_version}'" dist/wall-package.txt
+            "$tools/zipalign" -c -v 4 "dist/BOOP-Wall-v${wall_version}.apk"
+            "$tools/apksigner" verify --print-certs "dist/BOOP-Wall-v${wall_version}.apk" > dist/wall-certificate.txt
+            grep -F "Signer #1 certificate SHA-256 digest: $expected" dist/wall-certificate.txt
+
+            if unzip -l "dist/BOOP-Wall-v${wall_version}.apk" | grep -i "gradle"; then
+              echo "::error::Gradle metadata files detected inside Wall APK!"
+              exit 1
+            fi
+            echo "Wall APK built and signed cleanly: BOOP-Wall-v${wall_version}.apk"
+          fi
+
+          (cd dist && sha256sum BOOP-*.apk > SHA256SUMS)
           printf 'commit=%s\nversion=%s\ntests=%s\nvisual_check=manual_on_physical_shield\n' "$GITHUB_SHA" "$SHIELD_VERSION" "${{ steps.unit-tests.outcome }}" > dist/build-receipt.txt
 
       - name: Upload signed APK and build receipt
