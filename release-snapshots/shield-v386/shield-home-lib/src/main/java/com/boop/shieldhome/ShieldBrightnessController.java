@@ -18,7 +18,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.core.content.ContextCompat;
 
 /**
  * Native Shield & TV Display Brightness Controller.
@@ -211,7 +210,7 @@ public final class ShieldBrightnessController {
         // Sun Icon
         ImageView sunIcon = new ImageView(context);
         try {
-            sunIcon.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.boop_icon_sun));
+            sunIcon.setImageDrawable(context.getDrawable(R.drawable.boop_icon_sun));
         } catch (Throwable ignored) {}
         sunIcon.setColorFilter(accent);
         LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(dp(26), dp(26));
