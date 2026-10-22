@@ -32,15 +32,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          snapshot_file="$(find release-snapshots -mindepth 3 -maxdepth 3 -path '*/shield-app/build.gradle' -type f | sort -V | tail -n 1)"
-          [[ -n "$snapshot_file" ]]
-          snapshot_dir="${snapshot_file%/shield-app/build.gradle}"
+          snapshot_dir="$(find release-snapshots -mindepth 1 -maxdepth 1 -type d -name 'shield-v*' | sort -V | tail -n 1)"
+          [[ -n "$snapshot_dir" ]]
           snapshot_version="$(basename "$snapshot_dir" | sed -E 's/^shield-v([0-9]+)$/\1/')"
           [[ "$snapshot_version" =~ ^[0-9]+$ ]]
-          version_code="$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*$/\1/p' "$snapshot_file" | head -n 1)"
-          version_name="$(sed -nE "s/^[[:space:]]*versionName[[:space:]]+['\"]([^'\"]+)['\"].*$/\1/p" "$snapshot_file" | head -n 1)"
-          [[ "$version_code" == "$snapshot_version" ]]
-          [[ "$version_name" == "1.2.${version_code}-shield" ]]
+          version_code="$snapshot_version"
+          version_name="1.2.${version_code}-shield"
           echo "dir=$snapshot_dir" >> "$GITHUB_OUTPUT"
           echo "version=$version_code" >> "$GITHUB_OUTPUT"
           echo "SHIELD_SNAPSHOT_DIR=$snapshot_dir" >> "$GITHUB_ENV"
@@ -58,16 +55,16 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]
-          if ! git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- release-snapshots/ | grep -Eq '^release-snapshots/shield-v[0-9]+/(app/(src/main|libs)/|app/build\.gradle$|shield-app/|assistant-lib/|shield-lib/|shield-home-lib/|launcher-lib/|animation-lib/|build\.gradle$|settings\.gradle$|gradle\.properties$|split-app-shell\.gradle$)'; then
-            echo 'No Shield source or build inputs changed; version gate not needed.'
+          if ! git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- release-snapshots/ | grep -Eq '^release-snapshots/shield-v[0-9]+/'; then
+            echo 'No Shield source inputs changed; version gate not needed.'
             exit 0
           fi
-          previous_file="$(git ls-tree -r --name-only "$BASE_SHA" release-snapshots/ | grep -E '^release-snapshots/shield-v[0-9]+/shield-app/build\.gradle$' | sort -V | tail -n 1)"
-          [[ -n "$previous_file" ]]
-          previous_version="$(git show "$BASE_SHA:$previous_file" | sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+).*$/\1/p' | head -n 1)"
+          previous_dir="$(git ls-tree -d --name-only "$BASE_SHA" release-snapshots/ | grep -E '^release-snapshots/shield-v[0-9]+$' | sort -V | tail -n 1)"
+          [[ -n "$previous_dir" ]]
+          previous_version="$(basename "$previous_dir" | sed -E 's/^shield-v([0-9]+)$/\1/')"
           expected_version="$((previous_version + 1))"
           if [[ "$CURRENT_VERSION" != "$expected_version" ]]; then
-            echo "::error::Shield source changed: versionCode must advance from $previous_version to $expected_version (current is $CURRENT_VERSION)."
+            echo "::error::Shield source changed: snapshot version must advance from $previous_version to $expected_version (current is $CURRENT_VERSION)."
             exit 1
           fi
           [[ "$CURRENT_SNAPSHOT" == "release-snapshots/shield-v${expected_version}" ]]
@@ -129,6 +126,8 @@ jobs:
           BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
         run: |
           set -euo pipefail
+          sed -i -E "s/versionCode [0-9]+/versionCode $SHIELD_VERSION/" "$SHIELD_SNAPSHOT_DIR/shield-app/build.gradle"
+          sed -i -E "s/versionName '[^']+'/versionName '1.2.${SHIELD_VERSION}-shield'/" "$SHIELD_SNAPSHOT_DIR/shield-app/build.gradle"
           gradle -p "$SHIELD_SNAPSHOT_DIR" \
             :shield-app:assembleDebug \
             :wall-app:assembleDebug \
