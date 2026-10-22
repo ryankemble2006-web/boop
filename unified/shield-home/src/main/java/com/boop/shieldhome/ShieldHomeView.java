@@ -131,6 +131,16 @@ public final class ShieldHomeView extends LinearLayout {
         setClipToPadding(false);
     }
 
+    @Override
+    protected void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setPadding(dp(48), dp(22), dp(48), dp(26));
+        requestLayout();
+        if (roomPanelView != null) {
+            updateRoomReveal();
+        }
+    }
+
     public void render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks callbacks) {
         render(favourites, optionalRows, null, callbacks);
     }

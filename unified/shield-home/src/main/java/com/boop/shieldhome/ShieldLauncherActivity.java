@@ -244,6 +244,15 @@ public final class ShieldLauncherActivity extends Activity {
         overridePendingTransition(0, 0);
     }
 
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        restoreOpaqueWindow();
+        if (currentView != null) {
+            currentView.requestLayout();
+        }
+    }
+
     @Override protected void onResume() {
         super.onResume();
         restoreOpaqueWindow();
