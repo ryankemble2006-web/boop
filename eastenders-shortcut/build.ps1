@@ -12,7 +12,7 @@ foreach ($name in @('banner', 'icon')) {
         throw "Missing approved $name artwork resource"
     }
 }
-& javac -d build/tests src/uk/local/eastenders/Routes.java src/uk/local/eastenders/ClickGate.java src/uk/local/eastenders/UiPolicy.java src/uk/local/eastenders/LaunchPolicy.java tests/RouteTest.java tests/ClickGateTest.java tests/AutoplayPolicyTest.java tests/LaunchPolicyTest.java
+& javac -d build/tests src/uk/local/eastenders/Routes.java src/uk/local/eastenders/ClickGate.java src/uk/local/eastenders/UiPolicy.java src/uk/local/eastenders/LaunchPolicy.java tests/RouteTest.java tests/ClickGateTest.java tests/AutoplayPolicyTest.java tests/LaunchPolicyTest.java tests/ReturnHomeTest.java
 Check
 & java -cp build/tests uk.local.eastenders.RouteTest
 Check
@@ -22,13 +22,15 @@ Check
 Check
 & java -cp build/tests uk.local.eastenders.LaunchPolicyTest
 Check
+& java -cp build/tests uk.local.eastenders.ReturnHomeTest
+Check
 & "$PSScriptRoot/tests/BuildAssetsTest.ps1" -Sdk $Sdk
 & "$bt/aapt2.exe" compile --dir res -o build/resources.zip
 Check
 & "$bt/aapt2.exe" link -o build/base.apk --manifest AndroidManifest.xml -I $platform --java build/generated build/resources.zip
 Check
 $sources = @(Get-ChildItem src -Filter '*.java' -Recurse | ForEach-Object FullName)
-& javac --release 8 -classpath $platform -d build/classes @sources
+& javac --release 8 -encoding UTF-8 -classpath $platform -d build/classes @sources
 Check
 $classes = @(Get-ChildItem build/classes -Filter '*.class' -Recurse | ForEach-Object FullName)
 & "$bt/d8.bat" --release --min-api 23 --lib $platform --output build/dex @classes
@@ -42,9 +44,19 @@ Check
 # A new key belongs only to this standalone launcher. Keep it for future updates.
 New-Item -ItemType Directory -Force signing | Out-Null
 if (!(Test-Path signing/password.txt)) {
-    $bytes = New-Object byte[] 32
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
-    [Convert]::ToBase64String($bytes) | Set-Content signing/password.txt -NoNewline
+    $parentPass = Join-Path (Split-Path $PSScriptRoot -Parent) 'signing/password.txt'
+    if (Test-Path $parentPass) {
+        Copy-Item $parentPass signing/password.txt
+    } else {
+        $bytes = New-Object byte[] 32
+        $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+        $rng.GetBytes($bytes)
+        [Convert]::ToBase64String($bytes) | Set-Content signing/password.txt -NoNewline
+    }
+}
+$parentKey = Join-Path (Split-Path $PSScriptRoot -Parent) 'signing/eastenders.p12'
+if (!(Test-Path signing/eastenders.p12) -and (Test-Path $parentKey)) {
+    Copy-Item $parentKey signing/eastenders.p12
 }
 $env:EASTENDERS_SIGN_PASSWORD = Get-Content signing/password.txt -Raw
 try {
@@ -52,11 +64,11 @@ try {
         & keytool -genkeypair -keystore signing/eastenders.p12 -storetype PKCS12 -alias eastenders -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=EastEnders Personal Launcher' -storepass:env EASTENDERS_SIGN_PASSWORD -keypass:env EASTENDERS_SIGN_PASSWORD
         Check
     }
-    & "$bt/apksigner.bat" sign --ks signing/eastenders.p12 --ks-key-alias eastenders --ks-pass "file:signing/password.txt" --out build/EastEnders-1.7.apk build/aligned.apk
+    & "$bt/apksigner.bat" sign --ks signing/eastenders.p12 --ks-key-alias eastenders --ks-pass "file:signing/password.txt" --out build/EastEnders-2.0.0.apk build/aligned.apk
     Check
 } finally { Remove-Item Env:EASTENDERS_SIGN_PASSWORD -ErrorAction SilentlyContinue }
-& "$bt/apksigner.bat" verify --verbose --print-certs build/EastEnders-1.7.apk
+& "$bt/apksigner.bat" verify --verbose --print-certs build/EastEnders-2.0.0.apk
 Check
-& "$bt/aapt2.exe" dump badging build/EastEnders-1.7.apk
+& "$bt/aapt2.exe" dump badging build/EastEnders-2.0.0.apk
 Check
-Get-FileHash build/EastEnders-1.7.apk -Algorithm SHA256
+Get-FileHash build/EastEnders-2.0.0.apk -Algorithm SHA256
