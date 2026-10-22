@@ -147,14 +147,29 @@ jobs:
             --no-daemon --stacktrace
 
       - name: Verify package, version, alignment, and permanent signer
+        env:
+          BOOP_DEV_STORE_PASSWORD: ${{ secrets.BOOP_DEV_STORE_PASSWORD }}
+          BOOP_DEV_KEY_PASSWORD: ${{ secrets.BOOP_DEV_KEY_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
           apk="$SHIELD_SNAPSHOT_DIR/shield-app/build/outputs/apk/debug/shield-app-debug.apk"
           [[ -s "$apk" ]]
-          mkdir -p dist
-          cp "$apk" "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
           tools="$ANDROID_HOME/build-tools/36.0.0"
+          mkdir -p dist
+
+          # Eradicate any Gradle metadata from the APK archive
+          zip -d "$apk" 'META-INF/com/android/build/gradle/*' || true
+
+          # Align cleanly to 4-byte boundaries with page-aligned native libs
+          "$tools/zipalign" -f -p 4 "$apk" "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
+
+          # Sign with permanent boop-dev key
+          "$tools/apksigner" sign \
+            --ks "$BOOP_SIGNING_STORE_FILE" --ks-key-alias boop-dev \
+            --ks-pass env:BOOP_DEV_STORE_PASSWORD --key-pass env:BOOP_DEV_KEY_PASSWORD \
+            --out "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" "dist/BOOP-Shield-v${SHIELD_VERSION}.apk"
+
           "$tools/aapt" dump badging "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/package.txt
           grep -F "package: name='com.boop.shieldoverlay'" dist/package.txt
           grep -F "versionCode='${SHIELD_VERSION}'" dist/package.txt
@@ -163,6 +178,13 @@ jobs:
           "$tools/apksigner" verify --print-certs "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/certificate.txt
           expected="$(tr -d '[:space:]' < shield-overlay/signing/boop-dev-cert-sha256.txt | tr '[:upper:]' '[:lower:]')"
           grep -F "Signer #1 certificate SHA-256 digest: $expected" dist/certificate.txt
+
+          # Strictly assert that zero Gradle files or metadata exist inside the final APK
+          if unzip -l "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" | grep -i "gradle"; then
+            echo "::error::Gradle metadata files detected inside APK!"
+            exit 1
+          fi
+
           sha256sum "dist/BOOP-Shield-v${SHIELD_VERSION}.apk" > dist/SHA256SUMS
           printf 'commit=%s\nversion=%s\ntests=%s\nvisual_check=manual_on_physical_shield\n' "$GITHUB_SHA" "$SHIELD_VERSION" "${{ steps.unit-tests.outcome }}" > dist/build-receipt.txt
 
