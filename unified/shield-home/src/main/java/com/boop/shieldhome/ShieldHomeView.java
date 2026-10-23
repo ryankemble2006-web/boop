@@ -140,7 +140,6 @@ public final class ShieldHomeView extends LinearLayout {
         com.boop.alpha1.UnifiedApplication.applyShieldMetrics(getContext());
         reapplyLayoutDimensions();
     }
-    }
 
     public void render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks callbacks) {
         render(favourites, optionalRows, null, callbacks);
