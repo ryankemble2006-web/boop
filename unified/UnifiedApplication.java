@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Bundle;
+import com.boop.shieldhome.BoopTvChrome;
 import android.util.DisplayMetrics;
 
 public final class UnifiedApplication extends Application {
@@ -13,48 +14,13 @@ public final class UnifiedApplication extends Application {
     // At 4K (2160p): 2160 / 675dp viewport = 3.2 scale factor = 512 DPI.
     // Locking this keeps visual proportions 100% constant across all resolutions and wake cycles.
     public static int computeShieldTargetDensity(Context context) {
-        if (context == null) return 256;
-        Resources res = context.getResources();
-        if (res == null) return 256;
-        DisplayMetrics dm = res.getDisplayMetrics();
-        int height = Math.min(dm.widthPixels, dm.heightPixels);
-        if (height <= 0) height = 1080;
-        return Math.max(1, Math.round(height * (160f / 675f)));
+        return BoopTvChrome.computeTargetDensity(context);
     }
 
     public static void applyShieldMetrics(Context context) {
         if (context == null) return;
         if (BoopDeviceProfile.resolve(context) != BoopDeviceProfile.Mode.SHIELD) return;
-        applyToResources(context.getResources(), context);
-        Context app = context.getApplicationContext();
-        if (app != null && app != context) {
-            applyToResources(app.getResources(), context);
-        }
-    }
-
-    private static void applyToResources(Resources res, Context context) {
-        if (res == null) return;
-        int targetDpi = computeShieldTargetDensity(context);
-        float targetDensity = targetDpi / 160f;
-        Configuration config = res.getConfiguration();
-        DisplayMetrics dm = res.getDisplayMetrics();
-        float fontScale = config.fontScale > 0 ? config.fontScale : 1.0f;
-        float targetScaledDensity = targetDensity * fontScale;
-
-        boolean configChanged = config.densityDpi != targetDpi;
-        boolean metricsChanged = dm.densityDpi != targetDpi
-                || Math.abs(dm.density - targetDensity) > 0.001f
-                || Math.abs(dm.scaledDensity - targetScaledDensity) > 0.001f;
-
-        if (configChanged || metricsChanged) {
-            config.densityDpi = targetDpi;
-            dm.densityDpi = targetDpi;
-            dm.density = targetDensity;
-            dm.scaledDensity = targetScaledDensity;
-            try {
-                res.updateConfiguration(config, dm);
-            } catch (Throwable ignored) {}
-        }
+        BoopTvChrome.applyShieldMetrics(context);
     }
 
     @Override

@@ -150,7 +150,7 @@ public final class BoopTvChrome {
         return background;
     }
 
-    private static boolean isTelevision(Context context) {
+    public static boolean isTelevision(Context context) {
         int uiMode = context.getResources().getConfiguration().uiMode;
         return (uiMode & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_TELEVISION;
     }
@@ -209,4 +209,49 @@ public final class BoopTvChrome {
         if (context == null) return value;
         return Math.round(value * context.getResources().getDisplayMetrics().density);
     }
+
+    public static int computeTargetDensity(Context context) {
+        if (context == null) return 256;
+        android.content.res.Resources res = context.getResources();
+        if (res == null) return 256;
+        android.util.DisplayMetrics dm = res.getDisplayMetrics();
+        int height = Math.min(dm.widthPixels, dm.heightPixels);
+        if (height <= 0) height = 1080;
+        return Math.max(1, Math.round(height * (160f / 675f)));
+    }
+
+    public static void applyShieldMetrics(Context context) {
+        if (context == null) return;
+        applyToResources(context.getResources(), context);
+        Context app = context.getApplicationContext();
+        if (app != null && app != context) {
+            applyToResources(app.getResources(), context);
+        }
+    }
+
+    private static void applyToResources(android.content.res.Resources res, Context context) {
+        if (res == null) return;
+        int targetDpi = computeTargetDensity(context);
+        float targetDensity = targetDpi / 160f;
+        Configuration config = res.getConfiguration();
+        android.util.DisplayMetrics dm = res.getDisplayMetrics();
+        float fontScale = config.fontScale > 0 ? config.fontScale : 1.0f;
+        float targetScaledDensity = targetDensity * fontScale;
+
+        boolean configChanged = config.densityDpi != targetDpi;
+        boolean metricsChanged = dm.densityDpi != targetDpi
+                || Math.abs(dm.density - targetDensity) > 0.001f
+                || Math.abs(dm.scaledDensity - targetScaledDensity) > 0.001f;
+
+        if (configChanged || metricsChanged) {
+            config.densityDpi = targetDpi;
+            dm.densityDpi = targetDpi;
+            dm.density = targetDensity;
+            dm.scaledDensity = targetScaledDensity;
+            try {
+                res.updateConfiguration(config, dm);
+            } catch (Throwable ignored) {}
+        }
+    }
+
 }

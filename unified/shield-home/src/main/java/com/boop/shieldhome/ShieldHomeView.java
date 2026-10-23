@@ -10,6 +10,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
@@ -137,7 +138,7 @@ public final class ShieldHomeView extends LinearLayout {
     @Override
     protected void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(getContext());
+        BoopTvChrome.applyShieldMetrics(getContext());
         reapplyLayoutDimensions();
     }
 

@@ -226,14 +226,14 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override
     protected void attachBaseContext(Context newBase) {
-        if (newBase != null && com.boop.alpha1.BoopDeviceProfile.resolve(newBase) == com.boop.alpha1.BoopDeviceProfile.Mode.SHIELD) {
+        if (newBase != null && BoopTvChrome.isTelevision(newBase)) {
             Resources res = newBase.getResources();
             if (res != null) {
                 Configuration config = new Configuration(res.getConfiguration());
-                int targetDpi = com.boop.alpha1.UnifiedApplication.computeShieldTargetDensity(newBase);
+                int targetDpi = BoopTvChrome.computeTargetDensity(newBase);
                 config.densityDpi = targetDpi;
                 super.attachBaseContext(newBase.createConfigurationContext(config));
-                com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
+                BoopTvChrome.applyShieldMetrics(this);
                 return;
             }
         }
@@ -242,8 +242,8 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override
     public void applyOverrideConfiguration(Configuration overrideConfiguration) {
-        if (overrideConfiguration != null && com.boop.alpha1.BoopDeviceProfile.resolve(this) == com.boop.alpha1.BoopDeviceProfile.Mode.SHIELD) {
-            overrideConfiguration.densityDpi = com.boop.alpha1.UnifiedApplication.computeShieldTargetDensity(this);
+        if (overrideConfiguration != null && BoopTvChrome.isTelevision(this)) {
+            overrideConfiguration.densityDpi = BoopTvChrome.computeTargetDensity(this);
         }
         super.applyOverrideConfiguration(overrideConfiguration);
     }
@@ -255,12 +255,12 @@ public final class ShieldLauncherActivity extends Activity {
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
-        if (newConfig != null && com.boop.alpha1.BoopDeviceProfile.resolve(this) == com.boop.alpha1.BoopDeviceProfile.Mode.SHIELD) {
-            newConfig.densityDpi = com.boop.alpha1.UnifiedApplication.computeShieldTargetDensity(this);
+        BoopTvChrome.applyShieldMetrics(this);
+        if (newConfig != null && BoopTvChrome.isTelevision(this)) {
+            newConfig.densityDpi = BoopTvChrome.computeTargetDensity(this);
         }
         super.onConfigurationChanged(newConfig);
-        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
+        BoopTvChrome.applyShieldMetrics(this);
         restoreOpaqueWindow();
         if (currentView instanceof ShieldHomeView) {
             ((ShieldHomeView) currentView).reapplyLayoutDimensions();
@@ -270,7 +270,7 @@ public final class ShieldLauncherActivity extends Activity {
     }
 
     @Override protected void onResume() {
-        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
+        BoopTvChrome.applyShieldMetrics(this);
         super.onResume();
         restoreOpaqueWindow();
         resumed = true;
