@@ -11,6 +11,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -222,41 +224,59 @@ public final class ShieldLauncherActivity extends Activity {
         }
     }
 
-    private void restoreOpaqueWindow() {
-        try {
-            java.lang.reflect.Method convert = Activity.class.getDeclaredMethod("convertFromTranslucent");
-            convert.setAccessible(true);
-            convert.invoke(this);
-        } catch (Throwable ignored) {
-        }
-        if (Build.VERSION.SDK_INT >= 30) {
-            try {
-                java.lang.reflect.Field field = Activity.class.getDeclaredField("mTranslucent");
-                field.setAccessible(true);
-                field.setBoolean(this, true);
-                setTranslucent(false);
-            } catch (Throwable t) {
-                try {
-                    setTranslucent(false);
-                } catch (Throwable ignored) {}
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        if (newBase != null && com.boop.alpha1.BoopDeviceProfile.resolve(newBase) == com.boop.alpha1.BoopDeviceProfile.Mode.SHIELD) {
+            Resources res = newBase.getResources();
+            if (res != null) {
+                Configuration config = new Configuration(res.getConfiguration());
+                int targetDpi = com.boop.alpha1.UnifiedApplication.computeShieldTargetDensity(newBase);
+                config.densityDpi = targetDpi;
+                super.attachBaseContext(newBase.createConfigurationContext(config));
+                com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
+                return;
             }
         }
+        super.attachBaseContext(newBase);
+    }
+
+    @Override
+    public void applyOverrideConfiguration(Configuration overrideConfiguration) {
+        if (overrideConfiguration != null && com.boop.alpha1.BoopDeviceProfile.resolve(this) == com.boop.alpha1.BoopDeviceProfile.Mode.SHIELD) {
+            overrideConfiguration.densityDpi = com.boop.alpha1.UnifiedApplication.computeShieldTargetDensity(this);
+        }
+        super.applyOverrideConfiguration(overrideConfiguration);
+    }
+
+    private void restoreOpaqueWindow() {
+        getWindow().setFormat(PixelFormat.OPAQUE);
         overridePendingTransition(0, 0);
     }
 
     @Override
-    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+    public void onConfigurationChanged(Configuration newConfig) {
+        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
+        if (newConfig != null && com.boop.alpha1.BoopDeviceProfile.resolve(this) == com.boop.alpha1.BoopDeviceProfile.Mode.SHIELD) {
+            newConfig.densityDpi = com.boop.alpha1.UnifiedApplication.computeShieldTargetDensity(this);
+        }
         super.onConfigurationChanged(newConfig);
+        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
         restoreOpaqueWindow();
-        if (currentView != null) {
+        if (currentView instanceof ShieldHomeView) {
+            ((ShieldHomeView) currentView).reapplyLayoutDimensions();
+        } else if (currentView != null) {
             currentView.requestLayout();
         }
     }
 
     @Override protected void onResume() {
+        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(this);
         super.onResume();
         restoreOpaqueWindow();
         resumed = true;
+        if (currentView instanceof ShieldHomeView) {
+            ((ShieldHomeView) currentView).reapplyLayoutDimensions();
+        }
         AudioModeController.get(this).clearForegroundLaunch();
         com.boop.shared.BoopState.INSTANCE.homeVisible(currentPage == Page.HOME);
         if (nowPlayingManager != null) {

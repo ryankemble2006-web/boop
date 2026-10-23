@@ -103,6 +103,9 @@ public final class ShieldHomeView extends LinearLayout {
         }
     }
     private View serenRoomGap;
+    private View navSpacer;
+    private FrameLayout heroSlot;
+    private View beforeNextUp;
     private ScrollView homeContentScroll;
     private List<SerenEpisode> serenEpisodes = List.of();
     private String serenStatus = "";
@@ -134,11 +137,9 @@ public final class ShieldHomeView extends LinearLayout {
     @Override
     protected void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        setPadding(dp(48), dp(22), dp(48), dp(26));
-        requestLayout();
-        if (roomPanelView != null) {
-            updateRoomReveal();
-        }
+        com.boop.alpha1.UnifiedApplication.applyShieldMetrics(getContext());
+        reapplyLayoutDimensions();
+    }
     }
 
     public void render(List<TvAppEntry> favourites, List<HomeRow> optionalRows, Callbacks callbacks) {
@@ -183,7 +184,8 @@ public final class ShieldHomeView extends LinearLayout {
         }
 
         addView(navRow(callbacks), new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        addSpacer(dp(22));
+        navSpacer = new View(getContext());
+        addView(navSpacer, new LayoutParams(1, dp(22)));
 
         FrameLayout homeStage = new FrameLayout(getContext());
         roomPanelStage = homeStage;
@@ -195,7 +197,7 @@ public final class ShieldHomeView extends LinearLayout {
         stageContent.setClipChildren(false);
         stageContent.setClipToPadding(false);
 
-        FrameLayout heroSlot = new FrameLayout(getContext());
+        heroSlot = new FrameLayout(getContext());
         weatherView = new ShieldWeatherView(getContext());
         heroSlot.addView(weatherView, new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -209,7 +211,7 @@ public final class ShieldHomeView extends LinearLayout {
                 LayoutParams.MATCH_PARENT, dp(215)));
 
         if (serenEnabled) {
-            View beforeNextUp = new View(getContext());
+            beforeNextUp = new View(getContext());
             stageContent.addView(beforeNextUp, new LayoutParams(1, dp(26)));
             serenView = new SerenNextUpView(getContext());
             stageContent.addView(serenView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
@@ -1019,4 +1021,64 @@ public final class ShieldHomeView extends LinearLayout {
         }
         return false;
     }
+
+    public void reapplyLayoutDimensions() {
+        setPadding(dp(48), dp(22), dp(48), dp(26));
+        if (navSpacer != null && navSpacer.getLayoutParams() != null) {
+            navSpacer.getLayoutParams().height = dp(22);
+        }
+        if (heroSlot != null && heroSlot.getLayoutParams() != null) {
+            heroSlot.getLayoutParams().height = dp(178);
+        }
+        if (nowPlayingSpacer != null && nowPlayingSpacer.getLayoutParams() != null) {
+            nowPlayingSpacer.getLayoutParams().height = dp(24);
+        }
+        if (favouriteRow != null) {
+            for (int i = 0; i < favouriteRow.getChildCount(); i++) {
+                View child = favouriteRow.getChildAt(i);
+                if (child != null && child.getLayoutParams() != null) {
+                    ViewGroup.LayoutParams lp = child.getLayoutParams();
+                    lp.width = dp(230);
+                    lp.height = dp(185);
+                    if (lp instanceof MarginLayoutParams) {
+                        ((MarginLayoutParams) lp).rightMargin = dp(16);
+                    }
+                }
+                if (child instanceof TvAppCardView) {
+                    ((TvAppCardView) child).reapplyDimensions();
+                } else if (child == addFavouriteTile && child instanceof ViewGroup) {
+                    ViewGroup group = (ViewGroup) child;
+                    if (group.getChildCount() > 0) {
+                        View art = group.getChildAt(0);
+                        if (art != null && art.getLayoutParams() != null) {
+                            ViewGroup.LayoutParams artLp = art.getLayoutParams();
+                            artLp.width = dp(230);
+                            artLp.height = dp(129);
+                            if (artLp instanceof MarginLayoutParams) {
+                                ((MarginLayoutParams) artLp).bottomMargin = dp(6);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (beforeNextUp != null && beforeNextUp.getLayoutParams() != null) {
+            beforeNextUp.getLayoutParams().height = dp(26);
+        }
+        if (serenView != null) {
+            serenView.reapplyDimensions();
+        }
+        if (serenRoomGap != null && serenRoomGap.getLayoutParams() != null) {
+            serenRoomGap.getLayoutParams().height = dp(16);
+        }
+        if (favouriteScroller != null && favouriteScroller.getLayoutParams() != null) {
+            favouriteScroller.getLayoutParams().height = dp(215);
+        }
+        requestLayout();
+        if (roomPanelView != null) {
+            updateRoomPanelBounds();
+            updateRoomReveal();
+        }
+    }
+
 }

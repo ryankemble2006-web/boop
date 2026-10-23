@@ -137,5 +137,25 @@ final class SerenNextUpView extends LinearLayout {
         }
     }
     private TextView text(String value,int size) { TextView v=new TextView(getContext());v.setText(value);v.setTextColor(Color.WHITE);v.setTextSize(size);v.setIncludeFontPadding(false);return v; }
+    
+    void reapplyDimensions() {
+        int width = dp(TvAppCardView.HOME_ARTWORK_WIDTH_DP);
+        int height = dp(TvAppCardView.HOME_ARTWORK_HEIGHT_DP);
+        if (scroll != null && scroll.getLayoutParams() != null) {
+            scroll.getLayoutParams().height = height + dp(10);
+        }
+        if (row != null) {
+            for (int i = 0; i < row.getChildCount(); i++) {
+                View child = row.getChildAt(i);
+                if (child != null && child.getLayoutParams() != null) {
+                    LayoutParams p = (LayoutParams) child.getLayoutParams();
+                    p.width = width;
+                    p.height = height;
+                    p.rightMargin = dp(16);
+                }
+            }
+        }
+        requestLayout();
+    }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
 }

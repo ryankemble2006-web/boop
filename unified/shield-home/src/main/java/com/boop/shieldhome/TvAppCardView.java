@@ -35,6 +35,7 @@ public final class TvAppCardView extends FrameLayout {
     private boolean grabbed;
     private boolean favourite;
     private boolean homeFavourite;
+    private boolean bannerArtwork;
 
     public TvAppCardView(Context context) {
         this(context, null);
@@ -197,7 +198,14 @@ public final class TvAppCardView extends FrameLayout {
                 : Gravity.CENTER);
     }
 
+    public void reapplyDimensions() {
+        configureCardPadding(homeFavourite);
+        configureArtworkSize(bannerArtwork);
+        requestLayout();
+    }
+
     private void configureArtworkSize(boolean banner) {
+        bannerArtwork = banner;
         LinearLayout.LayoutParams params = banner
                 ? new LinearLayout.LayoutParams(dp(HOME_ARTWORK_WIDTH_DP), dp(HOME_ARTWORK_HEIGHT_DP))
                 : new LinearLayout.LayoutParams(
