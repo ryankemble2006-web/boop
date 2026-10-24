@@ -286,8 +286,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
             styleRipCheckbox(ripBox, liveRipSelected.contains(pkg), ripLocked, false);
             ripBox.setOnClickListener(ignored -> {
                 if (ripLocked) {
-                    String reason = state.systemApp()
-                            ? "System apps cannot be uninstalled. Toggle Startup [OFF] to disable safe bloatware."
+                    String reason = StartupRecoveryPolicy.SETUP_WRAITH.equals(pkg)
+                            ? "SetupWraith must stay Disabled [OFF] (uninstalling its update wakes up the Setup Wizard)."
                             : risk.protectionReason();
                     callbacks.onProtected(pkg, reason);
                     return;
@@ -338,7 +338,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         LinearLayout bottomBar = row();
         bottomBar.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView selectAllBtn = actionButton("Select All User Apps", "startup:packages:select-all",
+        TextView selectAllBtn = actionButton("Select All Bloatware", "startup:packages:select-all",
                 () -> callbacks.onSelectAllUser(true));
         TextView clearBtn = actionButton("Clear Selection", "startup:packages:clear-all",
                 () -> callbacks.onSelectAllUser(false));
@@ -563,7 +563,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(dp(9));
         if (locked) {
-            v.setText("\uD83D\uDD12 System");
+            v.setText("\uD83D\uDD12 Core");
             v.setTextColor(focused ? Color.WHITE : Color.rgb(82, 89, 102));
             bg.setColor(focused ? Color.rgb(26, 30, 39) : Color.rgb(13, 15, 20));
             bg.setStroke(Math.max(1, dp(focused ? 2 : 1)), focused ? accent : Color.rgb(32, 37, 48));

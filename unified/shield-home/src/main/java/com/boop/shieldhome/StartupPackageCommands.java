@@ -38,9 +38,13 @@ public final class StartupPackageCommands {
         return "am force-stop --user current '" + requirePackage(packageName) + "'";
     }
 
-    /** Strictly user-installed APK uninstall only. Never uninstalls system packages for user 0. */
     public static String uninstall(String packageName) {
         return "pm uninstall '" + requirePackage(packageName) + "'";
+    }
+
+    public static String uninstallForUserZero(String packageName) {
+        String pkg = requirePackage(packageName);
+        return "pm disable-user --user 0 '" + pkg + "' >/dev/null 2>&1; pm uninstall --user 0 '" + pkg + "'";
     }
 
     public static String userState(String packageName, int userId) {

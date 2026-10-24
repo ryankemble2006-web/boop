@@ -170,7 +170,14 @@ public final class ShieldLauncherActivity extends Activity {
         }
         reloadApps();
         refreshWeather();
-        // Unified profile selection does not request accessibility or replace Android HOME.
+        if (!ShieldSelfGrant.isAllReady(this) || !ShieldSelfGrant.isDefaultHome(this)) {
+            ShieldSelfGrant.ensureAllGrantedAsync(this, (ok, msg) -> {
+                if (!destroyed && nowPlayingManager != null) {
+                    nowPlayingManager.refreshAccess();
+                    if (currentPage == Page.SETTINGS) showSettings();
+                }
+            });
+        }
     }
 
     private static boolean isFlowRequest(Intent intent) {
@@ -730,10 +737,16 @@ public final class ShieldLauncherActivity extends Activity {
             }
 
             @Override public void onOpenNowPlayingAccess() {
-                if (nowPlayingManager == null
-                        || !nowPlayingManager.openAccessSettings(ShieldLauncherActivity.this)) {
-                    openSystemSettings();
-                }
+                android.widget.Toast.makeText(ShieldLauncherActivity.this,
+                        "Activating BOOP Media & Notification access...",
+                        android.widget.Toast.LENGTH_SHORT).show();
+                ShieldSelfGrant.ensureAllGrantedAsync(ShieldLauncherActivity.this, (ok, msg) -> {
+                    if (destroyed) return;
+                    if (nowPlayingManager != null) nowPlayingManager.refreshAccess();
+                    android.widget.Toast.makeText(ShieldLauncherActivity.this, msg,
+                            android.widget.Toast.LENGTH_SHORT).show();
+                    if (currentPage == Page.SETTINGS) showSettings();
+                });
             }
 
             @Override public void onChooseNowPlayingPlayer() {
@@ -1061,7 +1074,7 @@ public final class ShieldLauncherActivity extends Activity {
         if (enabled == null) {
             return false;
         }
-        String serviceName = ShieldHomeOverrideService.class.getName();
+        if (ShieldSelfGrant.isHomeAccessibilityEnabled(this)) return true; String serviceName = ShieldHomeOverrideService.class.getName();
         for (AccessibilityServiceInfo info : enabled) {
             ResolveInfo resolveInfo = info == null ? null : info.getResolveInfo();
             if (resolveInfo == null || resolveInfo.serviceInfo == null) {

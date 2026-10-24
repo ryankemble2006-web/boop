@@ -200,7 +200,7 @@ public final class ShieldStartupManagerActivity extends Activity {
                 var caps = AndroidRecoveryCapabilities.resolve(ShieldStartupManagerActivity.this);
                 if (row == null || !StartupRecoveryPolicy.canUninstall(row, caps)) {
                     ripSelected.remove(pkg);
-                    updateStatusOnly("System apps are protected from uninstallation.", false);
+                    updateStatusOnly("Core OS packages are protected from uninstallation.", false);
                     return;
                 }
                 if (checked) ripSelected.add(pkg);
@@ -211,7 +211,7 @@ public final class ShieldStartupManagerActivity extends Activity {
                 // Update status text in-place without calling render()!
                 updateStatusOnly(ripSelected.isEmpty()
                         ? "Selection cleared."
-                        : ripSelected.size() + (ripSelected.size() == 1 ? " user app" : " user apps") + " marked for silent rip-out.",
+                        : ripSelected.size() + (ripSelected.size() == 1 ? " package" : " packages") + " marked for silent rip-out.",
                         false);
             }
             public void onSelectAllUser(boolean selectAll) {
@@ -225,12 +225,12 @@ public final class ShieldStartupManagerActivity extends Activity {
                 }
                 var caps = AndroidRecoveryCapabilities.resolve(ShieldStartupManagerActivity.this);
                 for (var row : StartupManagerUiModel.filter(packages, filter)) {
-                    if (StartupRecoveryPolicy.canUninstall(row, caps)) {
+                    if (StartupRecoveryPolicy.isBloatCandidate(row, caps)) {
                         ripSelected.add(row.packageName());
                     }
                 }
                 focusTag = "startup:packages:rip-out";
-                status = ripSelected.size() + " user app(s) marked for silent rip-out.";
+                status = ripSelected.size() + " bloatware package(s) marked for silent rip-out.";
                 render();
             }
             public void onRipOutSelected() { ripOutSelected(); }

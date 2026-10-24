@@ -54,13 +54,13 @@ public final class StartupPackageController {
             if(!validPackageName(pkg)) throw new IllegalArgumentException("Invalid package name.");
             StartupPackageState before=bridge.probe(pkg);
             requireManageable(before);
-            if(before.systemApp() || !StartupRecoveryPolicy.canUninstall(before,capabilities)) {
-                return new Result(false,"System apps cannot be uninstalled (only disabled).",before);
+            if(!StartupRecoveryPolicy.canUninstall(before,capabilities)) {
+                return new Result(false,"Protected package cannot be uninstalled.",before);
             }
             bridge.uninstall(pkg);
             bootStore.setTarget(pkg,false);
             restoreStore.remove(pkg);
-            return new Result(true,"Uninstalled "+before.label()+".",null);
+            return new Result(true,"Ripped out "+before.label()+".",null);
         } catch(Exception failure) {
             String message=failure.getMessage();
             if(message==null || message.trim().isEmpty()) message="The package could not be uninstalled.";

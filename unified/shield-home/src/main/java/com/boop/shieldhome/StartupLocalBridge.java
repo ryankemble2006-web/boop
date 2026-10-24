@@ -217,15 +217,23 @@ public final class StartupLocalBridge {
             requireOpen(); loadKnown();
             if(pkg.equals(context.getPackageName())) throw new IOException("BOOP cannot uninstall itself.");
             StartupPackageState meta=known.get(pkg);
-            if(meta!=null && meta.systemApp()) {
-                throw new IOException("System apps cannot be uninstalled (only disabled).");
+            var caps=AndroidRecoveryCapabilities.resolve(context);
+            if(meta!=null && !StartupRecoveryPolicy.canUninstall(meta,caps)) {
+                throw new IOException("Protected package cannot be uninstalled.");
             }
-            AdbWire.Result first=adb.execute(StartupPackageCommands.uninstall(pkg),25_000);
-            if(first.exitCode==0 && first.output!=null && first.output.contains("Success")) {
+            if(meta!=null && !meta.systemApp()) {
+                AdbWire.Result first=adb.execute(StartupPackageCommands.uninstall(pkg),25_000);
+                if(first.exitCode==0 && first.output!=null && first.output.contains("Success")) {
+                    known.remove(pkg);
+                    return;
+                }
+            }
+            AdbWire.Result userZero=adb.execute(StartupPackageCommands.uninstallForUserZero(pkg),25_000);
+            if(userZero.exitCode==0 && userZero.output!=null && userZero.output.contains("Success")) {
                 known.remove(pkg);
                 return;
             }
-            String detail=first.output!=null && !first.output.isBlank() ? first.output.trim() : "Shield rejected uninstall.";
+            String detail=userZero.output!=null && !userZero.output.isBlank() ? userZero.output.trim() : "Shield rejected uninstall.";
             throw new IOException(detail.substring(0,Math.min(160,detail.length())));
         }
         public void requireDefaultsSession() throws IOException { requireOpen(); }
