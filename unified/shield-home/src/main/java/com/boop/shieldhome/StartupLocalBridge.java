@@ -275,56 +275,54 @@ public final class StartupLocalBridge {
             if (progress != null) {
                 progress.accept("Auto Optimise: disabling SetupWraith, stock launcher, recommendations & OTA...");
             }
-            StringBuilder disableBatch = new StringBuilder();
+            List<String> disableCmds = new ArrayList<>();
             int disabledCount = 0;
             for (String pkg : StartupRecoveryPolicy.AUTO_OPTIMISE_DISABLE_ONLY_PACKAGES) {
                 if (known.containsKey(pkg)) {
-                    disableBatch.append("pm disable-user --user ").append(userId).append(" ").append(pkg)
-                            .append(" >/dev/null 2>&1; am force-stop --user ").append(userId).append(" ").append(pkg)
-                            .append(" >/dev/null 2>&1; ");
+                    disableCmds.add("pm disable-user --user " + userId + " " + pkg
+                            + " >/dev/null 2>&1; am force-stop --user " + userId + " " + pkg + " >/dev/null 2>&1");
                     disabledCount++;
                 }
             }
-            if (disableBatch.length() > 0) {
-                adb.execute(disableBatch.toString(), 25_000);
-            }
+            execChunked(disableCmds);
 
             if (progress != null) {
                 progress.accept("Auto Optimise: blocking background autostart on media/voice/SMB services...");
             }
             String foreground = StartupPackageCommands.parseResumedPackage(checked(adb,
                     "dumpsys activity activities | grep -m2 -E 'mResumedActivity:|topResumedActivity='"));
-            StringBuilder silenceBatch = new StringBuilder();
+            List<String> silenceCmds = new ArrayList<>();
             int silencedCount = 0;
             for (String pkg : StartupRecoveryPolicy.AUTO_OPTIMISE_SILENCE_BACKGROUND_PACKAGES) {
                 if (known.containsKey(pkg)) {
-                    silenceBatch.append("appops set --user ").append(userId).append(" ").append(pkg).append(" RUN_IN_BACKGROUND ignore >/dev/null 2>&1; ")
-                            .append("appops set --user ").append(userId).append(" ").append(pkg).append(" RUN_ANY_IN_BACKGROUND ignore >/dev/null 2>&1; ")
-                            .append("appops set --user ").append(userId).append(" ").append(pkg).append(" START_FOREGROUND ignore >/dev/null 2>&1; ");
+                    String cmd = "appops set --user " + userId + " " + pkg + " RUN_IN_BACKGROUND ignore >/dev/null 2>&1; "
+                            + "appops set --user " + userId + " " + pkg + " RUN_ANY_IN_BACKGROUND ignore >/dev/null 2>&1; "
+                            + "appops set --user " + userId + " " + pkg + " START_FOREGROUND ignore >/dev/null 2>&1";
                     if (!pkg.equals(foreground)) {
-                        silenceBatch.append("am force-stop --user ").append(userId).append(" ").append(pkg).append(" >/dev/null 2>&1; ");
+                        cmd += "; am force-stop --user " + userId + " " + pkg + " >/dev/null 2>&1";
                     }
+                    silenceCmds.add(cmd);
                     silencedCount++;
                 }
             }
-            if (silenceBatch.length() > 0) {
-                adb.execute(silenceBatch.toString(), 25_000);
-            }
+            execChunked(silenceCmds);
 
             if (progress != null) {
                 progress.accept("Auto Optimise: locking BOOP Media, Home Button & Default Launcher permissions...");
             }
             String myPkg = context.getPackageName();
-            String permBatch = "pm grant " + myPkg + " android.permission.WRITE_SECURE_SETTINGS >/dev/null 2>&1; "
-                    + "pm grant " + myPkg + " android.permission.RECORD_AUDIO >/dev/null 2>&1; "
-                    + "appops set " + myPkg + " PROJECT_MEDIA allow >/dev/null 2>&1; "
-                    + "appops set " + myPkg + " SYSTEM_ALERT_WINDOW allow >/dev/null 2>&1; "
-                    + "cmd notification allow_listener " + myPkg + "/com.boop.shieldhome.ShieldNowPlayingListenerService >/dev/null 2>&1; "
-                    + "settings put secure enabled_accessibility_services "
-                    + myPkg + "/com.boop.alpha1.BoopHomeOverrideService:uk.local.eastenders/uk.local.eastenders.EastEndersAccessibilityService:uk.local.casualty/uk.local.casualty.CasualtyAccessibilityService >/dev/null 2>&1; "
-                    + "settings put secure accessibility_enabled 1 >/dev/null 2>&1; "
-                    + "cmd package set-home-activity --user " + userId + " " + myPkg + "/com.boop.alpha1.UnifiedEntryActivity >/dev/null 2>&1";
-            adb.execute(permBatch, 20_000);
+            List<String> permCmds = List.of(
+                    "pm grant " + myPkg + " android.permission.WRITE_SECURE_SETTINGS >/dev/null 2>&1",
+                    "pm grant " + myPkg + " android.permission.RECORD_AUDIO >/dev/null 2>&1",
+                    "appops set " + myPkg + " PROJECT_MEDIA allow >/dev/null 2>&1",
+                    "appops set " + myPkg + " SYSTEM_ALERT_WINDOW allow >/dev/null 2>&1",
+                    "cmd notification allow_listener " + myPkg + "/com.boop.shieldhome.ShieldNowPlayingListenerService >/dev/null 2>&1",
+                    "settings put secure enabled_accessibility_services "
+                            + myPkg + "/com.boop.alpha1.BoopHomeOverrideService:uk.local.eastenders/uk.local.eastenders.EastEndersAccessibilityService:uk.local.casualty/uk.local.casualty.CasualtyAccessibilityService >/dev/null 2>&1",
+                    "settings put secure accessibility_enabled 1 >/dev/null 2>&1",
+                    "cmd package set-home-activity --user " + userId + " " + myPkg + "/com.boop.alpha1.UnifiedEntryActivity >/dev/null 2>&1"
+            );
+            execChunked(permCmds);
 
             if (ripped > 0) {
                 return "\u26A1 Auto Optimise complete: ripped out " + ripped + " bloat packages, disabled " + disabledCount
@@ -332,6 +330,22 @@ public final class StartupLocalBridge {
             }
             return "\u26A1 Shield optimised: 0 bloat packages remaining, " + disabledCount
                     + " stock/OTA services disabled, " + silencedCount + " background hogs silenced & BOOP permissions locked.";
+        }
+
+        private void execChunked(List<String> commands) throws IOException {
+            StringBuilder batch = new StringBuilder();
+            for (String cmd : commands) {
+                if (cmd == null || cmd.isBlank()) continue;
+                if (batch.length() > 0 && batch.length() + cmd.length() + 2 > 1200) {
+                    adb.execute(batch.toString(), 25_000);
+                    batch.setLength(0);
+                }
+                if (batch.length() > 0) batch.append("; ");
+                batch.append(cmd);
+            }
+            if (batch.length() > 0) {
+                adb.execute(batch.toString(), 25_000);
+            }
         }
         public void requireDefaultsSession() throws IOException { requireOpen(); }
         public void verifyDefaultsSafety(String pkg) throws Exception {
