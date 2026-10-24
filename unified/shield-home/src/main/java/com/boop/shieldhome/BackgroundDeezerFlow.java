@@ -16,7 +16,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 
-
 /** Starts Deezer on an offscreen display for Flow requests or quiet launcher warm-up. */
 final class BackgroundDeezerFlow {
     private static final String PACKAGE = "deezer.android.app";
@@ -239,9 +238,10 @@ final class BackgroundDeezerFlow {
                     pending = false;
                     mode = Mode.IDLE;
                     flowRequested = null;
-                    // Defer virtual display teardown by 1200ms so Deezer's detached background
-                    // playback service firmly locks in foreground priority before the activity dies.
-                    scheduleRelease();
+                    handler.removeCallbacks(delayedRelease);
+                    // Keep offscreen virtual display alive during active playback.
+                    // Tearing down the virtual display with DESTROY_CONTENT_ON_REMOVAL causes
+                    // Android's ActivityTaskManager to remove the task and assassinate Deezer.
                     if (requested != null) requested.run();
                     return;
                 }
@@ -273,8 +273,12 @@ final class BackgroundDeezerFlow {
         pending = false;
         mode = Mode.IDLE;
         flowRequested = null;
-        if (sessionFound) scheduleRelease();
-        else release();
+        if (sessionFound) {
+            // Keep warm virtual display resident so future Flow requests dispatch instantly.
+            handler.removeCallbacks(delayedRelease);
+        } else {
+            release();
+        }
     }
 
     private void failPending() {
@@ -288,12 +292,13 @@ final class BackgroundDeezerFlow {
         }
     }
 
-    private void scheduleRelease() {
-        handler.removeCallbacks(delayedRelease);
-        handler.postDelayed(delayedRelease, 1200);
+    void onDeezerSessionEnded() {
+        if (!hasDeezerSession()) {
+            release();
+        }
     }
 
-    private void release() {
+    void release() {
         handler.removeCallbacks(delayedRelease);
         releaseNow();
     }

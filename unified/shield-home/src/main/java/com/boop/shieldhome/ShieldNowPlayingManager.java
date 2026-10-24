@@ -313,6 +313,7 @@ public final class ShieldNowPlayingManager {
     public boolean closeSource(Activity activity) {
         NowPlayingSnapshot snapshot=state.current();
         if(activity==null || snapshot==null) return false;
+            backgroundFlow.release();
         try {
             activity.startActivity(new Intent().setClassName(activity.getPackageName(),
                     "com.boop.alpha1.BoopClosePlayerActivity")
@@ -323,6 +324,7 @@ public final class ShieldNowPlayingManager {
 
     public boolean closeMediaApps(Activity activity) {
         if(activity==null) return false;
+            backgroundFlow.release();
         try {
             activity.startActivity(new Intent().setClassName(activity.getPackageName(),
                     "com.boop.alpha1.BoopClosePlayerActivity").putExtra("all_media_apps",true));
@@ -833,7 +835,10 @@ public final class ShieldNowPlayingManager {
             }
 
             @Override public void onSessionDestroyed() {
-                mainHandler.post(ShieldNowPlayingManager.this::reconcileActiveSessions);
+                mainHandler.post(() -> {
+                    reconcileActiveSessions();
+                    backgroundFlow.onDeezerSessionEnded();
+                });
             }
         };
 

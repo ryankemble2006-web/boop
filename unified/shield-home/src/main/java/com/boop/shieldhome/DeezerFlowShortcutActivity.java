@@ -17,9 +17,7 @@ public final class DeezerFlowShortcutActivity extends Activity {
                     .putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,
                             Intent.ShortcutIconResource.fromContext(this, R.drawable.boop_icon_shuffle)));
         } else {
-            startActivity(new Intent(this, ShieldLauncherActivity.class)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    .putExtra("boop_background_flow", true));
+            ShieldNowPlayingManager.get(this).playDeezerFlow();
         }
         finish();
         overridePendingTransition(0, 0);

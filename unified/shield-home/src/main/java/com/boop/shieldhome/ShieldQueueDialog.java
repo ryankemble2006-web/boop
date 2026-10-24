@@ -47,7 +47,7 @@ final class ShieldQueueDialog extends Dialog {
         list = new ListView(getContext()); list.setId(View.generateViewId());
         list.setBackgroundColor(Color.TRANSPARENT); list.setDivider(null); list.setDividerHeight(dp(3));
         list.setCacheColorHint(Color.TRANSPARENT); list.setVerticalScrollBarEnabled(true);
-        list.setSelector(FocusChrome.filled(getContext(), Color.rgb(38, 38, 38), 8, true));
+        list.setSelector(FocusChrome.filled(getContext(), BoopTvChrome.SURFACE_ELEVATED, 10, true));
         list.setDrawSelectorOnTop(false); list.setChoiceMode(ListView.CHOICE_MODE_NONE);
         list.setFocusable(true); list.setItemsCanFocus(false);
         adapter = new Rows(); list.setAdapter(adapter);
@@ -61,16 +61,16 @@ final class ShieldQueueDialog extends Dialog {
                 Toast.makeText(getContext(), "This queue is not ready for track selection.", Toast.LENGTH_SHORT).show();
         });
         panel.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
-        footer = text("Select a track. Press Back to return to Now Playing.", 13, Color.LTGRAY);
+        footer = text("Select a track. Press Back to return to Now Playing.", 13, BoopTvChrome.TEXT_SECONDARY);
         footer.setMaxLines(2); LinearLayout.LayoutParams foot = wrap(); foot.topMargin = dp(14);
         panel.addView(footer, foot); setContentView(panel);
         setCanceledOnTouchOutside(true);
         Window window = getWindow();
         if (window != null) {
-            GradientDrawable surface = new GradientDrawable(); surface.setColor(Color.rgb(24, 24, 24));
-            surface.setCornerRadius(dp(14)); surface.setStroke(dp(1), Color.rgb(58, 58, 58));
+            GradientDrawable surface = new GradientDrawable(); surface.setColor(BoopTvChrome.SURFACE_PANEL);
+            surface.setCornerRadius(dp(16)); surface.setStroke(dp(1), BoopTvChrome.BORDER_SUBTLE);
             window.setBackgroundDrawable(surface);
-            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND); window.setDimAmount(0.65f);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND); window.setDimAmount(0.72f);
             window.setLayout(Math.min(dp(680), activity.getResources().getDisplayMetrics().widthPixels - dp(56)),
                     Math.min(dp(540), activity.getResources().getDisplayMetrics().heightPixels - dp(64)));
         }

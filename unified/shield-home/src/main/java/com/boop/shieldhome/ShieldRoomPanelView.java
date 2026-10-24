@@ -26,6 +26,11 @@ import java.util.Map;
 
 /** Native BOOP charcoal panel. Entity identity, focus and scroll survive live state changes. */
 public final class ShieldRoomPanelView extends LinearLayout {
+    private static final int FOCUS_SCROLL_GUTTER_DP = 16;
+    private static final int TILE_GAP_DP = 16;
+    private static final int PANEL_HORIZONTAL_INSET_DP = 18;
+    private static final int FOCUSED_TILE_STROKE_DP = BoopTvChrome.FOCUS_STROKE_DP * 2;
+
     public interface Toggle { void onToggle(long generation, String entityId); }
     private final TextView title, status, empty, notice;
     private final HorizontalScrollView scroller;
@@ -44,19 +49,21 @@ public final class ShieldRoomPanelView extends LinearLayout {
         super(context);
         orderStore = new ShieldHomeStore(context);
         setOrientation(VERTICAL);
-        setPadding(dp(18), dp(14), dp(18), dp(14));
+        setClipChildren(true);
+        setClipToPadding(false);
+        setPadding(dp(18), dp(12), dp(18), dp(12));
         setFocusable(false);
-        GradientDrawable background = FocusChrome.filled(context, Color.rgb(16,16,16), 14, false);
-        background.setStroke(dp(1), Color.rgb(48,48,48));
-        setBackground(background);
+        setBackground(BoopTvChrome.cardSurface(context, 16));
         LinearLayout heading = new LinearLayout(context);
         heading.setGravity(Gravity.CENTER_VERTICAL);
-        title = text("Home", 22, Color.WHITE);
+        title = text("Home", 19, BoopTvChrome.TEXT_PRIMARY);
+        title.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        title.setLetterSpacing(0.02f);
         title.setSingleLine(true); title.setEllipsize(TextUtils.TruncateAt.END);
         title.setFocusable(true); title.setClickable(true); title.setDefaultFocusHighlightEnabled(false);
         BoopTvChrome.useTextOnlyFocus(title);
         title.setOnFocusChangeListener((v, focused) -> title.setTextColor(
-                focused ? FocusChrome.accentColor(getContext()) : Color.WHITE));
+                focused ? FocusChrome.accentColor(getContext()) : BoopTvChrome.TEXT_PRIMARY));
         title.setOnClickListener(v -> { if (chooseRoom != null) chooseRoom.run(); });
         title.setOnKeyListener((v, key, event) -> {
             if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN) {
@@ -66,33 +73,43 @@ public final class ShieldRoomPanelView extends LinearLayout {
                 }
                 return true;
             }
+            if (key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                return true;
+            }
             return false;
         });
         heading.addView(title, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
-        status = text("", 13, Color.LTGRAY);
-        status.setPadding(dp(12), 0, 0, 0);
+        status = text("", 12, BoopTvChrome.TEXT_SECONDARY);
+        status.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        status.setLetterSpacing(0.04f);
+        status.setPadding(dp(10), dp(3), dp(10), dp(3));
+        status.setBackground(BoopTvChrome.badgePill(context, false));
         status.setSingleLine(true);
         heading.addView(status, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         LayoutParams header = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         header.bottomMargin = dp(10);
         addView(heading, header);
-        empty = text("", 16, Color.LTGRAY);
+        empty = text("", 15, BoopTvChrome.TEXT_SECONDARY);
         empty.setMaxLines(3);
         addView(empty, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
         scroller = new HorizontalScrollView(context);
         scroller.setHorizontalScrollBarEnabled(false);
         scroller.setFocusable(false);
         scroller.setFillViewport(true);
-        scroller.setClipChildren(false);
+        scroller.setClipChildren(true);
         scroller.setClipToPadding(false);
-        scroller.setPadding(dp(3), dp(3), dp(3), dp(3));
+        scroller.setPadding(0, dp(6), 0, dp(6));
         row = new LinearLayout(context);
         row.setOrientation(HORIZONTAL);
         row.setClipChildren(false);
         row.setClipToPadding(false);
+        row.setPadding(dp(FOCUS_SCROLL_GUTTER_DP), 0, dp(FOCUS_SCROLL_GUTTER_DP), 0);
         scroller.addView(row, new HorizontalScrollView.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT));
-        addView(scroller, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
-        notice = text("", 13, Color.LTGRAY);
+        LayoutParams scrollerParams = new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f);
+        scrollerParams.leftMargin = -dp(PANEL_HORIZONTAL_INSET_DP);
+        scrollerParams.rightMargin = -dp(PANEL_HORIZONTAL_INSET_DP);
+        addView(scroller, scrollerParams);
+        notice = text("", 12, BoopTvChrome.TEXT_SECONDARY);
         notice.setMaxLines(2);
         addView(notice, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         scroller.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> {
@@ -157,10 +174,11 @@ public final class ShieldRoomPanelView extends LinearLayout {
         scroller.setVisibility(hasCards ? VISIBLE : GONE);
         String phase = next == null ? "" : next.phase.name();
         boolean live = "LIVE".equals(phase);
-        status.setText(live ? tiles.size() + (tiles.size()==1 ? " device" : " devices")
-                : "CONNECTING".equals(phase) ? "Connecting" : "NO_ROOM".equals(phase) ? "Room not set"
-                : "AUTH_REQUIRED".equals(phase) ? "Reconnect" : "OFFLINE".equals(phase) ? "Offline" : "");
-        status.setTextColor(live ? FocusChrome.accentColor(getContext()) : Color.LTGRAY);
+        status.setText(live ? tiles.size() + (tiles.size()==1 ? " DEVICE" : " DEVICES")
+                : "CONNECTING".equals(phase) ? "CONNECTING" : "NO_ROOM".equals(phase) ? "ROOM NOT SET"
+                : "AUTH_REQUIRED".equals(phase) ? "RECONNECT" : "OFFLINE".equals(phase) ? "OFFLINE" : "");
+        status.setTextColor(live ? FocusChrome.accentColor(getContext()) : BoopTvChrome.TEXT_SECONDARY);
+        status.setBackground(BoopTvChrome.badgePill(getContext(), live));
         String message = next == null ? "Connecting to Home Assistant…"
                 : next.room == null ? "Use ‘Set this device room’ in BOOP device and room settings."
                 : next.message != null ? next.message
@@ -228,9 +246,11 @@ public final class ShieldRoomPanelView extends LinearLayout {
             grabbedTile.setGrabbed(true);
             grabbedTile.requestFocus();
             grabbedTile.post(() -> {
-                if (grabbedTile != null && grabbedTile.hasFocus())
-                    grabbedTile.requestRectangleOnScreen(
-                            new Rect(0, 0, grabbedTile.getWidth(), grabbedTile.getHeight()), true);
+                if (grabbedTile != null && grabbedTile.hasFocus()) {
+                    Rect target = new Rect(0, 0, grabbedTile.getWidth(), grabbedTile.getHeight());
+                    target.inset(-dp(FOCUS_SCROLL_GUTTER_DP), -dp(6));
+                    grabbedTile.requestRectangleOnScreen(target, true);
+                }
             });
         }
     }
@@ -244,18 +264,22 @@ public final class ShieldRoomPanelView extends LinearLayout {
         return (previous == null ? row.getChildAt(0) : previous).requestFocus();
     }
     private void resizeTiles() {
-        int width = scroller.getWidth() - scroller.getPaddingLeft() - scroller.getPaddingRight();
+        int width = scroller.getWidth() - row.getPaddingLeft() - row.getPaddingRight();
         if (width <= 0) return;
-        int size = RoomPanelLayout.tileWidth(width, row.getChildCount(), dp(12), dp(150));
+        int size = RoomPanelLayout.tileWidth(width, row.getChildCount(), dp(TILE_GAP_DP), dp(150));
         for (int i=0; i<row.getChildCount(); i++) {
             View tile = row.getChildAt(i);
             LayoutParams p=(LayoutParams)tile.getLayoutParams();
-            int gap=i+1==row.getChildCount()?0:dp(12);
+            int gap=i+1==row.getChildCount()?0:dp(TILE_GAP_DP);
             if (p.width!=size || p.rightMargin!=gap) { p.width=size; p.rightMargin=gap; tile.setLayoutParams(p); }
         }
         View focus=row.findFocus();
         if (focus!=null) focus.post(() -> {
-            if (focus.hasFocus()) focus.requestRectangleOnScreen(new Rect(0,0,focus.getWidth(),focus.getHeight()),true);
+            if (focus.hasFocus()) {
+                Rect target = new Rect(0, 0, focus.getWidth(), focus.getHeight());
+                target.inset(-dp(FOCUS_SCROLL_GUTTER_DP), -dp(6));
+                focus.requestRectangleOnScreen(target, true);
+            }
         });
     }
 
@@ -273,16 +297,31 @@ public final class ShieldRoomPanelView extends LinearLayout {
             setPadding(dp(14),dp(8),dp(14),dp(8));
             setBackground(chrome(false));
             icon=new DeviceIcon(getContext());
-            LayoutParams art=new LayoutParams(dp(28),dp(28)); art.rightMargin=dp(12);
+            LayoutParams art=new LayoutParams(dp(26),dp(26)); art.rightMargin=dp(12);
             addView(icon,art);
             LinearLayout labels=new LinearLayout(getContext()); labels.setOrientation(VERTICAL);
-            name=text("",17,Color.WHITE); name.setSingleLine(true); name.setEllipsize(TextUtils.TruncateAt.END);
-            value=text("",14,Color.LTGRAY); value.setSingleLine(true);
+            name=text("",15,BoopTvChrome.TEXT_PRIMARY);
+            name.setTypeface(BoopTvChrome.FONT_MEDIUM);
+            name.setLetterSpacing(0.015f);
+            name.setSingleLine(true); name.setEllipsize(TextUtils.TruncateAt.END);
+            value=text("",12,BoopTvChrome.TEXT_SECONDARY);
+            value.setTypeface(BoopTvChrome.FONT_MEDIUM);
+            value.setLetterSpacing(0.05f);
+            value.setSingleLine(true);
             labels.addView(name); labels.addView(value);
             addView(labels,new LayoutParams(0,LayoutParams.WRAP_CONTENT,1f));
             setOnFocusChangeListener((v,focused) -> {
                 if (focused) focusedId=entityId;
                 refreshEmphasis();
+                if (focused) {
+                    post(() -> {
+                        if (hasFocus()) {
+                            Rect target = new Rect(0, 0, getWidth(), getHeight());
+                            target.inset(-dp(FOCUS_SCROLL_GUTTER_DP), -dp(6));
+                            requestRectangleOnScreen(target, true);
+                        }
+                    });
+                }
             });
             setOnLongClickListener(v -> {
                 beginGrab(this);
@@ -326,6 +365,7 @@ public final class ShieldRoomPanelView extends LinearLayout {
                 return false;
             });
         }
+        boolean activeOn;
         void setGrabbed(boolean value) {
             grabbed = value;
             refreshEmphasis();
@@ -335,25 +375,53 @@ public final class ShieldRoomPanelView extends LinearLayout {
             setBackground(chrome(focused));
             name.setSelected(focused);
             animate().cancel();
-            float scale = grabbed ? 1.10f : 1f;
+            float scale = grabbed ? 1.10f : (focused ? 1.03f : 1f);
             animate().scaleX(scale).scaleY(scale)
-                    .translationZ(grabbed ? dp(10) : 0f)
+                    .translationZ(grabbed ? dp(10) : (focused ? dp(4) : 0f))
                     .setDuration(TvAppCardView.FOCUS_DURATION_MS).start();
         }
         void bind(EntityCard card) {
             name.setText(card.displayName());
             boolean live=state.phase==RoomPanelController.Phase.LIVE;
             boolean available="on".equals(card.state())||"off".equals(card.state());
-            String label=!live?"Offline":state.pending(entityId)?"Updating…":!available?"Unavailable":"on".equals(card.state())?"On":"Off";
+            activeOn = "on".equals(card.state());
+            String label=!live?"OFFLINE":state.pending(entityId)?"UPDATING…":!available?"UNAVAILABLE":activeOn?"ON":"OFF";
             value.setText(label);
             int accent=FocusChrome.accentColor(getContext());
-            value.setTextColor("On".equals(label)?accent:Color.LTGRAY);
-            icon.kind=semanticIcon(card); icon.color=live&&available?accent:Color.GRAY; icon.invalidate();
+            name.setTextColor(activeOn ? Color.WHITE : BoopTvChrome.TEXT_PRIMARY);
+            value.setTextColor(activeOn ? accent : BoopTvChrome.TEXT_SECONDARY);
+            icon.kind=semanticIcon(card); icon.color=live&&available?(activeOn ? accent : BoopTvChrome.TEXT_SECONDARY):BoopTvChrome.TEXT_DIM; icon.invalidate();
             setContentDescription(card.displayName()+", "+label);
             // Focus remains available while pending or offline. Only the action is gated.
             setAlpha(live&&available?1f:0.60f);
+            refreshEmphasis();
         }
-        GradientDrawable chrome(boolean focused) { return FocusChrome.filled(getContext(),Color.rgb(42,42,42),10,focused); }
+        GradientDrawable chrome(boolean focused) {
+            int accent = FocusChrome.accentColor(getContext());
+            int normalFill;
+            if (activeOn) {
+                int r = (accent >> 16) & 0xFF;
+                int g = (accent >> 8) & 0xFF;
+                int b = accent & 0xFF;
+                normalFill = Color.argb(38, r, g, b);
+            } else {
+                normalFill = BoopTvChrome.SURFACE_CARD;
+            }
+            GradientDrawable d = FocusChrome.filled(getContext(), normalFill, 14, focused);
+            if (focused) {
+                d.setStroke(dp(FOCUSED_TILE_STROKE_DP), accent);
+            } else {
+                if (activeOn) {
+                    int r = (accent >> 16) & 0xFF;
+                    int g = (accent >> 8) & 0xFF;
+                    int b = accent & 0xFF;
+                    d.setStroke(dp(1), Color.argb(130, r, g, b));
+                } else {
+                    d.setStroke(dp(1), BoopTvChrome.BORDER_SUBTLE);
+                }
+            }
+            return d;
+        }
     }
 
     private static String semanticIcon(EntityCard card) {
@@ -398,7 +466,11 @@ public final class ShieldRoomPanelView extends LinearLayout {
         }
     }
     private TextView text(String label,int size,int color) {
-        TextView v=new TextView(getContext());v.setText(label);v.setTextColor(color);
+        TextView v=new TextView(getContext());
+        BoopTvChrome.markCustomStyled(v);
+        v.setTypeface(BoopTvChrome.FONT_REGULAR);
+        v.setLetterSpacing(0.01f);
+        v.setText(label);v.setTextColor(color);
         v.setTextSize(TypedValue.COMPLEX_UNIT_SP,size);v.setGravity(Gravity.CENTER_VERTICAL);return v;
     }
     private int dp(int n) { return Math.round(n*getResources().getDisplayMetrics().density); }

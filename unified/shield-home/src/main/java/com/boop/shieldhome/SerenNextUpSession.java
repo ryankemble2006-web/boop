@@ -40,9 +40,14 @@ final class SerenNextUpSession implements AutoCloseable {
         playback = new SerenPlayback(plays, new SerenPlayback.Port() {
             public void awaitReady() throws Exception {
                 long deadline = android.os.SystemClock.elapsedRealtime() + 15000;
+                long delay = 100L;
                 while (!closed && android.os.SystemClock.elapsedRealtime() < deadline) {
+                    if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
                     try { player.call("JSONRPC.Ping", new JSONObject(), 1200); return; }
-                    catch (IOException unavailable) { Thread.sleep(250); }
+                    catch (IOException unavailable) {
+                        Thread.sleep(delay);
+                        delay = Math.min(delay * 2, 800L);
+                    }
                 }
                 throw new IOException("Kodi did not start");
             }

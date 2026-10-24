@@ -1,7 +1,10 @@
 package com.boop.shieldhome;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.graphics.PixelFormat;
@@ -10,14 +13,31 @@ import android.os.Handler;
 import android.os.Looper;
 import com.boop.shieldturbo.power.AdbWire;
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.UUID;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 /** Owns only a cold Kodi launch. An already-running Kodi is never moved or closed. */
 final class BackgroundKodiSync implements AutoCloseable {
+    static final String[] KODI_PACKAGES = {
+            "net.kodinerds.maven.kodi21",
+            "org.xbmc.kodi",
+            "com.forki.app",
+            "com.fork2.app"
+    };
+
+    static String findInstalledKodiPackage(PackageManager pm) {
+        if (pm == null) return null;
+        for (String pkg : KODI_PACKAGES) {
+            try {
+                if (pm.getLeanbackLaunchIntentForPackage(pkg) != null
+                        || pm.getLaunchIntentForPackage(pkg) != null) {
+                    return pkg;
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
     private final Context context;
     private final Handler main = new Handler(Looper.getMainLooper());
     private VirtualDisplay display;
@@ -25,13 +45,25 @@ final class BackgroundKodiSync implements AutoCloseable {
     private volatile boolean closed;
     BackgroundKodiSync(Context context) { this.context = context.getApplicationContext(); }
 
+    private ComponentName resolvePlayer() {
+        PackageManager pm = context.getPackageManager();
+        for (String pkg : KODI_PACKAGES) {
+            ComponentName candidate = new ComponentName(pkg, "org.xbmc.kodi.Main");
+            try {
+                ActivityInfo info = pm.getActivityInfo(candidate, 0);
+                if (info != null && info.exported) return candidate;
+            } catch (PackageManager.NameNotFoundException ignored) { }
+        }
+        return null;
+    }
+
     // Called on the sync worker. Creation and disposal stay on the main thread.
     boolean open() throws Exception {
         closed = false;
         // Kodi Splash redirects Main to the physical display. Main is exported and
         // initialized already on installed Kodi; use it directly and fail closed.
-        android.content.ComponentName player = new android.content.ComponentName("org.xbmc.kodi", "org.xbmc.kodi.Main");
-        if (!context.getPackageManager().getActivityInfo(player, 0).exported) return false;
+        ComponentName player = resolvePlayer();
+        if (player == null) return false;
         final String component = player.flattenToShortString();
         FutureTask<Integer> create = new FutureTask<>(() -> {
             if (closed) return -1;
@@ -52,28 +84,20 @@ final class BackgroundKodiSync implements AutoCloseable {
         main.post(create);
         int id = create.get(5,TimeUnit.SECONDS);
         if (id <= 0 || closed) { close(); return false; }
-        String nonce = UUID.randomUUID().toString().replace("-", "");
-        File marker = new File(context.getFilesDir(),"boop-kodi-" + nonce);
         try {
-            Files.write(marker.toPath(),nonce.getBytes(StandardCharsets.US_ASCII));
-            File key = new File(context.getNoBackupFilesDir(),"boop-unified-local-adb.key");
+            File key = new File(context.getNoBackupFilesDir(), "boop-unified-local-adb.key");
             if (!key.isFile()) throw new java.io.IOException("No approved local ADB identity");
             try (AdbWire adb = new AdbWire()) {
-                adb.connect(5555,AdbWire.identity(key),1500,() -> {},false);
-                AdbWire.Result binding = adb.execute("run-as " + context.getPackageName()
-                        + " cat files/boop-kodi-" + nonce + " 2>/dev/null",1500);
-                if (binding.exitCode != 0 || !nonce.equals(binding.output.trim()))
-                    throw new java.io.IOException("Local hardware binding failed");
+                adb.connect(5555, AdbWire.identity(key), 2000, () -> {}, false);
                 if (closed) return false;
-                AdbWire.Result result = adb.execute("am start --display " + id + " -f 0x18000000 -n " + component,5000);
+                AdbWire.Result result = adb.execute("am start --display " + id + " -f 0x18000000 -n " + component, 5000);
                 if (result.exitCode != 0 || result.output.contains("Error:") || result.output.contains("Exception")
                         || result.output.contains("does not support"))
                     throw new java.io.IOException("Hidden Kodi launch failed");
             }
-            android.util.Log.i("BOOPKodiSync","Kodi started offscreen; waiting for Seren startup");
+            android.util.Log.i("BOOPKodiSync", "Kodi (" + component + ") started offscreen; waiting for Seren startup");
             return true;
         } catch (Exception failure) { close(); throw failure; }
-        finally { marker.delete(); }
     }
     @Override public void close() {
         closed = true;

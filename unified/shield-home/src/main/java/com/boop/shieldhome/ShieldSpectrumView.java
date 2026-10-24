@@ -30,8 +30,10 @@ public final class ShieldSpectrumView extends FrameLayout {
     float half=SpectrumPresentation.halfHeight(getHeight(),4*density,level);
     if(half<=gap)continue;
     float position=i/(float)(levels.length-1),x=i*step,w=step*.72f;
-    hsv[0]=SpectrumPresentation.hue(accentHue,position,now/1000f);
-    hsv[1]=saturation*(1f-.28f*position);hsv[2]=brightness;
+    float palettePosition=1f-position;
+    hsv[0]=SpectrumPresentation.hue(accentHue,palettePosition,now/1000f);
+    hsv[1]=saturation;
+    hsv[2]=brightness;
     paint.setColor(Color.HSVToColor(hsv));
     canvas.drawRect(x,centre-half,x+w,centre-gap,paint);
     canvas.drawRect(x,centre+gap,x+w,centre+half,paint);

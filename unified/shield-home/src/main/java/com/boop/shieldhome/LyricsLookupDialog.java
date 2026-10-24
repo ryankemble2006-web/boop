@@ -56,32 +56,76 @@ final class LyricsLookupDialog extends Dialog {
         panel.addView(label("Lyrics lookup", 25), wrap());
         TextView help = label(message.isEmpty()
                 ? "Edit the title or artist, then Search."
-                : message + " Edit the title or artist and try again.", 16);
+                : message + " Edit the title or artist and try again.", 15);
         help.setTextColor(Color.LTGRAY);
         panel.addView(help, wrap());
 
+        // Track Title label
         LinearLayout.LayoutParams titleLabelParams = wrap();
         titleLabelParams.topMargin = dp(12);
         panel.addView(label("Track title", 16), titleLabelParams);
 
-        LinearLayout.LayoutParams titleParams = wrap();
-        titleParams.topMargin = dp(4);
-        title = field(original.title());
-        panel.addView(title, titleParams);
+        // Track Title Row: [ title (weight 1) ] [ ⌫ Del ] [ Clean Suffix ]
+        LinearLayout titleRow = new LinearLayout(getContext());
+        titleRow.setOrientation(LinearLayout.HORIZONTAL);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams titleRowParams = wrap();
+        titleRowParams.topMargin = dp(4);
 
+        title = field(original.title());
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
+        titleRow.addView(title, titleParams);
+
+        TextView titleDel = miniButton("⌫ Del", v -> deleteLastChar(title));
+        titleDel.setOnLongClickListener(v -> {
+            deleteLastWord(title);
+            return true;
+        });
+        LinearLayout.LayoutParams delParams = new LinearLayout.LayoutParams(dp(76), dp(44));
+        delParams.leftMargin = dp(8);
+        titleRow.addView(titleDel, delParams);
+
+        TextView titleClean = miniButton("Clean Suffix", v -> cleanSuffix(title));
+        LinearLayout.LayoutParams cleanParams = new LinearLayout.LayoutParams(dp(118), dp(44));
+        cleanParams.leftMargin = dp(8);
+        titleRow.addView(titleClean, cleanParams);
+
+        panel.addView(titleRow, titleRowParams);
+
+        // Artist label
         LinearLayout.LayoutParams artistLabelParams = wrap();
         artistLabelParams.topMargin = dp(12);
         panel.addView(label("Artist", 16), artistLabelParams);
 
-        LinearLayout.LayoutParams artistParams = wrap();
-        artistParams.topMargin = dp(4);
+        // Artist Row: [ artist (weight 1) ] [ ⌫ Del ] [ Clean ]
+        LinearLayout artistRow = new LinearLayout(getContext());
+        artistRow.setOrientation(LinearLayout.HORIZONTAL);
+        artistRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams artistRowParams = wrap();
+        artistRowParams.topMargin = dp(4);
+
         artist = field(original.subtitle());
-        panel.addView(artist, artistParams);
+        LinearLayout.LayoutParams artistParams = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
+        artistRow.addView(artist, artistParams);
+
+        TextView artistDel = miniButton("⌫ Del", v -> deleteLastChar(artist));
+        artistDel.setOnLongClickListener(v -> {
+            deleteLastWord(artist);
+            return true;
+        });
+        LinearLayout.LayoutParams aDelParams = new LinearLayout.LayoutParams(dp(76), dp(44));
+        aDelParams.leftMargin = dp(8);
+        artistRow.addView(artistDel, aDelParams);
+
+        TextView artistClean = miniButton("Clean", v -> cleanSuffix(artist));
+        LinearLayout.LayoutParams aCleanParams = new LinearLayout.LayoutParams(dp(86), dp(44));
+        aCleanParams.leftMargin = dp(8);
+        artistRow.addView(artistClean, aCleanParams);
+
+        panel.addView(artistRow, artistRowParams);
 
         title.setImeOptions(EditorInfo.IME_ACTION_NEXT);
         artist.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-        title.setNextFocusDownId(artist.getId());
-        artist.setNextFocusUpId(title.getId());
 
         title.setOnEditorActionListener((v, action, event) -> {
             if (action == EditorInfo.IME_ACTION_NEXT) {
@@ -114,20 +158,38 @@ final class LyricsLookupDialog extends Dialog {
         actionParams.topMargin = dp(16);
         panel.addView(actions, actionParams);
 
-        artist.setNextFocusDownId(find.getId());
-        find.setNextFocusUpId(artist.getId());
+        // Directional focus mapping
+        title.setNextFocusRightId(titleDel.getId());
+        title.setNextFocusDownId(artist.getId());
+
+        titleDel.setNextFocusLeftId(title.getId());
+        titleDel.setNextFocusRightId(titleClean.getId());
+        titleDel.setNextFocusDownId(artistDel.getId());
+
+        titleClean.setNextFocusLeftId(titleDel.getId());
+        titleClean.setNextFocusDownId(artistClean.getId());
+
+        artist.setNextFocusUpId(title.getId());
+        artist.setNextFocusRightId(artistDel.getId());
+        artist.setNextFocusDownId(cancel.getId());
+
+        artistDel.setNextFocusUpId(titleDel.getId());
+        artistDel.setNextFocusLeftId(artist.getId());
+        artistDel.setNextFocusRightId(artistClean.getId());
+        artistDel.setNextFocusDownId(find.getId());
+
+        artistClean.setNextFocusUpId(titleClean.getId());
+        artistClean.setNextFocusLeftId(artistDel.getId());
+        artistClean.setNextFocusDownId(find.getId());
+
         cancel.setNextFocusUpId(artist.getId());
         cancel.setNextFocusRightId(find.getId());
+
+        find.setNextFocusUpId(artistClean.getId());
         find.setNextFocusLeftId(cancel.getId());
 
         title.setOnKeyListener((v, key, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (key == KeyEvent.KEYCODE_DPAD_DOWN) {
-                    hideKeyboard();
-                    artist.requestFocus();
-                    return true;
-                }
-            } else if (event.getAction() == KeyEvent.ACTION_UP) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
                 if (key == KeyEvent.KEYCODE_DPAD_CENTER
                         || key == KeyEvent.KEYCODE_ENTER
                         || key == KeyEvent.KEYCODE_NUMPAD_ENTER) {
@@ -139,40 +201,13 @@ final class LyricsLookupDialog extends Dialog {
         });
 
         artist.setOnKeyListener((v, key, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (key == KeyEvent.KEYCODE_DPAD_DOWN) {
-                    hideKeyboard();
-                    find.requestFocus();
-                    return true;
-                }
-                if (key == KeyEvent.KEYCODE_DPAD_UP) {
-                    hideKeyboard();
-                    title.requestFocus();
-                    return true;
-                }
-            } else if (event.getAction() == KeyEvent.ACTION_UP) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
                 if (key == KeyEvent.KEYCODE_DPAD_CENTER
                         || key == KeyEvent.KEYCODE_ENTER
                         || key == KeyEvent.KEYCODE_NUMPAD_ENTER) {
                     requestKeyboard(artist);
                     return true;
                 }
-            }
-            return false;
-        });
-
-        find.setOnKeyListener((v, key, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN && key == KeyEvent.KEYCODE_DPAD_UP) {
-                artist.requestFocus();
-                return true;
-            }
-            return false;
-        });
-
-        cancel.setOnKeyListener((v, key, event) -> {
-            if (event.getAction() == KeyEvent.ACTION_DOWN && key == KeyEvent.KEYCODE_DPAD_UP) {
-                artist.requestFocus();
-                return true;
             }
             return false;
         });
@@ -226,8 +261,8 @@ final class LyricsLookupDialog extends Dialog {
         Window window = getWindow();
         if (window != null) {
             window.setLayout(
-                    Math.min(dp(620), activity.getResources().getDisplayMetrics().widthPixels - dp(48)),
-                    Math.min(dp(390), activity.getResources().getDisplayMetrics().heightPixels - dp(48)));
+                    Math.min(dp(680), activity.getResources().getDisplayMetrics().widthPixels - dp(48)),
+                    Math.min(dp(410), activity.getResources().getDisplayMetrics().heightPixels - dp(48)));
         }
     }
 
@@ -306,9 +341,65 @@ final class LyricsLookupDialog extends Dialog {
             InputMethodManager keyboard = (InputMethodManager)
                     getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             if (keyboard != null) {
-                keyboard.showSoftInput(field, InputMethodManager.SHOW_IMPLICIT);
+                keyboard.showSoftInput(field, InputMethodManager.SHOW_FORCED);
             }
         });
+    }
+
+    static String stripSuffix(String text) {
+        if (text == null) return "";
+        String s = text.trim();
+        String cleaned = s;
+        for (int i = 0; i < 3; i++) {
+            String prev = cleaned;
+            cleaned = cleaned.replaceAll("(?i)\\s*\\([^(]*\\)\\s*$", "")
+                             .replaceAll("(?i)\\s*\\[[^\\]]*\\]\\s*$", "")
+                             .replaceAll("(?i)\\s*-\\s*(acoustic|live|remaster|radio|edit|deluxe|version|orchestral|instrumental|bonus|mono|stereo|anniversary).*$", "")
+                             .replaceAll("(?i)\\s+(feat\\.|ft\\.|featuring)\\s+.*$", "")
+                             .trim();
+            if (cleaned.equals(prev)) break;
+        }
+        return cleaned.isEmpty() ? s : cleaned;
+    }
+
+    private void cleanSuffix(EditText field) {
+        if (field == null) return;
+        String cur = field.getText().toString();
+        String cleaned = stripSuffix(cur);
+        field.setText(cleaned);
+        field.setSelection(cleaned.length());
+    }
+
+    private void deleteLastChar(EditText field) {
+        if (field == null) return;
+        String cur = field.getText().toString();
+        if (!cur.isEmpty()) {
+            int sel = field.getSelectionEnd();
+            if (sel > 0 && sel <= cur.length()) {
+                String updated = cur.substring(0, sel - 1) + cur.substring(sel);
+                field.setText(updated);
+                field.setSelection(sel - 1);
+            } else {
+                String updated = cur.substring(0, cur.length() - 1);
+                field.setText(updated);
+                field.setSelection(updated.length());
+            }
+        }
+    }
+
+    private void deleteLastWord(EditText field) {
+        if (field == null) return;
+        String cur = field.getText().toString();
+        int sel = field.getSelectionEnd();
+        if (sel <= 0) sel = cur.length();
+        if (sel > 0 && sel <= cur.length()) {
+            int i = sel - 1;
+            while (i > 0 && Character.isWhitespace(cur.charAt(i))) i--;
+            while (i > 0 && !Character.isWhitespace(cur.charAt(i - 1))) i--;
+            String updated = cur.substring(0, i) + cur.substring(sel);
+            field.setText(updated);
+            field.setSelection(i);
+        }
     }
 
     private EditText field(String value) {
@@ -316,7 +407,7 @@ final class LyricsLookupDialog extends Dialog {
         field.setId(View.generateViewId());
         field.setSingleLine(true);
         field.setTextColor(Color.WHITE);
-        field.setTextSize(19);
+        field.setTextSize(18);
         field.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
         field.setFilters(new InputFilter[]{new InputFilter.LengthFilter(256)});
         field.setText(value);
@@ -331,8 +422,21 @@ final class LyricsLookupDialog extends Dialog {
         return field;
     }
 
+    private TextView miniButton(String text, View.OnClickListener action) {
+        TextView view = label(text, 13);
+        view.setId(View.generateViewId());
+        view.setGravity(Gravity.CENTER);
+        view.setFocusable(true);
+        view.setClickable(true);
+        view.setOnClickListener(action);
+        view.setBackground(FocusChrome.filled(getContext(), Color.rgb(38, 38, 38), 8, false));
+        view.setOnFocusChangeListener((v, focused) ->
+                view.setBackground(FocusChrome.filled(getContext(), Color.rgb(38, 38, 38), 8, focused)));
+        return view;
+    }
+
     private TextView button(String text, View.OnClickListener action) {
-        TextView view = label(text, 18);
+        TextView view = label(text, 17);
         view.setId(View.generateViewId());
         view.setGravity(Gravity.CENTER);
         view.setFocusable(true);

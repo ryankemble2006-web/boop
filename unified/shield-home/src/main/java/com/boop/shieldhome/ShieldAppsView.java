@@ -29,7 +29,7 @@ public final class ShieldAppsView extends LinearLayout {
         super(context, attrs);
         setOrientation(VERTICAL);
         setBackgroundColor(Color.BLACK);
-        setPadding(dp(42), dp(34), dp(42), dp(30));
+        setPadding(dp(48), dp(30), dp(48), dp(28));
         setClipChildren(false);
         setClipToPadding(false);
     }
@@ -39,17 +39,51 @@ public final class ShieldAppsView extends LinearLayout {
         List<TvAppEntry> safeApps = apps == null ? List.of() : List.copyOf(apps);
         Set<String> safeFavourites = favouriteComponents == null ? Set.of() : Set.copyOf(favouriteComponents);
 
+        LinearLayout header = new LinearLayout(getContext());
+        header.setOrientation(HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
+        LinearLayout titleCol = new LinearLayout(getContext());
+        titleCol.setOrientation(VERTICAL);
+        TextView eyebrow = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(eyebrow);
+        eyebrow.setText("INSTALLED APPLICATIONS");
+        eyebrow.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        eyebrow.setLetterSpacing(0.08f);
+        eyebrow.setTextColor(FocusChrome.accentColor(getContext()));
+        eyebrow.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        titleCol.addView(eyebrow, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+
         TextView title = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(title);
         title.setText("Apps");
-        title.setTextColor(Color.WHITE);
+        title.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        title.setLetterSpacing(0.015f);
+        title.setTextColor(BoopTvChrome.TEXT_PRIMARY);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
-        addView(title, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+        titleCol.addView(title, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+        header.addView(titleCol, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView hint = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(hint);
+        hint.setText("OK Launch   ·   Hold OK Star to Home   ·   " + safeApps.size() + " apps");
+        hint.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        hint.setLetterSpacing(0.03f);
+        hint.setTextColor(BoopTvChrome.TEXT_SECONDARY);
+        hint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f);
+        hint.setPadding(dp(14), dp(6), dp(14), dp(6));
+        hint.setBackground(BoopTvChrome.badgePill(getContext(), false));
+        header.addView(hint, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+
+        addView(header, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         if (safeApps.isEmpty()) {
             TextView empty = new TextView(getContext());
+            BoopTvChrome.markCustomStyled(empty);
             empty.setText("No launchable apps found");
-            empty.setTextColor(Color.WHITE);
-            empty.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+            empty.setTypeface(BoopTvChrome.FONT_REGULAR);
+            empty.setTextColor(BoopTvChrome.TEXT_SECONDARY);
+            empty.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
             LayoutParams emptyParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
             emptyParams.topMargin = dp(24);
             addView(empty, emptyParams);
@@ -77,7 +111,7 @@ public final class ShieldAppsView extends LinearLayout {
         });
 
         LayoutParams gridParams = new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f);
-        gridParams.topMargin = dp(18);
+        gridParams.topMargin = dp(14);
         addView(grid, gridParams);
     }
 

@@ -2,7 +2,6 @@ package com.boop.shieldhome;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.GradientDrawable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -20,12 +19,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** MSConfig-style 10-foot Android TV Startup & Silent Batch Uninstall table. */
+/** MSConfig-style 10-foot Android TV Startup & Silent Batch Uninstall table with 0ms in-place checkbox updates. */
 public final class ShieldStartupManagerView extends LinearLayout {
     public interface Callbacks {
         void onOpenPackages(StartupManagerUiModel.Mode mode);
@@ -54,7 +54,6 @@ public final class ShieldStartupManagerView extends LinearLayout {
     }
 
     private static final int MUTED = BoopTvChrome.TEXT_SECONDARY;
-    private static final int PANEL = BoopTvChrome.SURFACE_PANEL;
     private static final int CARD = BoopTvChrome.SURFACE_CARD;
 
     private static final int COLOR_EMERALD = Color.rgb(52, 211, 153);
@@ -68,7 +67,10 @@ public final class ShieldStartupManagerView extends LinearLayout {
     private static final int COLOR_ROW_RIP_BORDER = Color.rgb(127, 29, 29);
 
     private LinearLayout body;
+    private TextView statusLabel;
+    private TextView bigRipButtonRef;
     private final Map<String, String> packageLabels = new HashMap<>();
+    private final Set<String> liveRipSelected = new HashSet<>();
     private boolean busy;
     private String status = "";
 
@@ -88,6 +90,10 @@ public final class ShieldStartupManagerView extends LinearLayout {
     public void setStatus(String text, boolean working) {
         status = text == null ? "" : text;
         busy = working;
+        if (statusLabel != null) {
+            statusLabel.setText((busy ? "Working: " : "") + status);
+            statusLabel.setTextColor(busy ? FocusChrome.accentColor(getContext()) : MUTED);
+        }
     }
 
     public void renderOverview(boolean linkReady, boolean auto, int managedCount, String lastSummary, Callbacks callbacks) {
@@ -113,6 +119,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
             Callbacks callbacks) {
         removeAllViews();
         body = this;
+        liveRipSelected.clear();
+        if (ripSelected != null) liveRipSelected.addAll(ripSelected);
 
         List<StartupPackageState> inventory = (allRows != null && !allRows.isEmpty()) ? allRows : rows;
         int enabledCount = 0;
@@ -143,7 +151,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
 
         LinearLayout titleCol = column();
         TextView title = text("STARTUP & UNINSTALL MANAGER", 20, true);
-        TextView subtitle = caption("Toggle Startup to enable or disable  \u2022  Tick Rip Out on multiple apps to silently batch remove", 12);
+        TextView subtitle = caption("Toggle Startup to enable/disable  \u2022  Tick Rip Out on User Apps to silently batch remove (System Apps Protected)", 12);
         titleCol.addView(title);
         titleCol.addView(subtitle);
         topHeader.addView(titleCol, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
@@ -240,31 +248,60 @@ public final class ShieldStartupManagerView extends LinearLayout {
             String pkg = state.packageName();
             ids.add(pkg);
             var risk = StartupRecoveryPolicy.assess(state, caps);
-            boolean locked = risk.protectedPackage();
+            boolean startupLocked = risk.protectedPackage();
+            boolean ripLocked = !StartupRecoveryPolicy.canUninstall(state, caps);
             boolean disabled = StartupManagerUiModel.isDisabled(state);
-            boolean queuedForRip = ripSelected != null && ripSelected.contains(pkg);
 
             LinearLayout rowCard = row();
             rowCard.setPadding(dp(12), dp(7), dp(14), dp(7));
             GradientDrawable rowBg = new GradientDrawable();
             rowBg.setCornerRadius(dp(11));
             rowBg.setColor(disabled ? COLOR_ROW_DISABLED : COLOR_ROW_ENABLED);
-            rowBg.setStroke(Math.max(1, dp(1)), queuedForRip ? COLOR_ROW_RIP_BORDER : COLOR_ROW_BORDER);
+            rowBg.setStroke(Math.max(1, dp(1)), liveRipSelected.contains(pkg) ? COLOR_ROW_RIP_BORDER : COLOR_ROW_BORDER);
             rowCard.setBackground(rowBg);
 
-            // Column 0: Startup Checkbox ([✓] ON / [ ] OFF)
-            Runnable startupAction = locked
+            // Column 0: Startup Checkbox ([✓] ON / [ ] OFF / 🔒 CORE)
+            Runnable startupAction = startupLocked
                     ? () -> callbacks.onProtected(pkg, risk.protectionReason())
                     : () -> callbacks.onPrimary(pkg);
-            TextView startupBox = startupCheckbox(state, !disabled, locked, tag(state, 0), startupAction);
+            TextView startupBox = startupCheckbox(state, !disabled, startupLocked, tag(state, 0), startupAction);
             rowCard.addView(startupBox, new LayoutParams(dp(116), dp(44)));
             hspace(rowCard, 10);
 
-            // Column 1: Multi-Select Rip Out Checkbox ([✕] RIP / [ ] Rip)
-            Runnable ripAction = locked
-                    ? () -> callbacks.onProtected(pkg, risk.protectionReason())
-                    : () -> callbacks.onToggleRipSelect(pkg, !queuedForRip);
-            TextView ripBox = ripCheckbox(queuedForRip, locked, tag(state, 1), ripAction);
+            // Column 3: Status / Type Pill (created before ripBox so ripBox can update it in-place)
+            TextView statusPill = rowStatusText(state, disabled, startupLocked, liveRipSelected.contains(pkg));
+
+            // Column 1: Multi-Select Rip Out Checkbox ([✕] RIP / [ ] Rip / 🔒 System)
+            TextView ripBox = new TextView(getContext());
+            BoopTvChrome.markCustomStyled(ripBox);
+            ripBox.setTypeface(BoopTvChrome.FONT_MEDIUM);
+            ripBox.setTextSize(13);
+            ripBox.setGravity(Gravity.CENTER);
+            ripBox.setSingleLine(true);
+            ripBox.setDefaultFocusHighlightEnabled(false);
+            ripBox.setFocusable(true);
+            ripBox.setClickable(true);
+            ripBox.setId(View.generateViewId());
+            ripBox.setTag(tag(state, 1));
+            styleRipCheckbox(ripBox, liveRipSelected.contains(pkg), ripLocked, false);
+            ripBox.setOnClickListener(ignored -> {
+                if (ripLocked) {
+                    String reason = state.systemApp()
+                            ? "System apps cannot be uninstalled. Toggle Startup [OFF] to disable safe bloatware."
+                            : risk.protectionReason();
+                    callbacks.onProtected(pkg, reason);
+                    return;
+                }
+                boolean nowSelected = !liveRipSelected.contains(pkg);
+                if (nowSelected) liveRipSelected.add(pkg);
+                else liveRipSelected.remove(pkg);
+                // 0ms In-place visual update without rebuilding the view tree!
+                styleRipCheckbox(ripBox, nowSelected, false, ripBox.isFocused());
+                rowBg.setStroke(Math.max(1, dp(1)), nowSelected ? COLOR_ROW_RIP_BORDER : COLOR_ROW_BORDER);
+                updateRowStatusText(statusPill, state, disabled, startupLocked, nowSelected);
+                updateBigRipButtonInPlace();
+                callbacks.onToggleRipSelect(pkg, nowSelected);
+            });
             rowCard.addView(ripBox, new LayoutParams(dp(126), dp(44)));
             hspace(rowCard, 16);
 
@@ -273,8 +310,6 @@ public final class ShieldStartupManagerView extends LinearLayout {
             rowCard.addView(appInfo, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
             hspace(rowCard, 12);
 
-            // Column 3: Status / Type Pill
-            TextView statusPill = rowStatusText(state, disabled, locked, queuedForRip);
             rowCard.addView(statusPill, new LayoutParams(dp(170), LayoutParams.WRAP_CONTENT));
 
             List<TextView> controls = List.of(startupBox, ripBox);
@@ -282,8 +317,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
                 final int colIndex = c;
                 final TextView box = controls.get(c);
                 box.setOnFocusChangeListener((v, focused) -> {
-                    if (colIndex == 0) styleStartupCheckbox(box, !disabled, locked, focused);
-                    else styleRipCheckbox(box, queuedForRip, locked, focused);
+                    if (colIndex == 0) styleStartupCheckbox(box, !disabled, startupLocked, focused);
+                    else styleRipCheckbox(box, liveRipSelected.contains(pkg), ripLocked, focused);
                     if (focused) callbacks.onPackageFocus(pkg, colIndex);
                 });
             }
@@ -318,9 +353,8 @@ public final class ShieldStartupManagerView extends LinearLayout {
         View bottomSpacer = new View(getContext());
         bottomBar.addView(bottomSpacer, new LayoutParams(0, 1, 1f));
 
-        int ripCount = ripSelected == null ? 0 : ripSelected.size();
-        TextView bigRipButton = bigRipOutButton(ripCount, "startup:packages:rip-out", callbacks::onRipOutSelected);
-        bottomBar.addView(bigRipButton, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(50)));
+        bigRipButtonRef = bigRipOutButton(liveRipSelected.size(), "startup:packages:rip-out", callbacks::onRipOutSelected);
+        bottomBar.addView(bigRipButtonRef, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(50)));
 
         body.addView(bottomBar, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
@@ -328,7 +362,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         footer();
 
         // --- 7. D-PAD MATRIX NAVIGATION WIRING ---
-        wireTableNavigation(matrix, ids, filterButtons, selectAllBtn, clearBtn, backBtn, bigRipButton,
+        wireTableNavigation(matrix, ids, filterButtons, selectAllBtn, clearBtn, backBtn, bigRipButtonRef,
                 focusPackage, focusAction);
     }
 
@@ -373,6 +407,16 @@ public final class ShieldStartupManagerView extends LinearLayout {
         body.addView(back, new LayoutParams(LayoutParams.MATCH_PARENT, dp(46)));
         footer();
         post(batch::requestFocus);
+    }
+
+    private void updateBigRipButtonInPlace() {
+        if (bigRipButtonRef == null) return;
+        int count = liveRipSelected.size();
+        String label = count > 0
+                ? "\uD83D\uDCA5  SILENTLY RIP OUT " + count + (count == 1 ? " APP" : " APPS") + " (ZERO CLICKING)"
+                : "\uD83D\uDDD1  SILENTLY RIP OUT (0 SELECTED)";
+        bigRipButtonRef.setText(label);
+        styleBigRipButton(bigRipButtonRef, count, bigRipButtonRef.isFocused());
     }
 
     private void wireTableNavigation(
@@ -514,24 +558,6 @@ public final class ShieldStartupManagerView extends LinearLayout {
         v.setPadding(dp(10), dp(6), dp(10), dp(6));
     }
 
-    private TextView ripCheckbox(boolean queued, boolean locked, String tag, Runnable action) {
-        TextView v = new TextView(getContext());
-        BoopTvChrome.markCustomStyled(v);
-        v.setTypeface(BoopTvChrome.FONT_MEDIUM);
-        v.setTextSize(13);
-        v.setGravity(Gravity.CENTER);
-        v.setSingleLine(true);
-        v.setDefaultFocusHighlightEnabled(false);
-        v.setFocusable(true);
-        v.setClickable(true);
-        v.setId(View.generateViewId());
-        v.setTag(tag);
-        v.setPadding(dp(10), dp(6), dp(10), dp(6));
-        styleRipCheckbox(v, queued, locked, false);
-        v.setOnClickListener(ignored -> action.run());
-        return v;
-    }
-
     private void styleRipCheckbox(TextView v, boolean queued, boolean locked, boolean focused) {
         int accent = FocusChrome.accentColor(getContext());
         GradientDrawable bg = new GradientDrawable();
@@ -573,7 +599,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         v.setId(View.generateViewId());
         v.setTag(tag);
         styleBigRipButton(v, count, false);
-        v.setOnFocusChangeListener((view, focused) -> styleBigRipButton(v, count, focused));
+        v.setOnFocusChangeListener((view, focused) -> styleBigRipButton(v, liveRipSelected.size(), focused));
         v.setOnClickListener(ignored -> action.run());
         return v;
     }
@@ -619,6 +645,11 @@ public final class ShieldStartupManagerView extends LinearLayout {
         TextView tv = text("", 12, false);
         tv.setTypeface(BoopTvChrome.FONT_MEDIUM);
         tv.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        updateRowStatusText(tv, state, disabled, locked, queuedForRip);
+        return tv;
+    }
+
+    private void updateRowStatusText(TextView tv, StartupPackageState state, boolean disabled, boolean locked, boolean queuedForRip) {
         if (queuedForRip) {
             tv.setText("\u25CF Queued for Rip");
             tv.setTextColor(COLOR_ROSE_TEXT);
@@ -635,7 +666,6 @@ public final class ShieldStartupManagerView extends LinearLayout {
             tv.setText("\u25CF System App");
             tv.setTextColor(Color.rgb(148, 163, 184));
         }
-        return tv;
     }
 
     private TextView pillBadge(String label, int textColor) {
@@ -691,11 +721,11 @@ public final class ShieldStartupManagerView extends LinearLayout {
         space(body, 6);
         LinearLayout foot = row();
         foot.setGravity(Gravity.CENTER_VERTICAL);
-        TextView result = caption((busy ? "Working: " : "") + status, 12);
-        result.setSingleLine(true);
-        result.setEllipsize(TextUtils.TruncateAt.END);
-        result.setTextColor(busy ? FocusChrome.accentColor(getContext()) : MUTED);
-        foot.addView(result, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+        statusLabel = caption((busy ? "Working: " : "") + status, 12);
+        statusLabel.setSingleLine(true);
+        statusLabel.setEllipsize(TextUtils.TruncateAt.END);
+        statusLabel.setTextColor(busy ? FocusChrome.accentColor(getContext()) : MUTED);
+        foot.addView(statusLabel, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
         hspace(foot, 12);
         TextView rightHint = caption("Menu: Restore Originals", 11);
         foot.addView(rightHint, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
@@ -750,7 +780,6 @@ public final class ShieldStartupManagerView extends LinearLayout {
     }
 
     private int dp(int n) {
-        Paint p = null;
         return Math.round(n * getResources().getDisplayMetrics().density);
     }
 }

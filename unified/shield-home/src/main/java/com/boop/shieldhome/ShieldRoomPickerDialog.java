@@ -71,17 +71,21 @@ final class ShieldRoomPickerDialog {
     }
     private static TextView label(Context context, String text, int padding) {
         TextView view = new TextView(context);
-        view.setText(text); view.setTextSize(20); view.setTextColor(Color.WHITE);
-        view.setPadding(padding, padding, padding, padding);
+        view.setText(text); view.setTextSize(18); view.setTextColor(Color.WHITE);
+        view.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        view.setPadding(padding, Math.round(padding * 0.75f), padding, Math.round(padding * 0.75f));
         return view;
     }
     private static TextView action(Context context, String text, int padding) {
         TextView view = label(context, text, padding);
+        int vPad = Math.round(padding * 0.75f);
         view.setFocusable(true); view.setClickable(true); view.setDefaultFocusHighlightEnabled(false);
-        view.setBackground(FocusChrome.filled(context, Color.rgb(34,34,34), 8, false));
+        view.setBackground(FocusChrome.filled(context, BoopTvChrome.SURFACE_CARD, 12, false));
+        view.setPadding(padding, vPad, padding, vPad);
         view.setOnFocusChangeListener((v, focused) -> {
             view.setTextColor(focused ? FocusChrome.accentColor(context) : Color.WHITE);
-            view.setBackground(FocusChrome.filled(context, Color.rgb(34,34,34), 8, focused));
+            view.setBackground(FocusChrome.filled(context, focused ? BoopTvChrome.SURFACE_ELEVATED : BoopTvChrome.SURFACE_CARD, 12, focused));
+            view.setPadding(padding, vPad, padding, vPad);
         });
         return view;
     }

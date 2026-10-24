@@ -27,7 +27,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private static final int CONTROL_GAP_DP = 6;
     private static final int ARTWORK_GAP_DP = 20;
     private static final int CONTROL_HEIGHT_DP = 44;
-    private static final int ARTWORK_CORNER_DP = 10;
+    private static final int ARTWORK_CORNER_DP = 12;
     static final int MASCOT_BAY_DP = 230;
 
 
@@ -87,6 +87,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         artwork = new FocusArtworkView(context);
         artwork.setScaleType(ImageView.ScaleType.CENTER_CROP);
         artwork.setBackground(artworkBackground());
+        artwork.setForeground(FocusChrome.artworkIdleOutline(context, ARTWORK_CORNER_DP));
         FocusChrome.clipRounded(artwork, ARTWORK_CORNER_DP);
         artwork.setContentDescription("Open source player");
         artwork.setFocusable(true);
@@ -107,9 +108,12 @@ public final class ShieldNowPlayingView extends FrameLayout {
         row.addView(details, new LinearLayout.LayoutParams(0, dp(154)));
 
         title = new SerenMarqueeTextView(context);
+        BoopTvChrome.markCustomStyled(title);
         title.setIncludeFontPadding(false);
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP,24);
+        title.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        title.setLetterSpacing(0.01f);
+        title.setTextColor(BoopTvChrome.TEXT_PRIMARY);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
         title.setSelected(true);
         title.setFocusable(false);
         title.setClickable(false);
@@ -119,7 +123,7 @@ public final class ShieldNowPlayingView extends FrameLayout {
         });
         details.addView(title, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        subtitle = text(18, Color.WHITE);
+        subtitle = text(17, BoopTvChrome.TEXT_SECONDARY);
         subtitle.setSingleLine(true);
         subtitle.setEllipsize(TextUtils.TruncateAt.END);
         subtitle.setFocusable(true);
@@ -581,7 +585,9 @@ public final class ShieldNowPlayingView extends FrameLayout {
     private void installFocusPop(View view) {
         view.setOnFocusChangeListener((v, focused) -> {
             if (v == artwork) {
-                v.setForeground(focused ? FocusChrome.artworkOutline(getContext(), ARTWORK_CORNER_DP) : null);
+                v.setForeground(focused
+                        ? FocusChrome.artworkOutline(getContext(), ARTWORK_CORNER_DP)
+                        : FocusChrome.artworkIdleOutline(getContext(), ARTWORK_CORNER_DP));
             } else if (v instanceof PrecisionIcons.Control) {
                 v.setBackground(null);
                 v.invalidate();
@@ -596,7 +602,10 @@ public final class ShieldNowPlayingView extends FrameLayout {
 
     private TextView text(int sp, int colour) {
         TextView view = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(view);
         view.setIncludeFontPadding(false);
+        view.setTypeface(BoopTvChrome.FONT_REGULAR);
+        view.setLetterSpacing(0.015f);
         view.setTextColor(colour);
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         return view;
@@ -611,14 +620,10 @@ public final class ShieldNowPlayingView extends FrameLayout {
             if (child instanceof GroupedControls) return ((GroupedControls)child).inkBounds();
             if (child instanceof TextView) {
                 TextView label = (TextView) child;
-                String value = label.getText().toString();
-                if (value.isEmpty()) value = "Ag";
-                label.getPaint().getTextBounds(value, 0, value.length(), bounds);
-                if (child instanceof SerenMarqueeTextView) {
-                    Rect capital = new Rect();
-                    label.getPaint().getTextBounds("H", 0, 1, capital);
-                    bounds.top = capital.top; // Capital top anchors to art; retain actual descenders below.
-                }
+                Rect capital = new Rect();
+                label.getPaint().getTextBounds("H", 0, 1, capital);
+                bounds.top = capital.top;
+                bounds.bottom = Math.round(label.getPaint().descent() * 0.30f);
                 bounds.offset(0, label.getBaseline());
             }
             return bounds;
@@ -630,15 +635,16 @@ public final class ShieldNowPlayingView extends FrameLayout {
                 View child = getChildAt(i);
                 if (child.getVisibility() != GONE) { used += ink(child).height(); count++; }
             }
-            int inset = 4;
-            float gap = count > 1 ? Math.max(0, (getHeight() - inset * 2 - used) / (float) (count - 1)) : 0;
-            float cursor = inset;
+            float density = getResources().getDisplayMetrics().density;
+            int topInset = Math.round(9f * density);
+            int bottomInset = Math.round(9f * density);
+            float gap = count > 1 ? Math.max(0, (getHeight() - topInset - bottomInset - used) / (float) (count - 1)) : 0;
+            float cursor = topInset;
             for (int i = 0; i < getChildCount(); i++) {
                 View child = getChildAt(i);
                 if (child.getVisibility() == GONE) continue;
                 Rect bounds = ink(child);
-                float nudge = (child instanceof ProgressBar) ? -4f : ((child instanceof TextView) && !(child instanceof SerenMarqueeTextView)) ? -8f : 0f;
-                int y = Math.round(cursor + nudge - bounds.top);
+                int y = Math.round(cursor - bounds.top);
                 // MATCH_PARENT marquee text can measure wider than its column.
                 // Its actual viewport must share the progress and control right edge.
                 child.layout(0, y, getWidth(), y + child.getMeasuredHeight());

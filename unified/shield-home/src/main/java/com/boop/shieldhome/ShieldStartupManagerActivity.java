@@ -37,6 +37,7 @@ public final class ShieldStartupManagerActivity extends Activity {
     private final Set<String> ripSelected = new LinkedHashSet<>();
     private String packageFocus, restoreFocus, focusTag, status = "";
     private int actionFocus;
+    private ShieldStartupManagerView currentView;
     private StartupDefaultsJournal defaultsJournal;
     private StartupDefaultsCoordinator.Preview defaultsPreview;
     private StartupDefaultsCoordinator.UndoPlan defaultsUndo;
@@ -90,21 +91,31 @@ public final class ShieldStartupManagerActivity extends Activity {
         super.onSaveInstanceState(out);
     }
 
+    private void updateStatusOnly(String message, boolean working) {
+        status = message == null ? "" : message;
+        if (currentView != null) {
+            currentView.setStatus(status, working);
+        }
+    }
+
     private void render() {
         if (isFinishing() || isDestroyed()) return;
         BoopTvChrome.applyShieldMetrics(this);
         if (screen == Screen.DEFAULTS && defaultsPreview != null) {
+            currentView = null;
             setContentView(new StartupDefaultsScreen(this, defaultsPreview.rows(), defaultsSelected, false, gate.busy(), status,
                     !defaultsPreview.auto(), this::applyBoopDefaults, this::handleBack, null));
             return;
         }
         if (screen == Screen.DEFAULTS_UNDO && defaultsUndo != null) {
+            currentView = null;
             setContentView(new StartupDefaultsScreen(this, defaultsUndo.rows(), Set.of(), true, gate.busy(), status,
                     defaultsUndo.batch() != null && defaultsUndo.batch().autoArmed(), this::undoBoopDefaults, this::handleBack,
                     defaultsUndo.batch() == null ? null : this::keepBoopDefaults));
             return;
         }
         ShieldStartupManagerView view = new ShieldStartupManagerView(this);
+        currentView = view;
         view.setStatus(status, gate.busy());
         view.setPackageLabels(packages);
         var cb = callbacks();
@@ -157,8 +168,7 @@ public final class ShieldStartupManagerActivity extends Activity {
                 if (!enabled) {
                     cancelWork();
                     boolean saved = cleanup.setAutoEnabled(false);
-                    status = saved ? "Automatic boot cleanup is OFF." : "Could not save boot cleanup.";
-                    render();
+                    updateStatusOnly(saved ? "Automatic boot cleanup is OFF." : "Could not save boot cleanup.", false);
                     return;
                 }
                 perform("Checking boot cleanup", session -> {
@@ -177,8 +187,7 @@ public final class ShieldStartupManagerActivity extends Activity {
             public void onToggleBackground(String pkg, boolean enabled) { act(pkg, c -> c.setBackgroundBlock(pkg, enabled)); }
             public void onForceStop(String pkg) { act(pkg, c -> c.forceStop(pkg)); }
             public void onProtected(String pkg, String reason) {
-                status = reason;
-                render();
+                updateStatusOnly(reason, gate.busy());
             }
             public void onPackageFocus(String pkg, int action) {
                 packageFocus = pkg;
@@ -187,15 +196,23 @@ public final class ShieldStartupManagerActivity extends Activity {
             }
             public void onToggleRipSelect(String pkg, boolean checked) {
                 if (gate.busy()) return;
+                StartupPackageState row = cached(pkg);
+                var caps = AndroidRecoveryCapabilities.resolve(ShieldStartupManagerActivity.this);
+                if (row == null || !StartupRecoveryPolicy.canUninstall(row, caps)) {
+                    ripSelected.remove(pkg);
+                    updateStatusOnly("System apps are protected from uninstallation.", false);
+                    return;
+                }
                 if (checked) ripSelected.add(pkg);
                 else ripSelected.remove(pkg);
                 packageFocus = pkg;
                 actionFocus = 1;
                 focusTag = null;
-                status = ripSelected.isEmpty()
+                // Update status text in-place without calling render()!
+                updateStatusOnly(ripSelected.isEmpty()
                         ? "Selection cleared."
-                        : ripSelected.size() + (ripSelected.size() == 1 ? " app" : " apps") + " marked for silent rip-out.";
-                render();
+                        : ripSelected.size() + (ripSelected.size() == 1 ? " user app" : " user apps") + " marked for silent rip-out.",
+                        false);
             }
             public void onSelectAllUser(boolean selectAll) {
                 if (gate.busy()) return;
@@ -207,10 +224,9 @@ public final class ShieldStartupManagerActivity extends Activity {
                     return;
                 }
                 var caps = AndroidRecoveryCapabilities.resolve(ShieldStartupManagerActivity.this);
-                int added = 0;
                 for (var row : StartupManagerUiModel.filter(packages, filter)) {
-                    if (!row.systemApp() && !StartupRecoveryPolicy.assess(row, caps).protectedPackage()) {
-                        if (ripSelected.add(row.packageName())) added++;
+                    if (StartupRecoveryPolicy.canUninstall(row, caps)) {
+                        ripSelected.add(row.packageName());
                     }
                 }
                 focusTag = "startup:packages:rip-out";
@@ -234,14 +250,25 @@ public final class ShieldStartupManagerActivity extends Activity {
     private void ripOutSelected() {
         if (gate.busy()) return;
         if (ripSelected.isEmpty()) {
-            status = "Tick Rip Out on one or more apps first.";
+            updateStatusOnly("Tick Rip Out on one or more user apps first.", false);
+            return;
+        }
+        var caps = AndroidRecoveryCapabilities.resolve(this);
+        final List<String> queue = new ArrayList<>();
+        for (String pkg : ripSelected) {
+            StartupPackageState row = cached(pkg);
+            if (row != null && StartupRecoveryPolicy.canUninstall(row, caps)) {
+                queue.add(pkg);
+            }
+        }
+        if (queue.isEmpty()) {
+            ripSelected.clear();
+            updateStatusOnly("Only user-installed apps can be uninstalled.", false);
             render();
             return;
         }
-        final List<String> queue = new ArrayList<>(ripSelected);
-        perform("Silently ripping out " + queue.size() + (queue.size() == 1 ? " app..." : " apps..."), session -> {
+        perform("Silently ripping out " + queue.size() + (queue.size() == 1 ? " user app..." : " user apps..."), session -> {
             ensureMigration(session);
-            var c = controller(session);
             List<String> removed = new ArrayList<>();
             List<String> failed = new ArrayList<>();
             for (int i = 0; i < queue.size(); i++) {
@@ -251,15 +278,16 @@ public final class ShieldStartupManagerActivity extends Activity {
                 final int index = i + 1;
                 runOnUiThread(() -> {
                     if (!isFinishing() && !isDestroyed()) {
-                        status = "Ripping out (" + index + "/" + queue.size() + "): " + name + "...";
-                        render();
+                        updateStatusOnly("Ripping out (" + index + "/" + queue.size() + "): " + name + "...", true);
                     }
                 });
-                var result = c.uninstall(pkg);
-                if (result.success()) {
+                try {
+                    session.uninstall(pkg);
+                    cleanup.setTarget(pkg, false);
+                    restores.remove(pkg);
                     removed.add(pkg);
-                } else {
-                    failed.add(name + " (" + result.summary() + ")");
+                } catch (Exception err) {
+                    failed.add(name + " (" + safeMessage(err) + ")");
                 }
             }
             List<StartupPackageState> updated = session.inventory();
@@ -361,8 +389,12 @@ public final class ShieldStartupManagerActivity extends Activity {
     private void perform(String message, Work work) {
         long token = gate.begin();
         if (token < 0) return;
-        status = message;
-        render();
+        if (currentView != null && !packages.isEmpty()) {
+            updateStatusOnly(message, true);
+        } else {
+            status = message;
+            render();
+        }
         task = executor.submit(() -> {
             StartupLocalBridge bridge = new StartupLocalBridge(getApplicationContext());
             activeBridge = bridge;
@@ -372,8 +404,7 @@ public final class ShieldStartupManagerActivity extends Activity {
             }
             try (StartupLocalBridge.PackageSession session = bridge.openPackageSession(true, () -> runOnUiThread(() -> {
                 if (gate.current(token)) {
-                    status = "Approve BOOP's local connection on the Shield.";
-                    render();
+                    updateStatusOnly("Approve BOOP's local connection on the Shield.", true);
                 }
             }))) {
                 if (!gate.current(token)) return;
@@ -402,9 +433,14 @@ public final class ShieldStartupManagerActivity extends Activity {
 
     private void replacePackages(List<StartupPackageState> rows) {
         List<String> oldIds = new ArrayList<>(), newIds = new ArrayList<>();
-        Set<String> allValidIds = new LinkedHashSet<>();
-        for (var row : rows) allValidIds.add(row.packageName());
-        ripSelected.retainAll(allValidIds);
+        var caps = AndroidRecoveryCapabilities.resolve(this);
+        Set<String> allValidUninstallIds = new LinkedHashSet<>();
+        for (var row : rows) {
+            if (StartupRecoveryPolicy.canUninstall(row, caps)) {
+                allValidUninstallIds.add(row.packageName());
+            }
+        }
+        ripSelected.retainAll(allValidUninstallIds);
 
         for (var row : StartupManagerUiModel.filter(packages, filter)) oldIds.add(row.packageName());
         for (var row : StartupManagerUiModel.filter(rows, filter)) newIds.add(row.packageName());
@@ -480,7 +516,7 @@ public final class ShieldStartupManagerActivity extends Activity {
     }
 
     private void prepareRestore(Set<String> requested) {
-        if (requested.isEmpty()) { status = "Select at least one package to restore."; render(); return; }
+        if (requested.isEmpty()) { updateStatusOnly("Select at least one package to restore.", false); return; }
         perform("Checking saved originals", session -> {
             ensureMigration(session);
             Map<String, StartupPackageState> expected = new LinkedHashMap<>();
@@ -545,7 +581,7 @@ public final class ShieldStartupManagerActivity extends Activity {
 
     private void runCleanup() {
         Set<String> targets = cleanup.targets();
-        if (targets.isEmpty()) { status = "No packages are selected for boot cleanup."; render(); return; }
+        if (targets.isEmpty()) { updateStatusOnly("No packages are selected for boot cleanup.", false); return; }
         perform("Closing selected packages", session -> {
             int stopped = 0, skipped = 0;
             for (String pkg : targets) {

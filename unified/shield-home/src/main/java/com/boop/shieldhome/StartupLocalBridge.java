@@ -214,21 +214,18 @@ public final class StartupLocalBridge {
             checked(adb,StartupPackageCommands.forUser(StartupPackageCommands.setAppOp(pkg,"RUN_ANY_IN_BACKGROUND",any),userId));
         }
         @Override public void uninstall(String pkg) throws Exception {
-            requireOpen();
+            requireOpen(); loadKnown();
             if(pkg.equals(context.getPackageName())) throw new IOException("BOOP cannot uninstall itself.");
+            StartupPackageState meta=known.get(pkg);
+            if(meta!=null && meta.systemApp()) {
+                throw new IOException("System apps cannot be uninstalled (only disabled).");
+            }
             AdbWire.Result first=adb.execute(StartupPackageCommands.uninstall(pkg),25_000);
             if(first.exitCode==0 && first.output!=null && first.output.contains("Success")) {
-                known=null;
+                known.remove(pkg);
                 return;
             }
-            AdbWire.Result second=adb.execute(
-                    StartupPackageCommands.forUser(StartupPackageCommands.uninstallForUser(pkg),userId),25_000);
-            if(second.exitCode==0 && second.output!=null && second.output.contains("Success")) {
-                known=null;
-                return;
-            }
-            String detail=(second.output!=null && !second.output.isBlank())?second.output.trim()
-                    :(first.output!=null?first.output.trim():"Shield rejected uninstall.");
+            String detail=first.output!=null && !first.output.isBlank() ? first.output.trim() : "Shield rejected uninstall.";
             throw new IOException(detail.substring(0,Math.min(160,detail.length())));
         }
         public void requireDefaultsSession() throws IOException { requireOpen(); }

@@ -54,11 +54,18 @@ public final class StartupPackageController {
             if(!validPackageName(pkg)) throw new IllegalArgumentException("Invalid package name.");
             StartupPackageState before=bridge.probe(pkg);
             requireManageable(before);
+            if(before.systemApp() || !StartupRecoveryPolicy.canUninstall(before,capabilities)) {
+                return new Result(false,"System apps cannot be uninstalled (only disabled).",before);
+            }
             bridge.uninstall(pkg);
             bootStore.setTarget(pkg,false);
             restoreStore.remove(pkg);
             return new Result(true,"Uninstalled "+before.label()+".",null);
-        } catch(Exception failure) { return failed(pkg,failure); }
+        } catch(Exception failure) {
+            String message=failure.getMessage();
+            if(message==null || message.trim().isEmpty()) message="The package could not be uninstalled.";
+            return new Result(false,message,null);
+        }
     }
     public Result setBootClean(String pkg, boolean enabled) {
         return change(pkg,StartupRecoveryPolicy.ManagedAction.BOOT_CLEAN,enabled,enabled,

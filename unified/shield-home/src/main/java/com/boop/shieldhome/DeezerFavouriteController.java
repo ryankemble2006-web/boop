@@ -84,18 +84,27 @@ final class DeezerFavouriteController {
         try { offscreenBackend = Class.forName("com.boop.alpha1.BoopDeezerHeartBackend"); }
         catch (ClassNotFoundException separateShell) { offscreenBackend = null; }
     }
+    private final Runnable deferredStop = this::doStopIfIdle;
     Runnable subscribe(Listener listener) {
         requireMain();
+        handler.removeCallbacks(deferredStop);
         if (listeners.isEmpty() && (!bridgeRunning || "read".equals(bridgeOperation))) {
             // Revalidate when a screen returns, without discarding a confirmed same-track heart.
             lastReadIdentity = ""; readAttemptIdentity = ""; readAttempts = 0;
         }
         listeners.add(listener);
+        if (state != null && state.session > 0) listener.changed(state);
         if (unsubscribe == null) unsubscribe = manager.state().subscribe(ignored -> refresh());
         else refresh();
         return () -> { requireMain(); listeners.remove(listener); stopIfIdle(); };
     }
     private void stopIfIdle() {
+        handler.removeCallbacks(deferredStop);
+        if (listeners.isEmpty() && !request.pending()) {
+            handler.postDelayed(deferredStop, 600);
+        }
+    }
+    private void doStopIfIdle() {
         if (!listeners.isEmpty() || request.pending()) return;
         if (bridgeRunning && !"read".equals(bridgeOperation) && activeBridgeEpoch == bridgeEpoch) return;
         clearReadRetry();

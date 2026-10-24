@@ -372,6 +372,13 @@ public final class ShieldHomeSettingsView extends LinearLayout {
         sysCard.addView(startupManager, cardRowParams());
         addCardSpacer(sysCard, 8);
 
+        TextView buttonRemapper = actionWithSubtitle("Button Remapper",
+                "Remote key bindings, long-press actions & task switcher killer");
+        buttonRemapper.setOnClickListener(v -> getContext().startActivity(
+                new Intent(getContext(), BoopRemapperActivity.class)));
+        sysCard.addView(buttonRemapper, cardRowParams());
+        addCardSpacer(sysCard, 8);
+
         TextView restoreHome = actionWithSubtitle("Android settings",
                 "System network, display, audio & device settings");
         restoreHome.setOnClickListener(v -> { if (callbacks != null) callbacks.onRestoreStockHome(); });

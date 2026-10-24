@@ -10,7 +10,7 @@ import android.view.ViewOutlineProvider;
 
 /** Shared TV focus chrome so Home and every BOOP TV menu use one accent/style. */
 final class FocusChrome {
-    static final int BORDER_DP = BoopTvChrome.BORDER_DP;
+    static final int BORDER_DP = BoopTvChrome.FOCUS_STROKE_DP;
     static final int ARTWORK_BORDER_DP = 5;
 
     private FocusChrome() { }
@@ -42,6 +42,11 @@ final class FocusChrome {
     static GradientDrawable artworkOutline(Context context, int cornerRadiusDp) {
         return new ArtworkOutline(dp(context, cornerRadiusDp), dp(context, ARTWORK_BORDER_DP) + 2,
                 accentColor(context));
+    }
+
+    static GradientDrawable artworkIdleOutline(Context context, int cornerRadiusDp) {
+        return new ArtworkOutline(dp(context, cornerRadiusDp), Math.max(1, dp(context, 1)),
+                Color.argb(42, 255, 255, 255));
     }
 
     /** Opaque ring fills all the way to the artwork's outer silhouette. */
@@ -77,7 +82,7 @@ final class FocusChrome {
         GradientDrawable outline = new GradientDrawable();
         outline.setColor(Color.TRANSPARENT);
         outline.setCornerRadius(dp(context, cornerRadiusDp));
-        outline.setStroke(dp(context, BORDER_DP), accentColor(context));
+        outline.setStroke(Math.max(2, dp(context, BORDER_DP)), accentColor(context));
         return outline;
     }
 
