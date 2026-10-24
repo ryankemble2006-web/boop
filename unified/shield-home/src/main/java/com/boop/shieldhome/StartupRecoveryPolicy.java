@@ -1,6 +1,7 @@
 package com.boop.shieldhome;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,7 +10,6 @@ public final class StartupRecoveryPolicy {
     public static final String SETUP_WRAITH = "com.google.android.tungsten.setupwraith";
 
     private static final Set<String> DAILY_KEEPER_APPS = Set.of(
-            "deezer.android.tv",
             "deezer.android.app",
             "org.xbmc.kodi",
             "net.kodinerds.maven.kodi21",
@@ -20,6 +20,88 @@ public final class StartupRecoveryPolicy {
             "uk.local.casualty",
             "com.neon.sleeptvtimerpro",
             "com.google.android.youtube.tv"
+    );
+
+    /**
+     * Canonical Shield Experience 9.x bloatware, telemetry, partner stub, and dead app list
+     * safe to completely rip out for user 0 (pm disable-user --user 0 + pm uninstall --user 0).
+     */
+    public static final List<String> AUTO_OPTIMISE_RIP_PACKAGES = List.of(
+            "android.autoinstalls.config.nvidia",
+            "com.amazon.amazonvideo.livingroom.nvidia",
+            "deezer.android.tv",
+            "com.nvidia.tegrazone3",
+            "com.nvidia.nvgamecast",
+            "com.nvidia.osc",
+            "com.nvidia.shieldbeta",
+            "com.nvidia.shield.beta",
+            "com.nvidia.stats",
+            "com.nvidia.feedback",
+            "com.nvidia.diagtools",
+            "com.nvidia.shield.registration",
+            "com.nvidia.shield.welcome",
+            "com.nvidia.shield.ask",
+            "com.nvidia.factorybundling",
+            "com.nvidia.factory",
+            "com.nvidia.factorysyschecker",
+            "com.nvidia.hotwordsetup",
+            "com.nvidia.app.messaging",
+            "com.nvidia.bluetooth.ps3usbpairer",
+            "com.nvidia.inputviewer",
+            "com.nvidia.developerwidget",
+            "com.nvidia.tegraprofiler.security",
+            "com.nvidia.benchmarkblocker",
+            "com.google.android.feedback",
+            "com.google.android.partnersetup",
+            "com.google.android.onetimeinitializer",
+            "com.google.android.tv",
+            "com.google.android.syncadapters.calendar",
+            "com.google.android.marvin.talkback",
+            "com.google.android.apps.nbu.smartconnect.tv",
+            "com.android.providers.calendar",
+            "com.android.providers.contacts",
+            "com.android.providers.userdictionary",
+            "com.android.printspooler",
+            "com.android.dreams.basic",
+            "com.android.gallery3d",
+            "com.android.bluetoothmidiservice",
+            "com.android.cts.ctsshim",
+            "com.android.cts.priv.ctsshim",
+            "com.android.backupconfirm",
+            "com.android.sharedstoragebackup",
+            "com.android.localtransport",
+            "com.android.wallpaperbackup",
+            "com.android.hotwordenrollment.okgoogle",
+            "com.android.hotwordenrollment.xgoogle",
+            "com.android.htmlviewer",
+            "com.android.soundpicker"
+    );
+
+    /**
+     * Stock launcher, ad recommendations, OTA, and SetupWraith packages that should be disabled
+     * (pm disable-user --user 0) rather than uninstalled (uninstalling SetupWraith's /data update wakes it up).
+     */
+    public static final List<String> AUTO_OPTIMISE_DISABLE_ONLY_PACKAGES = List.of(
+            "com.google.android.tungsten.setupwraith",
+            "com.google.android.tvlauncher",
+            "com.google.android.tvrecommendations",
+            "com.google.android.backdrop",
+            "com.nvidia.ota",
+            "com.nvidia.shield.appselector"
+    );
+
+    /**
+     * Apps & services kept enabled for manual launch or system voice/cast, but blocked from
+     * background autostart (RUN_IN_BACKGROUND ignore + RUN_ANY_IN_BACKGROUND ignore + force-stop).
+     */
+    public static final List<String> AUTO_OPTIMISE_SILENCE_BACKGROUND_PACKAGES = List.of(
+            "com.nvidia.bbciplayer",
+            "com.google.android.youtube.tv",
+            "com.google.android.apps.mediashell",
+            "com.google.android.katniss",
+            "com.nvidia.shield.smbserver",
+            "com.nvidia.shield.nas",
+            "com.nvidia.shield.smbauth"
     );
 
     public enum Impact { LOW, MEDIUM, HIGH, PROTECTED }
@@ -164,6 +246,11 @@ public final class StartupRecoveryPolicy {
     public static boolean isBloatCandidate(StartupPackageState state, RecoveryCapabilities capabilities) {
         if (!canUninstall(state, capabilities)) return false;
         if (STOCK_LAUNCHER.equals(state.packageName())) return false;
+        if (AUTO_OPTIMISE_DISABLE_ONLY_PACKAGES.contains(state.packageName())) return false;
         return !DAILY_KEEPER_APPS.contains(state.packageName());
+    }
+
+    public static boolean isDailyKeeper(String packageName) {
+        return packageName != null && DAILY_KEEPER_APPS.contains(packageName);
     }
 }

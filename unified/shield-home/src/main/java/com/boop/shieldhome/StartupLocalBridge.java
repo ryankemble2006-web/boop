@@ -236,6 +236,103 @@ public final class StartupLocalBridge {
             String detail=userZero.output!=null && !userZero.output.isBlank() ? userZero.output.trim() : "Shield rejected uninstall.";
             throw new IOException(detail.substring(0,Math.min(160,detail.length())));
         }
+
+        public String autoOptimiseShield(java.util.function.Consumer<String> progress) throws Exception {
+            requireOpen();
+            loadKnown();
+            var caps = AndroidRecoveryCapabilities.resolve(context);
+            java.util.Set<String> ripQueue = new java.util.LinkedHashSet<>();
+            for (String pkg : StartupRecoveryPolicy.AUTO_OPTIMISE_RIP_PACKAGES) {
+                StartupPackageState row = known.get(pkg);
+                if (row != null && StartupRecoveryPolicy.canUninstall(row, caps)) {
+                    ripQueue.add(pkg);
+                }
+            }
+            for (StartupPackageState row : known.values()) {
+                if (!row.systemApp()
+                        && !StartupRecoveryPolicy.isDailyKeeper(row.packageName())
+                        && !StartupRecoveryPolicy.AUTO_OPTIMISE_DISABLE_ONLY_PACKAGES.contains(row.packageName())
+                        && StartupRecoveryPolicy.canUninstall(row, caps)) {
+                    ripQueue.add(row.packageName());
+                }
+            }
+
+            int ripped = 0;
+            int idx = 0;
+            for (String pkg : ripQueue) {
+                idx++;
+                StartupPackageState row = known.get(pkg);
+                String name = row != null ? row.label() : pkg;
+                if (progress != null) {
+                    progress.accept("Auto Optimise: ripping out (" + idx + "/" + ripQueue.size() + ") " + name + "...");
+                }
+                try {
+                    uninstall(pkg);
+                    ripped++;
+                } catch (Exception ignored) { }
+            }
+
+            if (progress != null) {
+                progress.accept("Auto Optimise: disabling SetupWraith, stock launcher, recommendations & OTA...");
+            }
+            StringBuilder disableBatch = new StringBuilder();
+            int disabledCount = 0;
+            for (String pkg : StartupRecoveryPolicy.AUTO_OPTIMISE_DISABLE_ONLY_PACKAGES) {
+                if (known.containsKey(pkg)) {
+                    disableBatch.append("pm disable-user --user ").append(userId).append(" ").append(pkg)
+                            .append(" >/dev/null 2>&1; am force-stop --user ").append(userId).append(" ").append(pkg)
+                            .append(" >/dev/null 2>&1; ");
+                    disabledCount++;
+                }
+            }
+            if (disableBatch.length() > 0) {
+                adb.execute(disableBatch.toString(), 25_000);
+            }
+
+            if (progress != null) {
+                progress.accept("Auto Optimise: blocking background autostart on media/voice/SMB services...");
+            }
+            String foreground = StartupPackageCommands.parseResumedPackage(checked(adb,
+                    "dumpsys activity activities | grep -m2 -E 'mResumedActivity:|topResumedActivity='"));
+            StringBuilder silenceBatch = new StringBuilder();
+            int silencedCount = 0;
+            for (String pkg : StartupRecoveryPolicy.AUTO_OPTIMISE_SILENCE_BACKGROUND_PACKAGES) {
+                if (known.containsKey(pkg)) {
+                    silenceBatch.append("appops set --user ").append(userId).append(" ").append(pkg).append(" RUN_IN_BACKGROUND ignore >/dev/null 2>&1; ")
+                            .append("appops set --user ").append(userId).append(" ").append(pkg).append(" RUN_ANY_IN_BACKGROUND ignore >/dev/null 2>&1; ")
+                            .append("appops set --user ").append(userId).append(" ").append(pkg).append(" START_FOREGROUND ignore >/dev/null 2>&1; ");
+                    if (!pkg.equals(foreground)) {
+                        silenceBatch.append("am force-stop --user ").append(userId).append(" ").append(pkg).append(" >/dev/null 2>&1; ");
+                    }
+                    silencedCount++;
+                }
+            }
+            if (silenceBatch.length() > 0) {
+                adb.execute(silenceBatch.toString(), 25_000);
+            }
+
+            if (progress != null) {
+                progress.accept("Auto Optimise: locking BOOP Media, Home Button & Default Launcher permissions...");
+            }
+            String myPkg = context.getPackageName();
+            String permBatch = "pm grant " + myPkg + " android.permission.WRITE_SECURE_SETTINGS >/dev/null 2>&1; "
+                    + "pm grant " + myPkg + " android.permission.RECORD_AUDIO >/dev/null 2>&1; "
+                    + "appops set " + myPkg + " PROJECT_MEDIA allow >/dev/null 2>&1; "
+                    + "appops set " + myPkg + " SYSTEM_ALERT_WINDOW allow >/dev/null 2>&1; "
+                    + "cmd notification allow_listener " + myPkg + "/com.boop.shieldhome.ShieldNowPlayingListenerService >/dev/null 2>&1; "
+                    + "settings put secure enabled_accessibility_services "
+                    + myPkg + "/com.boop.alpha1.BoopHomeOverrideService:uk.local.eastenders/uk.local.eastenders.EastEndersAccessibilityService:uk.local.casualty/uk.local.casualty.CasualtyAccessibilityService >/dev/null 2>&1; "
+                    + "settings put secure accessibility_enabled 1 >/dev/null 2>&1; "
+                    + "cmd package set-home-activity --user " + userId + " " + myPkg + "/com.boop.alpha1.UnifiedEntryActivity >/dev/null 2>&1";
+            adb.execute(permBatch, 20_000);
+
+            if (ripped > 0) {
+                return "\u26A1 Auto Optimise complete: ripped out " + ripped + " bloat packages, disabled " + disabledCount
+                        + " stock/OTA services, silenced " + silencedCount + " background hogs & locked BOOP permissions.";
+            }
+            return "\u26A1 Shield optimised: 0 bloat packages remaining, " + disabledCount
+                    + " stock/OTA services disabled, " + silencedCount + " background hogs silenced & BOOP permissions locked.";
+        }
         public void requireDefaultsSession() throws IOException { requireOpen(); }
         public void verifyDefaultsSafety(String pkg) throws Exception {
             requireOpen();

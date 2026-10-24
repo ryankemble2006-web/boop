@@ -234,6 +234,7 @@ public final class ShieldStartupManagerActivity extends Activity {
                 render();
             }
             public void onRipOutSelected() { ripOutSelected(); }
+            public void onAutoOptimise() { autoOptimiseShield(); }
             public void onToggleRestoreSelection(String pkg, boolean checked) {
                 if (gate.busy()) return;
                 if (checked) selected.add(pkg);
@@ -295,6 +296,24 @@ public final class ShieldStartupManagerActivity extends Activity {
                     + (failed.isEmpty() ? " Zero clicking required." : " Skipped: " + String.join("; ", failed));
             return new Outcome(updated, summary, () -> {
                 ripSelected.removeAll(removed);
+                render();
+            });
+        });
+    }
+
+    private void autoOptimiseShield() {
+        if (gate.busy()) return;
+        perform("\u26A1 Running 1-click Shield Auto Optimise...", session -> {
+            ensureMigration(session);
+            String summary = session.autoOptimiseShield(msg -> runOnUiThread(() -> {
+                if (!isFinishing() && !isDestroyed()) {
+                    updateStatusOnly(msg, true);
+                }
+            }));
+            List<StartupPackageState> updated = session.inventory();
+            return new Outcome(updated, summary, () -> {
+                ripSelected.clear();
+                focusTag = "startup:packages:auto-optimise-top";
                 render();
             });
         });

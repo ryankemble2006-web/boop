@@ -51,6 +51,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         default void onToggleRipSelect(String packageName, boolean selected) { }
         default void onSelectAllUser(boolean selected) { }
         default void onRipOutSelected() { }
+        default void onAutoOptimise() { }
     }
 
     private static final int MUTED = BoopTvChrome.TEXT_SECONDARY;
@@ -151,7 +152,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
 
         LinearLayout titleCol = column();
         TextView title = text("STARTUP & UNINSTALL MANAGER", 20, true);
-        TextView subtitle = caption("Toggle Startup to enable/disable  \u2022  Tick Rip Out on User Apps to silently batch remove (System Apps Protected)", 12);
+        TextView subtitle = caption("Click [\u26A1 Auto Optimise Shield] for 1-click surgical debloat  \u2022  Or toggle Startup / Rip Out manually", 12);
         titleCol.addView(title);
         titleCol.addView(subtitle);
         topHeader.addView(titleCol, new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
@@ -189,7 +190,12 @@ public final class ShieldStartupManagerView extends LinearLayout {
         }
         TextView refreshBtn = filterButton("Refresh", "startup:packages:refresh", false, callbacks::onRefresh);
         filterStrip.addView(refreshBtn, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(38)));
+        hspace(filterStrip, 8);
         filterButtons.add(refreshBtn);
+
+        TextView topOptimiseBtn = autoOptimiseButton("\u26A1 Auto Optimise Shield", "startup:packages:auto-optimise-top", callbacks::onAutoOptimise);
+        filterStrip.addView(topOptimiseBtn, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(38)));
+        filterButtons.add(topOptimiseBtn);
 
         View spacer = new View(getContext());
         filterStrip.addView(spacer, new LayoutParams(0, 1, 1f));
@@ -338,12 +344,16 @@ public final class ShieldStartupManagerView extends LinearLayout {
         LinearLayout bottomBar = row();
         bottomBar.setGravity(Gravity.CENTER_VERTICAL);
 
+        TextView autoOptimiseBtn = autoOptimiseButton("\u26A1 Auto Optimise Shield", "startup:packages:auto-optimise",
+                callbacks::onAutoOptimise);
         TextView selectAllBtn = actionButton("Select All Bloatware", "startup:packages:select-all",
                 () -> callbacks.onSelectAllUser(true));
         TextView clearBtn = actionButton("Clear Selection", "startup:packages:clear-all",
                 () -> callbacks.onSelectAllUser(false));
         TextView backBtn = actionButton("Back", "startup:packages:back", callbacks::onBack);
 
+        bottomBar.addView(autoOptimiseBtn, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(46)));
+        hspace(bottomBar, 8);
         bottomBar.addView(selectAllBtn, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(46)));
         hspace(bottomBar, 8);
         bottomBar.addView(clearBtn, new LayoutParams(LayoutParams.WRAP_CONTENT, dp(46)));
@@ -362,7 +372,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
         footer();
 
         // --- 7. D-PAD MATRIX NAVIGATION WIRING ---
-        wireTableNavigation(matrix, ids, filterButtons, selectAllBtn, clearBtn, backBtn, bigRipButtonRef,
+        wireTableNavigation(matrix, ids, filterButtons, autoOptimiseBtn, selectAllBtn, clearBtn, backBtn, bigRipButtonRef,
                 focusPackage, focusAction);
     }
 
@@ -423,6 +433,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
             List<List<TextView>> matrix,
             List<String> ids,
             List<TextView> filterButtons,
+            TextView autoOptimiseBtn,
             TextView selectAllBtn,
             TextView clearBtn,
             TextView backBtn,
@@ -438,11 +449,11 @@ public final class ShieldStartupManagerView extends LinearLayout {
             if (!matrix.isEmpty()) {
                 chip.setNextFocusDownId(matrix.get(0).get(0).getId());
             } else {
-                chip.setNextFocusDownId(selectAllBtn.getId());
+                chip.setNextFocusDownId(autoOptimiseBtn.getId());
             }
         }
 
-        List<TextView> bottomControls = List.of(selectAllBtn, clearBtn, backBtn, bigRipButton);
+        List<TextView> bottomControls = List.of(autoOptimiseBtn, selectAllBtn, clearBtn, backBtn, bigRipButton);
         for (int i = 0; i < bottomControls.size(); i++) {
             TextView ctrl = bottomControls.get(i);
             ctrl.setNextFocusLeftId(i == 0 ? ctrl.getId() : bottomControls.get(i - 1).getId());
@@ -478,7 +489,7 @@ public final class ShieldStartupManagerView extends LinearLayout {
                         case KeyEvent.KEYCODE_DPAD_DOWN -> {
                             if (rr == matrix.size() - 1) {
                                 if (cc == 1) bigRipButton.requestFocus();
-                                else selectAllBtn.requestFocus();
+                                else autoOptimiseBtn.requestFocus();
                             } else {
                                 matrix.get(rr + 1).get(cc).requestFocus();
                             }
@@ -680,6 +691,37 @@ public final class ShieldStartupManagerView extends LinearLayout {
         tv.setBackground(bg);
         tv.setPadding(dp(12), dp(4), dp(12), dp(4));
         return tv;
+    }
+
+    private TextView autoOptimiseButton(String label, String tag, Runnable action) {
+        TextView v = new TextView(getContext());
+        BoopTvChrome.markCustomStyled(v);
+        v.setText(label);
+        v.setTypeface(BoopTvChrome.FONT_MEDIUM);
+        v.setTextSize(13);
+        v.setGravity(Gravity.CENTER);
+        v.setSingleLine(true);
+        v.setDefaultFocusHighlightEnabled(false);
+        v.setFocusable(true);
+        v.setClickable(true);
+        v.setId(View.generateViewId());
+        v.setTag(tag);
+        v.setContentDescription(label);
+        styleAutoOptimiseButton(v, false);
+        v.setOnFocusChangeListener((view, focused) -> styleAutoOptimiseButton(v, focused));
+        v.setOnClickListener(ignored -> action.run());
+        return v;
+    }
+
+    private void styleAutoOptimiseButton(TextView v, boolean focused) {
+        int accent = FocusChrome.accentColor(getContext());
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(11));
+        v.setTextColor(focused ? Color.WHITE : accent);
+        bg.setColor(focused ? Color.rgb(30, 37, 48) : Color.rgb(18, 23, 31));
+        bg.setStroke(Math.max(1, dp(focused ? 3 : 2)), accent);
+        v.setBackground(bg);
+        v.setPadding(dp(18), dp(8), dp(18), dp(8));
     }
 
     private TextView filterButton(String label, String tag, boolean active, Runnable action) {
