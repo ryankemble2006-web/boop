@@ -35,34 +35,6 @@ public final class StartupLocalBridge {
         });
     }
 
-    public String openDeezerLyrics() throws Exception {
-        cancelled = false;
-        return withAdb(false, null, adb -> {
-            com.boop.shared.DeezerScreen screen = dumpDeezerScreen(adb);
-            if (screen.hasLyricsPanel()) return "Lyrics already open.";
-            com.boop.shared.DeezerScreen.Target target = screen.lyricsTarget();
-            if (target == null) throw new IOException("Deezer Lyrics control is not available.");
-            checked(adb, "input tap " + target.x + " " + target.y);
-            for (int attempt = 0; attempt < 5; attempt++) {
-                Thread.sleep(attempt == 0 ? 220L : 180L);
-                try {
-                    if (dumpDeezerScreen(adb).hasLyricsPanel()) return "Lyrics opened.";
-                } catch (IOException settling) {
-                    if (attempt == 4) throw settling;
-                }
-            }
-            throw new IOException("Deezer did not open lyrics.");
-        });
-    }
-
-    private com.boop.shared.DeezerScreen dumpDeezerScreen(AdbWire adb) throws Exception {
-        String path = "/sdcard/boop_lyrics.xml";
-        String command = "rm -f " + path + "; uiautomator dump " + path
-                + " >/dev/null 2>&1; code=$?; if [ $code -eq 0 ]; then cat " + path
-                + "; fi; rm -f " + path + "; exit $code";
-        return com.boop.shared.DeezerScreen.parse(checked(adb, command));
-    }
-
     public String run(Collection<String> requested, boolean allowApproval, Runnable approvalRequired) throws Exception {
         int stopped=0, skipped=0, failed=0;
         try(PackageSession session=openPackageSession(allowApproval,approvalRequired)) {
@@ -240,6 +212,24 @@ public final class StartupLocalBridge {
             checked(adb,StartupPackageCommands.forUser(StartupPackageCommands.setAppOp(pkg,"RUN_IN_BACKGROUND",run),userId));
             requireOpen();
             checked(adb,StartupPackageCommands.forUser(StartupPackageCommands.setAppOp(pkg,"RUN_ANY_IN_BACKGROUND",any),userId));
+        }
+        @Override public void uninstall(String pkg) throws Exception {
+            requireOpen();
+            if(pkg.equals(context.getPackageName())) throw new IOException("BOOP cannot uninstall itself.");
+            AdbWire.Result first=adb.execute(StartupPackageCommands.uninstall(pkg),25_000);
+            if(first.exitCode==0 && first.output!=null && first.output.contains("Success")) {
+                known=null;
+                return;
+            }
+            AdbWire.Result second=adb.execute(
+                    StartupPackageCommands.forUser(StartupPackageCommands.uninstallForUser(pkg),userId),25_000);
+            if(second.exitCode==0 && second.output!=null && second.output.contains("Success")) {
+                known=null;
+                return;
+            }
+            String detail=(second.output!=null && !second.output.isBlank())?second.output.trim()
+                    :(first.output!=null?first.output.trim():"Shield rejected uninstall.");
+            throw new IOException(detail.substring(0,Math.min(160,detail.length())));
         }
         public void requireDefaultsSession() throws IOException { requireOpen(); }
         public void verifyDefaultsSafety(String pkg) throws Exception {

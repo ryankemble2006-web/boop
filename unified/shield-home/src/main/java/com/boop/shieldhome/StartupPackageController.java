@@ -12,6 +12,9 @@ public final class StartupPackageController {
         void setEnabledState(String packageName, String enabledState) throws Exception;
         void forceStop(String packageName) throws Exception;
         void setBackgroundModes(String packageName, String run, String any) throws Exception;
+        default void uninstall(String packageName) throws Exception {
+            throw new UnsupportedOperationException("Uninstall is not supported on this bridge.");
+        }
     }
     public interface BootStore {
         boolean setTarget(String packageName, boolean enabled);
@@ -44,6 +47,17 @@ public final class StartupPackageController {
             StartupPackageState before=observe(pkg); requireManageable(before);
             bridge.forceStop(pkg); // The bridge verifies stopped state and process absence.
             return new Result(true,"App stopped.",before);
+        } catch(Exception failure) { return failed(pkg,failure); }
+    }
+    public Result uninstall(String pkg) {
+        try {
+            if(!validPackageName(pkg)) throw new IllegalArgumentException("Invalid package name.");
+            StartupPackageState before=bridge.probe(pkg);
+            requireManageable(before);
+            bridge.uninstall(pkg);
+            bootStore.setTarget(pkg,false);
+            restoreStore.remove(pkg);
+            return new Result(true,"Uninstalled "+before.label()+".",null);
         } catch(Exception failure) { return failed(pkg,failure); }
     }
     public Result setBootClean(String pkg, boolean enabled) {

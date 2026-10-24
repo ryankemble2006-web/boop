@@ -38,6 +38,14 @@ public final class StartupPackageCommands {
         return "am force-stop --user current '" + requirePackage(packageName) + "'";
     }
 
+    public static String uninstall(String packageName) {
+        return "pm uninstall '" + requirePackage(packageName) + "'";
+    }
+
+    public static String uninstallForUser(String packageName) {
+        return "pm uninstall --user current '" + requirePackage(packageName) + "'";
+    }
+
     public static String userState(String packageName, int userId) {
         if (userId < 0) throw new IllegalArgumentException("Invalid user id");
         return "dumpsys package '" + requirePackage(packageName)
