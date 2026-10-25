@@ -12,17 +12,11 @@ foreach ($name in @('banner', 'icon')) {
         throw "Missing approved $name artwork resource"
     }
 }
-& javac -d build/tests src/uk/local/eastenders/Routes.java src/uk/local/eastenders/ClickGate.java src/uk/local/eastenders/UiPolicy.java src/uk/local/eastenders/LaunchPolicy.java tests/RouteTest.java tests/ClickGateTest.java tests/AutoplayPolicyTest.java tests/LaunchPolicyTest.java tests/ReturnHomeTest.java
+& javac -d build/tests src/uk/local/eastenders/Routes.java src/uk/local/eastenders/WatchNowPolicy.java tests/RouteTest.java tests/WatchNowPolicyTest.java
 Check
 & java -cp build/tests uk.local.eastenders.RouteTest
 Check
-& java -cp build/tests uk.local.eastenders.ClickGateTest
-Check
-& java -cp build/tests uk.local.eastenders.AutoplayPolicyTest
-Check
-& java -cp build/tests uk.local.eastenders.LaunchPolicyTest
-Check
-& java -cp build/tests uk.local.eastenders.ReturnHomeTest
+& java -cp build/tests uk.local.eastenders.WatchNowPolicyTest
 Check
 & "$PSScriptRoot/tests/BuildAssetsTest.ps1" -Sdk $Sdk
 & "$bt/aapt2.exe" compile --dir res -o build/resources.zip
@@ -64,11 +58,11 @@ try {
         & keytool -genkeypair -keystore signing/eastenders.p12 -storetype PKCS12 -alias eastenders -keyalg RSA -keysize 3072 -validity 10000 -dname 'CN=EastEnders Personal Launcher' -storepass:env EASTENDERS_SIGN_PASSWORD -keypass:env EASTENDERS_SIGN_PASSWORD
         Check
     }
-    & "$bt/apksigner.bat" sign --ks signing/eastenders.p12 --ks-key-alias eastenders --ks-pass "file:signing/password.txt" --out build/EastEnders-2.0.0.apk build/aligned.apk
+    & "$bt/apksigner.bat" sign --ks signing/eastenders.p12 --ks-key-alias eastenders --ks-pass "file:signing/password.txt" --out build/EastEnders-2.2.0.apk build/aligned.apk
     Check
 } finally { Remove-Item Env:EASTENDERS_SIGN_PASSWORD -ErrorAction SilentlyContinue }
-& "$bt/apksigner.bat" verify --verbose --print-certs build/EastEnders-2.0.0.apk
+& "$bt/apksigner.bat" verify --verbose --print-certs build/EastEnders-2.2.0.apk
 Check
-& "$bt/aapt2.exe" dump badging build/EastEnders-2.0.0.apk
+& "$bt/aapt2.exe" dump badging build/EastEnders-2.2.0.apk
 Check
-Get-FileHash build/EastEnders-2.0.0.apk -Algorithm SHA256
+Get-FileHash build/EastEnders-2.2.0.apk -Algorithm SHA256

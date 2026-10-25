@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='utf-8'?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" />
+
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+
+    <queries>
+        <intent><action android:name="android.speech.RecognitionService" /></intent>
+        <package android:name="com.boop.launcher" />
+        <intent><action android:name="android.support.customtabs.action.CustomTabsService" /></intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_BROWSER" />
+        </intent>
+    </queries>
+
+    <queries><package android:name="deezer.android.app" /></queries>
+    <application android:name="com.boop.alpha1.UnifiedApplication" android:allowBackup="false" android:enableOnBackInvokedCallback="false" android:icon="@drawable/boop_eyes" android:supportsRtl="true" android:theme="@style/Theme.BOOP" android:usesCleartextTraffic="true">
+        <activity android:name="com.boop.alpha1.BoopClosePlayerActivity" android:exported="false" android:theme="@style/Theme.BOOP" />
+        <activity android:name="com.boop.alpha1.BoopProfileActivity" android:exported="false" android:theme="@style/Theme.BOOP" />
+        <activity android:name="com.boop.alpha1.MainActivity" android:configChanges="keyboardHidden|orientation|screenSize" android:exported="true" android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="boop" android:host="auth-callback" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.boop.alpha1.ShieldPairingActivity" android:exported="true" android:excludeFromRecents="true" android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="boop" android:host="shield-pair" />
+                <data android:scheme="boop" android:host="shield-pair-return" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="com.boop.alpha1.BoopNotificationLabActivity" android:label="BOOP Notification Test" android:exported="true" />
+        <activity android:name="com.boop.alpha1.BoopDevMenuActivity" android:exported="false" />
+        <activity android:name="com.boop.alpha1.BoopCanonicalAnimationActivity" android:exported="false" />
+        <activity android:name="com.boop.alpha1.BoopNotificationOnboardingActivity" android:exported="false" android:excludeFromRecents="true" />
+        <activity android:name="com.boop.alpha1.BoopNotificationSettingsActivity" android:exported="false" />
+        <activity android:name="com.boop.alpha1.BoopNotificationLockActivity" android:exported="false" android:excludeFromRecents="true" android:launchMode="singleTop" />
+        <activity android:name="com.boop.alpha1.BoopNotificationInboxActivity" android:exported="false" />
+        <activity android:name="com.boop.alpha1.BoopAppearanceActivity" android:exported="false" />
+
+        <service android:name="com.boop.alpha1.BoopNotificationListenerService" android:exported="false" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+        <activity android:name="com.boop.alpha1.BoopAssistantSetupActivity" android:exported="false" android:theme="@style/Theme.BOOP" />
+        <activity android:name="com.boop.alpha1.BoopAssistantActivity" android:exported="true" android:theme="@style/Theme.BOOP">
+            <intent-filter>
+                <action android:name="android.intent.action.ASSIST" />
+                <action android:name="android.intent.action.VOICE_ASSIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+<queries><package android:name="local.johnnycastaway.halab" /></queries>
+</manifest>
