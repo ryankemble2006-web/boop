@@ -155,23 +155,15 @@ jobs:
           grep -F "Signer #1 certificate SHA-256 digest: $expected" dist/certificate.txt
 
           # 2. Wall APK (for Pixel / Phone)
-          wall_apk=""
-          for candidate in \
-            "dist/v${SHIELD_VERSION}/BOOP-Wall-v221.apk" \
-            "dist/v${SHIELD_VERSION}/BOOP-Shield-v${SHIELD_VERSION}-signed/BOOP-Wall-v221.apk" \
-            "dist/BOOP-Wall-v221.apk" \
-            "$SHIELD_SNAPSHOT_DIR/BOOP-Wall-v221.apk" \
-            "$SHIELD_SNAPSHOT_DIR/wall-app.apk" \
-            "$SHIELD_SNAPSHOT_DIR/wall-app/build/outputs/apk/debug/wall-app-debug.apk"; do
-            if [[ -s "$candidate" ]]; then
-              wall_apk="$candidate"
-              break
-            fi
-          done
+          wall_apk="$(find "$SHIELD_SNAPSHOT_DIR" dist -maxdepth 4 -name "*Wall*.apk" 2>/dev/null | sort -V | tail -n 1 || true)"
 
           if [[ -n "$wall_apk" && -s "$wall_apk" ]]; then
             echo "Found Wall APK: $wall_apk"
-            wall_version="221"
+            wall_version="$(basename "$wall_apk" | sed -nE 's/.*BOOP-Wall-v([0-9]+)\.apk/\1/p')"
+            if [[ -z "$wall_version" ]]; then
+              wall_version="222"
+            fi
+            echo "Signing Wall APK version $wall_version"
             rm -f "dist/BOOP-Wall-v${wall_version}.apk"
             "$tools/zipalign" -f -p 4 "$wall_apk" "dist/BOOP-Wall-v${wall_version}.apk"
             "$tools/apksigner" sign \
@@ -181,6 +173,8 @@ jobs:
 
             "$tools/aapt" dump badging "dist/BOOP-Wall-v${wall_version}.apk" > dist/wall-package.txt
             grep -F "package: name='com.boop.alpha1'" dist/wall-package.txt
+            grep -F "versionCode='${wall_version}'" dist/wall-package.txt
+            grep -F "versionName='1.2.${wall_version}-wall'" dist/wall-package.txt
             "$tools/zipalign" -c -v 4 "dist/BOOP-Wall-v${wall_version}.apk"
             "$tools/apksigner" verify --print-certs "dist/BOOP-Wall-v${wall_version}.apk" > dist/wall-certificate.txt
             grep -F "Signer #1 certificate SHA-256 digest: $expected" dist/wall-certificate.txt
