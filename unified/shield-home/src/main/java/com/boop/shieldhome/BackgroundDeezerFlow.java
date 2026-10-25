@@ -126,7 +126,7 @@ final class BackgroundDeezerFlow {
         }
         if (found == null) return false;
         // Idle sessions still accept Flow even though they have no Now Playing metadata.
-        found.getTransportControls().playFromUri(Uri.parse("https://www.deezer.com/flow"), null);
+        found.getTransportControls().playFromUri(Uri.parse("https://www.deezer.com/flow"), new android.os.Bundle());
         if (requested != null) requested.run();
         android.util.Log.i("BOOPFlow", "Background Deezer Flow requested");
         return true;
@@ -304,6 +304,10 @@ final class BackgroundDeezerFlow {
     }
 
     private void releaseNow() {
+        handler.removeCallbacksAndMessages(null);
+        pending = false;
+        mode = Mode.IDLE;
+        flowRequested = null;
         if (display != null) { display.release(); display = null; }
         if (images != null) { images.close(); images = null; }
     }
