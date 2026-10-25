@@ -328,6 +328,7 @@ public final class ShieldLauncherActivity extends Activity {
             restoreHomeFocus();
             returningFromHeldBackSettings = false;
         }
+        ensureSharedAppearanceRuntimes();
     }
 
     private void onNowPlayingChanged(NowPlayingSnapshot snapshot) {
@@ -1494,6 +1495,55 @@ public final class ShieldLauncherActivity extends Activity {
         artistBrowser.cancel();
         lyricsBrowser.onHostPaused();
         com.boop.shared.BoopState.INSTANCE.homeVisible(false);
+        pauseSharedAppearanceRuntimes();
         super.onPause();
+    }
+
+    private void ensureSharedAppearanceRuntimes() {
+        try {
+            String[] runtimes = {
+                "com.boop.alpha1.BoopSharedEyeColourRuntime",
+                "com.boop.alpha1.BoopSharedFeltColourRuntime",
+                "com.boop.alpha1.BoopSharedHandColourRuntime",
+                "com.boop.alpha1.BoopSharedVoiceProfileRuntime"
+            };
+            for (String r : runtimes) {
+                try {
+                    Class<?> cls = Class.forName(r);
+                    java.lang.reflect.Method getMethod = cls.getDeclaredMethod("get", Context.class);
+                    getMethod.setAccessible(true);
+                    Object instance = getMethod.invoke(null, this);
+                    if (instance instanceof android.app.Application.ActivityLifecycleCallbacks) {
+                        ((android.app.Application.ActivityLifecycleCallbacks) instance).onActivityStarted(this);
+                    }
+                } catch (Throwable inner) {
+                    android.util.Log.w("BOOP-Launcher", "Error starting shared runtime " + r, inner);
+                }
+            }
+        } catch (Throwable t) {
+            android.util.Log.w("BOOP-Launcher", "Could not ensure shared appearance runtimes", t);
+        }
+    }
+
+    private void pauseSharedAppearanceRuntimes() {
+        try {
+            String[] runtimes = {
+                "com.boop.alpha1.BoopSharedEyeColourRuntime",
+                "com.boop.alpha1.BoopSharedFeltColourRuntime",
+                "com.boop.alpha1.BoopSharedHandColourRuntime",
+                "com.boop.alpha1.BoopSharedVoiceProfileRuntime"
+            };
+            for (String r : runtimes) {
+                try {
+                    Class<?> cls = Class.forName(r);
+                    java.lang.reflect.Method getMethod = cls.getDeclaredMethod("get", Context.class);
+                    getMethod.setAccessible(true);
+                    Object instance = getMethod.invoke(null, this);
+                    if (instance instanceof android.app.Application.ActivityLifecycleCallbacks) {
+                        ((android.app.Application.ActivityLifecycleCallbacks) instance).onActivityStopped(this);
+                    }
+                } catch (Throwable ignored) {}
+            }
+        } catch (Throwable ignored) {}
     }
 }
