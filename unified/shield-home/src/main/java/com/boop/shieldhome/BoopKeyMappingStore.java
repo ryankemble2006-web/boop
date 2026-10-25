@@ -18,6 +18,7 @@ public final class BoopKeyMappingStore {
     private static final String PREF_NAME = "boop_key_mappings";
 
     public static final String ACTION_DEFAULT = "default";
+    public static final String ACTION_NONE = "none";
     public static final String ACTION_RECENTS = "recents";
     public static final String ACTION_NEXT_TRACK = "next_track";
     public static final String ACTION_PREV_TRACK = "prev_track";
@@ -124,6 +125,7 @@ public final class BoopKeyMappingStore {
     }
 
     public static String actionLabel(String action) {
+        if (ACTION_NONE.equals(action)) return "No Action / Disabled (Swallow)";
         if (ACTION_RECENTS.equals(action)) return "Recents / Task Switcher";
         if (ACTION_NEXT_TRACK.equals(action)) return "Next Track";
         if (ACTION_PREV_TRACK.equals(action)) return "Previous Track";
@@ -139,6 +141,7 @@ public final class BoopKeyMappingStore {
     public static List<String> availableActions() {
         List<String> actions = new ArrayList<>();
         actions.add(ACTION_DEFAULT);
+        actions.add(ACTION_NONE);
         actions.add(ACTION_RECENTS);
         actions.add(ACTION_NEXT_TRACK);
         actions.add(ACTION_PREV_TRACK);

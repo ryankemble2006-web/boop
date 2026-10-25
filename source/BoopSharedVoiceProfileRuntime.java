@@ -109,7 +109,7 @@ final class BoopSharedVoiceProfileRuntime implements Application.ActivityLifecyc
                 String base = tokens.getBaseUrl();
                 String scope = scope(base);
                 String saved = settings.getString("voice_server_scope", "");
-                if (!explicitSetup && !scope.equals(saved)) {
+                if (!explicitSetup && !saved.isEmpty() && !scope.equals(saved)) {
                     main.post(() -> {
                         if (current(request)) failed("Home Assistant changed. Turn voice sharing on again for this home.", false);
                     });
@@ -118,11 +118,13 @@ final class BoopSharedVoiceProfileRuntime implements Application.ActivityLifecyc
                 String token = new HomeAssistantAuth(app, tokens).freshAccessToken();
                 main.post(() -> {
                     if (!current(request)) return;
-                    if (explicitSetup) settings.edit().putString("voice_server_scope", scope).apply();
+                    if (explicitSetup || saved.isEmpty()) settings.edit().putString("voice_server_scope", scope).apply();
+                    android.util.Log.i("BOOP-SharedVoice", "Voice sharing starting for " + base);
                     open(request, base, token, explicitSetup);
                 });
             } catch (Exception unavailable) {
-                final boolean retry = unavailable instanceof java.io.IOException;
+                android.util.Log.w("BOOP-SharedVoice", "Voice sharing connection failed", unavailable);
+                final boolean retry = !(unavailable instanceof HomeAssistantAuth.AuthRejectedException);
                 main.post(() -> {
                     if (current(request)) failed("Connect BOOP to Home Assistant, then retry voice sharing. Local controls are unchanged.", retry);
                 });

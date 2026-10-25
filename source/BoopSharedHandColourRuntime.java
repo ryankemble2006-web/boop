@@ -104,20 +104,22 @@ final class BoopSharedHandColourRuntime implements Application.ActivityLifecycle
                 String base = tokens.getBaseUrl();
                 String scope = scope(base);
                 String saved = settings.getString("hand_server_scope", "");
-                if (!explicitSetup && !scope.equals(saved)) {
+                if (!explicitSetup && !saved.isEmpty() && !scope.equals(saved)) {
                     main.post(() -> {
-                        if (current(request)) failed("Home Assistant changed. Turn sharing on again to choose this home.", false);
+                        if (current(request)) failed("Home Assistant changed. Turn hand sharing on again to choose this home.", false);
                     });
                     return;
                 }
                 String token = new HomeAssistantAuth(app, tokens).freshAccessToken();
                 main.post(() -> {
                     if (!current(request)) return;
-                    if (explicitSetup) settings.edit().putString("hand_server_scope", scope).apply();
+                    if (explicitSetup || saved.isEmpty()) settings.edit().putString("hand_server_scope", scope).apply();
+                    android.util.Log.i("BOOP-SharedHand", "Hand sharing starting for " + base);
                     open(request, base, token, explicitSetup);
                 });
             } catch (Exception unavailable) {
-                final boolean retry = unavailable instanceof java.io.IOException;
+                android.util.Log.w("BOOP-SharedHand", "Hand sharing connection failed", unavailable);
+                final boolean retry = !(unavailable instanceof HomeAssistantAuth.AuthRejectedException);
                 main.post(() -> {
                     if (current(request)) failed("Connect BOOP to Home Assistant, then retry hand colour sharing. Your local colour is unchanged.", retry);
                 });

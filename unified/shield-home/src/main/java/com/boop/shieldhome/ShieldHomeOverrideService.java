@@ -59,6 +59,8 @@ public class ShieldHomeOverrideService extends AccessibilityService {
             ShieldBrightnessController.get(this).init();
         } catch (Throwable ignored) {}
 
+        ensureShieldMenuCustomization();
+
         if (!homeProfileEnabled()) return;
 
         int boot = Settings.Global.getInt(getContentResolver(), Settings.Global.BOOT_COUNT, -1);
@@ -67,6 +69,20 @@ public class ShieldHomeOverrideService extends AccessibilityService {
             prefs.edit().putInt("boot", boot).apply();
             lastLaunchElapsed = SystemClock.elapsedRealtime();
             bringBoopToFront();
+        }
+    }
+
+    private void ensureShieldMenuCustomization() {
+        try {
+            String opt = Settings.Global.getString(getContentResolver(), "customize_menu_option");
+            if (!"13".equals(opt)) {
+                Settings.Global.putString(getContentResolver(), "customize_menu_option", "13");
+                Settings.Global.putString(getContentResolver(), "customize_menu_double_press_option", "13");
+                Settings.Global.putString(getContentResolver(), "customize_menu_hold_option", "13");
+                Log.i(TAG, "Shield menu button customization locked to option 13 (Send Menu command to app)");
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "Unable to set customize_menu_option in Settings.Global", t);
         }
     }
 

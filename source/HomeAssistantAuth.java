@@ -86,6 +86,10 @@ final class HomeAssistantAuth {
             throw new AuthRejectedException("No saved Home Assistant connection");
         }
 
+        if (refreshToken.startsWith("eyJ") || refreshToken.contains(".") || refreshToken.length() > 60) {
+            return refreshToken;
+        }
+
         JSONObject token = postForm(
                 HomeAssistantAuthUrls.tokenUrl(baseUrl),
                 tokenStore.refreshBody(refreshToken));

@@ -19,7 +19,7 @@ public final class BoopKeyActionExecutor {
     private BoopKeyActionExecutor() {}
 
     public static void execute(Context context, String action, String targetComponent) {
-        if (action == null || BoopKeyMappingStore.ACTION_DEFAULT.equals(action)) return;
+        if (action == null || BoopKeyMappingStore.ACTION_DEFAULT.equals(action) || BoopKeyMappingStore.ACTION_NONE.equals(action)) return;
 
         Runnable r = () -> {
             try {
