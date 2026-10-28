@@ -1,21 +1,28 @@
-# EastEnders 2.0.0 — Standalone Android TV iPlayer Shortcut
+# EastEnders 2.3.0 — 1-Click Standalone Android TV iPlayer Launcher
 
-A clean, zero-friction shortcut for Android TV and NVIDIA Shield designed to be shared directly as a standalone APK.
+A 100% standalone, zero-menu Android TV launcher app for BBC iPlayer EastEnders. Designed to run on any Android TV, Google TV, NVIDIA Shield, or Fire TV without requiring any custom launcher, companion app, or adb tools. Perfect for parents and family.
 
 ## How it works
 
-1. **One Click Launch**: Clicking the shortcut launches official BBC iPlayer directly to the EastEnders programme page and finishes the shortcut activity immediately.
-2. **Auto-Play Accessibility Helper**: When enabled in TV Settings > Accessibility:
-   - Selects the focused user profile automatically if the profile chooser appears.
-   - Selects the newest episode automatically on the EastEnders page.
-   - Clicks `Skip trailer` once if a trailer skip control appears within 60 seconds.
-   - When playback finishes and returns to the programme page, automatically calls `performGlobalAction(GLOBAL_ACTION_HOME)` to return the TV to the Home launcher.
-3. **80-Year-Old Friendly Setup**:
-   - Zero ADB, zero USB debugging, zero network debugging, zero developer options, and zero socket permissions.
-   - If accessibility is disabled on first launch, shows a friendly 2-button screen: "Enable auto-play" (takes them to standard Accessibility settings) and "Watch EastEnders now" (launches iPlayer directly so they are never blocked).
+1. **Instant 1-Click Launch (Zero Menus)**:
+   - Clicking the EastEnders app icon immediately launches BBC iPlayer directly into the EastEnders programme page.
+   - Zero setup dialogs, zero extra menus, zero configuration buttons.
+   - `Theme.NoDisplay` ensures no intermediate window ever flashes on screen.
 
-## Building & Signing
+2. **Automated Accessibility Flow**:
+   - **First User Login**: Automatically detects the iPlayer profile selector ("Select who's watching") and selects the primary user profile.
+   - **Newest Episode CTA**: Automatically finds the newest episode Hero CTA / "Watch now" / "Resume" button and triggers playback.
+   - **Skip Trailers & Pre-rolls**: Actively monitors playback start and immediately clicks "Skip trailer" / "Skip pre-roll" as soon as it appears.
+   - **Auto Return Home**: Once playback finishes (and credits roll back to the programme page), automatically returns the TV to the home screen via `GLOBAL_ACTION_HOME`.
 
-- Build and verify: `build.ps1`
-- Local packaging & signing: `build-local.ps1`
-- Output artifact: `EastEnders-2.0.0.apk` signed with `signing/eastenders.p12`
+3. **Standalone Dad-Friendly Setup**:
+   - Zero ADB or PC required.
+   - Sideload `EastEnders-2.3.0.apk` onto the TV.
+   - Go to standard Android TV **Settings > Device Preferences / System > Accessibility** and toggle ON **EastEnders auto-play** (only needed once).
+   - From then on, pressing the EastEnders button immediately plays the latest episode every single time.
+   - Self-heals registration automatically on systems with `WRITE_SECURE_SETTINGS`.
+
+## Build Artifacts
+
+- Signed APK: `build/EastEnders-2.3.0.apk` (and on Desktop `EastEnders-2.3.0.apk`)
+- Keystore: `signing/eastenders.p12` (`CN=EastEnders Personal Launcher`)

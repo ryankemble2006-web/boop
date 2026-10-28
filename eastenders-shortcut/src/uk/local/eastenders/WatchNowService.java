@@ -1,7 +1,9 @@
 package uk.local.eastenders;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Path;
 import android.graphics.Rect;
@@ -9,18 +11,26 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
+import java.util.List;
 
-public final class WatchNowService extends AccessibilityService {
+public class WatchNowService extends AccessibilityService {
     private static final String TAG = "EastEnders";
     private static WatchNowService instance;
+
+    private static volatile boolean pendingArm = false;
+    private static volatile String pendingPackage = null;
+    private static volatile long pendingArmTime = 0L;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private String expectedPackage;
     private boolean armed;
     private long armTimestamp;
+    private boolean seenTargetApp;
 
     // Retry trackers with debouncing
     private long lastProfileClickTime;
@@ -38,7 +48,7 @@ public final class WatchNowService extends AccessibilityService {
     private static final long MAX_LAUNCH_WAIT_MS = 60_000L; // 60s max to reach active playback
     private static final long MAX_TOTAL_SESSION_MS = 3L * 60L * 60L * 1000L; // 3 hours max session
     private static final long MIN_PLAYBACK_FOR_AUTO_HOME_MS = 20_000L; // 20s minimum playback before returning home
-    private static final long CLICK_DEBOUNCE_MS = 1_200L; // wait 1.2s before re-attempting click
+    private static final long CLICK_DEBOUNCE_MS = 350L; // 350ms snappy debounce
 
     private static final class ParsedScreen {
         boolean isProfileChooser;
@@ -56,7 +66,7 @@ public final class WatchNowService extends AccessibilityService {
             if (!armed) return;
             inspect();
             if (armed) {
-                handler.postDelayed(this, 500);
+                handler.postDelayed(this, 350);
             }
         }
     };
@@ -65,24 +75,68 @@ public final class WatchNowService extends AccessibilityService {
         return instance != null;
     }
 
+    public static boolean isServiceEnabled(Context context) {
+        if (instance != null) return true;
+        try {
+            AccessibilityManager am = (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+            if (am != null) {
+                List<AccessibilityServiceInfo> list = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+                if (list != null) {
+                    String pkg = context.getPackageName();
+                    for (AccessibilityServiceInfo info : list) {
+                        if (info != null && info.getResolveInfo() != null && info.getResolveInfo().serviceInfo != null) {
+                            if (pkg.equals(info.getResolveInfo().serviceInfo.packageName)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable ignored) { }
+
+        try {
+            String setting = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (setting != null && setting.contains(context.getPackageName())) {
+                return true;
+            }
+        } catch (Throwable ignored) { }
+
+        return false;
+    }
+
     public static void arm(String pkg) {
-        if (instance == null) return;
-        instance.stop();
-        instance.expectedPackage = pkg;
-        instance.armed = true;
-        instance.armTimestamp = SystemClock.elapsedRealtime();
-        Log.i(TAG, "Auto-play armed for " + pkg);
-        instance.handler.postDelayed(instance.pollingRunnable, 400);
+        pendingPackage = pkg;
+        pendingArm = true;
+        pendingArmTime = SystemClock.elapsedRealtime();
+        if (instance != null) {
+            instance.executeArm(pkg);
+        } else {
+            Log.i(TAG, "WatchNowService queued pending arm for " + pkg);
+        }
     }
 
     public static void cancel() {
+        pendingArm = false;
+        pendingPackage = null;
         if (instance != null) {
             instance.stop();
         }
     }
 
+    private void executeArm(String pkg) {
+        stop();
+        expectedPackage = pkg;
+        armed = true;
+        seenTargetApp = false;
+        armTimestamp = SystemClock.elapsedRealtime();
+        Log.i(TAG, "Auto-play armed for " + pkg);
+        handler.removeCallbacks(pollingRunnable);
+        handler.postDelayed(pollingRunnable, 200);
+    }
+
     private void stop() {
         armed = false;
+        seenTargetApp = false;
         handler.removeCallbacks(pollingRunnable);
         expectedPackage = null;
         lastProfileClickTime = 0;
@@ -100,7 +154,10 @@ public final class WatchNowService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         instance = this;
-        Log.i(TAG, "WatchNowService connected and ready.");
+        Log.i(TAG, "WatchNowService connected and ready (" + getClass().getSimpleName() + ")");
+        if (pendingArm && (SystemClock.elapsedRealtime() - pendingArmTime < 60_000L)) {
+            executeArm(pendingPackage != null ? pendingPackage : "com.nvidia.bbciplayer");
+        }
     }
 
     @Override
@@ -135,12 +192,17 @@ public final class WatchNowService extends AccessibilityService {
     private void observeWindow(String pkg) {
         if (pkg == null) return;
         if (expectedPackage != null && pkg.equals(expectedPackage)) {
+            seenTargetApp = true;
             return;
         }
         if (pkg.equals(getPackageName()) || pkg.equals("android") || pkg.equals("com.android.systemui")) {
             return;
         }
-        // User switched to another app (Home, Netflix, Kodi, Deezer, etc.)
+        // Don't disarm during initial launch transition before the target app has even appeared
+        if (!seenTargetApp) {
+            return;
+        }
+        // User switched away to another app after iPlayer was already active
         Log.i(TAG, "Auto-play disarmed on window focus change to: " + pkg);
         stop();
     }
@@ -172,14 +234,19 @@ public final class WatchNowService extends AccessibilityService {
             }
             if (!armed) return;
 
+            // Only inspect and automate if root window belongs to the target app
+            if (rootPkg != null && !rootPkg.toString().equals(expectedPackage)) {
+                return;
+            }
+
             scanNode(root, screen, 0);
 
-            // PHASE 1: Profile Chooser
+            // PHASE 1: Profile Chooser ("Select who's watching")
             if (screen.isProfileChooser && screen.firstProfile != null) {
-                if (now - lastProfileClickTime > CLICK_DEBOUNCE_MS && profileClickAttempts < 6) {
+                if (now - lastProfileClickTime > CLICK_DEBOUNCE_MS && profileClickAttempts < 10) {
                     lastProfileClickTime = now;
                     profileClickAttempts++;
-                    Log.i(TAG, "Selecting iPlayer profile (attempt " + profileClickAttempts + "/6)");
+                    Log.i(TAG, "Selecting iPlayer profile (attempt " + profileClickAttempts + "/10)");
                     clickNode(screen.firstProfile);
                 }
                 return;
@@ -198,10 +265,10 @@ public final class WatchNowService extends AccessibilityService {
             // PHASE 3: EastEnders Programme Page & Newest Episode CTA
             if (!playbackStarted && (screen.isEastEndersPage || screen.watchNowButton != null)) {
                 if (screen.watchNowButton != null) {
-                    if (now - lastEpisodeClickTime > CLICK_DEBOUNCE_MS && episodeClickAttempts < 6) {
+                    if (now - lastEpisodeClickTime > CLICK_DEBOUNCE_MS && episodeClickAttempts < 10) {
                         lastEpisodeClickTime = now;
                         episodeClickAttempts++;
-                        Log.i(TAG, "Newest episode CTA found — clicking Watch Now (attempt " + episodeClickAttempts + "/6)");
+                        Log.i(TAG, "Newest episode CTA found — clicking Watch Now (attempt " + episodeClickAttempts + "/10)");
                         clickNode(screen.watchNowButton);
                     }
                     return;
@@ -258,7 +325,7 @@ public final class WatchNowService extends AccessibilityService {
             screen.isProfileChooser = true;
         }
 
-        if (screen.firstProfile == null && node.isClickable() && node.isEnabled()
+        if (screen.firstProfile == null && node.isEnabled()
                 && WatchNowPolicy.isProfileButton(viewId, text, desc)) {
             screen.firstProfile = AccessibilityNodeInfo.obtain(node);
         }
@@ -330,7 +397,7 @@ public final class WatchNowService extends AccessibilityService {
             try {
                 dispatchGesture(builder.build(), null, null);
             } catch (Throwable t) {
-                Log.w(TAG, "dispatchGesture not supported on this device: " + t.getMessage());
+                Log.w(TAG, "dispatchGesture error: " + t.getMessage());
             }
         }
     }

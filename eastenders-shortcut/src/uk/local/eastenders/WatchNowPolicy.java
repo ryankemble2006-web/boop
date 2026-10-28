@@ -7,13 +7,19 @@ public final class WatchNowPolicy {
      * Determines whether the current screen is the BBC iPlayer profile selector ("Select who's watching").
      */
     public static boolean isProfileChooser(CharSequence text, CharSequence description, String viewId) {
-        if (description != null && description.toString().toLowerCase().contains("who's watching")) {
-            return true;
+        if (description != null) {
+            String lower = description.toString().toLowerCase();
+            if (lower.contains("who's watching") || lower.contains("whos watching") || lower.contains("select who")) {
+                return true;
+            }
         }
-        if (text != null && text.toString().toLowerCase().contains("who's watching")) {
-            return true;
+        if (text != null) {
+            String lower = text.toString().toLowerCase();
+            if (lower.contains("who's watching") || lower.contains("whos watching") || lower.contains("select who")) {
+                return true;
+            }
         }
-        return "user-switcher".equals(viewId) || "account-layout-title".equals(viewId);
+        return "user-switcher".equals(viewId) || "account-layout-title".equals(viewId) || "user-switcher_container".equals(viewId);
     }
 
     /**
@@ -22,7 +28,7 @@ public final class WatchNowPolicy {
      */
     public static boolean isProfileButton(String viewId, CharSequence text, CharSequence description) {
         if (viewId != null) {
-            if (viewId.startsWith("avatar-add") || viewId.startsWith("avatar-label") || viewId.startsWith("edit-")) {
+            if (viewId.startsWith("avatar-add") || viewId.startsWith("avatar-label") || viewId.startsWith("edit-") || viewId.equals("language-switcher")) {
                 return false;
             }
             if (viewId.startsWith("avatar-")) {
@@ -32,17 +38,17 @@ public final class WatchNowPolicy {
         String label = text != null ? text.toString().trim() : (description != null ? description.toString().trim() : "");
         if (label.isEmpty()) return false;
         String lower = label.toLowerCase();
-        return !lower.contains("add child") && !lower.contains("add adult") && !lower.contains("language") && !lower.contains("edit");
+        return !lower.contains("add child") && !lower.contains("add adult") && !lower.contains("language") && !lower.contains("edit") && !lower.contains("settings") && !lower.contains("back");
     }
 
     /**
      * Determines whether the current screen is the EastEnders programme page.
      */
     public static boolean isProgrammePage(String viewId, CharSequence text) {
-        if (viewId != null && (viewId.startsWith("b006m86d") || viewId.equals("unsliced") || viewId.equals("programme-grid"))) {
+        if (viewId != null && (viewId.startsWith("b006m86d") || viewId.equals("unsliced") || viewId.equals("programme-grid") || viewId.equals("b006m86d-header") || viewId.equals("b006m86d-title"))) {
             return true;
         }
-        return text != null && "EastEnders".contentEquals(text);
+        return text != null && text.toString().contains("EastEnders");
     }
 
     /**
@@ -55,6 +61,9 @@ public final class WatchNowPolicy {
         String label = text != null ? text.toString().trim() : (description != null ? description.toString().trim() : "");
         if (label.isEmpty()) return false;
         String lower = label.toLowerCase();
+        if (lower.contains("watchlist") || lower.contains("more like this") || lower.contains("episodes") || lower.contains("back")) {
+            return false;
+        }
         return lower.contains("watch now") 
                 || lower.contains("resume") 
                 || lower.contains("watch from start") 
@@ -66,13 +75,13 @@ public final class WatchNowPolicy {
      * Determines whether a node is a "Skip trailer" / "Skip pre-roll" button.
      */
     public static boolean isSkipTrailer(String viewId, CharSequence text, CharSequence description) {
-        if (viewId != null && ("skip-prerolls".equals(viewId) || viewId.contains("skip-trailer") || viewId.contains("skip-preroll"))) {
+        if (viewId != null && (viewId.contains("skip-trailer") || viewId.contains("skip-preroll") || viewId.equals("skip-prerolls") || viewId.contains("skip-promo"))) {
             return true;
         }
         String label = text != null ? text.toString().trim() : (description != null ? description.toString().trim() : "");
         if (label.isEmpty()) return false;
         String lower = label.toLowerCase();
-        return lower.contains("skip trailer") || lower.contains("skip pre-roll") || lower.contains("skip preroll");
+        return lower.contains("skip trailer") || lower.contains("skip pre-roll") || lower.contains("skip preroll") || lower.contains("skip promo");
     }
 
     /**

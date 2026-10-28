@@ -2,48 +2,79 @@ package uk.local.eastenders;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
+import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public final class MainActivity extends Activity {
-    private boolean awaitingAccessibility;
+    private static final String TAG = "EastEnders";
 
-    @Override public void onCreate(Bundle state) {
+    @Override
+    public void onCreate(Bundle state) {
         super.onCreate(state);
-        if (state == null && WatchNowService.ready()) {
-            openProgramme();
-            return;
-        }
-        showSetupScreen();
+        selfHealAccessibility();
+        armAndLaunch();
     }
 
-    @Override protected void onNewIntent(Intent intent) {
+    @Override
+    protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        if (WatchNowService.ready()) {
-            openProgramme();
+        selfHealAccessibility();
+        armAndLaunch();
+    }
+
+    private void selfHealAccessibility() {
+        try {
+            if (checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED) {
+                String existing = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                Set<String> set = new LinkedHashSet<>();
+                if (existing != null) {
+                    for (String s : existing.split(":")) {
+                        if (!s.trim().isEmpty()) set.add(s.trim());
+                    }
+                }
+                set.add("uk.local.eastenders/uk.local.eastenders.EastEndersAccessibilityService");
+                set.add("uk.local.eastenders/uk.local.eastenders.WatchNowService");
+                Settings.Secure.putString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, TextUtils.join(":", set));
+                Settings.Secure.putInt(getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+                Log.i(TAG, "Self-healed accessibility service registration via WRITE_SECURE_SETTINGS");
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "Could not self-heal accessibility settings: " + t.getMessage());
         }
     }
 
-    @Override protected void onResume() {
-        super.onResume();
-        if (awaitingAccessibility && WatchNowService.ready()) {
-            awaitingAccessibility = false;
-            openProgramme();
+    private void armAndLaunch() {
+        boolean enabled = WatchNowService.isServiceEnabled(this);
+
+        if (!enabled) {
+            // First run on a new TV without accessibility turned on yet: prompt native TV settings once
+            Log.w(TAG, "Accessibility not enabled yet on this device. Prompting native TV settings.");
+            try {
+                Toast.makeText(this, "Turn ON 'EastEnders auto-play' in Accessibility for 1-click playback", Toast.LENGTH_LONG).show();
+                Intent a11yIntent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(a11yIntent);
+            } catch (Throwable ignored) { }
         }
+
+        // Arm the automation engine
+        WatchNowService.arm("com.nvidia.bbciplayer");
+
+        // Immediately launch BBC iPlayer directly to the EastEnders programme page
+        openProgramme();
+
+        // Finish immediately — zero custom menus, zero extra clicks
+        finish();
     }
 
     private void openProgramme() {
@@ -52,15 +83,13 @@ public final class MainActivity extends Activity {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         if (getPackageManager().resolveActivity(player, 0) != null) {
-            WatchNowService.arm("com.nvidia.bbciplayer");
             try {
                 startActivity(player);
-                finish();
                 return;
             } catch (ActivityNotFoundException | SecurityException ignored) { }
         }
 
-        // Fallback for devices running generic BBC iPlayer packages
+        // Fallback for devices running generic BBC iPlayer packages (Sony TV, Google TV, Fire TV)
         boolean launched = Routes.open(
                 (pkg, url) -> {
                     Intent fallback = new Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -70,7 +99,6 @@ public final class MainActivity extends Activity {
                     WatchNowService.arm(pkg);
                     try {
                         startActivity(fallback);
-                        finish();
                         return true;
                     } catch (Exception e) {
                         return false;
@@ -85,90 +113,5 @@ public final class MainActivity extends Activity {
         if (!launched) {
             WatchNowService.cancel();
         }
-    }
-
-    private void showSetupScreen() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
-        root.setPadding(dp(72), dp(48), dp(72), dp(48));
-        root.setBackgroundColor(Color.rgb(18, 22, 28));
-
-        TextView title = new TextView(this);
-        title.setText("EastEnders Shortcut");
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(32);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        root.addView(title, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        TextView body = new TextView(this);
-        body.setText("To choose your profile, select the newest episode, and return to Home automatically when finished, turn on 'EastEnders auto-play' in Accessibility settings.\n\nYou can also launch EastEnders right now without auto-play.");
-        body.setTextColor(Color.rgb(200, 210, 220));
-        body.setTextSize(19);
-        body.setGravity(Gravity.CENTER_HORIZONTAL);
-        LinearLayout.LayoutParams bodyParams = new LinearLayout.LayoutParams(dp(700), ViewGroup.LayoutParams.WRAP_CONTENT);
-        bodyParams.topMargin = dp(24);
-        bodyParams.bottomMargin = dp(32);
-        root.addView(body, bodyParams);
-
-        Button enableButton = makeButton("Enable auto-play", v -> {
-            awaitingAccessibility = true;
-            try {
-                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
-            } catch (Exception rejected) {
-                try {
-                    startActivity(new Intent(Settings.ACTION_SETTINGS));
-                } catch (Exception ignored) {
-                    Toast.makeText(this, "Open TV Settings > Accessibility to enable.", Toast.LENGTH_LONG).show();
-                }
-            }
-        });
-        root.addView(enableButton);
-
-        Button watchButton = makeButton("Watch EastEnders now", v -> openProgramme());
-        LinearLayout.LayoutParams watchParams = (LinearLayout.LayoutParams) watchButton.getLayoutParams();
-        watchParams.topMargin = dp(14);
-        root.addView(watchButton);
-
-        Button closeButton = makeButton("Close", v -> finish());
-        LinearLayout.LayoutParams closeParams = (LinearLayout.LayoutParams) closeButton.getLayoutParams();
-        closeParams.topMargin = dp(14);
-        root.addView(closeButton);
-
-        setContentView(root);
-        enableButton.requestFocus();
-    }
-
-    private Button makeButton(String text, View.OnClickListener onClick) {
-        Button button = new Button(this);
-        button.setText(text);
-        button.setTextSize(18);
-        button.setAllCaps(false);
-        button.setTextColor(Color.WHITE);
-        button.setFocusable(true);
-        button.setFocusableInTouchMode(true);
-        button.setOnClickListener(onClick);
-
-        button.setOnFocusChangeListener((v, focused) -> {
-            GradientDrawable d = new GradientDrawable();
-            d.setColor(focused ? Color.rgb(220, 30, 70) : Color.rgb(40, 50, 65));
-            d.setCornerRadius(dp(8));
-            d.setStroke(dp(focused ? 3 : 1), focused ? Color.WHITE : Color.rgb(80, 95, 115));
-            v.setBackground(d);
-        });
-
-        GradientDrawable normal = new GradientDrawable();
-        normal.setColor(Color.rgb(40, 50, 65));
-        normal.setCornerRadius(dp(8));
-        normal.setStroke(dp(1), Color.rgb(80, 95, 115));
-        button.setBackground(normal);
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(420), dp(56));
-        button.setLayoutParams(lp);
-        return button;
-    }
-
-    private int dp(int value) {
-        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
