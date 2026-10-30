@@ -1,0 +1,90 @@
+package com.boop.shieldoverlay;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.Settings;
+
+public final class MainActivity extends Activity {
+    private boolean permissionScreenLaunched;
+    private boolean leftForPermissionScreen;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        LaunchCrashRecorder crashRecorder = new LaunchCrashRecorder(this);
+        String crashReport = crashRecorder.consume();
+        if (crashReport != null) {
+            Intent reportIntent = new Intent(this, CrashReportActivity.class);
+            reportIntent.putExtra(CrashReportActivity.EXTRA_REPORT, crashReport);
+            startActivity(reportIntent);
+            finish();
+            return;
+        }
+
+        if (Settings.canDrawOverlays(this)) {
+            startOverlayAndOpenHome();
+            return;
+        }
+        launchOverlayPermission();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (permissionScreenLaunched) {
+            leftForPermissionScreen = true;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!com.boop.shieldhome.ShieldHomeOverrideService.isServiceBound()) {
+            com.boop.shieldhome.ShieldSelfGrant.tryDirectSecureSettingsGrant(this);
+        }
+        if (!permissionScreenLaunched || !leftForPermissionScreen) {
+            return;
+        }
+
+        permissionScreenLaunched = false;
+        leftForPermissionScreen = false;
+        if (Settings.canDrawOverlays(this)) {
+            startOverlayAndOpenHome();
+        } else {
+            finish();
+        }
+    }
+
+    private void launchOverlayPermission() {
+        permissionScreenLaunched = true;
+        try {
+            startActivity(new Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName())));
+            return;
+        } catch (RuntimeException ignored) {
+            // Some Shield firmware does not expose the package-detail route.
+        }
+        try {
+            startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION));
+            return;
+        } catch (RuntimeException ignored) {
+            // Last-resort route below.
+        }
+        try {
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
+        } catch (RuntimeException ignored) {
+            permissionScreenLaunched = false;
+            finish();
+        }
+    }
+
+    private void startOverlayAndOpenHome() {
+        startForegroundService(new Intent(this, BoopOverlayService.class));
+        startActivity(new Intent(this, BoopHomeActivity.class));
+        finish();
+    }
+}
