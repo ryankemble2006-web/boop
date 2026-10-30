@@ -80,6 +80,14 @@ jobs:
           packages: 'platforms;android-36 build-tools;36.0.0'
           log-accepted-android-sdk-licenses: false
 
+      - name: Build and verify native 4K launcher patch
+        if: hashFiles(format('{0}/build_native4k.py', steps.snapshot.outputs.dir)) != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s "$SHIELD_SNAPSHOT_DIR/tests" -v
+          python3 "$SHIELD_SNAPSHOT_DIR/build_native4k.py"
+
       - name: Load the unchanged GitHub signing key
         id: signing
         env:
