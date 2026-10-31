@@ -1,0 +1,127 @@
+package com.boop.shieldhome;
+
+import android.os.Handler;
+import android.os.Looper;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Consumer;
+
+/** One UI owner, one cancellable request. Successful documents live briefly in memory only. */
+final class NativeLyricsLoader {
+    private static final long WAIT_MS = 9000L;
+    private static final long DEEZER_WAIT_MS = 2500L;
+    private static final long LRCLIB_WAIT_MS = 6000L;
+    private static final long CACHE_MS = 300000L;
+    private static final Map<String, Cached> CACHE = new LinkedHashMap<>();
+    private static final class Cached {
+        final DeezerLyricsDocument document;
+        final long expires;
+        Cached(DeezerLyricsDocument document) {
+            this.document = document;
+            expires = DeezerLyricsClient.nowMs() + CACHE_MS;
+        }
+    }
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final LyricsRequestGate gate = new LyricsRequestGate();
+    private final LrclibLyricsClient primary = new LrclibLyricsClient();
+    private final DeezerTimedLyricsClient fallback = new DeezerTimedLyricsClient();
+    private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
+        Thread thread = new Thread(r, "boop-native-lyrics"); thread.setDaemon(true); return thread;
+    });
+    private Future<?> task;
+    private DeezerLyricsClient.Call call;
+    private Runnable timeout;
+    private String pending = "";
+    private static synchronized DeezerLyricsDocument cached(String id) {
+        Cached value = CACHE.get(id);
+        if (value == null) return null;
+        if (DeezerLyricsClient.nowMs() >= value.expires) { CACHE.remove(id); return null; }
+        return value.document;
+    }
+    private static synchronized void remember(DeezerLyricsDocument document) {
+        if (document.status() != DeezerLyricsDocument.Status.AVAILABLE) return;
+        CACHE.remove(document.trackId());
+        CACHE.put(document.trackId(), new Cached(document));
+        while (CACHE.size() > 4) CACHE.remove(CACHE.keySet().iterator().next());
+    }
+    void load(String id, String identity, Consumer<DeezerLyricsDocument> completion) {
+        load(null, id, identity, completion);
+    }
+    void load(NowPlayingSnapshot track, String id, String identity,
+            Consumer<DeezerLyricsDocument> completion) {
+        load(track, id, identity, false, completion);
+    }
+    void reload(NowPlayingSnapshot track, String id, String identity,
+            Consumer<DeezerLyricsDocument> completion) {
+        cancel();
+        synchronized (NativeLyricsLoader.class) { CACHE.remove(id); }
+        load(track, id, identity, true, completion);
+    }
+    private void load(NowPlayingSnapshot track, String id, String identity, boolean fresh,
+            Consumer<DeezerLyricsDocument> completion) {
+        if (worker.isShutdown() || identity.equals(pending)) return;
+        cancel();
+        long ticket = gate.begin(identity);
+        pending = identity;
+        DeezerLyricsDocument hit = fresh ? null : cached(id);
+        if (hit != null) {
+            pending = "";
+            completion.accept(hit);
+            return;
+        }
+        DeezerLyricsClient.Call request = new DeezerLyricsClient.Call();
+        call = request;
+        long deadline = DeezerLyricsClient.nowMs() + WAIT_MS;
+        timeout = () -> {
+            if (!gate.accepts(ticket, identity)) return;
+            cancel();
+            completion.accept(DeezerLyricsDocument.unknown(id));
+        };
+        main.postDelayed(timeout, WAIT_MS);
+        task = worker.submit(() -> {
+            long primaryDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + LRCLIB_WAIT_MS);
+            DeezerLyricsDocument document = primary.load(track, id, request, primaryDeadline);
+            if (document.status() != DeezerLyricsDocument.Status.AVAILABLE
+                    && !request.cancelled()
+                    && DeezerLyricsClient.nowMs() < deadline) {
+                long fallbackDeadline = Math.min(deadline, DeezerLyricsClient.nowMs() + DEEZER_WAIT_MS);
+                DeezerLyricsDocument second = fallback.load(id, request, fallbackDeadline);
+                if (second.status() == DeezerLyricsDocument.Status.AVAILABLE)
+                    document = second;
+                else if (document.status() != DeezerLyricsDocument.Status.UNAVAILABLE
+                        || second.status() != DeezerLyricsDocument.Status.UNAVAILABLE)
+                    document = DeezerLyricsDocument.unknown(id);
+            }
+            final DeezerLyricsDocument result = document;
+            main.post(() -> {
+                if (!gate.accepts(ticket, identity)) return;
+                if (DeezerLyricsClient.nowMs() >= deadline) {
+                    Runnable expired = timeout;
+                    if (expired != null) expired.run();
+                    return;
+                }
+                if (timeout != null) main.removeCallbacks(timeout);
+                timeout = null;
+                call = null;
+                task = null;
+                pending = "";
+                remember(result);
+                completion.accept(result);
+            });
+        });
+    }
+    void cancel() {
+        gate.cancel();
+        pending = "";
+        if (timeout != null) main.removeCallbacks(timeout);
+        timeout = null;
+        if (call != null) call.cancel();
+        call = null;
+        if (task != null) task.cancel(true);
+        task = null;
+    }
+    void destroy() { cancel(); worker.shutdownNow(); }
+}
