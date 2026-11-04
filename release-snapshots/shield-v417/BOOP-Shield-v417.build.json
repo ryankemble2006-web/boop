@@ -1,0 +1,12 @@
+{
+  "version": 417,
+  "baseline_sha256": "c03deaac7dd8b123d44e72d546ae84dc54f0dbb21888c91edc3b76ec09fddda6",
+  "unsigned_sha256": "898d462b416c51c7ba7c2e2a3d615ded19f50b4c257a4940f8298813a3c5138a",
+  "changed_entries": [
+    "AndroidManifest.xml",
+    "classes3.dex"
+  ],
+  "verified_classes": 814,
+  "background_capture_ui": false,
+  "signed": false
+}
