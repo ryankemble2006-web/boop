@@ -1,0 +1,12 @@
+{
+  "version": 416,
+  "baseline_sha256": "1a9c06292b404ac2af10b4d601d5a855d634773d138c7bfb0a5b77e3bb191ec5",
+  "unsigned_sha256": "c03deaac7dd8b123d44e72d546ae84dc54f0dbb21888c91edc3b76ec09fddda6",
+  "changed_entries": [
+    "AndroidManifest.xml",
+    "classes3.dex"
+  ],
+  "verified_classes": 814,
+  "global_display_writes": false,
+  "signed": false
+}
