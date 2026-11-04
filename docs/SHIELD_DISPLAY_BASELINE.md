@@ -17,6 +17,7 @@ Turned off the NVIDIA option through the installed Settings UI, accepted its req
 - NVIDIA-managed UI: 1920x1080 (`vendor.sys.ui.resolution.x/y=1920/1080`).
 - System density: stock 320 DPI; no saved density override.
 - Text scale: 1.3, unchanged across reboot and sleep/wake.
+- Window, transition and animator animation scales: all 0.0. Ryan explicitly wants these kept off because Deezer's animated curtain is irritating. Do not enable animations to repair Recents first-open behavior.
 - Saved `Settings.Global.display_size_forced` and `Settings.Secure.display_density_forced`: empty after reboot/wake.
 - `wm size` reports physical 3840x2160 and runtime override 1920x1080. With the saved forced setting empty, this runtime UI cap is NVIDIA-managed. Do not treat it as the earlier ADB override or reset it back to native 4K.
 - Settings and Recents visually checked at normal size after reboot. BOOP visually checked after reboot and wake with its chunky layout intact.

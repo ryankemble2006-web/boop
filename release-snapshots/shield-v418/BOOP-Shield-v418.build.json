@@ -1,0 +1,18 @@
+{
+  "version": 418,
+  "baseline_sha256": "898d462b416c51c7ba7c2e2a3d615ded19f50b4c257a4940f8298813a3c5138a",
+  "unsigned_sha256": "2726c28c43cc2615a926d4afe8bf2e41d0aaad3afc36a37a61ea65e752a9dfbf",
+  "changed_entries": [
+    "AndroidManifest.xml",
+    "classes3.dex"
+  ],
+  "verified_classes": 817,
+  "native_recents_preload": true,
+  "added_classes": [
+    "com/boop/shieldhome/RecentsPreload$NoPrompt.smali",
+    "com/boop/shieldhome/RecentsPreload$Request.smali",
+    "com/boop/shieldhome/RecentsPreload.smali"
+  ],
+  "helper_source_sha256": "af6f279c612665c66038495d2d138699065af4472bddd7ced09bfd09fbbfe549",
+  "signed": false
+}

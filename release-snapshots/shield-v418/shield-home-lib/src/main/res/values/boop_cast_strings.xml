@@ -1,0 +1,4 @@
+<resources>
+<string name="boop_cast_visibility_label">BOOP Cast corner</string>
+<string name="boop_cast_visibility_description">Shows BOOP during Deezer casting and hides him in other apps. Observes which app window is visible; does not read screen contents or press controls.</string>
+</resources>
