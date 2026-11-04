@@ -18,3 +18,15 @@ Constraints: no playback navigation or display changes while user watches; no re
 Deployment: commit fe4ef8f5135993cce7f03826fd335490dc5c3c3f, GitHub Actions run 41775265923 succeeded. Signed payload matches all 373 unsigned APK entries; existing certificate verified. Installed 1.2.416-shield at device time 2026-11-04 04:48:54. iPlayer PID 25678 remained unchanged and focused; fresh screenshot confirmed full picture after update. BOOP accessibility services rebound, while 1920x1080 logical UI / stock 320 DPI remained stable and HDMI stayed 3840x2160.
 
 Signed APK SHA-256: 6ea89379ce13e10268263c380caeba0340e8af318442b8d99420ff1917c56937.
+
+## Correction: playback froze after v416 installation
+
+The initial playback-continuity claim was incorrect: unchanged PID/focus and a fullscreen screenshot did not establish advancing video. The user reported frozen playback and no navigation. Captures were identical across minutes. Logs showed background spectrum revival at 04:48:56.346, iPlayer onPause at .365, MediaProjection permission activity at .462 and decoder release at .503. This background recovery behavior was inherited from v415 and triggered by updating the app.
+
+Force-stopped BOOP to terminate capture, restarted iPlayer without display changes, and selected the existing profile. User confirmed physical remote navigation works. A subsequent screenshot showed the user had resumed EastEnders fullscreen; projection was null.
+
+v417 removes only StartupCleanupBootReceiver.reviveSpectrumIfWanted's automatic activity launch; permission and cleanup recovery remain. Home retains spectrum startup. Three receiver regression tests pass (two failed against baseline), both display isolation tests pass, 814 DEX classes and all other APK entries audited. Independent review found no Critical/Important issue. Boot accessibility rearming remains and may bring Home forward on a new boot; that separate behavior is not claimed fixed.
+
+v417 deployment: e4e43aff47690129083794202dd0687f04ed76a5, GitHub Actions 41776004943 succeeded. Permanent certificate matched; all 373 signed payload entries matched the audited unsigned APK. Installed 1.2.417-shield at 04:56:22. iPlayer PID 30115 stayed unchanged and focused. Distinct, visually inspected fullscreen episode frames after install prove advancement; MediaProjection stayed null. No capture/projection launch or iPlayer pause matched the install log. UI remains 1920x1080 / stock 320 DPI, HDMI 3840x2160. Physical remote was confirmed by user during recovery before v417 install; no synthetic navigation/playback keys were sent during this installation.
+
+Signed v417 SHA-256: 0d4c5bbfea19c3d04fa1959e72fe901f2822b5cd5d2803d5b74b69efc64dd1b9.
